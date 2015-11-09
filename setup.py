@@ -87,14 +87,13 @@ install_requires = setuptools_args['install_requires'] = [
 ]
 
 extras_require = setuptools_args['extras_require'] = {
-    'test': ['pytest', 'ipykernel'],
-    'execute': ['jupyter_client'],
+#    'test': ['pytest', 'ipykernel'],
+#    'execute': ['jupyter_client'],
 }
 
 if 'setuptools' in sys.modules:
     setup_args.update(setuptools_args)
-    from setuptools.command.develop import develop
-    cmdclass['develop'] = css_first(develop)
+
     # force entrypoints with setuptools (needed for Windows, unconditional because of wheels)
     setup_args['entry_points'] = {
         'console_scripts': [
