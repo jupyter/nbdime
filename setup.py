@@ -31,6 +31,9 @@ import os
 from glob import glob
 
 from distutils.core import setup
+from distutils.cmd import Command
+from distutils.command.build import build
+from distutils.command.sdist import sdist
 
 pjoin = os.path.join
 here = os.path.abspath(os.path.dirname(__file__))
@@ -42,9 +45,6 @@ for d, _, _ in os.walk(pjoin(here, name)):
         packages.append(d[len(here)+1:].replace(os.path.sep, '.'))
 
 package_data = {
-#    'nbmerge' : [
-#        'tests/*.ipynb',
-#    ],
 }
 
 version_ns = {}
@@ -54,14 +54,11 @@ with open(pjoin(here, name, '_version.py')) as f:
 
 setup_args = dict(
     name            = name,
+    description     = "Diff and merge of Jupyter Notebooks",
     version         = version_ns['__version__'],
     scripts         = glob(pjoin('scripts', '*')),
     packages        = packages,
     package_data    = package_data,
-    description     = "Jupyter Notebook diff and merge tools",
-    long_description= """
-    This package contains tools for diff and merge and Jupyter Notebooks.
-    """,
     author          = 'Jupyter Development Team',
     author_email    = 'jupyter@googlegroups.com',
     url             = 'http://jupyter.org',
@@ -85,21 +82,29 @@ if 'develop' in sys.argv or any(a.startswith('bdist') for a in sys.argv):
 
 setuptools_args = {}
 install_requires = setuptools_args['install_requires'] = [
+    'jupyter_core',
     'nbformat',
 ]
 
 extras_require = setuptools_args['extras_require'] = {
+    'test': ['pytest', 'ipykernel'],
+    'execute': ['jupyter_client'],
 }
 
 if 'setuptools' in sys.modules:
     setup_args.update(setuptools_args)
-    # TODO: Figure out how to use entry points here, this is from nbformat:
-    #setup_args['entry_points'] = {
-    #    'console_scripts': [
-    #        'jupyter-trust = nbformat.sign:TrustNotebookApp.launch_instance',
-    #    ]
-    #}
-    #setup_args.pop('scripts', None)
+    from setuptools.command.develop import develop
+    cmdclass['develop'] = css_first(develop)
+    # force entrypoints with setuptools (needed for Windows, unconditional because of wheels)
+    setup_args['entry_points'] = {
+        'console_scripts': [
+            'jupyter-nbmerge = nbmerge.nbmergeapp:main_nbmerge',
+            'jupyter-nbdiff = nbmerge.nbmergeapp:main_nbdiff',
+        ]
+    }
+    setup_args.pop('scripts', None)
+
+    setup_args.update(setuptools_args)
 
 if __name__ == '__main__':
     setup(**setup_args)
