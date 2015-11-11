@@ -11,7 +11,8 @@ __all__ = ["diff_notebooks", "patch_notebook", "diff_cells", "patch_cells"]
 
 import copy
 
-from .diff_metadata import diff_metadata, patch_metadata
+from .diff import diff
+from .patch import patch
 
 
 def extract_source_lines(cells):
@@ -21,7 +22,7 @@ def extract_source_lines(cells):
     for i, cell in enumerate(cells):
         # Get source as a list of single-line strings without newlines
         source = cell["source"]
-        if isinstance(source, str):
+        if isinstance(source, basestring):
             source = source.splitlines()
 
         # Store the offset into the concatenated lines
@@ -228,7 +229,7 @@ def diff_notebooks(nba, nbb):
 
     The format of this
     """
-    mdiff = diff_metadata(nba["metadata"], nbb["metadata"])
+    mdiff = diff(nba["metadata"], nbb["metadata"])
     cdiff = diff_cells(nba["cells"], nbb["cells"])
     diff = {
         "metadata_diff": mdiff,
@@ -248,7 +249,7 @@ def patch_notebook(nb, diff):
     assert nb["nbformat_minor"] == 0
 
     # Patch metadata
-    nb["metadata"] = patch_metadata(nb["metadata"], diff["metadata_diff"])
+    nb["metadata"] = patch(nb["metadata"], diff["metadata_diff"])
 
     # Patch cells
     nb["cells"] = patch_cells(nb["cells"], diff["cells_diff"])

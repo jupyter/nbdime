@@ -56,7 +56,7 @@ def patch_list(obj, diff):
 
     return newobj
 
-def patch_str(obj, diff):
+def patch_string(obj, diff):
     # This can possibly be optimized for str if wanted, but
     # waiting until patch_list has been tested and debugged better
     return "".join(patch_list(list(obj), diff))
@@ -67,7 +67,7 @@ def patch_dict(obj, diff):
     for s in diff:
         action = s[0]
         key = s[1]
-        assert isinstance(key, str)
+        assert isinstance(key, basestring)
 
         if action == '+':
             assert key not in keys_to_copy
@@ -103,5 +103,5 @@ def patch(obj, diff):
         return patch_dict(obj, diff)
     elif isinstance(obj, list):
         return patch_list(obj, diff)
-    elif isinstance(obj, str):
-        return patch_str(obj, diff)
+    elif isinstance(obj, basestring):
+        return patch_string(obj, diff)

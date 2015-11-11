@@ -1,14 +1,15 @@
 from __future__ import print_function
 import pytest
 import copy
-from nbmerge.diff.diff_metadata import diff_metadata, patch_metadata
+from nbmerge.diff.diff import diff
+from nbmerge.diff.patch import patch
 
 from .fixtures import *
 
 def check_diff_patch_metadata(a, b):
     "Check diff/patch of metadata symmetrically."
-    assert patch_metadata(a, diff_metadata(a, b)) == b
-    assert patch_metadata(b, diff_metadata(b, a)) == a
+    assert patch(a, diff(a, b)) == b
+    assert patch(b, diff(b, a)) == a
 
 def test_diff_and_patch_metadata():
     # Note: check_diff_patch_metadata is symmetric, simplifying the number of cases to cover in here
@@ -70,12 +71,15 @@ def test_diff_and_patch_metadata():
     mdb = {"added": 7,   "modparent": {"mod": 22}, "mix": {"add": 42, "mod": 37, "unchanged": 123}}
     check_diff_patch_metadata(mda, mdb)
     # A more explicit assert showing the diff format and testing that paths are sorted:
-    assert diff_metadata(mda, mdb) == [
-        ['-', ['deleted']],
-        ['-', ['mix', 'del']],
-        ['!', ['mix', 'mod'], 37],
-        ['!', ['mix', 'unchanged'], 123],
-        ['+', ['mix', 'add'], 42],
-        ['!', ['modparent', 'mod'], 22],
-        ['+', ['added'], 7],
+    assert diff(mda, mdb) == [
+        ['-', 'deleted'],
+        ['!', 'mix', [
+            ['-', 'del'],
+            [':', 'mod', 37],
+            ['+', 'add', 42]
+            ]],
+        ['!', 'modparent', [
+            [':', 'mod', 22]
+            ]],
+        ['+', 'added', 7],
         ]

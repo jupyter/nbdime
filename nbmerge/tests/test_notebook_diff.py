@@ -1,7 +1,8 @@
 from __future__ import print_function
 import pytest
 import copy
-from nbmerge.diff.diff_metadata import diff_metadata, patch_metadata
+from nbmerge.diff.diff import diff
+from nbmerge.diff.patch import patch
 from nbmerge.diff.diff_notebooks import diff_cells, patch_cells
 from nbmerge.diff.diff_notebooks import diff_notebooks, patch_notebook
 
@@ -28,7 +29,7 @@ def test_notebook_database_fixture(db):
         assert name + "notindb" not in db
         assert_is_valid_notebook(db[name])
 
-#@pytest.xfail
+@pytest.xfail
 def test_diff_and_patch_notebooks(any_nb_pair):
     "Test diff/patch on any pair of notebooks in the test suite."
     a, b = any_nb_pair
@@ -39,9 +40,9 @@ def test_diff_and_patch_metadata_of_notebooks(any_nb_pair):
     nba, nbb = any_nb_pair
     a = nba["metadata"]
     b = nbb["metadata"]
-    assert patch_metadata(a, diff_metadata(a, b)) == b
+    assert patch(a, diff(a, b)) == b
 
-#@pytest.xfail
+@pytest.xfail
 def test_diff_and_patch_cells_of_notebooks(any_nb_pair):
     "Test diff/patch on the cells of any pair of notebooks in the test suite."
     nba, nbb = any_nb_pair
