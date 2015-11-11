@@ -10,6 +10,10 @@ def main_nbdiff():
     # Other jupyter apps use a more elaborate JupyterApp class framework, move to that later
     print("Dummy script until nbdiff is implemented.")
 
+def main_nbpatch():
+    # Other jupyter apps use a more elaborate JupyterApp class framework, move to that later
+    print("Dummy script until nbpatch is implemented.")
+
 def main_nbmerge():
     # Other jupyter apps use a more elaborate JupyterApp class framework, move to that later
     print("Dummy script until nbmerge is implemented.")

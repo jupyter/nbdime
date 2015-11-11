@@ -100,8 +100,9 @@ if 'setuptools' in sys.modules:
     # force entrypoints with setuptools (needed for Windows, unconditional because of wheels)
     setup_args['entry_points'] = {
         'console_scripts': [
-            'jupyter-nbmerge = nbmerge.nbmergeapp:main_nbmerge',
-            'jupyter-nbdiff = nbmerge.nbmergeapp:main_nbdiff',
+            'jupyter-nbdiff = nbmerge.application:main_nbdiff',
+            'jupyter-nbpatch= nbmerge.application:main_nbpatch',
+            'jupyter-nbmerge = nbmerge.application:main_nbmerge',
         ]
     }
     setup_args.pop('scripts', None)
