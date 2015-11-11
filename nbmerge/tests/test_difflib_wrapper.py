@@ -4,38 +4,76 @@ from nbmerge.diff.patch import patch
 import copy
 from difflib import SequenceMatcher
 
-def diff_sequence(a, b, include_equal=False):
-    """Diff lines with index tracking.
-
-    TODO: Document return format here, it's not quite standard.
-    """
-
-    # TODO: Make this easy configurable?
-
-    # TODO: Compare to my notebook diff prototype for curiosity. How does it perform?
-
+def opcodes_to_diff(a, b, opcodes):
+    "Convert difflib opcodes to nbmerge diff format."
     diff = []
-    s = SequenceMatcher(lambda x: False, a, b)
-    for opcode in s.get_opcodes():
+    for opcode in opcodes:
         action, abegin, aend, bbegin, bend = opcode
-        if action == "replace":
-            if bend - bbegin == aend - abegin:
-                diff.extend(['::', abegin, b[bbegin:bend]])
+        asize = aend - abegin
+        bsize = bend - bbegin
+        if action == "equal":
+            pass
+        elif action == "replace":
+            if asize == bsize:
+                if asize == 1:
+                    diff.append([':', abegin, b[bbegin]])
+                else:
+                    diff.append(['::', abegin, b[bbegin:bend]])
             else:
-                diff.append(['--', abegin, aend-abegin])
-                diff.extend(['++', abegin, b[bbegin:bend]])
-        elif action == "equal":
-            if include_equal:
-                diff.extend(['=', i, i-abegin+bbegin] for i in range(abegin, aend))
+                if asize == 1:
+                    diff.append(['-', abegin])
+                else:
+                    diff.append(['--', abegin, asize])
+                if bsize == 1:
+                    diff.append(['+', abegin, b[bbegin]])
+                else:
+                    diff.append(['++', abegin, b[bbegin:bend]])
         elif action == "insert":
-            diff.extend(['+', abegin, j] for j in range(bbegin, bend))
+            if bsize == 1:
+                diff.append(["+", abegin, b[bbegin]])
+            else:
+                diff.append(["++", abegin, b[bbegin:bend]])
         elif action == "delete":
-            diff.extend(['-', i] for i in range(abegin, aend))
+            if asize == 1:
+                diff.append(['-', abegin])
+            else:
+                diff.append(['--', abegin, asize])
         else:
             raise RuntimeError("Unknown action {}".format(action))
     return diff
 
+def diff_sequence(a, b):
+    """Compute a diff of two sequences.
+
+    Current implementation uses SequenceMatcher from the builtin Python
+    difflib. By the difflib documentation this should work for sequences
+    of hashable objects, i.e. the elements of the sequences are only
+    compared for full equality.
+    """
+    s = SequenceMatcher(lambda x: False, a, b)
+    return opcodes_to_diff(a, b, s.get_opcodes())
 
 def test_difflib_wrapper():
+    a = """\
+    def f(a, b):
+        c = a * b
+        return c
 
+    def g(x):
+        y = x**2
+        return y
+    """.splitlines()
+
+    b = []
     assert patch(a, diff_sequence(a, b)) == b
+    assert patch(b, diff_sequence(b, a)) == a
+
+    for i in range(len(a)+1):
+        for j in range(len(a)+1):
+            for k in range(len(a)+1):
+                for l in range(len(a)+1):
+                    b = a[i:j] + a[k:l]
+                    assert patch(a, diff_sequence(a, b)) == b
+                    assert patch(b, diff_sequence(b, a)) == a
+
+    #print("\n".join(map(repr, diff_sequence(a, b))))
