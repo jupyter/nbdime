@@ -45,6 +45,9 @@ for d, _, _ in os.walk(pjoin(here, name)):
         packages.append(d[len(here)+1:].replace(os.path.sep, '.'))
 
 package_data = {
+    'nbmerge' : [
+        'tests/files/*.*',
+    ]
 }
 
 version_ns = {}
