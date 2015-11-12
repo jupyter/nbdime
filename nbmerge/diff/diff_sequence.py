@@ -50,5 +50,5 @@ def diff_sequence(a, b):
     of hashable objects, i.e. the elements of the sequences are only
     compared for full equality.
     """
-    s = SequenceMatcher(lambda x: False, a, b)
+    s = SequenceMatcher(lambda x: False, a, b, autojunk=False)
     return opcodes_to_diff(a, b, s.get_opcodes())
