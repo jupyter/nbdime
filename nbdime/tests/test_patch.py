@@ -1,5 +1,5 @@
 
-from nbmerge.diff.patch import patch
+from nbdime.diff.patch import patch
 
 
 # TODO: Check and improve test coverage

@@ -1,8 +1,8 @@
 from __future__ import print_function
 import pytest
 import copy
-from nbmerge.diff.diff import diff
-from nbmerge.diff.patch import patch
+from nbdime.diff.diff import diff
+from nbdime.diff.patch import patch
 
 from .fixtures import *
 

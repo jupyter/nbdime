@@ -1,6 +1,6 @@
 
-from nbmerge.diff.diff import diff_sequence
-from nbmerge.diff.patch import patch
+from nbdime.diff.diff import diff_sequence
+from nbdime.diff.patch import patch
 
 def test_diff_sequence():
     a = """\

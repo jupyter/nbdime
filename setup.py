@@ -7,7 +7,7 @@
 from __future__ import print_function
 
 # the name of the project
-name = 'nbmerge'
+name = 'nbdime'
 
 #-----------------------------------------------------------------------------
 # Minimal Python version sanity check
@@ -45,7 +45,7 @@ for d, _, _ in os.walk(pjoin(here, name)):
         packages.append(d[len(here)+1:].replace(os.path.sep, '.'))
 
 package_data = {
-    'nbmerge' : [
+    'nbdime' : [
         'tests/files/*.*',
     ]
 }
@@ -100,9 +100,9 @@ if 'setuptools' in sys.modules:
     # force entrypoints with setuptools (needed for Windows, unconditional because of wheels)
     setup_args['entry_points'] = {
         'console_scripts': [
-            'jupyter-nbdiff = nbmerge.application:main_nbdiff',
-            'jupyter-nbpatch= nbmerge.application:main_nbpatch',
-            'jupyter-nbmerge = nbmerge.application:main_nbmerge',
+            'jupyter-nbdiff = nbdime.application:main_nbdiff',
+            'jupyter-nbpatch= nbdime.application:main_nbpatch',
+            'jupyter-nbmerge = nbdime.application:main_nbmerge',
         ]
     }
     setup_args.pop('scripts', None)

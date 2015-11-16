@@ -1,7 +1,7 @@
 
-from nbmerge.diff.diff import diff
-from nbmerge.diff.validation import is_valid_diff
-from nbmerge.diff.patch import patch
+from nbdime.diff.diff import diff
+from nbdime.diff.validation import is_valid_diff
+from nbdime.diff.patch import patch
 
 def test_generic_diff():
     a = []

@@ -1,10 +1,10 @@
 from __future__ import print_function
 import pytest
 import copy
-from nbmerge.diff.diff import diff
-from nbmerge.diff.patch import patch
-from nbmerge.diff.diff_notebooks import diff_cells, patch_cells
-from nbmerge.diff.diff_notebooks import diff_notebooks, patch_notebook
+from nbdime.diff.diff import diff
+from nbdime.diff.patch import patch
+from nbdime.diff.diff_notebooks import diff_cells, patch_cells
+from nbdime.diff.diff_notebooks import diff_notebooks, patch_notebook
 
 # pytest conf.py stuff is tricky to use robustly, this works with no magic
 from .fixtures import db, any_nb, any_nb_pair, assert_is_valid_notebook

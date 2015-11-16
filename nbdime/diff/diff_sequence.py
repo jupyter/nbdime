@@ -5,7 +5,7 @@ from difflib import SequenceMatcher
 __all__ = ["opcodes_to_diff", "diff_sequence"]
 
 def opcodes_to_diff(a, b, opcodes):
-    "Convert difflib opcodes to nbmerge diff format."
+    "Convert difflib opcodes to nbdime diff format."
     d = []
     for opcode in opcodes:
         action, abegin, aend, bbegin, bend = opcode

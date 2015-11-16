@@ -3,7 +3,7 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-from nbmerge.application import main_nbpatch
+from nbdime.application import main_nbpatch
 
 if __name__ == '__main__':
     main_nbpatch()
