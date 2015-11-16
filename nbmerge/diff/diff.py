@@ -7,14 +7,16 @@ from .diff_sequence import diff_sequence
 __all__ = ["diff"]
 
 def diff_lists(a, b):
+    # TODO: For now, only lists of hashable values are supported through difflib.
+    #       Working on implementing an algorithm to handle more general cases.
     assert isinstance(a, list) and isinstance(b, list)
-    # TODO: For now, only lists of atomic values are supported. Fix on demand.
     assert not any(isinstance(x, (list, dict)) for x in a)
     assert not any(isinstance(x, (list, dict)) for x in b)
     return diff_sequence(a, b)
 
 def diff_strings(a, b):
-    # TODO: I think this should work...
+    # TODO: I think this should Just Work, but can probably be improved
+    assert isinstance(a, basestring) and isinstance(b, basestring)
     return diff_lists(list(a), list(b))
 
 # Using this sentinel instead of None to allow the value None
@@ -64,3 +66,30 @@ def diff(a, b):
         raise RuntimeError("Can currently only diff list, dict, or str objects.")
     validate_diff(d)
     return d
+
+def decompress_diff(sequence_diff):
+    """Split all sequence diff actions ++,--,:: into single-line actions +,-,:.
+
+    Current implementation applies only to a single-level sequence list diff.
+    """
+    d = []
+    for s in sequence_diff:
+        action = s[0]
+        if action in ("+", "-", ":", "!"):
+            d.append(s)
+        elif action == "++":
+            for i, v in enumerate(s[2]):
+                d.append(["+", s[1], v])
+        elif action == "--":
+            for i in range(s[2]):
+                d.append(["-", s[1] + i])
+        elif action == "::":
+            for i, v in enumerate(s[2]):
+                d.append([":", s[1] + i, v])
+        else:
+            raise RuntimeError("Invalid action {}".format(action))
+    return d
+
+#def compress_diff(diff):
+#    """Combine contiguous single-line actions +,-,: into sequence diff actions ++,--,:: everywhere."""
+#    TODO
