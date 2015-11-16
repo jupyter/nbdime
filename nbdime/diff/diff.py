@@ -1,7 +1,7 @@
 
 import copy
 
-from .validation import validate_diff
+from ..diff_format import validate_diff
 from .diff_sequence import diff_sequence
 
 __all__ = ["diff"]

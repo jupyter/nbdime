@@ -1,7 +1,7 @@
 
 import copy
 
-from .validation import error_invalid_diff_entry
+from .diff.validation import error_invalid_diff_entry
 
 __all__ = ["patch"]
 
@@ -105,3 +105,4 @@ def patch(obj, diff):
         return patch_list(obj, diff)
     elif isinstance(obj, basestring):
         return patch_string(obj, diff)
+
