@@ -3,17 +3,14 @@
 All diff tools here currently assumes the notebooks have already been
 converted to the same format version, currently v4 at time of writing.
 Up- and down-conversion is handled by nbformat.
-
-FIXME: Define and document diff format.
 """
 
 __all__ = ["diff_notebooks", "patch_notebook", "diff_cells", "patch_cells"]
 
 import copy
 
-from .diff import diff
+from .diff import diff, decompress_diff
 from .patch import patch
-
 
 def extract_source_lines(cells):
     lines = []
@@ -38,6 +35,112 @@ def extract_source_lines(cells):
         #local_line = global_line - cell_offsets[origin_cell_numbers[global_line]]
 
     return lines, cell_offsets, origin_cell_numbers
+
+def build_line_to_line_number_mapping(lines_a, lines_b, line_diff):
+    aln = 0 # Line number into lines_a
+    bln = 0 # Line number into lines_b
+    a2b = [None]*len(lines_a) # a2b[i] = j  ===  line i from a is located at line j in b, missing in b if j=-1
+    b2a = [None]*len(lines_b) # vice versa
+    for s in line_diff:
+        action = s[0]
+        index = s[1]
+
+        # Range aln:index not mentioned in diff,
+        # corresponds to a range of equal lines
+        n = index - aln
+        for i in range(n):
+            a2b[aln + i] = bln + i
+            b2a[bln + i] = aln + i
+        aln += n
+        bln += n
+        assert a2b[aln] is None
+        assert b2a[bln] is None
+
+        if action == "+":
+            # Line s[2] inserted before lines_a[s[1]]
+            assert s[1] == aln
+            assert s[2] is lines_b[bln]
+            b2a[bln] = -1
+            bln += 1
+        elif action == "-":
+            # Line lines_a[s[1]] deleted
+            assert s[1] == aln
+            a2b[aln] = -1
+            aln += 1
+        elif action == ":":
+            # Line lines_a[s[1]] replaced with s[2]
+            assert s[1] == aln
+            assert s[2] is lines_b[bln]
+            a2b[aln] = bln
+            b2a[bln] = aln
+            aln += 1
+            bln += 1
+        elif action == "!":
+            # Line lines_a[s[1]] patched with diff s[2] to produce lines_b[bln]
+            # (I don't think this occurs at the time being)
+            assert s[1] == aln
+            assert patch(lines_a[aln], s[2]) == lines_b[bln]
+            a2b[aln] = bln
+            b2a[bln] = aln
+            aln += 1
+            bln += 1
+    return a2b, b2a
+
+def build_line_to_cell_number_mapping(a2b, b2a, origin_cell_numbers_a, origin_cell_numbers_b):
+    a2bc = [-1 if j == -1 else origin_cell_numbers_b[j]
+            for aln, j in enumerate(a2b)]
+    b2ac = [-1 if j == -1 else origin_cell_numbers_a[j]
+            for bln, j in enumerate(b2a)]
+    return a2bc, b2ac
+
+def build_cell_to_cell_numbers_mapping(a2bc, b2ac,
+                                       cell_offsets_a, origin_cell_numbers_a,
+                                       cell_offsets_b, origin_cell_numbers_b):
+    # Note: The local line number in the origin cell is
+    #local_line = global_line - cell_offsets[origin_cell_numbers[global_line]]
+
+    nca = len(origin_cell_numbers_a)
+    ncb = len(origin_cell_numbers_b)
+
+    # Could optimize storage here with a crs-like array
+    ac2bc = [[] for _ in range(nca)]
+    bc2ac = [[] for _ in range(ncb)]
+
+    for aln, bc in enumerate(a2bc):
+        # line aln in ac moved to bc
+        if bc != -1:
+            ac2bc[origin_cell_numbers_a[aln]].append(bc)
+
+    for bln, ac in enumerate(b2ac):
+        # line bln in bc originates in ac
+        if ac != -1:
+            bc2ac[origin_cell_numbers_b[bln]].append(ac)
+
+    # Build counts of how many different b-cells each a-cell maps to and vice versa
+    ac2nbcs = [len(set(bcs)) for bcs in ac2bc]
+    bc2nacs = [len(set(acs)) for acs in bc2ac]
+
+    # Cell diff building pseudocode:
+    d = []
+    k = 0 # Next line diff entry
+    #line_diff[k]
+    for ac, nbcs in enumerate(ac2nbcs):
+        # Delete cell ac if it doesn't map to any cell in b
+        if nbcs == 0:
+            d.append(["-", ac])
+            continue
+
+        # Insert cells from b
+
+        if nbcs == 1:
+            # Cell ac maps to a single cell
+            pass
+        else:
+            # Cell ac maps to a single cell
+            pass
+
+    return ac2bc, bc2ac, ac2nbcs, bc2nacs
+
 
 def diff_cells(cells_a, cells_b):
     """Return a list of transformations to transform notebook cells cells_a into notebook cells cells_b.
@@ -83,18 +186,6 @@ def diff_cells(cells_a, cells_b):
     }
     """
 
-    # Goal pseudo-diff:
-    """
-    # Delete a cell:
-    ['-', cellindex]
-    # Delete all outputs from a cell:
-    ['-', [cellindex, "outputs"]]
-    # Delete a particular output from a cell:
-    ['-', [cellindex, "outputs", outputindex]]
-    # Modify cell source:
-    ['!', [cellindex, "source"], ]
-    """
-
     diff = []
 
     # Extract all source lines from input cells as
@@ -104,7 +195,16 @@ def diff_cells(cells_a, cells_b):
 
     # Perform a regular line diff on the combined sources of all input cells
     line_diff = diff_lines(lines_a, lines_b)
+    line_diff = decompress_diff(line_diff)
 
+    # Build arrays with which line number each line moves to or comes from
+    a2b, b2a = build_line_to_line_number_mapping(lines_a, lines_b, line_diff)
+
+    # Build arrays with which cell number each line moves to or comes from
+    a2bc, b2ac = build_line_to_cell_number_mapping(a2b, b2a, origin_cell_numbers_a, origin_cell_numbers_b)
+
+    '''
+    # Build mappings to see where lines originate and end up
     prev_line_a = -1
     prev_cell_a = -1
     prev_line_b = -1
@@ -157,6 +257,7 @@ def diff_cells(cells_a, cells_b):
         if act != '-':
             prev_line_b = line_number_b
             prev_cell_b = cell_number_b
+    '''
 
     return diff
 
