@@ -1,6 +1,11 @@
+#!/usr/bin/env python
+# coding: utf-8
 
-from nbdime.diff.diff import diff_sequence
-from nbdime.diff.patch import patch
+# Copyright (c) Jupyter Development Team.
+# Distributed under the terms of the Modified BSD License.
+
+from nbdime import patch
+from nbdime.diff.diff_sequence import diff_sequence
 
 def test_diff_sequence():
     a = """\

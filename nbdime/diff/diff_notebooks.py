@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# Copyright (c) Jupyter Development Team.
+# Distributed under the terms of the Modified BSD License.
+
 """Tools for diffing notebooks.
 
 All diff tools here currently assumes the notebooks have already been
@@ -10,7 +16,7 @@ __all__ = ["diff_notebooks", "patch_notebook", "diff_cells", "patch_cells"]
 import copy
 
 from .diff import diff, decompress_diff
-from .patch import patch
+from ..patch import patch
 
 def extract_source_lines(cells):
     lines = []

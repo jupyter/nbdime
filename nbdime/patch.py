@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# Copyright (c) Jupyter Development Team.
+# Distributed under the terms of the Modified BSD License.
 
 import copy
 
@@ -105,4 +110,3 @@ def patch(obj, diff):
         return patch_list(obj, diff)
     elif isinstance(obj, basestring):
         return patch_string(obj, diff)
-

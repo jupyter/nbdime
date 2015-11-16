@@ -1,5 +1,10 @@
+#!/usr/bin/env python
+# coding: utf-8
 
-from nbdime.diff.patch import patch
+# Copyright (c) Jupyter Development Team.
+# Distributed under the terms of the Modified BSD License.
+
+from nbdime import patch
 
 
 # TODO: Check and improve test coverage

@@ -1,8 +1,15 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# Copyright (c) Jupyter Development Team.
+# Distributed under the terms of the Modified BSD License.
+
 from __future__ import print_function
+
 import pytest
 import copy
-from nbdime.diff.diff import diff
-from nbdime.diff.patch import patch
+
+from nbdime import patch, diff
 
 from .fixtures import *
 

@@ -1,7 +1,12 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# Copyright (c) Jupyter Development Team.
+# Distributed under the terms of the Modified BSD License.
 
 import copy
 
-from ..diff_format import validate_diff
+from .validation import validate_diff
 from .diff_sequence import diff_sequence
 
 __all__ = ["diff"]
