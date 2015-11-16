@@ -6,6 +6,15 @@
 
 from nbdime import patch
 from nbdime.diff.diff_sequence import diff_sequence
+from nbdime.diff.validation import is_valid_diff
+
+def check_diff_sequence_and_patch(a, b):
+    d = diff_sequence(a, b)
+    assert is_valid_diff(d)
+    assert patch(a, d) == b
+    d = diff_sequence(b, a)
+    assert is_valid_diff(d)
+    assert patch(b, d) == a
 
 def test_diff_sequence():
     a = """\
@@ -19,15 +28,11 @@ def test_diff_sequence():
     """.splitlines()
 
     b = []
-    assert patch(a, diff_sequence(a, b)) == b
-    assert patch(b, diff_sequence(b, a)) == a
+    check_diff_sequence_and_patch(a, b)
 
     for i in range(len(a)+1):
         for j in range(len(a)+1):
             for k in range(len(a)+1):
                 for l in range(len(a)+1):
                     b = a[i:j] + a[k:l]
-                    assert patch(a, diff_sequence(a, b)) == b
-                    assert patch(b, diff_sequence(b, a)) == a
-
-    #print("\n".join(map(repr, diff_sequence(a, b))))
+                    check_diff_sequence_and_patch(a, b)

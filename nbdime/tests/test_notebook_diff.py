@@ -4,6 +4,8 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+"""This file contains tests applying to reference notebook files from the nbdime/tests/files/ directory."""
+
 from __future__ import print_function
 
 import pytest
@@ -32,6 +34,12 @@ def test_diff_and_patch_metadata_of_notebooks(any_nb_pair):
     b = nbb["metadata"]
     assert patch(a, diff(a, b)) == b
 
+def test_diff_and_patch_notebooks_with_generic_diff(any_nb_pair):
+    "Test generic diff/patch on any pair of notebooks in the test suite."
+    a, b = any_nb_pair
+    assert patch(a, diff(a, b)) == b
+
+# Not yet implemented
 @pytest.skip
 def test_diff_and_patch_cells_of_notebooks(any_nb_pair):
     "Test diff/patch on the cells of any pair of notebooks in the test suite."
@@ -40,6 +48,7 @@ def test_diff_and_patch_cells_of_notebooks(any_nb_pair):
     b = nbb["cells"]
     assert patch_cells(a, diff_cells(a, b)) == b
 
+# Not yet implemented
 @pytest.skip
 def test_diff_and_patch_notebooks(any_nb_pair):
     "Test diff/patch on any pair of notebooks in the test suite."
