@@ -77,7 +77,7 @@ def greedy_forward_ses(A, B, compare=operator.__eq__):
             # Forward lines are centered around x-y=0
             y = x - k
             # Compare sequence elements along k-diagonal
-            while x < N and y < M and compare(A[x], B[y]):
+            while x < N and y < M and compare(A[x], B[y]): # Note: A[x+1] == B[y+1] in article with 1-based indexing
                 x += 1
                 y += 1
             # Store x coordinate at end of snake for this k-line
@@ -90,9 +90,9 @@ def greedy_forward_ses(A, B, compare=operator.__eq__):
 
 def greedy_reverse_ses(A, B, compare=operator.__eq__):
     "Reverse variant of the greedy LCS/SES algorithm from Fig. 2 of Myers' article."
-    # Note that the article uses 1-based indexing of A and B, while here we use standard 0-based indexing
-    pdb.set_trace()
-
+    # Note that the article uses 1-based indexing of A and B, while here we use standard 0-based indexing.
+    # Keep in mind that the index x is in the range [0,1,...,N,N+1],
+    # where 1...N corresponds to A[0...N-1] and 0 and N+1 correspond to just outside the range of A.
     N, M = len(A), len(B)
     delta = N - M
     if N + M == 0:
@@ -104,24 +104,24 @@ def greedy_reverse_ses(A, B, compare=operator.__eq__):
     # V is indexed from -MAX to +MAX in the algorithm,
     # here indexing using V[V0 + i] to map to 0-based indices
     V0 = MAX
-    V[V0+1] = N # Seed for first iteration, corresponding to x just outside of range
+    V[V0-1] = N + 1 # Seed for first iteration, corresponding to x just outside of range
     for D in range(MAX+1):
-        for k in range(-D, D+1, 2):
-            if k == -D or k != D and V[V0+k-1] < V[V0+k+1]:
-                # Coming from diagonal k+1, the diagonal to the right of k, so decrementing x
-                x = V[V0+k+1] - 1
-            else:
+        for k in range(D, -D-1, -2):
+            if k == D or k != -D and V[V0+k-1] < V[V0+k+1]:
                 # Coming from diagonal k-1, the diagonal below k, so keeping x
                 x = V[V0+k-1]
+            else:
+                # Coming from diagonal k+1, the diagonal to the right of k, so decrementing x
+                x = V[V0+k+1] - 1
             # Reverse lines are centered around x-y=delta
             y = x - k - delta
             # Compare sequence elements along k-diagonal
-            while x >= 0 and y >= 0 and compare(A[x], B[y]):
+            while x > 1 and y > 1 and compare(A[x-2], B[y-2]):
                 x -= 1
                 y -= 1
             # Store x coordinate at end of snake for this k-line
             V[V0+k] = x
-            if x < 0 and y < 0:
+            if x <= 1 and y <= 1:
                 # Return the length of the shortest edit script
                 ses = D
                 return ses
@@ -160,6 +160,7 @@ def find_forward_path(A, B, V, V0, D, k, compare=operator.__eq__):
     # The forward snake covers [x0,x) [y0,y)
     return x0, y0, x, y
 
+# FIXME: Update to correspond to the debugged greedy_reverse_ses
 def find_reverse_path(A, B, V, V0, D, k, delta, compare=operator.__eq__):
     "Reverse variant of the greedy LCS/SES algorithm from Fig. 2 of Myers' article."
     N, M = len(A), len(B)
@@ -343,16 +344,11 @@ def test_lcs():
             b.insert(j, len(a) + j + 1)
             assert list(lcs(a, b)) == a
 
-def xtest_greedy_ses_with_neil_fraser_cases():
-    global DEBUGGING
-    DEBUGGING = False
+def test_greedy_ses_with_neil_fraser_cases():
     # Case from neil.fraser.name/writing/diff/
     assert greedy_forward_ses(list("abcab"), list("ayb")) == 3+1
     assert greedy_reverse_ses(list("abcab"), list("ayb")) == 3+1
     assert greedy_forward_ses(list("xaxcxabc"), list("abcy")) == 5+1
-    #DEBUGGING = True
-
-def test_greedy_ses_with_neil_fraser_cases():
     assert greedy_reverse_ses(list("xaxcxabc"), list("abcy")) == 5+1
 
 def test_neil_fraser_case():
