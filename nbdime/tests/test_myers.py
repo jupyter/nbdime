@@ -1,34 +1,53 @@
+
+from __future__ import print_function
+
 import operator
 import numpy as np
 from six.moves import xrange as range
 
+# Set to True to enable additional assertions, array access checking, and printouts
 DEBUGGING = False
 
-def minimal_int_type(maxvalue):
-    if maxvalue < 2**7:
-        return np.int8
-    elif maxvalue < 2**15:
-        return np.int16
-    elif maxvalue < 2**31:
-        return np.int32
-    else:
-        return np.int64
+class DebuggingArray(object):
+    "Debugging tool to capture array accesses."
+    def __init__(self, n, dt):
+        print("Alloc", n)
+        self.a = np.empty(n, dtype=dt)
+        self.untouchedvalue = -123456789
+        self.a[:] = self.untouchedvalue
+        self.w = np.zeros(n, dtype=dt)
+
+    def __getitem__(self, i):
+        if not self.w[i]:
+            raise RuntimeError("Trying to read unwritten location in array!")
+        print("Read ", i, self.a[i])
+        return self.a[i]
+
+    def __setitem__(self, i, v):
+        self.w[i] = 1
+        print("Write", i, v)
+        self.a[i] = v
+        return v
 
 def alloc_V_array(N, M):
-    # Possible memory saving
-    #int_t = minimal_int_type(max(N, M))
-    int_t = int
+    # 32 bit should be sufficient for all practical use cases
+    assert max(N, M) < 2**31
+    int_t = np.int32
 
-    # Not initializing V with zeros, the algorithms _should_ not access uninitialized values
-    V = np.empty(2*(N + M)+1, dtype=int_t)
+    # Size of array should be big enough for N+M edits,
+    # and thus indexing from V[V0-D] to V[V0+D], V0=N+M
+    n = 2*(N + M)+1
 
-    # Enable to simplify debugging
-    #V[:] = -123456789
+    # Not initializing V with zeros, if the algorithms access uninitialized values that's a bug
+    V = np.empty(n, dtype=int_t)
+
+    # Enabling this allows debugging accesses to uninitialized values
+    if DEBUGGING:
+        V = DebuggingArray(n, int_t)
 
     return V
 
-# TODO: To allow LCS path reconstruction, must also keep copies of V for each D and return here
-def greedy_forward(A, B, compare=operator.__eq__):
+def greedy_forward_lcs(A, B, compare=operator.__eq__):
     "The greedy LCS/SES algorithm from Fig. 2 of Myers' article."
     # Note that the article uses 1-based indexing of A and B, while here we use standard 0-based indexing
     N, M = len(A), len(B)
@@ -63,7 +82,7 @@ def greedy_forward(A, B, compare=operator.__eq__):
                 return D
     raise RuntimeError("Shortest edit script length exceeds {}.".format(MAX))
 
-def greedy_reverse(A, B, compare=operator.__eq__):
+def greedy_reverse_lcs(A, B, compare=operator.__eq__):
     "Reverse variant of the greedy LCS/SES algorithm from Fig. 2 of Myers' article."
     # Note that the article uses 1-based indexing of A and B, while here we use standard 0-based indexing
     N, M = len(A), len(B)
@@ -183,31 +202,38 @@ def find_middle_snake(A, B, compare=operator.__eq__):
 
     # For an increasing number of edits
     for D in range((M+N+1)//2):
+        if DEBUGGING: print("Forward", D)
+
         # Forward search along k-diagonals
         for k in range(-D, D+1, 2):
+            if DEBUGGING: print("k:", k)
 
             # Find the end of the furthest reaching forward D-path in diagonal k
             x, y, u, v = find_forward_path(A, B, Vf, V0, D, k, compare=compare)
+            if DEBUGGING: print("xyuv:", x, y, u, v)
 
             # Look for overlap with reverse search
-            if odd and (-(D-1) <= k-delta <= D-1):
+            if odd and D>0 and (-(D-1) <= k-delta <= (D-1)):
                 # Check if the path overlaps the furthest reaching reverse D-1-path in diagonal k
-                if Vr[k-delta] <= Vf[k]:
+                if Vr[V0+k-delta] <= Vf[V0+k]:
                     # Length of the SES
                     ses = 2*D-1
                     # The last snake of the forward path is the middle snake
                     return ses, x, y, u, v
 
+        if DEBUGGING: print("Reverse", D)
         # Reverse search along k-diagonals
         for k in range(-D, D+1, 2):
+            if DEBUGGING: print("k:", k)
 
             # Find the end of the furthest reaching reverse D-path in diagonal k+delta
             x, y, u, v = find_reverse_path(A, B, Vr, V0, D, k, delta, compare=compare)
+            if DEBUGGING: print("xyuv:", x, y, u, v)
 
             # Look for overlap with forward search
             if even and (-D <= k+delta <= D):
                 # Check if the path overlaps the furthest reaching forward D-path in diagonal k+delta
-                if Vr[k] <= Vf[k+delta]:
+                if Vr[V0+k] <= Vf[V0+k+delta]:
                     # Length of the SES
                     ses = 2*D
                     # The last snake of the reverse path is the middle snake
@@ -250,6 +276,17 @@ def lcs(A, B, compare=operator.__eq__):
             for s in B:
                 yield s
 
+def test_greedy_forward_lcs():
+    for i in range(5):
+        for j in range(5):
+            assert greedy_forward_lcs(list(range(i)), list(range(j))) == abs(i-j)
+
+def test_greedy_reverse_lcs():
+    for i in range(5):
+        for j in range(5):
+            gr = greedy_reverse_lcs(list(range(i)), list(range(j)))
+            assert gr == abs(i-j)
+
 def test_lcs():
     # Both empty
     assert list(lcs([], [])) == []
@@ -261,7 +298,7 @@ def test_lcs():
         assert list(lcs([], a)) == []
 
     # Equal
-    for i in range(10):
+    for i in range(0, 10):
         a = list(range(i))
         assert list(lcs(a, a)) == a
 
@@ -281,16 +318,18 @@ def test_lcs():
             b.pop(j)
             assert list(lcs(a, b)) == b
 
-    # Simple insert
-    assert list(lcs([1], [1,2])) == [1]
+    # Insert single item anywhere
+    for i in range(10):
+        a = list(range(i))
+        for j in range(len(a)):
+            b = list(a)
+            b.insert(j, 77)
+            assert list(lcs(a, b)) == a
 
-def test_greedy_forward():
-    for i in range(5):
-        for j in range(5):
-            assert greedy_forward(list(range(i)), list(range(j))) == abs(i-j)
-
-def test_greedy_reverse():
-    for i in range(5):
-        for j in range(5):
-            gr = greedy_reverse(list(range(i)), list(range(j)))
-            assert gr == abs(i-j)
+    # Insert successive interleaved items
+    for i in range(1, 10):
+        a = list(range(i))
+        b = list(a)
+        for j in range(len(a)-1, 0, -2):
+            b.insert(j, len(a) + j + 1)
+            assert list(lcs(a, b)) == a
