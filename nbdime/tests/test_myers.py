@@ -5,31 +5,36 @@ import operator
 import numpy as np
 from six.moves import xrange as range
 
-# Set to True to enable additional assertions, array access checking, and printouts
-DEBUGGING = False
+# Set to true to enable additional assertions, array access checking, and printouts
+DEBUGGING = 0
+import pdb
 
 class DebuggingArray(object):
     "Debugging tool to capture array accesses."
-    def __init__(self, n, dt):
-        print("Alloc", n)
+    def __init__(self, n, dt, name):
+        print("Alloc %s[%d]" % (name, n))
         self.a = np.empty(n, dtype=dt)
         self.untouchedvalue = -123456789
         self.a[:] = self.untouchedvalue
         self.w = np.zeros(n, dtype=dt)
+        self.name = name
 
     def __getitem__(self, i):
         if not self.w[i]:
             raise RuntimeError("Trying to read unwritten location in array!")
-        print("Read ", i, self.a[i])
+        print("    %d <- %s[%d]" % (self.a[i], self.name, i))
         return self.a[i]
 
     def __setitem__(self, i, v):
+        if self.w[i]:
+            print("    %s[%d] <- %d (was: %d)" % (self.name, i, v, self.a[i]))
+        else:
+            print("    %s[%d] <- %d (first access)" % (self.name, i, v))
         self.w[i] = 1
-        print("Write", i, v)
         self.a[i] = v
         return v
 
-def alloc_V_array(N, M):
+def alloc_V_array(N, M, name):
     # 32 bit should be sufficient for all practical use cases
     assert max(N, M) < 2**31
     int_t = np.int32
@@ -43,11 +48,11 @@ def alloc_V_array(N, M):
 
     # Enabling this allows debugging accesses to uninitialized values
     if DEBUGGING:
-        V = DebuggingArray(n, int_t)
+        V = DebuggingArray(n, int_t, name)
 
     return V
 
-def greedy_forward_lcs(A, B, compare=operator.__eq__):
+def greedy_forward_ses(A, B, compare=operator.__eq__):
     "The greedy LCS/SES algorithm from Fig. 2 of Myers' article."
     # Note that the article uses 1-based indexing of A and B, while here we use standard 0-based indexing
     N, M = len(A), len(B)
@@ -56,7 +61,7 @@ def greedy_forward_lcs(A, B, compare=operator.__eq__):
     # Parameter to allow bounding the size of an acceptible edit script
     MAX = M + N
     # Allocate uninitialized array with minimal integer size needed
-    V = alloc_V_array(N, M)
+    V = alloc_V_array(N, M, "V")
     # V is indexed from -MAX to +MAX in the algorithm,
     # here indexing using V[V0 + i] to map to 0-based indices
     V0 = MAX
@@ -79,12 +84,15 @@ def greedy_forward_lcs(A, B, compare=operator.__eq__):
             V[V0+k] = x
             if x >= N and y >= M:
                 # Return the length of the shortest edit script
-                return D
+                ses = D
+                return ses
     raise RuntimeError("Shortest edit script length exceeds {}.".format(MAX))
 
-def greedy_reverse_lcs(A, B, compare=operator.__eq__):
+def greedy_reverse_ses(A, B, compare=operator.__eq__):
     "Reverse variant of the greedy LCS/SES algorithm from Fig. 2 of Myers' article."
     # Note that the article uses 1-based indexing of A and B, while here we use standard 0-based indexing
+    pdb.set_trace()
+
     N, M = len(A), len(B)
     delta = N - M
     if N + M == 0:
@@ -92,7 +100,7 @@ def greedy_reverse_lcs(A, B, compare=operator.__eq__):
     # Parameter to allow bounding the size of an acceptible edit script
     MAX = M + N
     # Allocate uninitialized array with minimal integer size needed
-    V = alloc_V_array(N, M)
+    V = alloc_V_array(N, M, "V")
     # V is indexed from -MAX to +MAX in the algorithm,
     # here indexing using V[V0 + i] to map to 0-based indices
     V0 = MAX
@@ -115,7 +123,8 @@ def greedy_reverse_lcs(A, B, compare=operator.__eq__):
             V[V0+k] = x
             if x < 0 and y < 0:
                 # Return the length of the shortest edit script
-                return D
+                ses = D
+                return ses
     raise RuntimeError("Shortest edit script length exceeds {}.".format(MAX))
 
 
@@ -195,8 +204,8 @@ def find_middle_snake(A, B, compare=operator.__eq__):
     # V is indexed from -MAX to +MAX in the algorithm,
     # here indexing using V[V0 + i] to map to 0-based indices
     V0 = N + M
-    Vf = alloc_V_array(N, M)
-    Vr = alloc_V_array(N, M)
+    Vf = alloc_V_array(N, M, "Vf")
+    Vr = alloc_V_array(N, M, "Vr")
     Vf[V0+1] = 0 # Seed for first iteration, corresponding to x just outside of range
     Vr[V0+1] = N # Seed for first iteration, corresponding to x just outside of range
 
@@ -206,11 +215,11 @@ def find_middle_snake(A, B, compare=operator.__eq__):
 
         # Forward search along k-diagonals
         for k in range(-D, D+1, 2):
-            if DEBUGGING: print("k:", k)
+            if DEBUGGING: print("  k:", k)
 
             # Find the end of the furthest reaching forward D-path in diagonal k
             x, y, u, v = find_forward_path(A, B, Vf, V0, D, k, compare=compare)
-            if DEBUGGING: print("xyuv:", x, y, u, v)
+            if DEBUGGING: print("    xyuv:", x, y, u, v)
 
             # Look for overlap with reverse search
             if odd and D>0 and (-(D-1) <= k-delta <= (D-1)):
@@ -224,11 +233,11 @@ def find_middle_snake(A, B, compare=operator.__eq__):
         if DEBUGGING: print("Reverse", D)
         # Reverse search along k-diagonals
         for k in range(-D, D+1, 2):
-            if DEBUGGING: print("k:", k)
+            if DEBUGGING: print("  k:", k)
 
             # Find the end of the furthest reaching reverse D-path in diagonal k+delta
             x, y, u, v = find_reverse_path(A, B, Vr, V0, D, k, delta, compare=compare)
-            if DEBUGGING: print("xyuv:", x, y, u, v)
+            if DEBUGGING: print("    xyuv:", x, y, u, v)
 
             # Look for overlap with forward search
             if even and (-D <= k+delta <= D):
@@ -276,15 +285,15 @@ def lcs(A, B, compare=operator.__eq__):
             for s in B:
                 yield s
 
-def test_greedy_forward_lcs():
+def test_greedy_forward_ses():
     for i in range(5):
         for j in range(5):
-            assert greedy_forward_lcs(list(range(i)), list(range(j))) == abs(i-j)
+            assert greedy_forward_ses(list(range(i)), list(range(j))) == abs(i-j)
 
-def test_greedy_reverse_lcs():
+def test_greedy_reverse_ses():
     for i in range(5):
         for j in range(5):
-            gr = greedy_reverse_lcs(list(range(i)), list(range(j)))
+            gr = greedy_reverse_ses(list(range(i)), list(range(j)))
             assert gr == abs(i-j)
 
 def test_lcs():
@@ -333,3 +342,27 @@ def test_lcs():
         for j in range(len(a)-1, 0, -2):
             b.insert(j, len(a) + j + 1)
             assert list(lcs(a, b)) == a
+
+def xtest_greedy_ses_with_neil_fraser_cases():
+    global DEBUGGING
+    DEBUGGING = False
+    # Case from neil.fraser.name/writing/diff/
+    assert greedy_forward_ses(list("abcab"), list("ayb")) == 3+1
+    assert greedy_reverse_ses(list("abcab"), list("ayb")) == 3+1
+    assert greedy_forward_ses(list("xaxcxabc"), list("abcy")) == 5+1
+    #DEBUGGING = True
+
+def test_greedy_ses_with_neil_fraser_cases():
+    assert greedy_reverse_ses(list("xaxcxabc"), list("abcy")) == 5+1
+
+def test_neil_fraser_case():
+    # Case from neil.fraser.name/writing/diff/
+    #assert list(lcs(list("abcab"), list("ayb"))) == ["a","b"]
+
+    # These cases fail:
+    assert list(lcs(list("abcab"), list("ayb"))) == ["a","b"]
+    #assert list(lcs(list("abcb"), list("ayb"))) == ["a","b"]
+
+    # These cases work:
+    #assert list(lcs(list("abyb"), list("ayb"))) == ["a","y","b"]
+    #assert list(lcs(list("ayb"), list("ayb"))) == ["a","y","b"]
