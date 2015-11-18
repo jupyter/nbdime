@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # coding: utf-8
 
 # Copyright (c) Jupyter Development Team.
@@ -6,6 +5,7 @@
 
 import operator
 import numpy as np
+from .lcs import diff_from_lcs
 
 __all__ = ["diff_sequence_bruteforce"]
 
