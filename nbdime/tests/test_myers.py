@@ -52,6 +52,84 @@ def alloc_V_array(N, M, name):
 
     return V
 
+
+
+def brute_force_compare_grid(A, B, compare=operator.__eq__):
+    N, M = len(A), len(B)
+    G = np.empty((N, M), dtype=int)
+    for i in range(N):
+        for j in range(M):
+            G[i, j] = int(compare(A[i], B[j]))
+    return G
+
+def measure_snake_at(i, j, A, B, compare=operator.__eq__):
+    N, M = len(A), len(B)
+    n = 0
+    while i+n<N and j+n<M and compare(A[i+n], B[j+n]):
+        n += 1
+    return n
+
+def brute_force_snake_grid(A, B, compare=operator.__eq__):
+    N, M = len(A), len(B)
+    G = np.empty((N, M), dtype=int)
+    for i in range(N):
+        for j in range(M):
+            G[i, j] = measure_snake_at(i, j, A, B, compare=compare)
+    return G
+
+def brute_force_snakes(A, B, compare=operator.__eq__):
+    """Build list of snakes represented by indices i,j into A and B and a length n for each diagonal -M<=k<=N.
+
+    Returns dict W where W[k] = [(i0,j0,n0), (i1,j1,n1), ...].
+    """
+    N, M = len(A), len(B)
+    W = {}
+    for k in range(-M+1, N):
+        snakes = []
+        n = 0
+        if k < 0:
+            i = 0
+            j = i - k
+        else:
+            j = 0
+            i = j + k
+        while i<N and j<M:
+            n = 0
+            while i+n<N and j+n<M and compare(A[i+n], B[j+n]):
+                n += 1
+            if n:
+                snakes.append((i, j, n))
+                i += n
+                j += n
+            else:
+                i += 1
+                j += 1
+        W[k] = snakes
+    return W
+
+def test_brute_force():
+    examples = [
+        ([], []),
+        ([1], [1]),
+        ([1,2], [1,2]),
+        ([2,1], [1,2]),
+        ([1,2,3], [1,2]),
+        ([2,1,3], [1,2]),
+        ([1,2], [1,2,3]),
+        ([2,1], [1,2,3]),
+        ([1,2], [1,2,1,2]),
+        ([1,2,1,2], [1,2]),
+        ]
+    for a, b in examples:
+        print('\n------------\na:', a, '\nb:', b)
+        print('\ncompare grid:')
+        print(brute_force_compare_grid(a, b).transpose())
+        print('\nsnake grid:')
+        print(brute_force_snake_grid(a, b).transpose())
+        print('\nsnakes:')
+        print(brute_force_snakes(a, b))
+
+
 def greedy_forward_ses(A, B, compare=operator.__eq__):
     "The greedy LCS/SES algorithm from Fig. 2 of Myers' article."
     # Note that the article uses 1-based indexing of A and B, while here we use standard 0-based indexing
@@ -87,6 +165,8 @@ def greedy_forward_ses(A, B, compare=operator.__eq__):
                 ses = D
                 return ses
     raise RuntimeError("Shortest edit script length exceeds {}.".format(MAX))
+
+# x, y = edit graph vertex coordinates, meaning how many letters of A and B respectively have been included
 
 def greedy_reverse_ses(A, B, compare=operator.__eq__):
     "Reverse variant of the greedy LCS/SES algorithm from Fig. 2 of Myers' article."
@@ -127,6 +207,54 @@ def greedy_reverse_ses(A, B, compare=operator.__eq__):
                 return ses
     raise RuntimeError("Shortest edit script length exceeds {}.".format(MAX))
 
+# FIXME: Update to correspond to the debugged greedy_reverse_ses
+def find_reverse_path(A, B, V, V0, D, k, delta, compare=operator.__eq__):
+    "Reverse variant of the greedy LCS/SES algorithm from Fig. 2 of Myers' article."
+    N, M = len(A), len(B)
+    delta = N - M
+
+    if k == D or k != -D and V[V0+k-1] < V[V0+k+1]:
+        # Coming from diagonal k-1, the diagonal below k, so keeping x
+        x = V[V0+k-1]
+    else:
+        # Coming from diagonal k+1, the diagonal to the right of k, so decrementing x
+        x = V[V0+k+1] - 1
+    #if k == -D or k != D and V[V0+k-1] < V[V0+k+1]:
+    #    # Coming from diagonal k+1, the diagonal to the right of k, so decrementing x
+    #    x = V[V0+k+1] - 1
+    #else:
+    #    # Coming from diagonal k-1, the diagonal below k, so keeping x
+    #    x = V[V0+k-1]
+    # Reverse lines are centered around x-y=delta
+    y = x - k - delta
+
+    x0 = x
+    y0 = y
+
+    # Compare sequence elements along k-diagonal
+    #while x >= 0 and y >= 0 and compare(A[x], B[y]):
+    while x > 1 and y > 1 and compare(A[x-2], B[y-2]):
+        x -= 1
+        y -= 1
+    # Store x coordinate at end of snake for this k-line
+    V[V0+k] = x
+
+    if DEBUGGING:
+        FIXME
+        assert x0 < 0 or y0 < 0 or (x0-x) == 0 or compare(A[x0], B[y0])
+        assert x < 0 or y < 0 or not compare(A[x], B[y])
+        for i in range(x0-x):
+            assert compare(A[x0-i], B[y0-i])
+
+    #FIXME
+    #For a nonzero snake well inside domain we have that:
+    #A[x0-2] == B[y0-2]
+    #A[x-2] != B[y-2]
+    # The reverse snake covers (x,x0] (y,y0]
+
+    # The forward snake covers (x,x0] (y,y0]
+    return x, y, x0, y0 # FIXME: Reconsider this
+
 
 def find_forward_path(A, B, V, V0, D, k, compare=operator.__eq__):
     "The greedy LCS/SES algorithm from Fig. 2 of Myers' article."
@@ -160,40 +288,6 @@ def find_forward_path(A, B, V, V0, D, k, compare=operator.__eq__):
     # The forward snake covers [x0,x) [y0,y)
     return x0, y0, x, y
 
-# FIXME: Update to correspond to the debugged greedy_reverse_ses
-def find_reverse_path(A, B, V, V0, D, k, delta, compare=operator.__eq__):
-    "Reverse variant of the greedy LCS/SES algorithm from Fig. 2 of Myers' article."
-    N, M = len(A), len(B)
-    delta = N - M
-
-    if k == -D or k != D and V[V0+k-1] < V[V0+k+1]:
-        # Coming from diagonal k+1, the diagonal to the right of k, so decrementing x
-        x = V[V0+k+1] - 1
-    else:
-        # Coming from diagonal k-1, the diagonal below k, so keeping x
-        x = V[V0+k-1]
-    # Reverse lines are centered around x-y=delta
-    y = x - k - delta
-
-    x0 = x
-    y0 = y
-
-    # Compare sequence elements along k-diagonal
-    while x >= 0 and y >= 0 and compare(A[x], B[y]):
-        x -= 1
-        y -= 1
-    # Store x coordinate at end of snake for this k-line
-    V[V0+k] = x
-
-    if DEBUGGING:
-        assert x0 < 0 or y0 < 0 or (x0-x) == 0 or compare(A[x0], B[y0])
-        assert x < 0 or y < 0 or not compare(A[x], B[y])
-        for i in range(x0-x):
-            assert compare(A[x0-i], B[y0-i])
-
-    # The forward snake covers (x,x0] (y,y0]
-    return x+1, y+1, x0+1, y0+1
-
 def find_middle_snake(A, B, compare=operator.__eq__):
     N = len(A)
     M = len(B)
@@ -208,7 +302,7 @@ def find_middle_snake(A, B, compare=operator.__eq__):
     Vf = alloc_V_array(N, M, "Vf")
     Vr = alloc_V_array(N, M, "Vr")
     Vf[V0+1] = 0 # Seed for first iteration, corresponding to x just outside of range
-    Vr[V0+1] = N # Seed for first iteration, corresponding to x just outside of range
+    Vr[V0-1] = N+1 # Seed for first iteration, corresponding to x just outside of range
 
     # For an increasing number of edits
     for D in range((M+N+1)//2):
@@ -233,7 +327,8 @@ def find_middle_snake(A, B, compare=operator.__eq__):
 
         if DEBUGGING: print("Reverse", D)
         # Reverse search along k-diagonals
-        for k in range(-D, D+1, 2):
+        #for k in range(-D, D+1, 2):
+        for k in range(D, -D-1, -2):
             if DEBUGGING: print("  k:", k)
 
             # Find the end of the furthest reaching reverse D-path in diagonal k+delta
@@ -259,10 +354,12 @@ def lcs(A, B, compare=operator.__eq__):
         # Find the middle snake. The middle snake is a sequence
         # of 0 or more diagonals where
         D, x, y, u, v = find_middle_snake(A, B, compare=compare)
+        n = u - x
+        assert v - y == n
+        assert x - y == u - v
 
         if DEBUGGING:
-            assert x - y == u - v
-            for i in range(u - x):
+            for i in range(n):
                 assert compare(A[x+i], B[y+i])
 
         if D > 1:
@@ -270,10 +367,10 @@ def lcs(A, B, compare=operator.__eq__):
             for s in lcs(A[:x], B[:y]):
                 yield s
             # Yield the middle snake
-            for s in A[x:u]:
-                yield s
+            for i in range(n):
+                yield A[x+i]
             # Yield lcs of the lower/right corner rectangle
-            for s in lcs(A[u:], B[v:]):
+            for s in lcs(A[x+n:], B[y+n:]):
                 yield s
         elif N < M:
             # A is shortest.
