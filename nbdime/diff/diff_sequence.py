@@ -4,56 +4,29 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-import copy
-from difflib import SequenceMatcher
+import operator
 
-__all__ = ["opcodes_to_diff", "diff_sequence"]
+__all__ = ["diff_sequence"]
 
-def opcodes_to_diff(a, b, opcodes):
-    "Convert difflib opcodes to nbdime diff format."
-    d = []
-    for opcode in opcodes:
-        action, abegin, aend, bbegin, bend = opcode
-        asize = aend - abegin
-        bsize = bend - bbegin
-        if action == "equal":
-            pass
-        elif action == "replace":
-            if asize == bsize:
-                if asize == 1:
-                    d.append([':', abegin, b[bbegin]])
-                else:
-                    d.append(['::', abegin, b[bbegin:bend]])
-            else:
-                if asize == 1:
-                    d.append(['-', abegin])
-                else:
-                    d.append(['--', abegin, asize])
-                if bsize == 1:
-                    d.append(['+', abegin, b[bbegin]])
-                else:
-                    d.append(['++', abegin, b[bbegin:bend]])
-        elif action == "insert":
-            if bsize == 1:
-                d.append(["+", abegin, b[bbegin]])
-            else:
-                d.append(["++", abegin, b[bbegin:bend]])
-        elif action == "delete":
-            if asize == 1:
-                d.append(['-', abegin])
-            else:
-                d.append(['--', abegin, asize])
-        else:
-            raise RuntimeError("Unknown action {}".format(action))
-    return d
+from nbdime.diff.diff_sequence_difflib import diff_sequence_difflib
+from nbdime.diff.diff_sequence_bruteforce import diff_sequence_bruteforce
+from nbdime.diff.diff_sequence_myers import diff_sequence_myers
 
-def diff_sequence(a, b):
+# TODO: Configuration framework?
+diff_sequence_algoritm = "difflib"
+
+def diff_sequence(a, b, compare=operator.__eq__):
     """Compute a diff of two sequences.
 
-    Current implementation uses SequenceMatcher from the builtin Python
-    difflib. By the difflib documentation this should work for sequences
-    of hashable objects, i.e. the elements of the sequences are only
-    compared for full equality.
+    This is a wrapper for alternative diff implementations.
     """
-    s = SequenceMatcher(None, a, b, autojunk=False)
-    return opcodes_to_diff(a, b, s.get_opcodes())
+    if diff_sequence_algoritm == "difflib":
+        if compare != operator.__eq__:
+            raise RuntimeError("Cannot use difflib with comparison other than ==.")
+        return diff_sequence_difflib(a, b)
+    elif diff_sequence_algoritm == "bruteforce":
+        return diff_sequence_bruteforce(a, b, compare)
+    elif diff_sequence_algoritm == "myers":
+        return diff_sequence_myers(a, b, compare)
+    else:
+        raise RuntimeError("Unknown diff_sequence_algorithm {}.".format(diff_sequence_algorithm))

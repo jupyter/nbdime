@@ -53,14 +53,6 @@ def alloc_V_array(N, M, name):
     return V
 
 
-def brute_force_compare_grid(A, B, compare=operator.__eq__):
-    N, M = len(A), len(B)
-    G = np.empty((N, M), dtype=int)
-    for i in range(N):
-        for j in range(M):
-            G[i, j] = int(compare(A[i], B[j]))
-    return G
-
 def measure_snake_at(i, j, A, B, compare=operator.__eq__):
     N, M = len(A), len(B)
     n = 0
@@ -73,7 +65,7 @@ def brute_force_snake_grid(A, B, compare=operator.__eq__):
     G = np.empty((N, M), dtype=int)
     for i in range(N):
         for j in range(M):
-            G[i, j] = measure_snake_at(i, j, A, B, compare=compare)
+            G[i, j] = measure_snake_at(i, j, A, B, compare)
     return G
 
 def brute_force_snakes(A, B, compare=operator.__eq__):
@@ -105,111 +97,6 @@ def brute_force_snakes(A, B, compare=operator.__eq__):
                 j += 1
         W[k] = snakes
     return W
-
-def brute_force_llcs_grid(G):
-    "Brute force compute grid R[x, y] == llcs(A[:x], B[:y]), given G[i,j] = compare(A[i], B[j])."
-    N, M = G.shape
-    R = np.zeros((N+1, M+1), dtype=int)
-    for x in range(1, N+1):
-        for y in range(1, M+1):
-            if G[x-1, y-1]:
-                R[x, y] = R[x-1, y-1] + 1
-            else:
-                R[x, y] = max(R[x-1, y], R[x, y-1])
-    return R
-
-def brute_force_lcs(A, B, compare=operator.__eq__):
-    """Brute force compute the lcs of A and B.
-
-    Returns three lists (lcs, A_indices, B_indices) all with length == llcs(A, B).
-    """
-    N, M = len(A), len(B)
-    G = brute_force_compare_grid(A, B, compare=compare)
-    R = brute_force_llcs_grid(G)
-    lcs = []
-    A_indices = []
-    B_indices = []
-    x = N
-    y = M
-    while x > 0 and y > 0:
-        if G[x-1, y-1]:
-            assert R[x, y] == R[x-1, y-1] + 1
-            x -= 1
-            y -= 1
-            lcs.append(A[x])
-            A_indices.append(x)
-            B_indices.append(y)
-        elif R[x, y] == R[x-1, y]:
-            x -= 1
-        else:
-            assert R[x, y] == R[x, y-1]
-            y -= 1
-    lcs.reverse()
-    A_indices.reverse()
-    B_indices.reverse()
-    return lcs, A_indices, B_indices
-
-def diff_from_lcs(A, B, lcs, A_indices, B_indices, compare=operator.__eq__):
-    diff = []
-    N, M = len(A), len(B)
-    llcs = len(lcs)
-    x = 0 # We have taken x=0 symbols from A
-    y = 0 # We have taken y=0 symbols from B
-    for r in range(llcs):
-        i = A_indices[r]
-        j = B_indices[r]
-        c = lcs[r]
-        assert compare(A[i], c)
-        assert compare(B[j], c)
-        if i > x:
-            diff.append(["--", x, i-x])
-        if j > y:
-            diff.append(["++", x, B[y:j]])
-        x = i + 1 # We have taken x=i+1 symbols from A
-        y = j + 1 # We have taken y=j+1 symbols from A
-    if x < N:
-        diff.append(["--", x, N-x])
-    if y < M:
-        diff.append(["++", x, B[y:M]])
-    return diff
-
-def test_brute_force():
-    examples = [
-        ([], []),
-        ([1], [1]),
-        ([1,2], [1,2]),
-        ([2,1], [1,2]),
-        ([1,2,3], [1,2]),
-        ([2,1,3], [1,2]),
-        ([1,2], [1,2,3]),
-        ([2,1], [1,2,3]),
-        ([1,2], [1,2,1,2]),
-        ([1,2,1,2], [1,2]),
-        ([1,2,3,4,1,2], [3,4,2,3]),
-        (list("abcab"), list("ayb")),
-        (list("xaxcxabc"), list("abcy")),
-        ]
-    for a, b in examples:
-        print('\n------------\na:', a, '\nb:', b)
-        G = brute_force_compare_grid(a, b)
-        print('\ncompare grid:')
-        print(G.transpose())
-        print('\nsnake grid:')
-        print(brute_force_snake_grid(a, b).transpose())
-        print('\nsnakes:')
-        print(brute_force_snakes(a, b))
-        print('\nllcs:')
-        print(brute_force_llcs_grid(G).transpose())
-        lcs, A_indices, B_indices = brute_force_lcs(a, b)
-        print('\nlcs:')
-        print(lcs)
-        print(A_indices)
-        print(B_indices)
-        from nbdime import patch
-        d = diff_from_lcs(a, b, lcs, A_indices, B_indices)
-        print('\ndiff from lcs:')
-        print(d)
-        assert patch(a, d) == b
 
 def greedy_forward_ses(A, B, compare=operator.__eq__):
     "The greedy LCS/SES algorithm from Fig. 2 of Myers' article."
@@ -394,7 +281,7 @@ def find_middle_snake(A, B, compare=operator.__eq__):
             if DEBUGGING: print("  k:", k)
 
             # Find the end of the furthest reaching forward D-path in diagonal k
-            x, y, u, v = find_forward_path(A, B, Vf, V0, D, k, compare=compare)
+            x, y, u, v = find_forward_path(A, B, Vf, V0, D, k, compare)
             if DEBUGGING: print("    xyuv:", x, y, u, v)
 
             # Look for overlap with reverse search
@@ -413,7 +300,7 @@ def find_middle_snake(A, B, compare=operator.__eq__):
             if DEBUGGING: print("  k:", k)
 
             # Find the end of the furthest reaching reverse D-path in diagonal k+delta
-            x, y, u, v = find_reverse_path(A, B, Vr, V0, D, k, delta, compare=compare)
+            x, y, u, v = find_reverse_path(A, B, Vr, V0, D, k, delta, compare)
             if DEBUGGING: print("    xyuv:", x, y, u, v)
 
             # Look for overlap with forward search
@@ -434,7 +321,7 @@ def lcs(A, B, compare=operator.__eq__):
     if N and M:
         # Find the middle snake. The middle snake is a sequence
         # of 0 or more diagonals where
-        D, x, y, u, v = find_middle_snake(A, B, compare=compare)
+        D, x, y, u, v = find_middle_snake(A, B, compare)
         n = u - x
         assert v - y == n
         assert x - y == u - v
