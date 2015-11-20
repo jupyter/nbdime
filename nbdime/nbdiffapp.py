@@ -8,7 +8,7 @@ import nbformat
 import json
 from jupyter_core.application import JupyterApp, base_flags
 from ._version import __version__
-from .diff import diff_notebooks
+from .diff.diff_notebooks import diff_notebooks
 
 nbdiff_flags = {
 }
@@ -38,8 +38,8 @@ class NBDiffApp(JupyterApp):
             self.log.critical("Missing file {}".format(bfn))
             self.exit(1)
 
-        a = nbformat.read(afn, asversion=4)
-        b = nbformat.read(bfn, asversion=4)
+        a = nbformat.read(afn, as_version=4)
+        b = nbformat.read(bfn, as_version=4)
 
         d = diff_notebooks(a, b)
 
@@ -47,7 +47,8 @@ class NBDiffApp(JupyterApp):
         if verbose:
             print(d)
 
-        json.dump(dfn, d)
+        with open(dfn, "w") as df:
+            json.dump(d, df)
 
 def main():
     NBDiffApp.launch_instance()

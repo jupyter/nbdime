@@ -8,7 +8,7 @@ import nbformat
 import json
 from jupyter_core.application import JupyterApp, base_flags
 from ._version import __version__
-from .diff import patch_notebooks
+from .diff.diff_notebooks import patch_notebook
 
 nbpatch_flags = {
 }
@@ -21,33 +21,35 @@ class NBPatchApp(JupyterApp):
     """
 
     examples = """
-    jupyter nbpatch before.ipynb patch.json -o after.ipynb
+    jupyter nbpatch before.ipynb patch.json after.ipynb
     """
 
-    flags = nbdiff_flags
+    flags = nbpatch_flags
 
     def start(self):
-        if len(self.extra_args) != 2:
+        if len(self.extra_args) != 3:
             self.log.critical("Specify one notebook and one patch to apply.")
             self.exit(1)
 
-        afn, dfn = self.extra_args
+        bfn, dfn, afn = self.extra_args
 
-        for fn in (afn, dfn):
+        for fn in (bfn, dfn):
             if not os.path.exists(fn):
                 self.log.critical("Missing file {}".format(fn))
                 self.exit(1)
 
-        a = nbformat.read(afn, asversion=4)
-        d = json.load(dfn)
+        before = nbformat.read(bfn, as_version=4)
+        with open(dfn) as df:
+            d = json.load(df)
 
-        b = patch_notebooks(a, d)
+        after = patch_notebook(before, d)
 
         verbose = True
         if verbose:
-            print(b)
+            print(after)
 
-        nbformat.write(bfn, b)
+        print "Writing", afn
+        nbformat.write(after, afn)
 
 def main():
     NBPatchApp.launch_instance()

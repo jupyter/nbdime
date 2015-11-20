@@ -11,11 +11,7 @@ from .diff_sequence import diff_sequence
 __all__ = ["diff"]
 
 def diff_lists(a, b):
-    # TODO: For now, only lists of hashable values are supported through difflib.
-    #       Working on implementing an algorithm to handle more general cases.
     assert isinstance(a, list) and isinstance(b, list)
-    assert not any(isinstance(x, (list, dict)) for x in a)
-    assert not any(isinstance(x, (list, dict)) for x in b)
     return diff_sequence(a, b)
 
 def diff_strings(a, b):

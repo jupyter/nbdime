@@ -12,7 +12,7 @@ from nbdime.diff.diff_sequence_bruteforce import diff_sequence_bruteforce
 from nbdime.diff.diff_sequence_myers import diff_sequence_myers
 
 # TODO: Configuration framework?
-diff_sequence_algoritm = "difflib"
+diff_sequence_algoritm = "bruteforce" #"difflib"
 
 def diff_sequence(a, b, compare=operator.__eq__):
     """Compute a diff of two sequences.

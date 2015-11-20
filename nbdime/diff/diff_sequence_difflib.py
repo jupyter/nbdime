@@ -55,5 +55,7 @@ def diff_sequence_difflib(a, b):
     compared for full equality. Therefore this function does not take
     a custom compare function like the other diff_sequence_* variants.
     """
+    assert not any(isinstance(x, (list, dict)) for x in a)
+    assert not any(isinstance(x, (list, dict)) for x in b)
     s = SequenceMatcher(None, a, b, autojunk=False)
     return opcodes_to_diff(a, b, s.get_opcodes())

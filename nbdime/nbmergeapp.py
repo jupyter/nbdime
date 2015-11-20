@@ -38,9 +38,9 @@ class NBMergeApp(JupyterApp):
                 self.log.critical("Missing file {}".format(fn))
                 self.exit(1)
 
-        b = nbformat.read(bfn, asversion=4)
-        l = nbformat.read(lfn, asversion=4)
-        r = nbformat.read(rfn, asversion=4)
+        b = nbformat.read(bfn, as_version=4)
+        l = nbformat.read(lfn, as_version=4)
+        r = nbformat.read(rfn, as_version=4)
 
         m = merge_notebooks(b, l, r)
 
