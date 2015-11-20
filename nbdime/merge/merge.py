@@ -6,3 +6,7 @@
 def merge(base, local, remote):
     # FIXME: Implement merge
     return None
+
+def merge_notebooks(base, local, remote):
+    # FIXME: Implement merge
+    return None

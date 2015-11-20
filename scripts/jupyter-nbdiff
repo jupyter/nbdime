@@ -3,7 +3,7 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-from nbdime.application import main_nbdiff
+from nbdime.nbdiffapp import main
 
 if __name__ == '__main__':
-    main_nbdiff()
+    main()
