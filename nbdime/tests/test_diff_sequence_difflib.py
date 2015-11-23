@@ -4,8 +4,8 @@
 # Distributed under the terms of the Modified BSD License.
 
 from nbdime import patch
-from nbdime.diff.diff_sequence_difflib import diff_sequence_difflib
-from nbdime.diff.validation import is_valid_diff
+from nbdime.diffing.seq_difflib import diff_sequence_difflib
+from nbdime.dformat import is_valid_diff
 
 def check_diff_sequence_and_patch(a, b):
     d = diff_sequence_difflib(a, b)

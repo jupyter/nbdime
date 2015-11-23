@@ -15,8 +15,11 @@ __all__ = ["diff_notebooks", "patch_notebook", "diff_cells", "patch_cells"]
 import copy
 import nbformat
 
-from .diff import diff, decompress_diff
-from ..patch import patch
+from ..dformat import decompress_diff
+from ..patching import patch
+
+from .deep import deep_diff
+
 
 def extract_source_lines(cells):
     lines = []
@@ -41,6 +44,7 @@ def extract_source_lines(cells):
         #local_line = global_line - cell_offsets[origin_cell_numbers[global_line]]
 
     return lines, cell_offsets, origin_cell_numbers
+
 
 def build_line_to_line_number_mapping(lines_a, lines_b, line_diff):
     aln = 0 # Line number into lines_a
@@ -92,12 +96,14 @@ def build_line_to_line_number_mapping(lines_a, lines_b, line_diff):
             bln += 1
     return a2b, b2a
 
+
 def build_line_to_cell_number_mapping(a2b, b2a, origin_cell_numbers_a, origin_cell_numbers_b):
     a2bc = [-1 if j == -1 else origin_cell_numbers_b[j]
             for aln, j in enumerate(a2b)]
     b2ac = [-1 if j == -1 else origin_cell_numbers_a[j]
             for bln, j in enumerate(b2a)]
     return a2bc, b2ac
+
 
 def build_cell_to_cell_numbers_mapping(a2bc, b2ac,
                                        cell_offsets_a, origin_cell_numbers_a,
@@ -149,8 +155,9 @@ def build_cell_to_cell_numbers_mapping(a2bc, b2ac,
 
 
 def diff_cells(cells_a, cells_b):
-    # Generic diff should be _correct_ but not _good_
-    return diff(cells_a, cells_b)
+    # Generic diff should be _correct_ but it's not necessarily _good_
+    return deep_diff(cells_a, cells_b)
+
 
 def _diff_cells(cells_a, cells_b):
     """Return a list of transformations to transform notebook cells cells_a into notebook cells cells_b.
@@ -271,16 +278,29 @@ def _diff_cells(cells_a, cells_b):
 
     return diff
 
+
 def diff_notebooks(nba, nbb):
-    """Compute the diff of two notebooks."""
-    nbdiff = []
-    mdiff = diff(nba["metadata"], nbb["metadata"])
-    if mdiff:
-        nbdiff.append(["!", "metadata", mdiff])
+    """Compute the diff of two notebooks.
+
+    Simliar to deep_diff, but handles cells in specialized ways.
+    """
+
+    # Shallow copy dicts and pop "cells"
+    nba = nba.copy()
+    nbb = nbb.copy()
+    acells = nba.pop("cells")
+    bcells = nbb.pop("cells")
+
+    # Diff the rest
+    nbdiff = deep_diff(nba, nbb)
+
+    # Then add specialized cells diff
     cdiff = diff_cells(nba["cells"], nbb["cells"])
     if cdiff:
         nbdiff.append(["!", "cells", cdiff])
+
     return nbdiff
+
 
 def patch_notebook(nb, diff):
     return nbformat.from_dict(patch(nb, diff))

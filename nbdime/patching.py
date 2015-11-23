@@ -5,7 +5,7 @@
 
 import copy
 
-from .diff.validation import error_invalid_diff_entry
+from .dformat import error_invalid_diff_entry
 
 __all__ = ["patch"]
 
@@ -53,6 +53,8 @@ def patch_list(obj, diff):
             error_invalid_diff_entry(s)
 
         # Skip the specified number of elements, but never decrement take.
+        # Note that take can pass index in diffs with repeated +/- on the
+        # same index, i.e. [['-', index], ['+', index, value]]
         take = max(take, index + skip)
 
     # Take values at end not mentioned in diff

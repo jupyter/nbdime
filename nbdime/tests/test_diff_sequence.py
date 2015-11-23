@@ -4,10 +4,12 @@
 # Distributed under the terms of the Modified BSD License.
 
 import pytest
+
 from nbdime import patch
-from nbdime.diff.validation import is_valid_diff
-import nbdime.diff.diff_sequence
-from nbdime.diff.diff_sequence import diff_sequence
+from nbdime.dformat import is_valid_diff
+
+import nbdime.diffing.sequences
+from nbdime.diffing.sequences import diff_sequence
 
 def check_diff_sequence_and_patch(a, b):
     d = diff_sequence(a, b)
@@ -17,12 +19,14 @@ def check_diff_sequence_and_patch(a, b):
     assert is_valid_diff(d)
     assert patch(b, d) == a
 
-@pytest.yield_fixture(params=["difflib", "bruteforce", "myers"])
+#algorithms = ["difflib", "bruteforce", "myers"]
+algorithms = ["difflib", "bruteforce"]
+@pytest.yield_fixture(params=algorithms)
 def algorithm(request):
-    alg = nbdime.diff.diff_sequence.diff_sequence_algorithm
-    nbdime.diff.diff_sequence.diff_sequence_algorithm = request.param
+    alg = nbdime.diffing.sequences.diff_sequence_algorithm
+    nbdime.diffing.sequences.diff_sequence_algorithm = request.param
     yield request.param
-    nbdime.diff.diff_sequence.diff_sequence_algorithm = alg
+    nbdime.diffing.sequences.diff_sequence_algorithm = alg
 
 def test_diff_sequence(algorithm):
     "FIXME: Add wide range of test cases here."

@@ -9,13 +9,14 @@ from __future__ import print_function
 
 import pytest
 import copy
+import nbformat
 
-from nbdime import diff, patch
-from nbdime.diff.diff_notebooks import diff_cells, patch_cells
-from nbdime.diff.diff_notebooks import diff_notebooks, patch_notebook
+from nbdime import patch
+from nbdime.diffing.notebooks import diff_cells
+from nbdime.diffing.notebooks import diff_notebooks, patch_notebook
 
 # pytest conf.py stuff is tricky to use robustly, this works with no magic
-from .fixtures import db, any_nb, any_nb_pair, assert_is_valid_notebook
+from .fixtures import db, any_nb, any_nb_pair, assert_is_valid_notebook, check_diff_and_patch
 
 def test_notebook_database_fixture(db):
     "Just test that the notebook file reader fixture is at least self-consistent."
@@ -31,12 +32,12 @@ def test_diff_and_patch_metadata_of_notebooks(any_nb_pair):
     nba, nbb = any_nb_pair
     a = nba["metadata"]
     b = nbb["metadata"]
-    assert patch(a, diff(a, b)) == b
+    check_diff_and_patch(a, b)
 
 def test_diff_and_patch_notebooks_with_generic_diff(any_nb_pair):
     "Test generic diff/patch on any pair of notebooks in the test suite."
     a, b = any_nb_pair
-    assert patch(a, diff(a, b)) == b
+    check_diff_and_patch(a, b)
 
 # Not yet implemented
 @pytest.skip
@@ -45,11 +46,11 @@ def test_diff_and_patch_cells_of_notebooks(any_nb_pair):
     nba, nbb = any_nb_pair
     a = nba["cells"]
     b = nbb["cells"]
-    assert patch_cells(a, diff_cells(a, b)) == b
+    assert patch(a, diff_cells(a, b)) == b
 
 # Not yet implemented
 @pytest.skip
 def test_diff_and_patch_notebooks(any_nb_pair):
     "Test diff/patch on any pair of notebooks in the test suite."
     a, b = any_nb_pair
-    assert patch_notebook(a, diff_notebooks(a, b)) == b
+    assert patch_notebook(a, diff_notebooks(a, b)) == nbformat.from_dict(b)

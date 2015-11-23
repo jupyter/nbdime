@@ -8,7 +8,7 @@ import nbformat
 import json
 from jupyter_core.application import JupyterApp, base_flags
 from ._version import __version__
-from .merge import merge_notebooks
+from .merging import merge_notebooks
 
 nbmerge_flags = {
 }

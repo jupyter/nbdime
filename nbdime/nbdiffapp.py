@@ -8,7 +8,7 @@ import nbformat
 import json
 from jupyter_core.application import JupyterApp, base_flags
 from ._version import __version__
-from .diff.diff_notebooks import diff_notebooks
+from .diffing.diff_notebooks import diff_notebooks
 
 nbdiff_flags = {
 }

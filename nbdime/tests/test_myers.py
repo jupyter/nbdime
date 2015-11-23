@@ -367,7 +367,7 @@ def test_greedy_reverse_ses():
             gr = greedy_reverse_ses(list(range(i)), list(range(j)))
             assert gr == abs(i-j)
 
-def test_lcs():
+def xtest_lcs():
     # Both empty
     assert list(lcs([], [])) == []
 
@@ -421,7 +421,7 @@ def test_greedy_ses_with_neil_fraser_cases():
     assert greedy_forward_ses(list("xaxcxabc"), list("abcy")) == 5+1
     assert greedy_reverse_ses(list("xaxcxabc"), list("abcy")) == 5+1
 
-def test_neil_fraser_case():
+def xtest_neil_fraser_case():
     # Case from neil.fraser.name/writing/diff/
     #assert list(lcs(list("abcab"), list("ayb"))) == ["a","b"]
 

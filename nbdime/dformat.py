@@ -3,11 +3,10 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+from .log import error
+
 class NBDiffFormatError(ValueError):
     pass
-
-def error(msg):
-    raise NBDiffFormatError(msg)
 
 def error_invalid_diff_entry(s):
     error("Invalid diff entry {}.".format(s))
@@ -88,3 +87,86 @@ def validate_diff_entry(s, deep=False):
 
     # Note that false positives are possible, for example
     # we're not checking the values in any way
+
+def decompress_diff(sequence_diff):
+    """Split all sequence diff actions ++,--,:: into single-line actions +,-,:.
+
+    Current implementation applies only to a single-level sequence list diff.
+    """
+    d = []
+    for s in sequence_diff:
+        action = s[0]
+        if action in ("+", "-", ":", "!"):
+            d.append(s)
+        elif action == "++":
+            for i, v in enumerate(s[2]):
+                d.append(["+", s[1], v])
+        elif action == "--":
+            for i in range(s[2]):
+                d.append(["-", s[1] + i])
+        elif action == "::":
+            for i, v in enumerate(s[2]):
+                d.append([":", s[1] + i, v])
+        else:
+            raise RuntimeError("Invalid action {}".format(action))
+    return d
+
+#def compress_diff(diff):
+#    """Combine contiguous single-line actions +,-,: into sequence diff actions ++,--,:: everywhere."""
+#    TODO
+
+def count_consumed_symbols(e):
+    "Count how many symbols are consumed from each sequence by a single sequence diff entry."
+    if action == "+":
+        return 0, 1
+    elif action == '-':
+        return 1, 0
+    elif action == ':':
+        return 1, 1
+    elif action == '!':
+        return 1, 1
+    elif action == '++':
+        return 0, len(e[2])
+    elif action == '--':
+        return e[2], 0
+    elif action == '::':
+        return len(e[2]), len(e[2])
+    else:
+        error_invalid_diff_entry(e)
+
+def get_equal_ranges(a, b, d):
+    "Return list of tuples [(i,j,n)] such that a[i:i+n] == b[j:j+n] given a diff d of sequences a and b."
+    # Count consumed items from a, 'take' in patch_list
+    acons = 0
+    bcons = 0
+    ranges = []
+    for e in d:
+        action = e[0]
+        index = e[1]
+
+        # Consume n more unmentioned items.
+        # Note that index can be larger than acons in the case where items
+        # have been deleted from a and then insertions from b occur.
+        n = max(0, index - acons)
+        if n > 0:
+            ranges.append((acons, bcons, n))
+
+        # Count consumed items
+        askip, bskip = count_consumed_symbols(e)
+        acons += n + askip
+        bcons += n + bskip
+
+    # Consume final items
+    n = len(a) - acons
+    assert n >= 0
+    assert len(b) - bcons == n
+    if n > 0:
+        ranges.append((acons, bcons, n))
+
+    # Sanity check
+    acons += n
+    bcons += n
+    assert acons == len(a)
+    assert bcons == len(b)
+
+    return ranges

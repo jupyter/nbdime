@@ -4,10 +4,10 @@
 # Distributed under the terms of the Modified BSD License.
 
 from nbdime import patch
-from nbdime.diff.validation import is_valid_diff
-from nbdime.diff.lcs import diff_from_lcs
-from nbdime.diff.diff_sequence_bruteforce import (bruteforce_compare_grid, bruteforce_llcs_grid,
-                                                  bruteforce_lcs_indices, diff_sequence_bruteforce)
+from nbdime.dformat import is_valid_diff
+from nbdime.diffing.lcs import diff_from_lcs
+from nbdime.diffing.seq_bruteforce import (bruteforce_compare_grid, bruteforce_llcs_grid,
+                                           bruteforce_lcs_indices, diff_sequence_bruteforce)
 
 def test_diff_sequence_bruteforce():
     examples = [

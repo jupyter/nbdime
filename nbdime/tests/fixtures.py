@@ -10,6 +10,9 @@ import os
 import glob
 import nbformat
 
+from nbdime import patch, shallow_diff, deep_diff
+from nbdime.dformat import is_valid_diff
+
 def testspath():
     return os.path.abspath(os.path.dirname(__file__))
 
@@ -76,3 +79,19 @@ def assert_is_valid_notebook(nb):
     assert isinstance(nb["metadata"], dict)
     assert isinstance(nb["cells"], list)
     assert all(isinstance(cell, dict) for cell in nb["cells"])
+
+
+def check_diff_and_patch(a, b):
+    "Check that patch(a, diff(a,b)) reproduces b."
+    d = shallow_diff(a, b)
+    assert is_valid_diff(d)
+    assert patch(a, d) == b
+
+    d = deep_diff(a, b)
+    assert is_valid_diff(d)
+    assert patch(a, d) == b
+
+def check_symmetric_diff_and_patch(a, b):
+    "Check that patch(a, diff(a,b)) reproduces b and vice versa."
+    check_diff_and_patch(a, b)
+    check_diff_and_patch(b, a)
