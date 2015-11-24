@@ -6,7 +6,7 @@
 import operator
 
 from ..dformat import validate_diff, count_consumed_symbols
-from .shallow import diff_strings, shallow_diff_lists, shallow_diff_dicts, Missing
+from .sequences import diff_strings, diff_sequence
 
 # TODO: These should probably be more customizable
 from .comparing import is_atomic, is_similar
@@ -71,29 +71,6 @@ def deep_diff_lists(a, b, compare=operator.__eq__):
     assert bcons == len(b)
 
     return pdi
-
-
-def old_deep_diff_dicts(a, b, compare=operator.__eq__):
-    # First make the one-level dict diff with custom compare
-    di = shallow_diff_dicts(a, b, compare)
-
-    # Build set of keys that have not been touched by the diff
-    keys = set(a.keys()) | set(b.keys())
-    for k, e in enumerate(di):
-        key = e[1]
-        keys.remove(key)
-
-    for key in keys:
-        aval = a[key]
-        bval = b[key]
-        # If we get here, this should hold: (FIXME: remove later, could be expensive)
-        assert compare(aval, bval) == True
-        if not is_atomic(aval):
-            # Recursively deep_diff the items that have been deemed similar
-            d = deep_diff(aval, bval, compare)
-            if d:
-                di[k] = ["!", key, d]
-    return di
 
 
 def deep_diff_dicts(a, b, compare=operator.__eq__):

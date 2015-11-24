@@ -295,7 +295,7 @@ def diff_notebooks(nba, nbb):
     nbdiff = deep_diff(nba, nbb)
 
     # Then add specialized cells diff
-    cdiff = diff_cells(nba["cells"], nbb["cells"])
+    cdiff = diff_cells(acells, bcells)
     if cdiff:
         nbdiff.append(["!", "cells", cdiff])
 

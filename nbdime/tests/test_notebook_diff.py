@@ -16,7 +16,7 @@ from nbdime.diffing.notebooks import diff_cells
 from nbdime.diffing.notebooks import diff_notebooks, patch_notebook
 
 # pytest conf.py stuff is tricky to use robustly, this works with no magic
-from .fixtures import db, any_nb, any_nb_pair, assert_is_valid_notebook, check_diff_and_patch
+from .fixtures import db, any_nb, any_nb_pair, matching_nb_pairs, assert_is_valid_notebook, check_diff_and_patch
 
 def test_notebook_database_fixture(db):
     "Just test that the notebook file reader fixture is at least self-consistent."
@@ -39,8 +39,6 @@ def test_diff_and_patch_notebooks_with_generic_diff(any_nb_pair):
     a, b = any_nb_pair
     check_diff_and_patch(a, b)
 
-# Not yet implemented
-@pytest.skip
 def test_diff_and_patch_cells_of_notebooks(any_nb_pair):
     "Test diff/patch on the cells of any pair of notebooks in the test suite."
     nba, nbb = any_nb_pair
@@ -48,8 +46,11 @@ def test_diff_and_patch_cells_of_notebooks(any_nb_pair):
     b = nbb["cells"]
     assert patch(a, diff_cells(a, b)) == b
 
-# Not yet implemented
-@pytest.skip
+def test_diff_and_patch_matching_notebooks(matching_nb_pairs):
+    "Test diff/patch on pairs of notebooks with the same basename in the test suite."
+    a, b = matching_nb_pairs
+    assert patch_notebook(a, diff_notebooks(a, b)) == nbformat.from_dict(b)
+
 def test_diff_and_patch_notebooks(any_nb_pair):
     "Test diff/patch on any pair of notebooks in the test suite."
     a, b = any_nb_pair

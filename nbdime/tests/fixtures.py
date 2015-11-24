@@ -9,6 +9,7 @@ import pytest
 import os
 import glob
 import nbformat
+import re
 
 from nbdime import patch, shallow_diff, deep_diff
 from nbdime.dformat import is_valid_diff
@@ -27,6 +28,11 @@ class NBTestDataBase(object):
         filenames = glob.glob(os.path.join(self.filespath, "*.ipynb"))
         names = [os.path.basename(fn).replace(".ipynb", "") for fn in filenames]
         self.names = list(sorted(names))
+
+        r = re.compile("^(.*)-([0-9]+)$")
+        matches = [r.match(name) for name in self.names]
+        self.groups = { basename: [name for name in self.names if name.startswith(basename)]
+                        for basename in set(m.groups()[0] for m in matches if m) }
 
     def __len__(self):
         return len(self.names)
@@ -60,6 +66,7 @@ class NBTestDataBase(object):
 
 _db = NBTestDataBase()
 
+
 @pytest.fixture
 def db():
     return _db
@@ -71,6 +78,19 @@ def any_nb(request):
 @pytest.fixture(params=range(len(_db)**2))
 def any_nb_pair(request):
     return (_db[request.param // len(_db)], _db[request.param % len(_db)])
+
+def _matching_nb_pair_names():
+    pairs = []
+    for basename, names in sorted(_db.groups.items()):
+        for i in range(len(names)):
+            for j in range(len(names)):
+                pairs.append((names[i], names[j]))
+    return pairs
+
+@pytest.fixture(params=_matching_nb_pair_names())
+def matching_nb_pairs(request):
+    a, b = request.param
+    return _db[a], _db[b]
 
 def assert_is_valid_notebook(nb):
     """These are the current assumptions on notebooks in these tests. Loosen on demand."""

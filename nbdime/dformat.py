@@ -117,6 +117,7 @@ def decompress_diff(sequence_diff):
 
 def count_consumed_symbols(e):
     "Count how many symbols are consumed from each sequence by a single sequence diff entry."
+    action = e[0]
     if action == "+":
         return 0, 1
     elif action == '-':
