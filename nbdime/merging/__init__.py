@@ -3,6 +3,6 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-from .merge import merge
+from .merge import merge, merge_notebooks
 
-__all__ = ["merge"]
+__all__ = ["merge", "merge_notebooks"]

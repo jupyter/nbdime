@@ -67,17 +67,16 @@ class NBTestDataBase(object):
 _db = NBTestDataBase()
 
 
-@pytest.fixture
-def db():
-    return _db
+def _any_nb_name():
+    return _db.names
 
-@pytest.fixture(params=range(len(_db)))
-def any_nb(request):
-    return _db[request.param]
-
-@pytest.fixture(params=range(len(_db)**2))
-def any_nb_pair(request):
-    return (_db[request.param // len(_db)], _db[request.param % len(_db)])
+def _any_nb_pair_names():
+    pairs = []
+    names = _db.names
+    for i in range(len(names)):
+        for j in range(len(names)):
+            pairs.append((names[i], names[j]))
+    return pairs
 
 def _matching_nb_pair_names():
     pairs = []
@@ -87,10 +86,25 @@ def _matching_nb_pair_names():
                 pairs.append((names[i], names[j]))
     return pairs
 
+
+@pytest.fixture
+def db():
+    return _db
+
+@pytest.fixture(params=_any_nb_name())
+def any_nb(request):
+    return _db[request.param]
+
+@pytest.fixture(params=_any_nb_pair_names())
+def any_nb_pair(request):
+    a, b = request.param
+    return _db[a], _db[b]
+
 @pytest.fixture(params=_matching_nb_pair_names())
 def matching_nb_pairs(request):
     a, b = request.param
     return _db[a], _db[b]
+
 
 def assert_is_valid_notebook(nb):
     """These are the current assumptions on notebooks in these tests. Loosen on demand."""

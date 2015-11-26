@@ -4,10 +4,13 @@
 # Distributed under the terms of the Modified BSD License.
 
 import copy
+import nbformat
 
 from .dformat import error_invalid_diff_entry
 
-__all__ = ["patch"]
+
+__all__ = ["patch", "patch_notebook"]
+
 
 def patch_list(obj, diff):
     # The patched sequence to build and return
@@ -62,10 +65,12 @@ def patch_list(obj, diff):
 
     return newobj
 
+
 def patch_string(obj, diff):
     # This can possibly be optimized for str if wanted, but
     # waiting until patch_list has been tested and debugged better
     return "".join(patch_list(list(obj), diff))
+
 
 def patch_dict(obj, diff):
     newobj = {}
@@ -93,6 +98,7 @@ def patch_dict(obj, diff):
         newobj[key] = copy.deepcopy(obj[key])
     return newobj
 
+
 def patch(obj, diff):
     """Produce a patched version of obj with given hierarchial diff.
 
@@ -111,3 +117,7 @@ def patch(obj, diff):
         return patch_list(obj, diff)
     elif isinstance(obj, basestring):
         return patch_string(obj, diff)
+
+
+def patch_notebook(nb, diff):
+    return nbformat.from_dict(patch(nb, diff))

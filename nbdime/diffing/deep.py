@@ -14,15 +14,17 @@ from .comparing import is_atomic, is_similar
 __all__ = ["deep_diff", "deep_diff_lists", "deep_diff_dicts"]
 
 
-def deep_diff_lists(a, b, compare=operator.__eq__):
-    # First make the one-level list diff with custom compare
-    di = diff_sequence(a, b, compare)
+def deep_diff_lists(a, b, compare=operator.__eq__, shallow_diff=None):
+    # First make the one-level list diff with custom compare,
+    # unless it's provided for us
+    if shallow_diff is None:
+        shallow_diff = diff_sequence(a, b, compare)
 
     # Count consumed items from a, 'take' in patch_list
     acons = 0
     bcons = 0
     pdi = []
-    for e in di:
+    for e in shallow_diff:
         action = e[0]
         index = e[1]
 
@@ -33,8 +35,6 @@ def deep_diff_lists(a, b, compare=operator.__eq__):
         for i in range(n):
             aval = a[acons+i]
             bval = b[bcons+i]
-            # If we get here, this should hold: (FIXME: remove later, could be expensive)
-            assert compare(aval, bval) == True
             # Recursively deep_diff the items that have been deemed similar
             if not is_atomic(aval):
                 d = deep_diff(aval, bval, compare)
@@ -56,8 +56,6 @@ def deep_diff_lists(a, b, compare=operator.__eq__):
     for i in range(n): # TODO: Get rid of code duplication
         aval = a[acons+i]
         bval = b[bcons+i]
-        # If we get here, this should hold: (FIXME: remove later, could be expensive)
-        assert compare(aval, bval) == True
         # Recursively deep_diff the non-atomic items that have been deemed similar
         if not is_atomic(aval):
             d = deep_diff(aval, bval, compare)

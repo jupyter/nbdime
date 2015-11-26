@@ -17,6 +17,39 @@ def is_atomic(x):
         return not isinstance(x, (basestring, list, dict))
 
 
+def strings_are_similar(x, y):
+
+    # TODO: How does e.g. git or meld handle this?
+
+    # TODO: Configuration framework? Tune heuristics.
+    enable_char_diff = True
+    threshold = 0.90
+
+    # Informal benchmark normalized to ==:
+    #    1.0  ==
+    #  438.2  real_quick_ratio
+    #  796.5  quick_ratio
+    # 3088.2  ratio
+    # The == cutoff will hit most of the time for long runs of
+    # equal items, at least in the Myers diff algorithm.
+    # Most other comparisons will likely not be very similar,
+    # and the (real_)quick_ratio cutoffs will speed up those.
+    # So the heavy ratio function is only used for close calls.
+    # TODO: Is Levenschtein ratio better than SequenceMatcher?
+
+    if x == y:
+        return True
+    elif enable_char_diff:
+        s = difflib.SequenceMatcher(lambda c: c in (" ", "\t"), x, y, autojunk=False)
+        if s.real_quick_ratio() < threshold:
+            return False
+        if s.quick_ratio() < threshold:
+            return False
+        return s.ratio() > threshold
+    else:
+        return False
+
+
 def is_similar(x, y):
     """Returns True if x and y are deemed sufficiently similar to be
     considered a changed instead of replaced element in a sequence diff.
@@ -39,32 +72,7 @@ def is_similar(x, y):
         return False
 
     if isinstance(x, basestring):
-        # TODO: Configuration framework?
-        enable_char_diff = False
-        threshold = 0.85
-
-        # Informal benchmark normalized to ==:
-        #    1.0  ==
-        #  438.2  real_quick_ratio
-        #  796.5  quick_ratio
-        # 3088.2  ratio
-        # The == cutoff will hit for long runs of equal items.
-        # Most other comparisons will likely not be very similar,
-        # and the (real_)quick_ratio cutoffs will speed up those.
-        # So the heavy ratio function is only used for close calls.
-        # TODO: Is Levenschtein ratio better than SequenceMatcher?
-
-        if x == y:
-            return True
-        elif enable_char_diff:
-            s = difflib.SequenceMatcher(lambda x: x in (" ", "\t"), a, b, autojunk=False)
-            if s.real_quick_ratio() < threshold:
-                return False
-            if s.quick_ratio() < threshold:
-                return False
-            return s.ratio() > threshold
-        else:
-            return False
+        return strings_are_similar(x, y)
 
     elif isinstance(x, list):
         # TODO: Implement custom ratio function, diff-like with cutoff?

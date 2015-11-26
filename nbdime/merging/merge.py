@@ -11,5 +11,5 @@ def merge(base, local, remote):
 
 def merge_notebooks(base, local, remote):
     # FIXME: Implement merge
-    merged = fixme
+    merged = merge(base, local, remote)
     return nbformat.from_dict(merged)
