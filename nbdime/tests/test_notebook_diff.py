@@ -11,9 +11,8 @@ import pytest
 import copy
 import nbformat
 
-from nbdime import patch
+from nbdime import patch, patch_notebook, diff_notebooks
 from nbdime.diffing.notebooks import diff_cells
-from nbdime.diffing.notebooks import diff_notebooks, patch_notebook
 
 # pytest conf.py stuff is tricky to use robustly, this works with no magic
 from .fixtures import db, any_nb, any_nb_pair, matching_nb_pairs, assert_is_valid_notebook, check_diff_and_patch
