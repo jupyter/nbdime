@@ -14,6 +14,40 @@ nbdiff_flags = {
 }
 nbdiff_flags.update(base_flags)
 
+
+# TODO: Improve and make a more reusable utility.
+import pprint
+def pretty_print_diff(d, indent=0):
+    "Pretty-print a nbdime diff."
+    indsep = " "*4
+    ind = indsep*indent
+    ind2 = indsep*(indent+1)
+
+    pp = []
+    for e in d:
+        action = e[0]
+        key = e[1]
+        if action == "-":
+            pp.append("{}{} {}".format(ind, action, key))
+        elif action in ("+", ":"):
+            lines = pprint.pformat(e[2]).splitlines()
+            pp.append("{}{} {}".format(ind, action, key))
+            pp.extend(ind2+line for line in lines)
+        elif action == "!":
+            lines = pretty_print_diff(e[2]).splitlines()
+            pp.append("{}{} {}".format(ind, action, key))
+            pp.extend(ind2+line for line in lines)
+        elif action == "--":
+            pp.append("{}{} {}-{}".format(ind, action, key, e[2]))
+        elif action == "++":
+            lines = pprint.pformat(e[2]).splitlines()
+            pp.append("{}{} {}-{}".format(ind, action, key, len(e[2])))
+            pp.extend(ind2+line for line in lines)
+        else:
+            error("Can't print {}".format(e[0]))
+    return '\n'.join(pp)
+
+
 class NBDiffApp(JupyterApp):
     version = __version__
 
@@ -45,10 +79,12 @@ class NBDiffApp(JupyterApp):
 
         verbose = True
         if verbose:
-            print(d)
+            print(pretty_print_diff(d))
 
         with open(dfn, "w") as df:
             json.dump(d, df)
+            # Verbose version:
+            #json.dump(d, df, indent=4, separators=(',', ': '))
 
 def main():
     NBDiffApp.launch_instance()
