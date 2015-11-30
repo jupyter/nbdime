@@ -10,45 +10,106 @@ heterogeneous types (strings, ints, floats), warranting a more
 flexible diff format. The diff of two objects is still a collection of
 transformations, converting one object into the other.
 
-Note that there is almost never a unique diff, but any diff must
-always be correct in the sense that "patch(X, diff(X, Y)) == Y"
-holds. This identity is extensively used in the test suite.
+In nbdime there is a single function `nbdiff.patch` that expects an
+initial object and a diff object. The expected generic diff format is
+defined below. Adhering to this diff format is a number of variations
+of diff algorithms for different types of data. The collection of diff
+algorithms is under heavy construction and therefore not documented
+here yet.
 
-Below we define a generic diff format. In nbdime there is number of
-variations of diff algorithms for different types of data, all of
-which adheres to the same diff format. A single function
-`nbdiff.patch` can be combined with any diff algorithm.
-
-The collection of diff algorithms is under heavy construction and
-therefore not documented.
+Note that, for all practical purposes, the diff between two objects is
+never unique. However any diff must always be correct in the sense
+that "patch(X, diff(X, Y)) == Y" holds. This identity is extensively
+used in the test suite. The goal of this project is to develop diff
+and merge algorithms tailored for Jupyter notebooks that are not only
+correct but also have high enough quality to be useful.
 
 
 A recursive generic diff format
--------------------------------
+===============================
 
 Note: The diff format herein is considered experimental until
-development stabilizes.
+development stabilizes. If you have objections or opinions on
+the format, please raise them ASAP while the project is in its
+early stages.
 
 The diff is itself a json-compatible object.  Instead of being a
 sequence of transformations, it is a tree of transformations, a
 hierarchial structure where a transformation may itself contain a
-sequence of transformations of a substructure.
+sequence of transformations of a substructure. Each level in the diff
+hierarchy applies either to a diff of two dicts, or to a diff of
+two sequences (lists or strings). The diff format for dict and
+sequence cases are slightly different.
 
-Each transformation is a list with two or three elements,
+For examples of concrete diffs, see e.g. the test suite for patch.
 
-   [action, key[, arg]]
 
-where key is a string when referring to a dict, or an int when
-referring to a list of string. Action can be one of
+Diff format for dicts (current)
+-------------------------------
 
-    * "-": delete value at key (arg omitted)
-    * "+": insert arg at key (if key is list index, just before the item at that index)
-    * ":": replace value at key with arg
-    * "!": patch value at key with diff=arg
+A diff of two dicts is a list of diff entries:
 
-If transforming a sequence (list or string), sequence actions are available:
+    key = string
+    entry = [action, key] | [action, key, argument]
+    diff = [entry0, entry1, ...]
 
-    * "--": delete arg number of sequence elements starting at key
-    * "++": insert sequence arg before element at key
+A dict diff entry is a list of action and argument (except for deletion):
 
-For examples, see e.g. the test suite for patch.
+    * ["-", key]: delete value at key
+    * ["+", key, newvalue]: insert newvalue at key
+    * ["!", key, diff]: patch value at key with diff
+    * [":", key, newvalue]: replace value at key with newvalue
+
+
+Diff format for dicts (alternative)
+-----------------------------------
+
+A diff of two dicts is itself a dict mapping string keys to diff entries:
+
+    key = string
+    entry = [action] | [action, argument]
+    diff = {key0:entry0, key1: entry1, ...}
+
+A dict diff entry is a list of action and argument (except for deletion):
+
+    * ["-"]: delete value at key
+    * ["+", newvalue]: insert newvalue at key
+    * ["!", diff]: patch value at key with diff
+    * [":", newvalue]: replace value at key with newvalue
+
+
+Diff format for sequences (list and string)
+-------------------------------------------
+
+A diff of two sequences is an ordered list of diff entries:
+
+    index = integer
+    entry = [action, index] | [action, index, argument]
+    diff = [entry0, entry1, ...]
+
+A sequence diff entry is a list of action, index and argument (except for deletion):
+
+    * ["-", index]: delete entry at index
+    * ["+", index, newvalue]: insert single newvalue before index
+    * ["--", index, n]: delete n entries starting at index
+    * ["++", index, newvalues]: insert sequence newvalues before index
+    * ["!", index, diff]: patch value at index with diff
+    * [":", index, newvalue]: replace value at index with newvalue
+
+Possible simplifications:
+
+    * Remove the ":" action.
+    * Remove single-item "-", "+" and rename "--" and "++" to single-letter.
+    * OR remove "--" and "++" and stick with just single-item versions.
+
+
+Representing merge results and conflicts
+========================================
+
+TODO: Define output formats for the merge operation.
+
+
+Notebook specific issues
+========================
+
+TODO: Document issues covered and plans here.
