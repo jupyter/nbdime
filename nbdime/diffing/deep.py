@@ -7,6 +7,7 @@ from six import string_types
 from six.moves import xrange as range
 import operator
 
+from ..dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE, SEQREPLACE
 from ..dformat import validate_diff, count_consumed_symbols
 from .sequences import diff_strings, diff_sequence
 
@@ -41,7 +42,7 @@ def deep_diff_lists(a, b, compare=operator.__eq__, shallow_diff=None):
             if not is_atomic(aval):
                 d = deep_diff(aval, bval, compare)
                 if d:
-                    pdi.append(["!", acons+i, d])
+                    pdi.append([PATCH, acons+i, d])
 
         # Count consumed items
         askip, bskip = count_consumed_symbols(e)
@@ -62,7 +63,7 @@ def deep_diff_lists(a, b, compare=operator.__eq__, shallow_diff=None):
         if not is_atomic(aval):
             d = deep_diff(aval, bval, compare)
             if d:
-                pdi.append(["!", acons+i, d])
+                pdi.append([PATCH, acons+i, d])
 
     # Sanity check
     acons += n
@@ -93,7 +94,7 @@ def deep_diff_dicts(a, b, compare=operator.__eq__):
 
     # Delete keys in a but not in b
     for key in sorted(akeys - bkeys):
-        d.append(["-", key])
+        d.append([DELETE, key])
 
     # Handle values for keys in both a and b
     for key in sorted(akeys & bkeys):
@@ -104,15 +105,15 @@ def deep_diff_dicts(a, b, compare=operator.__eq__):
             dd = deep_diff(avalue, bvalue, compare)
             if dd:
                 # Patch value at key with nonzero diff dd
-                d.append(["!", key, dd])
+                d.append([PATCH, key, dd])
         else:
             if not compare(avalue, bvalue): # TODO: Use != or not compare() here?
                 # Replace value at key with bvalue
-                d.append([":", key, bvalue])
+                d.append([REPLACE, key, bvalue])
 
     # Add keys in b but not in a
     for key in sorted(bkeys - akeys):
-        d.append(["+", key, b[key]])
+        d.append([INSERT, key, b[key]])
 
     return d
 

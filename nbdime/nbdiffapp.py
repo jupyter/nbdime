@@ -9,6 +9,7 @@ import json
 from jupyter_core.application import JupyterApp, base_flags
 from ._version import __version__
 from .diffing.notebooks import diff_notebooks
+from .dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE, SEQREPLACE
 
 nbdiff_flags = {
 }
@@ -27,25 +28,25 @@ def pretty_print_diff(d, indent=0):
     for e in d:
         action = e[0]
         key = e[1]
-        if action == "-":
+        if action == DELETE:
             pp.append("{}{} {}".format(ind, action, key))
-        elif action in ("+", ":"):
+        elif action in (INSERT, REPLACE):
             lines = pprint.pformat(e[2]).splitlines()
             pp.append("{}{} {}".format(ind, action, key))
             pp.extend(ind2+line for line in lines)
-        elif action == "!":
+        elif action == PATCH:
             lines = pretty_print_diff(e[2]).splitlines()
             pp.append("{}{} {}".format(ind, action, key))
             pp.extend(ind2+line for line in lines)
-        elif action == "--":
+        elif action == SEQDELETE:
             pp.append("{}{} {}-{}".format(ind, action, key, e[2]))
-        elif action == "++":
+        elif action == SEQINSERT:
             lines = pprint.pformat(e[2]).splitlines()
             pp.append("{}{} {}-{}".format(ind, action, key, len(e[2])))
             pp.extend(ind2+line for line in lines)
         else:
             error("Can't print {}".format(e[0]))
-    return "\n".join(pp)
+    return u"\n".join(pp)
 
 
 class NBDiffApp(JupyterApp):

@@ -6,6 +6,7 @@
 import operator
 from six import string_types
 
+from ..dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE, SEQREPLACE
 from ..dformat import validate_diff
 from .sequences import diff_sequence, diff_strings
 from .seq_difflib import diff_sequence_difflib
@@ -40,19 +41,19 @@ def old_shallow_diff_dicts(a, b, compare=operator.__eq__):
         bvalue = b.get(key, Missing)
         if bvalue is Missing:
             # key is not in b, deleting avalue
-            d.append(['-', key])
+            d.append([DELETE, key])
         else:
             avalue = a[key]
             # key is in both a and b
             if not compare(avalue, bvalue):
                 # values are different, so we replace old with new
-                d.append([':', key, bvalue])
+                d.append([REPLACE, key, bvalue])
     for key in sorted(b.keys()):
         bvalue = b[key]
         avalue = a.get(key, Missing)
         if avalue is Missing:
             # key is not in a, adding bvalue
-            d.append(['+', key, bvalue])
+            d.append([INSERT, key, bvalue])
     return d
 
 
@@ -72,7 +73,7 @@ def shallow_diff_dicts(a, b, compare=operator.__eq__):
 
     # Delete keys in a but not in b
     for key in sorted(akeys - bkeys):
-        d.append(['-', key])
+        d.append([DELETE, key])
 
     # Handle values for keys in both a and b
     for key in sorted(akeys & bkeys):
@@ -80,11 +81,11 @@ def shallow_diff_dicts(a, b, compare=operator.__eq__):
         bvalue = b[key]
         if not compare(avalue, bvalue):
             # Replace value at key with bvalue
-            d.append([':', key, bvalue])
+            d.append([REPLACE, key, bvalue])
 
     # Add keys in b but not in a
     for key in sorted(bkeys - akeys):
-        d.append(['+', key, b[key]])
+        d.append([INSERT, key, b[key]])
 
     return d
 
@@ -105,7 +106,7 @@ def alternative_shallow_diff_dicts(a, b, compare=operator.__eq__):
 
     # Delete keys in a but not in b
     for key in akeys - bkeys:
-        d[key] = ["-"]
+        d[key] = [DELETE]
 
     # Handle values for keys in both a and b
     for key in akeys & bkeys:
@@ -113,11 +114,11 @@ def alternative_shallow_diff_dicts(a, b, compare=operator.__eq__):
         bvalue = b[key]
         if not compare(avalue, bvalue):
             # Replace value at key with bvalue
-            d[key] = [":", bvalue]
+            d[key] = [REPLACE, bvalue]
 
     # Add keys in b but not in a
     for key in bkeys - akeys:
-        d[key] = ["+", b[key]]
+        d[key] = [INSERT, b[key]]
 
     return d
 

@@ -16,6 +16,7 @@ from six.moves import xrange as range
 import copy
 import nbformat
 
+from ..dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE, SEQREPLACE
 from ..dformat import decompress_diff
 from ..patching import patch
 
@@ -67,18 +68,18 @@ def build_line_to_line_number_mapping(lines_a, lines_b, line_diff):
         assert a2b[aln] is None
         assert b2a[bln] is None
 
-        if action == "+":
+        if action == INSERT:
             # Line s[2] inserted before lines_a[s[1]]
             assert s[1] == aln
             assert s[2] is lines_b[bln]
             b2a[bln] = -1
             bln += 1
-        elif action == "-":
+        elif action == DELETE:
             # Line lines_a[s[1]] deleted
             assert s[1] == aln
             a2b[aln] = -1
             aln += 1
-        elif action == ":":
+        elif action == REPLACE:
             # Line lines_a[s[1]] replaced with s[2]
             assert s[1] == aln
             assert s[2] is lines_b[bln]
@@ -86,7 +87,7 @@ def build_line_to_line_number_mapping(lines_a, lines_b, line_diff):
             b2a[bln] = aln
             aln += 1
             bln += 1
-        elif action == "!":
+        elif action == PATCH:
             # Line lines_a[s[1]] patched with diff s[2] to produce lines_b[bln]
             # (I don't think this occurs at the time being)
             assert s[1] == aln
@@ -140,7 +141,7 @@ def build_cell_to_cell_numbers_mapping(a2bc, b2ac,
     for ac, nbcs in enumerate(ac2nbcs):
         # Delete cell ac if it doesn't map to any cell in b
         if nbcs == 0:
-            d.append(["-", ac])
+            d.append([DELETE, ac])
             continue
 
         # Insert cells from b
@@ -232,7 +233,7 @@ def diff_cells_linebased(cells_a, cells_b):
         line_number_a = s[1]
         cell_number_a = origin_cell_numbers_a[line_number_a]
         local_line_number_a = line_number_a - cell_offsets_a[cell_number_a]
-        if act != "-":
+        if act != DELETE:
             line_number_b = s[2]
             cell_number_b = origin_cell_numbers_b[line_number_b]
             local_line_number_b = line_number_b - cell_offsets_b[cell_number_b]
@@ -242,19 +243,19 @@ def diff_cells_linebased(cells_a, cells_b):
         # TODO: Do something about that? Or use include_equals in diff_lines call?
 
         # Translate line diff action to cell diff action
-        if act == "-":
+        if act == DELETE:
             # Delete line from cell
             # TODO: Figure out when to delete cell itself
-            t = ["-", [cell_number_a, local_line_number_a]]
-        elif act == "+":
+            t = [DELETE, [cell_number_a, local_line_number_a]]
+        elif act == INSERT:
             # TODO: Figure out when to add new cell
             # Add line to cell
             #value = s[2]
-            t = ["+", [cell_number_a, local_line_number_a], [cell_number_b, local_line_number_b]]
-        elif act == "!":
+            t = [INSERT, [cell_number_a, local_line_number_a], [cell_number_b, local_line_number_b]]
+        elif act == PATCH:
             # FIXME:
             value = s[2]
-            t = ["!", [cell_number_a, local_line_number_a], [cell_number_b, local_line_number_b]]
+            t = [PATCH, [cell_number_a, local_line_number_a], [cell_number_b, local_line_number_b]]
         else:
             raise RuntimeError("Invalid diff action {}.".format(act))
 
@@ -270,7 +271,7 @@ def diff_cells_linebased(cells_a, cells_b):
         # Keep track of the last cell and line we handled in a and b
         prev_line_a = line_number_a
         prev_cell_a = cell_number_a
-        if act != "-":
+        if act != DELETE:
             prev_line_b = line_number_b
             prev_cell_b = cell_number_b
     '''

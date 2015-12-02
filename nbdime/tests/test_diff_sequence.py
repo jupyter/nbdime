@@ -33,7 +33,7 @@ def algorithm(request):
 def test_diff_sequence(algorithm):
     "FIXME: Add wide range of test cases here."
 
-    a = """\
+    a = u"""\
     def f(a, b):
         c = a * b
         return c

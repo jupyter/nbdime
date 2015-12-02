@@ -14,6 +14,7 @@ __all__ = ["diff_notebooks", "diff_cells"]
 
 import operator
 
+from ..dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE, SEQREPLACE
 from ..dformat import decompress_diff
 
 from .comparing import strings_are_similar
@@ -63,6 +64,6 @@ def diff_notebooks(nba, nbb):
     # Then add specialized cells diff
     cdiff = diff_cells(acells, bcells)
     if cdiff:
-        nbdiff.append(["!", "cells", cdiff])
+        nbdiff.append([PATCH, "cells", cdiff])
 
     return nbdiff

@@ -9,6 +9,7 @@ from six.moves import xrange as range
 import nbformat
 
 from ..diffing import deep_diff
+from ..dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE, SEQREPLACE
 
 # Sentinel to allow None value
 Missing = object()
@@ -40,26 +41,26 @@ def conflict(basevalue, localvalue, remotevalue, bl_diff, br_diff):
 
 
 def _check_actions(la, ra, bv):
-    if la == "+" or ra == "+":
+    if la == INSERT or ra == INSERT:
         # Inserted both places (inserting only on one side should never happen with a shared base)
-        assert la == "+" and ra == "+"
+        assert la == INSERT and ra == INSERT
         assert bv is Missing
     else:
         # Patched or replaced both places
-        assert la in (":", "!") and ra in (":", "!")
+        assert la in (REPLACE, PATCH) and ra in (REPLACE, PATCH)
 
 
 def dict_diff_entry_to_patch_entry(e):
-    if e[0] == "!":
+    if e[0] == PATCH:
         return e
-    if e[0] == "-":
-        return {key:"-"}
+    if e[0] == DELETE:
+        return {key:DELETE}
 
 
 def merge_dict_items(bv, lv, rv, ld, rd):
     # Switch on diff actions
-    if ld[0] == "-" or rd[0] == "-":
-        if ld[0] == "-" and rd[0] == "-":
+    if ld[0] == DELETE or rd[0] == DELETE:
+        if ld[0] == DELETE and rd[0] == DELETE:
             # (4) Removed in both local and remote
             me = None
             co = None
@@ -90,8 +91,8 @@ def merge_dict_items(bv, lv, rv, ld, rd):
             assert bv != rv
 
             # Get subpatches if already computed
-            lp = ld[1] if ld[0] == "!" else None
-            rp = rd[1] if rd[0] == "!" else None
+            lp = ld[1] if ld[0] == PATCH else None
+            rp = rd[1] if rd[0] == PATCH else None
 
             # Recursively attempt to merge lv and rv if possible
             recurse_types = string_types + (list, dict)
@@ -102,8 +103,8 @@ def merge_dict_items(bv, lv, rv, ld, rd):
                 # asserts here to rule out cases that don't make sense
                 # and check my understanding against examples we come
                 # up with later
-                assert ld[0] in (":", "+") and ld[1] == lv
-                assert rd[0] in (":", "+") and rd[1] == rv
+                assert ld[0] in (REPLACE, INSERT) and ld[1] == lv
+                assert rd[0] in (REPLACE, INSERT) and rd[1] == rv
                 # Automatic conflict when types are different and not dict/list/string
                 me = None
                 co = conflict(bv, lv, rv, ld, rd)
@@ -157,12 +158,12 @@ def merge_dicts(base, local, remote, base_local_diff=None, base_remote_diff=None
     # (2) Next apply one-sided diffs, i.e. no conflicts
     for key in bldkeys - brdkeys:
         # Just use local value or remove
-        if base_local_diff[key][0] != "-":
+        if base_local_diff[key][0] != DELETE:
             merged[key] = local[key]
     # (3)
     for key in brdkeys - bldkeys:
         # Just use remote value or remove
-        if base_remote_diff[key][0] != "-":
+        if base_remote_diff[key][0] != DELETE:
             merged[key] = remote[key]
 
     # (4) (5) (6)
@@ -192,9 +193,9 @@ def merge_dicts(base, local, remote, base_local_diff=None, base_remote_diff=None
 def get_deleted_indices(diff):
     deleted = set()
     for e in diff:
-        if e[0] == "-":
+        if e[0] == DELETE:
             deleted.add(e[1])
-        elif e[0] == "--":
+        elif e[0] == SEQDELETE:
             deleted.update(e[1] + i for i in range(e[2]))
     return deleted
 
@@ -231,8 +232,8 @@ def merge_lists(base, local, remote, base_local_diff=None, base_remote_diff=None
     remote_deleted = get_deleted_indices(base_local_diff)
 
     # Get non-deletion diff entries only
-    local_diff = [e for e in base_local_diff if e[0] not in ("-", "--")]
-    remote_diff = [e for e in base_remote_diff if e[0] not in ("-", "--")]
+    local_diff = [e for e in base_local_diff if e[0] not in (DELETE, SEQDELETE)]
+    remote_diff = [e for e in base_remote_diff if e[0] not in (DELETE, SEQDELETE)]
 
     # Interleave local and remote diff entries in a merged diff object
     merged_diff = []
@@ -256,7 +257,7 @@ def merge_lists(base, local, remote, base_local_diff=None, base_remote_diff=None
             if rdel:
                 remote_deleted.remove(i)
             if ldel or rdel:
-                merged_diff.append(["-", i])
+                merged_diff.append([DELETE, i])
         lastindex = min(lastindex, index+1) # FIXME: +1 here?
 
         #
@@ -268,8 +269,8 @@ def merge_lists(base, local, remote, base_local_diff=None, base_remote_diff=None
             merged_diff.append(re)
         else:
             # FIXME: Create conflict instead of inserting both
-            # FIXME: Inserting both won't even work for "!" or ":", only for "+"
-            assert le[1] == "+" and re[1] == "+"
+            # FIXME: Inserting both won't even work for PATCH or REPLACE, only for INSERT
+            assert le[1] == INSERT and re[1] == INSERT
             merged_diff.append(le)
             merged_diff.append(re)
 

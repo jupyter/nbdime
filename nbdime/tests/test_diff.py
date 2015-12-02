@@ -9,6 +9,7 @@ import pytest
 import copy
 
 from nbdime import patch, shallow_diff, deep_diff
+from nbdime.dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE, SEQREPLACE
 
 from .fixtures import check_diff_and_patch, check_symmetric_diff_and_patch
 
@@ -74,20 +75,20 @@ def test_diff_and_patch():
     check_symmetric_diff_and_patch(mda, mdb)
     # A more explicit assert showing the diff format and testing that paths are sorted:
     assert shallow_diff(mda, mdb) == [
-        ["-", "deleted"],
-        [":", "mix", {"add": 42, "mod": 37, "unchanged": 123}],
-        [":", "modparent", {"mod": 22}],
-        ["+", "added", 7],
+        [DELETE, "deleted"],
+        [REPLACE, "mix", {"add": 42, "mod": 37, "unchanged": 123}],
+        [REPLACE, "modparent", {"mod": 22}],
+        [INSERT, "added", 7],
         ]
     assert deep_diff(mda, mdb) == [
-        ["-", "deleted"],
-        ["!", "mix", [
-            ["-", "del"],
-            [":", "mod", 37],
-            ["+", "add", 42]
+        [DELETE, "deleted"],
+        [PATCH, "mix", [
+            [DELETE, "del"],
+            [REPLACE, "mod", 37],
+            [INSERT, "add", 42]
             ]],
-        ["!", "modparent", [
-            [":", "mod", 22]
+        [PATCH, "modparent", [
+            [REPLACE, "mod", 22]
             ]],
-        ["+", "added", 7],
+        [INSERT, "added", 7],
         ]
