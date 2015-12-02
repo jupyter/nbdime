@@ -4,6 +4,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 from __future__ import print_function
+from six.moves import xrange as range
 
 import pytest
 import os

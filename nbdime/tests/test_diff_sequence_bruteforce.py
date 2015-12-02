@@ -3,6 +3,8 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+from six.moves import xrange as range
+
 from nbdime import patch
 from nbdime.dformat import is_valid_diff
 from nbdime.diffing.lcs import diff_from_lcs

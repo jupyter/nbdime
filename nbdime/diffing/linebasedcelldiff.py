@@ -11,6 +11,7 @@ to throw it away or develop the idea further.
 
 __all__ = ["diff_cells_linebased"]
 
+from six.moves import xrange as range
 import copy
 import nbformat
 

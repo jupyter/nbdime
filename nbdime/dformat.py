@@ -3,6 +3,8 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+from six.moves import xrange as range
+
 from .log import error
 
 def error_invalid_diff_entry(s):
