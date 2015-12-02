@@ -21,7 +21,7 @@ def deep_diff_lists(a, b, compare=operator.__eq__, shallow_diff=None):
     if shallow_diff is None:
         shallow_diff = diff_sequence(a, b, compare)
 
-    # Count consumed items from a, 'take' in patch_list
+    # Count consumed items from a, "take" in patch_list
     acons = 0
     bcons = 0
     pdi = []
@@ -92,7 +92,7 @@ def deep_diff_dicts(a, b, compare=operator.__eq__):
 
     # Delete keys in a but not in b
     for key in sorted(akeys - bkeys):
-        d.append(['-', key])
+        d.append(["-", key])
 
     # Handle values for keys in both a and b
     for key in sorted(akeys & bkeys):
@@ -103,15 +103,15 @@ def deep_diff_dicts(a, b, compare=operator.__eq__):
             dd = deep_diff(avalue, bvalue, compare)
             if dd:
                 # Patch value at key with nonzero diff dd
-                d.append(['!', key, dd])
+                d.append(["!", key, dd])
         else:
             if not compare(avalue, bvalue): # TODO: Use != or not compare() here?
                 # Replace value at key with bvalue
-                d.append([':', key, bvalue])
+                d.append([":", key, bvalue])
 
     # Add keys in b but not in a
     for key in sorted(bkeys - akeys):
-        d.append(['+', key, b[key]])
+        d.append(["+", key, b[key]])
 
     return d
 

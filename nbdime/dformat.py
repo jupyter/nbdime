@@ -64,8 +64,8 @@ def validate_diff_entry(s, deep=False):
         # s[2] is a single value to replace value at key with
         pass
     elif s[0] == "!":
-        # s[2] is itself a diff, check it recursively if the 'deep' argument is true
-        # (the 'deep' argument is here to avoid recursion and potential O(>n) performance pitfalls)
+        # s[2] is itself a diff, check it recursively if the "deep" argument is true
+        # (the "deep" argument is here to avoid recursion and potential O(>n) performance pitfalls)
         if deep:
             validate_diff(s[2], deep=deep)
     # Experimental sequence diff actions
@@ -121,24 +121,24 @@ def count_consumed_symbols(e):
     action = e[0]
     if action == "+":
         return 0, 1
-    elif action == '-':
+    elif action == "-":
         return 1, 0
-    elif action == ':':
+    elif action == ":":
         return 1, 1
-    elif action == '!':
+    elif action == "!":
         return 1, 1
-    elif action == '++':
+    elif action == "++":
         return 0, len(e[2])
-    elif action == '--':
+    elif action == "--":
         return e[2], 0
-    elif action == '::':
+    elif action == "::":
         return len(e[2]), len(e[2])
     else:
         error_invalid_diff_entry(e)
 
 def get_equal_ranges(a, b, d):
     "Return list of tuples [(i,j,n)] such that a[i:i+n] == b[j:j+n] given a diff d of sequences a and b."
-    # Count consumed items from a, 'take' in patch_list
+    # Count consumed items from a, "take" in patch_list
     acons = 0
     bcons = 0
     ranges = []

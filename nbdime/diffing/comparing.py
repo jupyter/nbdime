@@ -59,7 +59,7 @@ def is_similar(x, y):
 
     TODO: Pass path to compare functions?
     A generic implementation like this one doesn't know
-    the context in which 'similar' is defined.
+    the context in which "similar" is defined.
     """
 
     # TODO: There are a lot of quality and performance issues that

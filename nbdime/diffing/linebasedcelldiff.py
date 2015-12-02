@@ -231,7 +231,7 @@ def diff_cells_linebased(cells_a, cells_b):
         line_number_a = s[1]
         cell_number_a = origin_cell_numbers_a[line_number_a]
         local_line_number_a = line_number_a - cell_offsets_a[cell_number_a]
-        if act != '-':
+        if act != "-":
             line_number_b = s[2]
             cell_number_b = origin_cell_numbers_b[line_number_b]
             local_line_number_b = line_number_b - cell_offsets_b[cell_number_b]
@@ -241,19 +241,19 @@ def diff_cells_linebased(cells_a, cells_b):
         # TODO: Do something about that? Or use include_equals in diff_lines call?
 
         # Translate line diff action to cell diff action
-        if act == '-':
+        if act == "-":
             # Delete line from cell
             # TODO: Figure out when to delete cell itself
-            t = ['-', [cell_number_a, local_line_number_a]]
-        elif act == '+':
+            t = ["-", [cell_number_a, local_line_number_a]]
+        elif act == "+":
             # TODO: Figure out when to add new cell
             # Add line to cell
             #value = s[2]
-            t = ['+', [cell_number_a, local_line_number_a], [cell_number_b, local_line_number_b]]
-        elif act == '!':
+            t = ["+", [cell_number_a, local_line_number_a], [cell_number_b, local_line_number_b]]
+        elif act == "!":
             # FIXME:
             value = s[2]
-            t = ['!', [cell_number_a, local_line_number_a], [cell_number_b, local_line_number_b]]
+            t = ["!", [cell_number_a, local_line_number_a], [cell_number_b, local_line_number_b]]
         else:
             raise RuntimeError("Invalid diff action {}.".format(act))
 
@@ -269,7 +269,7 @@ def diff_cells_linebased(cells_a, cells_b):
         # Keep track of the last cell and line we handled in a and b
         prev_line_a = line_number_a
         prev_cell_a = cell_number_a
-        if act != '-':
+        if act != "-":
             prev_line_b = line_number_b
             prev_cell_b = cell_number_b
     '''

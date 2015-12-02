@@ -45,7 +45,7 @@ def pretty_print_diff(d, indent=0):
             pp.extend(ind2+line for line in lines)
         else:
             error("Can't print {}".format(e[0]))
-    return '\n'.join(pp)
+    return "\n".join(pp)
 
 
 class NBDiffApp(JupyterApp):
@@ -84,7 +84,7 @@ class NBDiffApp(JupyterApp):
         with open(dfn, "w") as df:
             json.dump(d, df)
             # Verbose version:
-            #json.dump(d, df, indent=4, separators=(',', ': '))
+            #json.dump(d, df, indent=4, separators=(",", ": "))
 
 def main():
     NBDiffApp.launch_instance()

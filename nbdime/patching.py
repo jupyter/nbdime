@@ -25,30 +25,30 @@ def patch_list(obj, diff):
         # Take values from obj not mentioned in diff, up to not including index
         newobj.extend(copy.deepcopy(value) for value in obj[take:index])
 
-        if action == '+':
+        if action == "+":
             # Append new value directly
             newobj.append(s[2])
             skip = 0
-        elif action == '-':
+        elif action == "-":
             # Delete values obj[index] by incrementing take to skip
             skip = 1
-        elif action == ':':
+        elif action == ":":
             # Replace value at obj[index] with s[2]
             newobj.append(s[2])
             skip = 1
-        elif action == '!':
+        elif action == "!":
             # Patch value at obj[index] with diff s[2]
             newobj.append(patch(obj[index], s[2]))
             skip = 1
         # Experimental sequence diff actions:
-        elif action == '++':
+        elif action == "++":
             # Extend with new values directly
             newobj.extend(s[2])
             skip = 0
-        elif action == '--':
+        elif action == "--":
             # Delete values obj[index:index+s[2]] by incrementing take to skip
             skip = s[2]
-        elif action == '::':
+        elif action == "::":
             # Replace values at obj[index:index+len(s[2])] with s[2]
             newobj.extend(s[2])
             skip = len(s[2])
@@ -57,7 +57,7 @@ def patch_list(obj, diff):
 
         # Skip the specified number of elements, but never decrement take.
         # Note that take can pass index in diffs with repeated +/- on the
-        # same index, i.e. [['-', index], ['+', index, value]]
+        # same index, i.e. [["-", index], ["+", index, value]]
         take = max(take, index + skip)
 
     # Take values at end not mentioned in diff
@@ -80,15 +80,15 @@ def patch_dict(obj, diff):
         key = s[1]
         assert isinstance(key, basestring)
 
-        if action == '+':
+        if action == "+":
             assert key not in keys_to_copy
             newobj[key] = s[2]
-        elif action == '-':
+        elif action == "-":
             keys_to_copy.remove(key)
-        elif action == ':':
+        elif action == ":":
             keys_to_copy.remove(key)
             newobj[key] = s[2]
-        elif action == '!':
+        elif action == "!":
             keys_to_copy.remove(key)
             newobj[key] = patch(obj[key], s[2])
         else:

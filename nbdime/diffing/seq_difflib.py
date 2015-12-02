@@ -19,18 +19,18 @@ def opcodes_to_diff(a, b, opcodes):
         elif action == "replace":
             if asize == bsize:
                 if asize == 1:
-                    d.append([':', abegin, b[bbegin]])
+                    d.append([":", abegin, b[bbegin]])
                 else:
-                    d.append(['::', abegin, b[bbegin:bend]])
+                    d.append(["::", abegin, b[bbegin:bend]])
             else:
                 if asize == 1:
-                    d.append(['-', abegin])
+                    d.append(["-", abegin])
                 else:
-                    d.append(['--', abegin, asize])
+                    d.append(["--", abegin, asize])
                 if bsize == 1:
-                    d.append(['+', abegin, b[bbegin]])
+                    d.append(["+", abegin, b[bbegin]])
                 else:
-                    d.append(['++', abegin, b[bbegin:bend]])
+                    d.append(["++", abegin, b[bbegin:bend]])
         elif action == "insert":
             if bsize == 1:
                 d.append(["+", abegin, b[bbegin]])
@@ -38,9 +38,9 @@ def opcodes_to_diff(a, b, opcodes):
                 d.append(["++", abegin, b[bbegin:bend]])
         elif action == "delete":
             if asize == 1:
-                d.append(['-', abegin])
+                d.append(["-", abegin])
             else:
-                d.append(['--', abegin, asize])
+                d.append(["--", abegin, asize])
         else:
             raise RuntimeError("Unknown action {}".format(action))
     return d

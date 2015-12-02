@@ -74,20 +74,20 @@ def test_diff_and_patch():
     check_symmetric_diff_and_patch(mda, mdb)
     # A more explicit assert showing the diff format and testing that paths are sorted:
     assert shallow_diff(mda, mdb) == [
-        ['-', 'deleted'],
-        [':', 'mix', {"add": 42, "mod": 37, "unchanged": 123}],
-        [':', 'modparent', {"mod": 22}],
-        ['+', 'added', 7],
+        ["-", "deleted"],
+        [":", "mix", {"add": 42, "mod": 37, "unchanged": 123}],
+        [":", "modparent", {"mod": 22}],
+        ["+", "added", 7],
         ]
     assert deep_diff(mda, mdb) == [
-        ['-', 'deleted'],
-        ['!', 'mix', [
-            ['-', 'del'],
-            [':', 'mod', 37],
-            ['+', 'add', 42]
+        ["-", "deleted"],
+        ["!", "mix", [
+            ["-", "del"],
+            [":", "mod", 37],
+            ["+", "add", 42]
             ]],
-        ['!', 'modparent', [
-            [':', 'mod', 22]
+        ["!", "modparent", [
+            [":", "mod", 22]
             ]],
-        ['+', 'added', 7],
+        ["+", "added", 7],
         ]
