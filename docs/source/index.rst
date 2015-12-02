@@ -6,7 +6,7 @@
 Documentation for nbdime -- tools for diff and merge of Jupyter Notebooks
 =========================================================================
 
-NB! This documentation and the nbdime project is in a very early stage
+NB! The nbdime project and this documentation and is in a very early stage
 of development and is not usable for any kind of production work yet.
 
 
