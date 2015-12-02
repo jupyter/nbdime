@@ -7,22 +7,27 @@ NB! This project is highly experimental and rapidly changing.
 Documentation
 -------------
 
-Documentation resides in docs/ and is also available at
+To build documentation:
 
+    cd docs
+    make html
+
+Also available at:
+    
     http://nbdime.readthedocs.org
-
-To build locally, run 'cd docs/' and 'make html'.
 
 
 Dependencies
 ------------
 
-  - Python version 2.7.1, Python 3 support is coming
+  - Python version 2.7.1, 3.3, 3.4, 3.5
   - six
   - nbformat
+
+Test dependencies:
+
   - pytest
-  - numpy
-  - (Levenshtein)
+  - pytest-cov
 
 
 Install
@@ -55,8 +60,6 @@ for usage details.
 
 Testing
 -------
-If you have notebooks with interesting merge challenges,
-please consider contributing them to nbdime as test cases!
 
 Run
 
@@ -69,4 +72,15 @@ While developing,
     py.test -f -l -s
 
 can be useful. See the pytest documentation for more options.
+
+If you have notebooks with interesting merge challenges,
+please consider contributing them to nbdime as test cases!
+
+For latest test status see Travis:
+
+    https://travis-ci.org/martinal/nbdime
+
+And coverall:
+
+[![Coverage Status](https://coveralls.io/repos/martinal/nbdime/badge.svg?branch=master&service=github)](https://coveralls.io/github/martinal/nbdime?branch=master)
 
