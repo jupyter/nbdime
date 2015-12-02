@@ -1,0 +1,1 @@
+-e git+https://github.com/jupyter/nbformat.git#egg=nbformat

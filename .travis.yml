@@ -1,0 +1,10 @@
+language: python
+python:
+    - 3.5
+    - 3.4
+    - 3.3
+    - 2.7
+sudo: false
+install: pip install --user -r requirements.txt
+script: py.test -l
+after_success: coveralls
