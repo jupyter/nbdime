@@ -4,6 +4,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 import difflib
+from six import string_types
 
 __all__ = ["is_atomic", "is_similar"]
 
@@ -14,7 +15,7 @@ def is_atomic(x):
     if atomic_strings:
         return not isinstance(x, (list, dict))
     else:
-        return not isinstance(x, (basestring, list, dict))
+        return not isinstance(x, (string_types, list, dict))
 
 
 def strings_are_similar(x, y):
@@ -71,7 +72,7 @@ def is_similar(x, y):
     if type(x) != type(y):
         return False
 
-    if isinstance(x, basestring):
+    if isinstance(x, string_types):
         return strings_are_similar(x, y)
 
     elif isinstance(x, list):

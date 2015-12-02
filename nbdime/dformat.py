@@ -3,6 +3,7 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+from six import string_types
 from six.moves import xrange as range
 
 from .log import error
@@ -35,7 +36,7 @@ def validate_diff_entry(s, deep=False):
     Additional experimental sequence actions "++", "--", "::" are also allowed.
     """
     # Sequence types, allowing both list and string in sequence insert ("++")
-    sequence = (list, basestring)
+    sequence = string_types + (list,)
 
     # Entry is always a list with 3 items, or 2 in the special case of single item deletion
     if not isinstance(s, list):
@@ -46,9 +47,9 @@ def validate_diff_entry(s, deep=False):
 
     # Check key (list or str uses int key, dict uses str key)
     is_sequence = isinstance(s[1], int)
-    is_mapping = isinstance(s[1], basestring)
+    is_mapping = isinstance(s[1], string_types)
     if not (is_sequence or is_mapping):
-        error("Diff entry key '{}' has type '{}', expecting int or basestring.".format(s[1], type(s[1])))
+        error("Diff entry key '{}' has type '{}', expecting int or unicode/str.".format(s[1], type(s[1])))
 
     # Experimental sequence diff actions ++, --, :: are not valid for mapping diffs
     if is_mapping and len(s[0]) > 1:

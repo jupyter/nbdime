@@ -3,6 +3,7 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+from six import string_types
 from six.moves import xrange as range
 import operator
 
@@ -126,7 +127,7 @@ def deep_diff(a, b, compare=operator.__eq__):
         d = deep_diff_lists(a, b, compare)
     elif isinstance(a, dict) and isinstance(b, dict):
         d = deep_diff_dicts(a, b, compare)
-    elif isinstance(a, basestring) and isinstance(b, basestring):
+    elif isinstance(a, string_types) and isinstance(b, string_types):
         d = diff_strings(a, b)
     else:
         raise RuntimeError("Can currently only diff list, dict, or str objects.")

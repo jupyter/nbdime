@@ -11,6 +11,7 @@ to throw it away or develop the idea further.
 
 __all__ = ["diff_cells_linebased"]
 
+from six import string_types
 from six.moves import xrange as range
 import copy
 import nbformat
@@ -28,7 +29,7 @@ def extract_source_lines(cells):
     for i, cell in enumerate(cells):
         # Get source as a list of single-line strings without newlines
         source = cell["source"]
-        if isinstance(source, basestring):
+        if isinstance(source, string_types):
             source = source.splitlines()
 
         # Store the offset into the concatenated lines

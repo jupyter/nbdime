@@ -3,6 +3,7 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+from six import string_types
 import copy
 import nbformat
 
@@ -78,7 +79,7 @@ def patch_dict(obj, diff):
     for s in diff:
         action = s[0]
         key = s[1]
-        assert isinstance(key, basestring)
+        assert isinstance(key, string_types)
 
         if action == "+":
             assert key not in keys_to_copy
@@ -115,7 +116,7 @@ def patch(obj, diff):
         return patch_dict(obj, diff)
     elif isinstance(obj, list):
         return patch_list(obj, diff)
-    elif isinstance(obj, basestring):
+    elif isinstance(obj, string_types):
         return patch_string(obj, diff)
 
 

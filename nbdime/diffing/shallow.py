@@ -4,6 +4,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 import operator
+from six import string_types
 
 from ..dformat import validate_diff
 from .sequences import diff_sequence, diff_strings
@@ -131,7 +132,7 @@ def shallow_diff(a, b, compare=operator.__eq__):
         d = shallow_diff_lists(a, b, compare)
     elif isinstance(a, dict) and isinstance(b, dict):
         d = shallow_diff_dicts(a, b, compare)
-    elif isinstance(a, basestring) and isinstance(b, basestring):
+    elif isinstance(a, string_types) and isinstance(b, string_types):
         d = diff_strings(a, b)
     else:
         raise RuntimeError("Can currently only diff list, dict, or str objects.")

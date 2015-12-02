@@ -3,6 +3,7 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+from six import string_types
 from six.moves import xrange as range
 
 import nbformat
@@ -93,7 +94,8 @@ def merge_dict_items(bv, lv, rv, ld, rd):
             rp = rd[1] if rd[0] == "!" else None
 
             # Recursively attempt to merge lv and rv if possible
-            if isinstance(lv, (dict, list, basestring)) and type(lv) == type(rv):
+            recurse_types = string_types + (list, dict)
+            if isinstance(lv, recurse_types) and type(lv) == type(rv):
                 me, co = merge(bv, lv, rv, lp, rp)
             else:
                 # This code contains lots of corner cases, so using
@@ -287,7 +289,7 @@ def merge_lists(base, local, remote, base_local_diff=None, base_remote_diff=None
 def merge_strings(base, local, remote, base_local_diff=None, base_remote_diff=None):
     if base is Missing:
         base = u""
-    assert isinstance(base, basestring) and isinstance(local, basestring) and isinstance(remote, basestring)
+    assert isinstance(base, string_types) and isinstance(local, string_types) and isinstance(remote, string_types)
     me, co = merge_lists(list(base), list(local), list(remote), base_local_diff, base_remote_diff)
     # FIXME: Convert to string compatible format
     merged = u"".join(me)
@@ -302,8 +304,8 @@ def merge(base, local, remote, base_local_diff=None, base_remote_diff=None):
     elif isinstance(base, list):
         assert isinstance(local, list) and isinstance(remote, list)
         return merge_lists(base, local, remote, base_local_diff, base_remote_diff)
-    elif isinstance(base, basestring):
-        assert isinstance(local, basestring) and isinstance(remote, basestring)
+    elif isinstance(base, string_types):
+        assert isinstance(local, string_types) and isinstance(remote, string_types)
         return merge_strings(base, local, remote, base_local_diff, base_remote_diff)
     else:
         error("Cannot handle merge of types {}, {}, {}.".format(type(base), type(local), type(remote)))

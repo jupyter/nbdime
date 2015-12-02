@@ -3,9 +3,10 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-import operator
-
 __all__ = ["diff_strings", "diff_sequence"]
+
+import operator
+from six import string_types
 
 from .seq_difflib import diff_sequence_difflib
 from .seq_bruteforce import diff_sequence_bruteforce
@@ -33,5 +34,5 @@ def diff_sequence(a, b, compare=operator.__eq__):
 
 def diff_strings(a, b):
     "Compute char-based diff of two strings."
-    assert isinstance(a, basestring) and isinstance(b, basestring)
+    assert isinstance(a, string_types) and isinstance(b, string_types)
     return diff_sequence_difflib(a, b)
