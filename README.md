@@ -1,7 +1,18 @@
 This is nbdime, tools for diff and merge of Jupyter Notebooks
 =============================================================
 
-NB! This is currently experimental and rapidly changing.
+NB! This project is highly experimental and rapidly changing.
+
+
+Documentation
+-------------
+
+Documentation resides in docs/ and is also available at
+
+    http://nbdime.readthedocs.org
+
+To build locally, run 'cd docs/' and 'make html'.
+
 
 Dependencies
 ------------
@@ -12,6 +23,7 @@ Dependencies
   - pytest
   - numpy
   - (Levenshtein)
+
 
 Install
 -------
@@ -29,6 +41,7 @@ Local developer install
 
     pip install -e --user .
 
+
 Commandline tools
 -----------------
 Nbdime adds three commands to jupyter. See
@@ -38,6 +51,7 @@ Nbdime adds three commands to jupyter. See
     jupyter nbmerge --help
 
 for usage details.
+
 
 Testing
 -------
@@ -55,3 +69,4 @@ While developing,
     py.test -f -l -s
 
 can be useful. See the pytest documentation for more options.
+
