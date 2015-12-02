@@ -3,3 +3,4 @@
 nbdime.egg-info
 nbdime/tests/__pycache__
 nbdime/tests/files/.ipynb_checkpoints
+docs/build
