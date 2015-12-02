@@ -28,7 +28,14 @@ def to_dict_diff(ld):
 
 def conflict(basevalue, localvalue, remotevalue, bl_diff, br_diff):
     # TODO: Define conflicts format
-    return [basevalue, localvalue, remotevalue, bl_diff, br_diff]
+    if basevalue is Missing:
+        basevalue = None
+    if localvalue is Missing:
+        localvalue = None
+    if remotevalue is Missing:
+        remotevalue = None
+    #return [basevalue, localvalue, remotevalue, bl_diff, br_diff]
+    return [basevalue, localvalue, remotevalue]
 
 
 def _check_actions(la, ra, bv):
@@ -172,7 +179,7 @@ def merge_dicts(base, local, remote, base_local_diff=None, base_remote_diff=None
         me, co = merge_dict_items(bv, lv, rv, ld, rd)
 
         # Insert merge result and/or conflict
-        if me:
+        if me is not None:
             merged[key] = me
         if co:
             conflicts[key] = co
