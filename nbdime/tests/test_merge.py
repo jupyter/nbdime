@@ -1,11 +1,5 @@
 
-import pytest
-
 from nbdime import merge
-
-@pytest.xfail
-def test_fail():
-    assert False
 
 def test_shallow_merge_dicts_delete():
     # local removes an entry
