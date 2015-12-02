@@ -1,3 +1,2 @@
 six
 nbformat
-python-coveralls
