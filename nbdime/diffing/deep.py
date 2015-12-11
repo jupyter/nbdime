@@ -7,7 +7,7 @@ from six import string_types
 from six.moves import xrange as range
 import operator
 
-from ..dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE, SEQREPLACE
+from ..dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
 from ..dformat import validate_diff, count_consumed_symbols
 from .sequences import diff_strings, diff_sequence
 

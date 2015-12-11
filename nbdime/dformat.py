@@ -15,7 +15,6 @@ DELETE = u"-"
 REPLACE = u":"
 SEQINSERT = u"++"
 SEQDELETE = u"--"
-SEQREPLACE = u"::"
 
 ACTIONS = [
     PATCH,
@@ -24,7 +23,6 @@ ACTIONS = [
     REPLACE,
     SEQINSERT,
     SEQDELETE,
-    SEQREPLACE,
     ]
 
 sequence_types = string_types + (list,)
@@ -56,7 +54,7 @@ def validate_diff_entry(s, deep=False):
     s[2] # action specific argument, omitted if action is "-"
 
     For sequences (lists and strings) the actions
-    SEQINSERT, SEQDELETE, SEQREPLACE are also allowed.
+    SEQINSERT and SEQDELETE are also allowed.
     """
     # Entry is always a list with 3 items, or 2 in the special case of single item deletion
     if not isinstance(s, list):
@@ -98,11 +96,6 @@ def validate_diff_entry(s, deep=False):
         # s[2] is the number of items to delete from sequence
         if not isinstance(s[2], int):
             raise NBDiffFormatError("Diff sequence delete expects integer number of values, not '{}'.".format(s[2]))
-    elif s[0] == SEQREPLACE:
-        # For sequence replace, s[2] is a list of values to
-        # replace the next len(s[2]) values starting at key.
-        if not isinstance(s[2], sequence_types):
-            raise NBDiffFormatError("Diff sequence replace expects list of values, not '{}'.".format(s[2]))
     else:
         # Unknown action
         raise NBDiffFormatError("Unknown diff action '{}'.".format(s[0]))
@@ -127,9 +120,6 @@ def decompress_diff(sequence_diff):
         elif action == SEQDELETE:
             for i in range(s[2]):
                 d.append([DELETE, s[1] + i])
-        elif action == SEQREPLACE:
-            for i, v in enumerate(s[2]):
-                d.append([REPLACE, s[1] + i, v])
         else:
             raise NBDiffFormatError("Invalid action '{}'".format(action))
     return d
@@ -155,8 +145,6 @@ def count_consumed_symbols(e):
         return 0, len(e[2])
     elif action == SEQDELETE:
         return e[2], 0
-    elif action == SEQREPLACE:
-        return len(e[2]), len(e[2])
     else:
         raise NBDiffFormatError("Invalid action '{}'".format(action))
 

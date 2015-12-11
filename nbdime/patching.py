@@ -8,7 +8,7 @@ import copy
 import nbformat
 
 from .dformat import NBDiffFormatError
-from .dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE, SEQREPLACE
+from .dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
 
 
 __all__ = ["patch", "patch_notebook"]
@@ -50,10 +50,6 @@ def patch_list(obj, diff):
         elif action == SEQDELETE:
             # Delete values obj[index:index+s[2]] by incrementing take to skip
             skip = s[2]
-        elif action == SEQREPLACE:
-            # Replace values at obj[index:index+len(s[2])] with s[2]
-            newobj.extend(s[2])
-            skip = len(s[2])
         else:
             raise NBDiffFormatError("Invalid action {}.".format(s))
 

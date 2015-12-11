@@ -9,7 +9,7 @@ from six.moves import xrange as range
 import nbformat
 
 from ..diffing import deep_diff
-from ..dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE, SEQREPLACE
+from ..dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
 
 # Sentinel to allow None value
 Missing = object()

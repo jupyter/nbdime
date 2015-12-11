@@ -4,7 +4,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 from difflib import SequenceMatcher
-from ..dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE, SEQREPLACE
+from ..dformat import SEQINSERT, SEQDELETE
 
 __all__ = ["diff_sequence_difflib"]
 
@@ -16,32 +16,15 @@ def opcodes_to_diff(a, b, opcodes):
         asize = aend - abegin
         bsize = bend - bbegin
         if action == "equal":
+            # Unlike difflib we don't represent equal stretches explicitly
             pass
         elif action == "replace":
-            if asize == bsize:
-                if asize == 1:
-                    d.append([REPLACE, abegin, b[bbegin]])
-                else:
-                    d.append([SEQREPLACE, abegin, b[bbegin:bend]])
-            else:
-                if asize == 1:
-                    d.append([DELETE, abegin])
-                else:
-                    d.append([SEQDELETE, abegin, asize])
-                if bsize == 1:
-                    d.append([INSERT, abegin, b[bbegin]])
-                else:
-                    d.append([SEQINSERT, abegin, b[bbegin:bend]])
+            d.append([SEQDELETE, abegin, asize])
+            d.append([SEQINSERT, abegin, b[bbegin:bend]])
         elif action == "insert":
-            if bsize == 1:
-                d.append([INSERT, abegin, b[bbegin]])
-            else:
-                d.append([SEQINSERT, abegin, b[bbegin:bend]])
+            d.append([SEQINSERT, abegin, b[bbegin:bend]])
         elif action == "delete":
-            if asize == 1:
-                d.append([DELETE, abegin])
-            else:
-                d.append([SEQDELETE, abegin, asize])
+            d.append([SEQDELETE, abegin, asize])
         else:
             raise RuntimeError("Unknown action {}".format(action))
     return d

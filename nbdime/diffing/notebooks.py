@@ -14,7 +14,7 @@ __all__ = ["diff_notebooks", "diff_cells"]
 
 import operator
 
-from ..dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE, SEQREPLACE
+from ..dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
 from ..dformat import decompress_diff
 
 from .comparing import strings_are_similar

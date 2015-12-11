@@ -16,7 +16,7 @@ from six.moves import xrange as range
 import copy
 import nbformat
 
-from ..dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE, SEQREPLACE
+from ..dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
 from ..dformat import decompress_diff
 from ..patching import patch
 

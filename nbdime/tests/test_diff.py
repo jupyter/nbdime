@@ -9,7 +9,7 @@ import pytest
 import copy
 
 from nbdime import patch, shallow_diff, deep_diff
-from nbdime.dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE, SEQREPLACE
+from nbdime.dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
 
 from .fixtures import check_diff_and_patch, check_symmetric_diff_and_patch
 

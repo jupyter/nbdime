@@ -9,7 +9,7 @@ import json
 from jupyter_core.application import JupyterApp, base_flags
 from ._version import __version__
 from .diffing.notebooks import diff_notebooks
-from .dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE, SEQREPLACE
+from .dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
 
 nbdiff_flags = {
 }

@@ -6,7 +6,7 @@
 import operator
 from six import string_types
 
-from ..dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE, SEQREPLACE
+from ..dformat import PATCH, INSERT, DELETE, REPLACE
 from ..dformat import validate_diff
 from .sequences import diff_sequence, diff_strings
 from .seq_difflib import diff_sequence_difflib

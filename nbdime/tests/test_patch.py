@@ -4,7 +4,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 from nbdime import patch
-from nbdime.dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE, SEQREPLACE
+from nbdime.dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
 
 
 # TODO: Check and improve test coverage
@@ -42,11 +42,6 @@ def test_patch_str():
     assert patch("abcd", [[SEQDELETE, 1, 2]]) == "ad"
     assert patch("abcd", [[SEQDELETE, 2, 2]]) == "ab"
 
-    # Test ::, sequence replace
-    assert patch("abc", [[SEQREPLACE, 0, "fg"]]) == "fgc"
-    assert patch("abc", [[SEQREPLACE, 1, "fg"]]) == "afg"
-    assert patch("abc", [[SEQREPLACE, 0, "fgh"]]) == "fgh"
-
 def test_patch_list():
     # Test +, single item insertion
     assert patch([], [[INSERT, 0, 3]]) == [3]
@@ -73,11 +68,6 @@ def test_patch_list():
     assert patch([5, 6, 7, 8], [[SEQDELETE, 0, 2]]) == [7, 8]
     assert patch([5, 6, 7, 8], [[SEQDELETE, 1, 2]]) == [5, 8]
     assert patch([5, 6, 7, 8], [[SEQDELETE, 2, 2]]) == [5, 6]
-
-    # Test ::, sequence replace
-    assert patch(["a", "b", "c"], [[SEQREPLACE, 0, ["f", "g"]]]) == ["f", "g", "c"]
-    assert patch(["a", "b", "c"], [[SEQREPLACE, 1, ["f", "g"]]]) == ["a", "f", "g"]
-    assert patch(["a", "b", "c"], [[SEQREPLACE, 0, ["f", "g", "h"]]]) == ["f", "g", "h"]
 
 def test_patch_dict():
     # Test +, single item insertion
