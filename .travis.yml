@@ -6,7 +6,10 @@ python:
     - 2.7
 sudo: false
 before_install:
-    - pip install -r requirements.txt -r test_requirements.txt
+    - pip install -r requirements.txt
+    - pip install pytest
+    - pip install pytest-cov
+    - pip install coveralls
 install:
     - pip install -e .
 script:
