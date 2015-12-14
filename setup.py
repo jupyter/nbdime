@@ -77,6 +77,8 @@ setup_args = dict(
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
     ],
 )
 
@@ -85,12 +87,11 @@ if 'develop' in sys.argv or any(a.startswith('bdist') for a in sys.argv):
 
 setuptools_args = {}
 install_requires = setuptools_args['install_requires'] = [
-    'jupyter_core',
-    'nbformat',
+    'nbformat', 'six', 'numpy',
 ]
 
 extras_require = setuptools_args['extras_require'] = {
-#    'test': ['pytest', 'ipykernel'],
+    'test': ['pytest'],
 #    'execute': ['jupyter_client'],
 }
 
@@ -100,9 +101,9 @@ if 'setuptools' in sys.modules:
     # force entrypoints with setuptools (needed for Windows, unconditional because of wheels)
     setup_args['entry_points'] = {
         'console_scripts': [
-            'jupyter-nbdiff = nbdime.nbdiffapp:main',
-            'jupyter-nbpatch= nbdime.nbpatchapp:main',
-            'jupyter-nbmerge = nbdime.nbmergeapp:main',
+            'nbdiff = nbdime.nbdiffapp:main',
+            'nbpatch= nbdime.nbpatchapp:main',
+            'nbmerge = nbdime.nbmergeapp:main',
         ]
     }
     setup_args.pop('scripts', None)

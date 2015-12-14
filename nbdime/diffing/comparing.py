@@ -10,7 +10,8 @@ __all__ = ["is_atomic", "is_similar"]
 
 
 def is_atomic(x):
-    atomic_strings = False # TODO: Configuration framework?
+    # TODO: Configuration framework?
+    atomic_strings = False
 
     if atomic_strings:
         return not isinstance(x, (list, dict))

@@ -3,17 +3,15 @@
 # Copyright (c) IPython Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+from __future__ import print_function
+
 import os
+import sys
 import nbformat
 import json
-from jupyter_core.application import JupyterApp, base_flags
 from ._version import __version__
 from .diffing.notebooks import diff_notebooks
 from .dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
-
-nbdiff_flags = {
-}
-nbdiff_flags.update(base_flags)
 
 
 # TODO: Improve and make a more reusable utility.
@@ -49,43 +47,45 @@ def pretty_print_diff(d, indent=0):
     return u"\n".join(pp)
 
 
-class NBDiffApp(JupyterApp):
-    version = __version__
+_usage = """\
+Compute the difference between two Jupyter notebooks.
 
-    description="""Compute the diff of two Jupyter notebooks.
-    """
+This is nbdiff from nbdime version {}.
 
-    examples = """
-    jupyter nbdiff before.ipynb after.ipynb patch.json
-    """
+Example usage:
 
-    flags = nbdiff_flags
+  jupyter nbdiff before.ipynb after.ipynb patch.json
+""".format(__version__)
 
-    def start(self):
-        if len(self.extra_args) != 3:
-            self.log.critical("Specify filenames of exactly two notebooks to diff and the output patch json filename.")
-            self.exit(1)
-        afn, bfn, dfn = self.extra_args
-        if not os.path.exists(afn):
-            self.log.critical("Missing file {}".format(afn))
-            self.exit(1)
-        if not os.path.exists(bfn):
-            self.log.critical("Missing file {}".format(bfn))
-            self.exit(1)
 
-        a = nbformat.read(afn, as_version=4)
-        b = nbformat.read(bfn, as_version=4)
+def main_diff(afn, bfn, dfn):
+    for fn in (afn, bfn):
+        if not os.path.exists(fn):
+            print("Missing file {}".format(fn))
+            return 1
 
-        d = diff_notebooks(a, b)
+    a = nbformat.read(afn, as_version=4)
+    b = nbformat.read(bfn, as_version=4)
 
-        verbose = True
-        if verbose:
-            print(pretty_print_diff(d))
+    d = diff_notebooks(a, b)
 
-        with open(dfn, "w") as df:
-            json.dump(d, df)
-            # Verbose version:
-            #json.dump(d, df, indent=4, separators=(",", ": "))
+    verbose = True
+    if verbose:
+        print(pretty_print_diff(d))
+
+    with open(dfn, "w") as df:
+        json.dump(d, df)
+        # Verbose version:
+        #json.dump(d, df, indent=4, separators=(",", ": "))
+    return 0
+
 
 def main():
-    NBDiffApp.launch_instance()
+    args = sys.argv[1:]
+    if len(args) != 3:
+        r = 1
+    else:
+        r = main_diff(*args)
+    if r:
+        print(_usage)
+    sys.exit(r)

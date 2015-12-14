@@ -3,53 +3,54 @@
 # Copyright (c) IPython Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+from __future__ import print_function
+
 import os
+import sys
 import nbformat
 import json
-from jupyter_core.application import JupyterApp, base_flags
 from ._version import __version__
 from .patching import patch_notebook
 
-nbpatch_flags = {
-}
-nbpatch_flags.update(base_flags)
 
-class NBPatchApp(JupyterApp):
-    version = __version__
+_usage = """\
+Apply patch from nbpatch to a Jupyter notebook.
 
-    description="""Apply patch to a Jupyter notebook.
-    """
+This is nbpatch from nbdime version {}.
 
-    examples = """
-    jupyter nbpatch before.ipynb patch.json after.ipynb
-    """
+Example usage:
 
-    flags = nbpatch_flags
+  jupyter nbpatch before.ipynb patch.json after.ipynb
+""".format(__version__)
 
-    def start(self):
-        if len(self.extra_args) != 3:
-            self.log.critical("Specify one notebook and one patch to apply.")
-            self.exit(1)
 
-        bfn, dfn, afn = self.extra_args
+def main_patch(bfn, dfn, afn):
+    for fn in (bfn, dfn):
+        if not os.path.exists(fn):
+            print("Missing file {}".format(fn))
+            return 1
 
-        for fn in (bfn, dfn):
-            if not os.path.exists(fn):
-                self.log.critical("Missing file {}".format(fn))
-                self.exit(1)
+    before = nbformat.read(bfn, as_version=4)
+    with open(dfn) as df:
+        d = json.load(df)
 
-        before = nbformat.read(bfn, as_version=4)
-        with open(dfn) as df:
-            d = json.load(df)
+    after = patch_notebook(before, d)
 
-        after = patch_notebook(before, d)
+    verbose = True
+    if verbose:
+        print(after)
 
-        verbose = True
-        if verbose:
-            print(after)
+    print("Writing", afn)
+    nbformat.write(after, afn)
+    return 0
 
-        print "Writing", afn
-        nbformat.write(after, afn)
 
 def main():
-    NBPatchApp.launch_instance()
+    args = sys.argv[1:]
+    if len(args) != 3:
+        r = 1
+    else:
+        r = main_patch(*args)
+    if r:
+        print(_usage)
+    sys.exit(r)
