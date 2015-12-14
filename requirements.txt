@@ -1,5 +1,3 @@
 six
 nbformat
 numpy
-pytest
-pytest-cov
