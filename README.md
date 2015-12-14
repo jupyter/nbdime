@@ -8,3 +8,6 @@
 NB! This project is highly experimental and rapidly changing.
 
 See the latest documentation at http://nbdime.readthedocs.org.
+
+A JPEP pull request has been made at:
+https://github.com/jupyter/enhancement-proposals/pull/8
