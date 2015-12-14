@@ -7,7 +7,7 @@ from six import string_types
 from six.moves import xrange as range
 import operator
 
-from ..dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
+from ..dformat import PATCH, INSERT, DELETE, REPLACE
 from ..dformat import validate_diff, count_consumed_symbols
 from .sequences import diff_strings, diff_sequence
 
@@ -27,47 +27,42 @@ def deep_diff_lists(a, b, compare=operator.__eq__, shallow_diff=None):
     acons = 0
     bcons = 0
     pdi = []
-    for e in shallow_diff:
-        action = e[0]
-        index = e[1]
+    M = len(shallow_diff)
+    for ie in range(M+1):
+        if ie < M:
+            # Consume n more unmentioned items before this diff entry
+            # Note that index can be larger than acons in the case where items
+            # have been deleted from a and then insertions from b occur.
+            e = shallow_diff[ie]
+            index = e[1]
+            n = max(0, index - acons)
+            askip, bskip = count_consumed_symbols(e)
+        else:
+            # Consume final items after the last diff entry
+            e = None
+            n = len(a) - acons
+            askip, bskip = 0, 0
+            assert n >= 0
+            assert len(b) - bcons == n
 
-        # Consume n more unmentioned items.
-        # Note that index can be larger than acons in the case where items
-        # have been deleted from a and then insertions from b occur.
-        n = max(0, index - acons)
+        # Recursively deep_diff the n items that have been deemed similar
         for i in range(n):
             aval = a[acons+i]
             bval = b[bcons+i]
-            # Recursively deep_diff the items that have been deemed similar
             if not is_atomic(aval):
                 d = deep_diff(aval, bval, compare)
                 if d:
                     pdi.append([PATCH, acons+i, d])
 
-        # Count consumed items
-        askip, bskip = count_consumed_symbols(e)
+        # Keep count of consumed items
         acons += n + askip
         bcons += n + bskip
 
-        # Now insert the diff entry
-        pdi.append(e)
-
-    # Consume final items
-    n = len(a) - acons
-    assert n >= 0
-    assert len(b) - bcons == n
-    for i in range(n): # TODO: Get rid of code duplication
-        aval = a[acons+i]
-        bval = b[bcons+i]
-        # Recursively deep_diff the non-atomic items that have been deemed similar
-        if not is_atomic(aval):
-            d = deep_diff(aval, bval, compare)
-            if d:
-                pdi.append([PATCH, acons+i, d])
+        # Insert the diff entry unless past the end
+        if ie < M:
+            pdi.append(e)
 
     # Sanity check
-    acons += n
-    bcons += n
     assert acons == len(a)
     assert bcons == len(b)
 
