@@ -15,6 +15,9 @@ from ..dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
 Missing = object()
 
 
+collection_types = string_types + (list, dict)
+
+
 # TODO: Use this format in diffs directly?
 def to_dict_diff(ld):
     dd = {}
@@ -24,170 +27,119 @@ def to_dict_diff(ld):
         elif len(e) == 3:
             dd[e[1]] = [e[0], e[2]]
         else:
-            error("Invalid diff format.")
+            raise ValueError("Invalid diff format.")
     return dd
 
 
-def conflict(basevalue, localvalue, remotevalue, bl_diff, br_diff):
-    # TODO: Define conflicts format
-    if basevalue is Missing:
-        basevalue = None
-    if localvalue is Missing:
-        localvalue = None
-    if remotevalue is Missing:
-        remotevalue = None
-    #return [basevalue, localvalue, remotevalue, bl_diff, br_diff]
-    return [basevalue, localvalue, remotevalue]
-
-
-def _check_actions(la, ra, bv):
-    if la == INSERT or ra == INSERT:
-        # Inserted both places (inserting only on one side should never happen with a shared base)
-        assert la == INSERT and ra == INSERT
-        assert bv is Missing
-    else:
-        # Patched or replaced both places
-        assert la in (REPLACE, PATCH) and ra in (REPLACE, PATCH)
-
-
-def dict_diff_entry_to_patch_entry(e):
-    if e[0] == PATCH:
-        return e
-    if e[0] == DELETE:
-        return {key:DELETE}
-
-
-def merge_dict_items(bv, lv, rv, ld, rd):
-    # Switch on diff actions
-    if ld[0] == DELETE or rd[0] == DELETE:
-        if ld[0] == DELETE and rd[0] == DELETE:
-            # (4) Removed in both local and remote
-            me = None
-            co = None
-        else:
-            # (5) Conflict: removed one place and edited another
-            me = None
-            co = conflict(bv, lv, rv, ld, rd) # (ld, rd) contains one of (lv, rv) in this case
-    else:
-        # Asserts for valid combinations of ld[0] and rd[0]
-        _check_actions(ld[0], rd[0], bv)
-
-        # It doesn't matter if values are inserted, replaced,
-        # or patched if the end result is equal
-        if lv == rv: # ***
-            # TODO: We will want to automatically handle some differences
-            # like execution count for notebooks. Just adding a custom
-            # compare instead of == in here (***) won't cut it, as we want to
-            # create a merged value as well.  For the execution count we
-            # could just remove them before merging and set all to None
-            # afterwards. But there are probably some more intricate cases.
-            me = lv
-            co = None
-        else:
-            # At this point, we know that remote and local actions are
-            # not no-ops or deletions, and the resulting values differ.
-            # New values should also differ from base value here:
-            assert bv != lv
-            assert bv != rv
-
-            # Get subpatches if already computed
-            lp = ld[1] if ld[0] == PATCH else None
-            rp = rd[1] if rd[0] == PATCH else None
-
-            # Recursively attempt to merge lv and rv if possible
-            recurse_types = string_types + (list, dict)
-            if isinstance(lv, recurse_types) and type(lv) == type(rv):
-                me, co = merge(bv, lv, rv, lp, rp)
-            else:
-                # This code contains lots of corner cases, so using
-                # asserts here to rule out cases that don't make sense
-                # and check my understanding against examples we come
-                # up with later
-                assert ld[0] in (REPLACE, INSERT) and ld[1] == lv
-                assert rd[0] in (REPLACE, INSERT) and rd[1] == rv
-                # Automatic conflict when types are different and not dict/list/string
-                me = None
-                co = conflict(bv, lv, rv, ld, rd)
-    return me, co
-
-
-def merge_dicts(base, local, remote, base_local_diff=None, base_remote_diff=None):
-    """Perform a three-way merge.
+def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
+    """Perform a three-way merge of dicts
 
     Returns (merged, conflicts), where merged is the dict resulting
     from the merge process without any conflicting changes, and conflicts
     is on the format {key:(basevalue, localvalue, remotevalue)}.
     """
-    if base is Missing:
-        base = {}
     assert isinstance(base, dict) and isinstance(local, dict) and isinstance(remote, dict)
 
-    # Diffing base->{local|remote}
-    if base_local_diff is None:
-        base_local_diff = deep_diff(base, local)
-    if base_remote_diff is None:
-        base_remote_diff = deep_diff(base, remote)
-
     # Converting to dict-based diff format for dicts for convenience
+    # This step will be unnecessary if we change the diff format to work this way always
     base_local_diff = to_dict_diff(base_local_diff)
     base_remote_diff = to_dict_diff(base_remote_diff)
-
-
-    # FIXME: The diff recursion here is inconsistent, passing only a
-    # diff entry below and expecting a full diff above.
-
 
     # Summary of diff entry cases with (#) references to below code
     # r\l | N/A   -   +   :   !
     # ----|----------------------
     # N/A | (1)  (2)---------(2)
     #  -  | (3)  (4) (5)-----(5)
-    #  +  |  |   (5)
-    #  :  |  |    |     (6)
-    #  !  | (3)  (5)
+    #  +  |  |   (5) (6) (5) (5)
+    #  :  |  |    |  (5) (7) (5)
+    #  !  | (3)  (5) (5  (5) (8)
 
     # Get diff keys
     bldkeys = set(base_local_diff.keys())
     brdkeys = set(base_remote_diff.keys())
     dkeys = bldkeys | brdkeys
 
-    # (1) Just use base for all keys with no change
+    # (1) Use base values for all keys with no change
     merged = {key: base[key] for key in set(base.keys()) - dkeys}
-    conflicts = {}
 
-    # (2) Next apply one-sided diffs, i.e. no conflicts
+    # (2) Apply one-sided local diffs
     for key in bldkeys - brdkeys:
-        # Just use local value or remove
+        # Just use local value or remove by not inserting
         if base_local_diff[key][0] != DELETE:
             merged[key] = local[key]
-    # (3)
+
+    # (3) Apply one-sided remote diffs
     for key in brdkeys - bldkeys:
-        # Just use remote value or remove
+        # Just use remote value or remove by not inserting
         if base_remote_diff[key][0] != DELETE:
             merged[key] = remote[key]
+
+    # Data structures for storing conflicts
+    local_conflict_diff = {}
+    remote_conflict_diff = {}
 
     # (4) (5) (6)
     # Then we have the potentially conflicting changes
     for key in brdkeys & bldkeys:
-        # Get diffs
+        # Get diff entries for this key (we know both sides have an
+        # entry here because all other cases are covered above)
         ld = base_local_diff[key]
         rd = base_remote_diff[key]
 
-        # Get values
+        # Get values (using Missing as a sentinel to allow None as a value)
         bv = base.get(key, Missing)
         lv = local.get(key, Missing)
         rv = remote.get(key, Missing)
 
-        # Merge this item independently
-        me, co = merge_dict_items(bv, lv, rv, ld, rd)
-
-        # Insert merge result and/or conflict
-        if me is not None:
+        # Switch on diff actions
+        if ld[0] != rd[0]: # Note that this means the below cases always have the same action
+            # (5) Conflict: removed one place and edited another, or edited in different ways
+            local_conflict_diff[key] = ld
+            remote_conflict_diff[key] = rd
+        elif ld[0] == DELETE and rd[0] == DELETE:
+            # (4) Removed in both local and remote, just don't add it to merge result
+            pass
+        elif ld[0] in (INSERT, REPLACE, PATCH) and lv == rv:
+            # If inserting/replacing/patching produces the same value, just use it
+            merged[key] = lv
+        elif ld[0] == INSERT:
+            # (6) Insert in both local and remote, values are different
+            # Try partially merging the inserted values
+            if type(lv) == type(rv) and isinstance(lv, collection_types):
+                # Use empty collection of the right type as base
+                me, lco, rco = merge(type(lv)(), lv, rv)
+                # Insert partially merged result
+                merged[key] = me
+                # And add patch entries for the conflicting parts
+                if lco or rco:
+                    assert lco and rco
+                    local_conflict_diff[key] = [PATCH, lco]
+                    remote_conflict_diff[key] = [PATCH, rco]
+            else:
+                # Recursive merge not possible, record a conflict
+                local_conflict_diff[key] = ld
+                remote_conflict_diff[key] = rd
+        elif ld[0] == REPLACE:
+            # (7) Replace in both local and remote, values are different
+            local_conflict_diff[key] = ld
+            remote_conflict_diff[key] = rd
+        elif ld[0] == PATCH:
+            # (8) Patch on both local and remote, values are different
+            # Patches produce different values, try merging the substructures
+            # (a patch command only occurs when the type is a collection, so we
+            # can safely recurse here and know we won't encounter e.g. an int)
+            me, lco, rco = _merge(bv, lv, rv, ld[1], rd[1])
+            # Insert partially merged result
             merged[key] = me
-        if co:
-            conflicts[key] = co
+            # And add patch entries for the conflicting parts
+            if lco or rco:
+                assert lco and rco
+                local_conflict_diff[key] = [PATCH, lco]
+                remote_conflict_diff[key] = [PATCH, rco]
+        else:
+            raise ValueError("Invalid diff actions {} and {].".format(ld[0], rd[0]))
 
-    return merged, conflicts
+    return merged, local_conflict_diff, remote_conflict_diff
 
 
 def get_deleted_indices(diff):
@@ -200,7 +152,7 @@ def get_deleted_indices(diff):
     return deleted
 
 
-def merge_lists(base, local, remote, base_local_diff=None, base_remote_diff=None):
+def _merge_lists(base, local, remote, base_local_diff=None, base_remote_diff=None):
     """Perform a three-way merge of two lists.
 
     Returns (merged, conflicts), FIXME define format of returned values here.
@@ -211,15 +163,11 @@ def merge_lists(base, local, remote, base_local_diff=None, base_remote_diff=None
     """
     assert False, "This function is under construction and heavily broken at the moment."
 
-    if base is Missing:
-        base = []
     assert isinstance(base, list) and isinstance(local, list) and isinstance(remote, list)
 
-    # Diffing base->{local|remote}
-    if base_local_diff is None:
-        base_local_diff = deep_diff(base, local)
-    if base_remote_diff is None:
-        base_remote_diff = deep_diff(base, remote)
+    # Data structures for storing conflicts
+    local_conflict_diff = []
+    remote_conflict_diff = []
 
 
     # Compute the diff between the base->local and base->remote diffs
@@ -284,35 +232,205 @@ def merge_lists(base, local, remote, base_local_diff=None, base_remote_diff=None
     assert not remote_deleted
 
     merged = patch(base, merged_diff)
-    return merged, conflicts
+    return merged, local_conflict_diff, remote_conflict_diff
 
 
-def merge_strings(base, local, remote, base_local_diff=None, base_remote_diff=None):
-    if base is Missing:
-        base = u""
+def _merge_strings(base, local, remote, base_local_diff, base_remote_diff):
     assert isinstance(base, string_types) and isinstance(local, string_types) and isinstance(remote, string_types)
-    me, co = merge_lists(list(base), list(local), list(remote), base_local_diff, base_remote_diff)
-    # FIXME: Convert to string compatible format
+
+    # Merge characters as lists
+    me, lco, rco = _merge_lists(list(base), list(local), list(remote), base_local_diff, base_remote_diff)
+
+    # Convert to string compatible format
     merged = u"".join(me)
-    conflicts = co
-    return merged, conflicts
+
+    return merged, lco, rco
 
 
-def merge(base, local, remote, base_local_diff=None, base_remote_diff=None):
+def _merge(base, local, remote, base_local_diff, base_remote_diff):
+    if not (type(base) == type(local) and type(base) == type(remote)):
+        raise ValueError("Expecting matching types, got {}, {}, and {}.".format(type(base), type(local), type(remote)))
+
     if isinstance(base, dict):
-        assert isinstance(local, dict) and isinstance(remote, dict)
-        return merge_dicts(base, local, remote, base_local_diff, base_remote_diff)
+        return _merge_dicts(base, local, remote, base_local_diff, base_remote_diff)
     elif isinstance(base, list):
-        assert isinstance(local, list) and isinstance(remote, list)
-        return merge_lists(base, local, remote, base_local_diff, base_remote_diff)
+        return _merge_lists(base, local, remote, base_local_diff, base_remote_diff)
     elif isinstance(base, string_types):
-        assert isinstance(local, string_types) and isinstance(remote, string_types)
-        return merge_strings(base, local, remote, base_local_diff, base_remote_diff)
-    else:
-        error("Cannot handle merge of types {}, {}, {}.".format(type(base), type(local), type(remote)))
+        return _merge_strings(base, local, remote, base_local_diff, base_remote_diff)
+
+    raise ValueError("Cannot handle merge of type {}.".format(type(base)))
+
+
+def merge(base, local, remote):
+    """Do a three-way merge of same-type collections b, l, r.
+
+    Terminology:
+
+        collection = list | dict | string
+        value = int | float | string
+
+        (string is a collection of chars or atomic value depending on parameters)
+
+        (an alternative way to handle string parameters would be a pre/postprocessing
+        splitting/joining of strings into lists of lines, lists of words, lists of chars)
+
+    Input:
+
+        b - base collection
+        l - local collection
+        r - remote collection
+        bld - base-local diff
+        brd - base-remote diff
+
+    ### Output:
+
+        ad - agreed upon diff
+        cld - part of local diff bld that is in conflict with remote diff brd
+        crd - part of remote diff brd that is in conflict with local diff bld
+
+    The merge result can be computed by patching base with the agreed diff ad.
+    If the conflict diffs cld and crd are empty, the merge result is final,
+    otherwise it is the intermediate agreed upon part.
+
+    Note that the diff indices in the conflict diffs still relate to base,
+    and will have to be mapped appropriately to the intermediate merge output.
+
+
+    ### Alternative output:
+
+        m - merge result (partial, or final if no conflicts)
+        cld - part of local diff bld that is in conflict with remote diff brd
+        crd - part of remote diff brd that is in conflict with local diff bld
+
+    Note that the diff indices in the conflict diffs here relate to the
+    intermediate merge result m, and will have to be mapped appropriately
+    to the intermediate merge output.
+
+
+    ### Combination of the two Output:
+
+        ad - agreed upon diff parts (relating to base)
+        m - merge result (partial, or final if no conflicts)
+        cld - part of local diff bld that is in conflict with remote diff brd
+        crd - part of remote diff brd that is in conflict with local diff bld
+
+    Note that the diff indices in the conflict diffs here relate to the
+    intermediate merge result m, and will have to be mapped appropriately
+    to the intermediate merge output. Postcondition: m == patch(base, ad).
+
+    Critical question: can we be sure the partial merge result is a valid notebook?
+
+    ## Trying to figure out problem with diff vs diff entry in recursion:
+
+    merge(b, l, r) -> compute bld,brd and call _merge
+    _merge(b, l, r, bld, brd) -> switch on type of b,l,r
+    merge_dicts(b, l, r, bld, brd)
+    merge_lists(b, l, r, bld, brd)
+    merge_strings(b, l, r, bld, brd)
+
+    Case: b,l,r are dicts, bld,brd are dict diffs, keys of bld,brd correspond to keys in b,l,r.
+    Case: b,l,r are lists, bld,brd are list diffs, indices in bld,brd entries correspond to indices in b(,l,r).
+
+    Case: purely nested dicts of values. Alternatives for each dict key:
+
+        One sided actions always ok:
+        N,-
+        N,!
+        N,:
+        N,+
+        -,N
+        !,N
+        :,N
+        +,N
+
+        Two sided equal actions ok if argument is the same:
+        -,- = ok (agree on delete)
+.        +,+ = ok if equal inserts, otherwise conflict (two sided insert)
+.        !,! = ok if equal patches, otherwise conflict (two sided patch)
+.        :,: = ok if equal replacement value, otherwise conflict (two sided replace)
+
+        Different action always conflicts:
+        !,- = conflict (delete and patch)
+        -,! = conflict (delete and patch)
+        :,- = conflict (delete and replace)
+        -,: = conflict (delete and replace)
+.        :,! = conflict (patch and replace)
+.        !,: = conflict (patch and replace)
+
+  ! : + -
+! r x x m
+: x r x m
++ x x m x
+- m m x -
+
+        Conflict situations (symmetric, only listing from one side):
+        delete / replace or delete / patch -- manual resolution needed
+        replace / replace with different value -- manual resolution needed
+        insert / insert with different value -- manual resolution needed - recursion will not have a base value for further merging.
+        patch / patch with different diff -- recurse!
+        replace / patch -- manual resolution needed, will only happen if collection type changes in replace
+
+
+        Takeaways:
+        - Ensure that diff always uses patch on collections unless the type changes and replace on values.
+        - The only recursion will happen on the patch / patch action of equal type collections!
+        - Patch action is ["!", key, subdiff], providing subdiff for both sides, and meaning values exist on both sides.
+
+
+    ## Next trying to figure out list situations:
+
+    Case: purely nested lists of values. Alternatives for each base item:
+
+        One sided actions always ok:
+        N,-
+        N,+
+        N,!
+
+        Delete and patch is a conflict:
+        -,! = conflict (delete and patch)
+
+        Two sided equal actions ok if argument is the same:
+        -,- = ok (agree on deleting this item)
+        -,+ = ok (delete this item and insert new values)
+        +,+ = ok (always insert both, or pick one if new values are equal?)
+        !,! = ok (recurse)
+        !,+ = ok (patch this item and insert new values)
+
+  ! : + -
+! r x x m
+: x r x m
++ x x m x
+- m m x -
+
+        Conflict situations (symmetric, only listing from one side):
+        delete / replace or delete / patch -- manual resolution needed
+        replace / replace with different value -- manual resolution needed
+        insert / insert with different value -- manual resolution needed - recursion will not have a base value for further merging.
+        patch / patch with different diff -- recurse!
+        replace / patch -- manual resolution needed, will only happen if collection type changes in replace
+
+    """
+    base_local_diff = deep_diff(base, local)
+    base_remote_diff = deep_diff(base, remote)
+    return _merge(base, local, remote, base_local_diff, base_remote_diff)
 
 
 def merge_notebooks(base, local, remote):
     # FIXME: Implement notebook aware merge
     merged, conflicts = merge(base, local, remote)
     return nbformat.from_dict(merged), conflicts
+
+
+
+"""
+
+nbdiff: nb, nb  -> di
+
+nbmerge: nb, nb, nb -> nb, di, di
+
+
+diff: obj, obj -> di
+merge: obj, obj, obj, di, di -> obj, di, di
+
+
+"""
