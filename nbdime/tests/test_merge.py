@@ -6,7 +6,7 @@ import pytest
 
 
 def cut(li, *indices):
-    c = li.copy()
+    c = copy.deepcopy(li)
     for q in reversed(sorted(indices)):
         c.pop(q)
     return c
@@ -34,12 +34,12 @@ def test_shallow_merge_lists_delete_no_conflict():
     # both remove the same entry
     b = [1, 3, 2, 7]
     for i in range(len(b)):
-        l = b.copy()
-        r = b.copy()
+        l = copy.deepcopy(b)
+        r = copy.deepcopy(b)
         l.pop(i)
         r.pop(i)
         m, lc, rc = merge(b, l, r)
-        e = b.copy(); e.pop(i)
+        e = copy.deepcopy(b); e.pop(i)
         assert m == e
         assert lc == []
         assert rc == []
@@ -66,7 +66,7 @@ def test_shallow_merge_lists_insert_no_conflict():
     # local adds an entry
     b = [1]
     l = b + [2]
-    r = b.copy()
+    r = copy.deepcopy(b)
     m, lc, rc = merge(b, l, r)
     assert m == [1, 2]
     assert lc == []
@@ -74,7 +74,7 @@ def test_shallow_merge_lists_insert_no_conflict():
 
     # remote adds an entry
     b = [1]
-    l = b.copy()
+    l = copy.deepcopy(b)
     r = b + [3]
     m, lc, rc = merge(b, l, r)
     assert m == [1, 3]
@@ -113,7 +113,7 @@ def test_shallow_merge_lists_insert_no_conflict():
     # local and remote adds the same entries interleaved within each base entry
     b = [1, 3, 5]
     l = [0, 1, 2, 3, 4, 5]
-    r = l.copy()
+    r = copy.deepcopy(l)
     m, lc, rc = merge(b, l, r)
     # whether this is a good result is disputable but this is how it currently works:
     assert m == [0, 0, 1, 2, 2, 3, 4, 4, 5]
