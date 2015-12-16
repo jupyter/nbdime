@@ -32,12 +32,7 @@ def to_dict_diff(ld):
 
 
 def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
-    """Perform a three-way merge of dicts
-
-    Returns (merged, conflicts), where merged is the dict resulting
-    from the merge process without any conflicting changes, and conflicts
-    is on the format {key:(basevalue, localvalue, remotevalue)}.
-    """
+    """Perform a three-way merge of dicts. See docstring of merge."""
     assert isinstance(base, dict) and isinstance(local, dict) and isinstance(remote, dict)
 
     # Converting to dict-based diff format for dicts for convenience
@@ -152,22 +147,174 @@ def get_deleted_indices(diff):
     return deleted
 
 
-def _merge_lists(base, local, remote, base_local_diff=None, base_remote_diff=None):
-    """Perform a three-way merge of two lists.
+def where_deleted(diff, size):
+    deleted = [False]*size
+    for e in diff:
+        if e[0] == DELETE:
+            deleted[e[1]] = True
+        elif e[0] == SEQDELETE:
+            for i in range(e[2]):
+                deleted[e[1] + i] = True
+    return deleted
 
-    Returns (merged, conflicts), FIXME define format of returned values here.
 
-    FIXME: This is a very naive algorithm producing a highly suboptimal
-    merge, mainly to have a starting point of the discussion and for myself
-    to get a feeling for the difficulties.
-    """
-    assert False, "This function is under construction and heavily broken at the moment."
+def where_patched(diff, size):
+    patched = [False]*size
+    for e in diff:
+        if e[0] == PATCH:
+            patched[e[1]] = True
+    return patched
 
+
+def _split_diff(diff, size):
+    deleted = [False]*size
+    patched = [None]*size
+    inserts = []
+    for e in diff:
+        if e[0] == PATCH:
+            patched[e[1]] = e[2]
+        elif e[0] == DELETE:
+            deleted[e[1]] = True
+        elif e[0] == SEQDELETE:
+            for i in range(e[2]):
+                deleted[e[1] + i] = True
+        elif e[0] == INSERT:
+            # Make canonical representation of inserts
+            inserts.append([e[1], [e[2]]])
+        elif e[0] == SEQINSERT:
+            # Make canonical representation of inserts
+            inserts.append([e[1], e[2]])
+        else:
+            raise ValueError("Invalid diff action {}.".format(e[0]))
+    return deleted, patched, inserts
+
+
+def interleave_inserts(local_inserts, remote_inserts):
+    # [ (index0, values0), (index1, values1) ]
+    inserts = [[0, [], 0, 0]]
+
+    l = list(local_inserts)
+    r = list(remote_inserts)
+    li = 0
+    ri = 0
+    while li < len(l) or ri < len(r):
+        # NB! The code below defines that local inserts
+        # are inserted before remote change when index is equal,
+        # and that when inserts are made both locally and remote
+        # before the same base line, the values are concatenated
+        # without considering whether they represent the same change
+        # or not. It is possible that checking for duplicate inserts
+        # is better, but we need to think this through carefully and
+        # investigate what other tools do. At least this naive
+        # approach doesn't drop any data.
+        if li < len(l) and (ri >= len(r) or l[li][0] <= r[ri][0]):
+            index, values = l[li]
+            li += 1
+            lskip = len(values)
+            rskip = 0
+        else:
+            index, values = r[ri]
+            ri += 1
+            lskip = 0
+            rskip = len(values)
+
+        if inserts[-1][0] == index:
+            inserts[-1][1].extend(values)
+            inserts[-1][2] += lskip
+            inserts[-1][3] += rskip
+        else:
+            inserts.append([index, list(values), lskip, rskip])
+    return inserts
+
+
+def _merge_lists(base, local, remote, base_local_diff, base_remote_diff):
+    """Perform a three-way merge of lists. See docstring of merge."""
     assert isinstance(base, list) and isinstance(local, list) and isinstance(remote, list)
+
+    # Split diffs into different representations
+    local_deleted, local_patched, local_inserts = _split_diff(base_local_diff, len(base))
+    remote_deleted, remote_patched, remote_inserts = _split_diff(base_remote_diff, len(base))
+    inserts = interleave_inserts(local_inserts, remote_inserts)
+
+    # Add a dummy insert at end to make loop handle final stretch after last actual insert
+    inserts.append([len(base), [], 0, 0])
+
+    # Interleave local and remote diff entries in a merged diff object
+    merged = []
 
     # Data structures for storing conflicts
     local_conflict_diff = []
     remote_conflict_diff = []
+
+    loffset = 0
+    roffset = 0
+    boffset = 0
+    for index, values, lskip, rskip in inserts:
+        # 1) consume base[boffset:index]
+        for i in range(boffset, index):
+            # Bools meaning: local delete, remote deleted, local patched, remote patched
+            ld = local_deleted[i]
+            rd = remote_deleted[i]
+            lp = local_patched[i] is not None
+            rp = remote_patched[i] is not None
+
+            # Split the search space: have deletion of this line occurred on at least one side?
+            if ld or rd:
+                if lp:
+                    # Conflict: Deleted remote, patched local
+                    # NB! Note the use of j, index into merged, in the conflict diff!
+                    j = len(merged)
+                    merged.append(base[i])
+                    local_conflict_diff.append([PATCH, j, local_patched[i]])
+                    remote_conflict_diff.append([DELETE, j])
+                elif rp:
+                    # Conflict: Deleted local, patched remote
+                    # NB! Note the use of j, index into merged, in the conflict diff!
+                    j = len(merged)
+                    merged.append(base[i])
+                    local_conflict_diff.append([DELETE, j])
+                    remote_conflict_diff.append([PATCH, j, remote_patched[i]])
+                else:
+                    # Not patched on alternate side, so delete it by just skipping value
+                    pass
+            else:
+                # At this point we know no deletion has occured
+                if lp and rp:
+                    # Patched on both sides, recurse
+                    me, lco, rco = _merge(base[i], local[i+loffset], remote[i+roffset], local_patched[i], remote_patched[i])
+                    # NB! Note the use of j, index into merged, in the conflict diff!
+                    j = len(merged)
+                    merged.append(me)
+                    if lco or rco:
+                        assert lco and rco
+                        local_conflict_diff.append([PATCH, j, lco])
+                        remote_conflict_diff.append([PATCH, j, rco])
+                elif lp:
+                    assert local[i+loffset] == patch(base[i], local_patched[i][2])  # TODO: Remove expensive assert!
+                    # Patched on local side only
+                    merged.append(local[i+loffset])
+                elif rp:
+                    assert remote[i+roffset] == patch(base[i], remote_patched[i][2])  # TODO: Remove expensive assert!
+                    # Patched on remote side only
+                    merged.append(remote[i+loffset])
+                else:
+                    # No deletion, no patching, keep value
+                    merged.append(base[i])
+        # Start at index next time
+        boffset = index
+
+        # 2) insert next range of values before index and skip values in local and remote
+        merged.extend(values)
+        loffset += lskip
+        roffset += rskip
+
+    return merged, local_conflict_diff, remote_conflict_diff
+
+
+def __old_merge_lists(base, local, remote, base_local_diff, base_remote_diff):
+    """Perform a three-way merge of lists. See docstring of merge."""
+    assert isinstance(base, list) and isinstance(local, list) and isinstance(remote, list)
+
 
 
     # Compute the diff between the base->local and base->remote diffs
@@ -176,8 +323,12 @@ def _merge_lists(base, local, remote, base_local_diff=None, base_remote_diff=Non
 
 
     # Build sets of deleted indices on each side
-    local_deleted = get_deleted_indices(base_local_diff)
-    remote_deleted = get_deleted_indices(base_local_diff)
+    #local_deleted = get_deleted_indices(base_local_diff)
+    #remote_deleted = get_deleted_indices(base_local_diff)
+
+    # Build lists of markers, True for base item indices that are deleted in local or remote
+    local_deleted = where_deleted(base_local_diff, len(base))
+    remote_deleted = where_deleted(base_remote_diff, len(base))
 
     # Get non-deletion diff entries only
     local_diff = [e for e in base_local_diff if e[0] not in (DELETE, SEQDELETE)]
@@ -185,7 +336,11 @@ def _merge_lists(base, local, remote, base_local_diff=None, base_remote_diff=Non
 
     # Interleave local and remote diff entries in a merged diff object
     merged_diff = []
-    conflicts = [] # FIXME: Format?
+
+    # Data structures for storing conflicts
+    local_conflict_diff = []
+    remote_conflict_diff = []
+
     lk = 0
     rk = 0
     lastindex = 0
@@ -236,6 +391,7 @@ def _merge_lists(base, local, remote, base_local_diff=None, base_remote_diff=Non
 
 
 def _merge_strings(base, local, remote, base_local_diff, base_remote_diff):
+    """Perform a three-way merge of strings. See docstring of merge."""
     assert isinstance(base, string_types) and isinstance(local, string_types) and isinstance(remote, string_types)
 
     # Merge characters as lists
