@@ -115,51 +115,6 @@ def diff_dicts(a, b, compare=operator.__eq__):
     return d
 
 
-# Alternative dict-based diff format for dicts
-def _alternative_diff_dicts(a, b, compare=operator.__eq__):
-    """Compute diff of two dicts with configurable behaviour.
-
-    Keys in both a and b will be handled based on
-
-    Make a one-level diff of dicts a and b, using given compare
-    operator to specify which items are considered the same.
-
-    Items not mentioned in diff are items where compare(x, y) return True.
-    For other items the diff will contain delete, insert, or replace entries.
-    """
-    assert isinstance(a, dict) and isinstance(b, dict)
-    d = {}
-
-    # Sorting keys in loops to get a deterministic diff result
-    akeys = set(a.keys())
-    bkeys = set(b.keys())
-
-    # Delete keys in a but not in b
-    for key in sorted(akeys - bkeys):
-        d[key] = [DELETE]
-
-    # Handle values for keys in both a and b
-    for key in sorted(akeys & bkeys):
-        avalue = a[key]
-        bvalue = b[key]
-        # If types are the same and nonatomic, recurse
-        if type(avalue) == type(bvalue) and not is_atomic(avalue):
-            dd = diff(avalue, bvalue, compare)
-            if dd:
-                # Patch value at key with nonzero diff dd
-                d[key] = [PATCH, dd]
-        else:
-            if not compare(avalue, bvalue): # TODO: Use != or not compare() here?
-                # Replace value at key with bvalue
-                d[key] = [REPLACE, bvalue]
-
-    # Add keys in b but not in a
-    for key in sorted(bkeys - akeys):
-        d[key] = [INSERT, b[key]]
-
-    return d
-
-
 def diff(a, b, compare=operator.__eq__):
     "Compute the diff of two json-like objects, list or dict or string."
 
