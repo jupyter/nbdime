@@ -1,5 +1,4 @@
-from nbdime import merge
-#from nbdime.diffing import deep_diff
+from nbdime import merge, diff
 
 import copy
 import pytest

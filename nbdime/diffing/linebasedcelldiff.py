@@ -20,7 +20,7 @@ from ..dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
 from ..dformat import decompress_diff
 from ..patching import patch
 
-from .deep import deep_diff
+from .generic import diff
 
 
 def extract_source_lines(cells):

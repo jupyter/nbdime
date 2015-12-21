@@ -12,7 +12,7 @@ import glob
 import nbformat
 import re
 
-from nbdime import patch, shallow_diff, deep_diff
+from nbdime import patch, diff
 from nbdime.dformat import is_valid_diff
 
 def testspath():
@@ -118,11 +118,7 @@ def assert_is_valid_notebook(nb):
 
 def check_diff_and_patch(a, b):
     "Check that patch(a, diff(a,b)) reproduces b."
-    d = shallow_diff(a, b)
-    assert is_valid_diff(d)
-    assert patch(a, d) == b
-
-    d = deep_diff(a, b)
+    d = diff(a, b)
     assert is_valid_diff(d)
     assert patch(a, d) == b
 

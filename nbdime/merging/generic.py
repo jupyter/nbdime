@@ -8,7 +8,7 @@ from six.moves import xrange as range
 
 import nbformat
 
-from ..diffing import deep_diff
+from ..diffing import diff
 from ..dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
 
 # Sentinel to allow None value
@@ -566,27 +566,6 @@ def merge(base, local, remote):
         replace / patch -- manual resolution needed, will only happen if collection type changes in replace
 
     """
-    base_local_diff = deep_diff(base, local)
-    base_remote_diff = deep_diff(base, remote)
+    base_local_diff = diff(base, local)
+    base_remote_diff = diff(base, remote)
     return _merge(base, local, remote, base_local_diff, base_remote_diff)
-
-
-def merge_notebooks(base, local, remote):
-    # FIXME: Implement notebook aware merge
-    merged, conflicts = merge(base, local, remote)
-    return nbformat.from_dict(merged), conflicts
-
-
-
-"""
-
-nbdiff: nb, nb  -> di
-
-nbmerge: nb, nb, nb -> nb, di, di
-
-
-diff: obj, obj -> di
-merge: obj, obj, obj, di, di -> obj, di, di
-
-
-"""

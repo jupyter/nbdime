@@ -10,7 +10,7 @@ converted to the same format version, currently v4 at time of writing.
 Up- and down-conversion is handled by nbformat.
 """
 
-__all__ = ["diff_notebooks", "diff_cells"]
+__all__ = ["diff_notebooks"]
 
 import operator
 
@@ -19,13 +19,13 @@ from ..dformat import decompress_diff
 
 from .comparing import strings_are_similar
 from .sequences import diff_sequence
-from .deep import deep_diff, deep_diff_lists
+from .generic import diff, diff_lists
 
 
 def compare_cells(a, b):
     # If we get something different from a cell, fall back to ==.
     # TODO: Should avoid this situation and make sure compare_cells is only applied
-    # to cells, e.g. by handling path-specific comparison predicates in deep_diff
+    # to cells, e.g. by handling path-specific comparison predicates in diff()
     if not (isinstance(a, dict) and "source" in a and isinstance(b, dict) and "source" in b):
         return a == b
 
@@ -43,13 +43,13 @@ def compare_cells(a, b):
 def diff_cells(cells_a, cells_b):
     "Compute the diff of two sequences of cells."
     shallow_diff = diff_sequence(cells_a, cells_b, compare_cells)
-    return deep_diff_lists(cells_a, cells_b, compare=operator.__eq__, shallow_diff=shallow_diff)
+    return diff_lists(cells_a, cells_b, compare=operator.__eq__, shallow_diff=shallow_diff)
 
 
 def diff_notebooks(nba, nbb):
     """Compute the diff of two notebooks.
 
-    Simliar to deep_diff, but handles cells in specialized ways.
+    Simliar to diff(), but handles cells in specialized ways.
     """
 
     # Shallow copy dicts and pop "cells"
@@ -59,7 +59,7 @@ def diff_notebooks(nba, nbb):
     bcells = nbb.pop("cells")
 
     # Diff the rest
-    nbdiff = deep_diff(nba, nbb)
+    nbdiff = diff(nba, nbb)
 
     # Then add specialized cells diff
     cdiff = diff_cells(acells, bcells)

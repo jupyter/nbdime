@@ -9,15 +9,17 @@ import operator
 
 from ..dformat import PATCH, INSERT, DELETE, REPLACE
 from ..dformat import validate_diff, count_consumed_symbols
+
 from .sequences import diff_strings, diff_sequence
+from .comparing import is_atomic
 
-# TODO: These should probably be more customizable
-from .comparing import is_atomic, is_similar
+# FIXME: This should be as customizable as compare
+from .comparing import is_similar
 
-__all__ = ["deep_diff", "deep_diff_lists", "deep_diff_dicts"]
+__all__ = ["diff"]
 
 
-def deep_diff_lists(a, b, compare=operator.__eq__, shallow_diff=None):
+def diff_lists(a, b, compare=operator.__eq__, shallow_diff=None):
     # First make the one-level list diff with custom compare,
     # unless it's provided for us
     if shallow_diff is None:
@@ -45,12 +47,12 @@ def deep_diff_lists(a, b, compare=operator.__eq__, shallow_diff=None):
             assert n >= 0
             assert len(b) - bcons == n
 
-        # Recursively deep_diff the n items that have been deemed similar
+        # Recursively diff the n items that have been deemed similar
         for i in range(n):
             aval = a[acons+i]
             bval = b[bcons+i]
             if not is_atomic(aval):
-                d = deep_diff(aval, bval, compare)
+                d = diff(aval, bval, compare)
                 if d:
                     pdi.append([PATCH, acons+i, d])
 
@@ -69,7 +71,7 @@ def deep_diff_lists(a, b, compare=operator.__eq__, shallow_diff=None):
     return pdi
 
 
-def deep_diff_dicts(a, b, compare=operator.__eq__):
+def diff_dicts(a, b, compare=operator.__eq__):
     """Compute diff of two dicts with configurable behaviour.
 
     Keys in both a and b will be handled based on
@@ -97,7 +99,7 @@ def deep_diff_dicts(a, b, compare=operator.__eq__):
         bvalue = b[key]
         # If types are the same and nonatomic, recurse
         if type(avalue) == type(bvalue) and not is_atomic(avalue):
-            dd = deep_diff(avalue, bvalue, compare)
+            dd = diff(avalue, bvalue, compare)
             if dd:
                 # Patch value at key with nonzero diff dd
                 d.append([PATCH, key, dd])
@@ -113,16 +115,61 @@ def deep_diff_dicts(a, b, compare=operator.__eq__):
     return d
 
 
-def deep_diff(a, b, compare=operator.__eq__):
+# Alternative dict-based diff format for dicts
+def _alternative_diff_dicts(a, b, compare=operator.__eq__):
+    """Compute diff of two dicts with configurable behaviour.
+
+    Keys in both a and b will be handled based on
+
+    Make a one-level diff of dicts a and b, using given compare
+    operator to specify which items are considered the same.
+
+    Items not mentioned in diff are items where compare(x, y) return True.
+    For other items the diff will contain delete, insert, or replace entries.
+    """
+    assert isinstance(a, dict) and isinstance(b, dict)
+    d = {}
+
+    # Sorting keys in loops to get a deterministic diff result
+    akeys = set(a.keys())
+    bkeys = set(b.keys())
+
+    # Delete keys in a but not in b
+    for key in sorted(akeys - bkeys):
+        d[key] = [DELETE]
+
+    # Handle values for keys in both a and b
+    for key in sorted(akeys & bkeys):
+        avalue = a[key]
+        bvalue = b[key]
+        # If types are the same and nonatomic, recurse
+        if type(avalue) == type(bvalue) and not is_atomic(avalue):
+            dd = diff(avalue, bvalue, compare)
+            if dd:
+                # Patch value at key with nonzero diff dd
+                d[key] = [PATCH, dd]
+        else:
+            if not compare(avalue, bvalue): # TODO: Use != or not compare() here?
+                # Replace value at key with bvalue
+                d[key] = [REPLACE, bvalue]
+
+    # Add keys in b but not in a
+    for key in sorted(bkeys - akeys):
+        d[key] = [INSERT, b[key]]
+
+    return d
+
+
+def diff(a, b, compare=operator.__eq__):
     "Compute the diff of two json-like objects, list or dict or string."
 
     # TODO: Providing separate comparison predicate for
     # different dict paths will allow more customization
 
     if isinstance(a, list) and isinstance(b, list):
-        d = deep_diff_lists(a, b, compare)
+        d = diff_lists(a, b, compare)
     elif isinstance(a, dict) and isinstance(b, dict):
-        d = deep_diff_dicts(a, b, compare)
+        d = diff_dicts(a, b, compare)
     elif isinstance(a, string_types) and isinstance(b, string_types):
         d = diff_strings(a, b)
     else:
