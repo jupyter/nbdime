@@ -185,3 +185,30 @@ def get_equal_ranges(a, b, d):
     assert bcons == len(b)
 
     return ranges
+
+
+def to_json_patch_format(d, path=""):
+    """Convert nbdime diff object into the RFC6902 JSON Patch format.
+
+    This is untested and will need some details worked out.
+    """
+    jp = []
+    for e in d:
+        op = e[0]
+        k = e[1]
+        p = "/".join([path, str(k)])
+        if op == INSERT:
+            jp.append({"op": "add", "path": p, "value": e[2]})
+        elif op == REPLACE:
+            jp.append({"op": "replace", "path": p, "value": e[2]})
+        elif op == REMOVE:
+            jp.append({"op": "remove", "path": p})
+        elif op == SEQINSERT:
+            for value in e[2]: # FIXME: Reverse this or not? Read RFC carefully and/or test with some conforming tool.
+                jp.append({"op": "add", "path": p, "value": e[2]})
+        elif op == SEQREMOVE:
+            for i in range(e[1], e[1]+e[2]):
+                jp.append({"op": "remove", "path": "/".join((path, str(i)))})
+        elif op == PATCH:
+            jp.extend(to_json_patch_format(e[2], p))
+    return jp
