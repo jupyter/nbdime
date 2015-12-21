@@ -34,8 +34,8 @@ class NBTestDataBase(object):
 
         r = re.compile("^(.*)-([0-9]+)$")
         matches = [r.match(name) for name in self.names]
-        self.groups = { basename: [name for name in self.names if name.startswith(basename)]
-                        for basename in set(m.groups()[0] for m in matches if m) }
+        self.groups = {basename: [name for name in self.names if name.startswith(basename)]
+                       for basename in set(m.groups()[0] for m in matches if m)}
 
     def __len__(self):
         return len(self.names)

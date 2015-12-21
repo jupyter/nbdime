@@ -317,12 +317,9 @@ def __old_merge_lists(base, local, remote, base_local_diff, base_remote_diff):
     """Perform a three-way merge of lists. See docstring of merge."""
     assert isinstance(base, list) and isinstance(local, list) and isinstance(remote, list)
 
-
-
     # Compute the diff between the base->local and base->remote diffs
     #diffs_diff = diff_sequences(base_local_diff, base_remote_diff)
     # TODO: This will be much cleaner if the diffs are single-item only.
-
 
     # Build sets of deleted indices on each side
     #local_deleted = get_deleted_indices(base_local_diff)

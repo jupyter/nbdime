@@ -46,7 +46,6 @@ def validate_diff(diff, deep=False):
         validate_diff_entry(s, deep=deep)
 
 
-
 def validate_diff_entry(s, deep=False):
     """Check that s is a well formed diff entry.
 

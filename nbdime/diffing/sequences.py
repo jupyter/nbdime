@@ -5,8 +5,6 @@
 
 from __future__ import unicode_literals
 
-__all__ = ["diff_strings", "diff_sequence"]
-
 import operator
 from six import string_types
 
@@ -14,8 +12,12 @@ from .seq_difflib import diff_sequence_difflib
 from .seq_bruteforce import diff_sequence_bruteforce
 from .seq_myers import diff_sequence_myers
 
+__all__ = ["diff_strings", "diff_sequence"]
+
+
 # TODO: Configuration framework?
-diff_sequence_algorithm = "bruteforce" #"difflib" #"myers"
+# legal_diff_sequence_algorithms = ["bruteforce", "difflib", "myers"]
+diff_sequence_algorithm = "bruteforce"
 
 
 def diff_sequence(a, b, compare=operator.__eq__):
@@ -33,6 +35,7 @@ def diff_sequence(a, b, compare=operator.__eq__):
         return diff_sequence_myers(a, b, compare)
     else:
         raise RuntimeError("Unknown diff_sequence_algorithm {}.".format(diff_sequence_algorithm))
+
 
 def diff_strings(a, b):
     "Compute char-based diff of two strings."

@@ -12,8 +12,6 @@ converted to the same format version, currently v4 at time of writing.
 Up- and down-conversion is handled by nbformat.
 """
 
-__all__ = ["diff_notebooks"]
-
 import operator
 
 from ..dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
@@ -22,6 +20,8 @@ from ..dformat import decompress_diff
 from .comparing import strings_are_similar
 from .sequences import diff_sequence
 from .generic import diff, diff_lists
+
+__all__ = ["diff_notebooks"]
 
 
 def compare_cells(a, b):

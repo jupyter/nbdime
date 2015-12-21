@@ -45,7 +45,7 @@ for d, _, _ in os.walk(pjoin(here, name)):
         packages.append(d[len(here)+1:].replace(os.path.sep, '.'))
 
 package_data = {
-    'nbdime' : [
+    'nbdime': [
         'tests/files/*.*',
     ]
 }
@@ -92,7 +92,6 @@ install_requires = setuptools_args['install_requires'] = [
 
 extras_require = setuptools_args['extras_require'] = {
     'test': ['pytest'],
-#    'execute': ['jupyter_client'],
 }
 
 if 'setuptools' in sys.modules:

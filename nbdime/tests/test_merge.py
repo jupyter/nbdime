@@ -43,7 +43,8 @@ def test_shallow_merge_lists_delete_no_conflict():
         l.pop(i)
         r.pop(i)
         m, lc, rc = merge(b, l, r)
-        e = copy.deepcopy(b); e.pop(i)
+        e = copy.deepcopy(b)
+        e.pop(i)
         assert m == e
         assert lc == []
         assert rc == []
@@ -407,7 +408,7 @@ def test_merge_nonconflicting_nested_dicts():
 def test_merge_conflicting_nested_dicts():
     # local and remote each adds, deletes, and modifies entries inside nested structure with everything conflicting
     b = {"a": {"x": 1},         "d": {"x": 4, "y": 5}, "m": {"x": 7}}
-    l = {"a": {"x": 2, "y": 4}, "d": {        "y": 6}, "m": {"x": 17}, "n": {"q": 9}}
+    l = {"a": {"x": 2, "y": 4}, "d":         {"y": 6}, "m": {"x": 17}, "n": {"q": 9}}
     r = {"a": {"x": 3, "y": 5}, "d": {"x": 5},         "m": {"x": 27}, "n": {"q": 19}}
     m, lc, rc = merge(b, l, r)
     assert m == {"a": {}, "d": {}, "m": {}, "n": {}}
@@ -420,6 +421,6 @@ def test_merge_conflicting_nested_dicts():
                   "d": ["!", {"x": [":", 5], "y": ["-"]}],
                   "m": ["!", {"x": [":", 27]}],
                   "n": ["!", {"q": ["+", 19]}],
-                 }
+                  }
     #assert c == {"a": {"x": [1, 2, 3], "y": [None, 4, 5]}, "d": {"x": [4, None, 5], "y": [5, 6, None]},
     #             "m": {"x": [7, 17, 27]}}

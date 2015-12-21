@@ -10,9 +10,10 @@ import operator
 import numpy as np
 from six.moves import xrange as range
 
+import pdb
+
 # Set to true to enable additional assertions, array access checking, and printouts
 DEBUGGING = 0
-import pdb
 
 class DebuggingArray(object):
     "Debugging tool to capture array accesses."
@@ -279,15 +280,18 @@ def find_middle_snake(A, B, compare=operator.__eq__):
 
     # For an increasing number of edits
     for D in range((M+N+1)//2):
-        if DEBUGGING: print("Forward", D)
+        if DEBUGGING:
+            print("Forward", D)
 
         # Forward search along k-diagonals
         for k in range(-D, D+1, 2):
-            if DEBUGGING: print("  k:", k)
+            if DEBUGGING:
+                print("  k:", k)
 
             # Find the end of the furthest reaching forward D-path in diagonal k
             x, y, u, v = find_forward_path(A, B, Vf, V0, D, k, compare)
-            if DEBUGGING: print("    xyuv:", x, y, u, v)
+            if DEBUGGING:
+                print("    xyuv:", x, y, u, v)
 
             # Look for overlap with reverse search
             if odd and D>0 and (-(D-1) <= k-delta <= (D-1)):
@@ -298,15 +302,18 @@ def find_middle_snake(A, B, compare=operator.__eq__):
                     # The last snake of the forward path is the middle snake
                     return ses, x, y, u, v
 
-        if DEBUGGING: print("Reverse", D)
+        if DEBUGGING:
+            print("Reverse", D)
         # Reverse search along k-diagonals
         #for k in range(-D, D+1, 2):
         for k in range(D, -D-1, -2):
-            if DEBUGGING: print("  k:", k)
+            if DEBUGGING:
+                print("  k:", k)
 
             # Find the end of the furthest reaching reverse D-path in diagonal k+delta
             x, y, u, v = find_reverse_path(A, B, Vr, V0, D, k, delta, compare)
-            if DEBUGGING: print("    xyuv:", x, y, u, v)
+            if DEBUGGING:
+                print("    xyuv:", x, y, u, v)
 
             # Look for overlap with forward search
             if even and (-D <= k+delta <= D):
