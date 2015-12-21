@@ -52,27 +52,13 @@ A diff of two dicts is a list of diff entries:
 
 A dict diff entry is a list of action and argument (except for deletion):
 
-    * ["-", key]: delete value at key
-    * ["+", key, newvalue]: insert newvalue at key
+    * ["-", key]: delete existing value at key
+    * ["+", key, value]: insert new value at key
+    * [":", key, value]: replace value at key with newvalue
     * ["!", key, diff]: patch value at key with diff
-    * [":", key, newvalue]: replace value at key with newvalue
 
-
-Diff format for dicts (alternative)
------------------------------------
-
-A diff of two dicts is itself a dict mapping string keys to diff entries:
-
-    key = string
-    entry = [action] | [action, argument]
-    diff = {key0:entry0, key1: entry1, ...}
-
-A dict diff entry is a list of action and argument (except for deletion):
-
-    * ["-"]: delete value at key
-    * ["+", newvalue]: insert newvalue at key
-    * ["!", diff]: patch value at key with diff
-    * [":", newvalue]: replace value at key with newvalue
+Insert is an error if the key already exists.
+Delete, replace and patch are errors if the key does not already exist.
 
 
 Diff format for sequences (list and string)
@@ -91,10 +77,5 @@ A sequence diff entry is a list of action, index and argument (except for deleti
     * ["--", index, n]: delete n entries starting at index
     * ["++", index, newvalues]: insert sequence newvalues before index
     * ["!", index, diff]: patch value at index with diff
-    * [":", index, newvalue]: replace value at index with newvalue
 
-Possible simplifications:
-
-    * Remove the ":" action.
-    * Remove single-item "-", "+" and rename "--" and "++" to single-letter.
-    * OR remove "--" and "++" and stick with just single-item versions.
+Possible simplification: Remove single-item insert/delete for sequences.

@@ -44,6 +44,7 @@ def test_patch_str():
     assert patch("abcd", [[SEQDELETE, 1, 2]]) == "ad"
     assert patch("abcd", [[SEQDELETE, 2, 2]]) == "ab"
 
+
 def test_patch_list():
     # Test +, single item insertion
     assert patch([], [[INSERT, 0, 3]]) == [3]
@@ -70,6 +71,7 @@ def test_patch_list():
     assert patch([5, 6, 7, 8], [[SEQDELETE, 0, 2]]) == [7, 8]
     assert patch([5, 6, 7, 8], [[SEQDELETE, 1, 2]]) == [5, 8]
     assert patch([5, 6, 7, 8], [[SEQDELETE, 2, 2]]) == [5, 6]
+
 
 def test_patch_dict():
     # Test +, single item insertion

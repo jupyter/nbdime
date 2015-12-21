@@ -10,6 +10,7 @@ from ..dformat import SEQINSERT, SEQDELETE
 
 __all__ = ["diff_sequence_difflib"]
 
+
 def opcodes_to_diff(a, b, opcodes):
     "Convert difflib opcodes to nbdime diff format."
     d = []
@@ -30,6 +31,7 @@ def opcodes_to_diff(a, b, opcodes):
         else:
             raise RuntimeError("Unknown action {}".format(action))
     return d
+
 
 def diff_sequence_difflib(a, b):
     """Compute the diff of two sequences.

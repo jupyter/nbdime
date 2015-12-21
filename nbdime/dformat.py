@@ -10,6 +10,7 @@ from six.moves import xrange as range
 
 from .log import error, NBDiffFormatError
 
+
 # Valid values for the action field in diff entries
 PATCH = "!"
 INSERT = "+"
@@ -202,12 +203,12 @@ def to_json_patch_format(d, path=""):
             jp.append({"op": "add", "path": p, "value": e[2]})
         elif op == REPLACE:
             jp.append({"op": "replace", "path": p, "value": e[2]})
-        elif op == REMOVE:
+        elif op == DELETE:
             jp.append({"op": "remove", "path": p})
         elif op == SEQINSERT:
             for value in e[2]: # FIXME: Reverse this or not? Read RFC carefully and/or test with some conforming tool.
                 jp.append({"op": "add", "path": p, "value": e[2]})
-        elif op == SEQREMOVE:
+        elif op == SEQDELETE:
             for i in range(e[1], e[1]+e[2]):
                 jp.append({"op": "remove", "path": "/".join((path, str(i)))})
         elif op == PATCH:

@@ -73,7 +73,7 @@ def diff_lists(a, b, compare=operator.__eq__, shallow_diff=None):
     return pdi
 
 
-def diff_dicts(a, b, compare=operator.__eq__):
+def diff_dicts(a, b, compare):
     """Compute diff of two dicts with configurable behaviour.
 
     Keys in both a and b will be handled based on
@@ -119,7 +119,6 @@ def diff_dicts(a, b, compare=operator.__eq__):
 
 def diff(a, b, compare=operator.__eq__):
     "Compute the diff of two json-like objects, list or dict or string."
-
     # TODO: Providing separate comparison predicate for
     # different dict paths will allow more customization
 

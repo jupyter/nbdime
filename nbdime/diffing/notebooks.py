@@ -14,7 +14,8 @@ Up- and down-conversion is handled by nbformat.
 
 import operator
 
-from ..dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
+from ..dformat import PATCH
+#, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
 from ..dformat import decompress_diff
 
 from .comparing import strings_are_similar
@@ -60,10 +61,10 @@ def diff_notebooks(nba, nbb):
     acells = nba.pop("cells")
     bcells = nbb.pop("cells")
 
-    # Diff the rest
+    # Diff the rest of the notebook using generic tools
     nbdiff = diff(nba, nbb)
 
-    # Then add specialized cells diff
+    # Then apply a specialized approach to diffing cells
     cdiff = diff_cells(acells, bcells)
     if cdiff:
         nbdiff.append([PATCH, "cells", cdiff])
