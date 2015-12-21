@@ -3,6 +3,8 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+from __future__ import unicode_literals
+
 from six import string_types
 import copy
 import nbformat
@@ -67,7 +69,7 @@ def patch_list(obj, diff):
 def patch_string(obj, diff):
     # This can possibly be optimized for str if wanted, but
     # waiting until patch_list has been tested and debugged better
-    return u"".join(patch_list(list(obj), diff))
+    return "".join(patch_list(list(obj), diff))
 
 
 def patch_dict(obj, diff):

@@ -3,6 +3,8 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+from __future__ import unicode_literals
+
 """Tools for diffing notebooks.
 
 All diff tools here currently assumes the notebooks have already been

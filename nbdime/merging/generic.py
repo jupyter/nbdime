@@ -3,6 +3,8 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+from __future__ import unicode_literals
+
 from six import string_types
 from six.moves import xrange as range
 
@@ -398,7 +400,7 @@ def _merge_strings(base, local, remote, base_local_diff, base_remote_diff):
     me, lco, rco = _merge_lists(list(base), list(local), list(remote), base_local_diff, base_remote_diff)
 
     # Convert to string compatible format
-    merged = u"".join(me)
+    merged = "".join(me)
 
     return merged, lco, rco
 

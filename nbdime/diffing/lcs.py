@@ -3,6 +3,8 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+from __future__ import unicode_literals
+
 from six.moves import xrange as range
 
 def diff_from_lcs(A, B, A_indices, B_indices):

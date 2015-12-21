@@ -3,6 +3,8 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+from __future__ import unicode_literals
+
 from six.moves import xrange as range
 
 import pytest
@@ -33,7 +35,7 @@ def algorithm(request):
 def test_diff_sequence(algorithm):
     "FIXME: Add wide range of test cases here."
 
-    a = u"""\
+    a = """\
     def f(a, b):
         c = a * b
         return c

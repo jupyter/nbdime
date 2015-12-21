@@ -3,6 +3,7 @@
 # Copyright (c) IPython Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+from __future__ import unicode_literals
 from __future__ import print_function
 
 import os
@@ -16,7 +17,7 @@ from .dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
 
 # TODO: Improve and make a more reusable utility.
 import pprint
-def pretty_print_diff(d, indent=0):
+def present_diff(d, indent=0):
     "Pretty-print a nbdime diff."
     indsep = " "*4
     ind = indsep*indent
@@ -33,7 +34,7 @@ def pretty_print_diff(d, indent=0):
             pp.append("{}{} {}".format(ind, action, key))
             pp.extend(ind2+line for line in lines)
         elif action == PATCH:
-            lines = pretty_print_diff(e[2]).splitlines()
+            lines = present_diff(e[2]).splitlines()
             pp.append("{}{} {}".format(ind, action, key))
             pp.extend(ind2+line for line in lines)
         elif action == SEQDELETE:
@@ -44,7 +45,12 @@ def pretty_print_diff(d, indent=0):
             pp.extend(ind2+line for line in lines)
         else:
             error("Can't print {}".format(e[0]))
-    return u"\n".join(pp)
+    return "\n".join(pp)
+
+
+def pretty_print_notebook_diff(d):
+    assert isinstance(d, dict)
+    print(present_diff(d))
 
 
 _usage = """\
@@ -71,7 +77,7 @@ def main_diff(afn, bfn, dfn):
 
     verbose = True
     if verbose:
-        print(pretty_print_diff(d))
+        pretty_print_notebook_diff(d)
 
     with open(dfn, "w") as df:
         json.dump(d, df)

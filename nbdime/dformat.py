@@ -3,18 +3,20 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+from __future__ import unicode_literals
+
 from six import string_types
 from six.moves import xrange as range
 
 from .log import error, NBDiffFormatError
 
 # Valid values for the action field in diff entries
-PATCH = u"!"
-INSERT = u"+"
-DELETE = u"-"
-REPLACE = u":"
-SEQINSERT = u"++"
-SEQDELETE = u"--"
+PATCH = "!"
+INSERT = "+"
+DELETE = "-"
+REPLACE = ":"
+SEQINSERT = "++"
+SEQDELETE = "--"
 
 ACTIONS = [
     PATCH,
@@ -125,9 +127,9 @@ def decompress_diff(sequence_diff):
     return d
 
 
-#def compress_diff(diff):
+#def compress_diff(sequence_diff):
 #    """Combine contiguous single-line actions +,-,: into sequence diff actions ++,--,:: everywhere."""
-#    TODO
+#    pass # Not implemented
 
 
 def count_consumed_symbols(e):

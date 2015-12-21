@@ -1,7 +1,12 @@
-from nbdime import merge, diff
+
+from __future__ import unicode_literals
+
+from six.moves import xrange as range
 
 import copy
 import pytest
+
+from nbdime import merge, diff
 
 
 def cut(li, *indices):
