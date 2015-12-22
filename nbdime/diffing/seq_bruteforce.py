@@ -60,6 +60,30 @@ def bruteforce_lcs_indices(A, B, G, R, compare=operator.__eq__):
     B_indices.reverse()
     return A_indices, B_indices
 
+
+def bruteforce_compute_snakes(A, B, compare):
+    """Compute snakes using brute force algorithm.
+
+    Return a list of snakes, where each snake is a tuple (i,j,n)
+    representing a range of n elements that compare equal
+    in A and B starting at i and j, i.e. compare(x,y) returns
+    True for x,y in zip(A[i:i+n], B[j:j+n]).
+    """
+    G = bruteforce_compare_grid(A, B, compare)
+    R = bruteforce_llcs_grid(G)
+    A_indices, B_indices = bruteforce_lcs_indices(A, B, G, R, compare)
+    snakes = [(0,0,0)]
+    for i, j in zip(A_indices, B_indices):
+        if snakes[-1][0] == i and snakes[-1][1] == j:
+            snake = snakes[-1]
+            snakes[-1] = (snake[0], snake[1], snake[2] + 1)
+        else:
+            snakes.append((i, j, 1))
+    if snakes[0][2] == 0:
+        snakes.pop(0)
+    return snakes
+
+
 def diff_sequence_bruteforce(A, B, compare=operator.__eq__):
     """Compute the diff of A and B using expensive brute force O(MN) algorithms."""
     G = bruteforce_compare_grid(A, B, compare)
