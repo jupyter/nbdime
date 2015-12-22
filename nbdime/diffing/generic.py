@@ -13,12 +13,17 @@ from ..dformat import PATCH, INSERT, DELETE, REPLACE
 from ..dformat import validate_diff, count_consumed_symbols
 
 from .sequences import diff_strings, diff_sequence
-from .comparing import is_atomic
-
-# FIXME: This should be as customizable as compare
-from .comparing import is_similar
 
 __all__ = ["diff"]
+
+
+def is_atomic(x):
+    "Return True for values that diff should treat as a single atomic value."
+    atomic_strings = False  # TODO: Configuration framework?
+    if atomic_strings:
+        return not isinstance(x, (list, dict))
+    else:
+        return not isinstance(x, (string_types, list, dict))
 
 
 def diff_lists(a, b, compare=operator.__eq__, shallow_diff=None):

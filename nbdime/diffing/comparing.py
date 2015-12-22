@@ -8,17 +8,7 @@ from __future__ import unicode_literals
 import difflib
 from six import string_types
 
-__all__ = ["is_atomic", "is_similar"]
-
-
-def is_atomic(x):
-    # TODO: Configuration framework?
-    atomic_strings = False
-
-    if atomic_strings:
-        return not isinstance(x, (list, dict))
-    else:
-        return not isinstance(x, (string_types, list, dict))
+__all__ = []
 
 
 def strings_are_similar(x, y):
@@ -54,7 +44,7 @@ def strings_are_similar(x, y):
         return False
 
 
-def is_similar(x, y):
+def __unused_is_similar(x, y):
     """Returns True if x and y are deemed sufficiently similar to be
     considered a changed instead of replaced element in a sequence diff.
 

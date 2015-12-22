@@ -12,10 +12,10 @@ converted to the same format version, currently v4 at time of writing.
 Up- and down-conversion is handled by nbformat.
 """
 
+import difflib
 import operator
 
 from ..dformat import PATCH, SEQINSERT, SEQDELETE
-#, INSERT, DELETE, REPLACE,
 from ..dformat import decompress_diff
 
 from .comparing import strings_are_similar
@@ -26,21 +26,46 @@ from .snakes import compute_snakes_multilevel
 __all__ = ["diff_notebooks"]
 
 
-def diff_single_cells(a, b):
-    # TODO: Something smarter?
-    # TODO: Use google-diff-patch-match library to diff the sources?
-    # TODO: Handle output diffing with plugins? I.e. image diff, svg diff, json diff, etc.
-    from nbdime import diff
-    return diff(a, b)
-
-
 def compare_cell_source_approximate(x, y):
     "Compare source of cells x,y with approximate heuristics."
+    # Cell types must match
     if x["cell_type"] != y["cell_type"]:
         return False
-    # TODO: Use google-diff-patch-match library
-    # TODO: Initially try difflib ratio
-    return strings_are_similar(x["source"], y["source"])
+
+    # Convert from list to single string
+    xs = x["source"]
+    ys = y["source"]
+    if isinstance(xs, list):
+        xs = "\n".join(xs)
+    if isinstance(ys, list):
+        ys = "\n".join(ys)
+
+    # Cutoff on equality (Python has fast hash functions for strings)
+    if xs == ys:
+        return True
+
+    # TODO: Investigate performance and quality of this difflib ratio approach,
+    # possibly one of the weakest links of the notebook diffing algorithm.
+    # Alternatives to try are the libraries diff-patch-match and Levenschtein
+    threshold = 0.90  # TODO: Add configuration framework and tune with real world examples?
+
+    # Informal benchmark normalized to operator ==:
+    #    1.0  operator ==
+    #  438.2  real_quick_ratio
+    #  796.5  quick_ratio
+    # 3088.2  ratio
+    # The == cutoff will hit most of the time for long runs of
+    # equal items, at least in the Myers diff algorithm.
+    # Most other comparisons will likely not be very similar,
+    # and the (real_)quick_ratio cutoffs will speed up those.
+    # So the heavy ratio function is only used for close calls.
+    #s = difflib.SequenceMatcher(lambda c: c in (" ", "\t"), x, y, autojunk=False)
+    s = difflib.SequenceMatcher(None, xs, ys, autojunk=False)
+    if s.real_quick_ratio() < threshold:
+        return False
+    if s.quick_ratio() < threshold:
+        return False
+    return s.ratio() > threshold
 
 
 def compare_cell_source_exact(x, y):
@@ -61,6 +86,14 @@ def compare_cell_source_and_outputs(x, y):
     if x["cell_type"] == "code" and x["outputs"] != y["outputs"]:
         return False
     return True
+
+
+def diff_single_cells(a, b):
+    # TODO: Something smarter?
+    # TODO: Use google-diff-patch-match library to diff the sources?
+    # TODO: Handle output diffing with plugins? I.e. image diff, svg diff, json diff, etc.
+    from nbdime import diff
+    return diff(a, b)
 
 
 def diff_cells(a, b):

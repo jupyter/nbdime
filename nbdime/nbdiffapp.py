@@ -49,7 +49,7 @@ def present_diff(d, indent=0):
 
 
 def pretty_print_notebook_diff(d):
-    assert isinstance(d, dict)
+    assert isinstance(d, list)
     print(present_diff(d))
 
 

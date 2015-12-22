@@ -8,9 +8,11 @@ from __future__ import print_function
 
 import pytest
 import copy
+import operator
 
 from nbdime import patch, diff
 from nbdime.dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
+from nbdime.diffing.snakes import compute_snakes_multilevel
 
 from .fixtures import check_diff_and_patch, check_symmetric_diff_and_patch
 
@@ -87,3 +89,31 @@ def test_diff_and_patch():
             ]],
         [INSERT, "added", 7],
         ]
+
+
+def test_compute_snakes_multilevel():
+    a = [
+        ("a0", "b0", "c0"),
+        ("q", "y", "z"),
+        ("a1", "b1", "c1"),
+        ("a2", "b2", "c2"),
+        ("a3", "b3", "c3"),
+        ]
+    b = [
+        ("a0", "b0", "c"),
+        ("a", "b", "c"),
+        ("a2", "b2", "c2"),
+        ("x", "y", "z"),
+        ("x", "y", "z"),
+        ("a3", "b", "c"),
+        ]
+    def _cmp_n(n):
+        def _cmp(x, y):
+            return x[:n] == y[:n]
+        return _cmp
+    predicates = [_cmp_n(1), _cmp_n(2), operator.__eq__]
+
+    level = len(predicates) - 1
+    rect = (0, 0, len(a), len(b))
+    snakes = compute_snakes_multilevel(a, b, rect, predicates, level)
+    assert snakes == [(0, 0, 1), (3, 2, 1), (4, 5, 1)]
