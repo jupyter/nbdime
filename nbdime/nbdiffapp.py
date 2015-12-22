@@ -11,46 +11,149 @@ import sys
 import nbformat
 import json
 from ._version import __version__
+from .log import error
 from .diffing.notebooks import diff_notebooks
 from .dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
 
 
-# TODO: Improve and make a more reusable utility.
+from .dformat import to_dict_diff
 import pprint
-def present_diff(d, indent=0):
+
+
+action_names = {
+    DELETE: "delete",
+    INSERT: "insert",
+    REPLACE: "replace",
+    SEQDELETE: "delete",
+    SEQINSERT: "insert",
+    PATCH: "patch",
+    }
+
+
+def present_value(prefix, arg):
+    # TODO: improve pretty-print of arbitrary values?
+    lines = pprint.pformat(arg).splitlines()
+    return [prefix + line for line in lines]
+
+
+def present_dict_diff(a, b, d):
     "Pretty-print a nbdime diff."
+
+    d = to_dict_diff(d)
+    keys = sorted(d)
+
+    pp = []
+    for key in keys:
+        e = d[key]
+        action = e[0]
+        arg = e[1] if len(e) > 1 else None
+
+        actname = action_names[action]
+
+        if action == DELETE:
+            pp.append("-  a[{}]".format(key))
+            pp += present_value("- ", a[key])
+
+        elif action == INSERT:
+            pp.append(" + b[{}]".format(key))
+            pp += present_value("+ ", arg)
+
+        elif action == REPLACE:
+            pp.append("-+ a[{}] <- b[{}]".format(key, key))
+            pp += present_value("- ", a[key])
+            pp += present_value(" +", arg)
+
+        elif action == PATCH:
+            pp.append("!! a[{}], b[{}]".format(key, key))
+            pp += present_diff(a[key], b[key], arg)
+
+        else:
+            error("Can't print {}: {}".format(key, actname))
+
+    return pp
+
+
+def present_list_diff(a, b, d):
+    "Pretty-print a nbdime diff."
+    pp = []
+    for e in d:
+        action = e[0]
+        index = e[1]
+        arg = e[2] if len(e) > 2 else None
+
+        actname = action_names[action]
+
+        if action == DELETE:
+            pp.append("-  a[{}]".format(index))
+            pp += present_value("- ", a[index])
+
+        elif action == INSERT:
+            pp.append(" + b[{}]".format(index))
+            pp += present_value("+ ", arg)
+
+        elif action == SEQDELETE:
+            pp.append("-  a[{}:{}]".format(index, index+arg))
+            pp += present_value("- ", a[index:index+arg])
+
+        elif action == SEQINSERT:
+            pp.append(" + a[{}:{}]".format(index, index))
+            pp += present_value("+ ", arg)
+
+        elif action == PATCH:
+            pp.append("!! a[{}], b[{}]".format(index))
+            pp += present_diff(a[index], b[index], arg)
+
+        else:
+            error("Can't print {}: {}".format(index, actname))
+
+    return pp
+
+
+def present_diff(a, b, d, indent=True):
     indsep = " "*4
     ind = indsep*indent
     ind2 = indsep*(indent+1)
 
-    pp = []
-    for e in d:
-        action = e[0]
-        key = e[1]
-        if action == DELETE:
-            pp.append("{}{} {}".format(ind, action, key))
-        elif action in (INSERT, REPLACE):
-            lines = pprint.pformat(e[2]).splitlines()
-            pp.append("{}{} {}".format(ind, action, key))
-            pp.extend(ind2+line for line in lines)
-        elif action == PATCH:
-            lines = present_diff(e[2]).splitlines()
-            pp.append("{}{} {}".format(ind, action, key))
-            pp.extend(ind2+line for line in lines)
-        elif action == SEQDELETE:
-            pp.append("{}{} {}-{}".format(ind, action, key, e[2]))
-        elif action == SEQINSERT:
-            lines = pprint.pformat(e[2]).splitlines()
-            pp.append("{}{} {}-{}".format(ind, action, key, len(e[2])))
-            pp.extend(ind2+line for line in lines)
-        else:
-            error("Can't print {}".format(e[0]))
-    return "\n".join(pp)
+    if isinstance(a, dict) and isinstance(b, dict):
+        pp = present_dict_diff(a, b, d)
+    elif isinstance(a, list) and isinstance(b, list):
+        pp = present_list_diff(a, b, d)
+    elif isinstance(a, string_types) and isinstance(b, string_types):
+        pp = present_string_diff(a, b, d)
+    else:
+        error("Invalid type for diff presentation.")
+
+    # Optionally indent
+    indsep = " "*4
+    return [indsep + line for line in pp] if indent else pp
 
 
-def pretty_print_notebook_diff(d):
-    assert isinstance(d, list)
-    print(present_diff(d))
+header = """\
+nbdiff a/{afn} b/{bfn}
+--- a/{afn}
++++ b/{bfn}
+"""
+
+
+def pretty_print_notebook_diff(afn, bfn, a, b, d):
+
+    #d = to_dict_diff(d)
+    #p = []
+    #for key in ("metadata", "cells"):
+    #    s = d.get(key)
+    #    if s is not None:
+    #        p += ['"{key}" differs:'.format(key=key)]
+    #        p += present_diff(a[key], b[key], s)
+
+    p = present_diff(a, b, d)
+    if p:
+        p = [header.format(afn=afn, bfn=bfn)] + p
+    print("\n".join(p))
+
+    #missing = set(d.keys()) - set(("metadata", "cells"))
+    #if missing:
+    #    print("FIXME: Missing in presentation:")
+    #    print(missing)
 
 
 _usage = """\
@@ -77,7 +180,7 @@ def main_diff(afn, bfn, dfn):
 
     verbose = True
     if verbose:
-        pretty_print_notebook_diff(d)
+        pretty_print_notebook_diff(afn, bfn, a, b, d)
 
     with open(dfn, "w") as df:
         json.dump(d, df)

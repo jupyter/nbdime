@@ -28,6 +28,7 @@ ACTIONS = [
     SEQDELETE,
     ]
 
+
 sequence_types = string_types + (list,)
 
 
@@ -104,6 +105,22 @@ def validate_diff_entry(s, deep=False):
 
     # Note that false positives are possible, for example
     # we're not checking the values in any way
+
+
+def to_dict_diff(ld):
+    """Convert a dict diff from list format [[action, key, arg]] to dict format {key:[action,arg]}.
+
+    The conversion is shallow, i.e. diffs within PATCH entries are not modified.
+    """
+    dd = {}
+    for e in ld:
+        if len(e) == 2:
+            dd[e[1]] = [e[0]]
+        elif len(e) == 3:
+            dd[e[1]] = [e[0], e[2]]
+        else:
+            raise ValueError("Invalid diff format.")
+    return dd
 
 
 def decompress_diff(sequence_diff):

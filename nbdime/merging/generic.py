@@ -12,25 +12,13 @@ import nbformat
 
 from ..diffing import diff
 from ..dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
+from ..dformat import to_dict_diff
+
 
 # Sentinel to allow None value
 Missing = object()
 
-
 collection_types = string_types + (list, dict)
-
-
-# TODO: Use this format in diffs directly?
-def to_dict_diff(ld):
-    dd = {}
-    for e in ld:
-        if len(e) == 2:
-            dd[e[1]] = [e[0]]
-        elif len(e) == 3:
-            dd[e[1]] = [e[0], e[2]]
-        else:
-            raise ValueError("Invalid diff format.")
-    return dd
 
 
 def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
