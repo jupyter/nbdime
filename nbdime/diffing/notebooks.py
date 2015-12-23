@@ -20,8 +20,8 @@ from ..dformat import decompress_diff
 
 from .comparing import strings_are_similar
 from .sequences import diff_sequence
-from .generic import diff, diff_lists
-from .snakes import compute_snakes_multilevel
+from .generic import diff, diff_lists, diff_dicts
+from .snakes import diff_sequence_multilevel
 
 __all__ = ["diff_notebooks"]
 
@@ -47,7 +47,7 @@ def compare_cell_source_approximate(x, y):
     # TODO: Investigate performance and quality of this difflib ratio approach,
     # possibly one of the weakest links of the notebook diffing algorithm.
     # Alternatives to try are the libraries diff-patch-match and Levenschtein
-    threshold = 0.90  # TODO: Add configuration framework and tune with real world examples?
+    threshold = 0.7  # TODO: Add configuration framework and tune with real world examples?
 
     # Informal benchmark normalized to operator ==:
     #    1.0  operator ==
@@ -85,45 +85,71 @@ def compare_cell_source_and_outputs(x, y):
         return False
     if x["cell_type"] == "code" and x["outputs"] != y["outputs"]:
         return False
+    # NB! Ignoring metadata and execution count
     return True
 
 
-def diff_single_cells(a, b):
-    # TODO: Something smarter?
+def compare_output_type(x, y):
+    "Compare only type of output cells x,y."
+    if x["output_type"] != y["output_type"]:
+        return False
+    # NB! Ignoring metadata and execution count
+    return True
+
+
+def compare_output_data_keys(x, y):
+    "Compare type and data of output cells x,y exactly."
+    if x["output_type"] != y["output_type"]:
+        return False
+    if set(x["data"].keys()) != set(y["data"].keys()):
+        return False
+    # NB! Ignoring metadata and execution count
+    return True
+
+
+def compare_output_data(x, y):
+    "Compare type and data of output cells x,y exactly."
+    if x["output_type"] != y["output_type"]:
+        return False
+    # Keys are potentially a lot cheaper to compare than values
+    if set(x["data"].keys()) != set(y["data"].keys()):
+        return False
+    if x["data"] != y["data"]:
+        return False
+    # NB! Ignoring metadata and execution count
+    return True
+
+
+def diff_source(a, b, compare="ignored"):
+    "Diff a pair of sources."
     # TODO: Use google-diff-patch-match library to diff the sources?
-    # TODO: Handle output diffing with plugins? I.e. image diff, svg diff, json diff, etc.
-    from nbdime import diff
     return diff(a, b)
 
 
-def diff_cells(a, b):
-    "Diff cell lists a and b."
+def diff_single_outputs(a, b, compare="ignored"):
+    "Diff a pair of output cells."
+    # TODO: Handle output diffing with plugins? I.e. image diff, svg diff, json diff, etc.
+    return diff(a, b)
 
+
+def diff_outputs(a, b, compare="ignored"):
+    "Diff a pair of lists of outputs from within a single cell."
+    return diff_sequence_multilevel(a, b,
+                                    predicates=[compare_output_data_keys, compare_output_data],
+                                    subdiff=diff_single_outputs)
+
+
+def diff_single_cells(a, b):
+    return diff_dicts(a, b, subdiffs={"source": diff_source, "outputs": diff_outputs})
+
+
+def diff_cells(a, b, compare="ignored"):
+    "Diff cell lists a and b. Argument compare is ignored."
     # Predicates to compare cells in order of low-to-high precedence
     predicates = [compare_cell_source_approximate,
                   compare_cell_source_exact,
                   compare_cell_source_and_outputs]
-
-    # Invoke multilevel snake computation algorithm
-    level = len(predicates) - 1
-    rect = (0, 0, len(a), len(b))
-    snakes = compute_snakes_multilevel(a, b, rect, predicates, level)
-
-    # Compute diff from snakes
-    di = []
-    i0, j0, i1, j1 = 0, 0, len(a), len(b)
-    for i, j, n in snakes + [(i1, j1, 0)]:
-        if i > i0:
-            di.append([SEQDELETE, i0, i-i0])
-        if j > j0:
-            di.append([SEQINSERT, i0, b[j0:j]])
-        for k in range(n):
-            cd = diff_single_cells(a[i + k], b[j + k])
-            if cd:
-                di.append([PATCH, i+k, cd])
-        # Update corner offsets for next rectangle
-        i0, j0 = i+n, j+n
-    return di
+    return diff_sequence_multilevel(a, b, predicates, diff_single_cells)
 
 
 def old_diff_cells(cells_a, cells_b):
@@ -133,23 +159,5 @@ def old_diff_cells(cells_a, cells_b):
 
 
 def diff_notebooks(nba, nbb):
-    """Compute the diff of two notebooks.
-
-    Simliar to diff(), but handles cells in specialized ways.
-    """
-
-    # Shallow copy dicts and pop "cells"
-    nba = nba.copy()
-    nbb = nbb.copy()
-    acells = nba.pop("cells")
-    bcells = nbb.pop("cells")
-
-    # Diff the rest of the notebook using generic tools
-    nbdiff = diff(nba, nbb)
-
-    # Then apply a specialized approach to diffing cells
-    cdiff = diff_cells(acells, bcells)
-    if cdiff:
-        nbdiff.append([PATCH, "cells", cdiff])
-
-    return nbdiff
+    """Compute the diff of two notebooks."""
+    return diff_dicts(nba, nbb, subdiffs={"cells": diff_cells})

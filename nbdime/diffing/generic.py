@@ -26,7 +26,30 @@ def is_atomic(x):
         return not isinstance(x, (string_types, list, dict))
 
 
-def diff_lists(a, b, compare=operator.__eq__, shallow_diff=None):
+def diff(a, b, compare=operator.__eq__):
+    "Compute the diff of two json-like objects, list or dict or string."
+    # TODO: Providing separate comparison predicate for
+    # different dict paths will allow more customization
+
+    if isinstance(a, list) and isinstance(b, list):
+        d = diff_lists(a, b, compare=compare)
+    elif isinstance(a, dict) and isinstance(b, dict):
+        d = diff_dicts(a, b, compare=compare)
+    elif isinstance(a, string_types) and isinstance(b, string_types):
+        d = diff_strings(a, b)
+    else:
+        raise RuntimeError("Can currently only diff list, dict, or str objects.")
+
+    # We can turn this off for performance after the library has been well tested:
+    validate_diff(d)
+
+    return d
+
+
+def diff_lists(a, b, compare=operator.__eq__, shallow_diff=None, subdiffs=None):
+    if subdiffs is None:
+        subdiffs = {}
+
     # First make the one-level list diff with custom compare,
     # unless it's provided for us
     if shallow_diff is None:
@@ -59,7 +82,8 @@ def diff_lists(a, b, compare=operator.__eq__, shallow_diff=None):
             aval = a[acons+i]
             bval = b[bcons+i]
             if not is_atomic(aval):
-                d = diff(aval, bval, compare)
+                diffit = subdiffs.get(key, diff)
+                d = diffit(aval, bval, compare=compare)
                 if d:
                     pdi.append([PATCH, acons+i, d])
 
@@ -78,7 +102,7 @@ def diff_lists(a, b, compare=operator.__eq__, shallow_diff=None):
     return pdi
 
 
-def diff_dicts(a, b, compare):
+def diff_dicts(a, b, compare=operator.__eq__, subdiffs=None):
     """Compute diff of two dicts with configurable behaviour.
 
     Keys in both a and b will be handled based on
@@ -91,6 +115,9 @@ def diff_dicts(a, b, compare):
     """
     assert isinstance(a, dict) and isinstance(b, dict)
     d = []
+
+    if subdiffs is None:
+        subdiffs = {}
 
     # Sorting keys in loops to get a deterministic diff result
     akeys = set(a.keys())
@@ -106,11 +133,13 @@ def diff_dicts(a, b, compare):
         bvalue = b[key]
         # If types are the same and nonatomic, recurse
         if type(avalue) == type(bvalue) and not is_atomic(avalue):
-            dd = diff(avalue, bvalue, compare)
+            diffit = subdiffs.get(key, diff)
+            dd = diffit(avalue, bvalue, compare=compare)
             if dd:
                 # Patch value at key with nonzero diff dd
                 d.append([PATCH, key, dd])
         else:
+            #compareit = compare.get(key, operator.__eq__)  # TODO: Do like this?
             if not compare(avalue, bvalue): # TODO: Use != or not compare() here?
                 # Replace value at key with bvalue
                 d.append([REPLACE, key, bvalue])
@@ -118,25 +147,5 @@ def diff_dicts(a, b, compare):
     # Add keys in b but not in a
     for key in sorted(bkeys - akeys):
         d.append([INSERT, key, b[key]])
-
-    return d
-
-
-def diff(a, b, compare=operator.__eq__):
-    "Compute the diff of two json-like objects, list or dict or string."
-    # TODO: Providing separate comparison predicate for
-    # different dict paths will allow more customization
-
-    if isinstance(a, list) and isinstance(b, list):
-        d = diff_lists(a, b, compare)
-    elif isinstance(a, dict) and isinstance(b, dict):
-        d = diff_dicts(a, b, compare)
-    elif isinstance(a, string_types) and isinstance(b, string_types):
-        d = diff_strings(a, b)
-    else:
-        raise RuntimeError("Can currently only diff list, dict, or str objects.")
-
-    # We can turn this off for performance after the library has been well tested:
-    validate_diff(d)
 
     return d

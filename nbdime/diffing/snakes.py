@@ -13,7 +13,10 @@ Up- and down-conversion is handled by nbformat.
 """
 
 import operator
-from nbdime.diffing.seq_bruteforce import bruteforce_compute_snakes
+
+from ..dformat import PATCH, SEQINSERT, SEQDELETE
+from .seq_bruteforce import bruteforce_compute_snakes
+from .generic import diff
 
 __all__ = ["diff_notebooks"]
 
@@ -58,3 +61,29 @@ def compute_snakes_multilevel(A, B, rect, predicates, level):
     if newsnakes[0][2] == 0:
         newsnakes.pop(0)
     return newsnakes
+
+
+def compute_diff_from_snakes(a, b, snakes, diff_single_item=diff):
+    # Compute diff from snakes
+    di = []
+    i0, j0, i1, j1 = 0, 0, len(a), len(b)
+    for i, j, n in snakes + [(i1, j1, 0)]:
+        if i > i0:
+            di.append([SEQDELETE, i0, i-i0])
+        if j > j0:
+            di.append([SEQINSERT, i0, b[j0:j]])
+        for k in range(n):
+            cd = diff_single_item(a[i + k], b[j + k])
+            if cd:
+                di.append([PATCH, i+k, cd])
+        # Update corner offsets for next rectangle
+        i0, j0 = i+n, j+n
+    return di
+
+
+def diff_sequence_multilevel(a, b, predicates, subdiff=diff):
+    # Invoke multilevel snake computation algorithm
+    level = len(predicates) - 1
+    rect = (0, 0, len(a), len(b))
+    snakes = compute_snakes_multilevel(a, b, rect, predicates, level)
+    return compute_diff_from_snakes(a, b, snakes, subdiff)
