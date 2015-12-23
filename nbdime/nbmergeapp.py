@@ -35,13 +35,16 @@ def main_merge(bfn, lfn, rfn, mfn):
     l = nbformat.read(lfn, as_version=4)
     r = nbformat.read(rfn, as_version=4)
 
-    m = merge_notebooks(b, l, r)
+    m, lc, rc = merge_notebooks(b, l, r)
 
     verbose = True
     if verbose:
         print(m)
+        print(lc)
+        print(rc)
 
-    nbformat.write(mfn, m)
+    with open(mfn, "w") as mf:
+        nbformat.write(m, mf)
     return 0
 
 

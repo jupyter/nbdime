@@ -46,10 +46,7 @@ def diff(a, b, compare=operator.__eq__):
     return d
 
 
-def diff_lists(a, b, compare=operator.__eq__, shallow_diff=None, subdiffs=None):
-    if subdiffs is None:
-        subdiffs = {}
-
+def diff_lists(a, b, compare=operator.__eq__, shallow_diff=None):
     # First make the one-level list diff with custom compare,
     # unless it's provided for us
     if shallow_diff is None:
@@ -82,8 +79,7 @@ def diff_lists(a, b, compare=operator.__eq__, shallow_diff=None, subdiffs=None):
             aval = a[acons+i]
             bval = b[bcons+i]
             if not is_atomic(aval):
-                diffit = subdiffs.get(key, diff)
-                d = diffit(aval, bval, compare=compare)
+                d = diff(aval, bval, compare=compare)
                 if d:
                     pdi.append([PATCH, acons+i, d])
 

@@ -12,7 +12,7 @@ import nbformat
 
 from ..diffing import diff
 from ..dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
-
+from .generic import merge
 
 def merge_notebooks(base, local, remote):
     """Merge changes introduced by notebooks local and remote from a shared ancestor base.
@@ -20,5 +20,5 @@ def merge_notebooks(base, local, remote):
     Return new (partially) merged notebook and unapplied diffs from the local and remote side.
     """
     # FIXME: Implement notebook aware merge
-    merged, conflicts = merge(base, local, remote)
-    return nbformat.from_dict(merged), conflicts
+    merged, local_conflict_diffs, remote_conflict_diffs = merge(base, local, remote)
+    return nbformat.from_dict(merged), local_conflict_diffs, remote_conflict_diffs
