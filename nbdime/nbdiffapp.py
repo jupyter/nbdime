@@ -6,6 +6,7 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
+from six import string_types
 import os
 import sys
 import nbformat
@@ -36,7 +37,7 @@ def present_value(prefix, arg):
     return [prefix + line for line in lines]
 
 
-def present_dict_diff(a, b, d):
+def present_dict_diff(a, d, path):
     "Pretty-print a nbdime diff."
 
     d = to_dict_diff(d)
@@ -49,23 +50,24 @@ def present_dict_diff(a, b, d):
         arg = e[1] if len(e) > 1 else None
 
         actname = action_names[action]
+        nextpath = "/".join((path, key))
 
         if action == DELETE:
-            pp.append("-  a[{}]".format(key))
+            pp.append("delete from {}:".format(nextpath))
             pp += present_value("- ", a[key])
 
         elif action == INSERT:
-            pp.append(" + b[{}]".format(key))
+            pp.append("insert at {}:".format(nextpath))
             pp += present_value("+ ", arg)
 
         elif action == REPLACE:
-            pp.append("-+ a[{}] <- b[{}]".format(key, key))
+            pp.append("replace at {}:".format(nextpath))
             pp += present_value("- ", a[key])
             pp += present_value(" +", arg)
 
         elif action == PATCH:
-            pp.append("!! a[{}], b[{}]".format(key, key))
-            pp += present_diff(a[key], b[key], arg)
+            pp.append("patch {}:".format(nextpath))
+            pp += present_diff(a[key], arg, nextpath)
 
         else:
             error("Can't print {}: {}".format(key, actname))
@@ -73,7 +75,7 @@ def present_dict_diff(a, b, d):
     return pp
 
 
-def present_list_diff(a, b, d):
+def present_list_diff(a, d, path):
     "Pretty-print a nbdime diff."
     pp = []
     for e in d:
@@ -82,26 +84,23 @@ def present_list_diff(a, b, d):
         arg = e[2] if len(e) > 2 else None
 
         actname = action_names[action]
+        nextpath = "/".join((path, str(index)))
 
-        if action == DELETE:
-            pp.append("-  a[{}]".format(index))
-            pp += present_value("- ", a[index])
-
-        elif action == INSERT:
-            pp.append(" + b[{}]".format(index))
+        if action == SEQINSERT:
+            pp.append("insert before {}:".format(nextpath))
             pp += present_value("+ ", arg)
 
         elif action == SEQDELETE:
-            pp.append("-  a[{}:{}]".format(index, index+arg))
+            if arg > 1:
+                r = "{}-{}".format(index, index+arg-1)
+            else:
+                r = str(index)
+            pp.append("delete {}/{}:".format(path, r))
             pp += present_value("- ", a[index:index+arg])
 
-        elif action == SEQINSERT:
-            pp.append(" + a[{}:{}]".format(index, index))
-            pp += present_value("+ ", arg)
-
         elif action == PATCH:
-            pp.append("!! a[{}], b[{}]".format(index))
-            pp += present_diff(a[index], b[index], arg)
+            pp.append("patch {}:".format(nextpath))
+            pp += present_diff(a[index], arg, nextpath)
 
         else:
             error("Can't print {}: {}".format(index, actname))
@@ -109,51 +108,95 @@ def present_list_diff(a, b, d):
     return pp
 
 
-def present_diff(a, b, d, indent=True):
-    indsep = " "*4
-    ind = indsep*indent
-    ind2 = indsep*(indent+1)
+def present_string_diff(a, d, path):
+    "Pretty-print a nbdime diff."
 
-    if isinstance(a, dict) and isinstance(b, dict):
-        pp = present_dict_diff(a, b, d)
-    elif isinstance(a, list) and isinstance(b, list):
-        pp = present_list_diff(a, b, d)
-    elif isinstance(a, string_types) and isinstance(b, string_types):
-        pp = present_string_diff(a, b, d)
+    consumed = 0
+    lines = []
+    continuation = False
+    continuation_indent = 0
+    continuation_indent2 = 0
+    for e in d:
+        action = e[0]
+        index = e[1]
+        arg = e[2]
+
+        # Consume untouched characters
+        if index > consumed:
+            dlines = a[consumed:index].split("\n")
+            for dline in dlines:
+                prefix = ".." if continuation else "  "
+                lines.append(prefix + " "*continuation_indent2 + dline)
+                continuation = False
+                continuation_indent2 = 0
+            continuation_indent = len(lines[-1]) - 2
+            continuation_indent2 = continuation_indent
+            consumed = index
+
+        if action == SEQINSERT:
+            dlines = arg.split("\n")
+            lines.append("+ " + " "*continuation_indent + dlines[0])
+            for dline in dlines[1:]:
+                lines.append("+ " + dline)
+            continuation = True
+            continuation_indent2 = max(continuation_indent2, len(lines[-1]) - 2)
+
+        elif action == SEQDELETE:
+            dlines = a[index:index+arg].split("\n")
+            lines.append("- " + " "*continuation_indent + dlines[0])
+            for dline in dlines[1:]:
+                lines.append("- " + dline)
+            consumed = index + arg
+            continuation = True
+            continuation_indent2 = max(continuation_indent2, len(lines[-1]) - 2)
+
+        else:
+            error("Can't print {}: {}".format(index, actname))
+
+    # Consume untouched characters at end
+    index = len(a)  # copy-paste from top of loop...
+    if index > consumed:
+        dlines = a[consumed:index].split("\n")
+        for dline in dlines:
+            prefix = ".." if continuation else "  "
+            lines.append(prefix + " "*continuation_indent2 + dline)
+            continuation = False
+            continuation_indent2 = 0
+        continuation_indent = len(lines[-1]) - 2
+        continuation_indent2 = continuation_indent
+        consumed = index
+
+    return lines
+
+
+def present_diff(a, d, path, indent=True):
+    "Pretty-print a nbdime diff."
+    if isinstance(a, dict):
+        pp = present_dict_diff(a, d, path)
+    elif isinstance(a, list):
+        pp = present_list_diff(a, d, path)
+    elif isinstance(a, string_types):
+        pp = present_string_diff(a, d, path)
     else:
         error("Invalid type for diff presentation.")
 
     # Optionally indent
-    indsep = " "*4
+    indsep = " "*2
     return [indsep + line for line in pp] if indent else pp
 
 
 header = """\
-nbdiff a/{afn} b/{bfn}
---- a/{afn}
-+++ b/{bfn}
+nbdiff {afn} {bfn}
+--- a: {afn}
++++ b: {bfn}
 """
 
 
-def pretty_print_notebook_diff(afn, bfn, a, b, d):
-
-    #d = to_dict_diff(d)
-    #p = []
-    #for key in ("metadata", "cells"):
-    #    s = d.get(key)
-    #    if s is not None:
-    #        p += ['"{key}" differs:'.format(key=key)]
-    #        p += present_diff(a[key], b[key], s)
-
-    p = present_diff(a, b, d)
+def pretty_print_notebook_diff(afn, bfn, a, d):
+    p = present_diff(a, d, path="a", indent=False)
     if p:
         p = [header.format(afn=afn, bfn=bfn)] + p
     print("\n".join(p))
-
-    #missing = set(d.keys()) - set(("metadata", "cells"))
-    #if missing:
-    #    print("FIXME: Missing in presentation:")
-    #    print(missing)
 
 
 _usage = """\
@@ -167,7 +210,7 @@ Example usage:
 """.format(__version__)
 
 
-def main_diff(afn, bfn, dfn):
+def main_diff(afn, bfn, dfn=None):
     for fn in (afn, bfn):
         if not os.path.exists(fn):
             print("Missing file {}".format(fn))
@@ -180,18 +223,19 @@ def main_diff(afn, bfn, dfn):
 
     verbose = True
     if verbose:
-        pretty_print_notebook_diff(afn, bfn, a, b, d)
+        pretty_print_notebook_diff(afn, bfn, a, d)
 
-    with open(dfn, "w") as df:
-        json.dump(d, df)
-        # Verbose version:
-        #json.dump(d, df, indent=4, separators=(",", ": "))
+    if dfn is not None:
+        with open(dfn, "w") as df:
+            json.dump(d, df)
+            # Verbose version:
+            #json.dump(d, df, indent=4, separators=(",", ": "))
     return 0
 
 
 def main():
     args = sys.argv[1:]
-    if len(args) != 3:
+    if len(args) not in (2, 3):
         r = 1
     else:
         r = main_diff(*args)
