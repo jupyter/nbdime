@@ -5,13 +5,13 @@
 
 from __future__ import unicode_literals
 
-from six import string_types
-from six.moves import xrange as range
+#from six import string_types
+#from six.moves import xrange as range
 
 import nbformat
 
-from ..diffing import diff
-from ..dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
+#from ..diffing import diff
+#from ..dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
 from .generic import merge
 
 def merge_notebooks(base, local, remote):

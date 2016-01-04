@@ -6,7 +6,7 @@ from six.moves import xrange as range
 import copy
 import pytest
 
-from nbdime import merge, diff
+from nbdime import merge
 
 
 def cut(li, *indices):

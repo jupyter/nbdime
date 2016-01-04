@@ -6,7 +6,6 @@
 from __future__ import unicode_literals
 
 import operator
-import numpy as np
 
 __all__ = ["diff_sequence_myers"]
 

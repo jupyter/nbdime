@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 from six import string_types
 from six.moves import xrange as range
 
-from .log import error, NBDiffFormatError
+from .log import NBDiffFormatError
 
 
 # Valid values for the action field in diff entries
@@ -36,7 +36,7 @@ def is_valid_diff(diff, deep=False):
     try:
         validate_diff(diff, deep=deep)
         result = True
-    except NBDiffFormatError as e:
+    except NBDiffFormatError:
         result = False
     return result
 
@@ -175,7 +175,7 @@ def get_equal_ranges(a, b, d):
     bcons = 0
     ranges = []
     for e in d:
-        action = e[0]
+        #action = e[0]
         index = e[1]
 
         # Consume n more unmentioned items.

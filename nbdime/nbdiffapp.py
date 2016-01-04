@@ -121,6 +121,8 @@ def present_string_diff(a, d, path):
         index = e[1]
         arg = e[2]
 
+        actname = action_names[action]
+
         # Consume untouched characters
         if index > consumed:
             dlines = a[consumed:index].split("\n")

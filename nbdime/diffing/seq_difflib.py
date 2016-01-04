@@ -17,7 +17,7 @@ def opcodes_to_diff(a, b, opcodes):
     for opcode in opcodes:
         action, abegin, aend, bbegin, bend = opcode
         asize = aend - abegin
-        bsize = bend - bbegin
+        #bsize = bend - bbegin
         if action == "equal":
             # Unlike difflib we don't represent equal stretches explicitly
             pass

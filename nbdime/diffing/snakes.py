@@ -12,13 +12,11 @@ converted to the same format version, currently v4 at time of writing.
 Up- and down-conversion is handled by nbformat.
 """
 
-import operator
-
 from ..dformat import PATCH, SEQINSERT, SEQDELETE
 from .seq_bruteforce import bruteforce_compute_snakes
 from .generic import diff
 
-__all__ = ["diff_notebooks"]
+__all__ = ["diff_sequence_multilevel"]
 
 
 def compute_snakes(A, B, rect, compare):

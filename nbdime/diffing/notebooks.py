@@ -15,10 +15,10 @@ Up- and down-conversion is handled by nbformat.
 import difflib
 import operator
 
-from ..dformat import PATCH, SEQINSERT, SEQDELETE
-from ..dformat import decompress_diff
+#from ..dformat import PATCH, SEQINSERT, SEQDELETE
+#from ..dformat import decompress_diff
 
-from .comparing import strings_are_similar
+#from .comparing import strings_are_similar
 from .sequences import diff_sequence
 from .generic import diff, diff_lists, diff_dicts
 from .snakes import diff_sequence_multilevel
@@ -154,6 +154,7 @@ def diff_cells(a, b, compare="ignored"):
 
 def old_diff_cells(cells_a, cells_b):
     "Compute the diff of two sequences of cells."
+    compare_cells = compare_cell_source_and_outputs
     shallow_diff = diff_sequence(cells_a, cells_b, compare_cells)
     return diff_lists(cells_a, cells_b, compare=operator.__eq__, shallow_diff=shallow_diff)
 

@@ -6,15 +6,15 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
-import pytest
-import copy
+#import pytest
+#import copy
 import operator
 
-from nbdime import patch, diff
+from nbdime import diff
 from nbdime.dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
 from nbdime.diffing.snakes import compute_snakes_multilevel
 
-from .fixtures import check_diff_and_patch, check_symmetric_diff_and_patch
+from .fixtures import check_symmetric_diff_and_patch
 
 def test_diff_and_patch():
     # Note: check_symmetric_diff_and_patch handles (a,b) and (b,a) for both

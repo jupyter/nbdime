@@ -8,11 +8,14 @@ from __future__ import unicode_literals
 from six import string_types
 from six.moves import xrange as range
 
-import nbformat
-
 from ..diffing import diff
 from ..dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
 from ..dformat import to_dict_diff
+from ..patching import patch
+
+
+# Set to true to enable some expensive debugging assertions
+DEBUGGING = 0
 
 
 # Sentinel to allow None value
@@ -280,11 +283,15 @@ def _merge_lists(base, local, remote, base_local_diff, base_remote_diff):
                         local_conflict_diff.append([PATCH, j, lco])
                         remote_conflict_diff.append([PATCH, j, rco])
                 elif lp:
-                    assert local[i+loffset] == patch(base[i], local_patched[i][2])  # TODO: Remove expensive assert!
+                    if DEBUGGING:
+                        # This assert is expensive and must not be enabled in release mode
+                        assert local[i+loffset] == patch(base[i], local_patched[i][2])
                     # Patched on local side only
                     merged.append(local[i+loffset])
                 elif rp:
-                    assert remote[i+roffset] == patch(base[i], remote_patched[i][2])  # TODO: Remove expensive assert!
+                    if DEBUGGING:
+                        # This assert is expensive and must not be enabled in release mode
+                        assert remote[i+roffset] == patch(base[i], remote_patched[i][2])
                     # Patched on remote side only
                     merged.append(remote[i+loffset])
                 else:

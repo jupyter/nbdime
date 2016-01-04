@@ -10,10 +10,11 @@ import operator
 import numpy as np
 from six.moves import xrange as range
 
-import pdb
 
 # Set to true to enable additional assertions, array access checking, and printouts
 DEBUGGING = 0
+#import pdb
+
 
 class DebuggingArray(object):
     "Debugging tool to capture array accesses."
@@ -214,7 +215,7 @@ def find_reverse_path(A, B, V, V0, D, k, delta, compare=operator.__eq__):
     V[V0+k] = x
 
     if DEBUGGING:
-        FIXME
+        # FIXME
         assert x0 < 0 or y0 < 0 or (x0-x) == 0 or compare(A[x0], B[y0])
         assert x < 0 or y < 0 or not compare(A[x], B[y])
         for i in range(x0-x):
