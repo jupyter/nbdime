@@ -17,11 +17,14 @@ import re
 from nbdime import patch, diff
 from nbdime.dformat import is_valid_diff
 
+
 def testspath():
     return os.path.abspath(os.path.dirname(__file__))
 
+
 def filespath():
     return os.path.join(testspath(), "files")
+
 
 class NBTestDataBase(object):
     def __init__(self):
@@ -73,6 +76,7 @@ _db = NBTestDataBase()
 def _any_nb_name():
     return _db.names
 
+
 def _any_nb_pair_names():
     pairs = []
     names = _db.names
@@ -80,6 +84,7 @@ def _any_nb_pair_names():
         for j in range(len(names)):
             pairs.append((names[i], names[j]))
     return pairs
+
 
 def _matching_nb_pair_names():
     pairs = []
@@ -94,14 +99,17 @@ def _matching_nb_pair_names():
 def db():
     return _db
 
+
 @pytest.fixture(params=_any_nb_name())
 def any_nb(request):
     return _db[request.param]
+
 
 @pytest.fixture(params=_any_nb_pair_names())
 def any_nb_pair(request):
     a, b = request.param
     return _db[a], _db[b]
+
 
 @pytest.fixture(params=_matching_nb_pair_names())
 def matching_nb_pairs(request):
@@ -124,7 +132,26 @@ def check_diff_and_patch(a, b):
     assert is_valid_diff(d)
     assert patch(a, d) == b
 
+
 def check_symmetric_diff_and_patch(a, b):
     "Check that patch(a, diff(a,b)) reproduces b and vice versa."
     check_diff_and_patch(a, b)
     check_diff_and_patch(b, a)
+
+
+def sources_to_notebook(sources):
+    nb = nbformat.v4.new_notebook()
+    nb.cells.extend(nbformat.v4.new_code_cell(source) for source in sources)
+    return nb
+
+
+def notebook_to_sources(nb, as_str=True):
+    sources = []
+    for cell in nb["cells"]:
+        source = cell["source"]
+        if as_str and isinstance(source, list):
+            source = "\n".join([line.strip("\n") for line in source])
+        elif not as_str and isinstance(source, str):
+            source = source.split("\n")
+        sources.append(source)
+    return sources
