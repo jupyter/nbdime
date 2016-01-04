@@ -130,35 +130,6 @@ def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
     return merged, local_conflict_diff, remote_conflict_diff
 
 
-def get_deleted_indices(diff):
-    deleted = set()
-    for e in diff:
-        if e[0] == DELETE:
-            deleted.add(e[1])
-        elif e[0] == SEQDELETE:
-            deleted.update(e[1] + i for i in range(e[2]))
-    return deleted
-
-
-def where_deleted(diff, size):
-    deleted = [False]*size
-    for e in diff:
-        if e[0] == DELETE:
-            deleted[e[1]] = True
-        elif e[0] == SEQDELETE:
-            for i in range(e[2]):
-                deleted[e[1] + i] = True
-    return deleted
-
-
-def where_patched(diff, size):
-    patched = [False]*size
-    for e in diff:
-        if e[0] == PATCH:
-            patched[e[1]] = True
-    return patched
-
-
 def _split_diff(diff, size):
     deleted = [False]*size
     patched = [None]*size
@@ -305,82 +276,6 @@ def _merge_lists(base, local, remote, base_local_diff, base_remote_diff):
         loffset += lskip
         roffset += rskip
 
-    return merged, local_conflict_diff, remote_conflict_diff
-
-
-def __old_merge_lists(base, local, remote, base_local_diff, base_remote_diff):
-    """Perform a three-way merge of lists. See docstring of merge."""
-    assert isinstance(base, list) and isinstance(local, list) and isinstance(remote, list)
-
-    # Compute the diff between the base->local and base->remote diffs
-    #diffs_diff = diff_sequences(base_local_diff, base_remote_diff)
-    # TODO: This will be much cleaner if the diffs are single-item only.
-
-    # Build sets of deleted indices on each side
-    #local_deleted = get_deleted_indices(base_local_diff)
-    #remote_deleted = get_deleted_indices(base_local_diff)
-
-    # Build lists of markers, True for base item indices that are deleted in local or remote
-    local_deleted = where_deleted(base_local_diff, len(base))
-    remote_deleted = where_deleted(base_remote_diff, len(base))
-
-    # Get non-deletion diff entries only
-    local_diff = [e for e in base_local_diff if e[0] not in (DELETE, SEQDELETE)]
-    remote_diff = [e for e in base_remote_diff if e[0] not in (DELETE, SEQDELETE)]
-
-    # Interleave local and remote diff entries in a merged diff object
-    merged_diff = []
-
-    # Data structures for storing conflicts
-    local_conflict_diff = []
-    remote_conflict_diff = []
-
-    lk = 0
-    rk = 0
-    lastindex = 0
-    while lk < len(local_diff) and rk < len(remote_diff):
-        le = local_diff[lk]
-        re = remote_diff[rk]
-        lindex = le[1]
-        rindex = re[1]
-        index = min(lindex, rindex)
-
-        # Insert deletions up to (and including) this point
-        for i in range(lastindex, index+1): # (+1 for including) # FIXME: include +1 or make it part of conflict resolution?
-            ldel = i in local_deleted
-            rdel = i in remote_deleted
-            if ldel:
-                local_deleted.remove(i)
-            if rdel:
-                remote_deleted.remove(i)
-            if ldel or rdel:
-                merged_diff.append([DELETE, i])
-        lastindex = min(lastindex, index+1) # FIXME: +1 here?
-
-        #
-        if lindex < rindex:
-            # FIXME: Conflicts if remote_deletes overlap
-            merged_diff.append(le)
-        elif lindex > rindex:
-            # FIXME: Conflicts if local_deletes overlap
-            merged_diff.append(re)
-        else:
-            # FIXME: Create conflict instead of inserting both
-            # FIXME: Inserting both won't even work for PATCH or REPLACE, only for INSERT
-            assert le[1] == INSERT and re[1] == INSERT
-            merged_diff.append(le)
-            merged_diff.append(re)
-
-    # Add trailing diff entries, only one of these can be non-empty
-    # FIXME: Handle deletion conflicts too here
-    merged_diff.extend(local_diff[lk:])
-    merged_diff.extend(remote_diff[rk:])
-
-    # Assert that we've inserted all the deletions
-    assert not local_deleted
-    assert not remote_deleted
-
-    merged = patch(base, merged_diff)
     return merged, local_conflict_diff, remote_conflict_diff
 
 

@@ -19,11 +19,7 @@ __all__ = ["diff"]
 
 def is_atomic(x):
     "Return True for values that diff should treat as a single atomic value."
-    atomic_strings = False  # TODO: Configuration framework?
-    if atomic_strings:
-        return not isinstance(x, (list, dict))
-    else:
-        return not isinstance(x, (string_types, list, dict))
+    return not isinstance(x, (string_types, list, dict))
 
 
 def diff(a, b, compare=operator.__eq__):
@@ -81,7 +77,7 @@ def diff_lists(a, b, compare=operator.__eq__, shallow_diff=None):
             if not is_atomic(aval):
                 d = diff(aval, bval, compare=compare)
                 if d:
-                    pdi.append([PATCH, acons+i, d])
+                    pdi.append([PATCH, acons+i, d])  # FIXME: Not covered in tests, create test situation
 
         # Keep count of consumed items
         acons += n + askip

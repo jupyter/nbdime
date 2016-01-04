@@ -123,87 +123,25 @@ def to_dict_diff(ld):
     return dd
 
 
-def decompress_diff(sequence_diff):
-    """Split all sequence diff actions ++,--,:: into single-line actions +,-,:.
-
-    Current implementation applies only to a single-level sequence list diff.
-    """
-    d = []
-    for s in sequence_diff:
-        action = s[0]
-        if action in (INSERT, DELETE, REPLACE, PATCH):
-            d.append(s)
-        elif action == SEQINSERT:
-            for i, v in enumerate(s[2]):
-                d.append([INSERT, s[1], v])
-        elif action == SEQDELETE:
-            for i in range(s[2]):
-                d.append([DELETE, s[1] + i])
-        else:
-            raise NBDiffFormatError("Invalid action '{}'".format(action))
-    return d
-
-
-#def compress_diff(sequence_diff):
-#    """Combine contiguous single-line actions +,-,: into sequence diff actions ++,--,:: everywhere."""
-#    pass # Not implemented
-
-
 def count_consumed_symbols(e):
     "Count how many symbols are consumed from each sequence by a single sequence diff entry."
     action = e[0]
-    if action == INSERT:
-        return 0, 1
-    elif action == DELETE:
-        return 1, 0
-    elif action == REPLACE:
-        return 1, 1
-    elif action == PATCH:
-        return 1, 1
-    elif action == SEQINSERT:
+    if action == SEQINSERT:
         return 0, len(e[2])
     elif action == SEQDELETE:
         return e[2], 0
+    elif action == PATCH:
+        return 1, 1
     else:
         raise NBDiffFormatError("Invalid action '{}'".format(action))
 
 
-def get_equal_ranges(a, b, d):
-    "Return list of tuples [(i,j,n)] such that a[i:i+n] == b[j:j+n] given a diff d of sequences a and b."
-    # Count consumed items from a, "take" in patch_list
-    acons = 0
-    bcons = 0
-    ranges = []
-    for e in d:
-        #action = e[0]
-        index = e[1]
-
-        # Consume n more unmentioned items.
-        # Note that index can be larger than acons in the case where items
-        # have been deleted from a and then insertions from b occur.
-        n = max(0, index - acons)
-        if n > 0:
-            ranges.append((acons, bcons, n))
-
-        # Count consumed items
-        askip, bskip = count_consumed_symbols(e)
-        acons += n + askip
-        bcons += n + bskip
-
-    # Consume final items
-    n = len(a) - acons
-    assert n >= 0
-    assert len(b) - bcons == n
-    if n > 0:
-        ranges.append((acons, bcons, n))
-
-    # Sanity check
-    acons += n
-    bcons += n
-    assert acons == len(a)
-    assert bcons == len(b)
-
-    return ranges
+def source_as_string(source):
+    "Return source as a single string, joined as lines if it's a list."
+    if isinstance(source, list):
+        source = "\n".join(line.strip("\n") for line in source)
+    assert isinstance(source, string_types)
+    return source
 
 
 def to_json_patch_format(d, path=""):

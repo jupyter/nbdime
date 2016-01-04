@@ -14,11 +14,10 @@ Up- and down-conversion is handled by nbformat.
 
 import difflib
 import operator
+from six import string_types
 
-#from ..dformat import PATCH, SEQINSERT, SEQDELETE
-#from ..dformat import decompress_diff
+from ..dformat import source_as_string
 
-#from .comparing import strings_are_similar
 from .sequences import diff_sequence
 from .generic import diff, diff_lists, diff_dicts
 from .snakes import diff_sequence_multilevel
@@ -33,12 +32,8 @@ def compare_cell_source_approximate(x, y):
         return False
 
     # Convert from list to single string
-    xs = x["source"]
-    ys = y["source"]
-    if isinstance(xs, list):
-        xs = "\n".join(xs)
-    if isinstance(ys, list):
-        ys = "\n".join(ys)
+    xs = source_as_string(x["source"])
+    ys = source_as_string(y["source"])
 
     # Cutoff on equality (Python has fast hash functions for strings)
     if xs == ys:
@@ -134,9 +129,9 @@ def diff_single_outputs(a, b, compare="ignored"):
 
 def diff_outputs(a, b, compare="ignored"):
     "Diff a pair of lists of outputs from within a single cell."
-    return diff_sequence_multilevel(a, b,
-                                    predicates=[compare_output_data_keys, compare_output_data],
-                                    subdiff=diff_single_outputs)
+    predicates = [compare_output_data_keys,
+                  compare_output_data]
+    return diff_sequence_multilevel(a, b, predicates, diff_single_outputs)
 
 
 def diff_single_cells(a, b):
@@ -145,18 +140,15 @@ def diff_single_cells(a, b):
 
 def diff_cells(a, b, compare="ignored"):
     "Diff cell lists a and b. Argument compare is ignored."
+    # Old alternative implementation:
+    # shallow_diff = diff_sequence(a, b, compare_cell_source_and_outputs)
+    # return diff_lists(a, b, compare=operator.__eq__, shallow_diff=shallow_diff)
+
     # Predicates to compare cells in order of low-to-high precedence
     predicates = [compare_cell_source_approximate,
                   compare_cell_source_exact,
                   compare_cell_source_and_outputs]
     return diff_sequence_multilevel(a, b, predicates, diff_single_cells)
-
-
-def old_diff_cells(cells_a, cells_b):
-    "Compute the diff of two sequences of cells."
-    compare_cells = compare_cell_source_and_outputs
-    shallow_diff = diff_sequence(cells_a, cells_b, compare_cells)
-    return diff_lists(cells_a, cells_b, compare=operator.__eq__, shallow_diff=shallow_diff)
 
 
 def diff_notebooks(nba, nbb):
