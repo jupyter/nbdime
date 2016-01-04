@@ -1,4 +1,4 @@
-"""Utilities for patching notebooks"""
+# coding: utf-8
 
 # Copyright (c) IPython Development Team.
 # Distributed under the terms of the Modified BSD License.
@@ -21,7 +21,7 @@ This is nbpatch from nbdime version {}.
 
 Example usage:
 
-  jupyter nbpatch before.ipynb patch.json after.ipynb
+  nbpatch before.ipynb patch.json after.ipynb
 """.format(__version__)
 
 

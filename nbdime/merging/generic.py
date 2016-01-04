@@ -7,6 +7,7 @@ from __future__ import unicode_literals
 
 from six import string_types
 from six.moves import xrange as range
+import copy
 
 from ..diffing import diff
 from ..dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
@@ -130,24 +131,27 @@ def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
     return merged, local_conflict_diff, remote_conflict_diff
 
 
-def _split_diff(diff, size):
+def _split_list_diff(diff, size):
+    """Splits a sequence diff based on actions.
+
+    Returns lists (deleted, patched, inserts), where
+
+      deleted[i] = boolean: item i is deleted
+      patched[i] = None or diff if item i is patched
+      inserts = list of block inserts on the form [[index0, values0], ..., [indexn, valuesn]]
+
+    """
     deleted = [False]*size
     patched = [None]*size
     inserts = []
     for e in diff:
-        if e[0] == PATCH:
-            patched[e[1]] = e[2]
-        elif e[0] == DELETE:
-            deleted[e[1]] = True
+        if e[0] == SEQINSERT:
+            inserts.append([e[1], e[2]])
         elif e[0] == SEQDELETE:
             for i in range(e[2]):
                 deleted[e[1] + i] = True
-        elif e[0] == INSERT:
-            # Make canonical representation of inserts
-            inserts.append([e[1], [e[2]]])
-        elif e[0] == SEQINSERT:
-            # Make canonical representation of inserts
-            inserts.append([e[1], e[2]])
+        elif e[0] == PATCH:
+            patched[e[1]] = e[2]
         else:
             raise ValueError("Invalid diff action {}.".format(e[0]))
     return deleted, patched, inserts
@@ -155,7 +159,8 @@ def _split_diff(diff, size):
 
 def interleave_inserts(local_inserts, remote_inserts):
     # [ (index0, values0), (index1, values1) ]
-    inserts = [[0, [], 0, 0]]
+    empty = [0, [], 0, 0]
+    inserts = [copy.deepcopy(empty)]
 
     l = list(local_inserts)
     r = list(remote_inserts)
@@ -183,11 +188,17 @@ def interleave_inserts(local_inserts, remote_inserts):
             rskip = len(values)
 
         if inserts[-1][0] == index:
+            # Join inserts at the same base index into one block
             inserts[-1][1].extend(values)
             inserts[-1][2] += lskip
             inserts[-1][3] += rskip
         else:
-            inserts.append([index, list(values), lskip, rskip])
+            # Add new block insert (rebuilding list here to use extend above)
+            item = [index, list(values), lskip, rskip]
+            inserts.append(item)
+
+    # Remove empty insert items (can this happen more than the initial dummy item?)
+    inserts = [item for item in inserts if item != empty]
     return inserts
 
 
@@ -196,11 +207,11 @@ def _merge_lists(base, local, remote, base_local_diff, base_remote_diff):
     assert isinstance(base, list) and isinstance(local, list) and isinstance(remote, list)
 
     # Split diffs into different representations
-    local_deleted, local_patched, local_inserts = _split_diff(base_local_diff, len(base))
-    remote_deleted, remote_patched, remote_inserts = _split_diff(base_remote_diff, len(base))
+    local_deleted, local_patched, local_inserts = _split_list_diff(base_local_diff, len(base))
+    remote_deleted, remote_patched, remote_inserts = _split_list_diff(base_remote_diff, len(base))
     inserts = interleave_inserts(local_inserts, remote_inserts)
 
-    # Add a dummy insert at end to make loop handle final stretch after last actual insert
+    # Add a dummy insert at end to make loop below handle final stretch after last actual insert
     inserts.append([len(base), [], 0, 0])
 
     # Interleave local and remote diff entries in a merged diff object
@@ -210,9 +221,11 @@ def _merge_lists(base, local, remote, base_local_diff, base_remote_diff):
     local_conflict_diff = []
     remote_conflict_diff = []
 
+    # Offsets or number of items consumed from base, local, remote
+    boffset = 0
     loffset = 0
     roffset = 0
-    boffset = 0
+
     for index, values, lskip, rskip in inserts:
         # 1) consume base[boffset:index]
         for i in range(boffset, index):

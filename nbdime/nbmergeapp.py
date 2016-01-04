@@ -1,4 +1,4 @@
-"""Utilities for merging notebooks"""
+# coding: utf-8
 
 # Copyright (c) IPython Development Team.
 # Distributed under the terms of the Modified BSD License.
@@ -20,7 +20,7 @@ This is nbmerge from nbdime version {}.
 
 Example usage:
 
-  jupyter nbmerge base.ipynb local.ipynb remote.ipynb merged.ipynb
+  nbmerge base.ipynb local.ipynb remote.ipynb merged.ipynb
 """.format(__version__)
 
 
