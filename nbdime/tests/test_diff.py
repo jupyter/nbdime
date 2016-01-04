@@ -16,6 +16,7 @@ from nbdime.diffing.snakes import compute_snakes_multilevel
 
 from .fixtures import check_symmetric_diff_and_patch
 
+
 def test_diff_and_patch():
     # Note: check_symmetric_diff_and_patch handles (a,b) and (b,a) for both
     # shallow and deep diffs, simplifying the number of cases to cover in here.
@@ -107,6 +108,7 @@ def test_compute_snakes_multilevel():
         ("x", "y", "z"),
         ("a3", "b", "c"),
         ]
+
     def _cmp_n(n):
         def _cmp(x, y):
             return x[:n] == y[:n]

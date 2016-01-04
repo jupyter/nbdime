@@ -5,11 +5,14 @@
 
 from __future__ import unicode_literals
 
+
 class NBDimeError(Exception):
     pass
 
+
 class NBDiffFormatError(ValueError):
     pass
+
 
 def error(msg):
     raise NBDimeError(msg)

@@ -12,6 +12,7 @@ from .lcs import diff_from_lcs
 
 __all__ = ["diff_sequence_bruteforce"]
 
+
 def bruteforce_compare_grid(A, B, compare=operator.__eq__):
     "Brute force compute grid G[i, j] == compare(A[i], B[j])."
     N, M = len(A), len(B)
@@ -20,6 +21,7 @@ def bruteforce_compare_grid(A, B, compare=operator.__eq__):
         for j in range(M):
             G[i, j] = compare(A[i], B[j])
     return G
+
 
 def bruteforce_llcs_grid(G):
     "Brute force compute grid R[x, y] == llcs(A[:x], B[:y]), given G[i,j] = compare(A[i], B[j])."
@@ -32,6 +34,7 @@ def bruteforce_llcs_grid(G):
             else:
                 R[x, y] = max(R[x-1, y], R[x, y-1])
     return R
+
 
 def bruteforce_lcs_indices(A, B, G, R, compare=operator.__eq__):
     """Brute force compute the lcs of A and B.
@@ -72,7 +75,7 @@ def bruteforce_compute_snakes(A, B, compare):
     G = bruteforce_compare_grid(A, B, compare)
     R = bruteforce_llcs_grid(G)
     A_indices, B_indices = bruteforce_lcs_indices(A, B, G, R, compare)
-    snakes = [(0,0,0)]
+    snakes = [(0, 0, 0)]
     for i, j in zip(A_indices, B_indices):
         if snakes[-1][0] == i and snakes[-1][1] == j:
             snake = snakes[-1]

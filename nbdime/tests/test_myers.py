@@ -41,6 +41,7 @@ class DebuggingArray(object):
         self.a[i] = v
         return v
 
+
 def alloc_V_array(N, M, name):
     # 32 bit should be sufficient for all practical use cases
     assert max(N, M) < 2**31
@@ -63,9 +64,10 @@ def alloc_V_array(N, M, name):
 def measure_snake_at(i, j, A, B, compare=operator.__eq__):
     N, M = len(A), len(B)
     n = 0
-    while i+n<N and j+n<M and compare(A[i+n], B[j+n]):
+    while i+n < N and j+n < M and compare(A[i+n], B[j+n]):
         n += 1
     return n
+
 
 def brute_force_snake_grid(A, B, compare=operator.__eq__):
     N, M = len(A), len(B)
@@ -74,6 +76,7 @@ def brute_force_snake_grid(A, B, compare=operator.__eq__):
         for j in range(M):
             G[i, j] = measure_snake_at(i, j, A, B, compare)
     return G
+
 
 def brute_force_snakes(A, B, compare=operator.__eq__):
     """Build list of snakes represented by indices i,j into A and B and a length n for each diagonal -M<=k<=N.
@@ -91,9 +94,9 @@ def brute_force_snakes(A, B, compare=operator.__eq__):
         else:
             j = 0
             i = j + k
-        while i<N and j<M:
+        while i < N and j < M:
             n = 0
-            while i+n<N and j+n<M and compare(A[i+n], B[j+n]):
+            while i+n < N and j+n < M and compare(A[i+n], B[j+n]):
                 n += 1
             if n:
                 snakes.append((i, j, n))
@@ -104,6 +107,7 @@ def brute_force_snakes(A, B, compare=operator.__eq__):
                 j += 1
         W[k] = snakes
     return W
+
 
 def greedy_forward_ses(A, B, compare=operator.__eq__):
     "The greedy LCS/SES algorithm from Fig. 2 of Myers' article."
@@ -142,6 +146,7 @@ def greedy_forward_ses(A, B, compare=operator.__eq__):
     raise RuntimeError("Shortest edit script length exceeds {}.".format(MAX))
 
 # x, y = edit graph vertex coordinates, meaning how many letters of A and B respectively have been included
+
 
 def greedy_reverse_ses(A, B, compare=operator.__eq__):
     "Reverse variant of the greedy LCS/SES algorithm from Fig. 2 of Myers' article."
@@ -183,6 +188,8 @@ def greedy_reverse_ses(A, B, compare=operator.__eq__):
     raise RuntimeError("Shortest edit script length exceeds {}.".format(MAX))
 
 # FIXME: Update to correspond to the debugged greedy_reverse_ses
+
+
 def find_reverse_path(A, B, V, V0, D, k, delta, compare=operator.__eq__):
     "Reverse variant of the greedy LCS/SES algorithm from Fig. 2 of Myers' article."
     N, M = len(A), len(B)
@@ -263,6 +270,7 @@ def find_forward_path(A, B, V, V0, D, k, compare=operator.__eq__):
     # The forward snake covers [x0,x) [y0,y)
     return x0, y0, x, y
 
+
 def find_middle_snake(A, B, compare=operator.__eq__):
     N = len(A)
     M = len(B)
@@ -295,7 +303,7 @@ def find_middle_snake(A, B, compare=operator.__eq__):
                 print("    xyuv:", x, y, u, v)
 
             # Look for overlap with reverse search
-            if odd and D>0 and (-(D-1) <= k-delta <= (D-1)):
+            if odd and D > 0 and (-(D-1) <= k-delta <= (D-1)):
                 # Check if the path overlaps the furthest reaching reverse D-1-path in diagonal k
                 if Vr[V0+k-delta] <= Vf[V0+k]:
                     # Length of the SES
@@ -326,6 +334,7 @@ def find_middle_snake(A, B, compare=operator.__eq__):
                     return ses, x, y, u, v
 
     raise RuntimeError("Failed to find middle snake!")
+
 
 def lcs(A, B, compare=operator.__eq__):
     "Yield elements of the lcs of A and B."
@@ -364,6 +373,7 @@ def lcs(A, B, compare=operator.__eq__):
             for s in B:
                 yield s
 
+
 def test_greedy_forward_ses():
     for i in range(5):
         for j in range(5):
@@ -375,6 +385,7 @@ def test_greedy_reverse_ses():
         for j in range(5):
             gr = greedy_reverse_ses(list(range(i)), list(range(j)))
             assert gr == abs(i-j)
+
 
 def xtest_lcs():
     # Both empty
@@ -423,6 +434,7 @@ def xtest_lcs():
             b.insert(j, len(a) + j + 1)
             assert list(lcs(a, b)) == a
 
+
 def test_greedy_ses_with_neil_fraser_cases():
     # Case from neil.fraser.name/writing/diff/
     assert greedy_forward_ses(list("abcab"), list("ayb")) == 3+1
@@ -430,12 +442,13 @@ def test_greedy_ses_with_neil_fraser_cases():
     assert greedy_forward_ses(list("xaxcxabc"), list("abcy")) == 5+1
     assert greedy_reverse_ses(list("xaxcxabc"), list("abcy")) == 5+1
 
+
 def xtest_neil_fraser_case():
     # Case from neil.fraser.name/writing/diff/
     #assert list(lcs(list("abcab"), list("ayb"))) == ["a","b"]
 
     # These cases fail:
-    assert list(lcs(list("abcab"), list("ayb"))) == ["a","b"]
+    assert list(lcs(list("abcab"), list("ayb"))) == ["a", "b"]
     #assert list(lcs(list("abcb"), list("ayb"))) == ["a","b"]
 
     # These cases work:

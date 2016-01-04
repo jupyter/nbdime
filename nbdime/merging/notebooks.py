@@ -14,6 +14,7 @@ import nbformat
 #from ..dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
 from .generic import merge
 
+
 def merge_notebooks(base, local, remote):
     """Merge changes introduced by notebooks local and remote from a shared ancestor base.
 

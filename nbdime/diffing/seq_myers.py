@@ -9,6 +9,7 @@ import operator
 
 __all__ = ["diff_sequence_myers"]
 
+
 def diff_sequence_myers(A, B, compare=operator.__eq__):
     """Compute the diff of A and B using Myers' O(ND) algorithm."""
     raise NotImplementedError("Work in progress...")

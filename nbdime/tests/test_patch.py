@@ -65,7 +65,7 @@ def test_patch_list():
     assert patch(["hello", "world"], [[PATCH, 0, [[REPLACE, 0, "H"]]], [PATCH, 1, [[DELETE, 0], [INSERT, 0, "W"]]]]) == ["Hello", "World"]
 
     # Test ++, sequence insertion
-    assert patch([], [[SEQINSERT, 0, [3,4]], [INSERT, 0, 5], [SEQINSERT, 0, [6,7]]]) == [3, 4, 5, 6, 7]
+    assert patch([], [[SEQINSERT, 0, [3, 4]], [INSERT, 0, 5], [SEQINSERT, 0, [6, 7]]]) == [3, 4, 5, 6, 7]
 
     # Test --, sequence deletion
     assert patch([5, 6, 7, 8], [[SEQDELETE, 0, 2]]) == [7, 8]

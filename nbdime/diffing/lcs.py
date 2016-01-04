@@ -9,6 +9,7 @@ from six.moves import xrange as range
 
 from ..dformat import SEQDELETE, SEQINSERT
 
+
 def diff_from_lcs(A, B, A_indices, B_indices):
     """Compute the diff of A and B, given indices of their lcs."""
     diff = []
