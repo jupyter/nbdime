@@ -11,7 +11,7 @@ from __future__ import print_function
 import operator
 
 from nbdime import diff
-from nbdime.dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
+from nbdime.dformat import PATCH, INSERT, DELETE, REPLACE  # , SEQINSERT, SEQDELETE
 from nbdime.diffing.snakes import compute_snakes_multilevel
 
 from .fixtures import check_symmetric_diff_and_patch
