@@ -9,10 +9,10 @@ before_install:
     - pip install -r requirements.txt
     - pip install pytest
     - pip install pytest-cov
-    - pip install coveralls
+    - pip install codecov
 install:
     - pip install -e .
 script:
     - py.test -l --cov=nbdime
 after_success:
-    - coveralls
+    - codecov
