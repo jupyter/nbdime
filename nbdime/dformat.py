@@ -12,12 +12,12 @@ from .log import NBDiffFormatError
 
 
 # Valid values for the action field in diff entries
-PATCH = "!"
-INSERT = "+"
-DELETE = "-"
-REPLACE = ":"
-SEQINSERT = "++"
-SEQDELETE = "--"
+INSERT = "add"
+DELETE = "remove"
+REPLACE = "replace"
+PATCH = "patch"
+SEQINSERT = "addrange"
+SEQDELETE = "removerange"
 
 ACTIONS = [
     PATCH,
@@ -26,6 +26,19 @@ ACTIONS = [
     REPLACE,
     SEQINSERT,
     SEQDELETE,
+    ]
+
+SEQUENCE_ACTIONS = [
+    SEQINSERT,
+    SEQDELETE,
+    PATCH
+    ]
+
+MAPPING_ACTIONS = [
+    INSERT,
+    DELETE,
+    REPLACE,
+    PATCH
     ]
 
 
@@ -54,7 +67,7 @@ def validate_diff_entry(s, deep=False):
     The diff entry format is a list
     s[0] # action (one of PATCH, INSERT, DELETE, REPLACE)
     s[1] # key (str for diff of dict, int for diff of sequence (list or str))
-    s[2] # action specific argument, omitted if action is "-"
+    s[2] # action specific argument, omitted if action is DELETE
 
     For sequences (lists and strings) the actions
     SEQINSERT and SEQDELETE are also allowed.
@@ -72,8 +85,8 @@ def validate_diff_entry(s, deep=False):
     if not (is_sequence or is_mapping):
         raise NBDiffFormatError("Diff entry key '{}' has type '{}', expecting int or unicode/str.".format(s[1], type(s[1])))
 
-    # Experimental sequence diff actions ++, --, :: are not valid for mapping diffs
-    if is_mapping and len(s[0]) > 1:
+    # Sequence diff actions ++, --, :: are not valid for mapping diffs
+    if is_mapping and s[0] not in MAPPING_ACTIONS:
         raise NBDiffFormatError("Diff action '{}' only valid in diff of sequence.".format(s[0]))
 
     if s[0] == INSERT:

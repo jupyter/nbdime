@@ -11,6 +11,7 @@ import copy
 import pytest
 
 from nbdime import merge
+from nbdime.dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
 
 
 def cut(li, *indices):
@@ -416,15 +417,15 @@ def test_merge_conflicting_nested_dicts():
     r = {"a": {"x": 3, "y": 5}, "d": {"x": 5},         "m": {"x": 27}, "n": {"q": 19}}
     m, lc, rc = merge(b, l, r)
     assert m == {"a": {}, "d": {}, "m": {}, "n": {}}
-    assert lc == {"a": ["!", {"x": [":", 2], "y": ["+", 4]}],
-                  "d": ["!", {"x": ["-"], "y": [":", 6]}],
-                  "m": ["!", {"x": [":", 17]}],
-                  "n": ["!", {"q": ["+", 9]}],
+    assert lc == {"a": [PATCH, {"x": [REPLACE, 2], "y": [INSERT, 4]}],
+                  "d": [PATCH, {"x": [DELETE], "y": [REPLACE, 6]}],
+                  "m": [PATCH, {"x": [REPLACE, 17]}],
+                  "n": [PATCH, {"q": [INSERT, 9]}],
                   }
-    assert rc == {"a": ["!", {"x": [":", 3], "y": ["+", 5]}],
-                  "d": ["!", {"x": [":", 5], "y": ["-"]}],
-                  "m": ["!", {"x": [":", 27]}],
-                  "n": ["!", {"q": ["+", 19]}],
+    assert rc == {"a": [PATCH, {"x": [REPLACE, 3], "y": [INSERT, 5]}],
+                  "d": [PATCH, {"x": [REPLACE, 5], "y": [DELETE]}],
+                  "m": [PATCH, {"x": [REPLACE, 27]}],
+                  "n": [PATCH, {"q": [INSERT, 19]}],
                   }
     #assert c == {"a": {"x": [1, 2, 3], "y": [None, 4, 5]}, "d": {"x": [4, None, 5], "y": [5, 6, None]},
     #             "m": {"x": [7, 17, 27]}}

@@ -30,7 +30,6 @@ def present_dict_diff(a, d, path):
     for key in keys:
         e = d[key]
         action = e[0]
-        arg = e[1] if len(e) > 1 else None
 
         nextpath = "/".join((path, key))
 
@@ -39,15 +38,18 @@ def present_dict_diff(a, d, path):
             pp += present_value("- ", a[key])
 
         elif action == INSERT:
+            arg = e[1]
             pp.append("insert at {}:".format(nextpath))
             pp += present_value("+ ", arg)
 
         elif action == REPLACE:
+            arg = e[1]
             pp.append("replace at {}:".format(nextpath))
             pp += present_value("- ", a[key])
             pp += present_value(" +", arg)
 
         elif action == PATCH:
+            arg = e[1]
             pp.append("patch {}:".format(nextpath))
             pp += present_diff(a[key], arg, nextpath)
 
@@ -63,15 +65,16 @@ def present_list_diff(a, d, path):
     for e in d:
         action = e[0]
         index = e[1]
-        arg = e[2] if len(e) > 2 else None
 
         nextpath = "/".join((path, str(index)))
 
         if action == SEQINSERT:
+            arg = e[2]
             pp.append("insert before {}:".format(nextpath))
             pp += present_value("+ ", arg)
 
         elif action == SEQDELETE:
+            arg = e[2]
             if arg > 1:
                 r = "{}-{}".format(index, index+arg-1)
             else:
@@ -80,6 +83,7 @@ def present_list_diff(a, d, path):
             pp += present_value("- ", a[index:index+arg])
 
         elif action == PATCH:
+            arg = e[2]
             pp.append("patch {}:".format(nextpath))
             pp += present_diff(a[index], arg, nextpath)
 

@@ -52,10 +52,10 @@ A diff of two dicts is a list of diff entries:
 
 A dict diff entry is a list of action and argument (except for deletion):
 
-    * ["-", key]: delete existing value at key
-    * ["+", key, value]: insert new value at key
-    * [":", key, value]: replace value at key with newvalue
-    * ["!", key, diff]: patch value at key with diff
+    * ["remove", key]: delete existing value at key
+    * ["add", key, value]: insert new value at key
+    * ["replace", key, value]: replace value at key with newvalue
+    * ["patch", key, diff]: patch value at key with diff
 
 Insert is an error if the key already exists.
 Delete, replace and patch are errors if the key does not already exist.
@@ -72,10 +72,7 @@ A diff of two sequences is an ordered list of diff entries:
 
 A sequence diff entry is a list of action, index and argument (except for deletion):
 
-    * ["-", index]: delete entry at index
-    * ["+", index, newvalue]: insert single newvalue before index
-    * ["--", index, n]: delete n entries starting at index
-    * ["++", index, newvalues]: insert sequence newvalues before index
-    * ["!", index, diff]: patch value at index with diff
+    * ["addrange", index, n]: delete n entries starting at index
+    * ["removerange", index, newvalues]: insert sequence newvalues before index
+    * ["patch", index, diff]: patch value at index with diff
 
-Possible simplification: Remove single-item insert/delete for sequences.

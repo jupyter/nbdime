@@ -432,7 +432,7 @@ def merge(base, local, remote):
         Takeaways:
         - Ensure that diff always uses patch on collections unless the type changes and replace on values.
         - The only recursion will happen on the patch / patch action of equal type collections!
-        - Patch action is ["!", key, subdiff], providing subdiff for both sides, and meaning values exist on both sides.
+        - Patch action is [PATCH, key, subdiff], providing subdiff for both sides, and meaning values exist on both sides.
 
 
     ## Next trying to figure out list situations:

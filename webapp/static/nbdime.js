@@ -10,12 +10,12 @@
 
     // from the nbdime diff format:
     // Valid values for the action field in diff entries
-    var PATCH = "!";
-    var INSERT = "+";
-    var DELETE = "-";
-    var REPLACE = ":";
-    var SEQINSERT = "++";
-    var SEQDELETE = "--";
+    var INSERT = "add";
+    var DELETE = "remove";
+    var REPLACE = "replace";
+    var PATCH = "patch";
+    var SEQINSERT = "addrange";
+    var SEQDELETE = "removerange";
 
 
     function convert_merge_data(data) {
