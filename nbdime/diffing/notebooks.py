@@ -78,8 +78,9 @@ def compare_cell_source_and_outputs(x, y):
         return False
     if x["source"] != y["source"]:
         return False
-    if x["cell_type"] == "code" and x["outputs"] != y["outputs"]:
-        return False
+    if x["cell_type"] == "code":
+        if x["outputs"] != y["outputs"]:
+            return False
     # NB! Ignoring metadata and execution count
     return True
 
@@ -94,23 +95,37 @@ def compare_output_type(x, y):
 
 def compare_output_data_keys(x, y):
     "Compare type and data of output cells x,y exactly."
-    if x["output_type"] != y["output_type"]:
+    ot = x["output_type"]
+    if ot != y["output_type"]:
         return False
-    if set(x["data"].keys()) != set(y["data"].keys()):
-        return False
+
+    if ot == "stream":
+        pass
+    else:  # if ot == "display_data" or ot == "execute_result":
+        if set(x["data"].keys()) != set(y["data"].keys()):
+            return False
+
     # NB! Ignoring metadata and execution count
     return True
 
 
 def compare_output_data(x, y):
     "Compare type and data of output cells x,y exactly."
-    if x["output_type"] != y["output_type"]:
+    ot = x["output_type"]
+    if ot != y["output_type"]:
         return False
-    # Keys are potentially a lot cheaper to compare than values
-    if set(x["data"].keys()) != set(y["data"].keys()):
-        return False
-    if x["data"] != y["data"]:
-        return False
+
+    if ot == "stream":
+        pass
+    else:  # if ot == "display_data" or ot == "execute_result":
+        if set(x["data"].keys()) != set(y["data"].keys()):
+            return False
+        if x["metadata"] != y["metadata"]:
+            return False
+        # TODO: approximate mime-specific output data comparison?
+        if x["data"] != y["data"]:
+            return False
+
     # NB! Ignoring metadata and execution count
     return True
 
@@ -153,4 +168,10 @@ def diff_cells(a, b, compare="ignored"):
 
 def diff_notebooks(nba, nbb):
     """Compute the diff of two notebooks."""
-    return diff_dicts(nba, nbb, subdiffs={"cells": diff_cells})
+    try:
+        r = diff_dicts(nba, nbb, subdiffs={"cells": diff_cells})
+    except Exception as e:
+        import IPython
+        IPython.embed()
+        raise
+    return r
