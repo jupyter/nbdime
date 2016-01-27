@@ -9,8 +9,8 @@ from six import string_types
 from six.moves import xrange as range
 import operator
 
-from ..dformat import PATCH, INSERT, DELETE, REPLACE
 from ..dformat import validate_diff, count_consumed_symbols
+from ..dformat import MappingDiff, SequenceDiff
 
 from .sequences import diff_strings, diff_sequence
 
@@ -51,15 +51,17 @@ def diff_lists(a, b, compare=operator.__eq__, shallow_diff=None):
     # Count consumed items from a, "take" in patch_list
     acons = 0
     bcons = 0
-    pdi = []
+
+    di = SequenceDiff()
+
     M = len(shallow_diff)
     for ie in range(M+1):
         if ie < M:
             # Consume n more unmentioned items before this diff entry
             # Note that index can be larger than acons in the case where items
             # have been deleted from a and then insertions from b occur.
-            e = shallow_diff[ie]
-            index = e[1]
+            e = shallow_diff[ie]  # XXX
+            index = e[1]  # XXX
             n = max(0, index - acons)
             askip, bskip = count_consumed_symbols(e)
         else:
@@ -75,9 +77,9 @@ def diff_lists(a, b, compare=operator.__eq__, shallow_diff=None):
             aval = a[acons+i]
             bval = b[bcons+i]
             if not is_atomic(aval):
-                d = diff(aval, bval, compare=compare)
-                if d:
-                    pdi.append([PATCH, acons+i, d])  # FIXME: Not covered in tests, create test situation
+                dd = diff(aval, bval, compare=compare)
+                if dd:
+                    di.patch(acons+i, dd)  # FIXME: Not covered in tests, create test situation
 
         # Keep count of consumed items
         acons += n + askip
@@ -85,13 +87,13 @@ def diff_lists(a, b, compare=operator.__eq__, shallow_diff=None):
 
         # Insert the diff entry unless past the end
         if ie < M:
-            pdi.append(e)
+            di.append(e)  # XXX
 
     # Sanity check
     assert acons == len(a)
     assert bcons == len(b)
 
-    return pdi
+    return di.diff  # XXX
 
 
 def diff_dicts(a, b, compare=operator.__eq__, subdiffs=None):
@@ -105,19 +107,18 @@ def diff_dicts(a, b, compare=operator.__eq__, subdiffs=None):
     Items not mentioned in diff are items where compare(x, y) return True.
     For other items the diff will contain delete, insert, or replace entries.
     """
-    assert isinstance(a, dict) and isinstance(b, dict)
-    d = []
-
     if subdiffs is None:
         subdiffs = {}
 
-    # Sorting keys in loops to get a deterministic diff result
+    assert isinstance(a, dict) and isinstance(b, dict)
     akeys = set(a.keys())
     bkeys = set(b.keys())
 
-    # Delete keys in a but not in b
+    di = MappingDiff()
+
+    # Sorting keys in loops to get a deterministic diff result
     for key in sorted(akeys - bkeys):
-        d.append([DELETE, key])
+        di.remove(key)
 
     # Handle values for keys in both a and b
     for key in sorted(akeys & bkeys):
@@ -128,16 +129,12 @@ def diff_dicts(a, b, compare=operator.__eq__, subdiffs=None):
             diffit = subdiffs.get(key, diff)
             dd = diffit(avalue, bvalue, compare=compare)
             if dd:
-                # Patch value at key with nonzero diff dd
-                d.append([PATCH, key, dd])
+                di.patch(key, dd)
         else:
             #compareit = compare.get(key, operator.__eq__)  # TODO: Do like this?
             if not compare(avalue, bvalue): # TODO: Use != or not compare() here?
-                # Replace value at key with bvalue
-                d.append([REPLACE, key, bvalue])
-
-    # Add keys in b but not in a
+                di.replace(key, bvalue)
     for key in sorted(bkeys - akeys):
-        d.append([INSERT, key, b[key]])
+        di.add(key, b[key])
 
-    return d
+    return di.diff  # XXX

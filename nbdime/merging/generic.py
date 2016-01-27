@@ -11,7 +11,7 @@ import copy
 
 from ..diffing import diff
 from ..dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
-from ..dformat import to_dict_diff
+from ..dformat import to_dict_diff, SequenceDiff
 from ..patching import patch
 
 
@@ -54,18 +54,20 @@ def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
     # (2) Apply one-sided local diffs
     for key in bldkeys - brdkeys:
         # Just use local value or remove by not inserting
-        if base_local_diff[key][0] != DELETE:
+        op = base_local_diff[key][0]
+        if op != DELETE:
             merged[key] = local[key]
 
     # (3) Apply one-sided remote diffs
     for key in brdkeys - bldkeys:
         # Just use remote value or remove by not inserting
-        if base_remote_diff[key][0] != DELETE:
+        op = base_remote_diff[key][0]
+        if op != DELETE:
             merged[key] = remote[key]
 
     # Data structures for storing conflicts
-    local_conflict_diff = {}
-    remote_conflict_diff = {}
+    local_conflict_diff = {}  # XXX
+    remote_conflict_diff = {}  # XXX
 
     # (4) (5) (6)
     # Then we have the potentially conflicting changes
@@ -80,18 +82,20 @@ def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
         lv = local.get(key, Missing)
         rv = remote.get(key, Missing)
 
-        # Switch on diff actions
-        if ld[0] != rd[0]: # Note that this means the below cases always have the same action
+        # Switch on diff ops
+        lop = ld[0]
+        rop = rd[0]
+        if lop != rop: # Note that this means the below cases always have the same op
             # (5) Conflict: removed one place and edited another, or edited in different ways
             local_conflict_diff[key] = ld
             remote_conflict_diff[key] = rd
-        elif ld[0] == DELETE and rd[0] == DELETE:
+        elif lop == DELETE and rop == DELETE:
             # (4) Removed in both local and remote, just don't add it to merge result
             pass
-        elif ld[0] in (INSERT, REPLACE, PATCH) and lv == rv:
+        elif lop in (INSERT, REPLACE, PATCH) and lv == rv:
             # If inserting/replacing/patching produces the same value, just use it
             merged[key] = lv
-        elif ld[0] == INSERT:
+        elif lop == INSERT:
             # (6) Insert in both local and remote, values are different
             # Try partially merging the inserted values
             if type(lv) == type(rv) and isinstance(lv, collection_types):
@@ -108,11 +112,11 @@ def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
                 # Recursive merge not possible, record a conflict
                 local_conflict_diff[key] = ld
                 remote_conflict_diff[key] = rd
-        elif ld[0] == REPLACE:
+        elif lop == REPLACE:
             # (7) Replace in both local and remote, values are different
             local_conflict_diff[key] = ld
             remote_conflict_diff[key] = rd
-        elif ld[0] == PATCH:
+        elif lop == PATCH:
             # (8) Patch on both local and remote, values are different
             # Patches produce different values, try merging the substructures
             # (a patch command only occurs when the type is a collection, so we
@@ -126,13 +130,13 @@ def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
                 local_conflict_diff[key] = [PATCH, lco]
                 remote_conflict_diff[key] = [PATCH, rco]
         else:
-            raise ValueError("Invalid diff actions {} and {].".format(ld[0], rd[0]))
+            raise ValueError("Invalid diff ops {} and {].".format(lop, rop))
 
     return merged, local_conflict_diff, remote_conflict_diff
 
 
 def _split_list_diff(diff, size):
-    """Splits a sequence diff based on actions.
+    """Splits a sequence diff based on ops.
 
     Returns lists (deleted, patched, inserts), where
 
@@ -145,15 +149,16 @@ def _split_list_diff(diff, size):
     patched = [None]*size
     inserts = []
     for e in diff:
-        if e[0] == SEQINSERT:
+        op = e[0]
+        if op == SEQINSERT:
             inserts.append([e[1], e[2]])
-        elif e[0] == SEQDELETE:
+        elif op == SEQDELETE:
             for i in range(e[2]):
                 deleted[e[1] + i] = True
-        elif e[0] == PATCH:
+        elif op == PATCH:
             patched[e[1]] = e[2]
         else:
-            raise ValueError("Invalid diff action {}.".format(e[0]))
+            raise ValueError("Invalid diff op {}.".format(e[0]))
     return deleted, patched, inserts
 
 
@@ -218,8 +223,8 @@ def _merge_lists(base, local, remote, base_local_diff, base_remote_diff):
     merged = []
 
     # Data structures for storing conflicts
-    local_conflict_diff = []
-    remote_conflict_diff = []
+    local_conflict_diff = SequenceDiff()
+    remote_conflict_diff = SequenceDiff()
 
     # Offsets or number of items consumed from base, local, remote
     boffset = 0
@@ -242,15 +247,15 @@ def _merge_lists(base, local, remote, base_local_diff, base_remote_diff):
                     # NB! Note the use of j, index into merged, in the conflict diff!
                     j = len(merged)
                     merged.append(base[i])
-                    local_conflict_diff.append([PATCH, j, local_patched[i]])
-                    remote_conflict_diff.append([DELETE, j])
+                    local_conflict_diff.patch(j, local_patched[i])
+                    remote_conflict_diff.remove(j, 1)
                 elif rp:
                     # Conflict: Deleted local, patched remote
                     # NB! Note the use of j, index into merged, in the conflict diff!
                     j = len(merged)
                     merged.append(base[i])
-                    local_conflict_diff.append([DELETE, j])
-                    remote_conflict_diff.append([PATCH, j, remote_patched[i]])
+                    local_conflict_diff.remove(j, 1)
+                    remote_conflict_diff.patch(j, remote_patched[i])
                 else:
                     # Not patched on alternate side, so delete it by just skipping value
                     pass
@@ -264,8 +269,8 @@ def _merge_lists(base, local, remote, base_local_diff, base_remote_diff):
                     merged.append(me)
                     if lco or rco:
                         assert lco and rco
-                        local_conflict_diff.append([PATCH, j, lco])
-                        remote_conflict_diff.append([PATCH, j, rco])
+                        local_conflict_diff.patch(j, lco)
+                        remote_conflict_diff.patch(j, rco)
                 elif lp:
                     if DEBUGGING:
                         # This assert is expensive and must not be enabled in release mode
@@ -289,7 +294,7 @@ def _merge_lists(base, local, remote, base_local_diff, base_remote_diff):
         loffset += lskip
         roffset += rskip
 
-    return merged, local_conflict_diff, remote_conflict_diff
+    return merged, local_conflict_diff.diff, remote_conflict_diff.diff  # XXX
 
 
 def _merge_strings(base, local, remote, base_local_diff, base_remote_diff):
@@ -391,7 +396,7 @@ def merge(base, local, remote):
 
     Case: purely nested dicts of values. Alternatives for each dict key:
 
-        One sided actions always ok:
+        One sided ops always ok:
         N,-
         N,!
         N,:
@@ -401,13 +406,13 @@ def merge(base, local, remote):
         :,N
         +,N
 
-        Two sided equal actions ok if argument is the same:
+        Two sided equal ops ok if argument is the same:
         -,- = ok (agree on delete)
 .        +,+ = ok if equal inserts, otherwise conflict (two sided insert)
 .        !,! = ok if equal patches, otherwise conflict (two sided patch)
 .        :,: = ok if equal replacement value, otherwise conflict (two sided replace)
 
-        Different action always conflicts:
+        Different op always conflicts:
         !,- = conflict (delete and patch)
         -,! = conflict (delete and patch)
         :,- = conflict (delete and replace)
@@ -431,15 +436,15 @@ def merge(base, local, remote):
 
         Takeaways:
         - Ensure that diff always uses patch on collections unless the type changes and replace on values.
-        - The only recursion will happen on the patch / patch action of equal type collections!
-        - Patch action is [PATCH, key, subdiff], providing subdiff for both sides, and meaning values exist on both sides.
+        - The only recursion will happen on the patch / patch op of equal type collections!
+        - Patch op is [PATCH, key, subdiff], providing subdiff for both sides, and meaning values exist on both sides.
 
 
     ## Next trying to figure out list situations:
 
     Case: purely nested lists of values. Alternatives for each base item:
 
-        One sided actions always ok:
+        One sided ops always ok:
         N,-
         N,+
         N,!
@@ -447,7 +452,7 @@ def merge(base, local, remote):
         Delete and patch is a conflict:
         -,! = conflict (delete and patch)
 
-        Two sided equal actions ok if argument is the same:
+        Two sided equal ops ok if argument is the same:
         -,- = ok (agree on deleting this item)
         -,+ = ok (delete this item and insert new values)
         +,+ = ok (always insert both, or pick one if new values are equal?)

@@ -12,7 +12,7 @@ converted to the same format version, currently v4 at time of writing.
 Up- and down-conversion is handled by nbformat.
 """
 
-from ..dformat import PATCH, SEQINSERT, SEQDELETE
+from ..dformat import SequenceDiff
 from .seq_bruteforce import bruteforce_compute_snakes
 from .generic import diff
 
@@ -63,20 +63,20 @@ def compute_snakes_multilevel(A, B, rect, predicates, level):
 
 def compute_diff_from_snakes(a, b, snakes, diff_single_item=diff):
     # Compute diff from snakes
-    di = []
+    di = SequenceDiff()
     i0, j0, i1, j1 = 0, 0, len(a), len(b)
     for i, j, n in snakes + [(i1, j1, 0)]:
         if i > i0:
-            di.append([SEQDELETE, i0, i-i0])
+            di.remove(i0, i-i0)
         if j > j0:
-            di.append([SEQINSERT, i0, b[j0:j]])
+            di.add(i0, b[j0:j])
         for k in range(n):
             cd = diff_single_item(a[i + k], b[j + k])
             if cd:
-                di.append([PATCH, i+k, cd])
+                di.patch(i+k, cd)
         # Update corner offsets for next rectangle
         i0, j0 = i+n, j+n
-    return di
+    return di.diff  # XXX
 
 
 def diff_sequence_multilevel(a, b, predicates, subdiff=diff):

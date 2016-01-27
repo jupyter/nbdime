@@ -6,14 +6,15 @@
 from __future__ import unicode_literals
 
 from difflib import SequenceMatcher
-from ..dformat import SEQINSERT, SEQDELETE
+from ..dformat import SequenceDiff
+
 
 __all__ = ["diff_sequence_difflib"]
 
 
 def opcodes_to_diff(a, b, opcodes):
     "Convert difflib opcodes to nbdime diff format."
-    d = []
+    di = SequenceDiff()
     for opcode in opcodes:
         action, abegin, aend, bbegin, bend = opcode
         asize = aend - abegin
@@ -22,15 +23,15 @@ def opcodes_to_diff(a, b, opcodes):
             # Unlike difflib we don't represent equal stretches explicitly
             pass
         elif action == "replace":
-            d.append([SEQDELETE, abegin, asize])
-            d.append([SEQINSERT, abegin, b[bbegin:bend]])
+            di.remove(abegin, asize)
+            di.add(abegin, b[bbegin:bend])
         elif action == "insert":
-            d.append([SEQINSERT, abegin, b[bbegin:bend]])
+            di.add(abegin, b[bbegin:bend])
         elif action == "delete":
-            d.append([SEQDELETE, abegin, asize])
+            di.remove(abegin, asize)
         else:
             raise RuntimeError("Unknown action {}".format(action))
-    return d
+    return di.diff  # XXX
 
 
 def diff_sequence_difflib(a, b):
