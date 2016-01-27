@@ -7,7 +7,6 @@ from __future__ import unicode_literals
 from __future__ import print_function
 
 import operator
-import numpy as np
 from six.moves import xrange as range
 
 
@@ -18,12 +17,10 @@ DEBUGGING = 0
 
 class DebuggingArray(object):
     "Debugging tool to capture array accesses."
-    def __init__(self, n, dt, name):
+    def __init__(self, n, name):
         print("Alloc %s[%d]" % (name, n))
-        self.a = np.empty(n, dtype=dt)
-        self.untouchedvalue = -123456789
-        self.a[:] = self.untouchedvalue
-        self.w = np.zeros(n, dtype=dt)
+        self.a = [None]*n
+        self.w = [0]*n
         self.name = name
 
     def __getitem__(self, i):
@@ -43,20 +40,16 @@ class DebuggingArray(object):
 
 
 def alloc_V_array(N, M, name):
-    # 32 bit should be sufficient for all practical use cases
-    assert max(N, M) < 2**31
-    int_t = np.int32
-
     # Size of array should be big enough for N+M edits,
     # and thus indexing from V[V0-D] to V[V0+D], V0=N+M
     n = 2*(N + M)+1
 
     # Not initializing V with zeros, if the algorithms access uninitialized values that's a bug
-    V = np.empty(n, dtype=int_t)
+    V = [None]*n
 
     # Enabling this allows debugging accesses to uninitialized values
     if DEBUGGING:
-        V = DebuggingArray(n, int_t, name)
+        V = DebuggingArray(n, name)
 
     return V
 
@@ -71,11 +64,8 @@ def measure_snake_at(i, j, A, B, compare=operator.__eq__):
 
 def brute_force_snake_grid(A, B, compare=operator.__eq__):
     N, M = len(A), len(B)
-    G = np.empty((N, M), dtype=int)
-    for i in range(N):
-        for j in range(M):
-            G[i, j] = measure_snake_at(i, j, A, B, compare)
-    return G
+    return [[measure_snake_at(i, j, A, B, compare)
+             for j in range(M)] for i in range(N)]
 
 
 def brute_force_snakes(A, B, compare=operator.__eq__):

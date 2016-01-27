@@ -32,18 +32,18 @@ def test_diff_sequence_bruteforce():
         ]
     for a, b in examples:
         G = bruteforce_compare_grid(a, b)
-        assert all(bool(G[i, j]) == (a[i] == b[j]) for i in range(len(a)) for j in range(len(b)))
+        assert all(bool(G[i][j]) == (a[i] == b[j]) for i in range(len(a)) for j in range(len(b)))
 
         R = bruteforce_llcs_grid(G)
         for i in range(len(a)):
             for j in range(len(b)):
-                assert R[i+1, j+1] >= R[i, j]
-                assert R[i+1, j] >= R[i, j]
-                assert R[i, j+1] >= R[i, j]
-                assert R[i+1, j+1] - R[i, j] <= 1
-                assert R[i+1, j] - R[i, j] <= 1
-                assert R[i, j+1] - R[i, j] <= 1
-        llcs = R[len(a), len(b)]
+                assert R[i+1][j+1] >= R[i][j]
+                assert R[i+1][j] >= R[i][j]
+                assert R[i][j+1] >= R[i][j]
+                assert R[i+1][j+1] - R[i][j] <= 1
+                assert R[i+1][j] - R[i][j] <= 1
+                assert R[i][j+1] - R[i][j] <= 1
+        llcs = R[len(a)][len(b)]
 
         A_indices, B_indices = bruteforce_lcs_indices(a, b, G, R)
         assert len(A_indices) == len(B_indices)

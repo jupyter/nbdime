@@ -7,7 +7,6 @@ from __future__ import unicode_literals
 
 from six.moves import xrange as range
 import operator
-import numpy as np
 from .lcs import diff_from_lcs
 
 __all__ = ["diff_sequence_bruteforce"]
@@ -15,24 +14,21 @@ __all__ = ["diff_sequence_bruteforce"]
 
 def bruteforce_compare_grid(A, B, compare=operator.__eq__):
     "Brute force compute grid G[i, j] == compare(A[i], B[j])."
-    N, M = len(A), len(B)
-    G = np.empty((N, M), dtype=int)
-    for i in range(N):
-        for j in range(M):
-            G[i, j] = compare(A[i], B[j])
-    return G
+    return [[compare(a, b) for b in B] for a in A]
 
 
 def bruteforce_llcs_grid(G):
-    "Brute force compute grid R[x, y] == llcs(A[:x], B[:y]), given G[i,j] = compare(A[i], B[j])."
-    N, M = G.shape
-    R = np.zeros((N+1, M+1), dtype=int)
+    "Brute force compute grid R[x][y] == llcs(A[:x], B[:y]), given G[i][j] = compare(A[i], B[j])."
+    N = len(G)
+    M = len(G[0]) if N else 0
+
+    R = [[0]*(M+1) for i in range(N+1)]
     for x in range(1, N+1):
         for y in range(1, M+1):
-            if G[x-1, y-1]:
-                R[x, y] = R[x-1, y-1] + 1
+            if G[x-1][y-1]:
+                R[x][y] = R[x-1][y-1] + 1
             else:
-                R[x, y] = max(R[x-1, y], R[x, y-1])
+                R[x][y] = max(R[x-1][y], R[x][y-1])
     return R
 
 
@@ -48,16 +44,16 @@ def bruteforce_lcs_indices(A, B, G, R, compare=operator.__eq__):
     x = N
     y = M
     while x > 0 and y > 0:
-        if G[x-1, y-1]:
-            assert R[x, y] == R[x-1, y-1] + 1
+        if G[x-1][y-1]:
+            assert R[x][y] == R[x-1][y-1] + 1
             x -= 1
             y -= 1
             A_indices.append(x)
             B_indices.append(y)
-        elif R[x, y] == R[x-1, y]:
+        elif R[x][y] == R[x-1][y]:
             x -= 1
         else:
-            assert R[x, y] == R[x, y-1]
+            assert R[x][y] == R[x][y-1]
             y -= 1
     A_indices.reverse()
     B_indices.reverse()
