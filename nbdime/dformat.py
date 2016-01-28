@@ -46,7 +46,7 @@ DELETE = "remove"
 REPLACE = "replace"
 PATCH = "patch"
 ADDRANGE = "addrange"
-SEQDELETE = "removerange"
+REMOVERANGE = "removerange"
 
 ACTIONS = [
     PATCH,
@@ -54,12 +54,12 @@ ACTIONS = [
     DELETE,
     REPLACE,
     ADDRANGE,
-    SEQDELETE,
+    REMOVERANGE,
     ]
 
 SEQUENCE_ACTIONS = [
     ADDRANGE,
-    SEQDELETE,
+    REMOVERANGE,
     PATCH
     ]
 
@@ -99,7 +99,7 @@ class SequenceDiff(Diff):
         self.append(make_op(ADDRANGE, key, values))
 
     def remove(self, key, num_values):
-        self.append(make_op(SEQDELETE, key, num_values))
+        self.append(make_op(REMOVERANGE, key, num_values))
 
     def patch(self, key, diff):
         self.append(make_op(PATCH, key, diff))
@@ -160,7 +160,7 @@ def validate_diff_entry(e, deep=False):
     e[2] # op specific argument, omitted if op is DELETE
 
     For sequences (lists and strings) the ops
-    ADDRANGE and SEQDELETE are also allowed.
+    ADDRANGE and REMOVERANGE are also allowed.
     """
     # Entry is always a list with 3 items, or 2 in the special case of single item deletion
     if not isinstance(e, diff_types):
@@ -194,7 +194,7 @@ def validate_diff_entry(e, deep=False):
     elif op == ADDRANGE:
         if not isinstance(e.values, sequence_types):
             raise NBDiffFormatError("addrange expects a sequence of values to insert, not '{}'.".format(e.values))
-    elif op == SEQDELETE:
+    elif op == REMOVERANGE:
         if not isinstance(e.length, int):
             raise NBDiffFormatError("removerange expects a number of values to delete, not '{}'.".format(e.length))
     else:
@@ -210,7 +210,7 @@ def count_consumed_symbols(e):
     op = e.op
     if op == ADDRANGE:
         return 0, len(e.values)
-    elif op == SEQDELETE:
+    elif op == REMOVERANGE:
         return e.length, 0
     elif op == PATCH:
         return 1, 1
@@ -247,7 +247,7 @@ def to_json_patch_format(d, path="/"):
             #for value in reversed(e.values):
             for value in e.values:
                 jp.append({"op": "add", "path": p, "value": value})
-        elif op == SEQDELETE:
+        elif op == REMOVERANGE:
             # JSONPatch only has single value remove, no removerange
             for i in range(e.length):
                 p_i = "/".join((path, str(e.key + i)))  # Note: not using p

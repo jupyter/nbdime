@@ -10,7 +10,7 @@ import copy
 import nbformat
 
 from .dformat import NBDiffFormatError
-from .dformat import PATCH, INSERT, DELETE, REPLACE, ADDRANGE, SEQDELETE
+from .dformat import PATCH, INSERT, DELETE, REPLACE, ADDRANGE, REMOVERANGE
 
 
 __all__ = ["patch", "patch_notebook"]
@@ -47,7 +47,7 @@ def patch_list(obj, diff):
             # Extend with new values directly
             newobj.extend(e.values)
             skip = 0
-        elif op == SEQDELETE:
+        elif op == REMOVERANGE:
             # Delete a number of values by skipping
             skip = e.length
         else:

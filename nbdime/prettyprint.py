@@ -10,7 +10,7 @@ from six import string_types
 import pprint
 
 from .diffing.notebooks import diff_notebooks
-from .dformat import PATCH, INSERT, DELETE, REPLACE, ADDRANGE, SEQDELETE
+from .dformat import PATCH, INSERT, DELETE, REPLACE, ADDRANGE, REMOVERANGE
 from .dformat import NBDiffFormatError
 
 
@@ -69,7 +69,7 @@ def present_list_diff(a, d, path):
             pp.append("insert before {}:".format(nextpath))
             pp += present_value("+ ", e.values)
 
-        elif op == SEQDELETE:
+        elif op == REMOVERANGE:
             if e.length > 1:
                 r = "{}-{}".format(index, index + e.length - 1)
             else:
@@ -119,7 +119,7 @@ def present_string_diff(a, di, path):
             continuation = True
             continuation_indent2 = max(continuation_indent2, len(lines[-1]) - 2)
 
-        elif op == SEQDELETE:
+        elif op == REMOVERANGE:
             dlines = a[index: index + e.length].split("\n")
             lines.append("- " + " "*continuation_indent + dlines[0])
             for dline in dlines[1:]:

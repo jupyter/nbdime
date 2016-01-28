@@ -11,7 +11,7 @@ import copy
 from collections import namedtuple
 
 from ..diffing import diff
-from ..dformat import PATCH, INSERT, DELETE, REPLACE, ADDRANGE, SEQDELETE
+from ..dformat import PATCH, INSERT, DELETE, REPLACE, ADDRANGE, REMOVERANGE
 from ..dformat import SequenceDiff, MappingDiff
 from ..patching import patch
 
@@ -158,7 +158,7 @@ def _split_list_diff(diff, size):
         op = e.op
         if op == ADDRANGE:
             inserts.append(insertitem(e.key, e.values))
-        elif op == SEQDELETE:
+        elif op == REMOVERANGE:
             for i in range(e.length):
                 deleted[e.key + i] = True
         elif op == PATCH:

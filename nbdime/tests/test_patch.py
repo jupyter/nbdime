@@ -6,7 +6,7 @@
 from __future__ import unicode_literals
 
 from nbdime import patch
-from nbdime.dformat import PATCH, INSERT, DELETE, REPLACE, ADDRANGE, SEQDELETE
+from nbdime.dformat import PATCH, INSERT, DELETE, REPLACE, ADDRANGE, REMOVERANGE
 from nbdime.dformat import make_op
 
 
@@ -41,9 +41,9 @@ def test_patch_str():
     assert patch("", [make_op(ADDRANGE, 0, "34"), make_op(INSERT, 0, "5"), make_op(ADDRANGE, 0, "67")]) == "34567"
 
     # Test --, sequence deletion
-    assert patch("abcd", [make_op(SEQDELETE, 0, 2)]) == "cd"
-    assert patch("abcd", [make_op(SEQDELETE, 1, 2)]) == "ad"
-    assert patch("abcd", [make_op(SEQDELETE, 2, 2)]) == "ab"
+    assert patch("abcd", [make_op(REMOVERANGE, 0, 2)]) == "cd"
+    assert patch("abcd", [make_op(REMOVERANGE, 1, 2)]) == "ad"
+    assert patch("abcd", [make_op(REMOVERANGE, 2, 2)]) == "ab"
 
 
 def test_patch_list():
@@ -70,9 +70,9 @@ def test_patch_list():
     assert patch([], [make_op(ADDRANGE, 0, [3, 4]), make_op(INSERT, 0, 5), make_op(ADDRANGE, 0, [6, 7])]) == [3, 4, 5, 6, 7]
 
     # Test --, sequence deletion
-    assert patch([5, 6, 7, 8], [make_op(SEQDELETE, 0, 2)]) == [7, 8]
-    assert patch([5, 6, 7, 8], [make_op(SEQDELETE, 1, 2)]) == [5, 8]
-    assert patch([5, 6, 7, 8], [make_op(SEQDELETE, 2, 2)]) == [5, 6]
+    assert patch([5, 6, 7, 8], [make_op(REMOVERANGE, 0, 2)]) == [7, 8]
+    assert patch([5, 6, 7, 8], [make_op(REMOVERANGE, 1, 2)]) == [5, 8]
+    assert patch([5, 6, 7, 8], [make_op(REMOVERANGE, 2, 2)]) == [5, 6]
 
 
 def test_patch_dict():

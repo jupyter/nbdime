@@ -11,7 +11,7 @@ from __future__ import print_function
 import operator
 
 from nbdime import diff
-from nbdime.dformat import PATCH, INSERT, DELETE, REPLACE  # , ADDRANGE, SEQDELETE
+from nbdime.dformat import PATCH, INSERT, DELETE, REPLACE  # , ADDRANGE, REMOVERANGE
 from nbdime.dformat import make_op
 from nbdime.diffing.snakes import compute_snakes_multilevel
 
