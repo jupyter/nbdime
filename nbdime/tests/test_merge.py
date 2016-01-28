@@ -25,19 +25,19 @@ def cut(li, *indices):
 def test_shallow_merge_lists_delete_no_conflict():
     # local removes an entry
     b = [1, 3]
-    l = [ 1 ]
+    l = [1]
     r = [1, 3]
     m, lc, rc = merge(b, l, r)
-    assert m == [ 1 ]
+    assert m == [1]
     assert lc == []
     assert rc == []
 
     # remote removes an entry
     b = [1, 3]
     l = [1, 3]
-    r = [ 1 ]
+    r = [1]
     m, lc, rc = merge(b, l, r)
-    assert m == [ 1 ]
+    assert m == [1]
     assert lc == []
     assert rc == []
 
@@ -75,8 +75,8 @@ def test_shallow_merge_lists_delete_no_conflict():
 
 def test_shallow_merge_lists_insert_no_conflict():
     # local adds an entry
-    b = [ 1 ]
-    l = b + [ 2 ]
+    b = [1]
+    l = b + [2]
     r = copy.deepcopy(b)
     m, lc, rc = merge(b, l, r)
     assert m == [1, 2]
@@ -84,7 +84,7 @@ def test_shallow_merge_lists_insert_no_conflict():
     assert rc == []
 
     # remote adds an entry
-    b = [ 1 ]
+    b = [1]
     l = copy.deepcopy(b)
     r = b + [3]
     m, lc, rc = merge(b, l, r)
@@ -93,7 +93,7 @@ def test_shallow_merge_lists_insert_no_conflict():
     assert rc == []
 
     # local and remote adds an entry each
-    b = [ 1 ]
+    b = [1]
     l = [1, 2]
     r = [1, 3]
     m, lc, rc = merge(b, l, r)
@@ -199,17 +199,17 @@ def test_deep_merge_lists_delete_no_conflict__currently_expected_failures():
 def test_deep_merge_lists_insert_no_conflict():
 
     # local adds an entry
-    b = [[ 1 ]]
+    b = [[1]]
     l = [[1, 2]]
-    r = [[ 1 ]]
+    r = [[1]]
     m, lc, rc = merge(b, l, r)
     assert m == [[1, 2]]
     assert lc == []
     assert rc == []
 
     # remote adds an entry
-    b = [[ 1 ]]
-    l = [[ 1 ]]
+    b = [[1]]
+    l = [[1]]
     r = [[1, 3]]
     m, lc, rc = merge(b, l, r)
     assert m == [[1, 3]]
@@ -217,7 +217,7 @@ def test_deep_merge_lists_insert_no_conflict():
     assert rc == []
 
     # local and remote adds an entry each
-    b = [[ 1 ]]
+    b = [[1]]
     l = [[1, 2]]
     r = [[1, 3]]
     m, lc, rc = merge(b, l, r)
@@ -227,7 +227,7 @@ def test_deep_merge_lists_insert_no_conflict():
     assert rc == []
 
     # local and remote adds the same entry plus an entry each
-    b = [[ 1 ]]
+    b = [[1]]
     l = [[1, 2, 4]]
     r = [[1, 3, 4]]
     m, lc, rc = merge(b, l, r)
@@ -238,12 +238,12 @@ def test_deep_merge_lists_insert_no_conflict():
     assert rc == []
 
     # local and remote adds an entry each in a new sublist
-    b = [[ 1 ]]
-    l = [[ 1 ], [ 2 ], [3]]
-    r = [[ 1 ], [ 2 ], [4]]
+    b = [[1]]
+    l = [[1], [2], [3]]
+    r = [[1], [2], [4]]
     m, lc, rc = merge(b, l, r)
-    # No identification of equal inserted list [ 2 ] expected from current algorithm
-    assert m == [[ 1 ], [ 2 ], [3], [ 2 ], [4]]
+    # No identification of equal inserted list [2] expected from current algorithm
+    assert m == [[1], [2], [3], [2], [4]]
     assert lc == []
     assert rc == []
 

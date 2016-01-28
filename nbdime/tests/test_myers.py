@@ -20,7 +20,7 @@ class DebuggingArray(object):
     def __init__(self, n, name):
         print("Alloc %s[%d]" % (name, n))
         self.a = [None]*n
-        self.w = [ 0 ]*n
+        self.w = [0]*n
         self.name = name
 
     def __getitem__(self, i):
