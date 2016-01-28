@@ -60,8 +60,8 @@ def diff_lists(a, b, compare=operator.__eq__, shallow_diff=None):
             # Consume n more unmentioned items before this diff entry
             # Note that index can be larger than acons in the case where items
             # have been deleted from a and then insertions from b occur.
-            e = shallow_diff[ie]  # XXX
-            index = e[1]  # XXX
+            e = shallow_diff[ie]
+            index = e.key
             n = max(0, index - acons)
             askip, bskip = count_consumed_symbols(e)
         else:
@@ -87,7 +87,7 @@ def diff_lists(a, b, compare=operator.__eq__, shallow_diff=None):
 
         # Insert the diff entry unless past the end
         if ie < M:
-            di.append(e)  # XXX
+            di.append(e)
 
     # Sanity check
     assert acons == len(a)
@@ -134,6 +134,7 @@ def diff_dicts(a, b, compare=operator.__eq__, subdiffs=None):
             #compareit = compare.get(key, operator.__eq__)  # TODO: Do like this?
             if not compare(avalue, bvalue): # TODO: Use != or not compare() here?
                 di.replace(key, bvalue)
+
     for key in sorted(bkeys - akeys):
         di.add(key, b[key])
 

@@ -21,39 +21,37 @@ def patch_list(obj, diff):
     newobj = []
     # Index into obj, the next item to take unless diff says otherwise
     take = 0
-    for s in diff:
-        action = s[0]
-        index = s[1]
+    for e in diff:
+        op = e.op
+        index = e.key
         assert isinstance(index, int)
 
         # Take values from obj not mentioned in diff, up to not including index
         newobj.extend(copy.deepcopy(value) for value in obj[take:index])
 
-        if action == INSERT:
+        if op == INSERT:
             # Append new value directly
-            newobj.append(s[2])
+            newobj.append(e.value)
             skip = 0
-        elif action == DELETE:
+        elif op == DELETE:
             # Delete values obj[index] by incrementing take to skip
             skip = 1
-        elif action == REPLACE:
-            # Replace value at obj[index] with s[2]
-            newobj.append(s[2])
+        elif op == REPLACE:
+            # Add replacement value and skip old
+            newobj.append(e.value)
             skip = 1
-        elif action == PATCH:
-            # Patch value at obj[index] with diff s[2]
-            newobj.append(patch(obj[index], s[2]))
+        elif op == PATCH:
+            newobj.append(patch(obj[index], e.diff))
             skip = 1
-        # Experimental sequence diff actions:
-        elif action == SEQINSERT:
+        elif op == SEQINSERT:
             # Extend with new values directly
-            newobj.extend(s[2])
+            newobj.extend(e.values)
             skip = 0
-        elif action == SEQDELETE:
-            # Delete values obj[index:index+s[2]] by incrementing take to skip
-            skip = s[2]
+        elif op == SEQDELETE:
+            # Delete a number of values by skipping
+            skip = e.length
         else:
-            raise NBDiffFormatError("Invalid action {}.".format(s))
+            raise NBDiffFormatError("Invalid op {}.".format(op))
 
         # Skip the specified number of elements, but never decrement take.
         # Note that take can pass index in diffs with repeated +/- on the
@@ -75,24 +73,25 @@ def patch_string(obj, diff):
 def patch_dict(obj, diff):
     newobj = {}
     keys_to_copy = set(obj.keys())
-    for s in diff:
-        action = s[0]
-        key = s[1]
+
+    for e in diff:
+        op = e.op
+        key = e.key
         assert isinstance(key, string_types)
 
-        if action == INSERT:
+        if op == INSERT:
             assert key not in keys_to_copy
-            newobj[key] = s[2]
-        elif action == DELETE:
+            newobj[key] = e.value
+        elif op == DELETE:
             keys_to_copy.remove(key)
-        elif action == REPLACE:
+        elif op == REPLACE:
             keys_to_copy.remove(key)
-            newobj[key] = s[2]
-        elif action == PATCH:
+            newobj[key] = e.value
+        elif op == PATCH:
             keys_to_copy.remove(key)
-            newobj[key] = patch(obj[key], s[2])
+            newobj[key] = patch(obj[key], e.diff)
         else:
-            raise NBDiffFormatError("Invalid action {}.".format(s))
+            raise NBDiffFormatError("Invalid op {}.".format(op))
 
     # Take items not mentioned in diff
     for key in keys_to_copy:

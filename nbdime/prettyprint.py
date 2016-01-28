@@ -11,7 +11,7 @@ import pprint
 
 from .diffing.notebooks import diff_notebooks
 from .dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
-from .dformat import to_dict_diff, NBDiffFormatError
+from .dformat import NBDiffFormatError
 
 
 def present_value(prefix, arg):
@@ -20,41 +20,38 @@ def present_value(prefix, arg):
     return [prefix + line for line in lines]
 
 
-def present_dict_diff(a, d, path):
+def present_dict_diff(a, di, path):
     "Pretty-print a nbdime diff."
-
-    d = to_dict_diff(d)
-    keys = sorted(d)
-
     pp = []
-    for key in keys:
-        e = d[key]
-        action = e[0]
+
+    di = {e.key: e for e in di}
+    for key in sorted(di):
+        e = di[key]
+
+        op = e.op
+        assert key == e.key
 
         nextpath = "/".join((path, key))
 
-        if action == DELETE:
+        if op == DELETE:
             pp.append("delete from {}:".format(nextpath))
             pp += present_value("- ", a[key])
 
-        elif action == INSERT:
-            arg = e[1]
+        elif op == INSERT:
             pp.append("insert at {}:".format(nextpath))
-            pp += present_value("+ ", arg)
+            pp += present_value("+ ", e.value)
 
-        elif action == REPLACE:
-            arg = e[1]
+        elif op == REPLACE:
             pp.append("replace at {}:".format(nextpath))
             pp += present_value("- ", a[key])
-            pp += present_value(" +", arg)
+            pp += present_value(" +", e.value)
 
-        elif action == PATCH:
-            arg = e[1]
+        elif op == PATCH:
             pp.append("patch {}:".format(nextpath))
-            pp += present_diff(a[key], arg, nextpath)
+            pp += present_diff(a[key], e.diff, nextpath)
 
         else:
-            raise NBDiffFormatError("Unknown dict diff action {}".format(action))
+            raise NBDiffFormatError("Unknown dict diff op {}".format(op))
 
     return pp
 
@@ -63,37 +60,34 @@ def present_list_diff(a, d, path):
     "Pretty-print a nbdime diff."
     pp = []
     for e in d:
-        action = e[0]
-        index = e[1]
+        op = e.op
+        index = e.key
 
         nextpath = "/".join((path, str(index)))
 
-        if action == SEQINSERT:
-            arg = e[2]
+        if op == SEQINSERT:
             pp.append("insert before {}:".format(nextpath))
-            pp += present_value("+ ", arg)
+            pp += present_value("+ ", e.values)
 
-        elif action == SEQDELETE:
-            arg = e[2]
-            if arg > 1:
-                r = "{}-{}".format(index, index+arg-1)
+        elif op == SEQDELETE:
+            if e.length > 1:
+                r = "{}-{}".format(index, index + e.length - 1)
             else:
                 r = str(index)
             pp.append("delete {}/{}:".format(path, r))
-            pp += present_value("- ", a[index:index+arg])
+            pp += present_value("- ", a[index: index + e.length])
 
-        elif action == PATCH:
-            arg = e[2]
+        elif op == PATCH:
             pp.append("patch {}:".format(nextpath))
-            pp += present_diff(a[index], arg, nextpath)
+            pp += present_diff(a[index], e.diff, nextpath)
 
         else:
-            raise NBDiffFormatError("Unknown list diff action {}".format(action))
+            raise NBDiffFormatError("Unknown list diff op {}".format(op))
 
     return pp
 
 
-def present_string_diff(a, d, path):
+def present_string_diff(a, di, path):
     "Pretty-print a nbdime diff."
 
     consumed = 0
@@ -101,10 +95,9 @@ def present_string_diff(a, d, path):
     continuation = False
     continuation_indent = 0
     continuation_indent2 = 0
-    for e in d:
-        action = e[0]
-        index = e[1]
-        arg = e[2]
+    for e in di:
+        op = e.op
+        index = e.key
 
         # Consume untouched characters
         if index > consumed:
@@ -118,25 +111,25 @@ def present_string_diff(a, d, path):
             continuation_indent2 = continuation_indent
             consumed = index
 
-        if action == SEQINSERT:
-            dlines = arg.split("\n")
+        if op == SEQINSERT:
+            dlines = e.values.split("\n")
             lines.append("+ " + " "*continuation_indent + dlines[0])
             for dline in dlines[1:]:
                 lines.append("+ " + dline)
             continuation = True
             continuation_indent2 = max(continuation_indent2, len(lines[-1]) - 2)
 
-        elif action == SEQDELETE:
-            dlines = a[index:index+arg].split("\n")
+        elif op == SEQDELETE:
+            dlines = a[index: index + e.length].split("\n")
             lines.append("- " + " "*continuation_indent + dlines[0])
             for dline in dlines[1:]:
                 lines.append("- " + dline)
-            consumed = index + arg
+            consumed = index + e.length
             continuation = True
             continuation_indent2 = max(continuation_indent2, len(lines[-1]) - 2)
 
         else:
-            raise NBDiffFormatError("Unknown string diff action {}".format(action))
+            raise NBDiffFormatError("Unknown string diff op {}".format(op))
 
     # Consume untouched characters at end
     index = len(a)  # copy-paste from top of loop...
@@ -154,14 +147,14 @@ def present_string_diff(a, d, path):
     return lines
 
 
-def present_diff(a, d, path, indent=True):
+def present_diff(a, di, path, indent=True):
     "Pretty-print a nbdime diff."
     if isinstance(a, dict):
-        pp = present_dict_diff(a, d, path)
+        pp = present_dict_diff(a, di, path)
     elif isinstance(a, list):
-        pp = present_list_diff(a, d, path)
+        pp = present_list_diff(a, di, path)
     elif isinstance(a, string_types):
-        pp = present_string_diff(a, d, path)
+        pp = present_string_diff(a, di, path)
     else:
         raise NBDiffFormatError("Invalid type {} for diff presentation.".format(type(a)))
 
@@ -177,8 +170,8 @@ nbdiff {afn} {bfn}
 """
 
 
-def pretty_print_notebook_diff(afn, bfn, a, d):
-    p = present_diff(a, d, path="a", indent=False)
+def pretty_print_notebook_diff(afn, bfn, a, di):
+    p = present_diff(a, di, path="a", indent=False)
     if p:
         p = [header.format(afn=afn, bfn=bfn)] + p
     print("\n".join(p))

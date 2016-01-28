@@ -12,6 +12,7 @@ import pytest
 
 from nbdime import merge
 from nbdime.dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
+from nbdime.dformat import make_op
 
 
 def cut(li, *indices):
@@ -24,19 +25,19 @@ def cut(li, *indices):
 def test_shallow_merge_lists_delete_no_conflict():
     # local removes an entry
     b = [1, 3]
-    l = [1]
+    l = [ 1 ]
     r = [1, 3]
     m, lc, rc = merge(b, l, r)
-    assert m == [1]
+    assert m == [ 1 ]
     assert lc == []
     assert rc == []
 
     # remote removes an entry
     b = [1, 3]
     l = [1, 3]
-    r = [1]
+    r = [ 1 ]
     m, lc, rc = merge(b, l, r)
-    assert m == [1]
+    assert m == [ 1 ]
     assert lc == []
     assert rc == []
 
@@ -74,8 +75,8 @@ def test_shallow_merge_lists_delete_no_conflict():
 
 def test_shallow_merge_lists_insert_no_conflict():
     # local adds an entry
-    b = [1]
-    l = b + [2]
+    b = [ 1 ]
+    l = b + [ 2 ]
     r = copy.deepcopy(b)
     m, lc, rc = merge(b, l, r)
     assert m == [1, 2]
@@ -83,7 +84,7 @@ def test_shallow_merge_lists_insert_no_conflict():
     assert rc == []
 
     # remote adds an entry
-    b = [1]
+    b = [ 1 ]
     l = copy.deepcopy(b)
     r = b + [3]
     m, lc, rc = merge(b, l, r)
@@ -92,7 +93,7 @@ def test_shallow_merge_lists_insert_no_conflict():
     assert rc == []
 
     # local and remote adds an entry each
-    b = [1]
+    b = [ 1 ]
     l = [1, 2]
     r = [1, 3]
     m, lc, rc = merge(b, l, r)
@@ -198,17 +199,17 @@ def test_deep_merge_lists_delete_no_conflict__currently_expected_failures():
 def test_deep_merge_lists_insert_no_conflict():
 
     # local adds an entry
-    b = [[1]]
+    b = [[ 1 ]]
     l = [[1, 2]]
-    r = [[1]]
+    r = [[ 1 ]]
     m, lc, rc = merge(b, l, r)
     assert m == [[1, 2]]
     assert lc == []
     assert rc == []
 
     # remote adds an entry
-    b = [[1]]
-    l = [[1]]
+    b = [[ 1 ]]
+    l = [[ 1 ]]
     r = [[1, 3]]
     m, lc, rc = merge(b, l, r)
     assert m == [[1, 3]]
@@ -216,7 +217,7 @@ def test_deep_merge_lists_insert_no_conflict():
     assert rc == []
 
     # local and remote adds an entry each
-    b = [[1]]
+    b = [[ 1 ]]
     l = [[1, 2]]
     r = [[1, 3]]
     m, lc, rc = merge(b, l, r)
@@ -226,7 +227,7 @@ def test_deep_merge_lists_insert_no_conflict():
     assert rc == []
 
     # local and remote adds the same entry plus an entry each
-    b = [[1]]
+    b = [[ 1 ]]
     l = [[1, 2, 4]]
     r = [[1, 3, 4]]
     m, lc, rc = merge(b, l, r)
@@ -237,12 +238,12 @@ def test_deep_merge_lists_insert_no_conflict():
     assert rc == []
 
     # local and remote adds an entry each in a new sublist
-    b = [[1]]
-    l = [[1], [2], [3]]
-    r = [[1], [2], [4]]
+    b = [[ 1 ]]
+    l = [[ 1 ], [ 2 ], [3]]
+    r = [[ 1 ], [ 2 ], [4]]
     m, lc, rc = merge(b, l, r)
-    # No identification of equal inserted list [2] expected from current algorithm
-    assert m == [[1], [2], [3], [2], [4]]
+    # No identification of equal inserted list [ 2 ] expected from current algorithm
+    assert m == [[ 1 ], [ 2 ], [3], [ 2 ], [4]]
     assert lc == []
     assert rc == []
 
@@ -254,8 +255,8 @@ def test_shallow_merge_dicts_delete_no_conflict():
     r = {"b": 1, "a": 3}
     m, lc, rc = merge(b, l, r)
     assert m == {"b": 1}
-    assert lc == {}
-    assert rc == {}
+    assert lc == []
+    assert rc == []
 
     # remote removes an entry
     b = {"b": 1, "a": 3}
@@ -263,8 +264,8 @@ def test_shallow_merge_dicts_delete_no_conflict():
     r = {"b": 1}
     m, lc, rc = merge(b, l, r)
     assert m == {"b": 1}
-    assert lc == {}
-    assert rc == {}
+    assert lc == []
+    assert rc == []
 
     # both remove the same entry
     b = {"b": 1, "a": 3}
@@ -272,8 +273,8 @@ def test_shallow_merge_dicts_delete_no_conflict():
     r = {"b": 1}
     m, lc, rc = merge(b, l, r)
     assert m == {"b": 1}
-    assert lc == {}
-    assert rc == {}
+    assert lc == []
+    assert rc == []
 
 
 def test_shallow_merge_dicts_insert_no_conflict():
@@ -283,8 +284,8 @@ def test_shallow_merge_dicts_insert_no_conflict():
     r = {"b": 1}
     m, lc, rc = merge(b, l, r)
     assert m == {"b": 1, "l": 2}
-    assert lc == {}
-    assert rc == {}
+    assert lc == []
+    assert rc == []
 
     # remote adds an entry
     b = {"b": 1}
@@ -292,8 +293,8 @@ def test_shallow_merge_dicts_insert_no_conflict():
     r = {"b": 1, "r": 3}
     m, lc, rc = merge(b, l, r)
     assert m == {"b": 1, "r": 3}
-    assert lc == {}
-    assert rc == {}
+    assert lc == []
+    assert rc == []
 
     # local and remote adds an entry each
     b = {"b": 1}
@@ -301,8 +302,8 @@ def test_shallow_merge_dicts_insert_no_conflict():
     r = {"b": 1, "r": 3}
     m, lc, rc = merge(b, l, r)
     assert m == {"b": 1, "l": 2, "r": 3}
-    assert lc == {}
-    assert rc == {}
+    assert lc == []
+    assert rc == []
 
     # local and remote adds an equal entry plus a different entry each
     b = {"b": 1}
@@ -310,8 +311,8 @@ def test_shallow_merge_dicts_insert_no_conflict():
     r = {"b": 1, "r": 3, "s": 7}
     m, lc, rc = merge(b, l, r)
     assert m == {"b": 1, "l": 2, "r": 3, "s": 7}
-    assert lc == {}
-    assert rc == {}
+    assert lc == []
+    assert rc == []
 
 
 def test_deep_merge_dicts_delete_no_conflict():
@@ -321,8 +322,8 @@ def test_deep_merge_dicts_delete_no_conflict():
     r = {"p": {"b": 1, "a": 3}}
     m, lc, rc = merge(b, l, r)
     assert m == {"p": {"b": 1}}
-    assert lc == {}
-    assert rc == {}
+    assert lc == []
+    assert rc == []
 
     # remote removes an entry
     b = {"p": {"b": 1, "a": 3}}
@@ -330,8 +331,8 @@ def test_deep_merge_dicts_delete_no_conflict():
     r = {"p": {"b": 1}}
     m, lc, rc = merge(b, l, r)
     assert m == {"p": {"b": 1}}
-    assert lc == {}
-    assert rc == {}
+    assert lc == []
+    assert rc == []
 
     # both remove the same entry
     b = {"p": {"b": 1, "a": 3}}
@@ -339,8 +340,8 @@ def test_deep_merge_dicts_delete_no_conflict():
     r = {"p": {"b": 1}}
     m, lc, rc = merge(b, l, r)
     assert m == {"p": {"b": 1}}
-    assert lc == {}
-    assert rc == {}
+    assert lc == []
+    assert rc == []
 
     # both remove the same entry and one each
     b = {"p": {"b": 1, "a": 3, "c": 5, "d": 7}}
@@ -348,8 +349,8 @@ def test_deep_merge_dicts_delete_no_conflict():
     r = {"p": {"b": 1, "d": 7}}
     m, lc, rc = merge(b, l, r)
     assert m == {"p": {"b": 1}}
-    assert lc == {}
-    assert rc == {}
+    assert lc == []
+    assert rc == []
 
 
 def test_deep_merge_dicts_insert_no_conflict():
@@ -359,8 +360,8 @@ def test_deep_merge_dicts_insert_no_conflict():
     r = {"p": {"b": 1}}
     m, lc, rc = merge(b, l, r)
     assert m == {"p": {"b": 1, "l": 2}}
-    assert lc == {}
-    assert rc == {}
+    assert lc == []
+    assert rc == []
 
     # remote adds an entry
     b = {"p": {"b": 1}}
@@ -368,8 +369,8 @@ def test_deep_merge_dicts_insert_no_conflict():
     r = {"p": {"b": 1, "r": 3}}
     m, lc, rc = merge(b, l, r)
     assert m == {"p": {"b": 1, "r": 3}}
-    assert lc == {}
-    assert rc == {}
+    assert lc == []
+    assert rc == []
 
     # local and remote adds an entry each
     b = {"p": {"b": 1}}
@@ -377,8 +378,8 @@ def test_deep_merge_dicts_insert_no_conflict():
     r = {"p": {"b": 1, "r": 3}}
     m, lc, rc = merge(b, l, r)
     assert m == {"p": {"b": 1, "l": 2, "r": 3}}
-    assert lc == {}
-    assert rc == {}
+    assert lc == []
+    assert rc == []
 
     # local and remote adds the same entry plus an entry each
     b = {"p": {"b": 1}}
@@ -386,8 +387,8 @@ def test_deep_merge_dicts_insert_no_conflict():
     r = {"p": {"b": 1, "s": 7, "r": 3}}
     m, lc, rc = merge(b, l, r)
     assert m == {"p": {"b": 1, "s": 7, "l": 2, "r": 3}}
-    assert lc == {}
-    assert rc == {}
+    assert lc == []
+    assert rc == []
 
     # local and remote adds the same entry plus an entry each in a new subdict
     b = {"p": {"b": 1}}
@@ -395,8 +396,8 @@ def test_deep_merge_dicts_insert_no_conflict():
     r = {"p": {"b": 1}, "n": {"s": 7, "r": 3}}
     m, lc, rc = merge(b, l, r)
     assert m == {"p": {"b": 1}, "n": {"s": 7, "l": 2, "r": 3}}
-    assert lc == {}
-    assert rc == {}
+    assert lc == []
+    assert rc == []
 
 
 def test_merge_nonconflicting_nested_dicts():
@@ -406,8 +407,8 @@ def test_merge_nonconflicting_nested_dicts():
     r = {"a": {"x": 1, "z": 3}, "d": {"y": 5}, "m": {"x": 17, "y": 8, "z": 19}}
     m, lc, rc = merge(b, l, r)
     assert m == {"a": {"x": 1, "y": 2, "z": 3}, "d": {}, "m": {"x": 17, "y": 18, "z": 19}}
-    assert lc == {}
-    assert rc == {}
+    assert lc == []
+    assert rc == []
 
 
 def test_merge_conflicting_nested_dicts():
@@ -417,15 +418,13 @@ def test_merge_conflicting_nested_dicts():
     r = {"a": {"x": 3, "y": 5}, "d": {"x": 5},         "m": {"x": 27}, "n": {"q": 19}}
     m, lc, rc = merge(b, l, r)
     assert m == {"a": {}, "d": {}, "m": {}, "n": {}}
-    assert lc == {"a": [PATCH, {"x": [REPLACE, 2], "y": [INSERT, 4]}],
-                  "d": [PATCH, {"x": [DELETE], "y": [REPLACE, 6]}],
-                  "m": [PATCH, {"x": [REPLACE, 17]}],
-                  "n": [PATCH, {"q": [INSERT, 9]}],
-                  }
-    assert rc == {"a": [PATCH, {"x": [REPLACE, 3], "y": [INSERT, 5]}],
-                  "d": [PATCH, {"x": [REPLACE, 5], "y": [DELETE]}],
-                  "m": [PATCH, {"x": [REPLACE, 27]}],
-                  "n": [PATCH, {"q": [INSERT, 19]}],
-                  }
-    #assert c == {"a": {"x": [1, 2, 3], "y": [None, 4, 5]}, "d": {"x": [4, None, 5], "y": [5, 6, None]},
-    #             "m": {"x": [7, 17, 27]}}
+    assert lc == [make_op(PATCH, "a", [make_op(REPLACE, "x", 2), make_op(INSERT, "y", 4)]),
+                  make_op(PATCH, "d", [make_op(DELETE, "x"), make_op(REPLACE, "y", 6)]),
+                  make_op(PATCH, "m", [make_op(REPLACE, "x", 17)]),
+                  make_op(PATCH, "n", [make_op(INSERT, "q", 9)])
+                  ]
+    assert rc == [make_op(PATCH, "a", [make_op(REPLACE, "x", 3), make_op(INSERT, "y", 5)]),
+                  make_op(PATCH, "d", [make_op(REPLACE, "x", 5), make_op(DELETE, "y")]),
+                  make_op(PATCH, "m", [make_op(REPLACE, "x", 27)]),
+                  make_op(PATCH, "n", [make_op(INSERT, "q", 19)])
+                  ]

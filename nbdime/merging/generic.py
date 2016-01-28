@@ -8,10 +8,11 @@ from __future__ import unicode_literals
 from six import string_types
 from six.moves import xrange as range
 import copy
+from collections import namedtuple
 
 from ..diffing import diff
 from ..dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
-from ..dformat import to_dict_diff, SequenceDiff
+from ..dformat import SequenceDiff, MappingDiff
 from ..patching import patch
 
 
@@ -31,8 +32,8 @@ def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
 
     # Converting to dict-based diff format for dicts for convenience
     # This step will be unnecessary if we change the diff format to work this way always
-    base_local_diff = to_dict_diff(base_local_diff)
-    base_remote_diff = to_dict_diff(base_remote_diff)
+    base_local_diff = {e.key: e for e in base_local_diff}
+    base_remote_diff = {e.key: e for e in base_remote_diff}
 
     # Summary of diff entry cases with (#) references to below code
     # r\l | N/A   -   +   :   !
@@ -54,20 +55,20 @@ def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
     # (2) Apply one-sided local diffs
     for key in bldkeys - brdkeys:
         # Just use local value or remove by not inserting
-        op = base_local_diff[key][0]
+        op = base_local_diff[key].op
         if op != DELETE:
             merged[key] = local[key]
 
     # (3) Apply one-sided remote diffs
     for key in brdkeys - bldkeys:
         # Just use remote value or remove by not inserting
-        op = base_remote_diff[key][0]
+        op = base_remote_diff[key].op
         if op != DELETE:
             merged[key] = remote[key]
 
     # Data structures for storing conflicts
-    local_conflict_diff = {}  # XXX
-    remote_conflict_diff = {}  # XXX
+    local_conflict_diff = MappingDiff()
+    remote_conflict_diff = MappingDiff()
 
     # (4) (5) (6)
     # Then we have the potentially conflicting changes
@@ -83,12 +84,12 @@ def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
         rv = remote.get(key, Missing)
 
         # Switch on diff ops
-        lop = ld[0]
-        rop = rd[0]
+        lop = ld.op
+        rop = rd.op
         if lop != rop: # Note that this means the below cases always have the same op
             # (5) Conflict: removed one place and edited another, or edited in different ways
-            local_conflict_diff[key] = ld
-            remote_conflict_diff[key] = rd
+            local_conflict_diff.append(ld)
+            remote_conflict_diff.append(rd)
         elif lop == DELETE:
             # (4) Removed in both local and remote, just don't add it to merge result
             pass
@@ -106,33 +107,38 @@ def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
                 # And add patch entries for the conflicting parts
                 if lco or rco:
                     assert lco and rco
-                    local_conflict_diff[key] = [PATCH, lco]
-                    remote_conflict_diff[key] = [PATCH, rco]
+                    local_conflict_diff.patch(key, lco)
+                    remote_conflict_diff.patch(key, rco)
             else:
                 # Recursive merge not possible, record a conflict
-                local_conflict_diff[key] = ld
-                remote_conflict_diff[key] = rd
+                local_conflict_diff.append(ld)
+                remote_conflict_diff.append(rd)
         elif lop == REPLACE:
             # (7) Replace in both local and remote, values are different
-            local_conflict_diff[key] = ld
-            remote_conflict_diff[key] = rd
+            local_conflict_diff.append(ld)
+            remote_conflict_diff.append(rd)
         elif lop == PATCH:
             # (8) Patch on both local and remote, values are different
             # Patches produce different values, try merging the substructures
             # (a patch command only occurs when the type is a collection, so we
             # can safely recurse here and know we won't encounter e.g. an int)
-            me, lco, rco = _merge(bv, lv, rv, ld[1], rd[1])
+            me, lco, rco = _merge(bv, lv, rv, ld.diff, rd.diff)
             # Insert partially merged result
             merged[key] = me
             # And add patch entries for the conflicting parts
             if lco or rco:
                 assert lco and rco
-                local_conflict_diff[key] = [PATCH, lco]
-                remote_conflict_diff[key] = [PATCH, rco]
+                local_conflict_diff.patch(key, lco)
+                remote_conflict_diff.patch(key, rco)
         else:
             raise ValueError("Invalid diff ops {} and {].".format(lop, rop))
 
-    return merged, local_conflict_diff, remote_conflict_diff
+    lco = sorted(local_conflict_diff.diff, key=lambda x: x.key)  # XXX
+    rco = sorted(remote_conflict_diff.diff, key=lambda x: x.key)  # XXX
+    return merged, lco, rco
+
+
+insertitem = namedtuple("insertitem", ("index", "value"))
 
 
 def _split_list_diff(diff, size):
@@ -149,16 +155,16 @@ def _split_list_diff(diff, size):
     patched = [None]*size
     inserts = []
     for e in diff:
-        op = e[0]
+        op = e.op
         if op == SEQINSERT:
-            inserts.append([e[1], e[2]])
+            inserts.append(insertitem(e.key, e.values))
         elif op == SEQDELETE:
-            for i in range(e[2]):
-                deleted[e[1] + i] = True
+            for i in range(e.length):
+                deleted[e.key + i] = True
         elif op == PATCH:
-            patched[e[1]] = e[2]
+            patched[e.key] = e.diff
         else:
-            raise ValueError("Invalid diff op {}.".format(e[0]))
+            raise ValueError("Invalid diff op {}.".format(e.op))
     return deleted, patched, inserts
 
 
@@ -181,7 +187,7 @@ def interleave_inserts(local_inserts, remote_inserts):
         # is better, but we need to think this through carefully and
         # investigate what other tools do. At least this naive
         # approach doesn't drop any data.
-        if li < len(l) and (ri >= len(r) or l[li][0] <= r[ri][0]):
+        if li < len(l) and (ri >= len(r) or l[li].index <= r[ri].index):
             index, values = l[li]
             li += 1
             lskip = len(values)
@@ -274,13 +280,13 @@ def _merge_lists(base, local, remote, base_local_diff, base_remote_diff):
                 elif lp:
                     if DEBUGGING:
                         # This assert is expensive and must not be enabled in release mode
-                        assert local[i+loffset] == patch(base[i], local_patched[i][2])
+                        assert local[i+loffset] == patch(base[i], local_patched[i].diff)
                     # Patched on local side only
                     merged.append(local[i+loffset])
                 elif rp:
                     if DEBUGGING:
                         # This assert is expensive and must not be enabled in release mode
-                        assert remote[i+roffset] == patch(base[i], remote_patched[i][2])
+                        assert remote[i+roffset] == patch(base[i], remote_patched[i].diff)
                     # Patched on remote side only
                     merged.append(remote[i+loffset])
                 else:
