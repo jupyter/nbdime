@@ -11,7 +11,7 @@ import copy
 import pytest
 
 from nbdime import merge
-from nbdime.dformat import PATCH, INSERT, DELETE, REPLACE, ADDRANGE, REMOVERANGE
+from nbdime.dformat import PATCH, ADD, DELETE, REPLACE, ADDRANGE, REMOVERANGE
 from nbdime.dformat import make_op
 
 
@@ -418,13 +418,13 @@ def test_merge_conflicting_nested_dicts():
     r = {"a": {"x": 3, "y": 5}, "d": {"x": 5},         "m": {"x": 27}, "n": {"q": 19}}
     m, lc, rc = merge(b, l, r)
     assert m == {"a": {}, "d": {}, "m": {}, "n": {}}
-    assert lc == [make_op(PATCH, "a", [make_op(REPLACE, "x", 2), make_op(INSERT, "y", 4)]),
+    assert lc == [make_op(PATCH, "a", [make_op(REPLACE, "x", 2), make_op(ADD, "y", 4)]),
                   make_op(PATCH, "d", [make_op(DELETE, "x"), make_op(REPLACE, "y", 6)]),
                   make_op(PATCH, "m", [make_op(REPLACE, "x", 17)]),
-                  make_op(PATCH, "n", [make_op(INSERT, "q", 9)])
+                  make_op(PATCH, "n", [make_op(ADD, "q", 9)])
                   ]
-    assert rc == [make_op(PATCH, "a", [make_op(REPLACE, "x", 3), make_op(INSERT, "y", 5)]),
+    assert rc == [make_op(PATCH, "a", [make_op(REPLACE, "x", 3), make_op(ADD, "y", 5)]),
                   make_op(PATCH, "d", [make_op(REPLACE, "x", 5), make_op(DELETE, "y")]),
                   make_op(PATCH, "m", [make_op(REPLACE, "x", 27)]),
-                  make_op(PATCH, "n", [make_op(INSERT, "q", 19)])
+                  make_op(PATCH, "n", [make_op(ADD, "q", 19)])
                   ]

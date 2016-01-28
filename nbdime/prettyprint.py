@@ -10,7 +10,7 @@ from six import string_types
 import pprint
 
 from .diffing.notebooks import diff_notebooks
-from .dformat import PATCH, INSERT, DELETE, REPLACE, ADDRANGE, REMOVERANGE
+from .dformat import PATCH, ADD, DELETE, REPLACE, ADDRANGE, REMOVERANGE
 from .dformat import NBDiffFormatError
 
 
@@ -37,7 +37,7 @@ def present_dict_diff(a, di, path):
             pp.append("delete from {}:".format(nextpath))
             pp += present_value("- ", a[key])
 
-        elif op == INSERT:
+        elif op == ADD:
             pp.append("insert at {}:".format(nextpath))
             pp += present_value("+ ", e.value)
 

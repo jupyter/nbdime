@@ -11,7 +11,7 @@ from __future__ import print_function
 import operator
 
 from nbdime import diff
-from nbdime.dformat import PATCH, INSERT, DELETE, REPLACE  # , ADDRANGE, REMOVERANGE
+from nbdime.dformat import PATCH, ADD, DELETE, REPLACE  # , ADDRANGE, REMOVERANGE
 from nbdime.dformat import make_op
 from nbdime.diffing.snakes import compute_snakes_multilevel
 
@@ -84,12 +84,12 @@ def test_diff_and_patch():
         make_op(PATCH, "mix", [
             make_op(DELETE, "del"),
             make_op(REPLACE, "mod", 37),
-            make_op(INSERT, "add", 42)
+            make_op(ADD, "add", 42)
             ]),
         make_op(PATCH, "modparent", [
             make_op(REPLACE, "mod", 22)
             ]),
-        make_op(INSERT, "added", 7),
+        make_op(ADD, "added", 7),
         ]
 
 

@@ -41,7 +41,7 @@ def make_op(op, *args):
 
 
 # Valid values for the action field in diff entries
-INSERT = "add"
+ADD = "add"
 DELETE = "remove"
 REPLACE = "replace"
 PATCH = "patch"
@@ -50,7 +50,7 @@ REMOVERANGE = "removerange"
 
 ACTIONS = [
     PATCH,
-    INSERT,
+    ADD,
     DELETE,
     REPLACE,
     ADDRANGE,
@@ -64,7 +64,7 @@ SEQUENCE_ACTIONS = [
     ]
 
 MAPPING_ACTIONS = [
-    INSERT,
+    ADD,
     DELETE,
     REPLACE,
     PATCH
@@ -123,7 +123,7 @@ class MappingDiff(Diff):
         #self.diff[entry.key] = entry
 
     def add(self, key, value):
-        self.append(make_op(INSERT, key, value))
+        self.append(make_op(ADD, key, value))
 
     def remove(self, key):
         self.append(make_op(DELETE, key))
@@ -155,7 +155,7 @@ def validate_diff_entry(e, deep=False):
     """Check that e is a well formed diff entry.
 
     The diff entry format is a list
-    e[0] # op (one of PATCH, INSERT, DELETE, REPLACE)
+    e[0] # op (one of PATCH, ADD, DELETE, REPLACE)
     e[1] # key (str for diff of dict, int for diff of sequence (list or str))
     e[2] # op specific argument, omitted if op is DELETE
 
@@ -179,7 +179,7 @@ def validate_diff_entry(e, deep=False):
              or (isinstance(key, string_types) and op in MAPPING_ACTIONS) ):
         raise NBDiffFormatError("Invalid diff entry key '{}' of type '{}', expecting int for sequences or unicode/str for mappings.".format(key, type(key)))
 
-    if op == INSERT:
+    if op == ADD:
         pass  # e.value is a single value to insert at key
     elif op == DELETE:
         pass  # no argument
@@ -235,7 +235,7 @@ def to_json_patch_format(d, path="/"):
     for e in d:
         op = e.op
         p = "/".join([path, str(e.key)])
-        if op == INSERT:
+        if op == ADD:
             jp.append({"op": "add", "path": p, "value": e.value})
         elif op == REPLACE:
             jp.append({"op": "replace", "path": p, "value": e.value})

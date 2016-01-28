@@ -11,7 +11,7 @@ import copy
 from collections import namedtuple
 
 from ..diffing import diff
-from ..dformat import PATCH, INSERT, DELETE, REPLACE, ADDRANGE, REMOVERANGE
+from ..dformat import PATCH, ADD, DELETE, REPLACE, ADDRANGE, REMOVERANGE
 from ..dformat import SequenceDiff, MappingDiff
 from ..patching import patch
 
@@ -93,10 +93,10 @@ def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
         elif lop == DELETE:
             # (4) Removed in both local and remote, just don't add it to merge result
             pass
-        elif lop in (INSERT, REPLACE, PATCH) and lv == rv:
+        elif lop in (ADD, REPLACE, PATCH) and lv == rv:
             # If inserting/replacing/patching produces the same value, just use it
             merged[key] = lv
-        elif lop == INSERT:
+        elif lop == ADD:
             # (6) Insert in both local and remote, values are different
             # Try partially merging the inserted values
             if type(lv) == type(rv) and isinstance(lv, collection_types):

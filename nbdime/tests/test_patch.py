@@ -6,7 +6,7 @@
 from __future__ import unicode_literals
 
 from nbdime import patch
-from nbdime.dformat import PATCH, INSERT, DELETE, REPLACE, ADDRANGE, REMOVERANGE
+from nbdime.dformat import PATCH, ADD, DELETE, REPLACE, ADDRANGE, REMOVERANGE
 from nbdime.dformat import make_op
 
 
@@ -17,7 +17,7 @@ from nbdime.dformat import make_op
 
 def test_patch_str():
     # Test +, single item insertion
-    assert patch("42", [make_op(INSERT, 0, "3"), make_op(DELETE, 1)]) == "34"
+    assert patch("42", [make_op(ADD, 0, "3"), make_op(DELETE, 1)]) == "34"
 
     # Test -, single item deletion
     assert patch("3", [make_op(DELETE, 0)]) == ""
@@ -32,13 +32,13 @@ def test_patch_str():
     assert patch("42", [make_op(REPLACE, 0, "3"), make_op(REPLACE, 1, "5")]) == "35"
     assert patch("hello", [make_op(REPLACE, 0, "H")]) == "Hello"
     # Replace by delete-then-insert
-    assert patch("world", [make_op(DELETE, 0), make_op(INSERT, 0, "W")]) == "World"
+    assert patch("world", [make_op(DELETE, 0), make_op(ADD, 0, "W")]) == "World"
 
     # Test !, item patch (doesn't make sense for str)
     pass
 
     # Test ++, sequence insertion
-    assert patch("", [make_op(ADDRANGE, 0, "34"), make_op(INSERT, 0, "5"), make_op(ADDRANGE, 0, "67")]) == "34567"
+    assert patch("", [make_op(ADDRANGE, 0, "34"), make_op(ADD, 0, "5"), make_op(ADDRANGE, 0, "67")]) == "34567"
 
     # Test --, sequence deletion
     assert patch("abcd", [make_op(REMOVERANGE, 0, 2)]) == "cd"
@@ -48,9 +48,9 @@ def test_patch_str():
 
 def test_patch_list():
     # Test +, single item insertion
-    assert patch([], [make_op(INSERT, 0, 3)]) == [3]
-    assert patch([], [make_op(INSERT, 0, 3), make_op(INSERT, 0, 4)]) == [3, 4]
-    assert patch([], [make_op(INSERT, 0, 3), make_op(INSERT, 0, 4), make_op(INSERT, 0, 5)]) == [3, 4, 5]
+    assert patch([], [make_op(ADD, 0, 3)]) == [3]
+    assert patch([], [make_op(ADD, 0, 3), make_op(ADD, 0, 4)]) == [3, 4]
+    assert patch([], [make_op(ADD, 0, 3), make_op(ADD, 0, 4), make_op(ADD, 0, 5)]) == [3, 4, 5]
 
     # Test -, single item deletion
     assert patch([3], [make_op(DELETE, 0)]) == []
@@ -64,10 +64,10 @@ def test_patch_list():
 
     # Test !, item patch
     assert patch(["hello", "world"], [make_op(PATCH, 0, [make_op(REPLACE, 0, "H")]),
-                                      make_op(PATCH, 1, [make_op(DELETE, 0), make_op(INSERT, 0, "W")])]) == ["Hello", "World"]
+                                      make_op(PATCH, 1, [make_op(DELETE, 0), make_op(ADD, 0, "W")])]) == ["Hello", "World"]
 
     # Test ++, sequence insertion
-    assert patch([], [make_op(ADDRANGE, 0, [3, 4]), make_op(INSERT, 0, 5), make_op(ADDRANGE, 0, [6, 7])]) == [3, 4, 5, 6, 7]
+    assert patch([], [make_op(ADDRANGE, 0, [3, 4]), make_op(ADD, 0, 5), make_op(ADDRANGE, 0, [6, 7])]) == [3, 4, 5, 6, 7]
 
     # Test --, sequence deletion
     assert patch([5, 6, 7, 8], [make_op(REMOVERANGE, 0, 2)]) == [7, 8]
@@ -77,10 +77,10 @@ def test_patch_list():
 
 def test_patch_dict():
     # Test +, single item insertion
-    assert patch({}, [make_op(INSERT, "d", 4)]) == {"d": 4}
-    assert patch({"a": 1}, [make_op(INSERT, "d", 4)]) == {"a": 1, "d": 4}
+    assert patch({}, [make_op(ADD, "d", 4)]) == {"d": 4}
+    assert patch({"a": 1}, [make_op(ADD, "d", 4)]) == {"a": 1, "d": 4}
 
-    #assert patch({"d": 1}, [make_op(INSERT, "d", 4)]) == {"d": 4} # currently triggers assert, raise exception or allow?
+    #assert patch({"d": 1}, [make_op(ADD, "d", 4)]) == {"d": 4} # currently triggers assert, raise exception or allow?
 
     # Test -, single item deletion
     assert patch({"a": 1}, [make_op(DELETE, "a")]) == {}
@@ -91,5 +91,5 @@ def test_patch_dict():
     assert patch({"a": 1, "b": 2}, [make_op(REPLACE, "a", 3), make_op(REPLACE, "b", 5)]) == {"a": 3, "b": 5}
 
     # Test !, item patch
-    subdiff = [make_op(PATCH, 0, [make_op(REPLACE, 0, "H")]), make_op(PATCH, 1, [make_op(DELETE, 0), make_op(INSERT, 0, "W")])]
+    subdiff = [make_op(PATCH, 0, [make_op(REPLACE, 0, "H")]), make_op(PATCH, 1, [make_op(DELETE, 0), make_op(ADD, 0, "W")])]
     assert patch({"a": ["hello", "world"], "b": 3}, [make_op(PATCH, "a", subdiff)]) == {"a": ["Hello", "World"], "b": 3}
