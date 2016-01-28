@@ -11,7 +11,7 @@ import copy
 import pytest
 
 from nbdime import merge
-from nbdime.dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
+from nbdime.dformat import PATCH, INSERT, DELETE, REPLACE, ADDRANGE, SEQDELETE
 from nbdime.dformat import make_op
 
 

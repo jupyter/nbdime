@@ -10,7 +10,7 @@ from six import string_types
 import pprint
 
 from .diffing.notebooks import diff_notebooks
-from .dformat import PATCH, INSERT, DELETE, REPLACE, SEQINSERT, SEQDELETE
+from .dformat import PATCH, INSERT, DELETE, REPLACE, ADDRANGE, SEQDELETE
 from .dformat import NBDiffFormatError
 
 
@@ -65,7 +65,7 @@ def present_list_diff(a, d, path):
 
         nextpath = "/".join((path, str(index)))
 
-        if op == SEQINSERT:
+        if op == ADDRANGE:
             pp.append("insert before {}:".format(nextpath))
             pp += present_value("+ ", e.values)
 
@@ -111,7 +111,7 @@ def present_string_diff(a, di, path):
             continuation_indent2 = continuation_indent
             consumed = index
 
-        if op == SEQINSERT:
+        if op == ADDRANGE:
             dlines = e.values.split("\n")
             lines.append("+ " + " "*continuation_indent + dlines[0])
             for dline in dlines[1:]:

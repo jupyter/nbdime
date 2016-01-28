@@ -45,7 +45,7 @@ INSERT = "add"
 DELETE = "remove"
 REPLACE = "replace"
 PATCH = "patch"
-SEQINSERT = "addrange"
+ADDRANGE = "addrange"
 SEQDELETE = "removerange"
 
 ACTIONS = [
@@ -53,12 +53,12 @@ ACTIONS = [
     INSERT,
     DELETE,
     REPLACE,
-    SEQINSERT,
+    ADDRANGE,
     SEQDELETE,
     ]
 
 SEQUENCE_ACTIONS = [
-    SEQINSERT,
+    ADDRANGE,
     SEQDELETE,
     PATCH
     ]
@@ -96,7 +96,7 @@ class SequenceDiff(Diff):
         self.diff.append(entry)
 
     def add(self, key, values):
-        self.append(make_op(SEQINSERT, key, values))
+        self.append(make_op(ADDRANGE, key, values))
 
     def remove(self, key, num_values):
         self.append(make_op(SEQDELETE, key, num_values))
@@ -160,7 +160,7 @@ def validate_diff_entry(e, deep=False):
     e[2] # op specific argument, omitted if op is DELETE
 
     For sequences (lists and strings) the ops
-    SEQINSERT and SEQDELETE are also allowed.
+    ADDRANGE and SEQDELETE are also allowed.
     """
     # Entry is always a list with 3 items, or 2 in the special case of single item deletion
     if not isinstance(e, diff_types):
@@ -191,7 +191,7 @@ def validate_diff_entry(e, deep=False):
         # (the "deep" argument is here to avoid recursion and potential O(>n) performance pitfalls)
         if deep:
             validate_diff(e.diff, deep=deep)
-    elif op == SEQINSERT:
+    elif op == ADDRANGE:
         if not isinstance(e.values, sequence_types):
             raise NBDiffFormatError("addrange expects a sequence of values to insert, not '{}'.".format(e.values))
     elif op == SEQDELETE:
@@ -208,7 +208,7 @@ def validate_diff_entry(e, deep=False):
 def count_consumed_symbols(e):
     "Count how many symbols are consumed from each sequence by a single sequence diff entry."
     op = e.op
-    if op == SEQINSERT:
+    if op == ADDRANGE:
         return 0, len(e.values)
     elif op == SEQDELETE:
         return e.length, 0
@@ -241,7 +241,7 @@ def to_json_patch_format(d, path="/"):
             jp.append({"op": "replace", "path": p, "value": e.value})
         elif op == DELETE:
             jp.append({"op": "remove", "path": p})
-        elif op == SEQINSERT:
+        elif op == ADDRANGE:
             # JSONPatch only has single value add, no addrange
             # FIXME: Reverse this or not? Read RFC carefully and/or test with some conforming tool.
             #for value in reversed(e.values):
