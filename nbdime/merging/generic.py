@@ -11,7 +11,7 @@ import copy
 from collections import namedtuple
 
 from ..diffing import diff
-from ..dformat import PATCH, ADD, DELETE, REPLACE, ADDRANGE, REMOVERANGE
+from ..dformat import PATCH, ADD, REMOVE, REPLACE, ADDRANGE, REMOVERANGE
 from ..dformat import SequenceDiff, MappingDiff
 from ..patching import patch
 
@@ -56,14 +56,14 @@ def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
     for key in bldkeys - brdkeys:
         # Just use local value or remove by not inserting
         op = base_local_diff[key].op
-        if op != DELETE:
+        if op != REMOVE:
             merged[key] = local[key]
 
     # (3) Apply one-sided remote diffs
     for key in brdkeys - bldkeys:
         # Just use remote value or remove by not inserting
         op = base_remote_diff[key].op
-        if op != DELETE:
+        if op != REMOVE:
             merged[key] = remote[key]
 
     # Data structures for storing conflicts
@@ -90,7 +90,7 @@ def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
             # (5) Conflict: removed one place and edited another, or edited in different ways
             local_conflict_diff.append(ld)
             remote_conflict_diff.append(rd)
-        elif lop == DELETE:
+        elif lop == REMOVE:
             # (4) Removed in both local and remote, just don't add it to merge result
             pass
         elif lop in (ADD, REPLACE, PATCH) and lv == rv:

@@ -10,7 +10,7 @@ import copy
 import nbformat
 
 from .dformat import NBDiffFormatError
-from .dformat import PATCH, ADD, DELETE, REPLACE, ADDRANGE, REMOVERANGE
+from .dformat import PATCH, ADD, REMOVE, REPLACE, ADDRANGE, REMOVERANGE
 
 
 __all__ = ["patch", "patch_notebook"]
@@ -33,7 +33,7 @@ def patch_list(obj, diff):
             # Append new value directly
             newobj.append(e.value)
             skip = 0
-        elif op == DELETE:
+        elif op == REMOVE:
             # Delete values obj[index] by incrementing take to skip
             skip = 1
         elif op == REPLACE:
@@ -55,7 +55,7 @@ def patch_list(obj, diff):
 
         # Skip the specified number of elements, but never decrement take.
         # Note that take can pass index in diffs with repeated +/- on the
-        # same index, i.e. [make_op(DELETE, index), make_op(ADD, index, value)]
+        # same index, i.e. [make_op(REMOVE, index), make_op(ADD, index, value)]
         take = max(take, index + skip)
 
     # Take values at end not mentioned in diff
@@ -82,7 +82,7 @@ def patch_dict(obj, diff):
         if op == ADD:
             assert key not in keys_to_copy
             newobj[key] = e.value
-        elif op == DELETE:
+        elif op == REMOVE:
             keys_to_copy.remove(key)
         elif op == REPLACE:
             keys_to_copy.remove(key)

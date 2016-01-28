@@ -42,7 +42,7 @@ def make_op(op, *args):
 
 # Valid values for the action field in diff entries
 ADD = "add"
-DELETE = "remove"
+REMOVE = "remove"
 REPLACE = "replace"
 PATCH = "patch"
 ADDRANGE = "addrange"
@@ -51,7 +51,7 @@ REMOVERANGE = "removerange"
 ACTIONS = [
     PATCH,
     ADD,
-    DELETE,
+    REMOVE,
     REPLACE,
     ADDRANGE,
     REMOVERANGE,
@@ -65,7 +65,7 @@ SEQUENCE_ACTIONS = [
 
 MAPPING_ACTIONS = [
     ADD,
-    DELETE,
+    REMOVE,
     REPLACE,
     PATCH
     ]
@@ -126,7 +126,7 @@ class MappingDiff(Diff):
         self.append(make_op(ADD, key, value))
 
     def remove(self, key):
-        self.append(make_op(DELETE, key))
+        self.append(make_op(REMOVE, key))
 
     def replace(self, key, value):
         self.append(make_op(REPLACE, key, value))
@@ -155,9 +155,9 @@ def validate_diff_entry(e, deep=False):
     """Check that e is a well formed diff entry.
 
     The diff entry format is a list
-    e[0] # op (one of PATCH, ADD, DELETE, REPLACE)
+    e[0] # op (one of PATCH, ADD, REMOVE, REPLACE)
     e[1] # key (str for diff of dict, int for diff of sequence (list or str))
-    e[2] # op specific argument, omitted if op is DELETE
+    e[2] # op specific argument, omitted if op is REMOVE
 
     For sequences (lists and strings) the ops
     ADDRANGE and REMOVERANGE are also allowed.
@@ -168,7 +168,7 @@ def validate_diff_entry(e, deep=False):
 
     # This is not possible for namedtuple types:
     #n = len(e)
-    #if not (n == 3 or (n == 2 and e[0] == DELETE)):
+    #if not (n == 3 or (n == 2 and e[0] == REMOVE)):
     #    raise NBDiffFormatError("Diff entry '{}' has the wrong size.".format(e))
 
     op = e.op
@@ -181,7 +181,7 @@ def validate_diff_entry(e, deep=False):
 
     if op == ADD:
         pass  # e.value is a single value to insert at key
-    elif op == DELETE:
+    elif op == REMOVE:
         pass  # no argument
     elif op == REPLACE:
         # e.value is a single value to replace value at key with
@@ -239,7 +239,7 @@ def to_json_patch_format(d, path="/"):
             jp.append({"op": "add", "path": p, "value": e.value})
         elif op == REPLACE:
             jp.append({"op": "replace", "path": p, "value": e.value})
-        elif op == DELETE:
+        elif op == REMOVE:
             jp.append({"op": "remove", "path": p})
         elif op == ADDRANGE:
             # JSONPatch only has single value add, no addrange
