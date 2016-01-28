@@ -154,13 +154,27 @@ def validate_diff(diff, deep=False):
 def validate_diff_entry(e, deep=False):
     """Check that e is a well formed diff entry.
 
-    The diff entry format is a list
-    e[0] # op (one of PATCH, ADD, REMOVE, REPLACE)
-    e[1] # key (str for diff of dict, int for diff of sequence (list or str))
-    e[2] # op specific argument, omitted if op is REMOVE
+    All diff entry object have the two attributes, e.op and e.key.
 
-    For sequences (lists and strings) the ops
-    ADDRANGE and REMOVERANGE are also allowed.
+    For the diff of a sequence (list, string) of length N, these should be:
+
+        e.op = one of ADDRANGE, REMOVERANGE, PATCH
+        e.key = integer index in range 0-N inclusive
+
+    For the diff of a dict, these should be:
+
+        e.op = one of PATCH, ADD, REMOVE, REPLACE
+        e.key = string, must match existing key for PATCH, REMOVE, REPLACE, and not match for ADD
+
+    In addition most of the ops have specific attributes:
+
+        ADD: e.value, the new value to add at e.key
+        REPLACE: e.value, the new value to replace the existing value at e.key with
+        REMOVE: nothing
+        PATCH: e.diff, the diff object to patch the existing value at e.key with
+        ADDRANGE: e.values, the list of new values to add before e.key
+        REMOVERANGE: e.length, the number of values to remove starting at index e.key
+
     """
     # Entry is always a list with 3 items, or 2 in the special case of single item deletion
     if not isinstance(e, diff_types):
@@ -168,7 +182,7 @@ def validate_diff_entry(e, deep=False):
 
     # This is not possible for namedtuple types:
     #n = len(e)
-    #if not (n == 3 or (n == 2 and e[0] == REMOVE)):
+    #if not (n == 3 or (n == 2 and e.op == REMOVE)):
     #    raise NBDiffFormatError("Diff entry '{}' has the wrong size.".format(e))
 
     op = e.op
@@ -177,7 +191,8 @@ def validate_diff_entry(e, deep=False):
     # Check key (list or str uses int key, dict uses str key)
     if not (    (isinstance(key, int)          and op in SEQUENCE_ACTIONS)
              or (isinstance(key, string_types) and op in MAPPING_ACTIONS) ):
-        raise NBDiffFormatError("Invalid diff entry key '{}' of type '{}', expecting int for sequences or unicode/str for mappings.".format(key, type(key)))
+        msg = "Invalid diff entry key '{}' of type '{}'. Expecting int for sequences or unicode/str for mappings."
+        raise NBDiffFormatError(msg.format(key, type(key)))
 
     if op == ADD:
         pass  # e.value is a single value to insert at key
@@ -209,11 +224,11 @@ def count_consumed_symbols(e):
     "Count how many symbols are consumed from each sequence by a single sequence diff entry."
     op = e.op
     if op == ADDRANGE:
-        return 0, len(e.values)
+        return (0, len(e.values))
     elif op == REMOVERANGE:
-        return e.length, 0
+        return (e.length, 0)
     elif op == PATCH:
-        return 1, 1
+        return (1, 1)
     else:
         raise NBDiffFormatError("Invalid op '{}'".format(op))
 
