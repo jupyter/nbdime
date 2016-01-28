@@ -116,7 +116,12 @@ def compare_output_data(x, y):
         return False
 
     if ot == "stream":
-        pass
+        if x["name"] != y["name"]:
+            return False
+        if x["text"] != y["text"]:
+            return False
+        #d = diff(x["text"], y["text"])
+        #return bool(d)  # FIXME
     else:  # if ot == "display_data" or ot == "execute_result":
         if set(x["data"].keys()) != set(y["data"].keys()):
             return False
@@ -132,6 +137,7 @@ def compare_output_data(x, y):
 
 def diff_source(a, b, compare="ignored"):
     "Diff a pair of sources."
+    # FIXME: Make sure we use linebased diff of sources
     # TODO: Use google-diff-patch-match library to diff the sources?
     return diff(a, b)
 
