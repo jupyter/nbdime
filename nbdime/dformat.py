@@ -12,6 +12,13 @@ from collections import namedtuple
 from .log import NBDiffFormatError
 
 
+class DiffEntry(dict):
+    def __getattr__(self, name):
+        return self[name]
+    def __setattr__(self, name, value):
+        self[name] = value
+
+
 # Just to make sure we don't use the namedtuple instances directly,
 # at least for now I consider this a refactoring step that may be
 # replaced with something else such as a dict with setattr support like notebooks have.
@@ -27,8 +34,8 @@ def _make_diff_types():
     op_removerange = namedtuple("removerange", ("op", "key", "length"))
 
     # Collection used for validation
-    mapping_diff_types = (op_add, op_remove, op_replace, op_patch)
-    sequence_diff_types = (op_addrange, op_removerange, op_patch)
+    mapping_diff_types = (op_add, op_remove, op_replace, op_patch)  #, DiffEntry)
+    sequence_diff_types = (op_addrange, op_removerange, op_patch)  #, DiffEntry)
     diff_types = tuple(set(mapping_diff_types + sequence_diff_types))
     diff_types_by_key = {t.__name__: t for t in diff_types}
     return mapping_diff_types, sequence_diff_types, diff_types, diff_types_by_key
@@ -37,7 +44,10 @@ mapping_diff_types, sequence_diff_types, diff_types, diff_types_by_key = _make_d
 
 def make_op(op, *args):
     "Create a diff entry."
-    return diff_types_by_key[op](op, *args)
+    # FIXME: refactor and make less convoluted
+    e = diff_types_by_key[op](op, *args)
+    return e
+    #return DiffEntry(e._asdict())
 
 
 # Valid values for the action field in diff entries
