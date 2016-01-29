@@ -9,8 +9,8 @@ from six import string_types
 import copy
 import nbformat
 
-from .dformat import NBDiffFormatError
-from .dformat import PATCH, ADD, REMOVE, REPLACE, ADDRANGE, REMOVERANGE
+from .diff_format import NBDiffFormatError
+from .diff_format import PATCH, ADD, REMOVE, REPLACE, ADDRANGE, REMOVERANGE
 
 
 __all__ = ["patch", "patch_notebook"]

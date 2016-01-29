@@ -15,7 +15,7 @@ import nbformat
 import re
 
 from nbdime import patch, diff
-from nbdime.dformat import is_valid_diff
+from nbdime.diff_format import is_valid_diff
 
 
 def testspath():

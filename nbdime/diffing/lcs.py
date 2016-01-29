@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 
 from six.moves import xrange as range
 
-from ..dformat import SequenceDiff
+from ..diff_format import SequenceDiff
 
 
 def diff_from_lcs(A, B, A_indices, B_indices):

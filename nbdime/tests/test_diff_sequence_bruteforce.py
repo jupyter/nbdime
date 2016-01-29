@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 from six.moves import xrange as range
 
 from nbdime import patch
-from nbdime.dformat import is_valid_diff
+from nbdime.diff_format import is_valid_diff
 from nbdime.diffing.lcs import diff_from_lcs
 from nbdime.diffing.seq_bruteforce import (bruteforce_compare_grid, bruteforce_llcs_grid,
                                            bruteforce_lcs_indices, diff_sequence_bruteforce)

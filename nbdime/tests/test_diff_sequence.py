@@ -10,7 +10,7 @@ from six.moves import xrange as range
 import pytest
 
 from nbdime import patch
-from nbdime.dformat import is_valid_diff
+from nbdime.diff_format import is_valid_diff
 
 import nbdime.diffing.sequences
 from nbdime.diffing.sequences import diff_sequence

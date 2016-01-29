@@ -16,7 +16,7 @@ import difflib
 import operator
 from six import string_types
 
-from ..dformat import source_as_string
+from ..diff_format import source_as_string
 
 from .sequences import diff_sequence
 from .generic import diff, diff_lists, diff_dicts

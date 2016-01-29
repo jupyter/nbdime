@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 from six.moves import xrange as range
 from nbdime import patch
 from nbdime.diffing.seq_difflib import diff_sequence_difflib
-from nbdime.dformat import is_valid_diff
+from nbdime.diff_format import is_valid_diff
 
 
 def check_diff_sequence_and_patch(a, b):

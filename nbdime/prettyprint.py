@@ -10,8 +10,8 @@ from six import string_types
 import pprint
 
 from .diffing.notebooks import diff_notebooks
-from .dformat import PATCH, ADD, REMOVE, REPLACE, ADDRANGE, REMOVERANGE
-from .dformat import NBDiffFormatError
+from .diff_format import PATCH, ADD, REMOVE, REPLACE, ADDRANGE, REMOVERANGE
+from .diff_format import NBDiffFormatError
 
 
 def present_value(prefix, arg):

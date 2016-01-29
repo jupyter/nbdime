@@ -11,8 +11,8 @@ import copy
 import pytest
 
 from nbdime import merge
-from nbdime.dformat import PATCH, ADD, REMOVE, REPLACE, ADDRANGE, REMOVERANGE
-from nbdime.dformat import make_op
+from nbdime.diff_format import PATCH, ADD, REMOVE, REPLACE, ADDRANGE, REMOVERANGE
+from nbdime.diff_format import make_op
 
 
 def cut(li, *indices):

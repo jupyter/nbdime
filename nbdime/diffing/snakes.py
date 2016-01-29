@@ -12,7 +12,7 @@ converted to the same format version, currently v4 at time of writing.
 Up- and down-conversion is handled by nbformat.
 """
 
-from ..dformat import SequenceDiff
+from ..diff_format import SequenceDiff
 from .seq_bruteforce import bruteforce_compute_snakes
 from .generic import diff
 

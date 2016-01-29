@@ -11,8 +11,8 @@ import copy
 from collections import namedtuple
 
 from ..diffing import diff
-from ..dformat import PATCH, ADD, REMOVE, REPLACE, ADDRANGE, REMOVERANGE
-from ..dformat import SequenceDiff, MappingDiff
+from ..diff_format import PATCH, ADD, REMOVE, REPLACE, ADDRANGE, REMOVERANGE
+from ..diff_format import SequenceDiff, MappingDiff
 from ..patching import patch
 
 

@@ -6,7 +6,7 @@
 from __future__ import unicode_literals
 
 from difflib import SequenceMatcher
-from ..dformat import SequenceDiff
+from ..diff_format import SequenceDiff
 
 
 __all__ = ["diff_sequence_difflib"]
