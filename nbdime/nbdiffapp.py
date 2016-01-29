@@ -36,6 +36,10 @@ def main_diff(afn, bfn, dfn=None):
     a = nbformat.read(afn, as_version=4)
     b = nbformat.read(bfn, as_version=4)
 
+    # TODO: Split lines here?
+    #a = split_lines(a)
+    #b = split_lines(b)
+
     d = diff_notebooks(a, b)
 
     verbose = True

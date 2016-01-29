@@ -9,12 +9,11 @@ import nbformat
 
 from .generic import merge
 
-
 def merge_notebooks(base, local, remote):
     """Merge changes introduced by notebooks local and remote from a shared ancestor base.
 
     Return new (partially) merged notebook and unapplied diffs from the local and remote side.
     """
-    # FIXME: Implement notebook aware merge
     merged, local_conflict_diffs, remote_conflict_diffs = merge(base, local, remote)
-    return nbformat.from_dict(merged), local_conflict_diffs, remote_conflict_diffs
+    merged = nbformat.from_dict(merged)
+    return merged, local_conflict_diffs, remote_conflict_diffs

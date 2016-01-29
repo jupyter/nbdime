@@ -25,10 +25,38 @@ from .snakes import diff_sequence_multilevel
 __all__ = ["diff_notebooks"]
 
 
+def __unused__notebook_diff_data():
+    # TODO: It might be possible to encode the below
+    #       functions more compactly with collections
+    #       of predicate functions and generalize.
+    # Basically, sequence diffs should be applied with multilevel
+    # algorithm for paths with more than one predicate,
+    # and using operator.__eq__ if no match in there.
+    predicates = {
+        "/cells": [
+            compare_cell_source_approximate,
+            compare_cell_source_exact,
+            compare_cell_source_and_outputs,
+            ],
+        "/cells/#/outputs": [
+            compare_output_data_keys,
+            compare_output_data,
+            ]
+        }
+    diff_algorithms = {
+        "/": diff_notebooks,
+        "/cells": diff_cells,
+        "/cells/#": diff_single_cells,
+        "/cells/#/source": diff_source,
+        "/cells/#/outputs": diff_outputs,
+        "/cells/#/outputs/#": diff_single_outputs,
+        }
+
+
 def compare_cell_source_approximate(x, y):
     "Compare source of cells x,y with approximate heuristics."
     # Cell types must match
-    if x["cell_type"] != y["cell_type"]:
+    if x.cell_type != y["cell_type"]:
         return False
 
     # Convert from list to single string
@@ -120,8 +148,6 @@ def compare_output_data(x, y):
             return False
         if x["text"] != y["text"]:
             return False
-        #d = diff(x["text"], y["text"])
-        #return bool(d)  # FIXME
     else:  # if ot == "display_data" or ot == "execute_result":
         if set(x["data"].keys()) != set(y["data"].keys()):
             return False
@@ -135,16 +161,14 @@ def compare_output_data(x, y):
     return True
 
 
-def diff_source(a, b, compare="ignored"):
-    "Diff a pair of sources."
-    # FIXME: Make sure we use linebased diff of sources
-    # TODO: Use google-diff-patch-match library to diff the sources?
-    return diff(a, b)
-
-
 def diff_single_outputs(a, b, compare="ignored"):
     "Diff a pair of output cells."
     # TODO: Handle output diffing with plugins? I.e. image diff, svg diff, json diff, etc.
+    # FIXME: Use linebased diff of some types of outputs:
+    # if a.output_type in ("execute_result", "display_data"):
+    #    a.data.key if key.startswith('text/') or key in _non_text_split_mimes = {
+    #        'application/javascript','image/svg+xml'}
+    #    a.text
     return diff(a, b)
 
 
@@ -153,6 +177,13 @@ def diff_outputs(a, b, compare="ignored"):
     predicates = [compare_output_data_keys,
                   compare_output_data]
     return diff_sequence_multilevel(a, b, predicates, diff_single_outputs)
+
+
+def diff_source(a, b, compare="ignored"):
+    "Diff a pair of sources."
+    # FIXME: Make sure we use linebased diff of sources
+    # TODO: Use google-diff-patch-match library to diff the sources?
+    return diff(a, b)
 
 
 def diff_single_cells(a, b):
@@ -172,12 +203,6 @@ def diff_cells(a, b, compare="ignored"):
     return diff_sequence_multilevel(a, b, predicates, diff_single_cells)
 
 
-def diff_notebooks(nba, nbb):
+def diff_notebooks(a, b):
     """Compute the diff of two notebooks."""
-    try:
-        r = diff_dicts(nba, nbb, subdiffs={"cells": diff_cells})
-    except Exception as e:
-        import IPython
-        IPython.embed()
-        raise
-    return r
+    return diff_dicts(a, b, subdiffs={"cells": diff_cells})

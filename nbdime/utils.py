@@ -31,4 +31,3 @@ def revert_strings_to_lists(obj):
             return [revert_strings_to_lists(v) for v in obj]
     else:
         return obj
-

@@ -35,6 +35,11 @@ def main_merge(bfn, lfn, rfn, mfn):
     l = nbformat.read(lfn, as_version=4)
     r = nbformat.read(rfn, as_version=4)
 
+    # TODO: Split lines here?
+    #b = split_lines(b)
+    #l = split_lines(l)
+    #r = split_lines(r)
+
     m, lc, rc = merge_notebooks(b, l, r)
 
     if mfn:

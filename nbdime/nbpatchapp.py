@@ -36,6 +36,9 @@ def main_patch(bfn, dfn, afn):
         d = json.load(df)
     d = to_diffentry_dicts(d)
 
+    # TODO: Split lines here? Must be consistent with the diff for patch_notebook to work correctly!?
+    #before = split_lines(before)
+
     after = patch_notebook(before, d)
 
     if afn:

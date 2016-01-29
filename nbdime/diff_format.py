@@ -250,6 +250,7 @@ def to_json_patch(d, path=""):
 
     This is untested and will need some details worked out.
     """
+    raise RuntimeError("to_json_patch is currently not correct, see github issue.")
     jp = []
     for e in d:
         op = e.op
