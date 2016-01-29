@@ -224,6 +224,16 @@ def source_as_string(source):
     return source
 
 
+def to_clean_dicts(di):
+    "Recursively convert dict-like objects to straight python dicts."
+    if isinstance(di, dict):
+        return {k: to_clean_dicts(v) for k, v in di.items()}
+    elif isinstance(di, list):
+        return [to_clean_dicts(v) for v in di]
+    else:
+        return di
+
+
 def to_json_patch(d, path=""):
     """Convert nbdime diff object into the RFC6902 JSON Patch format.
 
