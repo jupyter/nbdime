@@ -14,6 +14,10 @@ from .diff_format import PATCH, ADD, REMOVE, REPLACE, ADDRANGE, REMOVERANGE
 from .diff_format import NBDiffFormatError
 
 
+# Disable indentation here
+with_indent = False
+
+
 def present_value(prefix, arg):
     # TODO: improve pretty-print of arbitrary values?
     lines = pprint.pformat(arg).splitlines()
@@ -47,7 +51,8 @@ def present_dict_diff(a, di, path):
             pp += present_value(" +", e.value)
 
         elif op == PATCH:
-            pp.append("patch {}:".format(nextpath))
+            if with_indent:
+                pp.append("patch {}:".format(nextpath))
             pp += present_diff(a[key], e.diff, nextpath)
 
         else:
@@ -78,7 +83,8 @@ def present_list_diff(a, d, path):
             pp += present_value("- ", a[index: index + e.length])
 
         elif op == PATCH:
-            pp.append("patch {}:".format(nextpath))
+            if with_indent:
+                pp.append("patch {}:".format(nextpath))
             pp += present_diff(a[index], e.diff, nextpath)
 
         else:
@@ -159,8 +165,11 @@ def present_diff(a, di, path, indent=True):
         raise NBDiffFormatError("Invalid type {} for diff presentation.".format(type(a)))
 
     # Optionally indent
-    indsep = " "*2
-    return [indsep + line for line in pp] if indent else pp
+    if with_indent:
+        indsep = " "*2
+        return [indsep + line for line in pp] if indent else pp
+    else:
+        return pp
 
 
 header = """\
