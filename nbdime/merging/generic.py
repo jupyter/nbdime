@@ -11,8 +11,7 @@ import copy
 from collections import namedtuple
 
 from ..diffing import diff
-from ..diff_format import PATCH, ADD, REMOVE, REPLACE, ADDRANGE, REMOVERANGE
-from ..diff_format import SequenceDiff, MappingDiff
+from ..diff_format import Diff, SequenceDiff, MappingDiff
 from ..patching import patch
 
 
@@ -56,14 +55,14 @@ def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
     for key in bldkeys - brdkeys:
         # Just use local value or remove by not inserting
         op = base_local_diff[key].op
-        if op != REMOVE:
+        if op != Diff.REMOVE:
             merged[key] = local[key]
 
     # (3) Apply one-sided remote diffs
     for key in brdkeys - bldkeys:
         # Just use remote value or remove by not inserting
         op = base_remote_diff[key].op
-        if op != REMOVE:
+        if op != Diff.REMOVE:
             merged[key] = remote[key]
 
     # Data structures for storing conflicts
@@ -90,13 +89,13 @@ def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
             # (5) Conflict: removed one place and edited another, or edited in different ways
             local_conflict_diff.append(ld)
             remote_conflict_diff.append(rd)
-        elif lop == REMOVE:
+        elif lop == Diff.REMOVE:
             # (4) Removed in both local and remote, just don't add it to merge result
             pass
-        elif lop in (ADD, REPLACE, PATCH) and lv == rv:
+        elif lop in (Diff.ADD, Diff.REPLACE, Diff.PATCH) and lv == rv:
             # If inserting/replacing/patching produces the same value, just use it
             merged[key] = lv
-        elif lop == ADD:
+        elif lop == Diff.ADD:
             # (6) Insert in both local and remote, values are different
             # Try partially merging the inserted values
             if type(lv) == type(rv) and isinstance(lv, collection_types):
@@ -113,11 +112,11 @@ def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
                 # Recursive merge not possible, record a conflict
                 local_conflict_diff.append(ld)
                 remote_conflict_diff.append(rd)
-        elif lop == REPLACE:
+        elif lop == Diff.REPLACE:
             # (7) Replace in both local and remote, values are different
             local_conflict_diff.append(ld)
             remote_conflict_diff.append(rd)
-        elif lop == PATCH:
+        elif lop == Diff.PATCH:
             # (8) Patch on both local and remote, values are different
             # Patches produce different values, try merging the substructures
             # (a patch command only occurs when the type is a collection, so we
@@ -156,12 +155,12 @@ def _split_list_diff(diff, size):
     inserts = []
     for e in diff:
         op = e.op
-        if op == ADDRANGE:
+        if op == Diff.ADDRANGE:
             inserts.append(insertitem(e.key, e.valuelist))
-        elif op == REMOVERANGE:
+        elif op == Diff.REMOVERANGE:
             for i in range(e.length):
                 deleted[e.key + i] = True
-        elif op == PATCH:
+        elif op == Diff.PATCH:
             patched[e.key] = e.diff
         else:
             raise ValueError("Invalid diff op {}.".format(e.op))
@@ -443,7 +442,7 @@ def merge(base, local, remote):
         Takeaways:
         - Ensure that diff always uses patch on collections unless the type changes and replace on values.
         - The only recursion will happen on the patch / patch op of equal type collections!
-        - Patch op is [PATCH, key, subdiff], providing subdiff for both sides, and meaning values exist on both sides.
+        - Patch op is [Diff.PATCH, key, subdiff], providing subdiff for both sides, and meaning values exist on both sides.
 
 
     ## Next trying to figure out list situations:

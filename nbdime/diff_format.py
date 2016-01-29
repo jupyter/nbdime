@@ -49,34 +49,28 @@ def make_op(op, *args):
     #return e
     return DiffEntry(e._asdict())
 
-# Valid values for the action field in diff entries
-ADD = "add"
-REMOVE = "remove"
-REPLACE = "replace"
-PATCH = "patch"
-ADDRANGE = "addrange"
-REMOVERANGE = "removerange"
-
-
 
 sequence_types = string_types + (list,)
 
 
 class Diff(object):
-    pass
-
-
-class SequenceDiff(Diff):
 
     # Valid values for the action field in diff entries
+    ADD = "add"
+    REMOVE = "remove"
+    REPLACE = "replace"
     ADDRANGE = "addrange"
     REMOVERANGE = "removerange"
     PATCH = "patch"
 
+
+class SequenceDiff(Diff):
+
+    # Valid values for the action field in sequence diff entries
     OPS = (
-        ADDRANGE,
-        REMOVERANGE,
-        PATCH,
+        Diff.ADDRANGE,
+        Diff.REMOVERANGE,
+        Diff.PATCH,
         )
 
     def __init__(self):
@@ -96,28 +90,23 @@ class SequenceDiff(Diff):
         self.diff.append(entry)
 
     def add(self, key, valuelist):
-        self.append(make_op(ADDRANGE, key, valuelist))
+        self.append(make_op(Diff.ADDRANGE, key, valuelist))
 
     def remove(self, key, length):
-        self.append(make_op(REMOVERANGE, key, length))
+        self.append(make_op(Diff.REMOVERANGE, key, length))
 
     def patch(self, key, diff):
-        self.append(make_op(PATCH, key, diff))
+        self.append(make_op(Diff.PATCH, key, diff))
 
 
 class MappingDiff(Diff):
 
-    # Valid values for the action field in diff entries
-    ADD = "add"
-    REMOVE = "remove"
-    REPLACE = "replace"
-    PATCH = "patch"
-
+    # Valid values for the action field in mapping diff entries
     OPS = (
-        PATCH,
-        ADD,
-        REMOVE,
-        REPLACE,
+        Diff.ADD,
+        Diff.REMOVE,
+        Diff.REPLACE,
+        Diff.PATCH,
         )
 
     def __init__(self):
@@ -137,16 +126,16 @@ class MappingDiff(Diff):
         #self.diff[entry.key] = entry
 
     def add(self, key, value):
-        self.append(make_op(ADD, key, value))
+        self.append(make_op(Diff.ADD, key, value))
 
     def remove(self, key):
-        self.append(make_op(REMOVE, key))
+        self.append(make_op(Diff.REMOVE, key))
 
     def replace(self, key, value):
-        self.append(make_op(REPLACE, key, value))
+        self.append(make_op(Diff.REPLACE, key, value))
 
     def patch(self, key, diff):
-        self.append(make_op(PATCH, key, diff))
+        self.append(make_op(Diff.PATCH, key, diff))
 
 
 def is_valid_diff(diff, deep=False):
@@ -167,30 +156,8 @@ def validate_diff(diff, deep=False):
 
 
 def validate_diff_entry(e, deep=False):
-    """Check that e is a well formed diff entry.
+    """Check that e is a well formed diff entry, as documented under docs/."""
 
-    All diff entry object have the two attributes, e.op and e.key.
-
-    For the diff of a sequence (list, string) of length N, these should be:
-
-        e.op = one of ADDRANGE, REMOVERANGE, PATCH
-        e.key = integer index in range 0-N inclusive
-
-    For the diff of a dict, these should be:
-
-        e.op = one of PATCH, ADD, REMOVE, REPLACE
-        e.key = string, must match existing key for PATCH, REMOVE, REPLACE, and not match for ADD
-
-    In addition most of the ops have specific attributes:
-
-        ADD: e.value, the new value to add at e.key
-        REPLACE: e.value, the new value to replace the existing value at e.key with
-        REMOVE: nothing
-        PATCH: e.diff, the diff object to patch the existing value at e.key with
-        ADDRANGE: e.valuelist, the list of new values to add before e.key
-        REMOVERANGE: e.length, the number of values to remove starting at index e.key
-
-    """
     # Entry is always a list with 3 items, or 2 in the special case of single item deletion
     if not isinstance(e, diff_types):
         raise NBDiffFormatError("Diff entry '{}' is not a diff type.".format(e))
@@ -199,13 +166,13 @@ def validate_diff_entry(e, deep=False):
     op = e.op
     key = e.key
     if isinstance(key, int) and op in SequenceDiff.OPS:
-        if op == SequenceDiff.ADDRANGE:
+        if op == Diff.ADDRANGE:
             if not isinstance(e.valuelist, sequence_types):
                 raise NBDiffFormatError("addrange expects a sequence of values to insert, not '{}'.".format(e.valuelist))
-        elif op == SequenceDiff.REMOVERANGE:
+        elif op == Diff.REMOVERANGE:
             if not isinstance(e.length, int):
                 raise NBDiffFormatError("removerange expects a number of values to delete, not '{}'.".format(e.length))
-        elif op == SequenceDiff.PATCH:
+        elif op == Diff.PATCH:
             # e.diff is itself a diff, check it recursively if the "deep" argument is true
             # (the "deep" argument is here to avoid recursion and potential O(>n) performance pitfalls)
             if deep:
@@ -213,14 +180,14 @@ def validate_diff_entry(e, deep=False):
         else:
             raise NBDiffFormatError("Unknown diff op '{}'.".format(op))
     elif isinstance(key, string_types) and op in MappingDiff.OPS:
-        if op == MappingDiff.ADD:
+        if op == Diff.ADD:
             pass  # e.value is a single value to insert at key
-        elif op == MappingDiff.REMOVE:
+        elif op == Diff.REMOVE:
             pass  # no argument
-        elif op == MappingDiff.REPLACE:
+        elif op == Diff.REPLACE:
             # e.value is a single value to replace value at key with
             pass
-        elif op == MappingDiff.PATCH:
+        elif op == Diff.PATCH:
             # e.diff is itself a diff, check it recursively if the "deep" argument is true
             # (the "deep" argument is here to avoid recursion and potential O(>n) performance pitfalls)
             if deep:
@@ -239,11 +206,11 @@ def validate_diff_entry(e, deep=False):
 def count_consumed_symbols(e):
     "Count how many symbols are consumed from each sequence by a single sequence diff entry."
     op = e.op
-    if op == ADDRANGE:
+    if op == Diff.ADDRANGE:
         return (0, len(e.valuelist))
-    elif op == REMOVERANGE:
+    elif op == Diff.REMOVERANGE:
         return (e.length, 0)
-    elif op == PATCH:
+    elif op == Diff.PATCH:
         return (1, 1)
     else:
         raise NBDiffFormatError("Invalid op '{}'".format(op))
@@ -266,24 +233,24 @@ def to_json_patch(d, path=""):
     for e in d:
         op = e.op
         p = "/".join([path, str(e.key)])
-        if op == ADD:
+        if op == Diff.ADD:
             jp.append({"op": "add", "path": p, "value": e.value})
-        elif op == REPLACE:
+        elif op == Diff.REPLACE:
             jp.append({"op": "replace", "path": p, "value": e.value})
-        elif op == REMOVE:
+        elif op == Diff.REMOVE:
             jp.append({"op": "remove", "path": p})
-        elif op == ADDRANGE:
+        elif op == Diff.ADDRANGE:
             # JSONPatch only has single value add, no addrange
             # FIXME: Reverse this or not? Read RFC carefully and/or test with some conforming tool.
             #for value in reversed(e.valuelist):
             for value in e.valuelist:
                 jp.append({"op": "add", "path": p, "value": value})
-        elif op == REMOVERANGE:
+        elif op == Diff.REMOVERANGE:
             # JSONPatch only has single value remove, no removerange
             for i in range(e.length):
                 p_i = "/".join((path, str(e.key + i)))  # Note: not using p
                 jp.append({"op": "remove", "path": p_i})
-        elif op == PATCH:
+        elif op == Diff.PATCH:
             # JSONPatch has no recursion, recurse here to flatten diff
             jp.extend(to_json_patch(e.diff, p))
     return jp

@@ -11,8 +11,7 @@ import copy
 import pytest
 
 from nbdime import merge
-from nbdime.diff_format import PATCH, ADD, REMOVE, REPLACE, ADDRANGE, REMOVERANGE
-from nbdime.diff_format import make_op
+from nbdime.diff_format import make_op, Diff
 
 
 def cut(li, *indices):
@@ -418,13 +417,13 @@ def test_merge_conflicting_nested_dicts():
     r = {"a": {"x": 3, "y": 5}, "d": {"x": 5},         "m": {"x": 27}, "n": {"q": 19}}
     m, lc, rc = merge(b, l, r)
     assert m == {"a": {}, "d": {}, "m": {}, "n": {}}
-    assert lc == [make_op(PATCH, "a", [make_op(REPLACE, "x", 2), make_op(ADD, "y", 4)]),
-                  make_op(PATCH, "d", [make_op(REMOVE, "x"), make_op(REPLACE, "y", 6)]),
-                  make_op(PATCH, "m", [make_op(REPLACE, "x", 17)]),
-                  make_op(PATCH, "n", [make_op(ADD, "q", 9)])
+    assert lc == [make_op(Diff.PATCH, "a", [make_op(Diff.REPLACE, "x", 2), make_op(Diff.ADD, "y", 4)]),
+                  make_op(Diff.PATCH, "d", [make_op(Diff.REMOVE, "x"), make_op(Diff.REPLACE, "y", 6)]),
+                  make_op(Diff.PATCH, "m", [make_op(Diff.REPLACE, "x", 17)]),
+                  make_op(Diff.PATCH, "n", [make_op(Diff.ADD, "q", 9)])
                   ]
-    assert rc == [make_op(PATCH, "a", [make_op(REPLACE, "x", 3), make_op(ADD, "y", 5)]),
-                  make_op(PATCH, "d", [make_op(REPLACE, "x", 5), make_op(REMOVE, "y")]),
-                  make_op(PATCH, "m", [make_op(REPLACE, "x", 27)]),
-                  make_op(PATCH, "n", [make_op(ADD, "q", 19)])
+    assert rc == [make_op(Diff.PATCH, "a", [make_op(Diff.REPLACE, "x", 3), make_op(Diff.ADD, "y", 5)]),
+                  make_op(Diff.PATCH, "d", [make_op(Diff.REPLACE, "x", 5), make_op(Diff.REMOVE, "y")]),
+                  make_op(Diff.PATCH, "m", [make_op(Diff.REPLACE, "x", 27)]),
+                  make_op(Diff.PATCH, "n", [make_op(Diff.ADD, "q", 19)])
                   ]

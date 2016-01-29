@@ -11,8 +11,7 @@ from __future__ import print_function
 import operator
 
 from nbdime import diff
-from nbdime.diff_format import PATCH, ADD, REMOVE, REPLACE  # , ADDRANGE, REMOVERANGE
-from nbdime.diff_format import make_op
+from nbdime.diff_format import make_op, Diff
 from nbdime.diffing.snakes import compute_snakes_multilevel
 
 from .fixtures import check_symmetric_diff_and_patch
@@ -80,16 +79,16 @@ def test_diff_and_patch():
     check_symmetric_diff_and_patch(mda, mdb)
     # A more explicit assert showing the diff format and testing that paths are sorted:
     assert diff(mda, mdb) == [
-        make_op(REMOVE, "deleted"),
-        make_op(PATCH, "mix", [
-            make_op(REMOVE, "del"),
-            make_op(REPLACE, "mod", 37),
-            make_op(ADD, "add", 42)
+        make_op(Diff.REMOVE, "deleted"),
+        make_op(Diff.PATCH, "mix", [
+            make_op(Diff.REMOVE, "del"),
+            make_op(Diff.REPLACE, "mod", 37),
+            make_op(Diff.ADD, "add", 42)
             ]),
-        make_op(PATCH, "modparent", [
-            make_op(REPLACE, "mod", 22)
+        make_op(Diff.PATCH, "modparent", [
+            make_op(Diff.REPLACE, "mod", 22)
             ]),
-        make_op(ADD, "added", 7),
+        make_op(Diff.ADD, "added", 7),
         ]
 
 

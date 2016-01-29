@@ -10,7 +10,7 @@ from six.moves import xrange as range
 import operator
 
 from ..diff_format import validate_diff, count_consumed_symbols
-from ..diff_format import MappingDiff, SequenceDiff
+from ..diff_format import SequenceDiff, MappingDiff
 
 from .sequences import diff_strings, diff_sequence
 

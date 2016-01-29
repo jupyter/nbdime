@@ -9,8 +9,7 @@ from six import string_types
 import copy
 import nbformat
 
-from .diff_format import NBDiffFormatError
-from .diff_format import PATCH, ADD, REMOVE, REPLACE, ADDRANGE, REMOVERANGE
+from .diff_format import Diff, NBDiffFormatError
 
 
 __all__ = ["patch", "patch_notebook"]
@@ -29,33 +28,35 @@ def patch_list(obj, diff):
         # Take values from obj not mentioned in diff, up to not including index
         newobj.extend(copy.deepcopy(value) for value in obj[take:index])
 
-        if op == ADD:
-            # Append new value directly
-            newobj.append(e.value)
-            skip = 0
-        elif op == REMOVE:
-            # Delete values obj[index] by incrementing take to skip
-            skip = 1
-        elif op == REPLACE:
-            # Add replacement value and skip old
-            newobj.append(e.value)
-            skip = 1
-        elif op == PATCH:
-            newobj.append(patch(obj[index], e.diff))
-            skip = 1
-        elif op == ADDRANGE:
+        if op == Diff.ADDRANGE:
             # Extend with new values directly
             newobj.extend(e.valuelist)
             skip = 0
-        elif op == REMOVERANGE:
+        elif op == Diff.REMOVERANGE:
             # Delete a number of values by skipping
             skip = e.length
+        elif op == Diff.PATCH:
+            newobj.append(patch(obj[index], e.diff))
+            skip = 1
+        # Note that the operations ADD, REMOVE, REPLACE are not produced by the
+        # diff algorithm anymore, keeping these cases just in case we want them back:
+        elif op == Diff.ADD:
+            # Append new value directly
+            newobj.append(e.value)
+            skip = 0
+        elif op == Diff.REMOVE:
+            # Delete values obj[index] by incrementing take to skip
+            skip = 1
+        elif op == Diff.REPLACE:
+            # Add replacement value and skip old
+            newobj.append(e.value)
+            skip = 1
         else:
             raise NBDiffFormatError("Invalid op {}.".format(op))
 
         # Skip the specified number of elements, but never decrement take.
         # Note that take can pass index in diffs with repeated +/- on the
-        # same index, i.e. [make_op(REMOVE, index), make_op(ADD, index, value)]
+        # same index, i.e. [make_op(Diff.REMOVE, index), make_op(Diff.ADD, index, value)]
         take = max(take, index + skip)
 
     # Take values at end not mentioned in diff
@@ -79,15 +80,15 @@ def patch_dict(obj, diff):
         key = e.key
         assert isinstance(key, string_types)
 
-        if op == ADD:
+        if op == Diff.ADD:
             assert key not in keys_to_copy
             newobj[key] = e.value
-        elif op == REMOVE:
+        elif op == Diff.REMOVE:
             keys_to_copy.remove(key)
-        elif op == REPLACE:
+        elif op == Diff.REPLACE:
             keys_to_copy.remove(key)
             newobj[key] = e.value
-        elif op == PATCH:
+        elif op == Diff.PATCH:
             keys_to_copy.remove(key)
             newobj[key] = patch(obj[key], e.diff)
         else:

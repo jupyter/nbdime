@@ -10,8 +10,7 @@ from six import string_types
 import pprint
 
 from .diffing.notebooks import diff_notebooks
-from .diff_format import PATCH, ADD, REMOVE, REPLACE, ADDRANGE, REMOVERANGE
-from .diff_format import NBDiffFormatError
+from .diff_format import NBDiffFormatError, Diff
 
 
 # Disable indentation here
@@ -37,20 +36,20 @@ def present_dict_diff(a, di, path):
 
         nextpath = "/".join((path, key))
 
-        if op == REMOVE:
+        if op == Diff.REMOVE:
             pp.append("delete from {}:".format(nextpath))
             pp += present_value("- ", a[key])
 
-        elif op == ADD:
+        elif op == Diff.ADD:
             pp.append("insert at {}:".format(nextpath))
             pp += present_value("+ ", e.value)
 
-        elif op == REPLACE:
+        elif op == Diff.REPLACE:
             pp.append("replace at {}:".format(nextpath))
             pp += present_value("- ", a[key])
             pp += present_value(" +", e.value)
 
-        elif op == PATCH:
+        elif op == Diff.PATCH:
             if with_indent:
                 pp.append("patch {}:".format(nextpath))
             pp += present_diff(a[key], e.diff, nextpath)
@@ -70,11 +69,11 @@ def present_list_diff(a, d, path):
 
         nextpath = "/".join((path, str(index)))
 
-        if op == ADDRANGE:
+        if op == Diff.ADDRANGE:
             pp.append("insert before {}:".format(nextpath))
             pp += present_value("+ ", e.valuelist)
 
-        elif op == REMOVERANGE:
+        elif op == Diff.REMOVERANGE:
             if e.length > 1:
                 r = "{}-{}".format(index, index + e.length - 1)
             else:
@@ -82,7 +81,7 @@ def present_list_diff(a, d, path):
             pp.append("delete {}/{}:".format(path, r))
             pp += present_value("- ", a[index: index + e.length])
 
-        elif op == PATCH:
+        elif op == Diff.PATCH:
             if with_indent:
                 pp.append("patch {}:".format(nextpath))
             pp += present_diff(a[index], e.diff, nextpath)
@@ -117,7 +116,7 @@ def present_string_diff(a, di, path):
             continuation_indent2 = continuation_indent
             consumed = index
 
-        if op == ADDRANGE:
+        if op == Diff.ADDRANGE:
             dlines = e.valuelist.split("\n")
             lines.append("+ " + " "*continuation_indent + dlines[0])
             for dline in dlines[1:]:
@@ -125,7 +124,7 @@ def present_string_diff(a, di, path):
             continuation = True
             continuation_indent2 = max(continuation_indent2, len(lines[-1]) - 2)
 
-        elif op == REMOVERANGE:
+        elif op == Diff.REMOVERANGE:
             dlines = a[index: index + e.length].split("\n")
             lines.append("- " + " "*continuation_indent + dlines[0])
             for dline in dlines[1:]:
