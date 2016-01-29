@@ -45,7 +45,7 @@ def patch_list(obj, diff):
             skip = 1
         elif op == ADDRANGE:
             # Extend with new values directly
-            newobj.extend(e.values)
+            newobj.extend(e.valuelist)
             skip = 0
         elif op == REMOVERANGE:
             # Delete a number of values by skipping

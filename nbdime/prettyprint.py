@@ -72,7 +72,7 @@ def present_list_diff(a, d, path):
 
         if op == ADDRANGE:
             pp.append("insert before {}:".format(nextpath))
-            pp += present_value("+ ", e.values)
+            pp += present_value("+ ", e.valuelist)
 
         elif op == REMOVERANGE:
             if e.length > 1:
@@ -118,7 +118,7 @@ def present_string_diff(a, di, path):
             consumed = index
 
         if op == ADDRANGE:
-            dlines = e.values.split("\n")
+            dlines = e.valuelist.split("\n")
             lines.append("+ " + " "*continuation_indent + dlines[0])
             for dline in dlines[1:]:
                 lines.append("+ " + dline)

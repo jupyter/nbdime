@@ -52,8 +52,8 @@ relative to object A of length N.  Valid ops are:
 
     * { "op": "removerange",  "key": <string>, "length": <n>}
       - delete the values A[key:key+length]
-    * { "op": "addrange",     "key": <string>, "values": <values> }
-      - insert new items from values list before A[key], at end if key=len(A)
+    * { "op": "addrange",     "key": <string>, "valuelist": <values> }
+      - insert new items from valuelist before A[key], at end if key=len(A)
     * { "op": "patch",   "key": <string>, "diff": <diffobject> }
       - patch existing value at key with another diffobject
 

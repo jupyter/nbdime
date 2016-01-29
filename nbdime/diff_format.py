@@ -30,12 +30,12 @@ def _make_diff_types():
     
     # These are nbdime additions not in JSON Patch
     op_patch       = namedtuple("patch",       ("op", "key", "diff"))
-    op_addrange    = namedtuple("addrange",    ("op", "key", "values"))
+    op_addrange    = namedtuple("addrange",    ("op", "key", "valuelist"))
     op_removerange = namedtuple("removerange", ("op", "key", "length"))
 
     # Collection used for validation
-    mapping_diff_types = (op_add, op_remove, op_replace, op_patch)  #, DiffEntry)
-    sequence_diff_types = (op_addrange, op_removerange, op_patch)  #, DiffEntry)
+    mapping_diff_types = (op_add, op_remove, op_replace, op_patch, DiffEntry)
+    sequence_diff_types = (op_addrange, op_removerange, op_patch, DiffEntry)
     diff_types = tuple(set(mapping_diff_types + sequence_diff_types))
     diff_types_by_key = {t.__name__: t for t in diff_types}
     return mapping_diff_types, sequence_diff_types, diff_types, diff_types_by_key
@@ -46,9 +46,8 @@ def make_op(op, *args):
     "Create a diff entry."
     # FIXME: refactor and make less convoluted
     e = diff_types_by_key[op](op, *args)
-    return e
-    #return DiffEntry(e._asdict())
-
+    #return e
+    return DiffEntry(e._asdict())
 
 # Valid values for the action field in diff entries
 ADD = "add"
@@ -58,27 +57,6 @@ PATCH = "patch"
 ADDRANGE = "addrange"
 REMOVERANGE = "removerange"
 
-ACTIONS = [
-    PATCH,
-    ADD,
-    REMOVE,
-    REPLACE,
-    ADDRANGE,
-    REMOVERANGE,
-    ]
-
-SEQUENCE_ACTIONS = [
-    ADDRANGE,
-    REMOVERANGE,
-    PATCH
-    ]
-
-MAPPING_ACTIONS = [
-    ADD,
-    REMOVE,
-    REPLACE,
-    PATCH
-    ]
 
 
 sequence_types = string_types + (list,)
@@ -89,6 +67,18 @@ class Diff(object):
 
 
 class SequenceDiff(Diff):
+
+    # Valid values for the action field in diff entries
+    ADDRANGE = "addrange"
+    REMOVERANGE = "removerange"
+    PATCH = "patch"
+
+    OPS = (
+        ADDRANGE,
+        REMOVERANGE,
+        PATCH,
+        )
+
     def __init__(self):
         self.diff = []
 
@@ -105,17 +95,31 @@ class SequenceDiff(Diff):
         assert isinstance(entry, sequence_diff_types)
         self.diff.append(entry)
 
-    def add(self, key, values):
-        self.append(make_op(ADDRANGE, key, values))
+    def add(self, key, valuelist):
+        self.append(make_op(ADDRANGE, key, valuelist))
 
-    def remove(self, key, num_values):
-        self.append(make_op(REMOVERANGE, key, num_values))
+    def remove(self, key, length):
+        self.append(make_op(REMOVERANGE, key, length))
 
     def patch(self, key, diff):
         self.append(make_op(PATCH, key, diff))
 
 
 class MappingDiff(Diff):
+
+    # Valid values for the action field in diff entries
+    ADD = "add"
+    REMOVE = "remove"
+    REPLACE = "replace"
+    PATCH = "patch"
+
+    OPS = (
+        PATCH,
+        ADD,
+        REMOVE,
+        REPLACE,
+        )
+
     def __init__(self):
         self.diff = []
         #self.diff = {}
@@ -151,6 +155,7 @@ def is_valid_diff(diff, deep=False):
         result = True
     except NBDiffFormatError:
         result = False
+        raise
     return result
 
 
@@ -182,7 +187,7 @@ def validate_diff_entry(e, deep=False):
         REPLACE: e.value, the new value to replace the existing value at e.key with
         REMOVE: nothing
         PATCH: e.diff, the diff object to patch the existing value at e.key with
-        ADDRANGE: e.values, the list of new values to add before e.key
+        ADDRANGE: e.valuelist, the list of new values to add before e.key
         REMOVERANGE: e.length, the number of values to remove starting at index e.key
 
     """
@@ -190,40 +195,41 @@ def validate_diff_entry(e, deep=False):
     if not isinstance(e, diff_types):
         raise NBDiffFormatError("Diff entry '{}' is not a diff type.".format(e))
 
-    # This is not possible for namedtuple types:
-    #n = len(e)
-    #if not (n == 3 or (n == 2 and e.op == REMOVE)):
-    #    raise NBDiffFormatError("Diff entry '{}' has the wrong size.".format(e))
-
+    # Check key (list or str uses int key, dict uses str key)
     op = e.op
     key = e.key
-
-    # Check key (list or str uses int key, dict uses str key)
-    if not (    (isinstance(key, int)          and op in SEQUENCE_ACTIONS)
-             or (isinstance(key, string_types) and op in MAPPING_ACTIONS) ):
+    if isinstance(key, int) and op in SequenceDiff.OPS:
+        if op == SequenceDiff.ADDRANGE:
+            if not isinstance(e.valuelist, sequence_types):
+                raise NBDiffFormatError("addrange expects a sequence of values to insert, not '{}'.".format(e.valuelist))
+        elif op == SequenceDiff.REMOVERANGE:
+            if not isinstance(e.length, int):
+                raise NBDiffFormatError("removerange expects a number of values to delete, not '{}'.".format(e.length))
+        elif op == SequenceDiff.PATCH:
+            # e.diff is itself a diff, check it recursively if the "deep" argument is true
+            # (the "deep" argument is here to avoid recursion and potential O(>n) performance pitfalls)
+            if deep:
+                validate_diff(e.diff, deep=deep)
+        else:
+            raise NBDiffFormatError("Unknown diff op '{}'.".format(op))
+    elif isinstance(key, string_types) and op in MappingDiff.OPS:
+        if op == MappingDiff.ADD:
+            pass  # e.value is a single value to insert at key
+        elif op == MappingDiff.REMOVE:
+            pass  # no argument
+        elif op == MappingDiff.REPLACE:
+            # e.value is a single value to replace value at key with
+            pass
+        elif op == MappingDiff.PATCH:
+            # e.diff is itself a diff, check it recursively if the "deep" argument is true
+            # (the "deep" argument is here to avoid recursion and potential O(>n) performance pitfalls)
+            if deep:
+                validate_diff(e.diff, deep=deep)
+        else:
+            raise NBDiffFormatError("Unknown diff op '{}'.".format(op))
+    else:
         msg = "Invalid diff entry key '{}' of type '{}'. Expecting int for sequences or unicode/str for mappings."
         raise NBDiffFormatError(msg.format(key, type(key)))
-
-    if op == ADD:
-        pass  # e.value is a single value to insert at key
-    elif op == REMOVE:
-        pass  # no argument
-    elif op == REPLACE:
-        # e.value is a single value to replace value at key with
-        pass
-    elif op == PATCH:
-        # e.diff is itself a diff, check it recursively if the "deep" argument is true
-        # (the "deep" argument is here to avoid recursion and potential O(>n) performance pitfalls)
-        if deep:
-            validate_diff(e.diff, deep=deep)
-    elif op == ADDRANGE:
-        if not isinstance(e.values, sequence_types):
-            raise NBDiffFormatError("addrange expects a sequence of values to insert, not '{}'.".format(e.values))
-    elif op == REMOVERANGE:
-        if not isinstance(e.length, int):
-            raise NBDiffFormatError("removerange expects a number of values to delete, not '{}'.".format(e.length))
-    else:
-        raise NBDiffFormatError("Unknown diff op '{}'.".format(op))
 
     # Note that false positives are possible, for example
     # we're not checking the values in any way, as they
@@ -234,7 +240,7 @@ def count_consumed_symbols(e):
     "Count how many symbols are consumed from each sequence by a single sequence diff entry."
     op = e.op
     if op == ADDRANGE:
-        return (0, len(e.values))
+        return (0, len(e.valuelist))
     elif op == REMOVERANGE:
         return (e.length, 0)
     elif op == PATCH:
@@ -269,8 +275,8 @@ def to_json_patch(d, path=""):
         elif op == ADDRANGE:
             # JSONPatch only has single value add, no addrange
             # FIXME: Reverse this or not? Read RFC carefully and/or test with some conforming tool.
-            #for value in reversed(e.values):
-            for value in e.values:
+            #for value in reversed(e.valuelist):
+            for value in e.valuelist:
                 jp.append({"op": "add", "path": p, "value": value})
         elif op == REMOVERANGE:
             # JSONPatch only has single value remove, no removerange

@@ -157,7 +157,7 @@ def _split_list_diff(diff, size):
     for e in diff:
         op = e.op
         if op == ADDRANGE:
-            inserts.append(insertitem(e.key, e.values))
+            inserts.append(insertitem(e.key, e.valuelist))
         elif op == REMOVERANGE:
             for i in range(e.length):
                 deleted[e.key + i] = True
