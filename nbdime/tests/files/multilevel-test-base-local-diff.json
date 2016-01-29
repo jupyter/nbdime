@@ -1,0 +1,70 @@
+[
+  {
+    "diff": [
+      {
+        "diff": [
+          {
+            "diff": [
+              {
+                "length": 1,
+                "key": 4,
+                "op": "removerange"
+              },
+              {
+                "key": 4,
+                "valuelist": "5",
+                "op": "addrange"
+              }
+            ],
+            "key": "source",
+            "op": "patch"
+          }
+        ],
+        "key": 1,
+        "op": "patch"
+      },
+      {
+        "diff": [
+          {
+            "diff": [
+              {
+                "diff": [
+                  {
+                    "diff": [
+                      {
+                        "diff": [
+                          {
+                            "length": 1,
+                            "key": 0,
+                            "op": "removerange"
+                          },
+                          {
+                            "key": 0,
+                            "valuelist": "25",
+                            "op": "addrange"
+                          }
+                        ],
+                        "key": "text/plain",
+                        "op": "patch"
+                      }
+                    ],
+                    "key": "data",
+                    "op": "patch"
+                  }
+                ],
+                "key": 0,
+                "op": "patch"
+              }
+            ],
+            "key": "outputs",
+            "op": "patch"
+          }
+        ],
+        "key": 2,
+        "op": "patch"
+      }
+    ],
+    "key": "cells",
+    "op": "patch"
+  }
+]

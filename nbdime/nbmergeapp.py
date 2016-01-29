@@ -37,14 +37,27 @@ def main_merge(bfn, lfn, rfn, mfn):
 
     m, lc, rc = merge_notebooks(b, l, r)
 
-    verbose = True
-    if verbose:
+    if mfn:
+        if lc or rc:
+            # Write partial merge and conflicts to a foo.ipynb-merge file
+            result = {
+                "merged": m,
+                "local_conflicts": lc,
+                "remote_conflicts": rc
+                }
+            with open(mfn+"-merge", "w") as mf:
+                json.dump(result, mf)
+        else:
+            # Write fully completed merge to given foo.ipynb filename
+            with open(mfn, "w") as mf:
+                nbformat.write(m, mf)
+    else:
         print(m)
-        print(lc)
-        print(rc)
-
-    with open(mfn, "w") as mf:
-        nbformat.write(m, mf)
+        if lc or rc:
+            print("Local conflicts:")
+            print(lc)
+            print("Remote conflicts:")
+            print(rc)
     return 0
 
 

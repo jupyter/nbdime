@@ -2,31 +2,38 @@
 from __future__ import unicode_literals
 
 import pytest
+import os
+
+from .fixtures import filespath
 
 from nbdime.nbdiffapp import main_diff
 from nbdime.nbpatchapp import main_patch
 from nbdime.nbmergeapp import main_merge
 
 
-@pytest.mark.xfail(reason="need to add actual test files")
 def test_nbdiff_app():
-    afn = "a.ipynb"
-    bfn = "b.ipynb"
-    dfn = "d.json"
+    p = filespath()
+    afn = os.path.join(p, "multilevel-test-base.ipynb")
+    bfn = os.path.join(p, "multilevel-test-local.ipynb")
+    # When filename is omitted, will print to console instead
+    dfn = ""  # os.path.join(p, "multilevel-test-local-diff.json")
     assert 0 == main_diff(afn, bfn, dfn)
 
 
-@pytest.mark.xfail(reason="need to add actual test files")
 def test_nbpatch_app():
-    afn = "a.ipynb"
-    dfn = "d.json"
-    assert 0 == main_patch(afn, dfn)
+    p = filespath()
+    bfn = os.path.join(p, "multilevel-test-base.ipynb")
+    dfn = os.path.join(p, "multilevel-test-base-local-diff.json")
+    # When filename is omitted, will print to console instead
+    afn = ""  # os.path.join(p, "multilevel-test-base-local.ipynb")
+    assert 0 == main_patch(bfn, dfn, afn)
 
 
-@pytest.mark.xfail(reason="need to add actual test files")
 def test_nbmerge_app():
-    bfn = "b.ipynb"
-    lfn = "l.ipynb"
-    rfn = "r.ipynb"
-    mfn = "m.ipynb"
+    p = filespath()
+    bfn = os.path.join(p, "multilevel-test-base.ipynb")
+    lfn = os.path.join(p, "multilevel-test-local.ipynb")
+    rfn = os.path.join(p, "multilevel-test-remote.ipynb")
+    # When filename is omitted, will print to console instead
+    mfn = ""  # os.path.join(temppath, "multilevel-test-merged.ipynb")
     assert 0 == main_merge(bfn, lfn, rfn, mfn)

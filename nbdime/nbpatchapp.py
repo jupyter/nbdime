@@ -12,7 +12,7 @@ import nbformat
 import json
 from ._version import __version__
 from .patching import patch_notebook
-
+from .diff_format import to_diffentry_dicts
 
 _usage = """\
 Apply patch from nbpatch to a Jupyter notebook.
@@ -34,15 +34,15 @@ def main_patch(bfn, dfn, afn):
     before = nbformat.read(bfn, as_version=4)
     with open(dfn) as df:
         d = json.load(df)
+    d = to_diffentry_dicts(d)
 
     after = patch_notebook(before, d)
 
-    verbose = True
-    if verbose:
+    if afn:
+        nbformat.write(after, afn)
+    else:
         print(after)
 
-    print("Writing", afn)
-    nbformat.write(after, afn)
     return 0
 
 

@@ -19,38 +19,36 @@ class DiffEntry(dict):
         self[name] = value
 
 
-# Just to make sure we don't use the namedtuple instances directly,
-# at least for now I consider this a refactoring step that may be
-# replaced with something else such as a dict with setattr support like notebooks have.
-def _make_diff_types():
-    # These are similar to the JSON Patch format except for the use of direct key instead of deep paths:
-    op_add     = namedtuple("add",    ("op", "key", "value"))
-    op_remove  = namedtuple("remove", ("op", "key"))
-    op_replace = namedtuple("replace", ("op", "key", "value"))
-    
-    # These are nbdime additions not in JSON Patch
-    op_patch       = namedtuple("patch",       ("op", "key", "diff"))
-    op_addrange    = namedtuple("addrange",    ("op", "key", "valuelist"))
-    op_removerange = namedtuple("removerange", ("op", "key", "length"))
-
-    # Collection used for validation
-    mapping_diff_types = (op_add, op_remove, op_replace, op_patch, DiffEntry)
-    sequence_diff_types = (op_addrange, op_removerange, op_patch, DiffEntry)
-    diff_types = tuple(set(mapping_diff_types + sequence_diff_types))
-    diff_types_by_key = {t.__name__: t for t in diff_types}
-    return mapping_diff_types, sequence_diff_types, diff_types, diff_types_by_key
-
-mapping_diff_types, sequence_diff_types, diff_types, diff_types_by_key = _make_diff_types()
-
 def make_op(op, *args):
-    "Create a diff entry."
-    # FIXME: refactor and make less convoluted
-    e = diff_types_by_key[op](op, *args)
-    #return e
-    return DiffEntry(e._asdict())
+    """Create a diff entry with compact notation and error checking.
 
+    Args depend on the op:
 
-sequence_types = string_types + (list,)
+        * op = "add",         args = (key, value)
+        * op = "remove",      args = (key,)
+        * op = "replace",     args = (key, value)
+        * op = "patch",       args = (key, diff)
+        * op = "addrange",    args = (key, valuelist)
+        * op = "removerange", args = (key, length)
+
+    """
+    if op == "addrange":
+        key, valuelist = args
+        return DiffEntry(op=op, key=key, valuelist=valuelist)
+    elif op == "removerange":
+        key, length = args
+        return DiffEntry(op=op, key=key, length=length)
+    elif op in ("add", "replace"):
+        key, value = args
+        return DiffEntry(op=op, key=key, value=value)
+    elif op == "remove":
+        key, = args
+        return DiffEntry(op=op, key=key)
+    elif op == "patch":
+        key, diff = args
+        return DiffEntry(op=op, key=key, diff=diff)
+    else:
+        raise NBDiffFormatError("Invalid op {}.".format(op))
 
 
 class Diff(object):
@@ -86,7 +84,7 @@ class SequenceDiff(Diff):
         return self.diff[i]
 
     def append(self, entry):
-        assert isinstance(entry, sequence_diff_types)
+        assert isinstance(entry, DiffEntry)
         self.diff.append(entry)
 
     def add(self, key, valuelist):
@@ -121,7 +119,7 @@ class MappingDiff(Diff):
         #return iter(self.diff.values())
 
     def append(self, entry):
-        assert isinstance(entry, mapping_diff_types)
+        assert isinstance(entry, DiffEntry)
         self.diff.append(entry)
         #self.diff[entry.key] = entry
 
@@ -155,11 +153,14 @@ def validate_diff(diff, deep=False):
         validate_diff_entry(e, deep=deep)
 
 
+sequence_types = string_types + (list,)
+
+
 def validate_diff_entry(e, deep=False):
     """Check that e is a well formed diff entry, as documented under docs/."""
 
     # Entry is always a list with 3 items, or 2 in the special case of single item deletion
-    if not isinstance(e, diff_types):
+    if not isinstance(e, DiffEntry):
         raise NBDiffFormatError("Diff entry '{}' is not a diff type.".format(e))
 
     # Check key (list or str uses int key, dict uses str key)
@@ -230,6 +231,16 @@ def to_clean_dicts(di):
         return {k: to_clean_dicts(v) for k, v in di.items()}
     elif isinstance(di, list):
         return [to_clean_dicts(v) for v in di]
+    else:
+        return di
+
+
+def to_diffentry_dicts(di):  # TODO: Better name, validate_diff? as_diff?
+    "Recursively convert dict objects to DiffEntry objects with attribute access."
+    if isinstance(di, dict):
+        return DiffEntry(**{k: to_diffentry_dicts(v) for k, v in di.items()})
+    elif isinstance(di, list):
+        return [to_diffentry_dicts(v) for v in di]
     else:
         return di
 

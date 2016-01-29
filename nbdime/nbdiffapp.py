@@ -42,11 +42,12 @@ def main_diff(afn, bfn, dfn=None):
     if verbose:
         pretty_print_notebook_diff(afn, bfn, a, d)
 
-    if dfn is not None:
+    if dfn:
         with open(dfn, "w") as df:
-            json.dump(d, df)
+            # Compact version:
+            #json.dump(d, df)
             # Verbose version:
-            #json.dump(d, df, indent=4, separators=(",", ": "))
+            json.dump(d, df, indent=2, separators=(",", ": "))
     return 0
 
 
