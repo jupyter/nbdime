@@ -2,10 +2,10 @@
 Commandline interface
 =====================
 
-Nbdime adds three commands to jupyter. See
+Nbdime provides three CLI commands. See
 
-    jupyter nbdiff --help
-    jupyter nbpatch --help
-    jupyter nbmerge --help
+    nbdiff --help
+    nbpatch --help
+    nbmerge --help
 
 for usage details.

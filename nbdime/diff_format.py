@@ -251,7 +251,7 @@ def source_as_string(source):
     return source
 
 
-def to_json_patch_format(d, path="/"):
+def to_json_patch(d, path="/"):
     """Convert nbdime diff object into the RFC6902 JSON Patch format.
 
     This is untested and will need some details worked out.

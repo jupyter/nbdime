@@ -1,78 +1,84 @@
-============================================================
-A description of the recursive diff representation in nbdime
-============================================================
+================================================
+Description of the diff representation in nbdime
+================================================
 
-Note: The diff format herein is considered experimental until
-development stabilizes. If you have objections or opinions on
-the format, please raise them ASAP while the project is in its
-early stages.
-
-In the traditional diff of two sequences X and Y, the diff is a
-sequence of transformations turning X into Y.
+*Note: The diff format herein is still considered experimental until
+development stabilizes. If you have objections or opinions on the
+format, please raise them ASAP while the project is in its early
+stages.*
 
 In nbdime, the objects to diff are json-compatible nested structures
-of dicts (limited to string keys) and/or lists of values with
-heterogeneous types (strings, ints, floats), warranting a more
-flexible diff format. The diff of two objects is still a collection of
-transformations, converting one object into the other.
-
-In nbdime there is a single function `nbdiff.patch` that expects an
-initial object and a diff object. The expected generic diff format is
-defined below. Adhering to this diff format is a number of variations
-of diff algorithms for different types of data. The collection of diff
-algorithms is under heavy construction and therefore not documented
-here yet.
-
-Note that, for all practical purposes, the diff between two objects is
-never unique. However any diff must always be correct in the sense
-that "patch(X, diff(X, Y)) == Y" holds. This identity is extensively
-used in the test suite. The goal of this project is to develop diff
-and merge algorithms tailored for Jupyter notebooks that are not only
-correct but also have high enough quality to be useful.
-
-The diff is itself a json-compatible object.  Instead of being a
-sequence of transformations, it is a tree of transformations, a
-hierarchial structure where a transformation may itself contain a
-sequence of transformations of a substructure. Each level in the diff
-hierarchy applies either to a diff of two dicts, or to a diff of
-two sequences (lists or strings). The diff format for dict and
-sequence cases are slightly different.
-
-For examples of concrete diffs, see e.g. the test suite for patch.
+of dicts (with string keys) and lists of values with heterogeneous
+types (strings, ints, floats). The difference between these objects
+will itself be represented as a json-compatible object in a format
+described below.
 
 
-Diff format for dicts (current)
--------------------------------
+Diff format basics
+------------------
 
-A diff of two dicts is a list of diff entries:
+A diff object represents the difference B-A between two objects A and
+B as a list of operations (ops) to apply to A to obtain B. Each
+operation is represented as a dict with at least two items:
 
-    key = string
-    entry = [action, key] | [action, key, argument]
-    diff = [entry0, entry1, ...]
+    { "op": <opname>, "key": <key> }
 
-A dict diff entry is a list of action and argument (except for deletion):
+The objects A and B are either mappings (dicts) or sequences (lists or
+strings), and a different set of ops are legal for mappings and
+sequences. Depending on the op, the operation dict usually contains an
+additional argument, documented below.
 
-    * ["remove", key]: delete existing value at key
-    * ["add", key, value]: insert new value at key
-    * ["replace", key, value]: replace value at key with newvalue
-    * ["patch", key, diff]: patch value at key with diff
 
-Insert is an error if the key already exists.
-Delete, replace and patch are errors if the key does not already exist.
+Diff format for mappings
+------------------------
+
+For mappings, the key is always a string. Valid ops are:
+
+    * { "op": "remove",  "key": <string> }
+      - delete existing value at key
+    * { "op": "add",     "key": <string>, "value": <value> }
+      - insert new value at key not previously existing
+    * { "op": "replace", "key": <string>, "value": <value> }
+      - replace existing value at key with new value
+    * { "op": "patch",   "key": <string>, "diff": <diffobject> }
+      - patch existing value at key with another diffobject
 
 
 Diff format for sequences (list and string)
 -------------------------------------------
 
-A diff of two sequences is an ordered list of diff entries:
+For sequences the key is always an integer index.  This index is
+relative to object A of length N.  Valid ops are:
 
-    index = integer
-    entry = [action, index] | [action, index, argument]
-    diff = [entry0, entry1, ...]
+    * { "op": "removerange",  "key": <string>, "length": <n>}
+      - delete the values A[key:key+length]
+    * { "op": "addrange",     "key": <string>, "values": <values> }
+      - insert new items from values list before A[key], at end if key=len(A)
+    * { "op": "patch",   "key": <string>, "diff": <diffobject> }
+      - patch existing value at key with another diffobject
 
-A sequence diff entry is a list of action, index and argument (except for deletion):
 
-    * ["addrange", index, n]: delete n entries starting at index
-    * ["removerange", index, newvalues]: insert sequence newvalues before index
-    * ["patch", index, diff]: patch value at index with diff
+Relation to JSONPatch
+---------------------
 
+The above described diff representation has similarities with the
+JSONPatch standard but is different in a few ways. JSONPatch contains
+operations "move", "copy", "test" not used by nbdime, and nbdime
+contains operations "addrange", "removerange", and "patch" not in
+JSONPatch. Instead of providing a recursive "patch" op, JSONPatch uses
+a deep JSON pointer based "path" item in each operation instead of the
+"key" item nbdime uses. This way JSONPatch can represent the diff
+object as a single list instead of the 'tree' of lists that nbdime
+uses. To convert a nbdime diff object to the JSONPatch format, use the
+function
+
+    from nbdime.diff_format import to_json_patch
+    jp = to_json_patch(diff_obj)
+
+Note that this function is currently a draft and not covered by tests.
+
+
+Examples
+--------
+
+For examples of concrete diffs, see e.g. the test suite in test_patch.py.
