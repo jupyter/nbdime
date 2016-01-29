@@ -251,7 +251,7 @@ def source_as_string(source):
     return source
 
 
-def to_json_patch(d, path="/"):
+def to_json_patch(d, path=""):
     """Convert nbdime diff object into the RFC6902 JSON Patch format.
 
     This is untested and will need some details worked out.
@@ -279,5 +279,5 @@ def to_json_patch(d, path="/"):
                 jp.append({"op": "remove", "path": p_i})
         elif op == PATCH:
             # JSONPatch has no recursion, recurse here to flatten diff
-            jp.extend(to_json_patch_format(e.diff, p))
+            jp.extend(to_json_patch(e.diff, p))
     return jp
