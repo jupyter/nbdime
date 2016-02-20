@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 
 import os
 import json
+from argparse import ArgumentParser
 from six import string_types
 from tornado import ioloop, web
 import nbformat
@@ -165,8 +166,21 @@ def main(**params):
     ioloop.IOLoop.current().start()
 
 
-if __name__ == "__main__":
-    # TODO: Get (some of) these from cli arguments
-    cwd = os.path.abspath(os.path.curdir)
-    main(port=8888, cwd=cwd, outputfilename="")
+def build_arg_parser():
+    """
+    Creates an argument parser that lets the user specify a port
+    and displays a help message.
+    """
+    description = 'Web interface for Nbdime.'
+    parser = ArgumentParser(description=description)
+    parser.add_argument('-p', '--port',
+                        help="Specify the port you want the server "
+                             "to run on. Default is 8888.")
+    return parser
 
+
+if __name__ == "__main__":
+    arguments = build_arg_parser().parse_args()
+    port = int(arguments.port) if arguments.port else 8888
+    cwd = os.path.abspath(os.path.curdir)
+    main(port=port, cwd=cwd, outputfilename="")
