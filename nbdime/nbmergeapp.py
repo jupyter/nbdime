@@ -8,23 +8,21 @@ from __future__ import print_function
 
 import os
 import sys
+import argparse
 import nbformat
 from ._version import __version__
 from .merging import merge_notebooks
 
 
-_usage = """\
-Merge two Jupyter notebooks "local" and "remote" with a common ancestor "base".
-
-This is nbmerge from nbdime version {}.
-
-Example usage:
-
-  nbmerge base.ipynb local.ipynb remote.ipynb merged.ipynb
-""".format(__version__)
+_description = 'Merge two Jupyter notebooks "local" and "remote" with a common ancestor "base".'
 
 
-def main_merge(bfn, lfn, rfn, mfn):
+def main_merge(args):
+    bfn = args.base
+    lfn = args.local
+    rfn = args.remote
+    mfn = args.output
+
     for fn in (bfn, lfn, rfn):
         if not os.path.exists(fn):
             print("Cannot find file '{}'".format(fn))
@@ -66,12 +64,36 @@ def main_merge(bfn, lfn, rfn, mfn):
     return 0
 
 
+def _build_arg_parser():
+    """Creates an argument parser for the nbdiff command."""
+    parser = argparse.ArgumentParser(
+        description=_description,
+        add_help=True,
+        )
+    from .nbdiffapp import add_generic_args, add_webgui_args, add_diff_args
+    add_generic_args(parser)
+    #add_webgui_args(parser)
+    add_diff_args(parser)
+
+    # TODO: Define sensible strategy variables and implement
+    #parser.add_argument('-m', '--merge-strategy',
+    #                    default="default", choices=("foo", "bar"),
+    #                    help="Specify the merge strategy to use.")
+    parser.add_argument('-i', '--ignore-transients',
+                        action="store_true",
+                        default=False,
+                        help="Allow automatic deletion of transient data to resolve conflicts (output, execution count).")
+
+    parser.add_argument('base',
+                        help="The base notebook filename.")
+    parser.add_argument('local',
+                        help="The local modified notebook filename.")
+    parser.add_argument('remote',
+                        help="The remote modified notebook filename.")
+    return parser
+
+
 def main():
-    args = sys.argv[1:]
-    if len(args) != 4:
-        r = 1
-    else:
-        r = main_merge(*args)
-    if r:
-        print(_usage)
+    args = _build_arg_parser().parse_args()
+    r = main_merge(args)
     sys.exit(r)

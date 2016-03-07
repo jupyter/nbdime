@@ -8,6 +8,7 @@ from __future__ import print_function
 
 import os
 import sys
+import argparse
 import nbformat
 import json
 
@@ -16,18 +17,14 @@ from .diffing.notebooks import diff_notebooks
 from .prettyprint import pretty_print_notebook_diff
 
 
-_usage = """\
-Compute the difference between two Jupyter notebooks.
-
-This is nbdiff from nbdime version {}.
-
-Example usage:
-
-  nbdiff before.ipynb after.ipynb patch.json
-""".format(__version__)
+_description = "Compute the difference between two Jupyter notebooks."
 
 
-def main_diff(afn, bfn, dfn=None):
+def main_diff(args):
+    afn = args.base
+    bfn = args.remote
+    dfn = args.output
+
     for fn in (afn, bfn):
         if not os.path.exists(fn):
             print("Missing file {}".format(fn))
@@ -55,12 +52,66 @@ def main_diff(afn, bfn, dfn=None):
     return 0
 
 
+# TODO: Reuse these add_*_args functions across the apps
+def add_generic_args(parser):
+    parser.add_argument('--version',
+                        action="version",
+                        version="%(prog)s " + __version__)
+    parser.add_argument('-o', '--output',
+                        default=None,
+                        help="the output filename.")
+    if 0:  # TODO: Use verbose and quiet across nbdime and enable these:
+        qv_group = parser.add_mutually_exclusive_group()
+        qv_group.add_argument('-v', '--verbose',
+                             default=False,
+                             action="store_true",
+                             help="increase verbosity of console output.")
+        qv_group.add_argument('-q', '--quiet',
+                              default=False,
+                              action="store_true",
+                              help="silence console output.")
+
+def add_webgui_args(parser):
+    parser.add_argument('-p', '--port',
+                        default=8888,
+                        type=int,
+                        help="specify the port you want the server "
+                             "to run on. Default is 8888.")
+    cwd = os.path.abspath(os.path.curdir)
+    parser.add_argument('-w', '--workdirectory',
+                        default=cwd,  # TODO: Are there any security implications of doing this?
+                        help="specify the working directory you want "
+                             "the server to run from. Default is the "
+                             "actual cwd at program start.")
+
+def add_diff_args(parser):
+    # TODO: Add diff strategy options that are reusable for the merge command here
+
+    # TODO: Define sensible strategy variables and implement
+    #parser.add_argument('-d', '--diff-strategy',
+    #                    default="default", choices=("foo", "bar"),
+    #                    help="specify the diff strategy to use.")
+    pass
+
+
+def _build_arg_parser():
+    """Creates an argument parser for the nbdiff command."""
+    parser = argparse.ArgumentParser(
+        description=_description,
+        add_help=True,
+        )
+    add_generic_args(parser)
+    #add_webgui_args(parser)
+    add_diff_args(parser)
+
+    parser.add_argument('base',
+                        help="the base notebook file.")
+    parser.add_argument('remote',
+                        help="the modified notebook file.")
+    return parser
+
+
 def main():
-    args = sys.argv[1:]
-    if len(args) not in (2, 3):
-        r = 1
-    else:
-        r = main_diff(*args)
-    if r:
-        print(_usage)
+    args = _build_arg_parser().parse_args()
+    r = main_diff(args)
     sys.exit(r)

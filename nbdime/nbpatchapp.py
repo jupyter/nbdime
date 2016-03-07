@@ -8,24 +8,21 @@ from __future__ import print_function
 
 import os
 import sys
-import nbformat
+import argparse
 import json
+import nbformat
 from ._version import __version__
 from .patching import patch_notebook
 from .diff_format import to_diffentry_dicts
 
-_usage = """\
-Apply patch from nbpatch to a Jupyter notebook.
-
-This is nbpatch from nbdime version {}.
-
-Example usage:
-
-  nbpatch before.ipynb patch.json after.ipynb
-""".format(__version__)
+_description = "Apply patch from nbpatch to a Jupyter notebook."
 
 
-def main_patch(bfn, dfn, afn):
+def main_patch(args):
+    bfn = args.base
+    dfn = args.patch
+    afn = args.output
+
     for fn in (bfn, dfn):
         if not os.path.exists(fn):
             print("Missing file {}".format(fn))
@@ -49,12 +46,23 @@ def main_patch(bfn, dfn, afn):
     return 0
 
 
+def _build_arg_parser():
+    """Creates an argument parser for the nbpatch command."""
+    parser = argparse.ArgumentParser(
+        description=_description,
+        add_help=True,
+        )
+    from .nbdiffapp import add_generic_args
+    add_generic_args(parser)
+
+    parser.add_argument('base',
+                        help="The base notebook filename.")
+    parser.add_argument('patch',
+                        help="The patch filename, output from nbdiff.")
+    return parser
+
+
 def main():
-    args = sys.argv[1:]
-    if len(args) != 3:
-        r = 1
-    else:
-        r = main_patch(*args)
-    if r:
-        print(_usage)
+    args = _build_arg_parser().parse_args()
+    r = main_patch(args)
     sys.exit(r)
