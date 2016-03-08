@@ -13,8 +13,8 @@ from collections import defaultdict
 from ..diff_format import validate_diff, count_consumed_symbols
 from ..diff_format import SequenceDiff, MappingDiff
 
-#from .snakes import diff_sequence_multilevel
 from .sequences import diff_strings, diff_sequence
+from .snakes import compute_snakes_multilevel, compute_diff_from_snakes
 
 __all__ = ["diff"]
 
@@ -56,9 +56,6 @@ def diff(a, b, path="", predicates=None, differs=None):
     return d
 
 
-from .snakes import compute_snakes_multilevel, compute_diff_from_snakes
-
-
 def diff_sequence_multilevel(a, b, path="", predicates=None, differs=None):
     """Compute diff of two lists with configurable behaviour."""
 
@@ -83,21 +80,25 @@ def diff_lists(a, b, path="", predicates=None, differs=None, shallow_diff=None):
     if differs is None:
         differs = default_differs()
 
+    # If multiple compares are provided to this path, delegate to multilevel algorithm
+    compares = predicates[path]
+    if len(compares) > 1:
+        assert shallow_diff is None
+        return diff_sequence_multilevel(a, b, path=path, predicates=predicates, differs=differs)
+
     # First make a shallow sequence diff with custom compare,
     # unless it's provided for us
     if shallow_diff is None:
-        compares = predicates[path]
-        assert len(compares) == 1  # FIXME: Assuming single compare in diff_sequence, streamline with multilevel algorithm
         shallow_diff = diff_sequence(a, b, compares[0])
 
-    # Count consumed items from a, "take" in patch_list
-    i, j = 0, 0
-
-    di = SequenceDiff()
-
+    # Next we recurse to diff items in sequence that are considered
+    # similar by compares[0] in the loop below
     subpath = "/".join((path, "*"))
     diffit = differs.get(subpath, diff)
 
+    # Count consumed items i,j from a,b, (i="take" in patch_list)
+    i, j = 0, 0
+    di = SequenceDiff()
     M = len(shallow_diff)
     for ie in range(M+1):
         if ie < M:

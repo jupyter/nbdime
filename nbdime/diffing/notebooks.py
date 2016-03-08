@@ -172,10 +172,10 @@ notebook_predicates = defaultdict(lambda: [operator.__eq__], {
 
 # Recursive diffing of substructures should pick a rule from here, with diff as fallback
 notebook_differs = defaultdict(lambda: diff, {
-    "/cells": diff_sequence_multilevel,
+    #"/cells": diff_sequence_multilevel,
     #"/cells/*": diff,
     #"/cells/*/source": diff,
-    "/cells/*/outputs": diff_sequence_multilevel,
+    #"/cells/*/outputs": diff_sequence_multilevel,
     #"/cells/*/outputs/*": diff_single_outputs,
     })
 

@@ -21,7 +21,9 @@ diff_sequence_algorithm = "bruteforce"
 
 
 def diff_sequence(a, b, compare=operator.__eq__):
-    """Compute a diff of two sequences.
+    """Compute a shallow diff of two sequences.
+
+    I.e. these algorithms do not recursively diff elements of the sequences.
 
     This is a wrapper for alternative diff implementations.
     """

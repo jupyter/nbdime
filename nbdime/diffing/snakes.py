@@ -5,19 +5,15 @@
 
 from __future__ import unicode_literals
 
-"""Tools for diffing notebooks.
-
-All diff tools here currently assumes the notebooks have already been
-converted to the same format version, currently v4 at time of writing.
-Up- and down-conversion is handled by nbformat.
+"""
+Utilities for computing 'snakes', or contiguous sequences of equal elements of two sequences.
 """
 
 import operator
 from ..diff_format import SequenceDiff
 from .seq_bruteforce import bruteforce_compute_snakes
-from .generic import diff
 
-__all__ = ["diff_sequence_multilevel"]
+__all__ = ["compute_snakes_multilevel"]
 
 
 def compute_snakes(A, B, compare, rect=None):
@@ -80,7 +76,7 @@ def compute_snakes_multilevel(A, B, compares, rect=None, level=None):
 def compute_diff_from_snakes(a, b, snakes, path="", predicates=None, differs=None):
     "Compute diff from snakes."
 
-    subpath = path + "/*"
+    subpath = "/".join((path, "*"))
     diffit = differs[subpath]
 
     di = SequenceDiff()
