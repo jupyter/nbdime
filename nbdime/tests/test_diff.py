@@ -12,7 +12,7 @@ import operator
 
 from nbdime import diff
 from nbdime.diff_format import make_op, Diff
-from nbdime.diffing.snakes import compute_snakes_multilevel
+from nbdime.diffing.snakes import compute_snakes, compute_snakes_multilevel
 
 from .fixtures import check_symmetric_diff_and_patch
 
@@ -113,9 +113,21 @@ def test_compute_snakes_multilevel():
         def _cmp(x, y):
             return x[:n] == y[:n]
         return _cmp
-    predicates = [_cmp_n(1), _cmp_n(2), operator.__eq__]
+    compares = [_cmp_n(1), _cmp_n(2), operator.__eq__]
 
-    level = len(predicates) - 1
-    rect = (0, 0, len(a), len(b))
-    snakes = compute_snakes_multilevel(a, b, rect, predicates, level)
+    snakes = compute_snakes_multilevel(a, b, compares)
     assert snakes == [(0, 0, 1), (3, 2, 1), (4, 5, 1)]
+
+    # Test case to show how first level provides a coarse
+    # identification and snakes from second level are merged
+    # with the first ones
+    A = ["aa", "ab", "ba", "bb"]
+    B = ["aa", "ax", "ba", "bx"]
+    compares = [
+        lambda a,b: a == b,
+        lambda a,b: a[0] == b[0],
+        ]
+    snakes = compute_snakes_multilevel(A, B, compares[:1])
+    assert snakes == [(0,0,1), (2,2,1)]
+    snakes = compute_snakes_multilevel(A, B, compares)
+    assert snakes == [(0,0,4)]

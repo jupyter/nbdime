@@ -5,22 +5,20 @@
 
 from __future__ import unicode_literals
 
-"""Tools for diffing notebooks.
-
-All diff tools here currently assumes the notebooks have already been
-converted to the same format version, currently v4 at time of writing.
-Up- and down-conversion is handled by nbformat.
+"""
+Utilities for computing 'snakes', or contiguous sequences of equal elements of two sequences.
 """
 
 import operator
 from ..diff_format import SequenceDiff
 from .seq_bruteforce import bruteforce_compute_snakes
-from .generic import diff
 
-__all__ = ["diff_sequence_multilevel"]
+__all__ = ["compute_snakes_multilevel"]
 
 
-def compute_snakes(A, B, rect, compare):
+def compute_snakes(A, B, compare, rect=None):
+    if rect is None:
+        rect = (0, 0, len(A), len(B))
     i0, j0, i1, j1 = rect
 
     # TODO: Implement this using difflib or recursive Myers or simpler
@@ -34,39 +32,52 @@ def compute_snakes(A, B, rect, compare):
     return snakes
 
 
-def compute_snakes_multilevel(A, B, rect, compares, level):
+def compute_snakes_multilevel(A, B, compares, rect=None, level=None):
     """Compute snakes using a multilevel multi-predicate algorithm.
 
     TODO: Document this algorithm.
     """
+    if level is None:
+        level = len(compares) - 1
+    if rect is None:
+        rect = (0, 0, len(A), len(B))
+
+    # Compute initial set of coarse snakes
     compare = compares[level]
-    snakes = compute_snakes(A, B, rect, compare)
+    snakes = compute_snakes(A, B, compare, rect)
     if level == 0:
         return snakes
+
     newsnakes = [(0, 0, 0)]
     i0, j0, i1, j1 = rect
     for snake in snakes + [(i1, j1, 0)]:
         i, j, n = snake
         if i > i0 and j > j0:
-            newsnakes += compute_snakes_multilevel(A, B, (i0, j0, i, j), compares, level-1)
+            # Recurse to compute snakes with less accurate
+            # compare predicates between the coarse snakes
+            subrect = (i0, j0, i, j)
+            newsnakes += compute_snakes_multilevel(A, B, compares, subrect, level-1)
         if n > 0:
-            if newsnakes[-1][0] == i and newsnakes[-1][1] == j:
-                snake = newsnakes[-1]
-                newsnakes[-1] = (snake[0], snake[1], snake[2] + n)
+            li, lj, ln = newsnakes[-1]
+            if li+ln == i and lj+ln == j:
+                # Merge contiguous snakes
+                newsnakes[-1] = (li, lj, ln + n)
             else:
+                # Add new snake
                 newsnakes.append(snake)
         i0 = i + n
         j0 = j + n
+    # Pop empty snake from beginning if it wasn't extended inside the loop
     if newsnakes[0][2] == 0:
         newsnakes.pop(0)
     return newsnakes
 
 
-def compute_diff_from_snakes(a, b, snakes, path="", differs={}):
+def compute_diff_from_snakes(a, b, snakes, path="", predicates=None, differs=None):
     "Compute diff from snakes."
 
-    subpath = path + "/*"
-    diffit = differs.get(subpath, diff)
+    subpath = "/".join((path, "*"))
+    diffit = differs[subpath]
 
     di = SequenceDiff()
     i0, j0, i1, j1 = 0, 0, len(a), len(b)
@@ -75,19 +86,14 @@ def compute_diff_from_snakes(a, b, snakes, path="", differs={}):
             di.remove(i0, i-i0)
         if j > j0:
             di.add(i0, b[j0:j])
+
         for k in range(n):
-            cd = diffit(a[i + k], b[j + k], path=subpath)
+            aval = a[i + k]
+            bval = b[j + k]
+            cd = diffit(aval, bval, path=subpath, predicates=predicates, differs=differs)
             if cd:
-                di.patch(i+k, cd)
+                di.patch(i + k, cd)
+
         # Update corner offsets for next rectangle
         i0, j0 = i+n, j+n
     return di.diff  # XXX
-
-
-def diff_sequence_multilevel(a, b, path="", compare=operator.__eq__, predicates={}, differs={}):
-    # Invoke multilevel snake computation algorithm
-    compares = predicates.get(path, [compare])
-    level = len(compares) - 1
-    rect = (0, 0, len(a), len(b))
-    snakes = compute_snakes_multilevel(a, b, rect, compares, level)
-    return compute_diff_from_snakes(a, b, snakes, path=path, differs=differs)
