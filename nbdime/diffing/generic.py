@@ -12,6 +12,7 @@ import operator
 from ..diff_format import validate_diff, count_consumed_symbols
 from ..diff_format import SequenceDiff, MappingDiff
 
+#from .snakes import diff_sequence_multilevel
 from .sequences import diff_strings, diff_sequence
 
 __all__ = ["diff"]
@@ -19,7 +20,7 @@ __all__ = ["diff"]
 
 def is_atomic(x):
     "Return True for values that diff should treat as a single atomic value."
-    return not isinstance(x, (string_types, list, dict))
+    return not isinstance(x, (string_types) + (list, dict))
 
 
 def diff(a, b, path="", compare=operator.__eq__, predicates={}, differs={}):
@@ -55,8 +56,7 @@ def diff_lists(a, b, path="", compare=operator.__eq__, predicates={}, differs={}
         shallow_diff = diff_sequence(a, b, predicates.get(path, compare))
 
     # Count consumed items from a, "take" in patch_list
-    acons = 0
-    bcons = 0
+    i, j = 0, 0
 
     di = SequenceDiff()
 
@@ -67,40 +67,41 @@ def diff_lists(a, b, path="", compare=operator.__eq__, predicates={}, differs={}
     for ie in range(M+1):
         if ie < M:
             # Consume n more unmentioned items before this diff entry
-            # Note that index can be larger than acons in the case where items
+            # Note that index can be larger than i in the case where items
             # have been deleted from a and then insertions from b occur.
             e = shallow_diff[ie]
             index = e.key
-            n = max(0, index - acons)
+            n = max(0, index - i)
             askip, bskip = count_consumed_symbols(e)
         else:
             # Consume final items after the last diff entry
             e = None
-            n = len(a) - acons
+            n = len(a) - i
             askip, bskip = 0, 0
             assert n >= 0
-            assert len(b) - bcons == n
+            assert len(b) - j == n
 
         # Recursively diff the n items that have been deemed similar
-        for i in range(n):
-            aval = a[acons+i]
-            bval = b[bcons+i]
+        for k in range(n):
+            aval = a[i + k]
+            bval = b[j + k]
             if not is_atomic(aval):
-                dd = diffit(aval, bval, path=subpath, compare=compare, predicates=predicates, differs=differs)
-                if dd:
-                    di.patch(acons+i, dd)  # FIXME: Not covered in tests, create test situation
+                cd = diffit(aval, bval, path=subpath, compare=compare, predicates=predicates, differs=differs)
+                if cd:
+                    di.patch(i + k, cd)  # FIXME: Not covered in tests, create test situation
 
         # Keep count of consumed items
-        acons += n + askip
-        bcons += n + bskip
+        i += n + askip
+        j += n + bskip
 
-        # Insert the diff entry unless past the end
+        # Insert the diff entry from shallow diff unless past the end
+        # (this either adds or removes items)
         if ie < M:
             di.append(e)
 
     # Sanity check
-    assert acons == len(a)
-    assert bcons == len(b)
+    assert i == len(a)
+    assert j == len(b)
 
     return di.diff  # XXX
 
