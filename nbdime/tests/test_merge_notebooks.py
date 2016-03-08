@@ -59,7 +59,8 @@ def test_merge_cell_sources_neighbouring_inserts():
         "    return y + 2",
         ],
         ])
-    actual, lco, rco = merge_notebooks(sources_to_notebook(base), sources_to_notebook(local), sources_to_notebook(remote))
+    args = None
+    actual, lco, rco = merge_notebooks(sources_to_notebook(base), sources_to_notebook(local), sources_to_notebook(remote), args)
     assert not lco
     assert not rco
     assert actual == expected
@@ -106,7 +107,8 @@ def test_merge_cell_sources_separate_inserts():
         "print(f(7))",
         ],
         ])
-    actual, lco, rco = merge_notebooks(sources_to_notebook(base), sources_to_notebook(local), sources_to_notebook(remote))
+    args = None
+    actual, lco, rco = merge_notebooks(sources_to_notebook(base), sources_to_notebook(local), sources_to_notebook(remote), args)
     assert not lco
     assert not rco
     assert actual == expected
