@@ -20,7 +20,9 @@ from .generic import diff
 __all__ = ["diff_sequence_multilevel"]
 
 
-def compute_snakes(A, B, rect, compare):
+def compute_snakes(A, B, compare, rect=None):
+    if rect is None:
+        rect = (0, 0, len(A), len(B))
     i0, j0, i1, j1 = rect
 
     # TODO: Implement this using difflib or recursive Myers or simpler
@@ -34,14 +36,19 @@ def compute_snakes(A, B, rect, compare):
     return snakes
 
 
-def compute_snakes_multilevel(A, B, rect, compares, level):
+def compute_snakes_multilevel(A, B, compares, rect=None, level=None):
     """Compute snakes using a multilevel multi-predicate algorithm.
 
     TODO: Document this algorithm.
     """
+    if level is None:
+        level = len(compares) - 1
+    if rect is None:
+        rect = (0, 0, len(A), len(B))
+
     # Compute initial set of coarse snakes
     compare = compares[level]
-    snakes = compute_snakes(A, B, rect, compare)
+    snakes = compute_snakes(A, B, compare, rect)
     if level == 0:
         return snakes
 
@@ -52,12 +59,13 @@ def compute_snakes_multilevel(A, B, rect, compares, level):
         if i > i0 and j > j0:
             # Recurse to compute snakes with less accurate
             # compare predicates between the coarse snakes
-            newsnakes += compute_snakes_multilevel(A, B, (i0, j0, i, j), compares, level-1)
+            subrect = (i0, j0, i, j)
+            newsnakes += compute_snakes_multilevel(A, B, compares, subrect, level-1)
         if n > 0:
-            lastsnake = newsnakes[-1]
-            if lastsnake[0] == i and lastsnake[1] == j:
+            li, lj, ln = newsnakes[-1]
+            if li+ln == i and lj+ln == j:
                 # Merge contiguous snakes
-                newsnakes[-1] = (lastsnake[0], lastsnake[1], lastsnake[2] + n)
+                newsnakes[-1] = (li, lj, ln + n)
             else:
                 # Add new snake
                 newsnakes.append(snake)

@@ -69,9 +69,7 @@ def diff_sequence_multilevel(a, b, path="", predicates=None, differs=None):
 
     # Invoke multilevel snake computation algorithm
     compares = predicates[path]
-    level = len(compares) - 1
-    rect = (0, 0, len(a), len(b))
-    snakes = compute_snakes_multilevel(a, b, rect, compares, level)
+    snakes = compute_snakes_multilevel(a, b, compares)
 
     # Convert snakes to diff
     return compute_diff_from_snakes(a, b, snakes, path=path, predicates=predicates, differs=differs)
