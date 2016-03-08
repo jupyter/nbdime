@@ -56,9 +56,29 @@ def diff(a, b, path="", predicates=None, differs=None):
     return d
 
 
+from .snakes import compute_snakes_multilevel, compute_diff_from_snakes
+
+
+def diff_sequence_multilevel(a, b, path="", predicates=None, differs=None):
+    """Compute diff of two lists with configurable behaviour."""
+
+    if predicates is None:
+        predicates = default_predicates()
+    if differs is None:
+        differs = default_differs()
+
+    # Invoke multilevel snake computation algorithm
+    compares = predicates[path]
+    level = len(compares) - 1
+    rect = (0, 0, len(a), len(b))
+    snakes = compute_snakes_multilevel(a, b, rect, compares, level)
+
+    # Convert snakes to diff
+    return compute_diff_from_snakes(a, b, snakes, path=path, predicates=predicates, differs=differs)
+
+
 def diff_lists(a, b, path="", predicates=None, differs=None, shallow_diff=None):
-    """Compute diff of two lists with configurable behaviour.
-    """
+    """Compute diff of two lists with configurable behaviour."""
 
     if predicates is None:
         predicates = default_predicates()

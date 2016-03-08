@@ -20,8 +20,7 @@ from collections import defaultdict
 from ..diff_format import source_as_string
 
 from .sequences import diff_sequence
-from .generic import diff, diff_lists, diff_dicts
-from .snakes import diff_sequence_multilevel
+from .generic import diff, diff_lists, diff_dicts, diff_sequence_multilevel
 
 __all__ = ["diff_notebooks"]
 
