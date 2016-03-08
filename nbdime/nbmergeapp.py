@@ -38,7 +38,12 @@ def main_merge(args):
     #l = split_lines(l)
     #r = split_lines(r)
 
-    m, lc, rc = merge_notebooks(b, l, r)
+    m, lc, rc = merge_notebooks(b, l, r, args)
+
+    if lc or rc:
+        print("Conflicts occured during merge operation.")
+    else:
+        print("Merge completed successfully with no conflicts.")
 
     if mfn:
         if lc or rc:
@@ -55,7 +60,7 @@ def main_merge(args):
             with open(mfn, "w") as mf:
                 nbformat.write(m, mf)
     else:
-        print(m)
+        # FIXME: Display conflicts in a useful way
         if lc or rc:
             print("Local conflicts:")
             print(lc)
@@ -76,6 +81,10 @@ def _build_arg_parser():
     add_diff_args(parser)
 
     # TODO: Define sensible strategy variables and implement
+    from .merging.notebooks import generic_conflict_strategies
+    parser.add_argument('-s', '--strategy',
+                        default="mergetool", choices=generic_conflict_strategies,
+                        help="Specify the merge strategy to use.")
     #parser.add_argument('-m', '--merge-strategy',
     #                    default="default", choices=("foo", "bar"),
     #                    help="Specify the merge strategy to use.")

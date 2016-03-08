@@ -245,6 +245,16 @@ def to_diffentry_dicts(di):  # TODO: Better name, validate_diff? as_diff?
         return di
 
 
+def as_dict_based_diff(di):
+    """Converting to dict-based diff format for dicts for convenience.
+
+    NB! Only one level, not recursive.
+
+    This step will be unnecessary if we change the diff format to work this way always.
+    """
+    return {e.key: e for e in di}
+
+
 def to_json_patch(d, path=""):
     """Convert nbdime diff object into the RFC6902 JSON Patch format.
 

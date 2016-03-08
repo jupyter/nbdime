@@ -11,13 +11,12 @@ import copy
 from collections import namedtuple
 
 from ..diffing import diff
-from ..diff_format import Diff, SequenceDiff, MappingDiff
+from ..diff_format import Diff, SequenceDiff, MappingDiff, as_dict_based_diff
 from ..patching import patch
 
 
 # Set to true to enable some expensive debugging assertions
 DEBUGGING = 0
-
 
 # Sentinel to allow None value
 Missing = object()
@@ -31,8 +30,8 @@ def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
 
     # Converting to dict-based diff format for dicts for convenience
     # This step will be unnecessary if we change the diff format to work this way always
-    base_local_diff = {e.key: e for e in base_local_diff}
-    base_remote_diff = {e.key: e for e in base_remote_diff}
+    base_local_diff = as_dict_based_diff(base_local_diff)
+    base_remote_diff = as_dict_based_diff(base_remote_diff)
 
     # Summary of diff entry cases with (#) references to below code
     # r\l | N/A   -   +   :   !
