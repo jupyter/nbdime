@@ -62,11 +62,11 @@ def compute_snakes_multilevel(A, B, rect, compares, level):
     return newsnakes
 
 
-def compute_diff_from_snakes(a, b, snakes, path="", compare=operator.__eq__, predicates={}, differs={}):
+def compute_diff_from_snakes(a, b, snakes, path="", predicates=None, differs=None):
     "Compute diff from snakes."
 
     subpath = path + "/*"
-    diffit = differs.get(subpath, diff)
+    diffit = differs[subpath]
 
     di = SequenceDiff()
     i0, j0, i1, j1 = 0, 0, len(a), len(b)
@@ -79,7 +79,7 @@ def compute_diff_from_snakes(a, b, snakes, path="", compare=operator.__eq__, pre
         for k in range(n):
             aval = a[i + k]
             bval = b[j + k]
-            cd = diffit(aval, bval, path=subpath, compare=compare, predicates=predicates, differs=differs)
+            cd = diffit(aval, bval, path=subpath, predicates=predicates, differs=differs)
             if cd:
                 di.patch(i + k, cd)
 
@@ -88,10 +88,10 @@ def compute_diff_from_snakes(a, b, snakes, path="", compare=operator.__eq__, pre
     return di.diff  # XXX
 
 
-def diff_sequence_multilevel(a, b, path="", compare=operator.__eq__, predicates={}, differs={}):
+def diff_sequence_multilevel(a, b, path="", predicates=None, differs=None):
     # Invoke multilevel snake computation algorithm
-    compares = predicates.get(path, [compare])
+    compares = predicates[path]
     level = len(compares) - 1
     rect = (0, 0, len(a), len(b))
     snakes = compute_snakes_multilevel(a, b, rect, compares, level)
-    return compute_diff_from_snakes(a, b, snakes, path=path, compare=compare, predicates=predicates, differs=differs)
+    return compute_diff_from_snakes(a, b, snakes, path=path, predicates=predicates, differs=differs)

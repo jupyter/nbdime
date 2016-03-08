@@ -15,6 +15,7 @@ Up- and down-conversion is handled by nbformat.
 import difflib
 import operator
 from six import string_types
+from collections import defaultdict
 
 from ..diff_format import source_as_string
 
@@ -133,7 +134,8 @@ def compare_output_data(x, y):
     return True
 
 
-def __unused_diff_single_outputs(a, b, compare="ignored", path="/cells/*/output/*"):
+# Keeping these here for the comments and as as a reminder for possible future extension points:
+def __unused_diff_single_outputs(a, b, path="/cells/*/output/*"):
     "Diff a pair of output cells."
     assert path == "/cells/*/outputs/*"
     # TODO: Handle output diffing with plugins? I.e. image diff, svg diff, json diff, etc.
@@ -143,8 +145,7 @@ def __unused_diff_single_outputs(a, b, compare="ignored", path="/cells/*/output/
     #        'application/javascript','image/svg+xml'}
     #    a.text
     return diff(a, b)
-
-def __unused_diff_source(a, b, path, compare, predicates, differs):
+def __unused_diff_source(a, b, path, predicates, differs):
     "Diff a pair of sources."
     assert path == "/cells/*/source"
     # FIXME: Make sure we use linebased diff of sources
@@ -155,7 +156,7 @@ def __unused_diff_source(a, b, path, compare, predicates, differs):
 # Sequence diffs should be applied with multilevel
 # algorithm for paths with more than one predicate,
 # and using operator.__eq__ if no match in there.
-notebook_predicates = {
+notebook_predicates = defaultdict(lambda: [operator.__eq__], {
     # Predicates to compare cells in order of low-to-high precedence
     "/cells": [
         compare_cell_source_approximate,
@@ -167,17 +168,17 @@ notebook_predicates = {
         compare_output_data_keys,
         compare_output_data,
         ]
-    }
+    })
 
 
 # Recursive diffing of substructures should pick a rule from here, with diff as fallback
-notebook_differs = {
+notebook_differs = defaultdict(lambda: diff, {
     "/cells": diff_sequence_multilevel,
     #"/cells/*": diff,
     #"/cells/*/source": diff,
     "/cells/*/outputs": diff_sequence_multilevel,
     #"/cells/*/outputs/*": diff_single_outputs,
-    }
+    })
 
 
 def diff_cells(a, b):

@@ -8,6 +8,7 @@ from __future__ import unicode_literals
 from six import string_types
 from six.moves import xrange as range
 import operator
+from collections import defaultdict
 
 from ..diff_format import validate_diff, count_consumed_symbols
 from ..diff_format import SequenceDiff, MappingDiff
@@ -23,15 +24,26 @@ def is_atomic(x):
     return not isinstance(x, (string_types) + (list, dict))
 
 
-def diff(a, b, path="", compare=operator.__eq__, predicates={}, differs={}):
+def default_predicates():
+    return defaultdict(lambda: (operator.__eq__,))
+
+
+def default_differs():
+    return defaultdict(lambda: diff)
+
+
+def diff(a, b, path="", predicates=None, differs=None):
     "Compute the diff of two json-like objects, list or dict or string."
-    # TODO: Providing separate comparison predicate for
-    # different dict paths will allow more customization
+
+    if predicates is None:
+        predicates = default_predicates()
+    if differs is None:
+        differs = default_differs()
 
     if isinstance(a, list) and isinstance(b, list):
-        d = diff_lists(a, b, path=path, compare=compare, predicates=predicates, differs=differs)
+        d = diff_lists(a, b, path=path, predicates=predicates, differs=differs)
     elif isinstance(a, dict) and isinstance(b, dict):
-        d = diff_dicts(a, b, path=path, compare=compare, predicates=predicates, differs=differs)
+        d = diff_dicts(a, b, path=path, predicates=predicates, differs=differs)
     elif isinstance(a, string_types) and isinstance(b, string_types):
         # FIXME: Do we need this string case, and if so do we need to pass on these additional arguments?
         d = diff_strings(a, b) #, path=path, predicates=predicates, differs=differs)
@@ -44,16 +56,21 @@ def diff(a, b, path="", compare=operator.__eq__, predicates={}, differs={}):
     return d
 
 
-def diff_lists(a, b, path="", compare=operator.__eq__, predicates={}, differs={}, shallow_diff=None):
+def diff_lists(a, b, path="", predicates=None, differs=None, shallow_diff=None):
+    """Compute diff of two lists with configurable behaviour.
+    """
 
-    # Keeping compare a valid kwargs for simplicity and to avoid rewriting tests right now
-    if path in predicates and compare is not operator.__eq__:
-        raise RuntimeError("Please don't pass compare and predicates at the same time.")
+    if predicates is None:
+        predicates = default_predicates()
+    if differs is None:
+        differs = default_differs()
 
     # First make a shallow sequence diff with custom compare,
     # unless it's provided for us
     if shallow_diff is None:
-        shallow_diff = diff_sequence(a, b, predicates.get(path, compare))
+        compares = predicates[path]
+        assert len(compares) == 1  # FIXME: Assuming single compare in diff_sequence, streamline with multilevel algorithm
+        shallow_diff = diff_sequence(a, b, compares[0])
 
     # Count consumed items from a, "take" in patch_list
     i, j = 0, 0
@@ -86,7 +103,7 @@ def diff_lists(a, b, path="", compare=operator.__eq__, predicates={}, differs={}
             aval = a[i + k]
             bval = b[j + k]
             if not is_atomic(aval):
-                cd = diffit(aval, bval, path=subpath, compare=compare, predicates=predicates, differs=differs)
+                cd = diffit(aval, bval, path=subpath, predicates=predicates, differs=differs)
                 if cd:
                     di.patch(i + k, cd)  # FIXME: Not covered in tests, create test situation
 
@@ -106,7 +123,7 @@ def diff_lists(a, b, path="", compare=operator.__eq__, predicates={}, differs={}
     return di.diff  # XXX
 
 
-def diff_dicts(a, b, path="", compare=operator.__eq__, predicates={}, differs={}):
+def diff_dicts(a, b, path="", predicates=None, differs=None):
     """Compute diff of two dicts with configurable behaviour.
 
     Keys in both a and b will be handled based on
@@ -117,6 +134,11 @@ def diff_dicts(a, b, path="", compare=operator.__eq__, predicates={}, differs={}
     Items not mentioned in diff are items where compare(x, y) return True.
     For other items the diff will contain delete, insert, or replace entries.
     """
+    if predicates is None:
+        predicates = default_predicates()
+    if differs is None:
+        differs = default_differs()
+
     assert isinstance(a, dict) and isinstance(b, dict)
     akeys = set(a.keys())
     bkeys = set(b.keys())
@@ -135,12 +157,14 @@ def diff_dicts(a, b, path="", compare=operator.__eq__, predicates={}, differs={}
         if type(avalue) == type(bvalue) and not is_atomic(avalue):
             subpath = "/".join((path, key))
             diffit = differs.get(subpath, diff)
-            dd = diffit(avalue, bvalue, path=subpath, compare=compare, predicates=predicates, differs=differs)
+            dd = diffit(avalue, bvalue, path=subpath, predicates=predicates, differs=differs)
             if dd:
                 di.patch(key, dd)
         else:
-            compareit = predicates.get(path, compare)
-            if not compareit(avalue, bvalue):  # TODO: Use != or not compare() here?
+            if path in predicates:
+                # Could also this a warning, but I think it shouldn't be done
+                raise RuntimeError("Found predicate(s) for path {} pointing to dict entry.".format(path))
+            if avalue != bvalue:
                 di.replace(key, bvalue)
 
     for key in sorted(bkeys - akeys):
