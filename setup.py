@@ -103,6 +103,7 @@ if 'setuptools' in sys.modules:
             'nbdiff = nbdime.nbdiffapp:main',
             'nbpatch= nbdime.nbpatchapp:main',
             'nbmerge = nbdime.nbmergeapp:main',
+            'git-nbdifftool = nbdime.gitdifftool:main',
         ]
     }
     setup_args.pop('scripts', None)
