@@ -25,34 +25,6 @@ from .snakes import diff_sequence_multilevel
 __all__ = ["diff_notebooks"]
 
 
-def __unused__notebook_diff_data():
-    # TODO: It might be possible to encode the below
-    #       functions more compactly with collections
-    #       of predicate functions and generalize.
-    # Basically, sequence diffs should be applied with multilevel
-    # algorithm for paths with more than one predicate,
-    # and using operator.__eq__ if no match in there.
-    predicates = {
-        "/cells": [
-            compare_cell_source_approximate,
-            compare_cell_source_exact,
-            compare_cell_source_and_outputs,
-            ],
-        "/cells/#/outputs": [
-            compare_output_data_keys,
-            compare_output_data,
-            ]
-        }
-    diff_algorithms = {
-        "/": diff_notebooks,
-        "/cells": diff_cells,
-        "/cells/#": diff_single_cells,
-        "/cells/#/source": diff_source,
-        "/cells/#/outputs": diff_outputs,
-        "/cells/#/outputs/#": diff_single_outputs,
-        }
-
-
 def compare_cell_source_approximate(x, y):
     "Compare source of cells x,y with approximate heuristics."
     # Cell types must match
@@ -161,8 +133,9 @@ def compare_output_data(x, y):
     return True
 
 
-def diff_single_outputs(a, b, compare="ignored"):
+def __unused_diff_single_outputs(a, b, compare="ignored", path="/cells/*/output/*"):
     "Diff a pair of output cells."
+    assert path == "/cells/*/outputs/*"
     # TODO: Handle output diffing with plugins? I.e. image diff, svg diff, json diff, etc.
     # FIXME: Use linebased diff of some types of outputs:
     # if a.output_type in ("execute_result", "display_data"):
@@ -171,38 +144,48 @@ def diff_single_outputs(a, b, compare="ignored"):
     #    a.text
     return diff(a, b)
 
-
-def diff_outputs(a, b, compare="ignored"):
-    "Diff a pair of lists of outputs from within a single cell."
-    predicates = [compare_output_data_keys,
-                  compare_output_data]
-    return diff_sequence_multilevel(a, b, predicates, diff_single_outputs)
-
-
-def diff_source(a, b, compare="ignored"):
+def __unused_diff_source(a, b, path, compare, predicates, differs):
     "Diff a pair of sources."
+    assert path == "/cells/*/source"
     # FIXME: Make sure we use linebased diff of sources
     # TODO: Use google-diff-patch-match library to diff the sources?
     return diff(a, b)
 
 
-def diff_single_cells(a, b):
-    return diff_dicts(a, b, subdiffs={"source": diff_source, "outputs": diff_outputs})
-
-
-def diff_cells(a, b, compare="ignored"):
-    "Diff cell lists a and b. Argument compare is ignored."
-    # Old alternative implementation:
-    # shallow_diff = diff_sequence(a, b, compare_cell_source_and_outputs)
-    # return diff_lists(a, b, compare=operator.__eq__, shallow_diff=shallow_diff)
-
+# Sequence diffs should be applied with multilevel
+# algorithm for paths with more than one predicate,
+# and using operator.__eq__ if no match in there.
+notebook_predicates = {
     # Predicates to compare cells in order of low-to-high precedence
-    predicates = [compare_cell_source_approximate,
-                  compare_cell_source_exact,
-                  compare_cell_source_and_outputs]
-    return diff_sequence_multilevel(a, b, predicates, diff_single_cells)
+    "/cells": [
+        compare_cell_source_approximate,
+        compare_cell_source_exact,
+        compare_cell_source_and_outputs,
+        ],
+    # Predicates to compare output cells (within one cell) in order of low-to-high precedence
+    "/cells/*/outputs": [
+        compare_output_data_keys,
+        compare_output_data,
+        ]
+    }
+
+
+# Recursive diffing of substructures should pick a rule from here, with diff as fallback
+notebook_differs = {
+    "/cells": diff_sequence_multilevel,
+    #"/cells/*": diff,
+    #"/cells/*/source": diff,
+    "/cells/*/outputs": diff_sequence_multilevel,
+    #"/cells/*/outputs/*": diff_single_outputs,
+    }
+
+
+def diff_cells(a, b):
+    "This is currently just used by some tests."
+    path = "/cells"
+    return notebook_differs[path](a, b, path=path, predicates=notebook_predicates, differs=notebook_differs)
 
 
 def diff_notebooks(a, b):
-    """Compute the diff of two notebooks."""
-    return diff_dicts(a, b, subdiffs={"cells": diff_cells})
+    """Compute the diff of two notebooks using customized heuristics and diff rules."""
+    return diff(a, b, path="", predicates=notebook_predicates, differs=notebook_differs)
