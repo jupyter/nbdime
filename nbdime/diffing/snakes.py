@@ -61,8 +61,12 @@ def compute_snakes_multilevel(A, B, rect, predicates, level):
     return newsnakes
 
 
-def compute_diff_from_snakes(a, b, snakes, diff_single_item=diff):
-    # Compute diff from snakes
+def compute_diff_from_snakes(a, b, snakes, path="", differs={}):
+    "Compute diff from snakes."
+
+    subpath = path + "/*"
+    diffit = differs.get(subpath, diff)
+
     di = SequenceDiff()
     i0, j0, i1, j1 = 0, 0, len(a), len(b)
     for i, j, n in snakes + [(i1, j1, 0)]:
@@ -71,7 +75,7 @@ def compute_diff_from_snakes(a, b, snakes, diff_single_item=diff):
         if j > j0:
             di.add(i0, b[j0:j])
         for k in range(n):
-            cd = diff_single_item(a[i + k], b[j + k])
+            cd = diffit(a[i + k], b[j + k], path=subpath)
             if cd:
                 di.patch(i+k, cd)
         # Update corner offsets for next rectangle
@@ -79,9 +83,9 @@ def compute_diff_from_snakes(a, b, snakes, diff_single_item=diff):
     return di.diff  # XXX
 
 
-def diff_sequence_multilevel(a, b, predicates, subdiff=diff):
+def diff_sequence_multilevel(a, b, predicates, path="", differs={}):
     # Invoke multilevel snake computation algorithm
     level = len(predicates) - 1
     rect = (0, 0, len(a), len(b))
     snakes = compute_snakes_multilevel(a, b, rect, predicates, level)
-    return compute_diff_from_snakes(a, b, snakes, subdiff)
+    return compute_diff_from_snakes(a, b, snakes, path=path, differs=differs)
