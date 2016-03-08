@@ -22,17 +22,18 @@ def is_atomic(x):
     return not isinstance(x, (string_types, list, dict))
 
 
-def diff(a, b, compare=operator.__eq__, path="", differs={}):
+def diff(a, b, path="", compare=operator.__eq__, predicates={}, differs={}):
     "Compute the diff of two json-like objects, list or dict or string."
     # TODO: Providing separate comparison predicate for
     # different dict paths will allow more customization
 
     if isinstance(a, list) and isinstance(b, list):
-        d = diff_lists(a, b, compare=compare, path=path, differs=differs)
+        d = diff_lists(a, b, path=path, compare=compare, predicates=predicates, differs=differs)
     elif isinstance(a, dict) and isinstance(b, dict):
-        d = diff_dicts(a, b, compare=compare, path=path, differs=differs)
+        d = diff_dicts(a, b, path=path, compare=compare, predicates=predicates, differs=differs)
     elif isinstance(a, string_types) and isinstance(b, string_types):
-        d = diff_strings(a, b)#, path=path, differs={})  # FIXME: Needed?
+        # FIXME: Do we need this string case, and if so do we need to pass on these additional arguments?
+        d = diff_strings(a, b) #, path=path, predicates=predicates, differs=differs)
     else:
         raise RuntimeError("Can currently only diff list, dict, or str objects.")
 
@@ -42,11 +43,16 @@ def diff(a, b, compare=operator.__eq__, path="", differs={}):
     return d
 
 
-def diff_lists(a, b, compare=operator.__eq__, path="", shallow_diff=None, differs={}):
-    # First make the one-level list diff with custom compare,
+def diff_lists(a, b, path="", compare=operator.__eq__, predicates={}, differs={}, shallow_diff=None):
+
+    # Keeping compare a valid kwargs for simplicity and to avoid rewriting tests right now
+    if path in predicates and compare is not operator.__eq__:
+        raise RuntimeError("Please don't pass compare and predicates at the same time.")
+
+    # First make a shallow sequence diff with custom compare,
     # unless it's provided for us
     if shallow_diff is None:
-        shallow_diff = diff_sequence(a, b, compare)
+        shallow_diff = diff_sequence(a, b, predicates.get(path, compare))
 
     # Count consumed items from a, "take" in patch_list
     acons = 0
@@ -80,7 +86,7 @@ def diff_lists(a, b, compare=operator.__eq__, path="", shallow_diff=None, differ
             aval = a[acons+i]
             bval = b[bcons+i]
             if not is_atomic(aval):
-                dd = diffit(aval, bval, compare=compare, path=subpath)
+                dd = diffit(aval, bval, path=subpath, compare=compare, predicates=predicates, differs=differs)
                 if dd:
                     di.patch(acons+i, dd)  # FIXME: Not covered in tests, create test situation
 
@@ -99,7 +105,7 @@ def diff_lists(a, b, compare=operator.__eq__, path="", shallow_diff=None, differ
     return di.diff  # XXX
 
 
-def diff_dicts(a, b, compare=operator.__eq__, path="", subdiffs=None, differs={}):
+def diff_dicts(a, b, path="", compare=operator.__eq__, predicates={}, differs={}):
     """Compute diff of two dicts with configurable behaviour.
 
     Keys in both a and b will be handled based on
@@ -110,11 +116,6 @@ def diff_dicts(a, b, compare=operator.__eq__, path="", subdiffs=None, differs={}
     Items not mentioned in diff are items where compare(x, y) return True.
     For other items the diff will contain delete, insert, or replace entries.
     """
-    # FIXME: Temporary conversion, make differs input instead of subdiffs
-    if subdiffs is not None:
-        assert not differs
-        differs = {"/".join((path, key)): diffit for key, diffit in subdiffs.items()}
-
     assert isinstance(a, dict) and isinstance(b, dict)
     akeys = set(a.keys())
     bkeys = set(b.keys())
@@ -133,12 +134,12 @@ def diff_dicts(a, b, compare=operator.__eq__, path="", subdiffs=None, differs={}
         if type(avalue) == type(bvalue) and not is_atomic(avalue):
             subpath = "/".join((path, key))
             diffit = differs.get(subpath, diff)
-            dd = diffit(avalue, bvalue, compare=compare, path=subpath)
+            dd = diffit(avalue, bvalue, path=subpath, compare=compare, predicates=predicates, differs=differs)
             if dd:
                 di.patch(key, dd)
         else:
-            #compareit = compare.get(key, operator.__eq__)  # TODO: Do like this?
-            if not compare(avalue, bvalue): # TODO: Use != or not compare() here?
+            compareit = predicates.get(path, compare)
+            if not compareit(avalue, bvalue):  # TODO: Use != or not compare() here?
                 di.replace(key, bvalue)
 
     for key in sorted(bkeys - akeys):

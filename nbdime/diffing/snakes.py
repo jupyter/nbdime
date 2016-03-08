@@ -12,6 +12,7 @@ converted to the same format version, currently v4 at time of writing.
 Up- and down-conversion is handled by nbformat.
 """
 
+import operator
 from ..diff_format import SequenceDiff
 from .seq_bruteforce import bruteforce_compute_snakes
 from .generic import diff
@@ -33,12 +34,12 @@ def compute_snakes(A, B, rect, compare):
     return snakes
 
 
-def compute_snakes_multilevel(A, B, rect, predicates, level):
+def compute_snakes_multilevel(A, B, rect, compares, level):
     """Compute snakes using a multilevel multi-predicate algorithm.
 
     TODO: Document this algorithm.
     """
-    compare = predicates[level]
+    compare = compares[level]
     snakes = compute_snakes(A, B, rect, compare)
     if level == 0:
         return snakes
@@ -47,7 +48,7 @@ def compute_snakes_multilevel(A, B, rect, predicates, level):
     for snake in snakes + [(i1, j1, 0)]:
         i, j, n = snake
         if i > i0 and j > j0:
-            newsnakes += compute_snakes_multilevel(A, B, (i0, j0, i, j), predicates, level-1)
+            newsnakes += compute_snakes_multilevel(A, B, (i0, j0, i, j), compares, level-1)
         if n > 0:
             if newsnakes[-1][0] == i and newsnakes[-1][1] == j:
                 snake = newsnakes[-1]
@@ -83,9 +84,10 @@ def compute_diff_from_snakes(a, b, snakes, path="", differs={}):
     return di.diff  # XXX
 
 
-def diff_sequence_multilevel(a, b, predicates, path="", differs={}):
+def diff_sequence_multilevel(a, b, path="", compare=operator.__eq__, predicates={}, differs={}):
     # Invoke multilevel snake computation algorithm
-    level = len(predicates) - 1
+    compares = predicates.get(path, [compare])
+    level = len(compares) - 1
     rect = (0, 0, len(a), len(b))
-    snakes = compute_snakes_multilevel(a, b, rect, predicates, level)
+    snakes = compute_snakes_multilevel(a, b, rect, compares, level)
     return compute_diff_from_snakes(a, b, snakes, path=path, differs=differs)

@@ -133,7 +133,7 @@ def compare_output_data(x, y):
     return True
 
 
-def diff_single_outputs(a, b, compare="ignored", path="/cells/*/output/*"):
+def __unused_diff_single_outputs(a, b, compare="ignored", path="/cells/*/output/*"):
     "Diff a pair of output cells."
     assert path == "/cells/*/outputs/*"
     # TODO: Handle output diffing with plugins? I.e. image diff, svg diff, json diff, etc.
@@ -144,15 +144,7 @@ def diff_single_outputs(a, b, compare="ignored", path="/cells/*/output/*"):
     #    a.text
     return diff(a, b)
 
-# TODO: This is now equal to diff_cells, after some refactoring steps towards generalization
-def diff_outputs(a, b, compare="ignored", path="/cells/*/outputs"):
-    "Diff a pair of lists of outputs from within a single cell."
-    assert path == "/cells/*/outputs"
-    predicates = notebook_predicates[path]
-    return diff_sequence_multilevel(a, b, predicates, path=path, differs=notebook_differs)
-
-
-def diff_source(a, b, compare="ignored", path="/cells/*/source"):
+def __unused_diff_source(a, b, path, compare, predicates, differs):
     "Diff a pair of sources."
     assert path == "/cells/*/source"
     # FIXME: Make sure we use linebased diff of sources
@@ -160,45 +152,40 @@ def diff_source(a, b, compare="ignored", path="/cells/*/source"):
     return diff(a, b)
 
 
-def diff_single_cells(a, b, path="/cells/*"):
-    assert path == "/cells/*"
-    return diff_dicts(a, b, path=path, differs=notebook_differs)
-
-def diff_cells(a, b, compare="ignored", path="/cells"):
-    "Diff cell lists a and b. Argument compare is ignored."
-    assert path == "/cells"
-    # Predicates to compare cells in order of low-to-high precedence
-    predicates = notebook_predicates[path]
-    return diff_sequence_multilevel(a, b, predicates, path=path, differs=notebook_differs)
-
-
-def diff_notebooks(a, b, path=""):
-    """Compute the diff of two notebooks."""
-    assert path == ""
-    return diff_dicts(a, b, path=path, subdiffs={"cells": diff_cells})
-
-
 # Sequence diffs should be applied with multilevel
 # algorithm for paths with more than one predicate,
 # and using operator.__eq__ if no match in there.
 notebook_predicates = {
+    # Predicates to compare cells in order of low-to-high precedence
     "/cells": [
         compare_cell_source_approximate,
         compare_cell_source_exact,
         compare_cell_source_and_outputs,
         ],
+    # Predicates to compare output cells (within one cell) in order of low-to-high precedence
     "/cells/*/outputs": [
         compare_output_data_keys,
         compare_output_data,
         ]
     }
 
+
 # Recursive diffing of substructures should pick a rule from here, with diff as fallback
 notebook_differs = {
-    "": diff_notebooks,
-    "/cells": diff_cells,
-    "/cells/*": diff_single_cells,
-    "/cells/*/source": diff_source,
-    "/cells/*/outputs": diff_outputs,
-    "/cells/*/outputs/*": diff_single_outputs,
+    "/cells": diff_sequence_multilevel,
+    #"/cells/*": diff,
+    #"/cells/*/source": diff,
+    "/cells/*/outputs": diff_sequence_multilevel,
+    #"/cells/*/outputs/*": diff_single_outputs,
     }
+
+
+def diff_cells(a, b):
+    "This is currently just used by some tests."
+    path = "/cells"
+    return notebook_differs[path](a, b, path=path, predicates=notebook_predicates, differs=notebook_differs)
+
+
+def diff_notebooks(a, b):
+    """Compute the diff of two notebooks using customized heuristics and diff rules."""
+    return diff(a, b, path="", predicates=notebook_predicates, differs=notebook_differs)
