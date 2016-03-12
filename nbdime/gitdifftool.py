@@ -57,7 +57,7 @@ def show_diff(before, after):
     """
     # TODO: handle /dev/null (Windows equivalent?) for new or deleted files
     if before.endswith('.ipynb') or after.endswith('ipynb'):
-        nbdiffapp.main_diff(before, after)
+        nbdiffapp.main([before, after])
     else:
         os.execvp('git', ['git', 'diff', before, after])
 
