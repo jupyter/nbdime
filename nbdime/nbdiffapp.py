@@ -111,7 +111,7 @@ def _build_arg_parser():
     return parser
 
 
-def main():
-    args = _build_arg_parser().parse_args()
+def main(argv=None):
+    args = _build_arg_parser().parse_args(argv)
     r = main_diff(args)
     sys.exit(r)
