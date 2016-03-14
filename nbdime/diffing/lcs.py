@@ -23,13 +23,13 @@ def diff_from_lcs(A, B, A_indices, B_indices):
         i = A_indices[r]
         j = B_indices[r]
         if i > x:
-            di.remove(x, i-x)
+            di.removerange(x, i-x)
         if j > y:
-            di.add(x, B[y:j])
+            di.addrange(x, B[y:j])
         x = i + 1
         y = j + 1
     if x < N:
-        di.remove(x, N-x)
+        di.removerange(x, N-x)
     if y < M:
-        di.add(x, B[y:M])
+        di.addrange(x, B[y:M])
     return di.diff  # XXX

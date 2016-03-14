@@ -23,12 +23,12 @@ def opcodes_to_diff(a, b, opcodes):
             # Unlike difflib we don't represent equal stretches explicitly
             pass
         elif action == "replace":
-            di.remove(abegin, asize)
-            di.add(abegin, b[bbegin:bend])
+            di.removerange(abegin, asize)
+            di.addrange(abegin, b[bbegin:bend])
         elif action == "insert":
-            di.add(abegin, b[bbegin:bend])
+            di.addrange(abegin, b[bbegin:bend])
         elif action == "delete":
-            di.remove(abegin, asize)
+            di.removerange(abegin, asize)
         else:
             raise RuntimeError("Unknown action {}".format(action))
     return di.diff  # XXX

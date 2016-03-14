@@ -252,13 +252,13 @@ def _merge_lists(base, local, remote, base_local_diff, base_remote_diff):
                     j = len(merged)
                     merged.append(base[i])
                     local_conflict_diff.patch(j, local_patched[i])
-                    remote_conflict_diff.remove(j, 1)
+                    remote_conflict_diff.removerange(j, 1)
                 elif rp:
                     # Conflict: Deleted local, patched remote
                     # NB! Note the use of j, index into merged, in the conflict diff!
                     j = len(merged)
                     merged.append(base[i])
-                    local_conflict_diff.remove(j, 1)
+                    local_conflict_diff.removerange(j, 1)
                     remote_conflict_diff.patch(j, remote_patched[i])
                 else:
                     # Not patched on alternate side, so delete it by just skipping value
