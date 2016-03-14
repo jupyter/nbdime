@@ -255,6 +255,11 @@ def as_dict_based_diff(di):
     return {e.key: e for e in di}
 
 
+def revert_as_dict_based_diff(di):
+    "Reverts as_dict_based_diff."
+    return [di[k] for k in sorted(di)]
+
+
 def to_json_patch(d, path=""):
     """Convert nbdime diff object into the RFC6902 JSON Patch format.
 
