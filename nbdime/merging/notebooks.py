@@ -7,50 +7,34 @@ from __future__ import unicode_literals
 
 import nbformat
 
-from .generic import merge
-from ..diff_format import as_dict_based_diff
+from .generic import merge_with_diff
+from .autoresolve import autoresolve
+from ..patching import patch
+from ..diffing.notebooks import diff_notebooks
 
 
 # Strategies for handling conflicts  TODO: Implement these and refine further!
-generic_conflict_strategies = ("mergetool", "use-base", "use-local", "use-remote")
-source_conflict_strategies = generic_conflict_strategies + ("add-markers",)
-transient_conflict_strategies = generic_conflict_strategies + ("invalidate",)
-output_conflict_strategies = transient_conflict_strategies + ("use-all",)
+generic_conflict_strategies = ("mergetool", "fail", "use-base", "use-local", "use-remote", "clear")
+source_conflict_strategies = generic_conflict_strategies # + ("merge-inline",)
+transient_conflict_strategies = generic_conflict_strategies # + ()
+output_conflict_strategies = transient_conflict_strategies # + ("use-all",)
 
 
-def autoresolve_notebook_conflicts(merged, local_conflict_diffs, remote_conflict_diffs, args):
-    assert isinstance(merged, dict)
-
-    # Converting to dict-based diff format for dicts for convenience
-    # This step will be unnecessary if we change the diff format to work this way always
-    lcd = as_dict_based_diff(local_conflict_diffs)
-    rcd = as_dict_based_diff(remote_conflict_diffs)
-    # FIXME: Step through nbformat docs and handle case by case
-
-
-    strategy = args.strategy
-    if strategy not in generic_conflict_strategies:
-        raise ValueError("Invalid strategy {}".format(strategy))
-
-    # TODO: We want to be a lot more sophisticated than this, e.g.
-    #   setting different strategies for source, output, metadata etc.
-    #   However this is illustrative and was quick and easy to implement.
-
-    if strategy == "mergetool":
-        pass
-    elif strategy == "use-base":
-        local_conflict_diffs = []
-        remote_conflict_diffs = []
-    elif strategy == "use-local":
-        merged = patch(merged, local_conflict_diffs)
-        local_conflict_diffs = []
-        remote_conflict_diffs = []
-    elif strategy == "use-remote":
-        merged = patch(merged, remote_conflict_diffs)
-        local_conflict_diffs = []
-        remote_conflict_diffs = []
-
-    return merged, local_conflict_diffs, remote_conflict_diffs
+def autoresolve_notebook_conflicts(merged, local_diffs, remote_diffs, args):
+    strategies = {
+        "/nbformat": "fail",
+        "/nbformat_minor": "fail",
+        "/metadata": "use-base",
+        "/cells/*/cell_type": "fail",
+        "/cells/*/execution_count": "clear",
+        "/cells/*/metadata": "use-base",
+        #"/cells/*/source": "inline",
+        #"/cells/*/outputs": "join",
+        }
+    resolutions, local_diffs, remote_diffs = \
+        autoresolve(merged, local_diffs, remote_diffs, strategies, "")
+    resolved = patch(merged, resolutions)
+    return resolved, local_diffs, remote_diffs
 
 
 def merge_notebooks(base, local, remote, args):
@@ -58,12 +42,16 @@ def merge_notebooks(base, local, remote, args):
 
     Return new (partially) merged notebook and unapplied diffs from the local and remote side.
     """
+    # Compute notebook specific diffs
+    local_diffs = diff_notebooks(base, local)
+    remote_diffs = diff_notebooks(base, remote)
+    
     # Execute a generic merge operation
-    merged, local_conflict_diffs, remote_conflict_diffs = merge(base, local, remote)
+    merged, local_diffs, remote_diffs = merge_with_diff(base, local, remote, local_diffs, remote_diffs)
     merged = nbformat.from_dict(merged)
 
     # Try to resolve conflicts based on behavioural options
-    #merged, local_conflict_diffs, remote_conflict_diffs = \
-    #  autoresolve_notebook_conflicts(merged, local_conflict_diffs, remote_conflict_diffs, args)
+    resolved, local_diffs, remote_diffs = \
+      autoresolve_notebook_conflicts(merged, local_diffs, remote_diffs, args)
 
-    return merged, local_conflict_diffs, remote_conflict_diffs
+    return resolved, local_diffs, remote_diffs

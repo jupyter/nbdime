@@ -411,12 +411,78 @@ def test_merge_nonconflicting_nested_dicts():
 
 
 def test_merge_conflicting_nested_dicts():
+    # Note: Tests in here were written by writing up the last version
+    # and then copy-pasting and deleting pieces to simplify...
+    # Not pretty for production code but the explicitness is convenient when the tests fail.
+
+    # local and remote each adds, deletes, and modifies entries inside nested structure with everything conflicting
+    b = {"a": {"x": 1}}
+    l = {"a": {"x": 2}}
+    r = {"a": {"x": 3}}
+    m, lc, rc = merge(b, l, r)
+    assert m == {"a": {"x": 1}}
+    assert lc == [make_op(Diff.PATCH, "a", [make_op(Diff.REPLACE, "x", 2)]),
+                  ]
+    assert rc == [make_op(Diff.PATCH, "a", [make_op(Diff.REPLACE, "x", 3)]),
+                  ]
+
+    # local and remote each adds, deletes, and modifies entries inside nested structure with everything conflicting
+    b = {"a": {}}
+    l = {"a": {"y": 4}}
+    r = {"a": {"y": 5}}
+    m, lc, rc = merge(b, l, r)
+    assert m == {"a": {}}
+    assert lc == [make_op(Diff.PATCH, "a", [make_op(Diff.ADD, "y", 4)]),
+                  ]
+    assert rc == [make_op(Diff.PATCH, "a", [make_op(Diff.ADD, "y", 5)]),
+                  ]
+
+    # local and remote each adds, deletes, and modifies entries inside nested structure with everything conflicting
+    b = {"a": {"x": 1}}
+    l = {"a": {"x": 2, "y": 4}}
+    r = {"a": {"x": 3, "y": 5}}
+    m, lc, rc = merge(b, l, r)
+    assert m == {"a": {"x": 1}}
+    assert lc == [make_op(Diff.PATCH, "a", [make_op(Diff.REPLACE, "x", 2), make_op(Diff.ADD, "y", 4)]),
+                  ]
+    assert rc == [make_op(Diff.PATCH, "a", [make_op(Diff.REPLACE, "x", 3), make_op(Diff.ADD, "y", 5)]),
+                  ]
+
+    # local and remote each adds, deletes, and modifies entries inside nested structure with everything conflicting
+    b = {"a": {"x": 1},         "d": {"x": 4, "y": 5}}
+    l = {"a": {"x": 2, "y": 4}, "d":         {"y": 6}}
+    r = {"a": {"x": 3, "y": 5}, "d": {"x": 5},       }
+    m, lc, rc = merge(b, l, r)
+    assert m == {"a": {"x": 1}, "d": {"x": 4, "y": 5}}
+    assert lc == [make_op(Diff.PATCH, "a", [make_op(Diff.REPLACE, "x", 2), make_op(Diff.ADD, "y", 4)]),
+                  make_op(Diff.PATCH, "d", [make_op(Diff.REMOVE, "x"), make_op(Diff.REPLACE, "y", 6)]),
+                  ]
+    assert rc == [make_op(Diff.PATCH, "a", [make_op(Diff.REPLACE, "x", 3), make_op(Diff.ADD, "y", 5)]),
+                  make_op(Diff.PATCH, "d", [make_op(Diff.REPLACE, "x", 5), make_op(Diff.REMOVE, "y")]),
+                  ]
+
+    # local and remote each adds, deletes, and modifies entries inside nested structure with everything conflicting
+    b = {"a": {"x": 1},         "d": {"x": 4, "y": 5}, "m": {"x": 7}}
+    l = {"a": {"x": 2, "y": 4}, "d":         {"y": 6}, "m": {"x": 17}}
+    r = {"a": {"x": 3, "y": 5}, "d": {"x": 5},         "m": {"x": 27}}
+    m, lc, rc = merge(b, l, r)
+    assert m == {"a": {"x": 1}, "d": {"x": 4, "y": 5}, "m": {"x": 7}}
+    assert lc == [make_op(Diff.PATCH, "a", [make_op(Diff.REPLACE, "x", 2), make_op(Diff.ADD, "y", 4)]),
+                  make_op(Diff.PATCH, "d", [make_op(Diff.REMOVE, "x"), make_op(Diff.REPLACE, "y", 6)]),
+                  make_op(Diff.PATCH, "m", [make_op(Diff.REPLACE, "x", 17)]),
+                  ]
+    assert rc == [make_op(Diff.PATCH, "a", [make_op(Diff.REPLACE, "x", 3), make_op(Diff.ADD, "y", 5)]),
+                  make_op(Diff.PATCH, "d", [make_op(Diff.REPLACE, "x", 5), make_op(Diff.REMOVE, "y")]),
+                  make_op(Diff.PATCH, "m", [make_op(Diff.REPLACE, "x", 27)]),
+                  ]
+
     # local and remote each adds, deletes, and modifies entries inside nested structure with everything conflicting
     b = {"a": {"x": 1},         "d": {"x": 4, "y": 5}, "m": {"x": 7}}
     l = {"a": {"x": 2, "y": 4}, "d":         {"y": 6}, "m": {"x": 17}, "n": {"q": 9}}
     r = {"a": {"x": 3, "y": 5}, "d": {"x": 5},         "m": {"x": 27}, "n": {"q": 19}}
     m, lc, rc = merge(b, l, r)
-    assert m == {"a": {}, "d": {}, "m": {}, "n": {}}
+    # Note that "n":{} gets added to the merge result even though it's empty
+    assert m == {"a": {"x": 1}, "d": {"x": 4, "y": 5}, "m": {"x": 7}, "n": {}}
     assert lc == [make_op(Diff.PATCH, "a", [make_op(Diff.REPLACE, "x", 2), make_op(Diff.ADD, "y", 4)]),
                   make_op(Diff.PATCH, "d", [make_op(Diff.REMOVE, "x"), make_op(Diff.REPLACE, "y", 6)]),
                   make_op(Diff.PATCH, "m", [make_op(Diff.REPLACE, "x", 17)]),
