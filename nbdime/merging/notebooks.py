@@ -48,10 +48,10 @@ def merge_notebooks(base, local, remote, args):
     
     # Execute a generic merge operation
     merged, local_diffs, remote_diffs = merge_with_diff(base, local, remote, local_diffs, remote_diffs)
-    merged = nbformat.from_dict(merged)
 
     # Try to resolve conflicts based on behavioural options
     resolved, local_diffs, remote_diffs = \
       autoresolve_notebook_conflicts(merged, local_diffs, remote_diffs, args)
 
+    resolved = nbformat.from_dict(resolved)
     return resolved, local_diffs, remote_diffs
