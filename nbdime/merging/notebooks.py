@@ -30,6 +30,7 @@ def autoresolve_notebook_conflicts(merged, local_diffs, remote_diffs, args):
         "/cells/*/metadata": "use-base",
         #"/cells/*/source": "inline",
         #"/cells/*/outputs": "join",
+        "/cells/*/outputs": "clear",
         }
     resolutions, local_diffs, remote_diffs = \
         autoresolve(merged, local_diffs, remote_diffs, strategies, "")

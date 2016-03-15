@@ -12,27 +12,6 @@ from ..diff_format import as_dict_based_diff, revert_as_dict_based_diff, decompr
 from ..patching import patch
 
 
-def __find_strategy(path, strategies):
-    # Use closest parent strategy if specific entry is missing
-    strategy = strategies.get(path)
-    ppath = path
-    while strategy is None and ppath:
-        i = ppath.rfind("/")
-        if i >= 0:
-            ppath = ppath[:i]
-            strategy = strategies.get(path)
-        else:
-            break
-    return strategy
-
-
-# Strategies for handling conflicts  TODO: Implement these and refine further!
-#generic_conflict_strategies = ("mergetool", "use-base", "use-local", "use-remote", "fail")
-#source_conflict_strategies = generic_conflict_strategies + ("inline",)
-#transient_conflict_strategies = generic_conflict_strategies + ("clear",)
-#output_conflict_strategies = transient_conflict_strategies + ("use-all",)
-
-
 # Sentinel object
 Deleted = object()
 
