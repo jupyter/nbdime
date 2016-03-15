@@ -83,9 +83,9 @@ def compute_diff_from_snakes(a, b, snakes, path="", predicates=None, differs=Non
     i0, j0, i1, j1 = 0, 0, len(a), len(b)
     for i, j, n in snakes + [(i1, j1, 0)]:
         if i > i0:
-            di.remove(i0, i-i0)
+            di.removerange(i0, i-i0)
         if j > j0:
-            di.add(i0, b[j0:j])
+            di.addrange(i0, b[j0:j])
 
         for k in range(n):
             aval = a[i + k]

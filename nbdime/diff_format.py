@@ -12,6 +12,9 @@ from collections import namedtuple
 from .log import NBDiffFormatError
 
 
+# TODO: Move some of the less official utilities in here to another submodule
+
+
 class DiffEntry(dict):
     def __getattr__(self, name):
         return self[name]
@@ -47,6 +50,9 @@ def make_op(op, *args):
     elif op == "patch":
         key, diff = args
         return DiffEntry(op=op, key=key, diff=diff)
+    elif op == "keep":
+        key, = args
+        return DiffEntry(op=op, key=key)
     else:
         raise NBDiffFormatError("Invalid op {}.".format(op))
 
@@ -60,6 +66,13 @@ class Diff(object):
     ADDRANGE = "addrange"
     REMOVERANGE = "removerange"
     PATCH = "patch"
+
+    # Not yet used in official diffs but possibly in
+    # internal tools or for future consideration
+    _KEEP = "keep"
+    #_MOVE = "move"
+    #_KEEPRANGE = "keeprange"
+    #_MOVERANGE = "moverange"
 
 
 class SequenceDiff(Diff):
@@ -95,6 +108,12 @@ class SequenceDiff(Diff):
 
     def patch(self, key, diff):
         self.append(make_op(Diff.PATCH, key, diff))
+
+    def addrange(self, key, valuelist):
+        self.append(make_op(Diff.ADDRANGE, key, valuelist))
+
+    def removerange(self, key, length):
+        self.append(make_op(Diff.REMOVERANGE, key, length))
 
 
 class MappingDiff(Diff):
@@ -245,6 +264,32 @@ def to_diffentry_dicts(di):  # TODO: Better name, validate_diff? as_diff?
         return di
 
 
+def decompress_sequence_diff(di, n):
+    """Convert sequence diff into pairs of (op, arg) for each n entries in base sequence.
+
+    This is for internal use in algorithms where no
+    insertions occur, making the mapping
+
+        index -> (op, arg)
+
+    possible with op in (KEEP, REMOVE, PATCH, REPLACE).
+    """
+    offset = 0
+    decompressed = [make_op(Diff._KEEP, i) for i in range(n)]
+    for e in di:
+        op = e.op
+        if op in (Diff.PATCH, Diff.REPLACE, Diff.REMOVE):
+            decompressed[e.key] = e
+        elif op == Diff.REMOVERANGE:
+            for i in range(e.length):
+                decompressed[e.key + i] = make_op(Diff.REMOVE, e.key + i)
+        elif op in (Diff.ADDRANGE, Diff.ADD):
+            raise ValueError("Not expexting insertions.")
+        else:
+            raise ValueError("Unknown op {}.".format(op))
+    return decompressed
+
+
 def as_dict_based_diff(di):
     """Converting to dict-based diff format for dicts for convenience.
 
@@ -253,6 +298,11 @@ def as_dict_based_diff(di):
     This step will be unnecessary if we change the diff format to work this way always.
     """
     return {e.key: e for e in di}
+
+
+def revert_as_dict_based_diff(di):
+    "Reverts as_dict_based_diff."
+    return [di[k] for k in sorted(di)]
 
 
 def to_json_patch(d, path=""):

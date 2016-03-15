@@ -118,6 +118,8 @@ def patch(obj, diff):
         return patch_list(obj, diff)
     elif isinstance(obj, string_types):
         return patch_string(obj, diff)
+    else:
+        raise ValueError("Invalid object type to patch: {}".format(type(obj).__name__))
 
 
 def patch_notebook(nb, diff):

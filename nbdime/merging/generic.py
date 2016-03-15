@@ -86,6 +86,7 @@ def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
         rop = rd.op
         if lop != rop: # Note that this means the below cases always have the same op
             # (5) Conflict: removed one place and edited another, or edited in different ways
+            merged[key] = bv
             local_conflict_diff.append(ld)
             remote_conflict_diff.append(rd)
         elif lop == Diff.REMOVE:
@@ -108,11 +109,13 @@ def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
                     local_conflict_diff.patch(key, lco)
                     remote_conflict_diff.patch(key, rco)
             else:
-                # Recursive merge not possible, record a conflict
+                # Recursive merge not possible, record conflicting adds (no base value)
                 local_conflict_diff.append(ld)
                 remote_conflict_diff.append(rd)
         elif lop == Diff.REPLACE:
-            # (7) Replace in both local and remote, values are different
+            # (7) Replace in both local and remote, values are different,
+            #     record a conflict against original base value
+            merged[key] = bv
             local_conflict_diff.append(ld)
             remote_conflict_diff.append(rd)
         elif lop == Diff.PATCH:
@@ -252,13 +255,13 @@ def _merge_lists(base, local, remote, base_local_diff, base_remote_diff):
                     j = len(merged)
                     merged.append(base[i])
                     local_conflict_diff.patch(j, local_patched[i])
-                    remote_conflict_diff.remove(j, 1)
+                    remote_conflict_diff.removerange(j, 1)
                 elif rp:
                     # Conflict: Deleted local, patched remote
                     # NB! Note the use of j, index into merged, in the conflict diff!
                     j = len(merged)
                     merged.append(base[i])
-                    local_conflict_diff.remove(j, 1)
+                    local_conflict_diff.removerange(j, 1)
                     remote_conflict_diff.patch(j, remote_patched[i])
                 else:
                     # Not patched on alternate side, so delete it by just skipping value
@@ -316,7 +319,8 @@ def _merge_strings(base, local, remote, base_local_diff, base_remote_diff):
 
 def _merge(base, local, remote, base_local_diff, base_remote_diff):
     if not (type(base) == type(local) and type(base) == type(remote)):
-        raise ValueError("Expecting matching types, got {}, {}, and {}.".format(type(base), type(local), type(remote)))
+        raise ValueError("Expecting matching types, got {}, {}, and {}.".format(
+            type(base), type(local), type(remote)))
 
     if isinstance(base, dict):
         return _merge_dicts(base, local, remote, base_local_diff, base_remote_diff)
@@ -324,8 +328,13 @@ def _merge(base, local, remote, base_local_diff, base_remote_diff):
         return _merge_lists(base, local, remote, base_local_diff, base_remote_diff)
     elif isinstance(base, string_types):
         return _merge_strings(base, local, remote, base_local_diff, base_remote_diff)
+    else:
+        raise ValueError("Cannot handle merge of type {}.".format(type(base)))
 
-    raise ValueError("Cannot handle merge of type {}.".format(type(base)))
+
+def merge_with_diff(base, local, remote, base_local_diff, base_remote_diff):
+    """Do a three-way merge of same-type collections b, l, r with given diffs b->l and b->r."""
+    return _merge(base, local, remote, base_local_diff, base_remote_diff)
 
 
 def merge(base, local, remote):
@@ -479,4 +488,4 @@ def merge(base, local, remote):
     """
     base_local_diff = diff(base, local)
     base_remote_diff = diff(base, remote)
-    return _merge(base, local, remote, base_local_diff, base_remote_diff)
+    return merge_with_diff(base, local, remote, base_local_diff, base_remote_diff)
