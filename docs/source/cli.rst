@@ -1,8 +1,8 @@
-=====================
-Commandline interface
-=====================
+======================
+Command-line interface
+======================
 
-Nbdime provides three CLI commands. See
+Nbdime provides three CLI commands. See the help text::
 
     nbdiff --help
     nbpatch --help
