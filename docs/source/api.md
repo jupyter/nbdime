@@ -22,7 +22,7 @@ arguments and response to be the output arguments for all APIs.
 
 ## /diff
 
-Compute diff of two notebooks provided in full json format.
+Compute diff of two notebooks provided in full JSON format.
 
 ### Request:
 
@@ -41,7 +41,7 @@ Compute diff of two notebooks provided in full json format.
 
 ## /merge
 
-Compute merge of three notebooks provided in full json format.
+Compute merge of three notebooks provided in full JSON format.
 
 ### Request:
 

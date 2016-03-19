@@ -38,7 +38,7 @@ Version control use cases
 -------------------------
 
 Most commonly, cell source is the primary content,
-and output can presumably be regenerated. Indee, it
+and output can presumably be regenerated. Indeed, it
 is not possible to guarantee that merged sources and
 merged output is consistent or makes any kind of sense.
 
@@ -51,3 +51,5 @@ Some tasks:
 
 Regression testing use cases
 ----------------------------
+
+.. TODO:: Add text and description
