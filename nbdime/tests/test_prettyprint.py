@@ -40,7 +40,7 @@ def test_present_dict_no_markup():
         if key != 'd':
             mark = '- %s:' % key
             assert mark in text
-    assert "short: 'text'" in text
+    assert "short: text" in text
     assert 'long:\n' in text
     assert 'd:' not in text
 
@@ -90,7 +90,7 @@ def test_present_stream_output():
     lines = pp.present_value('+ ', output)
     assert lines == [
         '+ output_type: stream',
-        "+ name: 'stdout'",
+        "+ name: stdout",
         "+ text:",
         "+   some",
         "+   text",
@@ -107,7 +107,7 @@ def test_present_display_data():
     assert len(text) < 500
     assert 'snip base64' in text
     assert 'image/png' in text
-    assert "text/plain: 'text'" in text
+    assert "text/plain: text" in text
     assert all(line.startswith('+ ') for line in lines if line)
 
 def test_present_markdown_cell():
