@@ -12,7 +12,12 @@ import pprint
 import re
 from subprocess import Popen, PIPE
 import tempfile
-from textwrap import indent
+try:
+    from textwrap import indent
+except ImportError:
+    def indent(text, prefix):
+        """The relevant part of textwrap.indent for Python 2"""
+        return prefix + text.replace('\n', '\n' + prefix)
 
 from six import string_types
 
@@ -24,7 +29,7 @@ try:
 except ImportError:
     from backports.shutil_which import which
 
-# Disable indentation here
+# Toggle indentation here
 with_indent = True
 
 
