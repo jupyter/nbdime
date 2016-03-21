@@ -87,11 +87,15 @@ if 'develop' in sys.argv or any(a.startswith('bdist') for a in sys.argv):
 
 setuptools_args = {}
 install_requires = setuptools_args['install_requires'] = [
-    'nbformat', 'six',
+    'nbformat',
+    'six',
 ]
 
 extras_require = setuptools_args['extras_require'] = {
     'test': ['pytest'],
+    ':python_version == "2.7"': [
+        'backports.shutil_which',
+    ],
 }
 
 if 'setuptools' in sys.modules:
