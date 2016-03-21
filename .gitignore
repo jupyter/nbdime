@@ -1,6 +1,9 @@
 *.pyc
 *~
-nbdime.egg-info
-nbdime/tests/__pycache__
-nbdime/tests/files/.ipynb_checkpoints
+*.egg-info
+__pycache__
+.ipynb_checkpoints
 docs/build
+htmlcov
+.coverage
+.cache
