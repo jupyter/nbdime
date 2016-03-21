@@ -10,6 +10,7 @@ from itertools import chain
 import os
 import pprint
 import re
+import shutil
 from subprocess import Popen, PIPE
 import tempfile
 try:
@@ -219,7 +220,8 @@ def present_string_diff(a, di, path):
     if _base64.match(a):
         return ['<base64 data changed>']
     b = patch(a, di)
-    with tempfile.TemporaryDirectory() as td:
+    td = tempfile.mkdtemp()
+    try:
         with open(os.path.join(td, 'before'), 'w') as f:
             f.write(a)
         with open(os.path.join(td, 'after'), 'w') as f:
@@ -234,6 +236,8 @@ def present_string_diff(a, di, path):
         p = Popen(cmd + ['before', 'after'], cwd=td, stdout=PIPE)
         out, _ = p.communicate()
         dif = out.decode('utf8')
+    finally:
+        shutil.rmtree(td)
     return dif.splitlines()[heading_lines:]
 
     consumed = 0
