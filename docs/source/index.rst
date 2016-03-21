@@ -3,11 +3,13 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Documentation for nbdime -- tools for diffing and merging of Jupyter Notebooks
-==============================================================================
+nbdime -- tools for diffing and merging of Jupyter Notebooks
+============================================================
 
-NB! The nbdime project and this documentation and is in a very early stage
-of development and is not usable for any kind of production work yet.
+.. warning::
+
+   nbdime project and this documentation are in a very early stage
+   of development and are not usable for any kind of production work yet.
 
 
 Contents:
@@ -21,6 +23,7 @@ Contents:
    diffing
    merging
    plans
+   api
 
 
 Indices and tables
