@@ -43,6 +43,7 @@ def present_dict_no_markup(prefix, d, exclude_keys=None):
         key:
           long
           value
+
     """
     pp = []
     value_prefix = prefix + '  '
@@ -79,7 +80,10 @@ def present_multiline_string(prefix, s):
 
 
 def present_output(prefix, output):
-    """Present an output (whole output add/delete)"""
+    """Present an output (whole output add/delete)
+    
+    Called by present_value
+    """
     pp = []
     pp.append(prefix + 'output_type: %s' % output['output_type'])
     value_prefix = prefix + '  '
@@ -98,7 +102,10 @@ def present_output(prefix, output):
 
 
 def present_cell(prefix, cell):
-    """Present a cell as a scalar (whole cell delete/add)"""
+    """Present a cell as a scalar (whole cell delete/add)
+    
+    Called by present_value
+    """
     pp = []
     pp.append('')
     pp.append(prefix + "%s cell:" % cell['cell_type'])
@@ -127,6 +134,12 @@ def present_cell(prefix, cell):
     return pp
 
 def present_value(prefix, arg):
+    """Present a whole value that is either added or deleted.
+    
+    Calls out to other formatters for cells, outputs, and multiline strings.
+    
+    Uses pprint.pformat, otherwise.
+    """
     # TODO: improve pretty-print of arbitrary values?
     if isinstance(arg, dict):
         if 'cell_type' in arg:
