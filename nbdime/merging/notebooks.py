@@ -51,6 +51,7 @@ def merge_notebooks(base, local, remote, args):
     merged, local_diffs, remote_diffs = merge_with_diff(base, local, remote, local_diffs, remote_diffs)
 
     # Try to resolve conflicts based on behavioural options
+    #resolved = merged
     resolved, local_diffs, remote_diffs = \
       autoresolve_notebook_conflicts(merged, local_diffs, remote_diffs, args)
 
