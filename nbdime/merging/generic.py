@@ -214,7 +214,7 @@ def interleave_inserts(local_inserts, remote_inserts):
     return inserts
 
 
-def _merge_lists(base, local, remote, base_local_diff, base_remote_diff):
+def _old_merge_lists(base, local, remote, base_local_diff, base_remote_diff):
     """Perform a three-way merge of lists. See docstring of merge."""
     assert isinstance(base, list) and isinstance(local, list) and isinstance(remote, list)
 
@@ -226,7 +226,7 @@ def _merge_lists(base, local, remote, base_local_diff, base_remote_diff):
     # Add a dummy insert at end to make loop below handle final stretch after last actual insert
     inserts.append([len(base), [], 0, 0])
 
-    # Interleave local and remote diff entries in a merged diff object
+    # Interleave changes that local and remote agrees on in a merged object
     merged = []
 
     # Data structures for storing conflicts
@@ -304,6 +304,171 @@ def _merge_lists(base, local, remote, base_local_diff, base_remote_diff):
     return merged, local_conflict_diff.diff, remote_conflict_diff.diff  # XXX
 
 
+def get_diff_range(diffs, i):
+    "Returns diff entry and range j..k which this diff affects, i.e. base[j:k] is affected."
+    assert i < len(diffs)
+    e = diffs[i]
+    j = e.key
+    if e.op == Diff.PATCH:
+        k = j + 1
+    elif e.op == Diff.ADDRANGE:
+        k = j
+    elif e.op == Diff.REMOVERANGE:
+        k = j + e.length
+    else:
+        raise ValueError("Unexpected diff op {}".format(e.op))
+    return e, j, k
+
+
+def get_section_boundaries(diffs):
+    boundaries = set()
+    for e in diffs:
+        j = e.key
+        boundaries.add(j)
+        if e.op == Diff.ADDRANGE:
+            pass
+        elif e.op == Diff.REMOVERANGE:
+            k = j + e.length
+            boundaries.add(k)
+        elif e.op == Diff.PATCH:
+            k = j + 1
+            boundaries.add(k)
+    return boundaries
+
+
+def split_diffs_on_boundaries(diffs, boundaries):
+    newdiffs = SequenceDiff()
+    assert isinstance(boundaries, list)
+    b = 0
+    for i in range(len(diffs)):
+        e = diffs[i]
+        j = e.key
+
+        # Skip boundaries smaller than j
+        while b < len(boundaries) and boundaries[b] < j:
+            b += 1
+
+        if b > len(boundaries) or e.op in (Diff.ADDRANGE, Diff.PATCH):
+            # No boundaries left or no diff range to split
+            newdiffs.append(e)
+        elif e.op == Diff.REMOVERANGE:
+            # Find end of diff range
+            k = j + e.length
+
+            # Split on boundaries smaller than k
+            while b < len(boundaries) and boundaries[b] < k:
+                newdiffs.removerange(j, boundaries[b])
+                j = boundaries[b]
+                b += 1
+
+            # Add remaining diff
+            if j < k:
+                newdiffs.removerange(j, k)
+        else:
+            raise ValueError("Unhandled diff entry op {}.".format(e.op))
+
+    return newdiffs.diff
+
+
+from nbdime.diff_format import DiffEntry
+
+def offset_op(e, n):
+    e = DiffEntry(e)
+    e.key += n
+    return e
+
+
+def _merge_lists(base, local, remote, base_local_diff, base_remote_diff):
+    """Perform a three-way merge of lists. See docstring of merge."""
+    assert isinstance(base, list) and isinstance(local, list) and isinstance(remote, list)
+
+    # Interleave changes that local and remote agrees on in a merged object
+    merged = []
+
+    # Data structures for storing conflicts
+    local_conflict_diff = SequenceDiff()
+    remote_conflict_diff = SequenceDiff()
+
+    # Offset of indices between base and merged
+    merged_offset = 0
+
+    def _apply_diff(e, base, merged):
+        # Apply diff entry
+        j = e.key
+        if e.op == Diff.PATCH:
+            assert j < len(base)
+            # Patch this entry. Since j < j_other
+            merged.append(patch(base[j], e.diff))
+            assert len(merged) - 1 == j + merged_offset  # Not quite sure if this check is correct?
+            offset = 0
+        elif e.op == Diff.ADDRANGE:
+            assert j <= len(base)
+            # Add new values
+            merged.extend(e.valuelist)
+            offset = len(e.valuelist)
+        elif e.op == Diff.REMOVERANGE:
+            assert j < len(base)
+            # Represent skipping of values base[j:j+e.length]
+            offset = -e.length
+        else:
+            raise ValueError("Unexpected diff op {}".format(e.op))
+        return offset
+
+    # Split diffs on union of diff entry boundaries such that
+    # no diff entry overlaps with more than one other entry
+    boundaries = sorted(get_section_boundaries(base_local_diff) | get_section_boundaries(base_remote_diff))
+    diff0 = split_diffs_on_boundaries(base_local_diff, boundaries)
+    diff1 = split_diffs_on_boundaries(base_remote_diff, boundaries)
+
+    e0 = None
+    e1 = None
+    i0 = 0
+    i1 = 0
+    n0 = len(diff0)
+    n1 = len(diff1)
+    while i0 < n0 and i1 < n1:
+        e0, j0, k0 = get_diff_range(diff0, i0)
+        e1, j1, k1 = get_diff_range(diff1, i1)
+
+        # At the end of one or both diffs, nothing more to resolve
+        if e0 is None or e1 is None:
+            break
+
+        if k1 < j0:
+            # Remote change does not overlap with local change
+            merged_offset += _apply_diff(e1, base, merged)
+            i1 += 1
+        elif k0 < j1:
+            # Local change does not overlap with remote change
+            merged_offset += _apply_diff(e0, base, merged)
+            i0 += 1
+        else:
+            # The diffs e0 and e1 are overlapping and thus in conflict.
+
+            # Figure out if they are a false conflict, i.e. if they result in the same
+            false_conflict = (e0 == e1)  # TODO: Is this check robust?
+            if false_conflict:
+                # Apply e0 or e1, doesn't matter
+                merged_offset += _apply_diff(e1, base, merged)
+            else:
+                # Keep diffs as conflicts
+                local_conflict_diff.append(offset_op(e0, merged_offset))
+                remote_conflict_diff.append(offset_op(e1, merged_offset))
+
+            # Skip to the next diff on both sides
+            i0 += 1
+            i1 += 1
+
+    # Apply final diffs from one of the sides if any
+    assert not (e0 is None and e1 is None)
+    for i in range(i0, n0):
+        merged_offset += _apply_diff(diff0[i], base, merged)
+    for i in range(i1, n1):
+        merged_offset += _apply_diff(diff1[i], base, merged)
+
+    return merged, local_conflict_diff.diff, remote_conflict_diff.diff  # XXX
+
+
 def _merge_strings(base, local, remote, base_local_diff, base_remote_diff):
     """Perform a three-way merge of strings. See docstring of merge."""
     assert isinstance(base, string_types) and isinstance(local, string_types) and isinstance(remote, string_types)
@@ -345,7 +510,7 @@ def merge(base, local, remote):
         collection = list | dict | string
         value = int | float | string
 
-        (string is a collection of chars or atomic value depending on parameters)
+        (string is a collection of chars or an atomic value depending on parameters)
 
         (an alternative way to handle string parameters would be a pre/postprocessing
         splitting/joining of strings into lists of lines, lists of words, lists of chars)
@@ -421,23 +586,17 @@ def merge(base, local, remote):
 
         Two sided equal ops ok if argument is the same:
         -,- = ok (agree on delete)
-.        +,+ = ok if equal inserts, otherwise conflict (two sided insert)
-.        !,! = ok if equal patches, otherwise conflict (two sided patch)
-.        :,: = ok if equal replacement value, otherwise conflict (two sided replace)
+        +,+ = ok if equal inserts, otherwise conflict (two sided insert)
+        !,! = ok if equal patches, otherwise conflict (two sided patch)
+        :,: = ok if equal replacement value, otherwise conflict (two sided replace)
 
         Different op always conflicts:
         !,- = conflict (delete and patch)
         -,! = conflict (delete and patch)
         :,- = conflict (delete and replace)
         -,: = conflict (delete and replace)
-.        :,! = conflict (patch and replace)
-.        !,: = conflict (patch and replace)
-
-  ! : + -
-! r x x m
-: x r x m
-+ x x m x
-- m m x -
+        :,! = conflict (patch and replace)
+        !,: = conflict (patch and replace)
 
         Conflict situations (symmetric, only listing from one side):
         delete / replace or delete / patch -- manual resolution needed
@@ -471,12 +630,6 @@ def merge(base, local, remote):
         +,+ = ok (always insert both, or pick one if new values are equal?)
         !,! = ok (recurse)
         !,+ = ok (patch this item and insert new values)
-
-  ! : + -
-! r x x m
-: x r x m
-+ x x m x
-- m m x -
 
         Conflict situations (symmetric, only listing from one side):
         delete / replace or delete / patch -- manual resolution needed

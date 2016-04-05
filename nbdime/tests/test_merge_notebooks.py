@@ -7,6 +7,7 @@ from __future__ import unicode_literals
 
 import pytest
 import copy
+from six import string_types
 import nbformat
 
 from nbdime import merge_notebooks, merge, diff, patch
@@ -260,52 +261,25 @@ def test_merge_cell_sources_separate_inserts():
     assert not rco
     assert actual == expected
 
+def src2nb(src):
+    """Convert source strings to a notebook.
 
-def test_merge_cell_sources_conflicts_shift_indices_correctly():
-
-    # Triplets of (local, base, remote) cell source strings
-    cases = [
-        ("same", "same", "different"), # no conflict, but will shift diff index
-        ("left", "middle", "right"),   # conflict
-        ("different", "same", "same"), # no conflict
-        ]
-    local  = sources_to_notebook([[case[0]] for case in cases])
-    base   = sources_to_notebook([[case[1]] for case in cases])
-    remote = sources_to_notebook([[case[2]] for case in cases])
-
-    expected_partial = sources_to_notebook([
-        ["different"], # autoresolved
-        ["middle"],    # conflict remaining
-        ["different"], # autoresolved
-        ])
-    expected_lco = [
-        make_op("removerange", 1, 1),
-        make_op("addrange", 1, ["left"]),
-        ]
-    expected_rco = [
-        make_op("removerange", 1, 1),
-        make_op("addrange", 1, ["right"]),
-        ]
-
-    args = None
-    partial, lco, rco = merge_notebooks(base, local, remote, args)
-    sources = [cell["source"] for cell in partial["cells"]]
-    expected_sources = [cell["source"] for cell in expected_partial["cells"]]
-    assert sources == expected_sources
-    assert partial == expected_partial
-    assert lco == expected_lco
-    assert rco == expected_rco
-
+    src is either a single multiline string to become one cell,
+    or a list (cells) of lists (lines) of singleline strings.
+    """
+    if isinstance(src, string_types):
+        src = [src.split("\n")]
+    if isinstance(src, list):
+        src  = sources_to_notebook(src)
+    assert isinstance(src, dict)
+    assert "cells" in src
+    return src
 
 def _check(base, local, remote, expected_partial, expected_lco, expected_rco):
-    if isinstance(local, list):
-        local  = sources_to_notebook(local)
-    if isinstance(base, list):
-        base   = sources_to_notebook(base)
-    if isinstance(remote, list):
-        remote = sources_to_notebook(remote)
-    if isinstance(expected_partial, list):
-        expected_partial = sources_to_notebook(expected_partial)
+    base = src2nb(base)
+    local = src2nb(local)
+    remote = src2nb(remote)
+    expected_partial = src2nb(expected_partial)
 
     args = None
     partial, lco, rco = merge_notebooks(base, local, remote, args)
@@ -418,13 +392,104 @@ def test_merge_single_cell_sources_conflicts():
     _check(base, local, remote, expected_partial, expected_lco, expected_rco)
 
 
-    # Trying to induce conflicts with shifting of diff indices
+    # Interleaving cell inserts and deletes, no modifications = avoids heuristics
     local  = [["local 1"],  ["base 1"], ["local 2"], ["base 2"], ["local 3"],  ["base 3"], ["base 4"]]
     base   = [              ["base 1"],              ["base 2"],               ["base 3"], ["base 4"]]
     remote = [["remote 1"], ["base 1"], ["remote 2"],            ["remote 3"], ["base 3"]]
+    # Note: in this case "remote 3" is before "local 3" because it's lumped
+    # together with "remote 2" in the diff and the insert of ["remote 2", "remote 3"]
+    # starts before the removal of "base 2"
     expected_partial = [["local 1"], ["remote 1"], ["base 1"],
                         ["local 2"], ["remote 2"],
-                        ["remote 3"], ["local 3"], ["base 3"]]  # in this case "remote 3" is before "local 3" because it's lumped together with "remote 2"
+                        ["remote 3"], ["local 3"], ["base 3"]]
     expected_lco = []
     expected_rco = []
     _check(base, local, remote, expected_partial, expected_lco, expected_rco)
+
+
+    # Trying to induce conflicts with shifting of diff indices
+    source = [
+        "def foo(x, y):",
+        "    z = x * y",
+        "    return z",
+        ]
+    local  = [["same"], source+["local"], ["different"]]
+    base   = [["same"], source+["base"], ["same"]]
+    remote = [["different"], source+["remote"], ["same"]]
+    expected_partial = [["different"], source+["local", "remote"], ["different"]]
+    expected_lco = [
+        make_op("removerange", 1, 1),
+        make_op("addrange", 1, ["left"]),
+        ]
+    expected_rco = [
+        make_op("removerange", 1, 1),
+        make_op("addrange", 1, ["right"]),
+        ]
+    expected_lco = []
+    expected_rco = []
+    _check(base, local, remote, expected_partial, expected_lco, expected_rco)
+
+
+    # Trying to induce conflicts with shifting of diff indices
+    source = [
+        "def foo(x, y):",
+        "    z = x * y",
+        "    return z",
+        ]
+    local  = [["same"], source+["long line with minor change L"], ["different"]]
+    base   = [["same"], source+["long line with minor change"], ["same"]]
+    remote = [["different"], source+["long line with minor change R"], ["same"]]
+    expected_partial = [["different"], source+["long line with minor change"], ["different"]]
+    expected_lco = [
+        make_op("removerange", 1, 1),
+        make_op("addrange", 1, ["left"]), # todo
+        ]
+    expected_rco = [
+        make_op("removerange", 1, 1),
+        make_op("addrange", 1, ["right"]), # todo
+        ]
+    expected_lco = []
+    expected_rco = []
+    _check(base, local, remote, expected_partial, expected_lco, expected_rco)
+
+
+    # Multiple inserts within a deleted range
+    base = """
+def f(x):
+    return x**2
+
+def g(x):
+    return x + 2
+"""
+
+    local = """
+def foo(y):
+    return y / 3
+
+def f(x):
+    return x**2
+
+def bar(y):
+    return y - 3
+
+def g(x):
+    return x + 2
+"""
+
+    remote = ""
+
+    # This is quite optimistic employing aggressive attempts at automatic resolution beyond what git and meld do:
+    expected_partial = """
+def foo(y):
+    return y / 3
+
+def bar(y):
+    return y - 3
+"""
+    expected_lco = []
+    expected_rco = []
+    _check(base, local, remote, expected_partial, expected_lco, expected_rco)
+
+
+    # Keep it failing
+    assert False
