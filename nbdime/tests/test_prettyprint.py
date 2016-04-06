@@ -153,10 +153,10 @@ def test_present_list_diff():
     di = diff(a, b, path=path)
     lines = pp.present_diff(a, di, path=path)
     assert lines == [
-        '  delete a/b/0:',
-        '  - [1]',
         '  insert before a/b/0:',
         '  + [2]',
+        '  delete a/b/0:',
+        '  - [1]',
     ]
 
 def test_present_string_diff():
