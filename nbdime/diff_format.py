@@ -98,7 +98,21 @@ class SequenceDiff(Diff):
 
     def append(self, entry):
         assert isinstance(entry, DiffEntry)
+
+        # Assert consistent ordering
+        if self.diff:
+            assert self.diff[-1].key <= entry.key
+
+        # Add entry
         self.diff.append(entry)
+
+        # Swap last two entries if insertion was inserted
+        # at same location as remove or patch
+        if (len(self.diff) >= 2 and
+                entry.op == Diff.ADDRANGE and
+                entry.key == self.diff[-2].key
+                ):
+            self.diff[-2], self.diff[-1] = self.diff[-1], self.diff[-2]
 
     def add(self, key, valuelist):
         self.append(make_op(Diff.ADDRANGE, key, valuelist))

@@ -28,8 +28,8 @@ def autoresolve_notebook_conflicts(merged, local_diffs, remote_diffs, args):
         "/cells/*/cell_type": "fail",
         "/cells/*/execution_count": "clear",
         "/cells/*/metadata": "use-base",
-        #"/cells/*/source": "inline",
-        #"/cells/*/outputs": "join",
+        #"/cells/*/source": "inline",  # FIXME: Implement
+        #"/cells/*/outputs": "join",   # FIXME: Implement
         "/cells/*/outputs": "clear",
         }
     resolutions, local_diffs, remote_diffs = \
@@ -51,7 +51,7 @@ def merge_notebooks(base, local, remote, args):
     merged, local_diffs, remote_diffs = merge_with_diff(base, local, remote, local_diffs, remote_diffs)
 
     # Try to resolve conflicts based on behavioural options
-    resolved = merged  # FIXME: Enable again
+    resolved = merged  # FIXME: Enable autoresolve again when basic merge works properly
     #resolved, local_diffs, remote_diffs = \
     #  autoresolve_notebook_conflicts(merged, local_diffs, remote_diffs, args)
 

@@ -10,7 +10,7 @@ from six.moves import xrange as range
 import copy
 import pytest
 
-from nbdime import merge
+from nbdime import merge, diff, patch
 from nbdime.diff_format import make_op, Diff
 
 
@@ -215,15 +215,35 @@ def test_deep_merge_lists_insert_no_conflict():
     assert lc == []
     assert rc == []
 
-    # local and remote adds an entry each
+
+    # Some notes explaining the below expected values... while this works:
+    assert diff([1], [1, 2]) == [make_op("addrange", 1, [2])]
+    # This does not happen:
+    #assert diff([[1]], [[1, 2]]) == [make_op("patch", 0, [make_op("addrange", 1, [2])])]
+    # Instead we get this:
+    assert diff([[1]], [[1, 2]]) == [make_op("addrange", 0, [[1, 2]]), make_op("removerange", 0, 1)]
+    # To get the "patch inner list" version instead of the "remove inner list + add new inner list" version,
+    # the diff algorithm would need to identify that the inner list [1] is similar to [1,2],
+    # e.g. through heuristics. In the case [1] vs [1,2] the answer will probably be "not similar enough" even
+    # with better heuristics than we have today, i.e. we can never be quite certain what the "right choice" is.
+
+    # *** Because of this uncertainty, insertions at the same location are suspect and must be treated as conflicts! ***
+
+
+    # local and remote adds an entry each to inner list
+    # (documents failure to identify inner list patching opportunity)
     b = [[1]]
     l = [[1, 2]]
     r = [[1, 3]]
     m, lc, rc = merge(b, l, r)
-    assert m == [[1, 2], [1, 3]]  # This is expected behaviour today
-    #assert m == [[1, 2, 3]]  # TODO: This is the behaviour we want
-    assert lc == []
-    assert rc == []
+    #assert m == [[1, 2], [1, 3]]  # This was expected behaviour in old code, obviously not what we want
+    #assert m == [[1, 2, 3]]  # This is the behaviour we want from an ideal thought-reading algorithm, unclear if possible
+    assert m == []  # This is the behaviour we get now, with conflicts left:
+    assert lc == [make_op("addrange", 0, [[1, 2]])]
+    assert rc == [make_op("addrange", 0, [[1, 3]])]
+    assert m == [[1]]  # This is the behaviour we get now, with conflicts left:
+    assert lc == [make_op("removerange", 0, 1), make_op("addrange", 0, [[1, 2]])]
+    assert rc == [make_op("removerange", 0, 1), make_op("addrange", 0, [[1, 3]])]
 
     # local and remote adds the same entry plus an entry each
     b = [[1]]

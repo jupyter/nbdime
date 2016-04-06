@@ -399,7 +399,7 @@ def _merge_lists(base, local, remote, base_local_diff, base_remote_diff):
             assert j < len(base)
             # Patch this entry. Since j < j_other
             merged.append(patch(base[j], e.diff))
-            assert len(merged) - 1 == j + merged_offset  # Not quite sure if this check is correct?
+            #assert len(merged) - 1 == j + merged_offset  # Not quite sure if this check is correct?
             offset = 0
         elif e.op == Diff.ADDRANGE:
             assert j <= len(base)
@@ -443,7 +443,42 @@ def _merge_lists(base, local, remote, base_local_diff, base_remote_diff):
             merged_offset += _apply_diff(e0, base, merged)
             i0 += 1
         else:
-            # The diffs e0 and e1 are overlapping and thus in conflict.
+            # The diffs e0 and e1 are overlapping and thus in (possible) conflict.
+
+            # FIXME: What about the next diff entry?
+            # Possible cases still colliding:
+            # del base[j:j+n]; base.insert(j, localvalues)  # local diffs
+            # del base[j:j+n]; base.insert(j, remotevalues) # remote diffs
+
+            """
+remove and patch may not overlap!
+local: remove 1..4 -> remove 1..2, remove 3..3, remove 4..4
+remote: remove 1..2, patch 3
+->
+remove 1..2 agreed upon
+remove 3 conflicts with patch 3
+remove 4 single-sided
+
+x        foo()  x
+x        bar()  x
+bling()  ting() x
+tang()   tang() x
+
+results in partial with conflicts:
+
+bling()  ting()  x
+
+actually this is what git gives:
+
+>>>>>>>
+bling()
+tang()
+=======
+<<<<<<<
+"""            
+            # given abcd:
+            # delete b, insert x before b: axcd
+            # delete b, insert x before d: acxd
 
             # Figure out if they are a false conflict, i.e. if they result in the same
             false_conflict = (e0 == e1)  # TODO: Is this check robust?
@@ -460,7 +495,7 @@ def _merge_lists(base, local, remote, base_local_diff, base_remote_diff):
             i1 += 1
 
     # Apply final diffs from one of the sides if any
-    assert not (e0 is None and e1 is None)
+    assert not (i0 < n0 and i1 < n1)
     for i in range(i0, n0):
         merged_offset += _apply_diff(diff0[i], base, merged)
     for i in range(i1, n1):

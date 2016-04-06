@@ -12,6 +12,30 @@ from ..diff_format import as_dict_based_diff, revert_as_dict_based_diff, decompr
 from ..patching import patch
 
 
+# FIXME: Move to utils
+def as_text_lines(text):
+    if isinstance(text, string_types):
+        text = text.split("\n")
+    if isinstance(text, tuple):
+        text = list(text)
+    assert isinstance(text, list)
+    assert all(isinstance(t, string_types) for t in text)
+    return text
+
+# FIXME: Move to utils
+def format_text_merge_display(local, remote,
+                              local_title="local", remote_title="remote"):
+    local = as_text_lines(local)
+    remote = as_text_lines(remote)
+
+    n = 7  # git uses 7
+    pre = "%s %s" % ("<"*n, local_title)
+    mid = "="*n
+    post = "%s %s" % (">"*n, remote_title)
+
+    return "\n".join([pre, local, mid, remote, post])
+
+
 # Sentinel object
 Deleted = object()
 
@@ -39,11 +63,29 @@ def __make_join_diffentry(value, le, re):
     e = FIXME
     return e
 
-def __make_inline_diffentry(value, le, re):
-    # FIXME implement
-    e = FIXME
-    return e
 
+def make_inline_diffentry(value, le, re):  # FIXME: Test this!
+    if le.op == Diff.REPLACE:
+        local = le.value
+    elif le.op == Diff.PATCH:
+        local = patch(value, le.diff)
+    elif le.op == Diff.REMOVE:
+        local = []  # ""
+    else:
+        raise ValueError("Invalid item patch op {}".format(le.op))
+
+    if re.op == Diff.REPLACE:
+        remote = re.value
+    elif re.op == Diff.PATCH:
+        remote = patch(value, re.diff)
+    elif re.op == Diff.REMOVE:
+        remote = []  # ""
+    else:
+        raise ValueError("Invalid item patch op {}".format(re.op))
+
+    # FIXME: use format_text_merge_display for each conflicting chunk
+    e = format_text_merge_display(local, remote)
+    return e
 
 
 def cleared_value(value):
@@ -84,10 +126,9 @@ def resolve_single_conflict(value, le, re, strategy, path):
         e = make_op(Diff.REPLACE, le.key, v)
         le, re = None, None
 
-    # FIXME: Implement
-    #elif strategy == "inline":
-    #    e = make_inline_diffentry(value, le, re)
-    #    le, re = None
+    elif strategy == "inline":
+        e = make_inline_diffentry(value, le, re)
+        le, re = None
 
     # FIXME: Implement
     #elif strategy == "join":
