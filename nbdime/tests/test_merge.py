@@ -242,8 +242,8 @@ def test_deep_merge_lists_insert_no_conflict():
     assert lc == [make_op("addrange", 0, [[1, 2]])]
     assert rc == [make_op("addrange", 0, [[1, 3]])]
     assert m == [[1]]  # This is the behaviour we get now, with conflicts left:
-    assert lc == [make_op("removerange", 0, 1), make_op("addrange", 0, [[1, 2]])]
-    assert rc == [make_op("removerange", 0, 1), make_op("addrange", 0, [[1, 3]])]
+    assert lc == [make_op("addrange", 0, [[1, 2]]), make_op("removerange", 0, 1)]
+    assert rc == [make_op("addrange", 0, [[1, 3]]), make_op("removerange", 0, 1)]
 
     # local and remote adds the same entry plus an entry each
     b = [[1]]
