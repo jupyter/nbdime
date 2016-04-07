@@ -139,171 +139,6 @@ def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
     return merged, lco, rco
 
 
-insertitem = namedtuple("insertitem", ("index", "value"))
-
-
-def _split_list_diff(diff, size):
-    """Splits a sequence diff based on ops.
-
-    Returns lists (deleted, patched, inserts), where
-
-      deleted[i] = boolean: item i is deleted
-      patched[i] = None or diff if item i is patched
-      inserts = list of block inserts on the form [[index0, values0], ..., [indexn, valuesn]]
-
-    """
-    deleted = [False]*size
-    patched = [None]*size
-    inserts = []
-    for e in diff:
-        op = e.op
-        if op == Diff.ADDRANGE:
-            inserts.append(insertitem(e.key, e.valuelist))
-        elif op == Diff.REMOVERANGE:
-            for i in range(e.length):
-                deleted[e.key + i] = True
-        elif op == Diff.PATCH:
-            patched[e.key] = e.diff
-        else:
-            raise ValueError("Invalid diff op {}.".format(e.op))
-    return deleted, patched, inserts
-
-
-def interleave_inserts(local_inserts, remote_inserts):
-    # [ (index0, values0), (index1, values1) ]
-    empty = [0, [], 0, 0]
-    inserts = [copy.deepcopy(empty)]
-
-    l = list(local_inserts)
-    r = list(remote_inserts)
-    li = 0
-    ri = 0
-    while li < len(l) or ri < len(r):
-        # NB! The code below defines that local inserts
-        # are inserted before remote change when index is equal,
-        # and that when inserts are made both locally and remote
-        # before the same base line, the values are concatenated
-        # without considering whether they represent the same change
-        # or not. It is possible that checking for duplicate inserts
-        # is better, but we need to think this through carefully and
-        # investigate what other tools do. At least this naive
-        # approach doesn't drop any data.
-        if li < len(l) and (ri >= len(r) or l[li].index <= r[ri].index):
-            index, values = l[li]
-            li += 1
-            lskip = len(values)
-            rskip = 0
-        else:
-            index, values = r[ri]
-            ri += 1
-            lskip = 0
-            rskip = len(values)
-
-        if inserts[-1][0] == index:
-            # Join inserts at the same base index into one block
-            inserts[-1][1].extend(values)
-            inserts[-1][2] += lskip
-            inserts[-1][3] += rskip
-        else:
-            # Add new block insert (rebuilding list here to use extend above)
-            item = [index, list(values), lskip, rskip]
-            inserts.append(item)
-
-    # Remove empty insert items (can this happen more than the initial dummy item?)
-    inserts = [item for item in inserts if item != empty]
-    return inserts
-
-
-def _old_merge_lists(base, local, remote, base_local_diff, base_remote_diff):
-    """Perform a three-way merge of lists. See docstring of merge."""
-    assert isinstance(base, list) and isinstance(local, list) and isinstance(remote, list)
-
-    # Split diffs into different representations
-    local_deleted, local_patched, local_inserts = _split_list_diff(base_local_diff, len(base))
-    remote_deleted, remote_patched, remote_inserts = _split_list_diff(base_remote_diff, len(base))
-    inserts = interleave_inserts(local_inserts, remote_inserts)
-
-    # Add a dummy insert at end to make loop below handle final stretch after last actual insert
-    inserts.append([len(base), [], 0, 0])
-
-    # Interleave changes that local and remote agrees on in a merged object
-    merged = []
-
-    # Data structures for storing conflicts
-    local_conflict_diff = SequenceDiff()
-    remote_conflict_diff = SequenceDiff()
-
-    # Offsets or number of items consumed from base, local, remote
-    boffset = 0
-    loffset = 0
-    roffset = 0
-
-    for index, values, lskip, rskip in inserts:
-        # 1) consume base[boffset:index]
-        for i in range(boffset, index):
-            # Bools meaning: local delete, remote deleted, local patched, remote patched
-            ld = local_deleted[i]
-            rd = remote_deleted[i]
-            lp = local_patched[i] is not None
-            rp = remote_patched[i] is not None
-
-            # Split the search space: have deletion of this line occurred on at least one side?
-            if ld or rd:
-                if lp:
-                    # Conflict: Deleted remote, patched local
-                    # NB! Note the use of j, index into merged, in the conflict diff!
-                    j = len(merged)
-                    merged.append(base[i])
-                    local_conflict_diff.patch(j, local_patched[i])
-                    remote_conflict_diff.removerange(j, 1)
-                elif rp:
-                    # Conflict: Deleted local, patched remote
-                    # NB! Note the use of j, index into merged, in the conflict diff!
-                    j = len(merged)
-                    merged.append(base[i])
-                    local_conflict_diff.removerange(j, 1)
-                    remote_conflict_diff.patch(j, remote_patched[i])
-                else:
-                    # Not patched on alternate side, so delete it by just skipping value
-                    pass
-            else:
-                # At this point we know no deletion has occured
-                if lp and rp:
-                    # Patched on both sides, recurse
-                    me, lco, rco = _merge(base[i], local[i+loffset], remote[i+roffset], local_patched[i], remote_patched[i])
-                    # NB! Note the use of j, index into merged, in the conflict diff!
-                    j = len(merged)
-                    merged.append(me)
-                    if lco or rco:
-                        assert lco and rco
-                        local_conflict_diff.patch(j, lco)
-                        remote_conflict_diff.patch(j, rco)
-                elif lp:
-                    if DEBUGGING:
-                        # This assert is expensive and must not be enabled in release mode
-                        assert local[i+loffset] == patch(base[i], local_patched[i].diff)
-                    # Patched on local side only
-                    merged.append(local[i+loffset])
-                elif rp:
-                    if DEBUGGING:
-                        # This assert is expensive and must not be enabled in release mode
-                        assert remote[i+roffset] == patch(base[i], remote_patched[i].diff)
-                    # Patched on remote side only
-                    merged.append(remote[i+loffset])
-                else:
-                    # No deletion, no patching, keep value
-                    merged.append(base[i])
-        # Start at index next time
-        boffset = index
-
-        # 2) insert next range of values before index and skip values in local and remote
-        merged.extend(values)
-        loffset += lskip
-        roffset += rskip
-
-    return merged, local_conflict_diff.diff, remote_conflict_diff.diff  # XXX
-
-
 def get_diff_range(diffs, i):
     "Returns diff entry and range j..k which this diff affects, i.e. base[j:k] is affected."
     assert i < len(diffs)
@@ -339,35 +174,65 @@ def get_section_boundaries(diffs):
 def split_diffs_on_boundaries(diffs, boundaries):
     newdiffs = SequenceDiff()
     assert isinstance(boundaries, list)
+
+    # Next relevant boundary index
     b = 0
-    for i in range(len(diffs)):
-        e = diffs[i]
-        j = e.key
 
-        # Skip boundaries smaller than j
-        while b < len(boundaries) and boundaries[b] < j:
-            b += 1
-
-        if b > len(boundaries) or e.op in (Diff.ADDRANGE, Diff.PATCH):
-            # No boundaries left or no diff range to split
+    for e in diffs:
+        if e.op in (Diff.ADDRANGE, Diff.PATCH):
+            # Nothing to split
             newdiffs.append(e)
         elif e.op == Diff.REMOVERANGE:
-            # Find end of diff range
-            k = j + e.length
-
-            # Split on boundaries smaller than k
-            while b < len(boundaries) and boundaries[b] < k:
-                newdiffs.removerange(j, boundaries[b])
-                j = boundaries[b]
+            # Skip boundaries smaller than key
+            while boundaries[b] < e.key:
                 b += 1
 
-            # Add remaining diff
-            if j < k:
-                newdiffs.removerange(j, k)
+            # key should be included in the boundaries
+            assert boundaries[b] == e.key
+
+            # Add diff entries for each interval between boundaries up to k
+            while b < len(boundaries)-1 and boundaries[b + 1] <= e.key + e.length:
+                newdiffs.removerange(boundaries[b], boundaries[b + 1])
+                b += 1
         else:
             raise ValueError("Unhandled diff entry op {}.".format(e.op))
 
     return newdiffs.diff
+
+
+def make_chunks(boundaries, diff0, diff1):
+    """Make list of chunks on the form (j, k, diffs0, diffs1).
+
+    Because the diff entries have been split on the union of
+    begin/end boundaries of all diff entries, the keys of
+    diff entries on each side will always match a boundary
+    exactly. The only situation where multiple diff entries
+    on one side matches a boundary is when add/remove or
+    add/patch pairs occur, i.e. when inserting something
+    just before an item that is removed or modified.
+    """
+    i0 = 0
+    i1 = 0
+    chunks = []
+    nb = len(boundaries)
+    for i in range(nb):
+        # Find span of next chunk
+        j = boundaries[i]
+        k = boundaries[i+1] if i < nb-1 else j
+        # Collect diff entries from each side
+        # starting at beginning of this chunk
+        d0 = ()
+        while i0 < len(diff0) and diff0[i0].key == j:
+            d0 += (diff0[i0],)
+            i0 += 1
+        d1 = ()
+        while i1 < len(diff1) and diff1[i1].key == j:
+            d1 += (diff1[i1],)
+            i1 += 1
+        # Add non-empty chunks
+        if j < k or d0 or d1:
+            chunks.append((j, k, d0, d1))
+    return chunks
 
 
 from nbdime.diff_format import DiffEntry
@@ -392,114 +257,88 @@ def _merge_lists(base, local, remote, base_local_diff, base_remote_diff):
     # Offset of indices between base and merged
     merged_offset = 0
 
-    def _apply_diff(e, base, merged):
-        # Apply diff entry
-        j = e.key
-        if e.op == Diff.PATCH:
-            assert j < len(base)
-            # Patch this entry. Since j < j_other
-            merged.append(patch(base[j], e.diff))
-            #assert len(merged) - 1 == j + merged_offset  # Not quite sure if this check is correct?
-            offset = 0
-        elif e.op == Diff.ADDRANGE:
-            assert j <= len(base)
-            # Add new values
-            merged.extend(e.valuelist)
-            offset = len(e.valuelist)
-        elif e.op == Diff.REMOVERANGE:
-            assert j < len(base)
-            # Represent skipping of values base[j:j+e.length]
-            offset = -e.length
-        else:
-            raise ValueError("Unexpected diff op {}".format(e.op))
-        return offset
-
     # Split diffs on union of diff entry boundaries such that
-    # no diff entry overlaps with more than one other entry
-    boundaries = sorted(get_section_boundaries(base_local_diff) | get_section_boundaries(base_remote_diff))
+    # no diff entry overlaps with more than one other entry.
+    # Including 0,N makes loop over chunks cleaner.
+    boundaries = sorted(set((0,len(base)))
+                        | get_section_boundaries(base_local_diff)
+                        | get_section_boundaries(base_remote_diff))
     diff0 = split_diffs_on_boundaries(base_local_diff, boundaries)
     diff1 = split_diffs_on_boundaries(base_remote_diff, boundaries)
 
-    e0 = None
-    e1 = None
-    i0 = 0
-    i1 = 0
-    n0 = len(diff0)
-    n1 = len(diff1)
-    while i0 < n0 and i1 < n1:
-        e0, j0, k0 = get_diff_range(diff0, i0)
-        e1, j1, k1 = get_diff_range(diff1, i1)
+    # Make list of chunks on the form (j, k, diffs0, diffs1)
+    chunks = make_chunks(boundaries, diff0, diff1)
 
-        # At the end of one or both diffs, nothing more to resolve
-        if e0 is None or e1 is None:
-            break
+    # Some sanity checking
+    if base or diff0 or diff1:
+        assert chunks
+        assert chunks[0][0] == 0
+        assert chunks[-1][1] == len(base)
 
-        if k1 < j0:
-            # Remote change does not overlap with local change
-            merged_offset += _apply_diff(e1, base, merged)
-            i1 += 1
-        elif k0 < j1:
-            # Local change does not overlap with remote change
-            merged_offset += _apply_diff(e0, base, merged)
-            i0 += 1
+    if 0:
+        print()
+        print(base)
+        print(local)
+        print(remote)
+        print('\n'.join(map(repr,chunks)))
+        print()
+        
+    # Loop over chunks of base[j:k], grouping insertion at j into
+    # the chunk starting with j
+    for (j, k, d0, d1) in chunks:
+        assert len(merged) == j + merged_offset
+
+        if not (d0 or d1):
+            # Unmodified chunk
+            merged.extend(base[j:k])
+
+        elif (all(e.op == Diff.ADDRANGE for e in d0) and
+              all(e.op == Diff.ADDRANGE for e in d1)):
+            # Treating two-sided insertions as non-conflicting.
+            # NB! This behaviour is possibly contentious, and if
+            # this behaviour is not wanted, this elif block can be deleted.
+            # Note that insertions should definitely always be part of 
+            # conflict if at the beginning of a patch or removerange,
+            # but in this case there are two insertions before a
+            # list item that will be kept.
+            assert j <= len(base)
+            for e in d0 + d1:
+                merged.extend(e.valuelist)
+                merged_offset += len(e.valuelist)
+            merged.extend(base[j:k])
+
+        elif bool(d0) != bool(d1) or (d0 == d1):  # xor
+            # One-sided modification of chunk (or exactly the same modifications)
+            d = d0 or d1  # Pick the non-empty one
+            # Apply diff entries (either just one or an add + remove or patch)
+            for e in d:
+                assert j == e.key
+                if e.op == Diff.PATCH:
+                    assert j < len(base)
+                    merged.append(patch(base[j], e.diff))
+                elif e.op == Diff.ADDRANGE:
+                    assert j <= len(base)
+                    merged.extend(e.valuelist)
+                    merged_offset += len(e.valuelist)
+                elif e.op == Diff.REMOVERANGE:
+                    assert j < len(base)
+                    merged_offset -= e.length
+                else:
+                    raise ValueError("Unexpected diff op {}".format(e.op))
+            if (all(e.op == Diff.ADDRANGE for e in d0) and
+                all(e.op == Diff.ADDRANGE for e in d1)):
+                merged.extend(base[j:k])
+
         else:
-            # The diffs e0 and e1 are overlapping and thus in (possible) conflict.
-
-            # FIXME: What about the next diff entry?
-            # Possible cases still colliding:
-            # del base[j:j+n]; base.insert(j, localvalues)  # local diffs
-            # del base[j:j+n]; base.insert(j, remotevalues) # remote diffs
-
-            """
-remove and patch may not overlap!
-local: remove 1..4 -> remove 1..2, remove 3..3, remove 4..4
-remote: remove 1..2, patch 3
-->
-remove 1..2 agreed upon
-remove 3 conflicts with patch 3
-remove 4 single-sided
-
-x        foo()  x
-x        bar()  x
-bling()  ting() x
-tang()   tang() x
-
-results in partial with conflicts:
-
-bling()  ting()  x
-
-actually this is what git gives:
-
->>>>>>>
-bling()
-tang()
-=======
-<<<<<<<
-"""            
-            # given abcd:
-            # delete b, insert x before b: axcd
-            # delete b, insert x before d: acxd
-
-            # Figure out if they are a false conflict, i.e. if they result in the same
-            false_conflict = (e0 == e1)  # TODO: Is this check robust?
-            if false_conflict:
-                # Apply e0 or e1, doesn't matter
-                merged_offset += _apply_diff(e1, base, merged)
-            else:
-                # Keep diffs as conflicts
-                local_conflict_diff.append(offset_op(e0, merged_offset))
-                remote_conflict_diff.append(offset_op(e1, merged_offset))
-
-            # Skip to the next diff on both sides
-            i0 += 1
-            i1 += 1
-
-    # Apply final diffs from one of the sides if any
-    assert not (i0 < n0 and i1 < n1)
-    for i in range(i0, n0):
-        merged_offset += _apply_diff(diff0[i], base, merged)
-    for i in range(i1, n1):
-        merged_offset += _apply_diff(diff1[i], base, merged)
+            # Two-sided modification, i.e. a conflict, keeping diffs with an index offset
+            # It's possible that something more clever can be done here to reduce
+            # the number of conflicts. For now we leave this up to the autoresolve
+            # code and manual conflict resolution.
+            merged.extend(base[j:k])
+            for e in d0:
+                local_conflict_diff.append(offset_op(e, merged_offset))
+            for e in d1:
+                remote_conflict_diff.append(offset_op(e, merged_offset))
 
     return merged, local_conflict_diff.diff, remote_conflict_diff.diff  # XXX
 

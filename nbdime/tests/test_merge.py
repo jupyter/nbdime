@@ -195,8 +195,7 @@ def test_deep_merge_lists_delete_no_conflict__currently_expected_failures():
             assert rc == []
 
 
-def test_deep_merge_lists_insert_no_conflict():
-
+def test_deep_merge_onesided_inner_list_insert_no_conflict():
     # local adds an entry
     b = [[1]]
     l = [[1, 2]]
@@ -215,6 +214,36 @@ def test_deep_merge_lists_insert_no_conflict():
     assert lc == []
     assert rc == []
 
+
+def test_deep_merge_twosided_inserts_no_conflict():
+    # local and remote adds an entry each in a new sublist
+    b = []
+    l = [[2], [3]]
+    r = [[2], [4]]
+    assert diff(b, l) == [make_op("addrange", 0, [[2], [3]])]
+    assert diff(b, r) == [make_op("addrange", 0, [[2], [4]])]
+    m, lc, rc = merge(b, l, r)
+    # No identification of equal inserted list [2] expected from current algorithm
+    assert m == [[2], [3], [2], [4]]
+    assert lc == []
+    assert rc == []
+
+
+def test_deep_merge_twosided_inserts_no_conflict():
+    # local and remote adds an entry each in a new sublist
+    b = [[1]]
+    l = [[1], [2], [3]]
+    r = [[1], [2], [4]]
+    assert diff(b, l) == [make_op("addrange", 1, [[2], [3]])]
+    assert diff(b, r) == [make_op("addrange", 1, [[2], [4]])]
+    m, lc, rc = merge(b, l, r)
+    # No identification of equal inserted list [2] expected from current algorithm
+    assert m == [[1], [2], [3], [2], [4]]
+    assert lc == []
+    assert rc == []
+
+
+def test_deep_merge_lists_insert_no_conflict():
 
     # Some notes explaining the below expected values... while this works:
     assert diff([1], [1, 2]) == [make_op("addrange", 1, [2])]
@@ -238,9 +267,6 @@ def test_deep_merge_lists_insert_no_conflict():
     m, lc, rc = merge(b, l, r)
     #assert m == [[1, 2], [1, 3]]  # This was expected behaviour in old code, obviously not what we want
     #assert m == [[1, 2, 3]]  # This is the behaviour we want from an ideal thought-reading algorithm, unclear if possible
-    assert m == []  # This is the behaviour we get now, with conflicts left:
-    assert lc == [make_op("addrange", 0, [[1, 2]])]
-    assert rc == [make_op("addrange", 0, [[1, 3]])]
     assert m == [[1]]  # This is the behaviour we get now, with conflicts left:
     assert lc == [make_op("addrange", 0, [[1, 2]]), make_op("removerange", 0, 1)]
     assert rc == [make_op("addrange", 0, [[1, 3]]), make_op("removerange", 0, 1)]
@@ -250,21 +276,14 @@ def test_deep_merge_lists_insert_no_conflict():
     l = [[1, 2, 4]]
     r = [[1, 3, 4]]
     m, lc, rc = merge(b, l, r)
-    # No identification of equal insert value 4 expected from current algorithm
-    assert m == [[1, 2, 4], [1, 3, 4]]  # This is expected behaviour today
-    #assert m == [[1, 2, 4, 3, 4]]  # TODO: This is the behaviour we want
-    assert lc == []
-    assert rc == []
-
-    # local and remote adds an entry each in a new sublist
-    b = [[1]]
-    l = [[1], [2], [3]]
-    r = [[1], [2], [4]]
-    m, lc, rc = merge(b, l, r)
-    # No identification of equal inserted list [2] expected from current algorithm
-    assert m == [[1], [2], [3], [2], [4]]
-    assert lc == []
-    assert rc == []
+    # No identification of equal inserted value 4 expected from current algorithm
+    #assert m == [[1, 2, 4, 3, 4]]  # TODO: Is this the behaviour we want, merge in inner list?
+    #assert m == [[1, 2, 4], [1, 3, 4]]  # This was expected behaviour in previous algorithm
+    #assert lc == []
+    #assert rc == []
+    assert m == [[1]]  # This is expected behaviour today, base left for conflict resolution
+    assert lc == [make_op("addrange", 0, [[1, 2, 4]]), make_op("removerange", 0, 1)]
+    assert rc == [make_op("addrange", 0, [[1, 3, 4]]), make_op("removerange", 0, 1)]
 
 
 def test_shallow_merge_dicts_delete_no_conflict():
