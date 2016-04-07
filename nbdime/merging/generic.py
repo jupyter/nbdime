@@ -192,7 +192,7 @@ def split_diffs_on_boundaries(diffs, boundaries):
 
             # Add diff entries for each interval between boundaries up to k
             while b < len(boundaries)-1 and boundaries[b + 1] <= e.key + e.length:
-                newdiffs.removerange(boundaries[b], boundaries[b + 1])
+                newdiffs.removerange(boundaries[b], boundaries[b + 1] - boundaries[b])
                 b += 1
         else:
             raise ValueError("Unhandled diff entry op {}.".format(e.op))
@@ -282,7 +282,7 @@ def _merge_lists(base, local, remote, base_local_diff, base_remote_diff):
         print(remote)
         print('\n'.join(map(repr,chunks)))
         print()
-        
+
     # Loop over chunks of base[j:k], grouping insertion at j into
     # the chunk starting with j
     for (j, k, d0, d1) in chunks:

@@ -21,6 +21,22 @@ def cut(li, *indices):
     return c
 
 
+def test_mytemp():
+    # both remove the same entry
+    b = [1, 3, 2, 7]
+    i = 1
+    if 1:
+        l = copy.deepcopy(b)
+        r = copy.deepcopy(b)
+        l.pop(i)
+        r.pop(i)
+        m, lc, rc = merge(b, l, r)
+        e = copy.deepcopy(b)
+        e.pop(i)
+        assert m == e
+        assert lc == []
+        assert rc == []
+
 def test_shallow_merge_lists_delete_no_conflict():
     # local removes an entry
     b = [1, 3]
@@ -171,10 +187,11 @@ def test_deep_merge_lists_delete_no_conflict():
     l = [[1, 5], [2, 4]]  # deletes 3 and 6
     r = [[1, 5], [4, 6]]  # deletes 3 and 2
     m, lc, rc = merge(b, l, r)
-    assert m == [[1, 5], [2, 4], [1, 5], [4, 6]]  # This is expected behaviour today: clear b, add l, add r
-    #assert m == [[1, 5], [4]]  # 2,3,6 should be gone. TODO: This is the behaviour we want.
-    assert lc == []
-    assert rc == []
+    #assert m == [[1, 5], [2, 4], [1, 5], [4, 6]]  # This was expected behaviour before: clear b, add l, add r
+    #assert m == [[1, 5], [4]]  # 2,3,6 should be gone. TODO: This is the naively ideal thought-reading behaviour. Possible?
+    assert m == b  # conflicts lead to original kept in m
+    assert lc == [make_op("addrange", 0, l), make_op("removerange", 0, 2)]
+    assert rc == [make_op("addrange", 0, r), make_op("removerange", 0, 2)]
 
 
 # TODO: We want this to work, requires improvements to nested list diffing.
