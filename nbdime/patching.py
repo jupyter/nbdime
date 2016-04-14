@@ -56,7 +56,7 @@ def patch_list(obj, diff):
 
         # Skip the specified number of elements, but never decrement take.
         # Note that take can pass index in diffs with repeated +/- on the
-        # same index, i.e. [make_op(Diff.REMOVE, index), make_op(Diff.ADD, index, value)]
+        # same index, i.e. [op_remove(index), op_add(index, value)]
         take = max(take, index + skip)
 
     # Take values at end not mentioned in diff

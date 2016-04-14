@@ -31,73 +31,8 @@ class DiffEntry(dict):
         self[name] = value
 
 
-def make_op(op, *args):
-    """Create a diff entry with compact notation and error checking.
-
-    Args depend on the op:
-
-        * op = "add",         args = (key, value)
-        * op = "remove",      args = (key,)
-        * op = "replace",     args = (key, value)
-        * op = "patch",       args = (key, diff)
-        * op = "addrange",    args = (key, valuelist)
-        * op = "removerange", args = (key, length)
-
-    """
-    if op == "addrange":
-        key, valuelist = args
-        return DiffEntry(op=op, key=key, valuelist=valuelist)
-    elif op == "removerange":
-        key, length = args
-        return DiffEntry(op=op, key=key, length=length)
-    elif op == "keeprange":
-        key, length = args
-        return DiffEntry(op=op, key=key, length=length)
-    elif op in ("add", "replace"):
-        key, value = args
-        return DiffEntry(op=op, key=key, value=value)
-    elif op == "remove":
-        key, = args
-        return DiffEntry(op=op, key=key)
-    elif op == "patch":
-        key, diff = args
-        return DiffEntry(op=op, key=key, diff=diff)
-    elif op == "keep":
-        key, = args
-        return DiffEntry(op=op, key=key)
-    else:
-        raise NBDiffFormatError("Invalid op {}.".format(op))
-
-
-def op_addrange(key, valuelist):
-    return DiffEntry(op="addrange", key=key, valuelist=valuelist)
-
-def op_removerange(key, length):
-    return DiffEntry(op="removerange", key=key, length=length)
-
-def op_keeprange(key, length):
-    return DiffEntry(op="keeprange", key=key, length=length)
-
-def op_add(key, value):
-    return DiffEntry(op="add", key=key, value=value)
-
-def op_replace(key, value):
-    return DiffEntry(op="replace", key=key, value=value)
-
-def op_remove(key):
-    return DiffEntry(op="remove", key=key)
-
-def op_keep(key):
-    return DiffEntry(op="keep", key=key)
-
-def op_patch(key, diff):
-    return DiffEntry(op="patch", key=key, diff=diff)
-
-
-# TODO: Rename to Diff
-class Diff(object):
-
-    # Valid values for the action field in diff entries
+class Diff:
+    "Collection of valid values for the action field in diff entries."
     ADD = "add"
     REMOVE = "remove"
     REPLACE = "replace"
@@ -105,20 +40,53 @@ class Diff(object):
     REMOVERANGE = "removerange"
     PATCH = "patch"
 
-    # Not yet used in official diffs but possibly in
-    # internal tools or for future consideration
-    KEEP = "keep"
-    KEEPRANGE = "keeprange"
+    # For future consideration
+    #KEEP = "keep"
+    #KEEPRANGE = "keeprange"
     #MOVE = "move"
     #MOVERANGE = "moverange"
 
 
-class SequenceDiffBuilder(Diff):
+#def op_keep(key):
+#    "Create a diff entry to keep value at key."
+#    return DiffEntry(op=Diff.KEEP, key=key)
+
+def op_add(key, value):
+    "Create a diff entry to add value at/before key."
+    return DiffEntry(op=Diff.ADD, key=key, value=value)
+
+def op_remove(key):
+    "Create a diff entry to remove value at key."
+    return DiffEntry(op=Diff.REMOVE, key=key)
+
+def op_replace(key, value):
+    "Create a diff entry to replace value at key with given value."
+    return DiffEntry(op=Diff.REPLACE, key=key, value=value)
+
+#def op_keeprange(key, length):
+#    "Create a diff entry to keep values in range key:key+length."
+#    return DiffEntry(op=Diff.KEEPRANGE, key=key, length=length)
+
+def op_addrange(key, valuelist):
+    "Create a diff entry to add given list of values before key."
+    return DiffEntry(op=Diff.ADDRANGE, key=key, valuelist=valuelist)
+
+def op_removerange(key, length):
+    "Create a diff entry to remove values in range key:key+length."
+    return DiffEntry(op=Diff.REMOVERANGE, key=key, length=length)
+
+def op_patch(key, diff):
+    "Create a diff entry to patch value at key with diff."
+    return DiffEntry(op=Diff.PATCH, key=key, diff=diff)
+
+
+class SequenceDiffBuilder(object):
 
     # Valid values for the action field in sequence diff entries
     OPS = (
         Diff.ADDRANGE,
         Diff.REMOVERANGE,
+        #Diff.KEEPRANGE,
         Diff.PATCH,
         )
 
@@ -142,25 +110,17 @@ class SequenceDiffBuilder(Diff):
         assert isinstance(entry, DiffEntry)
 
         # Assert consistent ordering
-        if self.diff:
-            assert self.diff[-1].key <= entry.key
+        assert len(self.diff) == 0 or self.diff[-1].key <= entry.key
 
         # Add entry
         self.diff.append(entry)
 
         # Swap last two entries if insertion was inserted
-        # at same location as remove or patch
-        if (len(self.diff) >= 2 and
-                entry.op == Diff.ADDRANGE and
-                entry.key == self.diff[-2].key
-                ):
+        # at same location as a previous remove or patch
+        if (entry.op == Diff.ADDRANGE and
+            len(self.diff) >= 2 and entry.key == self.diff[-2].key
+            ):
             self.diff[-2], self.diff[-1] = self.diff[-1], self.diff[-2]
-
-    #def add(self, key, value):
-    #    self.append(op_addrange(key, [value]))
-
-    #def remove(self, key):
-    #    self.append(op_removerange(key, 1))
 
     def patch(self, key, diff):
         if diff:
@@ -179,11 +139,11 @@ class SequenceDiffBuilder(Diff):
             self.append(op_keeprange(key, length))
 
 
-class MappingDiffBuilder(Diff):
+class MappingDiffBuilder(object):
 
     # Valid values for the action field in mapping diff entries
     OPS = (
-        Diff.KEEP,
+        #Diff.KEEP,
         Diff.ADD,
         Diff.REMOVE,
         Diff.REPLACE,
@@ -408,3 +368,4 @@ def to_json_patch(d, path=""):
             # JSONPatch has no recursion, recurse here to flatten diff
             jp.extend(to_json_patch(e.diff, p))
     return jp
+

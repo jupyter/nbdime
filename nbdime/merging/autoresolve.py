@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 
 from six import string_types
 
-from ..diff_format import SequenceDiffBuilder, MappingDiffBuilder, Diff, make_op
+from ..diff_format import SequenceDiffBuilder, MappingDiffBuilder, Diff, op_replace
 from ..diff_format import as_dict_based_diff, revert_as_dict_based_diff, decompress_sequence_diff
 from ..patching import patch
 from .chunks import make_merge_chunks
@@ -149,22 +149,22 @@ def resolve_single_conflict(value, le, re, strategy, path):
 
     elif strategy == "clear":
         v = make_cleared_value(value)
-        e = make_op(Diff.REPLACE, le.key, v)
+        e = op_replace(le.key, v)
         le, re = None, None
 
     elif strategy == "inline-source":
         v = make_inline_source_value(value, le, re)
-        e = make_op(Diff.REPLACE, le.key, v)
+        e = op_replace(le.key, v)
         le, re = None, None
 
     elif strategy == "inline-outputs":
         v = make_inline_outputs_value(value, le, re)
-        e = make_op(Diff.REPLACE, le.key, v)
+        e = op_replace(le.key, v)
         le, re = None, None
 
     elif strategy == "join":
         v = make_join_value(value, le, re)
-        e = make_op(Diff.REPLACE, le.key, v)
+        e = op_replace(le.key, v)
         le, re = None, None
 
     else:

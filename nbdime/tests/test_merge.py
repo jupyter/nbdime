@@ -11,7 +11,7 @@ import copy
 import pytest
 
 from nbdime import merge, diff, patch
-from nbdime.diff_format import make_op, Diff
+from nbdime.diff_format import op_patch, op_add, op_remove, op_replace, op_addrange, op_removerange
 
 
 def cut(li, *indices):
@@ -190,8 +190,8 @@ def test_deep_merge_lists_delete_no_conflict():
     #assert m == [[1, 5], [2, 4], [1, 5], [4, 6]]  # This was expected behaviour before: clear b, add l, add r
     #assert m == [[1, 5], [4]]  # 2,3,6 should be gone. TODO: This is the naively ideal thought-reading behaviour. Possible?
     assert m == b  # conflicts lead to original kept in m
-    assert lc == [make_op("addrange", 0, l), make_op("removerange", 0, 2)]
-    assert rc == [make_op("addrange", 0, r), make_op("removerange", 0, 2)]
+    assert lc == [op_addrange(0, l), op_removerange(0, 2)]
+    assert rc == [op_addrange(0, r), op_removerange(0, 2)]
 
 
 # TODO: We want this to work, requires improvements to nested list diffing.
@@ -237,8 +237,8 @@ def test_deep_merge_twosided_inserts_no_conflict():
     b = []
     l = [[2], [3]]
     r = [[2], [4]]
-    assert diff(b, l) == [make_op("addrange", 0, [[2], [3]])]
-    assert diff(b, r) == [make_op("addrange", 0, [[2], [4]])]
+    assert diff(b, l) == [op_addrange(0, [[2], [3]])]
+    assert diff(b, r) == [op_addrange(0, [[2], [4]])]
     m, lc, rc = merge(b, l, r)
     # No identification of equal inserted list [2] expected from current algorithm
     assert m == [[2], [3], [2], [4]]
@@ -251,8 +251,8 @@ def test_deep_merge_twosided_inserts_no_conflict():
     b = [[1]]
     l = [[1], [2], [3]]
     r = [[1], [2], [4]]
-    assert diff(b, l) == [make_op("addrange", 1, [[2], [3]])]
-    assert diff(b, r) == [make_op("addrange", 1, [[2], [4]])]
+    assert diff(b, l) == [op_addrange(1, [[2], [3]])]
+    assert diff(b, r) == [op_addrange(1, [[2], [4]])]
     m, lc, rc = merge(b, l, r)
     # No identification of equal inserted list [2] expected from current algorithm
     assert m == [[1], [2], [3], [2], [4]]
@@ -263,11 +263,11 @@ def test_deep_merge_twosided_inserts_no_conflict():
 def test_deep_merge_lists_insert_no_conflict():
 
     # Some notes explaining the below expected values... while this works:
-    assert diff([1], [1, 2]) == [make_op("addrange", 1, [2])]
+    assert diff([1], [1, 2]) == [op_addrange(1, [2])]
     # This does not happen:
-    #assert diff([[1]], [[1, 2]]) == [make_op("patch", 0, [make_op("addrange", 1, [2])])]
+    #assert diff([[1]], [[1, 2]]) == [op_patch(0, [op_addrange(1, [2])])]
     # Instead we get this:
-    assert diff([[1]], [[1, 2]]) == [make_op("addrange", 0, [[1, 2]]), make_op("removerange", 0, 1)]
+    assert diff([[1]], [[1, 2]]) == [op_addrange(0, [[1, 2]]), op_removerange(0, 1)]
     # To get the "patch inner list" version instead of the "remove inner list + add new inner list" version,
     # the diff algorithm would need to identify that the inner list [1] is similar to [1,2],
     # e.g. through heuristics. In the case [1] vs [1,2] the answer will probably be "not similar enough" even
@@ -285,8 +285,8 @@ def test_deep_merge_lists_insert_no_conflict():
     #assert m == [[1, 2], [1, 3]]  # This was expected behaviour in old code, obviously not what we want
     #assert m == [[1, 2, 3]]  # This is the behaviour we want from an ideal thought-reading algorithm, unclear if possible
     assert m == [[1]]  # This is the behaviour we get now, with conflicts left:
-    assert lc == [make_op("addrange", 0, [[1, 2]]), make_op("removerange", 0, 1)]
-    assert rc == [make_op("addrange", 0, [[1, 3]]), make_op("removerange", 0, 1)]
+    assert lc == [op_addrange(0, [[1, 2]]), op_removerange(0, 1)]
+    assert rc == [op_addrange(0, [[1, 3]]), op_removerange(0, 1)]
 
     # local and remote adds the same entry plus an entry each
     b = [[1]]
@@ -299,8 +299,8 @@ def test_deep_merge_lists_insert_no_conflict():
     #assert lc == []
     #assert rc == []
     assert m == [[1]]  # This is expected behaviour today, base left for conflict resolution
-    assert lc == [make_op("addrange", 0, [[1, 2, 4]]), make_op("removerange", 0, 1)]
-    assert rc == [make_op("addrange", 0, [[1, 3, 4]]), make_op("removerange", 0, 1)]
+    assert lc == [op_addrange(0, [[1, 2, 4]]), op_removerange(0, 1)]
+    assert rc == [op_addrange(0, [[1, 3, 4]]), op_removerange(0, 1)]
 
 
 def test_shallow_merge_dicts_delete_no_conflict():
@@ -477,9 +477,9 @@ def test_merge_conflicting_nested_dicts():
     r = {"a": {"x": 3}}
     m, lc, rc = merge(b, l, r)
     assert m == {"a": {"x": 1}}
-    assert lc == [make_op(Diff.PATCH, "a", [make_op(Diff.REPLACE, "x", 2)]),
+    assert lc == [op_patch("a", [op_replace("x", 2)]),
                   ]
-    assert rc == [make_op(Diff.PATCH, "a", [make_op(Diff.REPLACE, "x", 3)]),
+    assert rc == [op_patch("a", [op_replace("x", 3)]),
                   ]
 
     # local and remote each adds, deletes, and modifies entries inside nested structure with everything conflicting
@@ -488,9 +488,9 @@ def test_merge_conflicting_nested_dicts():
     r = {"a": {"y": 5}}
     m, lc, rc = merge(b, l, r)
     assert m == {"a": {}}
-    assert lc == [make_op(Diff.PATCH, "a", [make_op(Diff.ADD, "y", 4)]),
+    assert lc == [op_patch("a", [op_add("y", 4)]),
                   ]
-    assert rc == [make_op(Diff.PATCH, "a", [make_op(Diff.ADD, "y", 5)]),
+    assert rc == [op_patch("a", [op_add("y", 5)]),
                   ]
 
     # local and remote each adds, deletes, and modifies entries inside nested structure with everything conflicting
@@ -499,9 +499,9 @@ def test_merge_conflicting_nested_dicts():
     r = {"a": {"x": 3, "y": 5}}
     m, lc, rc = merge(b, l, r)
     assert m == {"a": {"x": 1}}
-    assert lc == [make_op(Diff.PATCH, "a", [make_op(Diff.REPLACE, "x", 2), make_op(Diff.ADD, "y", 4)]),
+    assert lc == [op_patch("a", [op_replace("x", 2), op_add("y", 4)]),
                   ]
-    assert rc == [make_op(Diff.PATCH, "a", [make_op(Diff.REPLACE, "x", 3), make_op(Diff.ADD, "y", 5)]),
+    assert rc == [op_patch("a", [op_replace("x", 3), op_add("y", 5)]),
                   ]
 
     # local and remote each adds, deletes, and modifies entries inside nested structure with everything conflicting
@@ -510,11 +510,11 @@ def test_merge_conflicting_nested_dicts():
     r = {"a": {"x": 3, "y": 5}, "d": {"x": 5},       }
     m, lc, rc = merge(b, l, r)
     assert m == {"a": {"x": 1}, "d": {"x": 4, "y": 5}}
-    assert lc == [make_op(Diff.PATCH, "a", [make_op(Diff.REPLACE, "x", 2), make_op(Diff.ADD, "y", 4)]),
-                  make_op(Diff.PATCH, "d", [make_op(Diff.REMOVE, "x"), make_op(Diff.REPLACE, "y", 6)]),
+    assert lc == [op_patch("a", [op_replace("x", 2), op_add("y", 4)]),
+                  op_patch("d", [op_remove("x"), op_replace("y", 6)]),
                   ]
-    assert rc == [make_op(Diff.PATCH, "a", [make_op(Diff.REPLACE, "x", 3), make_op(Diff.ADD, "y", 5)]),
-                  make_op(Diff.PATCH, "d", [make_op(Diff.REPLACE, "x", 5), make_op(Diff.REMOVE, "y")]),
+    assert rc == [op_patch("a", [op_replace("x", 3), op_add("y", 5)]),
+                  op_patch("d", [op_replace("x", 5), op_remove("y")]),
                   ]
 
     # local and remote each adds, deletes, and modifies entries inside nested structure with everything conflicting
@@ -523,13 +523,13 @@ def test_merge_conflicting_nested_dicts():
     r = {"a": {"x": 3, "y": 5}, "d": {"x": 5},         "m": {"x": 27}}
     m, lc, rc = merge(b, l, r)
     assert m == {"a": {"x": 1}, "d": {"x": 4, "y": 5}, "m": {"x": 7}}
-    assert lc == [make_op(Diff.PATCH, "a", [make_op(Diff.REPLACE, "x", 2), make_op(Diff.ADD, "y", 4)]),
-                  make_op(Diff.PATCH, "d", [make_op(Diff.REMOVE, "x"), make_op(Diff.REPLACE, "y", 6)]),
-                  make_op(Diff.PATCH, "m", [make_op(Diff.REPLACE, "x", 17)]),
+    assert lc == [op_patch("a", [op_replace("x", 2), op_add("y", 4)]),
+                  op_patch("d", [op_remove("x"), op_replace("y", 6)]),
+                  op_patch("m", [op_replace("x", 17)]),
                   ]
-    assert rc == [make_op(Diff.PATCH, "a", [make_op(Diff.REPLACE, "x", 3), make_op(Diff.ADD, "y", 5)]),
-                  make_op(Diff.PATCH, "d", [make_op(Diff.REPLACE, "x", 5), make_op(Diff.REMOVE, "y")]),
-                  make_op(Diff.PATCH, "m", [make_op(Diff.REPLACE, "x", 27)]),
+    assert rc == [op_patch("a", [op_replace("x", 3), op_add("y", 5)]),
+                  op_patch("d", [op_replace("x", 5), op_remove("y")]),
+                  op_patch("m", [op_replace("x", 27)]),
                   ]
 
     # local and remote each adds, deletes, and modifies entries inside nested structure with everything conflicting
@@ -539,13 +539,13 @@ def test_merge_conflicting_nested_dicts():
     m, lc, rc = merge(b, l, r)
     # Note that "n":{} gets added to the merge result even though it's empty
     assert m == {"a": {"x": 1}, "d": {"x": 4, "y": 5}, "m": {"x": 7}, "n": {}}
-    assert lc == [make_op(Diff.PATCH, "a", [make_op(Diff.REPLACE, "x", 2), make_op(Diff.ADD, "y", 4)]),
-                  make_op(Diff.PATCH, "d", [make_op(Diff.REMOVE, "x"), make_op(Diff.REPLACE, "y", 6)]),
-                  make_op(Diff.PATCH, "m", [make_op(Diff.REPLACE, "x", 17)]),
-                  make_op(Diff.PATCH, "n", [make_op(Diff.ADD, "q", 9)])
+    assert lc == [op_patch("a", [op_replace("x", 2), op_add("y", 4)]),
+                  op_patch("d", [op_remove("x"), op_replace("y", 6)]),
+                  op_patch("m", [op_replace("x", 17)]),
+                  op_patch("n", [op_add("q", 9)])
                   ]
-    assert rc == [make_op(Diff.PATCH, "a", [make_op(Diff.REPLACE, "x", 3), make_op(Diff.ADD, "y", 5)]),
-                  make_op(Diff.PATCH, "d", [make_op(Diff.REPLACE, "x", 5), make_op(Diff.REMOVE, "y")]),
-                  make_op(Diff.PATCH, "m", [make_op(Diff.REPLACE, "x", 27)]),
-                  make_op(Diff.PATCH, "n", [make_op(Diff.ADD, "q", 19)])
+    assert rc == [op_patch("a", [op_replace("x", 3), op_add("y", 5)]),
+                  op_patch("d", [op_replace("x", 5), op_remove("y")]),
+                  op_patch("m", [op_replace("x", 27)]),
+                  op_patch("n", [op_add("q", 19)])
                   ]
