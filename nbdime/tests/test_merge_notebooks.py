@@ -382,13 +382,11 @@ def test_merge_multiline_cell_sources():
     else:
         expected_partial = base
         expected_lco = [op_patch("cells", [op_patch(0, [op_patch("source", [
-            op_addrange(3, local[3:])
+            op_addrange(len(source), local[0][-1:])
             ])])])]
-        expected_rco = [op_patch("cells",
-                                [op_patch("source",
-                                         [op_addrange(3, remote[3:])])
-                                ])
-                        ]
+        expected_rco = [op_patch("cells", [op_patch(0, [op_patch("source", [
+            op_addrange(len(source), remote[0][-1:])
+            ])])])]
     _check(base, local, remote, expected_partial, expected_lco, expected_rco)
 
     # Modifying cell on both sides interpreted as editing the original cell,
@@ -401,11 +399,37 @@ def test_merge_multiline_cell_sources():
     local  = [["new local cell"], source + ["local"]]
     base   = [source]
     remote = [source + ["remote"], ["new remote cell"]]
-    expected_partial = [["new local cell"],
-                        source + ["local", "remote"],
-                        ["new remote cell"]]
-    expected_lco = []
-    expected_rco = []
+    if 0:
+        # Conflict-free behaviour that probably isn't safe to do in general:
+        expected_partial = [["new local cell"],
+                            source + ["local", "remote"],
+                            ["new remote cell"]]
+        expected_lco = []
+        expected_rco = []
+    elif 0:
+        # This doesn't happen because local[0] is inserted before source which
+        # has conflicting modifications. Thus the insertion of local[0] is
+        # treated as part of the conflict. While remote[1] is not because it's
+        # inserted after the conflicting region. For cell insertions, the
+        # behaviour that makes the most sense here could very well differ from
+        # text line insertions.
+        # FIXME: Figure out the best behaviour and make it happen!
+        expected_partial = [local[0], source, remote[1]]
+        expected_lco = [op_patch("cells", [op_patch(1, [op_patch("source", [
+            op_addrange(len(source), local[1][-1:])
+            ])])])]
+        expected_rco = [op_patch("cells", [op_patch(1, [op_patch("source", [
+            op_addrange(len(source), remote[0][-1:])
+            ])])])]
+    else: # Current behaviour
+        # FIXME: This doesn't seem to happen?
+        expected_partial = [source, remote[1]]
+        expected_lco = [op_patch("cells", [op_patch(0, [op_patch("source", [
+            op_addrange(len(source), local[1][-1:])
+            ])])])]
+        expected_rco = [op_patch("cells", [op_patch(0, [op_patch("source", [
+            op_addrange(len(source), remote[0][-1:])
+            ])])])]
     _check(base, local, remote, expected_partial, expected_lco, expected_rco)
 
     # FIXME: Code is perhaps too accepting, it's hard to make conflicts!

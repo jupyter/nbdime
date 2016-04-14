@@ -90,6 +90,7 @@ def make_inline_outputs_value(value, le, re):
 
     return newvalue
 
+
 def make_inline_source_value(value, le, re):  # FIXME: Test this!
     if le.op == DiffOp.REPLACE:
         local = le.value
