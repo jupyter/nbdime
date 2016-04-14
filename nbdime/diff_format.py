@@ -21,7 +21,6 @@ class DiffEntry(dict):
     def __setattr__(self, name, value):
         self[name] = value
 
-
 def make_op(op, *args):
     """Create a diff entry with compact notation and error checking.
 
@@ -41,6 +40,9 @@ def make_op(op, *args):
     elif op == "removerange":
         key, length = args
         return DiffEntry(op=op, key=key, length=length)
+    elif op == "keeprange":
+        key, length = args
+        return DiffEntry(op=op, key=key, length=length)
     elif op in ("add", "replace"):
         key, value = args
         return DiffEntry(op=op, key=key, value=value)
@@ -57,6 +59,32 @@ def make_op(op, *args):
         raise NBDiffFormatError("Invalid op {}.".format(op))
 
 
+def op_addrange(key, valuelist):
+    return DiffEntry(op="addrange", key=key, valuelist=valuelist)
+
+def op_removerange(key, length):
+    return DiffEntry(op="removerange", key=key, length=length)
+
+def op_keeprange(key, length):
+    return DiffEntry(op="keeprange", key=key, length=length)
+
+def op_add(key, value):
+    return DiffEntry(op="add", key=key, value=value)
+
+def op_replace(key, value):
+    return DiffEntry(op="replace", key=key, value=value)
+
+def op_remove(key):
+    return DiffEntry(op="remove", key=key)
+
+def op_keep(key):
+    return DiffEntry(op="keep", key=key)
+
+def op_patch(key, diff):
+    return DiffEntry(op="patch", key=key, diff=diff)
+
+
+# TODO: Rename to DiffBuilder
 class Diff(object):
 
     # Valid values for the action field in diff entries
@@ -69,13 +97,13 @@ class Diff(object):
 
     # Not yet used in official diffs but possibly in
     # internal tools or for future consideration
-    _KEEP = "keep"
-    #_MOVE = "move"
-    #_KEEPRANGE = "keeprange"
-    #_MOVERANGE = "moverange"
+    KEEP = "keep"
+    KEEPRANGE = "keeprange"
+    #MOVE = "move"
+    #MOVERANGE = "moverange"
 
 
-class SequenceDiff(Diff):
+class SequenceDiffBuilder(Diff):
 
     # Valid values for the action field in sequence diff entries
     OPS = (
@@ -96,6 +124,10 @@ class SequenceDiff(Diff):
     def __getitem__(self, i):
         return self.diff[i]
 
+    def validated(self):
+        # TODO: Use .validated() instead of .diff in algorithms and add invariant checking here
+        return self.diff
+    
     def append(self, entry):
         assert isinstance(entry, DiffEntry)
 
@@ -114,26 +146,34 @@ class SequenceDiff(Diff):
                 ):
             self.diff[-2], self.diff[-1] = self.diff[-1], self.diff[-2]
 
-    def add(self, key, valuelist):
-        self.append(make_op(Diff.ADDRANGE, key, valuelist))
+    #def add(self, key, value):
+    #    self.append(op_addrange(key, [value]))
 
-    def remove(self, key, length):
-        self.append(make_op(Diff.REMOVERANGE, key, length))
+    #def remove(self, key):
+    #    self.append(op_removerange(key, 1))
 
     def patch(self, key, diff):
-        self.append(make_op(Diff.PATCH, key, diff))
+        if diff:
+            self.append(op_patch(key, diff))
 
     def addrange(self, key, valuelist):
-        self.append(make_op(Diff.ADDRANGE, key, valuelist))
+        if valuelist:
+            self.append(op_addrange(key, valuelist))
 
     def removerange(self, key, length):
-        self.append(make_op(Diff.REMOVERANGE, key, length))
+        if length:
+            self.append(op_removerange(key, length))
+
+    def keeprange(self, key, length):
+        if length:
+            self.append(op_keeprange(key, length))
 
 
-class MappingDiff(Diff):
+class MappingDiffBuilder(Diff):
 
     # Valid values for the action field in mapping diff entries
     OPS = (
+        Diff.KEEP,
         Diff.ADD,
         Diff.REMOVE,
         Diff.REPLACE,
@@ -151,22 +191,35 @@ class MappingDiff(Diff):
         return iter(self.diff)
         #return iter(self.diff.values())
 
+    def validated(self):
+        # TODO: Use .validated() instead of .diff in algorithms and add invariant checking here
+        return self.diff
+
     def append(self, entry):
         assert isinstance(entry, DiffEntry)
         self.diff.append(entry)
         #self.diff[entry.key] = entry
 
+    def keep(self, key):
+        self.append(op_keep(key))
+
     def add(self, key, value):
-        self.append(make_op(Diff.ADD, key, value))
+        self.append(op_add(key, value))
 
     def remove(self, key):
-        self.append(make_op(Diff.REMOVE, key))
+        self.append(op_remove(key))
 
     def replace(self, key, value):
-        self.append(make_op(Diff.REPLACE, key, value))
+        self.append(op_replace(key, value))
 
     def patch(self, key, diff):
-        self.append(make_op(Diff.PATCH, key, diff))
+        if diff:
+            self.append(op_patch(key, diff))
+
+
+# TODO: Rename to *DiffBuilder in code elsewhere and remove these
+MappingDiff = MappingDiffBuilder
+SequenceDiff = SequenceDiffBuilder
 
 
 def is_valid_diff(diff, deep=False):
@@ -289,14 +342,14 @@ def decompress_sequence_diff(di, n):
     possible with op in (KEEP, REMOVE, PATCH, REPLACE).
     """
     offset = 0
-    decompressed = [make_op(Diff._KEEP, i) for i in range(n)]
+    decompressed = [op_keep(i) for i in range(n)]
     for e in di:
         op = e.op
         if op in (Diff.PATCH, Diff.REPLACE, Diff.REMOVE):
             decompressed[e.key] = e
         elif op == Diff.REMOVERANGE:
             for i in range(e.length):
-                decompressed[e.key + i] = make_op(Diff.REMOVE, e.key + i)
+                decompressed[e.key + i] = op_remove(e.key + i)
         elif op in (Diff.ADDRANGE, Diff.ADD):
             raise ValueError("Not expexting insertions.")
         else:

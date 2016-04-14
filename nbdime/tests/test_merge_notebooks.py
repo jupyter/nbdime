@@ -12,7 +12,7 @@ import nbformat
 
 from nbdime import merge_notebooks, merge, diff, patch
 from nbdime.merging.notebooks import autoresolve
-from nbdime.diff_format import make_op
+from nbdime.diff_format import op_patch, op_addrange, op_removerange
 from .fixtures import sources_to_notebook
 
 
@@ -293,7 +293,7 @@ def _check(base, local, remote, expected_partial, expected_lco, expected_rco):
     assert rco == expected_rco
 
 
-def test_merge_single_cell_sources_conflicts():
+def test_merge_simple_cell_sources():
     # A very basic test: Just checking changes to a single cell source,
 
     # No change
@@ -332,15 +332,39 @@ def test_merge_single_cell_sources_conflicts():
     expected_rco = []
     _check(base, local, remote, expected_partial, expected_lco, expected_rco)
 
-    # Completely changing cell on both sides interpreted as two new cell inserts, local first
+    # Conflicting cell inserts at same location as removing old cell
     local  = [["local"]]
     base   = [["base"]]
     remote = [["remote"]]
-    expected_partial = [["local"], ["remote"]]  # two cells!
-    expected_lco = []
-    expected_rco = []
+    expected_partial = [["base"]]
+    expected_lco = [op_patch("cells", [
+        op_addrange(0, [nbformat.v4.new_code_cell(source) for source in local]),
+        op_removerange(0, 1)])]
+    expected_rco = [op_patch("cells", [
+        op_addrange(0, [nbformat.v4.new_code_cell(source) for source in remote]),
+        op_removerange(0, 1)])]
     _check(base, local, remote, expected_partial, expected_lco, expected_rco)
 
+    # Cell inserts at same location but no other modifications: should this be accepted?
+    local  = [["base"], ["local"]]
+    base   = [["base"]]
+    remote = [["base"], ["remote"]]
+    if 0:  # Treat as conflict
+        expected_partial = [["base"]]
+        expected_lco = [op_patch("cells", [
+            op_addrange(1, [nbformat.v4.new_code_cell(source) for source in local]),
+            ])]
+        expected_rco = [op_patch("cells", [
+            op_addrange(1, [nbformat.v4.new_code_cell(source) for source in remote]),
+            ])]
+    else:  # Treat as non-conflict (insert both)
+        expected_partial = [["base"], ["local"], ["remote"]]
+        expected_lco = []
+        expected_rco = []
+    _check(base, local, remote, expected_partial, expected_lco, expected_rco)
+
+
+def test_merge_multiline_cell_sources():
     # Modifying cell on both sides interpreted as editing the original cell
     # (this is where heuristics kick in: when is a cell modified and when is it replaced?)
     source = [
@@ -351,9 +375,20 @@ def test_merge_single_cell_sources_conflicts():
     local  = [source + ["local"]]
     base   = [source]
     remote = [source + ["remote"]]
-    expected_partial = [source + ["local", "remote"]]  # one cell!
-    expected_lco = []
-    expected_rco = []
+    if 0:
+        expected_partial = [source + ["local", "remote"]]  # one cell!
+        expected_lco = []
+        expected_rco = []
+    else:
+        expected_partial = base
+        expected_lco = [op_patch("cells", [op_patch(0, [op_patch("source", [
+            op_addrange(3, local[3:])
+            ])])])]
+        expected_rco = [op_patch("cells",
+                                [op_patch("source",
+                                         [op_addrange(3, remote[3:])])
+                                ])
+                        ]
     _check(base, local, remote, expected_partial, expected_lco, expected_rco)
 
     # Modifying cell on both sides interpreted as editing the original cell,
@@ -418,12 +453,12 @@ def test_merge_single_cell_sources_conflicts():
     remote = [["different"], source+["remote"], ["same"]]
     expected_partial = [["different"], source+["local", "remote"], ["different"]]
     expected_lco = [
-        make_op("removerange", 1, 1),
-        make_op("addrange", 1, ["left"]),
+        op_removerange(1, 1),
+        op_addrange(1, ["left"]),
         ]
     expected_rco = [
-        make_op("removerange", 1, 1),
-        make_op("addrange", 1, ["right"]),
+        op_removerange(1, 1),
+        op_addrange(1, ["right"]),
         ]
     expected_lco = []
     expected_rco = []
@@ -441,12 +476,12 @@ def test_merge_single_cell_sources_conflicts():
     remote = [["different"], source+["long line with minor change R"], ["same"]]
     expected_partial = [["different"], source+["long line with minor change"], ["different"]]
     expected_lco = [
-        make_op("removerange", 1, 1),
-        make_op("addrange", 1, ["left"]), # todo
+        op_removerange(1, 1),
+        op_addrange(1, ["left"]), # todo
         ]
     expected_rco = [
-        make_op("removerange", 1, 1),
-        make_op("addrange", 1, ["right"]), # todo
+        op_removerange(1, 1),
+        op_addrange(1, ["right"]), # todo
         ]
     expected_lco = []
     expected_rco = []
