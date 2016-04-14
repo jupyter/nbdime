@@ -11,7 +11,7 @@ import copy
 from collections import namedtuple
 
 from ..diffing import diff
-from ..diff_format import Diff, SequenceDiffBuilder, MappingDiffBuilder, DiffEntry, as_dict_based_diff
+from ..diff_format import DiffOp, SequenceDiffBuilder, MappingDiffBuilder, DiffEntry, as_dict_based_diff
 from ..patching import patch
 from .chunks import make_merge_chunks
 
@@ -55,14 +55,14 @@ def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
     for key in bldkeys - brdkeys:
         # Just use local value or remove by not inserting
         op = base_local_diff[key].op
-        if op != Diff.REMOVE:
+        if op != DiffOp.REMOVE:
             merged[key] = local[key]
 
     # (3) Apply one-sided remote diffs
     for key in brdkeys - bldkeys:
         # Just use remote value or remove by not inserting
         op = base_remote_diff[key].op
-        if op != Diff.REMOVE:
+        if op != DiffOp.REMOVE:
             merged[key] = remote[key]
 
     # Data structures for storing conflicts
@@ -90,13 +90,13 @@ def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
             merged[key] = bv
             local_conflict_diff.append(ld)
             remote_conflict_diff.append(rd)
-        elif lop == Diff.REMOVE:
+        elif lop == DiffOp.REMOVE:
             # (4) Removed in both local and remote, just don't add it to merge result
             pass
-        elif lop in (Diff.ADD, Diff.REPLACE, Diff.PATCH) and lv == rv:
+        elif lop in (DiffOp.ADD, DiffOp.REPLACE, DiffOp.PATCH) and lv == rv:
             # If inserting/replacing/patching produces the same value, just use it
             merged[key] = lv
-        elif lop == Diff.ADD:
+        elif lop == DiffOp.ADD:
             # (6) Insert in both local and remote, values are different
             # Try partially merging the inserted values
             if type(lv) == type(rv) and isinstance(lv, collection_types):
@@ -113,13 +113,13 @@ def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
                 # Recursive merge not possible, record conflicting adds (no base value)
                 local_conflict_diff.append(ld)
                 remote_conflict_diff.append(rd)
-        elif lop == Diff.REPLACE:
+        elif lop == DiffOp.REPLACE:
             # (7) Replace in both local and remote, values are different,
             #     record a conflict against original base value
             merged[key] = bv
             local_conflict_diff.append(ld)
             remote_conflict_diff.append(rd)
-        elif lop == Diff.PATCH:
+        elif lop == DiffOp.PATCH:
             # (8) Patch on both local and remote, values are different
             # Patches produce different values, try merging the substructures
             # (a patch command only occurs when the type is a collection, so we
@@ -173,8 +173,8 @@ def _merge_lists(base, local, remote, base_local_diff, base_remote_diff):
             # Unmodified chunk
             merged.extend(base[j:k])
 
-        elif (all(e.op == Diff.ADDRANGE for e in d0) and
-              all(e.op == Diff.ADDRANGE for e in d1)):
+        elif (all(e.op == DiffOp.ADDRANGE for e in d0) and
+              all(e.op == DiffOp.ADDRANGE for e in d1)):
             # Treating two-sided insertions as non-conflicting.
             # NB! This behaviour is possibly contentious, and if
             # this behaviour is not wanted, this elif block can be deleted.
@@ -194,20 +194,20 @@ def _merge_lists(base, local, remote, base_local_diff, base_remote_diff):
             # Apply diff entries (either just one or an add + remove or patch)
             for e in d:
                 assert j == e.key
-                if e.op == Diff.PATCH:
+                if e.op == DiffOp.PATCH:
                     assert j < len(base)
                     merged.append(patch(base[j], e.diff))
-                elif e.op == Diff.ADDRANGE:
+                elif e.op == DiffOp.ADDRANGE:
                     assert j <= len(base)
                     merged.extend(e.valuelist)
                     merged_offset += len(e.valuelist)
-                elif e.op == Diff.REMOVERANGE:
+                elif e.op == DiffOp.REMOVERANGE:
                     assert j < len(base)
                     merged_offset -= e.length
                 else:
                     raise ValueError("Unexpected diff op {}".format(e.op))
-            if (all(e.op == Diff.ADDRANGE for e in d0) and
-                all(e.op == Diff.ADDRANGE for e in d1)):
+            if (all(e.op == DiffOp.ADDRANGE for e in d0) and
+                all(e.op == DiffOp.ADDRANGE for e in d1)):
                 merged.extend(base[j:k])
 
         else:
@@ -364,7 +364,7 @@ def merge(base, local, remote):
         Takeaways:
         - Ensure that diff always uses patch on collections unless the type changes and replace on values.
         - The only recursion will happen on the patch / patch op of equal type collections!
-        - Patch op is [Diff.PATCH, key, subdiff], providing subdiff for both sides, and meaning values exist on both sides.
+        - Patch op is [DiffOp.PATCH, key, subdiff], providing subdiff for both sides, and meaning values exist on both sides.
 
 
     ## Next trying to figure out list situations:

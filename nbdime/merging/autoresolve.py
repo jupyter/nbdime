@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 
 from six import string_types
 
-from ..diff_format import SequenceDiffBuilder, MappingDiffBuilder, Diff, op_replace
+from ..diff_format import SequenceDiffBuilder, MappingDiffBuilder, DiffOp, op_replace
 from ..diff_format import as_dict_based_diff, revert_as_dict_based_diff, decompress_sequence_diff
 from ..patching import patch
 from .chunks import make_merge_chunks
@@ -42,11 +42,11 @@ Deleted = object()
 
 def patch_item(value, diffentry):
     op = diffentry.op
-    if op == Diff.REPLACE:
+    if op == DiffOp.REPLACE:
         return diffentry.value
-    elif op == Diff.PATCH:
+    elif op == DiffOp.PATCH:
         return patch(value, diffentry.diff)
-    elif op == Diff.REMOVE:
+    elif op == DiffOp.REMOVE:
         return Deleted
     else:
         raise ValueError("Invalid item patch op {}".format(op))
@@ -91,20 +91,20 @@ def make_inline_outputs_value(value, le, re):
     return newvalue
 
 def make_inline_source_value(value, le, re):  # FIXME: Test this!
-    if le.op == Diff.REPLACE:
+    if le.op == DiffOp.REPLACE:
         local = le.value
-    elif le.op == Diff.PATCH:
+    elif le.op == DiffOp.PATCH:
         local = patch(value, le.diff)
-    elif le.op == Diff.REMOVE:
+    elif le.op == DiffOp.REMOVE:
         local = []  # ""
     else:
         raise ValueError("Invalid item patch op {}".format(le.op))
 
-    if re.op == Diff.REPLACE:
+    if re.op == DiffOp.REPLACE:
         remote = re.value
-    elif re.op == Diff.PATCH:
+    elif re.op == DiffOp.PATCH:
         remote = patch(value, re.diff)
-    elif re.op == Diff.REMOVE:
+    elif re.op == DiffOp.REMOVE:
         remote = []  # ""
     else:
         raise ValueError("Invalid item patch op {}".format(re.op))
@@ -216,10 +216,10 @@ def autoresolve_lists(merged, lcd, rcd, strategies, path):
         if not (d0 or d1):
             continue
 
-        linserts = [e for e in d0 if e.op == Diff.ADDRANGE]
-        rinserts = [e for e in d1 if e.op == Diff.ADDRANGE]
-        lpatches = [e for e in d0 if e.op == Diff.PATCH]
-        rpatches = [e for e in d1 if e.op == Diff.PATCH]
+        linserts = [e for e in d0 if e.op == DiffOp.ADDRANGE]
+        rinserts = [e for e in d1 if e.op == DiffOp.ADDRANGE]
+        lpatches = [e for e in d0 if e.op == DiffOp.PATCH]
+        rpatches = [e for e in d1 if e.op == DiffOp.PATCH]
 
         if lpatches and rpatches:
             assert len(lpatches) == 1
@@ -300,7 +300,7 @@ def autoresolve_dicts(merged, lcd, rcd, strategies, path):
             if re is not None:
                 newrcd.append(re)
 
-        elif le.op == Diff.PATCH and re.op == Diff.PATCH:
+        elif le.op == DiffOp.PATCH and re.op == DiffOp.PATCH:
             # Recurse if we have no strategy for this key but diffs available for the subdocument
             di, ldi, rdi = autoresolve(value, le.diff, re.diff, strategies, subpath)
             if di:
