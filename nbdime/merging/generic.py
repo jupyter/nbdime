@@ -11,7 +11,7 @@ import copy
 from collections import namedtuple
 
 from ..diffing import diff
-from ..diff_format import Diff, SequenceDiff, MappingDiff, DiffEntry, as_dict_based_diff
+from ..diff_format import Diff, SequenceDiffBuilder, MappingDiffBuilder, DiffEntry, as_dict_based_diff
 from ..patching import patch
 from .chunks import make_merge_chunks
 
@@ -66,8 +66,8 @@ def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
             merged[key] = remote[key]
 
     # Data structures for storing conflicts
-    local_conflict_diff = MappingDiff()
-    remote_conflict_diff = MappingDiff()
+    local_conflict_diff = MappingDiffBuilder()
+    remote_conflict_diff = MappingDiffBuilder()
 
     # (4) (5) (6)
     # Then we have the potentially conflicting changes
@@ -155,8 +155,8 @@ def _merge_lists(base, local, remote, base_local_diff, base_remote_diff):
     merged = []
 
     # Data structures for storing conflicts
-    local_conflict_diff = SequenceDiff()
-    remote_conflict_diff = SequenceDiff()
+    local_conflict_diff = SequenceDiffBuilder()
+    remote_conflict_diff = SequenceDiffBuilder()
 
     # Offset of indices between base and merged
     merged_offset = 0

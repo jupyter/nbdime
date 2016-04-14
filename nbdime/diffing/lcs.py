@@ -7,12 +7,12 @@ from __future__ import unicode_literals
 
 from six.moves import xrange as range
 
-from ..diff_format import SequenceDiff
+from ..diff_format import SequenceDiffBuilder
 
 
 def diff_from_lcs(A, B, A_indices, B_indices):
     """Compute the diff of A and B, given indices of their lcs."""
-    di = SequenceDiff()
+    di = SequenceDiffBuilder()
     N, M = len(A), len(B)
     llcs = len(A_indices)
     assert llcs == len(B_indices)

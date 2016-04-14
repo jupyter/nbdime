@@ -11,7 +11,7 @@ import operator
 from collections import defaultdict
 
 from ..diff_format import validate_diff, count_consumed_symbols
-from ..diff_format import SequenceDiff, MappingDiff
+from ..diff_format import SequenceDiffBuilder, MappingDiffBuilder
 
 from .sequences import diff_strings, diff_sequence
 from .snakes import compute_snakes_multilevel, compute_diff_from_snakes
@@ -98,7 +98,7 @@ def diff_lists(a, b, path="", predicates=None, differs=None, shallow_diff=None):
 
     # Count consumed items i,j from a,b, (i="take" in patch_list)
     i, j = 0, 0
-    di = SequenceDiff()
+    di = SequenceDiffBuilder()
     M = len(shallow_diff)
     for ie in range(M+1):
         if ie < M:
@@ -162,7 +162,7 @@ def diff_dicts(a, b, path="", predicates=None, differs=None):
     akeys = set(a.keys())
     bkeys = set(b.keys())
 
-    di = MappingDiff()
+    di = MappingDiffBuilder()
 
     # Sorting keys in loops to get a deterministic diff result
     for key in sorted(akeys - bkeys):

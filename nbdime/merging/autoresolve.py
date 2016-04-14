@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 
 from six import string_types
 
-from ..diff_format import SequenceDiff, MappingDiff, Diff, make_op
+from ..diff_format import SequenceDiffBuilder, MappingDiffBuilder, Diff, make_op
 from ..diff_format import as_dict_based_diff, revert_as_dict_based_diff, decompress_sequence_diff
 from ..patching import patch
 from .chunks import make_merge_chunks
@@ -199,9 +199,9 @@ def autoresolve_lists(merged, lcd, rcd, strategies, path):
         raise RuntimeError("Not expecting strategy {} for list items at path {}.".format(strategy, path))
 
     # Data structures for storing conflicts
-    resolutions = SequenceDiff()
-    newlcd = SequenceDiff()
-    newrcd = SequenceDiff()
+    resolutions = SequenceDiffBuilder()
+    newlcd = SequenceDiffBuilder()
+    newrcd = SequenceDiffBuilder()
 
     # Offset of indices between merged and resolved
     merged_offset = 0
@@ -274,9 +274,9 @@ def autoresolve_dicts(merged, lcd, rcd, strategies, path):
     # We can't have a one-sided conflict so keys must match
     assert set(lcd) == set(rcd)
 
-    resolutions = MappingDiff()
-    newlcd = MappingDiff()
-    newrcd = MappingDiff()
+    resolutions = MappingDiffBuilder()
+    newlcd = MappingDiffBuilder()
+    newrcd = MappingDiffBuilder()
 
     for key in sorted(lcd):
         # Query out how to handle conflicts in this part of the document

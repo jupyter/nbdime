@@ -16,10 +16,20 @@ from .log import NBDiffFormatError
 
 
 class DiffEntry(dict):
+    """For internal usage in nbdime library.
+
+    Minimal class providing attribute access to diff entiry keys.
+
+    Tip: If performance dictates, we can easily replace this
+    with a namedtuple during processing of diffs and convert
+    to dicts before any json conversions.
+    """
     def __getattr__(self, name):
         return self[name]
+
     def __setattr__(self, name, value):
         self[name] = value
+
 
 def make_op(op, *args):
     """Create a diff entry with compact notation and error checking.
@@ -84,7 +94,7 @@ def op_patch(key, diff):
     return DiffEntry(op="patch", key=key, diff=diff)
 
 
-# TODO: Rename to DiffBuilder
+# TODO: Rename to Diff
 class Diff(object):
 
     # Valid values for the action field in diff entries
@@ -217,11 +227,6 @@ class MappingDiffBuilder(Diff):
             self.append(op_patch(key, diff))
 
 
-# TODO: Rename to *DiffBuilder in code elsewhere and remove these
-MappingDiff = MappingDiffBuilder
-SequenceDiff = SequenceDiffBuilder
-
-
 def is_valid_diff(diff, deep=False):
     try:
         validate_diff(diff, deep=deep)
@@ -252,7 +257,7 @@ def validate_diff_entry(e, deep=False):
     # Check key (list or str uses int key, dict uses str key)
     op = e.op
     key = e.key
-    if isinstance(key, int) and op in SequenceDiff.OPS:
+    if isinstance(key, int) and op in SequenceDiffBuilder.OPS:
         if op == Diff.ADDRANGE:
             if not isinstance(e.valuelist, sequence_types):
                 raise NBDiffFormatError("addrange expects a sequence of values to insert, not '{}'.".format(e.valuelist))
@@ -266,7 +271,7 @@ def validate_diff_entry(e, deep=False):
                 validate_diff(e.diff, deep=deep)
         else:
             raise NBDiffFormatError("Unknown diff op '{}'.".format(op))
-    elif isinstance(key, string_types) and op in MappingDiff.OPS:
+    elif isinstance(key, string_types) and op in MappingDiffBuilder.OPS:
         if op == Diff.ADD:
             pass  # e.value is a single value to insert at key
         elif op == Diff.REMOVE:

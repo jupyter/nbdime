@@ -6,7 +6,7 @@
 from __future__ import unicode_literals
 
 from difflib import SequenceMatcher
-from ..diff_format import SequenceDiff
+from ..diff_format import SequenceDiffBuilder
 
 
 __all__ = ["diff_sequence_difflib"]
@@ -14,7 +14,7 @@ __all__ = ["diff_sequence_difflib"]
 
 def opcodes_to_diff(a, b, opcodes):
     "Convert difflib opcodes to nbdime diff format."
-    di = SequenceDiff()
+    di = SequenceDiffBuilder()
     for opcode in opcodes:
         action, abegin, aend, bbegin, bend = opcode
         asize = aend - abegin
