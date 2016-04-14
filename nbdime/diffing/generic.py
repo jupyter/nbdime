@@ -139,7 +139,7 @@ def diff_lists(a, b, path="", predicates=None, differs=None, shallow_diff=None):
     assert i == len(a)
     assert j == len(b)
 
-    return di.diff  # XXX
+    return di.validated()
 
 
 def diff_dicts(a, b, path="", predicates=None, differs=None):
@@ -189,4 +189,4 @@ def diff_dicts(a, b, path="", predicates=None, differs=None):
     for key in sorted(bkeys - akeys):
         di.add(key, b[key])
 
-    return di.diff  # XXX
+    return di.validated()

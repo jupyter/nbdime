@@ -87,36 +87,37 @@ class SequenceDiffBuilder(object):
         )
 
     def __init__(self):
-        self.diff = []
+        self._diff = []
 
+    # TODO: Remove these?
     def __len__(self):
-        return len(self.diff)
-
+        return len(self._diff)
     def __iter__(self):
-        return iter(self.diff)
-
+        return iter(self._diff)
     def __getitem__(self, i):
-        return self.diff[i]
+        return self._diff[i]
 
     def validated(self):
-        # TODO: Use .validated() instead of .diff in algorithms and add invariant checking here
-        return self.diff
+        return self._diff
     
     def append(self, entry):
         assert isinstance(entry, DiffEntry)
-
+        assert "op" in entry
+        assert entry.op in SequenceDiffBuilder.OPS
+        assert "key" in entry
         # Assert consistent ordering
-        assert len(self.diff) == 0 or self.diff[-1].key <= entry.key
+        _prev = self._diff[-1].key if self._diff else 0
+        assert _prev <= entry.key
 
         # Add entry
-        self.diff.append(entry)
+        self._diff.append(entry)
 
         # Swap last two entries if insertion was inserted
         # at same location as a previous remove or patch
         if (entry.op == DiffOp.ADDRANGE and
-            len(self.diff) >= 2 and entry.key == self.diff[-2].key
+            len(self._diff) >= 2 and entry.key == self._diff[-2].key
             ):
-            self.diff[-2], self.diff[-1] = self.diff[-1], self.diff[-2]
+            self._diff[-2], self._diff[-1] = self._diff[-1], self._diff[-2]
 
     def patch(self, key, diff):
         if diff:
@@ -147,24 +148,24 @@ class MappingDiffBuilder(object):
         )
 
     def __init__(self):
-        self.diff = []
-        #self.diff = {}
+        self._diff = {}
 
+    # TODO: Remove these?
     def __len__(self):
-        return len(self.diff)
-
+        return len(self._diff)
     def __iter__(self):
-        return iter(self.diff)
-        #return iter(self.diff.values())
+        return iter(sorted(self._diff.values(), key=lambda x: x.key))
 
     def validated(self):
-        # TODO: Use .validated() instead of .diff in algorithms and add invariant checking here
-        return self.diff
+        return sorted(self._diff.values(), key=lambda x: x.key)
 
     def append(self, entry):
         assert isinstance(entry, DiffEntry)
-        self.diff.append(entry)
-        #self.diff[entry.key] = entry
+        assert "op" in entry
+        assert entry.op in MappingDiffBuilder.OPS
+        assert "key" in entry
+        assert entry.key not in self._diff
+        self._diff[entry.key] = entry
 
     def keep(self, key):
         self.append(op_keep(key))

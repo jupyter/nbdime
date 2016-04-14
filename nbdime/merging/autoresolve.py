@@ -262,7 +262,7 @@ def autoresolve_lists(merged, lcd, rcd, strategies, path):
             for e in d1:
                 newrcd.append(e)  # offset_op(e, merged_offset))
 
-    return resolutions.diff, newlcd.diff, newrcd.diff
+    return resolutions.validated(), newlcd.validated(), newrcd.validated()
 
 
 def autoresolve_dicts(merged, lcd, rcd, strategies, path):
@@ -318,7 +318,7 @@ def autoresolve_dicts(merged, lcd, rcd, strategies, path):
             newlcd.append(le)
             newrcd.append(re)
 
-    return resolutions.diff, newlcd.diff, newrcd.diff
+    return resolutions.validated(), newlcd.validated(), newrcd.validated()
 
 
 def autoresolve(merged, local_diff, remote_diff, strategies, path):

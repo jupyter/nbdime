@@ -31,7 +31,7 @@ def opcodes_to_diff(a, b, opcodes):
             di.removerange(abegin, asize)
         else:
             raise RuntimeError("Unknown action {}".format(action))
-    return di.diff  # XXX
+    return di.validated()
 
 
 def diff_sequence_difflib(a, b):

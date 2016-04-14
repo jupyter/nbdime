@@ -32,4 +32,4 @@ def diff_from_lcs(A, B, A_indices, B_indices):
         di.removerange(x, N-x)
     if y < M:
         di.addrange(x, B[y:M])
-    return di.diff  # XXX
+    return di.validated()

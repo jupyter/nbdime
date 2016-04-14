@@ -79,16 +79,16 @@ def test_diff_and_patch():
     check_symmetric_diff_and_patch(mda, mdb)
     # A more explicit assert showing the diff format and testing that paths are sorted:
     assert diff(mda, mdb) == [
+        op_add("added", 7),
         op_remove("deleted"),
         op_patch("mix", [
+            op_add("add", 42)
             op_remove("del"),
             op_replace("mod", 37),
-            op_add("add", 42)
             ]),
         op_patch("modparent", [
             op_replace("mod", 22)
             ]),
-        op_add("added", 7),
         ]
 
 

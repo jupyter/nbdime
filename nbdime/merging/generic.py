@@ -135,9 +135,7 @@ def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
         else:
             raise ValueError("Invalid diff ops {} and {].".format(lop, rop))
 
-    lco = sorted(local_conflict_diff.diff, key=lambda x: x.key)  # XXX
-    rco = sorted(remote_conflict_diff.diff, key=lambda x: x.key)  # XXX
-    return merged, lco, rco
+    return merged, local_conflict_diff.validated(), remote_conflict_diff.validated()
 
 
 
@@ -221,7 +219,7 @@ def _merge_lists(base, local, remote, base_local_diff, base_remote_diff):
             for e in d1:
                 remote_conflict_diff.append(offset_op(e, merged_offset))
 
-    return merged, local_conflict_diff.diff, remote_conflict_diff.diff  # XXX
+    return merged, local_conflict_diff.validated(), remote_conflict_diff.validated()
 
 
 def _merge_strings(base, local, remote, base_local_diff, base_remote_diff):

@@ -96,4 +96,4 @@ def compute_diff_from_snakes(a, b, snakes, path="", predicates=None, differs=Non
 
         # Update corner offsets for next rectangle
         i0, j0 = i+n, j+n
-    return di.diff  # XXX
+    return di.validated()
