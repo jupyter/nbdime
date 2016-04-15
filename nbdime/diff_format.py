@@ -89,14 +89,6 @@ class SequenceDiffBuilder(object):
     def __init__(self):
         self._diff = []
 
-    # TODO: Remove these?
-    def __len__(self):
-        return len(self._diff)
-    def __iter__(self):
-        return iter(self._diff)
-    def __getitem__(self, i):
-        return self._diff[i]
-
     def validated(self):
         return self._diff
     
@@ -149,12 +141,6 @@ class MappingDiffBuilder(object):
 
     def __init__(self):
         self._diff = {}
-
-    # TODO: Remove these?
-    def __len__(self):
-        return len(self._diff)
-    def __iter__(self):
-        return iter(sorted(self._diff.values(), key=lambda x: x.key))
 
     def validated(self):
         return sorted(self._diff.values(), key=lambda x: x.key)
