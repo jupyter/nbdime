@@ -345,8 +345,7 @@ def to_json_patch(d, path=""):
 
     This is untested and will need some details worked out.
     """
-    # FIXME: Test with some conforming tool.
-    print("to_json_patch is not tested, see github issues.")
+    print("Warning: to_json_patch is not thouroughly tested.")
     jp = []
     offset = 0
     for e in d:
@@ -375,7 +374,7 @@ def to_json_patch(d, path=""):
             assert isinstance(e.key, int)
             # JSONPatch only has single value remove, no removerange,
             # repeat removal at same index instead
-            p = "/".join((path, str(e.key)))
+            p = "/".join((path, str(e.key + offset)))
             for i in range(e.length):
                 jp.append({"op": "remove", "path": p})
                 offset -= 1
