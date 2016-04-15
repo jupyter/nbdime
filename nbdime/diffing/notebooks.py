@@ -135,7 +135,7 @@ def compare_output_data(x, y):
 
 # Keeping these here for the comments and as as a reminder for possible future extension points:
 def __unused_diff_single_outputs(a, b, path="/cells/*/output/*"):
-    "Diff a pair of output cells."
+    "DiffOp a pair of output cells."
     assert path == "/cells/*/outputs/*"
     # TODO: Handle output diffing with plugins? I.e. image diff, svg diff, json diff, etc.
     # FIXME: Use linebased diff of some types of outputs:
@@ -145,7 +145,7 @@ def __unused_diff_single_outputs(a, b, path="/cells/*/output/*"):
     #    a.text
     return diff(a, b)
 def __unused_diff_source(a, b, path, predicates, differs):
-    "Diff a pair of sources."
+    "DiffOp a pair of sources."
     assert path == "/cells/*/source"
     # FIXME: Make sure we use linebased diff of sources
     # TODO: Use google-diff-patch-match library to diff the sources?

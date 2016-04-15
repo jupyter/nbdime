@@ -9,7 +9,7 @@ from six import string_types
 import copy
 import nbformat
 
-from .diff_format import Diff, NBDiffFormatError
+from .diff_format import DiffOp, NBDiffFormatError
 
 
 __all__ = ["patch", "patch_notebook"]
@@ -28,26 +28,26 @@ def patch_list(obj, diff):
         # Take values from obj not mentioned in diff, up to not including index
         newobj.extend(copy.deepcopy(value) for value in obj[take:index])
 
-        if op == Diff.ADDRANGE:
+        if op == DiffOp.ADDRANGE:
             # Extend with new values directly
             newobj.extend(e.valuelist)
             skip = 0
-        elif op == Diff.REMOVERANGE:
+        elif op == DiffOp.REMOVERANGE:
             # Delete a number of values by skipping
             skip = e.length
-        elif op == Diff.PATCH:
+        elif op == DiffOp.PATCH:
             newobj.append(patch(obj[index], e.diff))
             skip = 1
         # Note that the operations ADD, REMOVE, REPLACE are not produced by the
         # diff algorithm anymore, keeping these cases just in case we want them back:
-        elif op == Diff.ADD:
+        elif op == DiffOp.ADD:
             # Append new value directly
             newobj.append(e.value)
             skip = 0
-        elif op == Diff.REMOVE:
+        elif op == DiffOp.REMOVE:
             # Delete values obj[index] by incrementing take to skip
             skip = 1
-        elif op == Diff.REPLACE:
+        elif op == DiffOp.REPLACE:
             # Add replacement value and skip old
             newobj.append(e.value)
             skip = 1
@@ -56,7 +56,7 @@ def patch_list(obj, diff):
 
         # Skip the specified number of elements, but never decrement take.
         # Note that take can pass index in diffs with repeated +/- on the
-        # same index, i.e. [make_op(Diff.REMOVE, index), make_op(Diff.ADD, index, value)]
+        # same index, i.e. [op_remove(index), op_add(index, value)]
         take = max(take, index + skip)
 
     # Take values at end not mentioned in diff
@@ -80,15 +80,15 @@ def patch_dict(obj, diff):
         key = e.key
         assert isinstance(key, string_types)
 
-        if op == Diff.ADD:
+        if op == DiffOp.ADD:
             assert key not in keys_to_copy
             newobj[key] = e.value
-        elif op == Diff.REMOVE:
+        elif op == DiffOp.REMOVE:
             keys_to_copy.remove(key)
-        elif op == Diff.REPLACE:
+        elif op == DiffOp.REPLACE:
             keys_to_copy.remove(key)
             newobj[key] = e.value
-        elif op == Diff.PATCH:
+        elif op == DiffOp.PATCH:
             keys_to_copy.remove(key)
             newobj[key] = patch(obj[key], e.diff)
         else:

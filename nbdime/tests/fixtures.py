@@ -140,6 +140,8 @@ def check_symmetric_diff_and_patch(a, b):
 
 
 def sources_to_notebook(sources):
+    assert isinstance(sources, list)
+    assert len(sources) == 0 or isinstance(sources[0], list)
     nb = nbformat.v4.new_notebook()
     nb.cells.extend(nbformat.v4.new_code_cell(source) for source in sources)
     return nb
@@ -152,6 +154,6 @@ def notebook_to_sources(nb, as_str=True):
         if as_str and isinstance(source, list):
             source = "\n".join([line.strip("\n") for line in source])
         elif not as_str and isinstance(source, str):
-            source = source.split("\n")
+            source = source.splitlines(True)
         sources.append(source)
     return sources

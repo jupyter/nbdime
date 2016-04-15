@@ -15,9 +15,9 @@ from ..diffing.notebooks import diff_notebooks
 
 # Strategies for handling conflicts  TODO: Implement these and refine further!
 generic_conflict_strategies = ("mergetool", "fail", "use-base", "use-local", "use-remote", "clear")
-source_conflict_strategies = generic_conflict_strategies # + ("merge-inline",)
+source_conflict_strategies = generic_conflict_strategies # + ("inline-source",)
 transient_conflict_strategies = generic_conflict_strategies # + ()
-output_conflict_strategies = transient_conflict_strategies # + ("use-all",)
+output_conflict_strategies = transient_conflict_strategies # + ("join", "inline-outputs")
 
 
 def autoresolve_notebook_conflicts(merged, local_diffs, remote_diffs, args):
@@ -28,13 +28,12 @@ def autoresolve_notebook_conflicts(merged, local_diffs, remote_diffs, args):
         "/cells/*/cell_type": "fail",
         "/cells/*/execution_count": "clear",
         "/cells/*/metadata": "use-base",
-        #"/cells/*/source": "inline",
-        #"/cells/*/outputs": "join",
-        "/cells/*/outputs": "clear",
+        #"/cells/*/source": "inline-source",  # FIXME: Debug this mode
+        "/cells/*/source": "mergetool",
+        "/cells/*/outputs": "inline-outputs", # "clear", "join"
         }
-    resolutions, local_diffs, remote_diffs = \
+    resolved, local_diffs, remote_diffs = \
         autoresolve(merged, local_diffs, remote_diffs, strategies, "")
-    resolved = patch(merged, resolutions)
     return resolved, local_diffs, remote_diffs
 
 

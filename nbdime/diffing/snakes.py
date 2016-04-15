@@ -10,7 +10,7 @@ Utilities for computing 'snakes', or contiguous sequences of equal elements of t
 """
 
 import operator
-from ..diff_format import SequenceDiff
+from ..diff_format import SequenceDiffBuilder
 from .seq_bruteforce import bruteforce_compute_snakes
 
 __all__ = ["compute_snakes_multilevel"]
@@ -79,7 +79,7 @@ def compute_diff_from_snakes(a, b, snakes, path="", predicates=None, differs=Non
     subpath = "/".join((path, "*"))
     diffit = differs[subpath]
 
-    di = SequenceDiff()
+    di = SequenceDiffBuilder()
     i0, j0, i1, j1 = 0, 0, len(a), len(b)
     for i, j, n in snakes + [(i1, j1, 0)]:
         if i > i0:
@@ -96,4 +96,4 @@ def compute_diff_from_snakes(a, b, snakes, path="", predicates=None, differs=Non
 
         # Update corner offsets for next rectangle
         i0, j0 = i+n, j+n
-    return di.diff  # XXX
+    return di.validated()

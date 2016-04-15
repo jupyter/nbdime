@@ -7,59 +7,35 @@ from __future__ import unicode_literals
 
 from six import string_types
 from six.moves import xrange as range
-from collections import namedtuple
 
 from .log import NBDiffFormatError
 
 
-# TODO: Move some of the less official utilities in here to another submodule
-
-
 class DiffEntry(dict):
+    """For internal usage in nbdime library.
+
+    Minimal class providing attribute access to diff entiry keys.
+
+    Tip: If performance dictates, we can easily replace this
+    with a namedtuple during processing of diffs and convert
+    to dicts before any json conversions.
+    """
     def __getattr__(self, name):
         return self[name]
+
     def __setattr__(self, name, value):
         self[name] = value
 
 
-def make_op(op, *args):
-    """Create a diff entry with compact notation and error checking.
-
-    Args depend on the op:
-
-        * op = "add",         args = (key, value)
-        * op = "remove",      args = (key,)
-        * op = "replace",     args = (key, value)
-        * op = "patch",       args = (key, diff)
-        * op = "addrange",    args = (key, valuelist)
-        * op = "removerange", args = (key, length)
-
-    """
-    if op == "addrange":
-        key, valuelist = args
-        return DiffEntry(op=op, key=key, valuelist=valuelist)
-    elif op == "removerange":
-        key, length = args
-        return DiffEntry(op=op, key=key, length=length)
-    elif op in ("add", "replace"):
-        key, value = args
-        return DiffEntry(op=op, key=key, value=value)
-    elif op == "remove":
-        key, = args
-        return DiffEntry(op=op, key=key)
-    elif op == "patch":
-        key, diff = args
-        return DiffEntry(op=op, key=key, diff=diff)
-    elif op == "keep":
-        key, = args
-        return DiffEntry(op=op, key=key)
-    else:
-        raise NBDiffFormatError("Invalid op {}.".format(op))
+def offset_op(e, n):
+    "Recreate sequence diff entry with offset added to key."
+    e = DiffEntry(e)
+    e.key += n
+    return e
 
 
-class Diff(object):
-
-    # Valid values for the action field in diff entries
+class DiffOp:
+    "Collection of valid values for the action field in diff entries."
     ADD = "add"
     REMOVE = "remove"
     REPLACE = "replace"
@@ -67,92 +43,151 @@ class Diff(object):
     REMOVERANGE = "removerange"
     PATCH = "patch"
 
-    # Not yet used in official diffs but possibly in
-    # internal tools or for future consideration
-    _KEEP = "keep"
-    #_MOVE = "move"
-    #_KEEPRANGE = "keeprange"
-    #_MOVERANGE = "moverange"
+    # For future consideration
+    #KEEP = "keep"
+    #KEEPRANGE = "keeprange"
+    #MOVE = "move"
+    #MOVERANGE = "moverange"
 
 
-class SequenceDiff(Diff):
+#def op_keep(key):
+#    "Create a diff entry to keep value at key."
+#    return DiffEntry(op=DiffOp.KEEP, key=key)
+
+def op_add(key, value):
+    "Create a diff entry to add value at/before key."
+    return DiffEntry(op=DiffOp.ADD, key=key, value=value)
+
+def op_remove(key):
+    "Create a diff entry to remove value at key."
+    return DiffEntry(op=DiffOp.REMOVE, key=key)
+
+def op_replace(key, value):
+    "Create a diff entry to replace value at key with given value."
+    return DiffEntry(op=DiffOp.REPLACE, key=key, value=value)
+
+#def op_keeprange(key, length):
+#    "Create a diff entry to keep values in range key:key+length."
+#    return DiffEntry(op=DiffOp.KEEPRANGE, key=key, length=length)
+
+def op_addrange(key, valuelist):
+    "Create a diff entry to add given list of values before key."
+    return DiffEntry(op=DiffOp.ADDRANGE, key=key, valuelist=valuelist)
+
+def op_removerange(key, length):
+    "Create a diff entry to remove values in range key:key+length."
+    return DiffEntry(op=DiffOp.REMOVERANGE, key=key, length=length)
+
+def op_patch(key, diff):
+    "Create a diff entry to patch value at key with diff."
+    return DiffEntry(op=DiffOp.PATCH, key=key, diff=diff)
+
+
+class SequenceDiffBuilder(object):
 
     # Valid values for the action field in sequence diff entries
     OPS = (
-        Diff.ADDRANGE,
-        Diff.REMOVERANGE,
-        Diff.PATCH,
+        DiffOp.ADDRANGE,
+        DiffOp.REMOVERANGE,
+        #DiffOp.KEEPRANGE,
+        DiffOp.PATCH,
         )
 
     def __init__(self):
-        self.diff = []
+        self._diff = []
 
-    def __len__(self):
-        return len(self.diff)
-
-    def __iter__(self):
-        return iter(self.diff)
-
-    def __getitem__(self, i):
-        return self.diff[i]
+    def validated(self):
+        return self._diff
 
     def append(self, entry):
+        # Simplifies some algorithms
+        if entry is None:
+            return
+
+        # Typechecking (just for internal consistency checking)
         assert isinstance(entry, DiffEntry)
-        self.diff.append(entry)
+        assert "op" in entry
+        assert entry.op in SequenceDiffBuilder.OPS
+        assert "key" in entry
 
-    def add(self, key, valuelist):
-        self.append(make_op(Diff.ADDRANGE, key, valuelist))
+        # Assert consistent ordering of diff entries
+        _prev = self._diff[-1].key if self._diff else 0
+        assert _prev <= entry.key
 
-    def remove(self, key, length):
-        self.append(make_op(Diff.REMOVERANGE, key, length))
+        # Add entry!
+        self._diff.append(entry)
+
+        # Swap last two entries if insertion was inserted
+        # at same location as a previous remove or patch
+        if (entry.op == DiffOp.ADDRANGE and
+            len(self._diff) >= 2 and entry.key == self._diff[-2].key
+            ):
+            self._diff[-2], self._diff[-1] = self._diff[-1], self._diff[-2]
 
     def patch(self, key, diff):
-        self.append(make_op(Diff.PATCH, key, diff))
+        if diff:
+            self.append(op_patch(key, diff))
 
     def addrange(self, key, valuelist):
-        self.append(make_op(Diff.ADDRANGE, key, valuelist))
+        if valuelist:
+            self.append(op_addrange(key, valuelist))
 
     def removerange(self, key, length):
-        self.append(make_op(Diff.REMOVERANGE, key, length))
+        if length:
+            self.append(op_removerange(key, length))
+
+    #def keeprange(self, key, length):
+    #    if length:
+    #        self.append(op_keeprange(key, length))
 
 
-class MappingDiff(Diff):
+class MappingDiffBuilder(object):
 
     # Valid values for the action field in mapping diff entries
     OPS = (
-        Diff.ADD,
-        Diff.REMOVE,
-        Diff.REPLACE,
-        Diff.PATCH,
+        #DiffOp.KEEP,
+        DiffOp.ADD,
+        DiffOp.REMOVE,
+        DiffOp.REPLACE,
+        DiffOp.PATCH,
         )
 
     def __init__(self):
-        self.diff = []
-        #self.diff = {}
+        self._diff = {}
 
-    def __len__(self):
-        return len(self.diff)
-
-    def __iter__(self):
-        return iter(self.diff)
-        #return iter(self.diff.values())
+    def validated(self):
+        return sorted(self._diff.values(), key=lambda x: x.key)
 
     def append(self, entry):
+        # Simplifies some algorithms
+        if entry is None:
+            return
+
+        # Typechecking (just for internal consistency checking)
         assert isinstance(entry, DiffEntry)
-        self.diff.append(entry)
-        #self.diff[entry.key] = entry
+        assert "op" in entry
+        assert entry.op in MappingDiffBuilder.OPS
+        assert "key" in entry
+        assert entry.key not in self._diff
+
+        # Add entry!
+        self._diff[entry.key] = entry
+
+    #def keep(self, key):
+    #    self.append(op_keep(key))
 
     def add(self, key, value):
-        self.append(make_op(Diff.ADD, key, value))
+        self.append(op_add(key, value))
 
     def remove(self, key):
-        self.append(make_op(Diff.REMOVE, key))
+        self.append(op_remove(key))
 
     def replace(self, key, value):
-        self.append(make_op(Diff.REPLACE, key, value))
+        self.append(op_replace(key, value))
 
     def patch(self, key, diff):
-        self.append(make_op(Diff.PATCH, key, diff))
+        if diff:
+            self.append(op_patch(key, diff))
 
 
 def is_valid_diff(diff, deep=False):
@@ -167,7 +202,7 @@ def is_valid_diff(diff, deep=False):
 
 def validate_diff(diff, deep=False):
     if not isinstance(diff, list):
-        raise NBDiffFormatError("Diff must be a list.")
+        raise NBDiffFormatError("DiffOp must be a list.")
     for e in diff:
         validate_diff_entry(e, deep=deep)
 
@@ -180,34 +215,34 @@ def validate_diff_entry(e, deep=False):
 
     # Entry is always a list with 3 items, or 2 in the special case of single item deletion
     if not isinstance(e, DiffEntry):
-        raise NBDiffFormatError("Diff entry '{}' is not a diff type.".format(e))
+        raise NBDiffFormatError("DiffOp entry '{}' is not a diff type.".format(e))
 
     # Check key (list or str uses int key, dict uses str key)
     op = e.op
     key = e.key
-    if isinstance(key, int) and op in SequenceDiff.OPS:
-        if op == Diff.ADDRANGE:
+    if isinstance(key, int) and op in SequenceDiffBuilder.OPS:
+        if op == DiffOp.ADDRANGE:
             if not isinstance(e.valuelist, sequence_types):
                 raise NBDiffFormatError("addrange expects a sequence of values to insert, not '{}'.".format(e.valuelist))
-        elif op == Diff.REMOVERANGE:
+        elif op == DiffOp.REMOVERANGE:
             if not isinstance(e.length, int):
                 raise NBDiffFormatError("removerange expects a number of values to delete, not '{}'.".format(e.length))
-        elif op == Diff.PATCH:
+        elif op == DiffOp.PATCH:
             # e.diff is itself a diff, check it recursively if the "deep" argument is true
             # (the "deep" argument is here to avoid recursion and potential O(>n) performance pitfalls)
             if deep:
                 validate_diff(e.diff, deep=deep)
         else:
             raise NBDiffFormatError("Unknown diff op '{}'.".format(op))
-    elif isinstance(key, string_types) and op in MappingDiff.OPS:
-        if op == Diff.ADD:
+    elif isinstance(key, string_types) and op in MappingDiffBuilder.OPS:
+        if op == DiffOp.ADD:
             pass  # e.value is a single value to insert at key
-        elif op == Diff.REMOVE:
+        elif op == DiffOp.REMOVE:
             pass  # no argument
-        elif op == Diff.REPLACE:
+        elif op == DiffOp.REPLACE:
             # e.value is a single value to replace value at key with
             pass
-        elif op == Diff.PATCH:
+        elif op == DiffOp.PATCH:
             # e.diff is itself a diff, check it recursively if the "deep" argument is true
             # (the "deep" argument is here to avoid recursion and potential O(>n) performance pitfalls)
             if deep:
@@ -226,11 +261,11 @@ def validate_diff_entry(e, deep=False):
 def count_consumed_symbols(e):
     "Count how many symbols are consumed from each sequence by a single sequence diff entry."
     op = e.op
-    if op == Diff.ADDRANGE:
+    if op == DiffOp.ADDRANGE:
         return (0, len(e.valuelist))
-    elif op == Diff.REMOVERANGE:
+    elif op == DiffOp.REMOVERANGE:
         return (e.length, 0)
-    elif op == Diff.PATCH:
+    elif op == DiffOp.PATCH:
         return (1, 1)
     else:
         raise NBDiffFormatError("Invalid op '{}'".format(op))
@@ -275,15 +310,15 @@ def decompress_sequence_diff(di, n):
     possible with op in (KEEP, REMOVE, PATCH, REPLACE).
     """
     offset = 0
-    decompressed = [make_op(Diff._KEEP, i) for i in range(n)]
+    decompressed = [op_keep(i) for i in range(n)]
     for e in di:
         op = e.op
-        if op in (Diff.PATCH, Diff.REPLACE, Diff.REMOVE):
+        if op in (DiffOp.PATCH, DiffOp.REPLACE, DiffOp.REMOVE):
             decompressed[e.key] = e
-        elif op == Diff.REMOVERANGE:
+        elif op == DiffOp.REMOVERANGE:
             for i in range(e.length):
-                decompressed[e.key + i] = make_op(Diff.REMOVE, e.key + i)
-        elif op in (Diff.ADDRANGE, Diff.ADD):
+                decompressed[e.key + i] = op_remove(e.key + i)
+        elif op in (DiffOp.ADDRANGE, DiffOp.ADD):
             raise ValueError("Not expexting insertions.")
         else:
             raise ValueError("Unknown op {}.".format(op))
@@ -310,29 +345,45 @@ def to_json_patch(d, path=""):
 
     This is untested and will need some details worked out.
     """
-    raise RuntimeError("to_json_patch is currently not correct, see github issue.")
+    print("Warning: to_json_patch is not thouroughly tested.")
     jp = []
+    offset = 0
     for e in d:
         op = e.op
-        p = "/".join([path, str(e.key)])
-        if op == Diff.ADD:
+        if op == DiffOp.ADD:
+            assert isinstance(e.key, string_types)
+            p = "/".join([path, e.key])
             jp.append({"op": "add", "path": p, "value": e.value})
-        elif op == Diff.REPLACE:
+        elif op == DiffOp.REPLACE:
+            assert isinstance(e.key, string_types)
+            p = "/".join([path, e.key])
             jp.append({"op": "replace", "path": p, "value": e.value})
-        elif op == Diff.REMOVE:
+        elif op == DiffOp.REMOVE:
+            assert isinstance(e.key, string_types)
+            p = "/".join([path, e.key])
             jp.append({"op": "remove", "path": p})
-        elif op == Diff.ADDRANGE:
-            # JSONPatch only has single value add, no addrange
-            # FIXME: Reverse this or not? Read RFC carefully and/or test with some conforming tool.
-            #for value in reversed(e.valuelist):
+        elif op == DiffOp.ADDRANGE:
+            # JSONPatch only has single value add, no addrange,
+            # repeat addition after increasing index instead
+            assert isinstance(e.key, int)
             for value in e.valuelist:
+                p = "/".join([path, str(e.key + offset)])
                 jp.append({"op": "add", "path": p, "value": value})
-        elif op == Diff.REMOVERANGE:
-            # JSONPatch only has single value remove, no removerange
+                offset += 1
+        elif op == DiffOp.REMOVERANGE:
+            assert isinstance(e.key, int)
+            # JSONPatch only has single value remove, no removerange,
+            # repeat removal at same index instead
+            p = "/".join((path, str(e.key + offset)))
             for i in range(e.length):
-                p_i = "/".join((path, str(e.key + i)))  # Note: not using p
-                jp.append({"op": "remove", "path": p_i})
-        elif op == Diff.PATCH:
+                jp.append({"op": "remove", "path": p})
+                offset -= 1
+        elif op == DiffOp.PATCH:
             # JSONPatch has no recursion, recurse here to flatten diff
+            key = e.key
+            if isinstance(key, int):
+                key += offset
+            p = "/".join([path, str(key)])
             jp.extend(to_json_patch(e.diff, p))
     return jp
+
