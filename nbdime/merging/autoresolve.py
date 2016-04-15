@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 
 from six import string_types
 
-from ..diff_format import SequenceDiffBuilder, MappingDiffBuilder, DiffOp, op_replace
+from ..diff_format import SequenceDiffBuilder, MappingDiffBuilder, DiffOp, offset_op, op_replace
 from ..diff_format import as_dict_based_diff
 from ..patching import patch
 from .chunks import make_merge_chunks
@@ -130,49 +130,60 @@ def make_cleared_value(value):
         return None
 
 
-def resolve_single_conflict(value, le, re, strategy, path):
+def resolve_dict_item_conflict(value, le, re, strategy, path):
     assert le.key == re.key
 
+    # Expecting never to get this kind of conflict
     if strategy == "fail":
         raise RuntimeError("Not expecting a conflict at path {}.".format(path))
 
-    elif strategy == "mergetool":
-        e, le, re = None, le, re
+    # Leave this type of conflict for other tool to resolve
+    if strategy == "mergetool":
+        return (value, le, re)
 
-    elif strategy == "use-base":
-        e, le, re = None, None, None
-
+    # The rest here remove the conflicts and provide a new value
+    if strategy == "use-base":
+        newvalue = value
     elif strategy == "use-local":
-        e, le, re = le, None, None
-
+        newvalue = patch_item(value, le)
     elif strategy == "use-remote":
-        e, le, re = re, None, None
-
+        newvalue = patch_item(value, re)
     elif strategy == "clear":
-        v = make_cleared_value(value)
-        e = op_replace(le.key, v)
-        le, re = None, None
-
+        newvalue = make_cleared_value(value)
     elif strategy == "inline-source":
-        v = make_inline_source_value(value, le, re)
-        e = op_replace(le.key, v)
-        le, re = None, None
-
+        newvalue = make_inline_source_value(value, le, re)
     elif strategy == "inline-outputs":
-        v = make_inline_outputs_value(value, le, re)
-        e = op_replace(le.key, v)
-        le, re = None, None
-
+        newvalue = make_inline_outputs_value(value, le, re)
     elif strategy == "join":
-        v = make_join_value(value, le, re)
-        e = op_replace(le.key, v)
-        le, re = None, None
-
+        newvalue = make_join_value(value, le, re)
     else:
         raise RuntimeError("Invalid strategy {}.".format(strategy))
 
-    return e, le, re
+    return (newvalue, None, None)
 
+
+def resolve_list_item_conflicts(merged, lcd, rcd, strategy, path):
+    "Resolve conflicts for all items in list."
+
+    # Leave this type of conflict for other tool to resolve
+    if strategy == "mergetool":
+        return (merged, lcd, rcd)
+
+    # The rest here remove the conflicts and provide a new value
+    if strategy == "use-base":
+        resolved = merged
+    elif strategy == "use-local":
+        resolved = patch(merged, lcd)
+    elif strategy == "use-remote":
+        resolved = patch(merged, rcd)
+    elif strategy == "fail":
+        raise RuntimeError("Not expecting a conflict at path {}.".format(path))
+    else:
+        # I think "clear", "inline", "join" don't make sense for list items, but are rather applied to the list itself instead?
+        raise RuntimeError("Not expecting strategy {} for list items at path {}.".format(strategy, path))
+
+    return (resolved, [], [])
+    
 
 def autoresolve_lists(merged, lcd, rcd, strategies, path):
     key = "*"
@@ -180,27 +191,11 @@ def autoresolve_lists(merged, lcd, rcd, strategies, path):
     strategy = strategies.get(subpath)
 
     # Cutting off handling of strategies of subitems if there's a strategy for these list items
-    if strategy is None:
-        pass  # Go on and potentially recurse
-    elif strategy == "mergetool":
-        return [], lcd, rcd
-    elif strategy == "use-base":
-        return [], [], []
-    elif strategy == "use-local":
-        return lcd, [], []
-    elif strategy == "use-remote":
-        return rcd, [], []
-    # I think these don't make sense for list items? Applied to lists instead?
-    #elif strategy == "clear":
-    #elif strategy == "inline"
-    #elif strategy == "join":
-    elif strategy == "fail":
-        raise RuntimeError("Not expecting a conflict at path {}.".format(path))
-    else:
-        raise RuntimeError("Not expecting strategy {} for list items at path {}.".format(strategy, path))
+    if strategy:
+        return resolve_list_item_conflicts(merged, lcd, rcd, strategy, path)
 
     # Data structures for storing conflicts
-    resolutions = SequenceDiffBuilder()
+    resolved = []
     newlcd = SequenceDiffBuilder()
     newrcd = SequenceDiffBuilder()
 
@@ -213,60 +208,66 @@ def autoresolve_lists(merged, lcd, rcd, strategies, path):
     # Loop over chunks of base[j:k], grouping insertion at j into
     # the chunk starting with j
     for (j, k, d0, d1) in chunks:
-        # Skip chunks with no conflict
-        if not (d0 or d1):
-            continue
-
-        linserts = [e for e in d0 if e.op == DiffOp.ADDRANGE]
-        rinserts = [e for e in d1 if e.op == DiffOp.ADDRANGE]
         lpatches = [e for e in d0 if e.op == DiffOp.PATCH]
         rpatches = [e for e in d1 if e.op == DiffOp.PATCH]
+        if not (d0 or d1):
+            # Unmodified chunk
+            resolved.extend(merged[j:k])
 
-        if lpatches and rpatches:
+        elif lpatches and rpatches:
+            # Recurse if we have diffs available for both subdocuments
             assert len(lpatches) == 1
             assert len(rpatches) == 1
+            linserts = [e for e in d0 if e.op == DiffOp.ADDRANGE]
+            rinserts = [e for e in d1 if e.op == DiffOp.ADDRANGE]
             assert len(lpatches) + len(linserts) == len(d0)
             assert len(rpatches) + len(rinserts) == len(d1)
             assert k == j + 1
             assert all(e.key == j for e in linserts + rinserts)
+            
             le, = lpatches
             re, = rpatches
-            # Recurse if we have diffs available for both subdocuments
-            di, ldi, rdi = autoresolve(merged[j], le.diff, re.diff, strategies, subpath)
+            newvalue, ldi, rdi = autoresolve(merged[j], le.diff, re.diff, strategies, subpath)
 
             # NB! Possibly contentious handling of inserts here:
-            # if patch conflicts have been resolved, allow inserts from both sides
             if not (ldi or rdi):
+                # Patch conflicts have been resolved, allow inserts from both sides
                 for e in linserts + rinserts:
-                    resolutions.append(e)
+                    resolved.extend(e.valuelist)
+                    merged_offset += len(e.valuelist) # FIXME: Correct?
             else:
+                # Keep inserts as conflicts
                 for e in linserts:
                     newlcd.append(e)
                 for e in rinserts:
                     newrcd.append(e)
 
             # Now add patch entries with result of autoresolve recursion
-            if di:
-                resolutions.patch(j, di)
-            if ldi:
-                newlcd.patch(j, ldi)
-            if rdi:
-                newrcd.patch(j, rdi)
+            if newvalue is Deleted:
+                merged_offset -= 1 # FIXME: Correct?
+                assert not ldi and not rdi
+            else:
+                resolved.append(newvalue)
+                if ldi:
+                    newlcd.patch(j, ldi)
+                if rdi:
+                    newrcd.patch(j, rdi)
         else:
-            # Alternatives if we don't have PATCH, are:
-            #  - INSERT: not happening
-            #  - REPLACE: technically possible, if so we can can convert it to PATCH, but does it happen?
-            #  - REMOVE: more likely, but resolving subdocument diff will still leave us with a full conflict on parent here
-            # No resolution, keep conflicts le, re
+            # Just keep input and conflicts but offset conflicts
+            resolved.extend(merged[j:k])
             for e in d0:
-                newlcd.append(e)  # offset_op(e, merged_offset))
+                newlcd.append(offset_op(e, merged_offset))
             for e in d1:
-                newrcd.append(e)  # offset_op(e, merged_offset))
+                newrcd.append(offset_op(e, merged_offset))
 
-    return resolutions.validated(), newlcd.validated(), newrcd.validated()
+    return resolved, newlcd.validated(), newrcd.validated()
 
 
 def autoresolve_dicts(merged, lcd, rcd, strategies, path):
+
+    # lcd = local conflict diffs
+    # rcd = remote conflict diffs
+    
     # Converting to dict-based diff format for dicts for convenience
     # This step will be unnecessary if we change the diff format to work this way always
     lcd = as_dict_based_diff(lcd)
@@ -275,11 +276,19 @@ def autoresolve_dicts(merged, lcd, rcd, strategies, path):
     # We can't have a one-sided conflict so keys must match
     assert set(lcd) == set(rcd)
 
-    resolutions = MappingDiffBuilder()
+    # Get diff keys
+    bldkeys = set(lcd.keys())
+    brdkeys = set(rcd.keys())
+    dkeys = bldkeys | brdkeys
+
+    # (1) Use base values for all keys with no change
+    resolved = {key: merged[key] for key in set(merged.keys()) - dkeys}
+
+    # Builders for remaining conflicts
     newlcd = MappingDiffBuilder()
     newrcd = MappingDiffBuilder()
 
-    for key in sorted(lcd):
+    for key in sorted(dkeys):
         # Query out how to handle conflicts in this part of the document
         subpath = "/".join((path, key))
         strategy = strategies.get(subpath)
@@ -293,9 +302,7 @@ def autoresolve_dicts(merged, lcd, rcd, strategies, path):
 
         if strategy is not None:
             # Autoresolve conflicts for this key
-            e, le, re = resolve_single_conflict(value, le, re, strategy, subpath)
-            if e is not None:
-                resolutions.append(e)
+            newvalue, le, re = resolve_dict_item_conflict(value, le, re, strategy, subpath)
             if le is not None:
                 newlcd.append(le)
             if re is not None:
@@ -303,23 +310,28 @@ def autoresolve_dicts(merged, lcd, rcd, strategies, path):
 
         elif le.op == DiffOp.PATCH and re.op == DiffOp.PATCH:
             # Recurse if we have no strategy for this key but diffs available for the subdocument
-            di, ldi, rdi = autoresolve(value, le.diff, re.diff, strategies, subpath)
-            if di:
-                resolutions.patch(key, di)
+            newvalue, ldi, rdi = autoresolve(value, le.diff, re.diff, strategies, subpath)
             if ldi:
                 newlcd.patch(key, ldi)
             if rdi:
                 newrcd.patch(key, rdi)
         else:
             # Alternatives if we don't have PATCH, are:
-            #  - INSERT: only happens if inserted values are different, could possibly autoresolve some cases but nothing important
+            #  - ADD: only happens if inserted values are different, could possibly autoresolve some cases but nothing important
             #  - REPLACE: technically possible, if so we can can convert it to PATCH, but does it happen?
             #  - REMOVE: more likely, but resolving subdocument diff will still leave us with a full conflict on parent here
             # No resolution, keep conflicts le, re
+            newvalue = value
             newlcd.append(le)
             newrcd.append(re)
 
-    return resolutions.validated(), newlcd.validated(), newrcd.validated()
+        # Add new value unless deleted
+        if newvalue is Deleted:
+            assert key not in resolved
+        else:
+            resolved[key] = newvalue
+
+    return resolved, newlcd.validated(), newrcd.validated()
 
 
 def autoresolve(merged, local_diff, remote_diff, strategies, path):

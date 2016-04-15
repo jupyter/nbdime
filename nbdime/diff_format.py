@@ -27,6 +27,13 @@ class DiffEntry(dict):
         self[name] = value
 
 
+def offset_op(e, n):
+    "Recreate sequence diff entry with offset added to key."
+    e = DiffEntry(e)
+    e.key += n
+    return e
+
+
 class DiffOp:
     "Collection of valid values for the action field in diff entries."
     ADD = "add"
@@ -91,17 +98,23 @@ class SequenceDiffBuilder(object):
 
     def validated(self):
         return self._diff
-    
+
     def append(self, entry):
+        # Simplifies some algorithms
+        if entry is None:
+            return
+
+        # Typechecking (just for internal consistency checking)
         assert isinstance(entry, DiffEntry)
         assert "op" in entry
         assert entry.op in SequenceDiffBuilder.OPS
         assert "key" in entry
-        # Assert consistent ordering
+
+        # Assert consistent ordering of diff entries
         _prev = self._diff[-1].key if self._diff else 0
         assert _prev <= entry.key
 
-        # Add entry
+        # Add entry!
         self._diff.append(entry)
 
         # Swap last two entries if insertion was inserted
@@ -146,11 +159,18 @@ class MappingDiffBuilder(object):
         return sorted(self._diff.values(), key=lambda x: x.key)
 
     def append(self, entry):
+        # Simplifies some algorithms
+        if entry is None:
+            return
+
+        # Typechecking (just for internal consistency checking)
         assert isinstance(entry, DiffEntry)
         assert "op" in entry
         assert entry.op in MappingDiffBuilder.OPS
         assert "key" in entry
         assert entry.key not in self._diff
+
+        # Add entry!
         self._diff[entry.key] = entry
 
     #def keep(self, key):

@@ -54,8 +54,7 @@ def test_autoresolve_clear():
     assert merged == { "foo": 1 }
     assert local_diffs != []
     assert remote_diffs != []
-    resolutions, local_conflicts, remote_conflicts = autoresolve(merged, local_diffs, remote_diffs, strategies, "")
-    resolved = patch(merged, resolutions)
+    resolved, local_conflicts, remote_conflicts = autoresolve(merged, local_diffs, remote_diffs, strategies, "")
     assert resolved == { "foo": None }
     assert local_conflicts == []
     assert remote_conflicts == []
@@ -65,8 +64,7 @@ def test_autoresolve_clear():
     #remote = { "foo": [3] }
     #strategies = { "/foo": "clear" }
     #merged, local_diffs, remote_diffs = merge(base, local, remote)
-    #resolutions, local_conflicts, remote_conflicts = autoresolve(merged, local_diffs, remote_diffs, strategies, "")
-    #resolved = patch(merged, resolutions)
+    #resolved, local_conflicts, remote_conflicts = autoresolve(merged, local_diffs, remote_diffs, strategies, "")
     # This isn't happening because merge passes without conflict by removing [1] and adding [2,3] to foo:
     #assert local_diffs != []
     #assert remote_diffs != []
@@ -83,24 +81,21 @@ def test_autoresolve_use_one_side():
 
     strategies = { "/foo": "use-base" }
     merged, local_diffs, remote_diffs = merge(base, local, remote)
-    resolutions, local_conflicts, remote_conflicts = autoresolve(merged, local_diffs, remote_diffs, strategies, "")
-    resolved = patch(merged, resolutions)
+    resolved, local_conflicts, remote_conflicts = autoresolve(merged, local_diffs, remote_diffs, strategies, "")
     assert local_conflicts == []
     assert remote_conflicts == []
     assert resolved == { "foo": 1 }
 
     strategies = { "/foo": "use-local" }
     merged, local_diffs, remote_diffs = merge(base, local, remote)
-    resolutions, local_conflicts, remote_conflicts = autoresolve(merged, local_diffs, remote_diffs, strategies, "")
-    resolved = patch(merged, resolutions)
+    resolved, local_conflicts, remote_conflicts = autoresolve(merged, local_diffs, remote_diffs, strategies, "")
     assert local_conflicts == []
     assert remote_conflicts == []
     assert resolved == { "foo": 2 }
 
     strategies = { "/foo": "use-remote" }
     merged, local_diffs, remote_diffs = merge(base, local, remote)
-    resolutions, local_conflicts, remote_conflicts = autoresolve(merged, local_diffs, remote_diffs, strategies, "")
-    resolved = patch(merged, resolutions)
+    resolved, local_conflicts, remote_conflicts = autoresolve(merged, local_diffs, remote_diffs, strategies, "")
     assert local_conflicts == []
     assert remote_conflicts == []
     assert resolved == { "foo": 3 }
@@ -112,24 +107,21 @@ def test_autoresolve_use_one_side():
 
     strategies = { "/foo/bar": "use-base" }
     merged, local_diffs, remote_diffs = merge(base, local, remote)
-    resolutions, local_conflicts, remote_conflicts = autoresolve(merged, local_diffs, remote_diffs, strategies, "")
-    resolved = patch(merged, resolutions)
+    resolved, local_conflicts, remote_conflicts = autoresolve(merged, local_diffs, remote_diffs, strategies, "")
     assert local_conflicts == []
     assert remote_conflicts == []
     assert resolved == { "foo": {"bar": 1 } }
 
     strategies = { "/foo/bar": "use-local" }
     merged, local_diffs, remote_diffs = merge(base, local, remote)
-    resolutions, local_conflicts, remote_conflicts = autoresolve(merged, local_diffs, remote_diffs, strategies, "")
-    resolved = patch(merged, resolutions)
+    resolved, local_conflicts, remote_conflicts = autoresolve(merged, local_diffs, remote_diffs, strategies, "")
     assert local_conflicts == []
     assert remote_conflicts == []
     assert resolved == { "foo": {"bar": 2 } }
 
     strategies = { "/foo/bar": "use-remote" }
     merged, local_diffs, remote_diffs = merge(base, local, remote)
-    resolutions, local_conflicts, remote_conflicts = autoresolve(merged, local_diffs, remote_diffs, strategies, "")
-    resolved = patch(merged, resolutions)
+    resolved, local_conflicts, remote_conflicts = autoresolve(merged, local_diffs, remote_diffs, strategies, "")
     assert local_conflicts == []
     assert remote_conflicts == []
     assert resolved == { "foo": {"bar": 3 } }
@@ -408,8 +400,8 @@ def test_merge_insert_cells_around_conflicting_cell():
     elif 0:
         # This is how it would look if source inserts but not cell inserts resulted in conflicts:
         expected_partial = [local[0], source, remote[1]]
-        expected_lco = _patch_cell_source(1, [op_addrange(0, ["new local cell"])])
-        expected_rco = _patch_cell_source(1, [op_addrange(len(source), ["new remote cell"])])
+        expected_lco = _patch_cell_source(1, [op_addrange(len(source), ["local"])])
+        expected_rco = _patch_cell_source(1, [op_addrange(len(source), ["remote"])])
     else:
         # In current behaviour:
         # - base cell 0 is aligned correctly (this is the notebook diff heuristics)
@@ -428,9 +420,7 @@ def test_merge_insert_cells_around_conflicting_cell():
                                   [op_addrange(len(source), ["local"])]
                                   )]),
             ])]
-        expected_rco = [op_patch("cells", [op_patch(0, [op_patch("source", [
-            op_addrange(len(source), remote[0][-1:])
-            ])])])]
+        expected_rco = _patch_cell_source(0, [op_addrange(len(source), ["remote"])])
     _check(base, local, remote, expected_partial, expected_lco, expected_rco)
 
 

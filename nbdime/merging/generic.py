@@ -11,7 +11,7 @@ import copy
 from collections import namedtuple
 
 from ..diffing import diff
-from ..diff_format import DiffOp, SequenceDiffBuilder, MappingDiffBuilder, DiffEntry, as_dict_based_diff
+from ..diff_format import DiffOp, SequenceDiffBuilder, MappingDiffBuilder, DiffEntry, as_dict_based_diff, offset_op
 from ..patching import patch
 from .chunks import make_merge_chunks
 
@@ -71,7 +71,7 @@ def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
 
     # (4) (5) (6)
     # Then we have the potentially conflicting changes
-    for key in brdkeys & bldkeys:
+    for key in sorted(brdkeys & bldkeys):
         # Get diff entries for this key (we know both sides have an
         # entry here because all other cases are covered above)
         ld = base_local_diff[key]
@@ -136,13 +136,6 @@ def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
             raise ValueError("Invalid diff ops {} and {].".format(lop, rop))
 
     return merged, local_conflict_diff.validated(), remote_conflict_diff.validated()
-
-
-
-def offset_op(e, n):
-    e = DiffEntry(e)
-    e.key += n
-    return e
 
 
 def _merge_lists(base, local, remote, base_local_diff, base_remote_diff):
