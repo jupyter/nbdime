@@ -345,30 +345,46 @@ def to_json_patch(d, path=""):
 
     This is untested and will need some details worked out.
     """
-    raise RuntimeError("to_json_patch is currently not correct, see github issue.")
+    # FIXME: Test with some conforming tool.
+    print("to_json_patch is not tested, see github issues.")
     jp = []
+    offset = 0
     for e in d:
         op = e.op
-        p = "/".join([path, str(e.key)])
         if op == DiffOp.ADD:
+            assert isinstance(e.key, string_types)
+            p = "/".join([path, e.key])
             jp.append({"op": "add", "path": p, "value": e.value})
         elif op == DiffOp.REPLACE:
+            assert isinstance(e.key, string_types)
+            p = "/".join([path, e.key])
             jp.append({"op": "replace", "path": p, "value": e.value})
         elif op == DiffOp.REMOVE:
+            assert isinstance(e.key, string_types)
+            p = "/".join([path, e.key])
             jp.append({"op": "remove", "path": p})
         elif op == DiffOp.ADDRANGE:
-            # JSONPatch only has single value add, no addrange
-            # FIXME: Reverse this or not? Read RFC carefully and/or test with some conforming tool.
-            #for value in reversed(e.valuelist):
+            # JSONPatch only has single value add, no addrange,
+            # repeat addition after increasing index instead
+            assert isinstance(e.key, int)
             for value in e.valuelist:
+                p = "/".join([path, str(e.key + offset)])
                 jp.append({"op": "add", "path": p, "value": value})
+                offset += 1
         elif op == DiffOp.REMOVERANGE:
-            # JSONPatch only has single value remove, no removerange
+            assert isinstance(e.key, int)
+            # JSONPatch only has single value remove, no removerange,
+            # repeat removal at same index instead
+            p = "/".join((path, str(e.key)))
             for i in range(e.length):
-                p_i = "/".join((path, str(e.key + i)))  # Note: not using p
-                jp.append({"op": "remove", "path": p_i})
+                jp.append({"op": "remove", "path": p})
+                offset -= 1
         elif op == DiffOp.PATCH:
             # JSONPatch has no recursion, recurse here to flatten diff
+            key = e.key
+            if isinstance(key, int):
+                key += offset
+            p = "/".join([path, str(key)])
             jp.extend(to_json_patch(e.diff, p))
     return jp
 
