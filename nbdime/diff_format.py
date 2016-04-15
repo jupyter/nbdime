@@ -123,9 +123,9 @@ class SequenceDiffBuilder(object):
         if length:
             self.append(op_removerange(key, length))
 
-    def keeprange(self, key, length):
-        if length:
-            self.append(op_keeprange(key, length))
+    #def keeprange(self, key, length):
+    #    if length:
+    #        self.append(op_keeprange(key, length))
 
 
 class MappingDiffBuilder(object):
@@ -153,8 +153,8 @@ class MappingDiffBuilder(object):
         assert entry.key not in self._diff
         self._diff[entry.key] = entry
 
-    def keep(self, key):
-        self.append(op_keep(key))
+    #def keep(self, key):
+    #    self.append(op_keep(key))
 
     def add(self, key, value):
         self.append(op_add(key, value))

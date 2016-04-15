@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 from six import string_types
 
 from ..diff_format import SequenceDiffBuilder, MappingDiffBuilder, DiffOp, op_replace
-from ..diff_format import as_dict_based_diff, revert_as_dict_based_diff, decompress_sequence_diff
+from ..diff_format import as_dict_based_diff
 from ..patching import patch
 from .chunks import make_merge_chunks
 
@@ -16,7 +16,7 @@ from .chunks import make_merge_chunks
 # FIXME: Move to utils
 def as_text_lines(text):
     if isinstance(text, string_types):
-        text = text.split("\n")
+        text = text.splitlines(True)
     if isinstance(text, tuple):
         text = list(text)
     assert isinstance(text, list)

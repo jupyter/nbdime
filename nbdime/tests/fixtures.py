@@ -154,6 +154,6 @@ def notebook_to_sources(nb, as_str=True):
         if as_str and isinstance(source, list):
             source = "\n".join([line.strip("\n") for line in source])
         elif not as_str and isinstance(source, str):
-            source = source.split("\n")
+            source = source.splitlines(True)
         sources.append(source)
     return sources

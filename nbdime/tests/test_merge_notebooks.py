@@ -268,7 +268,7 @@ def src2nb(src):
     or a list (cells) of lists (lines) of singleline strings.
     """
     if isinstance(src, string_types):
-        src = [src.split("\n")]
+        src = [src.splitlines(True)]
     if isinstance(src, list):
         src  = sources_to_notebook(src)
     assert isinstance(src, dict)

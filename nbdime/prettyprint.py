@@ -264,7 +264,7 @@ def present_string_diff(a, di, path):
 
         # Consume untouched characters
         if index > consumed:
-            dlines = a[consumed:index].split("\n")
+            dlines = a[consumed:index].splitlines()
             for dline in dlines:
                 prefix = ".." if continuation else "  "
                 lines.append(prefix + " "*continuation_indent2 + dline)
@@ -275,7 +275,7 @@ def present_string_diff(a, di, path):
             consumed = index
 
         if op == DiffOp.ADDRANGE:
-            dlines = e.valuelist.split("\n")
+            dlines = e.valuelist.splitlines()
             lines.append("+ " + " "*continuation_indent + dlines[0])
             for dline in dlines[1:]:
                 lines.append("+ " + dline)
@@ -283,7 +283,7 @@ def present_string_diff(a, di, path):
             continuation_indent2 = max(continuation_indent2, len(lines[-1]) - 2)
 
         elif op == DiffOp.REMOVERANGE:
-            dlines = a[index: index + e.length].split("\n")
+            dlines = a[index: index + e.length].splitlines()
             lines.append("- " + " "*continuation_indent + dlines[0])
             for dline in dlines[1:]:
                 lines.append("- " + dline)
@@ -297,7 +297,7 @@ def present_string_diff(a, di, path):
     # Consume untouched characters at end
     index = len(a)  # copy-paste from top of loop...
     if index > consumed:
-        dlines = a[consumed:index].split("\n")
+        dlines = a[consumed:index].splitlines()
         for dline in dlines:
             prefix = ".." if continuation else "  "
             lines.append(prefix + " "*continuation_indent2 + dline)
