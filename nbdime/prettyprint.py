@@ -31,7 +31,7 @@ except ImportError:
     from backports.shutil_which import which
 
 # Toggle indentation here
-with_indent = True
+with_indent = False  #True
 
 
 def present_dict_no_markup(prefix, d, exclude_keys=None):
@@ -228,10 +228,14 @@ def present_list_diff(a, d, path):
 
     return pp
 
+
 def present_string_diff(a, di, path):
     "Pretty-print a nbdime diff."
+    header = ["patch {}:".format(path)]
+
     if _base64.match(a):
-        return ['<base64 data changed>']
+        return header + ['<base64 data changed>']
+
     b = patch(a, di)
     td = tempfile.mkdtemp()
     try:
@@ -239,7 +243,7 @@ def present_string_diff(a, di, path):
             f.write(a)
         with open(os.path.join(td, 'after'), 'w') as f:
             f.write(b)
-        print(which)
+        #print(which)
         if which('git'):
             cmd = 'git diff --no-index --color-words'.split()
             heading_lines = 4
@@ -251,8 +255,10 @@ def present_string_diff(a, di, path):
         dif = out.decode('utf8')
     finally:
         shutil.rmtree(td)
-    return dif.splitlines()[heading_lines:]
+    return header + dif.splitlines()[heading_lines:]
 
+
+def __unused_old_present_string_diff(a, di, path): # Just delete this?
     consumed = 0
     lines = []
     continuation = False

@@ -141,9 +141,9 @@ def test_present_dict_diff():
     di = diff(a, b, path='x/y')
     lines = pp.present_diff(a, di, path='x/y')
     assert lines == [
-        '  replace at x/y/a:',
-        '  - 1',
-        '   +2',
+        'replace at x/y/a:',
+        '- 1',
+        ' +2',
     ]
 
 def test_present_list_diff():
@@ -153,10 +153,10 @@ def test_present_list_diff():
     di = diff(a, b, path=path)
     lines = pp.present_diff(a, di, path=path)
     assert lines == [
-        '  insert before a/b/0:',
-        '  + [2]',
-        '  delete a/b/0:',
-        '  - [1]',
+        'insert before a/b/0:',
+        '+ [2]',
+        'delete a/b/0:',
+        '- [1]',
     ]
 
 def test_present_string_diff():
@@ -176,4 +176,4 @@ def test_present_string_diff_b64():
     path = 'a/b'
     di = diff(a, b, path=path)
     lines = pp.present_diff(a, di, path=path)
-    assert lines == ['  <base64 data changed>']
+    assert lines[1:] == ['<base64 data changed>']
