@@ -82,7 +82,7 @@ def test_diff_and_patch():
         op_add("added", 7),
         op_remove("deleted"),
         op_patch("mix", [
-            op_add("add", 42)
+            op_add("add", 42),
             op_remove("del"),
             op_replace("mod", 37),
             ]),
