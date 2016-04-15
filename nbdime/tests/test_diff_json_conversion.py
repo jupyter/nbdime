@@ -1,4 +1,5 @@
 
+import pytest
 import json
 from nbdime import diff
 from nbdime.diff_format import to_clean_dicts, to_json_patch
