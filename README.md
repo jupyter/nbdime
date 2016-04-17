@@ -1,6 +1,6 @@
 # Jupyter Notebook Diff and Merge tools
 
-[![Build Status](https://travis-ci.org/martinal/nbdime.svg?branch=master)](https://travis-ci.org/martinal/nbdime)
+[![Build Status](https://travis-ci.org/jupyter/nbdime.svg?branch=master)](https://travis-ci.org/jupyter/nbdime)
 
 `nbdime` contains tools for diffing and merging of Jupyter Notebooks.
 
