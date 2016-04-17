@@ -6,6 +6,8 @@
 nbdime -- diffing and merging of Jupyter Notebooks
 ==================================================
 
+Version: |version|
+
 Abstract
 --------
 
@@ -36,8 +38,3 @@ Contents
    merging
    api.md
 
-
-Search in this guide
---------------------
-
-:ref:`search`
