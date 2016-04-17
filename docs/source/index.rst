@@ -6,14 +6,18 @@
 nbdime -- tools for diffing and merging of Jupyter Notebooks
 ============================================================
 
+Abstract
+--------
+
+**nbdime** provides tools for diffing and merging notebooks.
+
 .. warning::
 
-   nbdime project and this documentation are in a very early stage
-   of development and are not usable for any kind of production work yet.
+   The nbdime project is experimental and under active development.
+   It is not suitable for production work.
 
-
-Contents:
-
+Contents
+--------
 .. toctree::
    :maxdepth: 2
 
@@ -22,13 +26,11 @@ Contents:
    cli
    diffing
    merging
-   plans
+   usecases
    api
+   testing
 
+Search in this guide
+--------------------
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+:ref:`search`
