@@ -1,5 +1,5 @@
-Representing merge results and conflicts
-========================================
+Merge results and conflicts
+===========================
 
 Nbdime implements a three-way merge of Jupyter notebooks and a large
 subset of generic JSON objects. The result of a merge operation with a
@@ -10,9 +10,3 @@ diff objects represent the merge conflicts that could not be
 automatically resolved.
 
 .. TODO:: Define output formats for the merge operation.
-
-
-Notebook specific issues
-========================
-
-.. TODO:: Document issues covered and plans here.

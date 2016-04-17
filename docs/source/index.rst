@@ -20,15 +20,22 @@ Contents
 --------
 .. toctree::
    :maxdepth: 2
+   :caption: Installation, Use, and Developer Guides
 
    overview
    installing
    cli
+   testing
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Planning
+
+   usecases
    diffing
    merging
-   usecases
    api
-   testing
+
 
 Search in this guide
 --------------------
