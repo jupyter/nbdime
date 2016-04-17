@@ -12,92 +12,97 @@ arguments and response to be the output arguments for all APIs.
 
 ## Definitions
 
-  * json_*: always a json object
-  * json_notebook: a full Jupyter notebook
-  * json_diff_args: arguments to control nbdiff behaviour
-  * json_merge_args: arguments to control nbmerge behaviour
-  * json_diff_object: diff result in nbdime diff format
-  * json_merge_object: merge result in nbdime merge format
+`json_*` always a JSON object
+
+`json_notebook` a full Jupyter notebook
+
+`json_diff_args` arguments to control nbdiff behaviour
+
+`json_merge_args` arguments to control nbmerge behaviour
+
+`json_diff_object` diff result in nbdime diff format
+
+`**json_merge_object` merge result in nbdime merge format
 
 
 ## /diff
 
 Compute diff of two notebooks provided in full JSON format.
 
-### Request:
+Request:
 
-  {
-    "base":   json_notebook,
-    "remote": json_notebook,
-    "args": json_diff_args
-  }
+    {
+      "base":   json_notebook,
+      "remote": json_notebook,
+      "args": json_diff_args
+    }
 
-### Response:
+Response:
 
-  {
-    "diff": json_diff_object
-  }
+    {
+      "diff": json_diff_object
+    }
 
 
 ## /merge
 
 Compute merge of three notebooks provided in full JSON format.
 
-### Request:
+Request:
 
-  {
-    "base":   json_notebook,
-    "local":  json_notebook,
-    "remote": json_notebook,
-    "args": json_merge_args
-  }
+    {
+      "base":   json_notebook,
+      "local":  json_notebook,
+      "remote": json_notebook,
+      "args": json_merge_args
+    }
 
-### Response:
+Response:
 
-  {
-    "merged": json_notebook,
-    "localconflicts": json_diff_object,
-    "remoteconflicts": json_diff_object,
-  }
+    {
+      "merged": json_notebook,
+      "localconflicts": json_diff_object,
+      "remoteconflicts": json_diff_object,
+    }
 
 
 ## /localdiff
 
 Compute diff of notebooks known to the server by name.
 
-### Request:
+Request:
 
-  {
-    "base":   "filename.ipynb",
-    "remote": "filename.ipynb",
-    "args": json_diff_args
-  }
+    {
+      "base":   "filename.ipynb",
+      "remote": "filename.ipynb",
+      "args": json_diff_args
+    }
 
-### Response:
+Response:
 
-  {
-    "base": json_notebook,
-    "diff": json_diff_object
-  }
+    {
+      "base": json_notebook,
+      "diff": json_diff_object
+    }
 
 
 ## /localmerge
 
 Compute merge of notebooks known to the server by name.
 
-### Request:
+Request:
 
-  {
-    "base":   "filename.ipynb",
-    "local":  "filename.ipynb",
-    "remote": "filename.ipynb",
-    "args": json_merge_args
-  }
+    {
+      "base":   "filename.ipynb",
+      "local":  "filename.ipynb",
+      "remote": "filename.ipynb",
+      "args": json_merge_args
+    }
 
-### Response:
+Response:
 
-  {
-    "merged": json_notebook,
-    "localconflicts": json_diff_object,
-    "remoteconflicts": json_diff_object,
-  }
+    {
+      "merged": json_notebook,
+      "localconflicts": json_diff_object,
+      "remoteconflicts": json_diff_object,
+    }

@@ -271,7 +271,7 @@ texinfo_documents = [
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
 
-intersphinx_mapping = {'https://docs.python.org/': None}
+intersphinx_mapping = {'py3': ('https://docs.python.org/3.5', None)}
 
 # Read The Docs
 # on_rtd is whether we are on readthedocs.org, this line of code grabbed from

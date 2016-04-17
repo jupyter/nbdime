@@ -10,10 +10,14 @@ Dependencies
   - nbformat
 
 Note the requirement 2.7.1, not 2.7.0, this is because
-2.7.1 fixes a bug in ``difflib`` in an interface-breaking way.
+2.7.1 fixes a bug in :mod:`difflib <py3.difflib>` in an interface-breaking way.
 
 Installing nbdime
 -----------------
+Clone the `nbdime repository <https://github.com/jupyter/nbdime.git>`_::
+
+    git clone https://github.com/jupyter/nbdime.git
+
 Use pip to install. See the `pip documentation <https://pip.pypa.io/en/stable/>`_
 for options.
 
