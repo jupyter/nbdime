@@ -1,6 +1,6 @@
-======================================
-Use cases and future development plans
-======================================
+=========
+Use cases
+=========
 
 Fundamentally, we envision use cases mainly in the categories
 of a merge command for version control integration, and

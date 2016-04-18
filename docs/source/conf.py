@@ -57,8 +57,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'nbdime'
-copyright = u'2015, Martin Sandve Alnæs'
-author = u'Martin Sandve Alnæs'
+copyright = u'2015, Martin Sandve Alnæs; 2016, Project Jupyter'
+author = u'Martin Sandve Alnæs and Project Jupyter'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -106,7 +106,6 @@ pygments_style = 'sphinx'
 
 # If true, keep warnings as "system message" paragraphs in the built documents.
 #keep_warnings = False
-
 
 # -- Options for HTML output ----------------------------------------------
 
@@ -211,7 +210,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
   ('index', 'nbdime.tex', u'nbdime Documentation',
-   u'Martin Sandve Alnæs', 'manual'),
+   u'Martin Sandve Alnæs and Project Jupyter', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -241,7 +240,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'nbdime', u'nbdime Documentation',
-     [u'Martin Sandve Alnæs'], 1)
+     [u'Martin Sandve Alnæs and Project Jupyter'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -255,8 +254,8 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
   ('index', 'nbdime', u'nbdime Documentation',
-   u'Martin Sandve Alnæs', 'nbdime', 'One line description of project.',
-   'Miscellaneous'),
+   u'Martin Sandve Alnæs and Project Jupyter', 'nbdime',
+   'One line description of project.', 'Miscellaneous'),
 ]
 
 # Documents to append as an appendix to all manuals.
@@ -271,7 +270,7 @@ texinfo_documents = [
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
 
-intersphinx_mapping = {'https://docs.python.org/': None}
+intersphinx_mapping = {'py3': ('https://docs.python.org/3.5', None)}
 
 # Read The Docs
 # on_rtd is whether we are on readthedocs.org, this line of code grabbed from
@@ -286,5 +285,4 @@ if not on_rtd:  # only import and set the theme if we're building docs locally
 # otherwise, readthedocs.org uses their theme by default, so no need to specify it
 
 # TODO configuration - Remove this section or set to False after docs are stable
-todo_include_todos = True
-
+todo_include_todos = False
