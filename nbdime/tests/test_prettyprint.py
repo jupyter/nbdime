@@ -167,8 +167,8 @@ def test_present_string_diff():
     with mock.patch('nbdime.prettyprint.which', lambda cmd: None):
         lines = pp.present_diff(a, di, path=path)
     text = '\n'.join(lines)
-    assert '< line 2' in text
-    assert '> line 4' in text
+    assert ('< line 2' in text) or ('-line 2' in text)
+    assert ('> line 4' in text) or ('+line 4' in text)
 
 def test_present_string_diff_b64():
     a = b64text(1024)

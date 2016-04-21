@@ -13,6 +13,8 @@ import re
 import shutil
 from subprocess import Popen, PIPE
 import tempfile
+from difflib import unified_diff
+
 try:
     from textwrap import indent
 except ImportError:
@@ -238,21 +240,28 @@ def present_string_diff(a, di, path):
 
     b = patch(a, di)
     td = tempfile.mkdtemp()
+    cmd = None
     try:
         with open(os.path.join(td, 'before'), 'w') as f:
             f.write(a)
         with open(os.path.join(td, 'after'), 'w') as f:
             f.write(b)
-        #print(which)
         if which('git'):
             cmd = 'git diff --no-index --color-words'.split()
             heading_lines = 4
-        else:
+        elif which('diff'):
             cmd = ['diff']
             heading_lines = 0
-        p = Popen(cmd + ['before', 'after'], cwd=td, stdout=PIPE)
-        out, _ = p.communicate()
-        dif = out.decode('utf8')
+        else:
+            dif = ''.join(unified_diff(a.split("\n"),
+                                       b.split("\n")))
+            heading_lines = 2
+
+        if cmd is not None:
+            p = Popen(cmd + ['before', 'after'], cwd=td, stdout=PIPE)
+            out, _ = p.communicate()
+            dif = out.decode('utf8')
+
     finally:
         shutil.rmtree(td)
     return header + dif.splitlines()[heading_lines:]
