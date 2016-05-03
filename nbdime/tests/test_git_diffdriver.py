@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 import pytest
-import unittest
+import mock
 import os
 from  os.path import join as pjoin
 
@@ -37,7 +37,7 @@ def test_git_diff_driver(capsys):
         pjoin(test_dir, 'files/foo-foe-1.ipynb'),
         pjoin(test_dir, 'files/foo-foe-1.ipynb'), 'invalid_mock_checksum', '100644',
         pjoin(test_dir, 'files/foo-foe-2.ipynb'), 'invalid_mock_checksum', '100644']
-    with unittest.mock.patch('sys.argv', mock_argv):
+    with mock.patch('sys.argv', mock_argv):
         with pytest.raises(SystemExit) as cm:
             gdd_main()
         assert cm.value.code == 0
