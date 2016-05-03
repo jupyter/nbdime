@@ -44,4 +44,4 @@ def test_git_diff_driver(capsys):
         cap_out = capsys.readouterr()[0]
         assert cap_out  == expected_output.format(
             pjoin(test_dir, 'files/foo-foe-1.ipynb'),
-            pjoin(test_dir, 'files/foo-foe-2.ipynb')
+            pjoin(test_dir, 'files/foo-foe-2.ipynb'))
