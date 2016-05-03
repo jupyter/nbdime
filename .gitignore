@@ -7,3 +7,5 @@ docs/build
 htmlcov
 .coverage
 .cache
+
+.spyderproject
