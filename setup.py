@@ -112,6 +112,7 @@ if 'setuptools' in sys.modules:
             'nbpatch= nbdime.nbpatchapp:main',
             'nbmerge = nbdime.nbmergeapp:main',
             'git-nbdifftool = nbdime.gitdifftool:main',
+            'git-nbdiffdriver = nbdime.gitdiffdriver:main',
         ]
     }
     setup_args.pop('scripts', None)
