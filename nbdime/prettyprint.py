@@ -35,12 +35,15 @@ except ImportError:
 # Toggle indentation here
 with_indent = False  #True
 
+# Change to enable/disable color print etc.
+_git_diff_print_cmd = 'git diff --no-index --color-words'
+
 
 def present_dict_no_markup(prefix, d, exclude_keys=None):
     """Pretty-print a dict without wrapper keys
-    
+
     Instead of {'key': 'value'}, do
-    
+
         key: value
         key:
           long
@@ -83,7 +86,7 @@ def present_multiline_string(prefix, s):
 
 def present_output(prefix, output):
     """Present an output (whole output add/delete)
-    
+
     Called by present_value
     """
     pp = []
@@ -95,17 +98,17 @@ def present_output(prefix, output):
     if output['output_type'] in {'display_data', 'execute_result'} and 'data' in output:
         pp.append(prefix + 'data:')
         pp.extend(present_dict_no_markup(value_prefix, output['data']))
-    
+
     pp.extend(present_dict_no_markup(prefix, output,
         exclude_keys={'output_type', 'metadata', 'data'},
     ))
-    
+
     return pp
 
 
 def present_cell(prefix, cell):
     """Present a cell as a scalar (whole cell delete/add)
-    
+
     Called by present_value
     """
     pp = []
@@ -137,9 +140,9 @@ def present_cell(prefix, cell):
 
 def present_value(prefix, arg):
     """Present a whole value that is either added or deleted.
-    
+
     Calls out to other formatters for cells, outputs, and multiline strings.
-    
+
     Uses pprint.pformat, otherwise.
     """
     # TODO: improve pretty-print of arbitrary values?
@@ -247,7 +250,7 @@ def present_string_diff(a, di, path):
         with open(os.path.join(td, 'after'), 'w') as f:
             f.write(b)
         if which('git'):
-            cmd = 'git diff --no-index --color-words'.split()
+            cmd = _git_diff_print_cmd.split()
             heading_lines = 4
         elif which('diff'):
             cmd = ['diff']
@@ -353,10 +356,10 @@ nbdiff {afn} {bfn}
 
 def pretty_print_notebook_diff(afn, bfn, a, di):
     """Pretty-print a notebook diff
-    
+
     Parameters
     ----------
-    
+
     afn: str
         Filename of a, the base notebook
     bfn: str
