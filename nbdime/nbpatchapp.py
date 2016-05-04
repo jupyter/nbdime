@@ -15,7 +15,7 @@ from ._version import __version__
 from .patching import patch_notebook
 from .diff_format import to_diffentry_dicts
 
-_description = "Apply patch from nbpatch to a Jupyter notebook."
+_description = "Apply patch from nbdiff to a Jupyter notebook."
 
 
 def main_patch(args):
