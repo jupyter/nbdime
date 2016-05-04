@@ -95,8 +95,9 @@ extras_require = setuptools_args['extras_require'] = {
     'test': [
         'pytest',
         'testpath',
+        'mock',
     ],
-    
+
     ':python_version == "2.7"': [
         'backports.shutil_which',
     ],
@@ -112,6 +113,7 @@ if 'setuptools' in sys.modules:
             'nbpatch= nbdime.nbpatchapp:main',
             'nbmerge = nbdime.nbmergeapp:main',
             'git-nbdifftool = nbdime.gitdifftool:main',
+            'git-nbdiffdriver = nbdime.gitdiffdriver:main',
         ]
     }
     setup_args.pop('scripts', None)
