@@ -99,7 +99,7 @@ def compare_output_data_keys(x, y):
     if ot != y["output_type"]:
         return False
 
-    if ot == "stream":
+    if ot == "stream" or ot == "error":
         pass
     else:  # if ot == "display_data" or ot == "execute_result":
         if set(x["data"].keys()) != set(y["data"].keys()):
@@ -119,6 +119,13 @@ def compare_output_data(x, y):
         if x["name"] != y["name"]:
             return False
         if x["text"] != y["text"]:
+            return False
+    elif ot == "error":
+        if x["evalue"] != y["evalue"]:
+            return False
+        if x["ename"] != y["ename"]:
+            return False
+        if x["traceback"] != y["traceback"]:
             return False
     else:  # if ot == "display_data" or ot == "execute_result":
         if set(x["data"].keys()) != set(y["data"].keys()):
