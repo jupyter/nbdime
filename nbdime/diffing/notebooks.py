@@ -16,9 +16,10 @@ import difflib
 import operator
 from collections import defaultdict
 
-from ..diff_format import source_as_string, MappingDiffBuilder, DiffOp
+from ..diff_format import source_as_string, MappingDiffBuilder
 
 from .generic import diff, diff_sequence_multilevel
+from .sequences import diff_strings_linewise
 
 __all__ = ["diff_notebooks"]
 
@@ -131,17 +132,6 @@ def compare_output_data(x, y):
     return True
 
 
-def translate_splitlines_diff(a, b, d):
-    for change in d:
-        old_key = change.key
-        change.key = sum([len(ia) for ia in a[:old_key]])
-        if change.op == DiffOp.ADDRANGE:
-            change.valuelist = ''.join(change.valuelist)
-        elif change.op == DiffOp.REMOVERANGE:
-            change.length = len(a[old_key])
-    return d
-
-
 # Keeping these here for the comments and as as a reminder for possible future extension points:
 def diff_single_outputs(a, b, path="/cells/*/outputs/*", predicates=None, differs=None):
     "DiffOp a pair of output cells."
@@ -153,10 +143,8 @@ def diff_single_outputs(a, b, path="/cells/*/outputs/*", predicates=None, differ
         assert a.output_type == b.output_type
         key = tuple(a.data.keys())[0]
         if key.startswith('text/'):
-            # Do line-wise diff:
-            a_lines = a.data[key].splitlines(True)
-            b_lines = b.data[key].splitlines(True)
-            d = translate_splitlines_diff(a_lines, b_lines, diff(a_lines, b_lines))
+            # Do line-wise diff of data/text/...:
+            d = diff_strings_linewise(a.data[key], b.data[key])
             # Ensure correct diff structure
             data_bld = MappingDiffBuilder()
             data_bld.patch(key, d)
@@ -176,10 +164,7 @@ def diff_source(a, b, path, predicates, differs):
     "DiffOp a pair of sources."
     assert path == "/cells/*/source"
     # TODO: Use google-diff-patch-match library to diff the sources?
-    a_lines = a.splitlines(True)
-    b_lines = b.splitlines(True)
-    d = translate_splitlines_diff(a_lines, b_lines, diff(a_lines, b_lines))
-    return d
+    return diff_strings_linewise(a, b)
 
 
 # Sequence diffs should be applied with multilevel

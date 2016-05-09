@@ -11,6 +11,7 @@ from six import string_types
 from .seq_difflib import diff_sequence_difflib
 from .seq_bruteforce import diff_sequence_bruteforce
 from .seq_myers import diff_sequence_myers
+from ..diff_format import DiffOp
 
 __all__ = ["diff_strings", "diff_sequence"]
 
@@ -46,3 +47,25 @@ def diff_strings(a, b):
         return []
     else:
         return diff_sequence_difflib(a, b)
+
+
+def _translate_splitlines_diff(a, b, d):
+    """Translates a diff of strings split by str.splitlines() to single string diff
+    """
+    for change in d:
+        old_key = change.key
+        change.key = sum([len(ia) for ia in a[:old_key]])
+        if change.op == DiffOp.ADDRANGE:
+            change.valuelist = ''.join(change.valuelist)
+        elif change.op == DiffOp.REMOVERANGE:
+            change.length = len(a[old_key])
+    return d
+
+
+def diff_strings_linewise(a, b):
+    """Do a line-wise diff of two strings
+    """
+    from .generic import diff
+    a_lines = a.splitlines(True)
+    b_lines = b.splitlines(True)
+    return _translate_splitlines_diff(a_lines, b_lines, diff(a_lines, b_lines))
