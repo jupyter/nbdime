@@ -42,4 +42,7 @@ def diff_sequence(a, b, compare=operator.__eq__):
 def diff_strings(a, b):
     "Compute char-based diff of two strings."
     assert isinstance(a, string_types) and isinstance(b, string_types)
-    return diff_sequence_difflib(a, b)
+    if a == b:
+        return []
+    else:
+        return diff_sequence_difflib(a, b)
