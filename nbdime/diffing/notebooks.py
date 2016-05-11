@@ -14,13 +14,12 @@ Up- and down-conversion is handled by nbformat.
 
 import difflib
 import operator
-from six import string_types
 from collections import defaultdict
 
-from ..diff_format import source_as_string
+from ..diff_format import source_as_string, MappingDiffBuilder
 
-from .sequences import diff_sequence
-from .generic import diff, diff_lists, diff_dicts, diff_sequence_multilevel
+from .generic import diff, diff_sequence_multilevel
+from .sequences import diff_strings_linewise
 
 __all__ = ["diff_notebooks"]
 
@@ -141,22 +140,38 @@ def compare_output_data(x, y):
 
 
 # Keeping these here for the comments and as as a reminder for possible future extension points:
-def __unused_diff_single_outputs(a, b, path="/cells/*/output/*"):
+def diff_single_outputs(a, b, path="/cells/*/outputs/*", predicates=None, differs=None):
     "DiffOp a pair of output cells."
     assert path == "/cells/*/outputs/*"
     # TODO: Handle output diffing with plugins? I.e. image diff, svg diff, json diff, etc.
-    # FIXME: Use linebased diff of some types of outputs:
-    # if a.output_type in ("execute_result", "display_data"):
-    #    a.data.key if key.startswith('text/') or key in _non_text_split_mimes = {
-    #        'application/javascript','image/svg+xml'}
-    #    a.text
-    return diff(a, b)
-def __unused_diff_source(a, b, path, predicates, differs):
+    # FIXME: Include all fields in output
+    d = None
+    if a.output_type in ("execute_result", "display_data"):
+        assert a.output_type == b.output_type
+        key = tuple(a.data.keys())[0]
+        if key.startswith('text/'):
+            # Do line-wise diff of data/text/...:
+            d = diff_strings_linewise(a.data[key], b.data[key])
+            # Ensure correct diff structure
+            data_bld = MappingDiffBuilder()
+            data_bld.patch(key, d)
+            output_bld = MappingDiffBuilder()
+            output_bld.patch('data', data_bld.validated())
+            d_meta = diff(a.metadata, b.metadata)
+            if d_meta:
+                output_bld.patch('metadata', d_meta)
+            d = output_bld.validated()
+        # elif key in ('application/javascript','image/svg+xml')
+    if d is None:
+        d = diff(a, b)
+    return d
+
+
+def diff_source(a, b, path, predicates, differs):
     "DiffOp a pair of sources."
     assert path == "/cells/*/source"
-    # FIXME: Make sure we use linebased diff of sources
     # TODO: Use google-diff-patch-match library to diff the sources?
-    return diff(a, b)
+    return diff_strings_linewise(a, b)
 
 
 # Sequence diffs should be applied with multilevel
@@ -179,11 +194,11 @@ notebook_predicates = defaultdict(lambda: [operator.__eq__], {
 
 # Recursive diffing of substructures should pick a rule from here, with diff as fallback
 notebook_differs = defaultdict(lambda: diff, {
-    #"/cells": diff_sequence_multilevel,
-    #"/cells/*": diff,
-    #"/cells/*/source": diff,
-    #"/cells/*/outputs": diff_sequence_multilevel,
-    #"/cells/*/outputs/*": diff_single_outputs,
+    "/cells": diff_sequence_multilevel,
+    "/cells/*": diff,
+    "/cells/*/source": diff_source,
+    "/cells/*/outputs": diff_sequence_multilevel,
+    "/cells/*/outputs/*": diff_single_outputs,
     })
 
 
