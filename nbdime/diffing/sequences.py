@@ -12,7 +12,7 @@ from .seq_difflib import diff_sequence_difflib
 from .seq_bruteforce import diff_sequence_bruteforce
 from .seq_myers import diff_sequence_myers
 
-__all__ = ["diff_strings", "diff_sequence"]
+__all__ = ["diff_strings_by_char", "diff_sequence"]
 
 
 # TODO: Configuration framework?
@@ -39,7 +39,7 @@ def diff_sequence(a, b, compare=operator.__eq__):
         raise RuntimeError("Unknown diff_sequence_algorithm {}.".format(diff_sequence_algorithm))
 
 
-def diff_strings(a, b):
+def diff_strings_by_char(a, b):
     "Compute char-based diff of two strings."
     assert isinstance(a, string_types) and isinstance(b, string_types)
     return diff_sequence_difflib(a, b)

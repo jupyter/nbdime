@@ -11,9 +11,10 @@ import operator
 from collections import defaultdict
 
 from ..diff_format import validate_diff, count_consumed_symbols
-from ..diff_format import SequenceDiffBuilder, MappingDiffBuilder
+from ..diff_format import (SequenceDiffBuilder, MappingDiffBuilder,
+                           flatten_list_of_string_diff)
 
-from .sequences import diff_strings, diff_sequence
+from .sequences import diff_strings_by_char, diff_sequence
 from .snakes import compute_snakes_multilevel, compute_diff_from_snakes
 
 __all__ = ["diff"]
@@ -21,7 +22,7 @@ __all__ = ["diff"]
 
 def is_atomic(x):
     "Return True for values that diff should treat as a single atomic value."
-    return not isinstance(x, (string_types) + (list, dict))
+    return not isinstance(x, string_types + (list, dict))
 
 
 def default_predicates():
@@ -45,8 +46,9 @@ def diff(a, b, path="", predicates=None, differs=None):
     elif isinstance(a, dict) and isinstance(b, dict):
         d = diff_dicts(a, b, path=path, predicates=predicates, differs=differs)
     elif isinstance(a, string_types) and isinstance(b, string_types):
-        # FIXME: Do we need this string case, and if so do we need to pass on these additional arguments?
-        d = diff_strings(a, b) #, path=path, predicates=predicates, differs=differs)
+        # FIXME: Do we need this string case, and if so do we need to pass on
+        # the additional arguments?
+        d = diff_strings_by_char(a, b)
     else:
         raise RuntimeError("Can currently only diff list, dict, or str objects.")
 
@@ -140,6 +142,16 @@ def diff_lists(a, b, path="", predicates=None, differs=None, shallow_diff=None):
     assert j == len(b)
 
     return di.validated()
+
+
+def diff_strings_by_line(a, b):
+    "Compute line-based diff of two strings."
+    assert isinstance(a, string_types) and isinstance(b, string_types)
+    lines_a = a.splitlines(True)
+    lines_b = b.splitlines(True)
+    line_diff = diff_lists(lines_a, lines_b)
+    # Flatten diff
+    return flatten_list_of_string_diff(lines_a, line_diff)
 
 
 def diff_dicts(a, b, path="", predicates=None, differs=None):

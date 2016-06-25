@@ -7,6 +7,8 @@ from __future__ import unicode_literals
 
 from six import string_types
 from six.moves import xrange as range
+import itertools
+import copy
 
 from .log import NBDiffFormatError
 
@@ -21,6 +23,8 @@ class DiffEntry(dict):
     to dicts before any json conversions.
     """
     def __getattr__(self, name):
+        if name.startswith("__") and name.endswith("__"):
+            return self.__getattribute__(name)
         return self[name]
 
     def __setattr__(self, name, value):
@@ -277,6 +281,43 @@ def source_as_string(source):
         source = "\n".join(line.strip("\n") for line in source)
     assert isinstance(source, string_types)
     return source
+
+
+if hasattr(itertools, "accumulate"):
+    _accum = itertools.accumulate
+else:
+    def _accum(seq):
+        total = 0
+        for x in seq:
+            total += x
+            yield total
+
+
+def flatten_list_of_string_diff(a, diff):
+    """Returns a flattened version of the list diff, i.e. all keys are
+    made absolute in the concatenated list.
+    """
+    a_mapping = [0] + list(_accum(len(ia) for ia in a))
+    flattened = []
+    for e in diff:
+        op = e.op
+        if op == DiffOp.ADDRANGE:
+            d = copy.deepcopy(e)
+            d.key = a_mapping[e.key]
+            d.valuelist = "".join(e.valuelist)
+            flattened.append(d)
+        elif op == DiffOp.REMOVERANGE:
+            d = copy.deepcopy(e)
+            d.key = a_mapping[e.key]
+            d.length = a_mapping[e.key + e.length] - d.key
+            flattened.append(d)
+        elif op == DiffOp.PATCH:
+            start = a_mapping[e.key]
+            for p in e.diff:
+                d = copy.deepcopy(p)
+                d.key += start
+                flattened.append(d)
+    return flattened
 
 
 def to_clean_dicts(di):
