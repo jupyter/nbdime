@@ -14,6 +14,7 @@ Up- and down-conversion is handled by nbformat.
 
 import difflib
 import operator
+import copy
 from collections import defaultdict
 
 from ..diff_format import source_as_string, MappingDiffBuilder
@@ -138,28 +139,19 @@ def diff_single_outputs(a, b, path="/cells/*/output/*",
     assert path == "/cells/*/outputs/*"
     assert a.output_type == b.output_type
 
-    if predicates is None:
-        predicates = default_predicates()
-    if differs is None:
-        differs = default_differs()
-
     # TODO: Handle output diffing with plugins? I.e. image diff, svg diff, json diff, etc.
     if a.output_type in ("execute_result", "display_data"):
         di = MappingDiffBuilder()
-        subpath = path + "/metadata"
-        diffit = differs.get(subpath, diff)
-        dd = diffit(a.metadata, b.metadata, path=subpath,
-                    predicates=predicates, differs=differs)
-        if dd:
-            di.patch("metadata", dd)
 
-        if a.output_type == "execute_result":
-            subpath = path+"/execution_count"
-            diffit = differs.get(subpath, diff)
-            dd = diffit(a.execution_count, b.execution_count, path=subpath,
-                        predicates=predicates, differs=differs)
-            if dd:
-                di.patch("execution_count", dd)
+        a_conj = copy.deepcopy(a)
+        del a_conj['data']
+        b_conj = copy.deepcopy(b)
+        del b_conj['data']
+        dd_conj = diff(a_conj, b_conj)
+        if dd_conj:
+            for e in dd_conj:
+                di.append(e)
+
 
         dd = diff_mime_bundle(a.data, b.data, path=path+"/data")
         if dd:
