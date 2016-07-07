@@ -19,6 +19,10 @@ import {
   Widget
 } from 'phosphor-widget';
 
+import {
+  Panel, PanelLayout
+} from 'phosphor-panel';
+
 import 'codemirror/lib/codemirror.css';
 
 import {
@@ -41,6 +45,20 @@ import {
   CellDiffModel, NotebookDiffModel, IDiffModel,
   IStringDiffModel, StringDiffModel, OutputDiffModel
 } from './diffmodel';
+
+
+const CELLDIFF_CLASS = 'jp-Cell-diff';
+
+const SOURCE_ROW_CLASS = 'jp-Cellrow-source';
+const METADATA_ROW_CLASS = 'jp-Cellrow-metadata';
+const OUTPUTS_ROW_CLASS = 'jp-Cellrow-outputs';
+
+const TWOWAY_DIFF_CLASS = 'jp-Diff-twoway';
+const ADDED_DIFF_CLASS = 'jp-Diff-added';
+const DELETED_DIFF_CLASS = 'jp-Diff-deleted';
+const UNCHANGED_DIFF_CLASS = 'jp-Diff-unchanged';
+
+const DIFF_CLASSES = ['jp-Diff-base', 'jp-Diff-remote'];
 
 const COLLAPISBLE_HEADER = 'jp-Collapsible-header';
 const COLLAPISBLE_HEADER_ICON = 'jp-Collapsible-header-icon';
@@ -262,5 +280,143 @@ class RenderableView extends Widget {
 
   _sanitized: boolean;
   _rendermime: RenderMime<Widget>;
+}
+
+/**
+ * CellDiffWidget for cell changes
+ */
+export
+class CellDiffWidget extends Panel {
+  /**
+   * 
+   */
+  constructor(model: CellDiffModel, rendermime: RenderMime<Widget>,
+        public mimetype: string) {
+    super();
+    this.addClass(CELLDIFF_CLASS);
+    this._model = model;
+    this._rendermime = rendermime;
+    
+    this.init();
+  }
+  
+  protected init() {
+    var model = this.model;
+
+    // Add 'cell added/deleted' notifiers, as appropriate
+    var CURR_DIFF_CLASSES = DIFF_CLASSES.slice();  // copy
+    if (model.added) {
+      let widget = new Widget();
+      widget.node.textContent = 'Cell added';
+      this.addChild(widget);
+      this.addClass(ADDED_DIFF_CLASS);
+      CURR_DIFF_CLASSES = DIFF_CLASSES.slice(0, 1);
+    } else if (model.deleted) {
+      let widget = new Widget();
+      widget.node.textContent = 'Cell deleted';
+      this.addChild(widget);
+      this.addClass(DELETED_DIFF_CLASS);
+      CURR_DIFF_CLASSES = DIFF_CLASSES.slice(1, 2);
+    } else if (model.unchanged) {
+      this.addClass(UNCHANGED_DIFF_CLASS);
+    } else {
+      this.addClass(TWOWAY_DIFF_CLASS);
+    }
+    
+    // Add inputs and outputs, on a row-by-row basis
+    let sourceView = this.createView(
+      model.source, model, CURR_DIFF_CLASSES);
+    sourceView.addClass(SOURCE_ROW_CLASS);
+    this.addChild(sourceView);
+    
+    if (model.metadata && !model.metadata.unchanged) {
+      let metadataView = this.createView(
+        model.metadata, model, CURR_DIFF_CLASSES);
+      metadataView.addClass(METADATA_ROW_CLASS);
+      this.addChild(metadataView);
+    }
+    if (model.outputs && model.outputs.length > 0) {
+      let container = new Panel();
+      let changed = false;
+      for (let o of model.outputs) {
+        let outputsWidget = this.createView(
+          o, model, CURR_DIFF_CLASSES);
+        container.addChild(outputsWidget);
+        changed = changed || !o.unchanged || o.added || o.deleted;
+      }
+      let header = changed ? 'Outputs changed' : 'Outputs unchanged'
+      let collapser = new CollapsibleWidget(container, header, !changed);
+      collapser.addClass(OUTPUTS_ROW_CLASS);
+      this.addChild(collapser);
+    }
+  }
+  
+  /**
+   * Create a new sub-view.
+   */
+  createView(model: IDiffModel, parent: CellDiffModel, editorClasses: string[]): Widget {
+    let view: Widget = null;
+    if (model instanceof StringDiffModel) {
+      view = new NbdimeMergeView(model as IStringDiffModel, editorClasses);
+    } else if (model instanceof OutputDiffModel) {
+      // Take one of three actions, depending on output types
+      // 1) Text-type output: Show a MergeView with text diff.
+      // 2) Renderable types: Side-by-side comparison.
+      // 3) Unknown types: Stringified JSON diff.
+      let tmodel = model as OutputDiffModel;
+      let renderable = RenderableView.canRenderUntrusted(tmodel);
+      for (let mt of this._rendermime.order) {
+        let key = tmodel.hasMimeType(mt);
+        if (key) {
+          if (!renderable || valueIn(mt, stringDiffMimeTypes)) {
+            view = new NbdimeMergeView(tmodel.stringify(key), editorClasses);
+          } else if (renderable) {
+            view = new RenderableView(tmodel, editorClasses, this._rendermime);
+          }
+          break;
+        }
+      }
+      if (!view) {
+        view = new NbdimeMergeView(tmodel.stringify(), editorClasses);
+      }
+    } else {
+      throw 'Unrecognized model type.'
+    }
+    if (model.collapsible) {
+      view = new CollapsibleWidget(
+        view, model.collapsibleHeader, model.startCollapsed);
+    }
+    let container = new Panel();
+    if (model.added && !parent.added) {
+      let addSpacer = new Widget()
+      addSpacer.node.textContent = 'Output added';
+      container.addChild(addSpacer);
+      container.addClass(ADDED_DIFF_CLASS);
+    } else if (model.deleted && !parent.deleted) {
+      let delSpacer = new Widget()
+      delSpacer.node.textContent = 'Output deleted';
+      container.addChild(delSpacer);
+      container.addClass(DELETED_DIFF_CLASS);
+    } else if (model.unchanged && !parent.unchanged) {
+      container.addClass(UNCHANGED_DIFF_CLASS);
+    } else {
+      container.addClass(TWOWAY_DIFF_CLASS);
+    }
+    container.addChild(view);
+    return container;
+  }
+  
+  /**
+   * Get the model for the widget.
+   *
+   * #### Notes
+   * This is a read-only property.
+   */
+  get model(): CellDiffModel {
+    return this._model;
+  }
+  
+  protected _model: CellDiffModel = null;
+  protected _rendermime: RenderMime<Widget> = null;
 }
   
