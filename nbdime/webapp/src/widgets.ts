@@ -3,6 +3,15 @@
 'use strict';
 
 import {
+  RenderMime
+} from 'jupyterlab/lib/rendermime';
+
+import {
+  OutputWidget
+} from 'jupyterlab/lib/notebook/output-area';
+
+
+import {
   loadModeByMIME
 } from 'jupyterlab/lib/codemirror';
 
@@ -16,6 +25,23 @@ import {
   DiffView, MergeView, MergeViewEditorConfiguration
 } from './mergeview';
 
+import {
+  sanitize
+} from 'sanitizer';
+
+import {
+  nbformat
+} from 'jupyterlab/lib/notebook/notebook/nbformat';
+
+import {
+  valueIn
+} from './util';
+
+import {
+  CellDiffModel, NotebookDiffModel, IDiffModel,
+  IStringDiffModel, StringDiffModel, OutputDiffModel
+} from './diffmodel';
+
 const COLLAPISBLE_HEADER = 'jp-Collapsible-header';
 const COLLAPISBLE_HEADER_ICON = 'jp-Collapsible-header-icon';
 const COLLAPISBLE_HEADER_ICON_OPEN = 'jp-Collapsible-header-icon-opened';
@@ -24,6 +50,23 @@ const COLLAPISBLE_SLIDER = 'jp-Collapsible-slider';
 const COLLAPSIBLE_OPEN = 'jp-Collapsible-opened';
 const COLLAPSIBLE_CLOSED = 'jp-Collapsible-closed';
 const COLLAPSIBLE_CONTAINER = 'jp-Collapsible-container';
+
+
+/**
+ * A list of outputs considered safe.
+ */
+const safeOutputs = ['text/plain', 'text/latex', 'image/png', 'image/jpeg',
+                    'application/vnd.jupyter.console-text'];
+
+/**
+ * A list of outputs that are sanitizable.
+ */
+const sanitizable = ['text/svg', 'text/html'];
+
+/**
+ * A list of MIME types that can be shown as string diff.
+ */
+const stringDiffMimeTypes = ['text/html', 'text/plain'];
 
 
 /**
@@ -134,3 +177,90 @@ class NbdimeMergeView extends Widget {
   protected _editors: DiffView[];
 }
 
+
+/**
+ * Widget for outputs with renderable MIME data.
+ */
+class RenderableView extends Widget {
+  constructor(model: OutputDiffModel, editorClass: string[],
+              rendermime: RenderMime<Widget>) {
+    super();
+    this._rendermime = rendermime;
+    let bdata = model.base as nbformat.IOutput;
+    let rdata = model.remote as nbformat.IOutput;
+    this.layout = new PanelLayout();
+
+    let ci = 0;
+    if (bdata){
+      let widget = this.createOutput(bdata, false);
+      (this.layout as PanelLayout).addChild(widget);
+      widget.addClass(editorClass[ci++]);
+    }
+    if (rdata && rdata !== bdata) {
+      let widget = this.createOutput(rdata, false);
+      (this.layout as PanelLayout).addChild(widget);
+      widget.addClass(editorClass[ci++]);
+    }
+  }
+
+  /**
+   * Checks if all MIME types of a MIME bundle are safe or can be sanitized.
+   */
+  static safeOrSanitizable(bundle: nbformat.MimeBundle) {
+    let keys = Object.keys(bundle);
+    for (let key of keys) {
+      if (valueIn(key, safeOutputs)) {
+        continue;
+      } else if (valueIn(key, sanitizable)) {
+        let out = bundle[key];
+        if (typeof out === 'string') {
+          continue;
+        } else {
+          return false;
+        }
+      } else {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Checks if a cell output can be rendered as untrusted (either safe or
+   * sanitizable)
+   */
+  static canRenderUntrusted(model: OutputDiffModel): boolean {
+    let toTest: nbformat.IOutput[] = [];
+    if (model.base) {
+      toTest.push(model.base);
+    }
+    if (model.remote && model.remote !== model.base) {
+      toTest.push(model.remote);
+    }
+    for (let o of toTest) {
+      if (valueIn(o.output_type, ['execute_result', 'display_data'])) {
+        let bundle = (o as any).data as nbformat.MimeBundle;
+        if (!this.safeOrSanitizable(bundle)) {
+          return false;
+        }
+      } else if (valueIn(o.output_type, ['stream', 'error'])) {
+        // Unknown output type
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Create a widget which renders the given cell output
+   */
+  protected createOutput(output: nbformat.IOutput, trusted: boolean): Widget {
+    let widget = new OutputWidget({rendermime: this._rendermime});
+    widget.render(output, trusted);
+    return widget;
+  }
+
+  _sanitized: boolean;
+  _rendermime: RenderMime<Widget>;
+}
+  
