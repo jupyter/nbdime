@@ -8,7 +8,7 @@ import os
 import json
 from argparse import ArgumentParser
 from six import string_types
-from tornado import ioloop, web
+from tornado import ioloop, web, escape
 import nbformat
 import nbdime
 
@@ -39,7 +39,7 @@ class NbdimeApiHandler(web.RequestHandler):
 
     def get_notebook_argument(self, argname):
         # Assuming a request on the form "{'argname':arg}"
-        body = json.loads(self.request.body)
+        body = json.loads(escape.to_unicode(self.request.body))
         arg = body[argname]
 
         # Currently assuming arg is a filename relative to
@@ -68,8 +68,10 @@ class MainHandler(NbdimeApiHandler):
 
 class MainDiffHandler(NbdimeApiHandler):
     def get(self):
-        # Currently just using the same file for both diff and merge
-        self.render("index.html")
+        args = {}
+        args["base"] = self.get_argument("base", "")
+        args["remote"] = self.get_argument("remote", "")
+        self.render("diff.html", **args)
 
 class MainMergeHandler(NbdimeApiHandler):
     def get(self):
@@ -103,7 +105,7 @@ class ApiMergeHandler(NbdimeApiHandler):
         try:
             merged, lco, rco = nbdime.merge_notebooks(base_nb, local_nb, remote_nb)
         except Exception as e:
-            raise web.HTTPError(400, "Error while attempting to merge documents.")
+            raise web.HTTPError(400, "Error while attempting to merge documents: %s" % e)
 
         data = {
             "base": base_nb,
@@ -124,7 +126,7 @@ class ApiMergeStoreHandler(NbdimeApiHandler):
             raise web.HTTPError(400, "Server does not accept storing merge result.")
         path = os.path.join(self.params["cwd"], fn)
 
-        body = json.loads(self.request.body)
+        body = json.loads(escape.to_unicode(self.request.body))
         merged_nb = body["merged"]
 
         with open(path, "w") as f:
@@ -141,7 +143,7 @@ def make_app(**params):
         (r"/api/diff", ApiDiffHandler, params),
         (r"/api/merge", ApiMergeHandler, params),
         (r"/static", web.StaticFileHandler, {"path": static_path}),
-        ]
+    ]
 
     settings = {
         "static_path": static_path,
@@ -173,7 +175,7 @@ def build_arg_parser():
     """
     description = 'Web interface for Nbdime.'
     parser = ArgumentParser(description=description)
-    parser.add_argument('-p', '--port',
+    parser.add_argument('-p', '--port', default="8888",
                         help="Specify the port you want the server "
                              "to run on. Default is 8888.")
     return parser
