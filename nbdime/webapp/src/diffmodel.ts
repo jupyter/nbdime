@@ -515,3 +515,209 @@ export class OutputDiffModel implements IDiffModel {
   startCollapsed: boolean;
 }
 
+
+// CellDiffModel
+
+/**
+ * Diff model for individual Notebook Cells
+ */
+export class CellDiffModel {
+  constructor(source: IDiffModel, metadata: IDiffModel, 
+        outputs: IDiffModel[]) {
+    this.source = source;
+    this.metadata = metadata;
+    this.outputs = outputs;
+    if (this.metadata) {
+      this.metadata.collapsible = true;
+      this.metadata.collapsibleHeader = 'Metadata changed';
+      this.metadata.startCollapsed = true;
+    }
+  }
+
+  /**
+   * Diff model for the source field.
+   */
+  source: IDiffModel;
+
+  /**
+   * Diff model for the metadata field. Can be null.
+   */
+  metadata: IDiffModel;
+
+  /**
+   * Diff model for the outputs field. Can be null.
+   */
+  outputs: IDiffModel[];
+
+
+  /**
+   * Whether the cell has remained unchanged
+   */
+  get unchanged(): boolean {
+    let unchanged = this.source.unchanged;
+    unchanged = unchanged && 
+      (this.metadata ? this.metadata.unchanged : true);
+    if (this.outputs) {
+      for (let o of this.outputs) {
+        unchanged = unchanged && o.unchanged;
+      }
+    }
+    return unchanged;
+  }
+  
+  /**
+   * Whether the cell has been added to the notebook (new cell)
+   */
+  get added(): boolean {
+    return this.source.added;
+  }
+  
+  /**
+   * Whether the cell has been deleted/removed from the notebook
+   */
+  get deleted(): boolean {
+    return this.source.deleted;
+  }
+}
+
+export function createPatchedCellDiffModel(base: nbformat.ICell, diff: IDiffEntry[],
+      nbMimetype: string): CellDiffModel {
+  let source: IDiffModel = null;
+  let metadata: IDiffModel = null;
+  let outputs: IDiffModel[] = null;
+
+  let subDiff = getDiffKey(diff, 'source');
+  if (subDiff) {
+    source = createPatchDiffModel(base.source, subDiff);
+  } else {
+    source = createDirectDiffModel(base.source, base.source);
+  }
+  setMimetypeFromCellType(source as IStringDiffModel, base, nbMimetype);
+
+  subDiff = getDiffKey(diff, 'metadata');
+  if (base.metadata !== undefined) {
+    metadata = subDiff ? 
+      createPatchDiffModel(base.metadata, subDiff) : 
+      createDirectDiffModel(base.metadata, base.metadata)
+  }
+
+  if (base.cell_type === 'code' && (base as nbformat.ICodeCell).outputs) {
+    outputs = makeOutputModels((base as nbformat.ICodeCell).outputs, null,
+      getDiffKey(diff, 'outputs'));
+  }
+  return new CellDiffModel(source, metadata, outputs);
+}
+
+export function createUnchangedCellDiffModel(base: nbformat.ICell, 
+        nbMimetype: string): CellDiffModel {
+  let metadata: IDiffModel = null;
+  let outputs: IDiffModel[] = null;
+  
+  let source = createDirectDiffModel(base.source, base.source);
+  setMimetypeFromCellType(source as IStringDiffModel, base, nbMimetype);
+  if (base.metadata !== undefined) {
+    metadata = createDirectDiffModel(base.metadata, base.metadata);
+  }
+  if (base.cell_type === 'code' && (base as nbformat.ICodeCell).outputs) {
+    outputs = makeOutputModels((base as nbformat.ICodeCell).outputs,
+      (base as nbformat.ICodeCell).outputs);
+  }
+  return new CellDiffModel(source, metadata, outputs);
+}
+
+export function createAddedCellDiffModel(remote: nbformat.ICell, 
+      nbMimetype: string): CellDiffModel {
+  let metadata: IDiffModel = null;
+  let outputs: IDiffModel[] = null;
+
+  let source = createDirectDiffModel(null, remote.source);
+  setMimetypeFromCellType(source as IStringDiffModel, remote, nbMimetype);
+  if (remote.metadata !== undefined) {
+    metadata = createDirectDiffModel(null, remote.metadata);
+  }
+  if (remote.cell_type === 'code' && (remote as nbformat.ICodeCell).outputs) {
+    outputs = makeOutputModels(
+      null, (remote as nbformat.ICodeCell).outputs);
+  }
+  return new CellDiffModel(source, metadata, outputs);
+}
+
+export function createDeletedCellDiffModel(base: nbformat.ICell, 
+      nbMimetype: string): CellDiffModel {
+  let source: IDiffModel = null;
+  let metadata: IDiffModel = null;
+  let outputs: IDiffModel[] = null;
+
+  source = createDirectDiffModel(base.source, null);
+  setMimetypeFromCellType(source as IStringDiffModel, base, nbMimetype);
+  if (base.metadata !== undefined) {
+    metadata = createDirectDiffModel(base.metadata, null);
+  }
+  if (base.cell_type === 'code' && (base as nbformat.ICodeCell).outputs) {
+    outputs = makeOutputModels((base as nbformat.ICodeCell).outputs, null);
+  }
+  return new CellDiffModel(source, metadata, outputs);
+}
+
+
+function makeOutputModels(base: nbformat.IOutput[], remote: nbformat.IOutput[],
+      diff?: IDiffEntry[]) : IDiffModel[] {
+  let models: IDiffModel[] = [];
+  if (remote === null && !diff) {
+    // Cell deleted
+    for (let o of base) {
+      models.push(new OutputDiffModel(o, null));
+    }
+  } else if (base === null) {
+    // Cell added
+    for (let o of remote) {
+      models.push(new OutputDiffModel(null, o));
+    }
+  } else if (remote === base) {
+    // Outputs unchanged
+    for (let o of base) {
+      models.push(new OutputDiffModel(o, o));
+    }
+  } else if (diff) {
+    // Outputs' patched, remote will be null
+    let consumed = 0;
+    let skip = 0;
+    for (let d of diff) {
+      let index = d.key as number;
+      for (let o of base.slice(consumed, index)) {
+        // Add unchanged outputs
+        models.push(new OutputDiffModel(o, o));
+      }
+      if (d.op === DiffOp.SEQINSERT) {
+        // Outputs added
+        for (let o of (d as IDiffAddRange).valuelist) {
+          models.push(new OutputDiffModel(null, o));
+        }
+        skip = 0;
+      } else if (d.op === DiffOp.SEQDELETE) {
+        // Outputs removed
+        let len = (d as IDiffRemoveRange).length;
+        for (let i = index; i < index + len; i++) {
+          models.push(new OutputDiffModel(base[i], null));
+        }
+        skip = len;
+      } else if (d.op === DiffOp.PATCH) {
+        // Output changed
+        models.push(new OutputDiffModel(
+          base[index], null, (d as IDiffPatch).diff));
+        skip = 1;
+      } else {
+        throw 'Invalid diff operation: ' + d;
+      }
+      consumed = Math.max(consumed, index + skip);
+    }
+    for (let o of base.slice(consumed)) {
+      // Add unchanged outputs
+      models.push(new OutputDiffModel(o, o));
+    }
+  } else {
+    throw 'Invalid arguments to OutputsDiffModel';
+  }
+  return models;
+}
+
