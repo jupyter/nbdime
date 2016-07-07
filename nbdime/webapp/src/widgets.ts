@@ -47,6 +47,8 @@ import {
 } from './diffmodel';
 
 
+const NBDIFF_CLASS = 'jp-Notebook-diff';
+
 const ROOT_METADATA_CLASS = 'jp-Metadata-diff';
 const CELLDIFF_CLASS = 'jp-Cell-diff';
 
@@ -283,6 +285,7 @@ class RenderableView extends Widget {
   _rendermime: RenderMime<Widget>;
 }
 
+
 /**
  * CellDiffWidget for cell changes
  */
@@ -453,4 +456,36 @@ class MetadataDiffWidget extends Panel {
   private _model: IDiffModel;
 }
 
+
+/**
+ * NotebookDiffWidget
+ */
+export
+class NotebookDiffWidget extends Widget {
+  constructor(model: NotebookDiffModel, rendermime: RenderMime<Widget>) {
+    super();
+    this._model = model;
+    this._rendermime = rendermime;
+    let layout = this.layout = new PanelLayout();
+    
+    this.addClass(NBDIFF_CLASS);
+    
+    layout.addChild(new MetadataDiffWidget(model.metadata));
+    for (var c of model.cells) {
+      layout.addChild(new CellDiffWidget(c, rendermime, model.mimetype));
+    }
+  }
   
+  /**
+   * Get the model for the widget.
+   *
+   * #### Notes
+   * This is a read-only property.
+   */
+  get model(): NotebookDiffModel {
+    return this._model;
+  }
+  
+  private _model: NotebookDiffModel;
+  private _rendermime: RenderMime<Widget> = null;
+}
