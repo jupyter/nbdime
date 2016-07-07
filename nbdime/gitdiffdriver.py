@@ -15,7 +15,7 @@ Use with:
 
     git diff [<commit> [<commit>]]
 """
-import os
+
 import sys
 from subprocess import check_call
 

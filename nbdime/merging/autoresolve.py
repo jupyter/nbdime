@@ -68,7 +68,8 @@ def make_join_value(value, le, re):
     return newvalue
 
 
-def make_inline_outputs_value(value, le, re):
+def make_inline_outputs_value(value, le, re,
+                              local_title="local", remote_title="remote"):
     # FIXME: Use this for inline outputs diff?
     # Joining e.g. an outputs list means concatenating all items
     lvalue = patch_item(value, le)
@@ -183,7 +184,7 @@ def resolve_list_item_conflicts(merged, lcd, rcd, strategy, path):
         raise RuntimeError("Not expecting strategy {} for list items at path {}.".format(strategy, path))
 
     return (resolved, [], [])
-    
+
 
 def autoresolve_lists(merged, lcd, rcd, strategies, path):
     key = "*"
@@ -224,7 +225,7 @@ def autoresolve_lists(merged, lcd, rcd, strategies, path):
             assert len(rpatches) + len(rinserts) == len(d1)
             assert k == j + 1
             assert all(e.key == j for e in linserts + rinserts)
-            
+
             le, = lpatches
             re, = rpatches
             newvalue, ldi, rdi = autoresolve(merged[j], le.diff, re.diff, strategies, subpath)
@@ -267,7 +268,7 @@ def autoresolve_dicts(merged, lcd, rcd, strategies, path):
 
     # lcd = local conflict diffs
     # rcd = remote conflict diffs
-    
+
     # Converting to dict-based diff format for dicts for convenience
     # This step will be unnecessary if we change the diff format to work this way always
     lcd = as_dict_based_diff(lcd)

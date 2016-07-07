@@ -270,64 +270,6 @@ def present_string_diff(a, di, path):
     return header + dif.splitlines()[heading_lines:]
 
 
-def __unused_old_present_string_diff(a, di, path): # Just delete this?
-    consumed = 0
-    lines = []
-    continuation = False
-    continuation_indent = 0
-    continuation_indent2 = 0
-    for e in di:
-        op = e.op
-        index = e.key
-
-        # Consume untouched characters
-        if index > consumed:
-            dlines = a[consumed:index].splitlines()
-            for dline in dlines:
-                prefix = ".." if continuation else "  "
-                lines.append(prefix + " "*continuation_indent2 + dline)
-                continuation = False
-                continuation_indent2 = 0
-            continuation_indent = len(lines[-1]) - 2
-            continuation_indent2 = continuation_indent
-            consumed = index
-
-        if op == DiffOp.ADDRANGE:
-            dlines = e.valuelist.splitlines()
-            lines.append("+ " + " "*continuation_indent + dlines[0])
-            for dline in dlines[1:]:
-                lines.append("+ " + dline)
-            continuation = True
-            continuation_indent2 = max(continuation_indent2, len(lines[-1]) - 2)
-
-        elif op == DiffOp.REMOVERANGE:
-            dlines = a[index: index + e.length].splitlines()
-            lines.append("- " + " "*continuation_indent + dlines[0])
-            for dline in dlines[1:]:
-                lines.append("- " + dline)
-            consumed = index + e.length
-            continuation = True
-            continuation_indent2 = max(continuation_indent2, len(lines[-1]) - 2)
-
-        else:
-            raise NBDiffFormatError("Unknown string diff op {}".format(op))
-
-    # Consume untouched characters at end
-    index = len(a)  # copy-paste from top of loop...
-    if index > consumed:
-        dlines = a[consumed:index].splitlines()
-        for dline in dlines:
-            prefix = ".." if continuation else "  "
-            lines.append(prefix + " "*continuation_indent2 + dline)
-            continuation = False
-            continuation_indent2 = 0
-        continuation_indent = len(lines[-1]) - 2
-        continuation_indent2 = continuation_indent
-        consumed = index
-
-    return lines
-
-
 def present_diff(a, di, path, indent=True):
     "Pretty-print a nbdime diff."
     if isinstance(a, dict):
