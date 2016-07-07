@@ -3,8 +3,18 @@
 'use strict';
 
 import {
+  loadModeByMIME
+} from 'jupyterlab/lib/codemirror';
+
+import {
   Widget
 } from 'phosphor-widget';
+
+import 'codemirror/lib/codemirror.css';
+
+import {
+  DiffView, MergeView, MergeViewEditorConfiguration
+} from './mergeview';
 
 const COLLAPISBLE_HEADER = 'jp-Collapsible-header';
 const COLLAPISBLE_HEADER_ICON = 'jp-Collapsible-header-icon';
@@ -86,3 +96,41 @@ class CollapsibleWidget extends Widget {
   container: HTMLElement;
   button: HTMLElement;
 }
+
+
+/**
+ * A wrapper view for showing StringDiffModels in a MergeView
+ */
+class NbdimeMergeView extends Widget {
+  constructor(remote: IStringDiffModel, editorClasses: string[],
+              local?: IStringDiffModel, merged?: any) {
+    super();
+    let opts: MergeViewEditorConfiguration = {remote: remote};
+    opts.collapseIdentical = true;
+    opts.local = local ? local : null;
+    //opts.merged = merged ? merged : null;
+    this._mergeview = new MergeView(this.node, opts);
+    this._editors = [];
+    if (this._mergeview.left) {
+      this._editors.push(this._mergeview.left);
+    }
+    if (this._mergeview.right) {
+      this._editors.push(this._mergeview.right);
+    }
+    if (this._mergeview.merge) {
+      this._editors.push(this._mergeview.merge);
+    }
+        
+    if (remote.mimetype) {
+      // Set the editor mode to the MIME type.
+      for (let e of this._editors) {
+        loadModeByMIME(e.orig, remote.mimetype);
+      }
+      loadModeByMIME(this._mergeview.base, remote.mimetype);
+    }
+  }
+  
+  protected _mergeview: MergeView;
+  protected _editors: DiffView[];
+}
+
