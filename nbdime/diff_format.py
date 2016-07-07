@@ -294,8 +294,9 @@ else:
 
 
 def _check_overlaps(existing, new):
-    """Check whether existing collection of ops has any op with same key,
-    and same op. Assumes keys are sorted
+    """Check whether existing collection of diff ops shares a key with the
+    new diffop, and if they  also have the same op type.
+    Assumes exsiting diff ops are sorted on key.
     """
     for oo in reversed(existing):
         if oo.key == new.key and oo.op == new.op:
