@@ -47,6 +47,7 @@ import {
 } from './diffmodel';
 
 
+const ROOT_METADATA_CLASS = 'jp-Metadata-diff';
 const CELLDIFF_CLASS = 'jp-Cell-diff';
 
 const SOURCE_ROW_CLASS = 'jp-Cellrow-source';
@@ -419,4 +420,37 @@ class CellDiffWidget extends Panel {
   protected _model: CellDiffModel = null;
   protected _rendermime: RenderMime<Widget> = null;
 }
+
+
+/**
+ * MetadataWidget for changes to Notebook-level metadata
+ */
+export
+class MetadataDiffWidget extends Panel {
+  constructor(model: IDiffModel) {
+    super();
+    this._model = model;
+    console.assert(!model.added && !model.deleted);
+    this.addClass(ROOT_METADATA_CLASS);
+    this.init();
+  }
+
+  init() {
+    let model = this._model;
+    if (!model.unchanged) {
+      this.addClass(TWOWAY_DIFF_CLASS);
+      console.assert(model instanceof StringDiffModel)
+      let view: Widget = new NbdimeMergeView(
+        model as StringDiffModel, DIFF_CLASSES);
+      if (model.collapsible) {
+        view = new CollapsibleWidget(
+          view, model.collapsibleHeader, model.startCollapsed);
+      }
+      this.addChild(view);
+    }
+  }
+
+  private _model: IDiffModel;
+}
+
   
