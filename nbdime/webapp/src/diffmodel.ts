@@ -355,3 +355,163 @@ export function createDirectDiffModel(base: any, remote: any): StringDiffModel {
   }
   return new StringDiffModel(base_str, remote_str, additions, deletions);
 }
+
+
+
+/**
+ * Assign MIME type to an IStringDiffModel based on the cell type.
+ * 
+ * The parameter nbMimetype is the MIME type set for the entire notebook, and is used as the
+ * MIME type for code cells.
+ */
+function setMimetypeFromCellType(model: IStringDiffModel, cell: nbformat.ICell, 
+      nbMimetype: string) {
+  let cellType = cell.cell_type;
+  if (cellType === 'code') {
+    model.mimetype = nbMimetype;
+  } else if (cellType === 'markdown') {
+    model.mimetype = 'text/markdown';
+  } else if (cellType === 'raw') {
+    model.mimetype = (cell as nbformat.IRawCell).metadata.format;
+  }
+}
+
+
+/**
+ * Diff model for single cell output entries.
+ * 
+ * Can converted to a StringDiffModel via the method `stringify()`, which also 
+ * takes an optional argument `key` which specifies a subpath of the IOutput to
+ * make the model from.
+ */
+export class OutputDiffModel implements IDiffModel {
+  constructor(
+        public base: nbformat.IOutput,
+        remote: nbformat.IOutput,
+        diff?: IDiffEntry[],
+        collapsible?: boolean,
+        header?: string,
+        collapsed?: boolean) {
+    if (!remote && diff) {
+      this.remote = patch(base, diff) as nbformat.IOutput;
+    } else {
+      this.remote = remote;
+    }
+    this.diff = !!diff ? diff : null;
+    this.collapsible = collapsible === true;
+    if (this.collapsible) {
+      this.collapsibleHeader = header ? header : '';
+      this.startCollapsed = collapsed;
+    }
+  }
+  
+  get unchanged() : boolean {
+    return this.diff === null;
+  }
+  
+  get added(): boolean {
+    return this.base === null;
+  }
+  
+  get deleted(): boolean {
+    return this.remote === null;
+  }
+
+  /**
+   * Checks whether the given mimetype is present in the output's mimebundle.
+   * If so, it returns the path/key to that mimetype's data. If not present, 
+   * it returns null. 
+   * 
+   * See also: innerMimeType
+   */
+  hasMimeType(mimetype: string): string {
+    let t = this.base ? this.base.output_type : this.remote.output_type;
+    if (t === 'stream' && 
+          mimetype == 'application/vnd.jupyter.console-text') {
+      return 'text';
+    } else if (t === 'execute_result' || t === 'display_data') {
+      let data = this.base ? (this.base as nbformat.IExecuteResult).data : 
+        (this.remote as nbformat.IExecuteResult).data;
+      if (mimetype in data) {
+        return 'data.' + mimetype;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Returns the expected MIME type of the IOutput subpath specified by `key`,
+   * as determined by the notebook format specification.
+   * 
+   * Throws an error for unknown keys.
+   * 
+   * See also: hasMimeType
+   */
+  innerMimeType(key: string) : string {
+    let t = this.base ? this.base.output_type : this.remote.output_type;
+    if (t === 'stream' && key === 'text') {
+      // TODO: 'application/vnd.jupyter.console-text'?
+      return 'text/plain';
+    } else if ((t === 'execute_result' || t === 'display_data') &&
+          key.indexOf('data.') === 0) {
+      return key.slice('data.'.length);
+    }
+    throw 'Unknown MIME type for key: ' + key;
+  }
+  
+  /**
+   * Can converted to a StringDiffModel via the method `stringify()`, which also 
+   * takes an optional argument `key` which specifies a subpath of the IOutput to
+   * make the model from.
+   */
+  stringify(key?: string) : IStringDiffModel {
+    let getMemberByPath = function(obj: any, key: string, f?: (obj: any, key: string) => any) {
+      if (!obj) return obj;
+      let i = key.indexOf('.');
+      if (i >= 0) {
+        console.assert(i < key.length);
+        if (f) {
+          return getMemberByPath(
+            f(obj, key.slice(0, i)), key.slice(i+1), f);
+        }
+        return getMemberByPath(
+          obj[key.slice(0, i)], key.slice(i+1), f);
+      } else if (f) {
+        return f(obj, key);
+      }
+      return obj[key];
+    };
+    let base = key ? getMemberByPath(this.base, key) : this.base;
+    let remote = key ? getMemberByPath(this.remote, key) : this.remote;
+    let diff = this.diff && key ? 
+      getMemberByPath(this.diff, key, getDiffKey) :
+      this.diff;
+    let model: IStringDiffModel = null;
+    if (this.unchanged || this.added || this.deleted || !diff) {
+      model = createDirectDiffModel(base, remote);
+    } else {
+      model = createPatchDiffModel(base, diff);
+    }
+    model.mimetype = key ? this.innerMimeType(key) : 'application/json';
+    model.collapsible = this.collapsible;
+    model.collapsibleHeader = this.collapsibleHeader;
+    model.startCollapsed = this.startCollapsed;
+    return model;
+  }
+  
+  /**
+   * Remote value
+   */
+  remote: nbformat.IOutput;
+
+  /**
+   * Diff entries between base and remote
+   */
+  diff: IDiffEntry[];
+
+  // ICollapsibleModel:
+  collapsible: boolean;
+  collapsibleHeader: string;
+  startCollapsed: boolean;
+}
+
