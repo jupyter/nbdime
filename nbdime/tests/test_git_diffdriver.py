@@ -15,18 +15,29 @@ expected_output = """nbdiff {0} {1}
 +++ b: {1}
 
 patch a/cells/0/outputs/0/data/text/plain:
-\x1b[36m@@ -1 +1 @@\x1b[m
-\x1b[31m6\x1b[m\x1b[32m3\x1b[m
+@@ -1 +1 @@
+-6
+\ No newline at end of file
++3
+\ No newline at end of file
 patch a/cells/0/source:
-\x1b[36m@@ -1,3 +1,3 @@\x1b[m
-def \x1b[31mfoe(x,\x1b[m\x1b[32mfoo(x,\x1b[m y):
-    return x + y\x1b[m
-\x1b[31mfoe(3,\x1b[m\x1b[32mfoo(1,\x1b[m 2)
+@@ -1,3 +1,3 @@
+-def foe(x, y):
++def foo(x, y):
+     return x + y
+-foe(3, 2)
+\ No newline at end of file
++foo(1, 2)
+\ No newline at end of file
 patch a/cells/1/source:
-\x1b[36m@@ -1,3 +1,3 @@\x1b[m
-def \x1b[31mfoo(x,\x1b[m\x1b[32mfoe(x,\x1b[m y):
-    return x * y\x1b[m
-\x1b[31mfoo(1,\x1b[m\x1b[32mfoe(1,\x1b[m 2)
+@@ -1,3 +1,3 @@
+-def foo(x, y):
++def foe(x, y):
+     return x * y
+-foo(1, 2)
+\ No newline at end of file
++foe(1, 2)
+\ No newline at end of file
 """
 
 
@@ -37,6 +48,10 @@ def test_git_diff_driver(capsys):
         pjoin(test_dir, 'files/foo-foe-1.ipynb'),
         pjoin(test_dir, 'files/foo-foe-1.ipynb'), 'invalid_mock_checksum', '100644',
         pjoin(test_dir, 'files/foo-foe-2.ipynb'), 'invalid_mock_checksum', '100644']
+    import nbdime.prettyprint
+    # Disable color printing for test
+    nbdime.prettyprint._git_diff_print_cmd = \
+        nbdime.prettyprint._git_diff_print_cmd.replace(' --color-words', '')
     with mock.patch('sys.argv', mock_argv):
         with pytest.raises(SystemExit) as cm:
             gdd_main()

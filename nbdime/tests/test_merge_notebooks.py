@@ -12,7 +12,8 @@ import nbformat
 
 from nbdime import merge_notebooks, merge, diff, patch
 from nbdime.merging.notebooks import autoresolve
-from nbdime.diff_format import op_patch, op_addrange, op_removerange
+from nbdime.diff_format import (op_patch, op_addrange, op_removerange,
+                                source_as_string)
 from .fixtures import sources_to_notebook
 
 
@@ -143,7 +144,7 @@ def test_autoresolve_notebook_ec():
     local["cells"][0]["execution_count"] = 2
     remote["cells"][0]["execution_count"] = 3
     expected["cells"][0]["execution_count"] = None
-    
+
     merged, local_conflicts, remote_conflicts = merge_notebooks(base, local, remote, args)
 
     if 0:
@@ -373,8 +374,8 @@ def test_merge_multiline_cell_source_conflict():
     base   = [source]
     remote = [source + ["remote"]]
     expected_partial = base
-    expected_lco = _patch_cell_source(0, [op_addrange(len(source), ["local"])])
-    expected_rco = _patch_cell_source(0, [op_addrange(len(source), ["remote"])])
+    expected_lco = _patch_cell_source(0, [op_addrange(len("\n".join(source)), "\nlocal")])
+    expected_rco = _patch_cell_source(0, [op_addrange(len("\n".join(source)), "\nremote")])
     _check(base, local, remote, expected_partial, expected_lco, expected_rco)
 
 
@@ -400,8 +401,8 @@ def test_merge_insert_cells_around_conflicting_cell():
     elif 0:
         # This is how it would look if source inserts but not cell inserts resulted in conflicts:
         expected_partial = [local[0], source, remote[1]]
-        expected_lco = _patch_cell_source(1, [op_addrange(len(source), ["local"])])
-        expected_rco = _patch_cell_source(1, [op_addrange(len(source), ["remote"])])
+        expected_lco = _patch_cell_source(1, [op_addrange(len("\n".join(source)), "\nlocal")])
+        expected_rco = _patch_cell_source(1, [op_addrange(len("\n".join(source)), "\nremote")])
     else:
         # In current behaviour:
         # - base cell 0 is aligned correctly (this is the notebook diff heuristics)
@@ -417,10 +418,10 @@ def test_merge_insert_cells_around_conflicting_cell():
         expected_lco = [op_patch("cells", [
             op_addrange(0, [nbformat.v4.new_code_cell(source=["new local cell"])]),
             op_patch(0, [op_patch("source",
-                                  [op_addrange(len(source), ["local"])]
+                                  [op_addrange(len("\n".join(source)), "\nlocal")]
                                   )]),
             ])]
-        expected_rco = _patch_cell_source(0, [op_addrange(len(source), ["remote"])])
+        expected_rco = _patch_cell_source(0, [op_addrange(len("\n".join(source)), "\nremote")])
     _check(base, local, remote, expected_partial, expected_lco, expected_rco)
 
 

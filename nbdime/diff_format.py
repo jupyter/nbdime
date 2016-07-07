@@ -293,30 +293,56 @@ else:
             yield total
 
 
+def _check_overlaps(existing, new):
+    """Check whether existing collection of ops has any op with same key,
+    and same op. Assumes keys are sorted
+    """
+    for oo in reversed(existing):
+        if oo.key == new.key and oo.op == new.op:
+            # Found a match, combine ops
+            return oo
+
+def _combine_ops(existing, new):
+    """Combines new op into existing op
+    """
+    if new.op == DiffOp.ADDRANGE:
+        existing.valuelist += new.valuelist
+    elif new.op == DiffOp.REMOVERANGE:
+        existing.lenght += new.length
+
+
 def flatten_list_of_string_diff(a, diff):
-    """Returns a flattened version of the list diff, i.e. all keys are
-    made absolute in the concatenated list.
+    """Translates a diff of strings split by str.splitlines() to a diff of
+    the joined multiline string
     """
     a_mapping = [0] + list(_accum(len(ia) for ia in a))
     flattened = []
     for e in diff:
         op = e.op
-        if op == DiffOp.ADDRANGE:
+        new_key = a_mapping[e.key]
+        if op in (DiffOp.ADDRANGE, DiffOp.REMOVERANGE):
             d = copy.deepcopy(e)
-            d.key = a_mapping[e.key]
-            d.valuelist = "".join(e.valuelist)
-            flattened.append(d)
-        elif op == DiffOp.REMOVERANGE:
-            d = copy.deepcopy(e)
-            d.key = a_mapping[e.key]
-            d.length = a_mapping[e.key + e.length] - d.key
-            flattened.append(d)
+            d.key = new_key
+            if op == DiffOp.ADDRANGE:
+                d.valuelist = "".join(e.valuelist)
+            else:
+                d.length = a_mapping[e.key + e.length] - d.key
+            oo = _check_overlaps(flattened, d)
+            if oo is None:
+                flattened.append(d)
+            else:
+                _combine_ops(oo, d)
+
         elif op == DiffOp.PATCH:
-            start = a_mapping[e.key]
             for p in e.diff:
                 d = copy.deepcopy(p)
-                d.key += start
-                flattened.append(d)
+                d.key += new_key
+                oo = _check_overlaps(flattened, d)
+                if oo is None:
+                    flattened.append(d)
+                else:
+                    _combine_ops(oo, d)
+
     return flattened
 
 
