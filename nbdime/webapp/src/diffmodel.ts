@@ -721,3 +721,95 @@ function makeOutputModels(base: nbformat.IOutput[], remote: nbformat.IOutput[],
   return models;
 }
 
+
+
+/**
+ * Diff model for a Jupyter Notebook
+ */
+export class NotebookDiffModel {
+
+  /**
+   * Create a new NotebookDiffModel from a base notebook and a list of diffs.
+   * 
+   * The base as well as the diff entries are normally supplied by the nbdime 
+   * server.
+   */
+  constructor(base: nbformat.INotebookContent, diff: IDiffEntry[]) {
+    // Process global notebook metadata field
+    let metaDiff = getDiffKey(diff, 'metadata');
+    this.metadata = (base.metadata || metaDiff) ?
+      createPatchDiffModel(base.metadata, metaDiff) :
+      null;
+    this.metadata.collapsible = true;
+    this.metadata.collapsibleHeader = 'Notebook metadata changed';
+    this.metadata.startCollapsed = true;
+    // The notebook metadata MIME type is used for determining the MIME type
+    // of source cells, so store it easily accessible:
+    this.mimetype = base.metadata.language_info.mimetype;
+
+    // Build cell diff models. Follows similar logic to patching code:
+    this.cells = [];
+    var take = 0;
+    var skip = 0;
+    for (var e of getDiffKey(diff, 'cells')) {
+      var op = e.op;
+      var index = e.key as number;
+      
+      // diff is sorted on index, so take any preceding cells as unchanged:
+      for (var i=take; i < index; i++) {
+        this.cells.push(createUnchangedCellDiffModel(
+          base.cells[i], this.mimetype));
+      }
+      
+      // Process according to diff type:
+      if (op == DiffOp.SEQINSERT) {
+        // One or more inserted/added cells:
+        for (var e_i of (e as IDiffAddRange).valuelist) {
+          this.cells.push(createAddedCellDiffModel(
+            e_i as nbformat.ICell, this.mimetype));
+        }
+        skip = 0;
+      }
+      else if (op == DiffOp.SEQDELETE) {
+        // One or more removed/deleted cells:
+        skip = (e as IDiffRemoveRange).length;
+        for (var i=index; i < index + skip; i++) {
+          this.cells.push(createDeletedCellDiffModel(
+            base.cells[i], this.mimetype));
+        }
+      }
+      else if (op == DiffOp.PATCH) {
+        // A cell has changed:
+        this.cells.push(createPatchedCellDiffModel(
+          base.cells[index], (e as IDiffPatch).diff, this.mimetype));
+        skip = 1;
+      }
+
+      // Skip the specified number of elements, but never decrement take.
+      // Note that take can pass index in diffs with repeated +/- on the
+      // same index, i.e. [op_remove(index), op_add(index, value)]
+      take = Math.max(take, index + skip);
+    }
+    // Take unchanged values at end
+    for (var i=take; i < base.cells.length; i++) {
+      this.cells.push(createUnchangedCellDiffModel(
+        base.cells[i], this.mimetype));
+    }
+  }
+  
+  /**
+   * Diff model of the notebook's root metadata field
+   */
+  metadata: IDiffModel;
+
+  /**
+   * The default MIME type according to the notebook's root metadata
+   */
+  mimetype: string;
+
+  /**
+   * List of all cell diff models, including unchanged, added/removed and 
+   * changed cells, in order.
+   */
+  cells: CellDiffModel[];
+}
