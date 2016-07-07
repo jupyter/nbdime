@@ -73,6 +73,17 @@ class MainDiffHandler(NbdimeApiHandler):
         args["remote"] = self.get_argument("remote", "")
         self.render("diff.html", **args)
 
+class MainDifftoolHandler(NbdimeApiHandler):
+    def get(self):
+        args = {}
+        if "difftool_args" in self.params:
+            args["base"] = self.params["difftool_args"]["base"]
+            args["remote"] = self.params["difftool_args"]["remote"]
+        else:
+            args["base"] = self.get_argument("base", "")
+            args["remote"] = self.get_argument("remote", "")
+        self.render("difftool.html", **args)
+
 class MainMergeHandler(NbdimeApiHandler):
     def get(self):
         # Currently just using the same file for both diff and merge
@@ -135,13 +146,39 @@ class ApiMergeStoreHandler(NbdimeApiHandler):
         self.finish()
 
 
+class ApiCloseHandler(NbdimeApiHandler):
+    def post(self):
+        # Only allow closing, if started as tool
+        if ("difftool_args" not in self.params and
+                "mergetool_args" not in self.params):
+            raise web.HTTPError(
+                400, "Server is not a tool server, cannot be closed remotely.")
+
+        print("Closing tool")
+        self.finish()
+        ioloop.IOLoop.current().stop()
+
+
+class NbdimeApp(web.Application):
+    @property
+    def connection_url(self):
+        ip = self.ip if self.ip else 'localhost'
+        return self._url(ip)
+
+    def _url(self, ip):
+        proto = 'https' if self.certfile else 'http'
+        return "%s://%s:%i%s" % (proto, ip, self.port, self.base_url)
+
+
 def make_app(**params):
     handlers = [
         (r"/", MainHandler, params),
         (r"/diff", MainDiffHandler, params),
+        (r"/difftool", MainDifftoolHandler, params),
         (r"/merge", MainMergeHandler, params),
         (r"/api/diff", ApiDiffHandler, params),
         (r"/api/merge", ApiMergeHandler, params),
+        (r"/api/closetool", ApiCloseHandler, params),
         (r"/static", web.StaticFileHandler, {"path": static_path}),
     ]
 

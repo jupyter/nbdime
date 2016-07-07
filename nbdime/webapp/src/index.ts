@@ -194,24 +194,51 @@ function getConfigOption(name: string): any {
 }
 
 /**
+ * POSTs to the server that it should shut down if it was launched as a
+ * difftool/mergetool.
+ * 
+ * Used to indicate that the tool has finished its operation, and that the tool
+ * should return to its caller.
+ */
+function closeTool() {
+  //TODO: Send an exit code
+  var xhttp = new XMLHttpRequest();
+  var url = '/api/closetool';
+  xhttp.open('POST', url, false);
+  xhttp.send();
+  window.close();
+}
+
+/**
  * Wire up callbacks.
  */
 function attachToForm() {
   var frm = document.getElementById('nbdime-diff-form') as HTMLFormElement;
   if (frm) {
     frm.onsubmit = onDiff;
+    // It only makes sense to listen to pop state events when the form is
+    // availalbe (i.e. when we are not a diff/mergetool):
+    window.onpopstate = onPopState;
   }
 }
 
 /** */
 function initialize() {
   attachToForm();
-  window.onpopstate = onPopState;
   // If arguments supplied in config, run diff directly:
   let base = getConfigOption('base');
   let remote = getConfigOption('remote');
   if (base && remote) {
     requestDiff(base, remote);
+  }
+
+  // If launched as a tool, there should be a close button, to indicate that
+  // the tool has finshed. If present, wire it to events, and connect to 
+  // window unload event as well:
+  let close_btn = document.getElementById('nbdime-close') as HTMLButtonElement;
+  if (close_btn) {
+    close_btn.onclick = closeTool;
+    window.onbeforeunload = closeTool;
   }
 }
 
