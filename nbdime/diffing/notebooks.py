@@ -156,10 +156,10 @@ def diff_single_outputs(a, b, path="/cells/*/output/*",
         if a.output_type == "execute_result":
             subpath = path+"/execution_count"
             diffit = differs.get(subpath, diff)
-            dd = diffit(a.metadata, b.metadata, path=subpath,
+            dd = diffit(a.execution_count, b.execution_count, path=subpath,
                         predicates=predicates, differs=differs)
             if dd:
-                di.patch("data", dd)
+                di.patch("execution_count", dd)
 
         dd = diff_mime_bundle(a.data, b.data, path=path+"/data")
         if dd:
