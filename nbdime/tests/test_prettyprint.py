@@ -21,6 +21,14 @@ def b64text(nbytes):
     """Return n bytes as base64-encoded text"""
     return encodebytes(os.urandom(nbytes)).decode('ascii')
 
+# don't color test output
+no_color = mock.patch.multiple(pp, ADD='+ ', REMOVE='- ', RESET='')
+
+def setup():
+    no_color.start()
+def deardown():
+    no_color.stop()
+
 def test_present_dict_no_markup():
     d = {
         'a': 5,
@@ -143,7 +151,7 @@ def test_present_dict_diff():
     assert lines == [
         'replace at x/y/a:',
         '- 1',
-        ' +2',
+        '+ 2',
     ]
 
 def test_present_list_diff():

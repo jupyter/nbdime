@@ -112,6 +112,8 @@ def _build_arg_parser():
 
 
 def main(argv=None):
+    if sys.platform.startswith('win'):
+        colorama.init()
     args = _build_arg_parser().parse_args(argv)
     r = main_diff(args)
     sys.exit(r)

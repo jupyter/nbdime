@@ -5,7 +5,7 @@ Uses nbdime to create diffs for notebooks instead of plain text diffs of JSON.
 Note that this requires the following to be set in .gitattributes to correctly
 identify filetypes with the driver:
 
-    *.ipynb     jupyternotebook
+    *.ipynb     diff=jupyternotebook
 
 Enable in your global git config with:
 
