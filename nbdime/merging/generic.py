@@ -69,7 +69,7 @@ def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
     local_conflict_diff = MappingDiffBuilder()
     remote_conflict_diff = MappingDiffBuilder()
 
-    # (4) (5) (6)
+    # (4) (5) (6) (7) (8)
     # Then we have the potentially conflicting changes
     for key in sorted(brdkeys & bldkeys):
         # Get diff entries for this key (we know both sides have an
@@ -169,7 +169,7 @@ def _merge_lists(base, local, remote, base_local_diff, base_remote_diff):
             # Treating two-sided insertions as non-conflicting.
             # NB! This behaviour is possibly contentious, and if
             # this behaviour is not wanted, this elif block can be deleted.
-            # Note that insertions should definitely always be part of 
+            # Note that insertions should definitely always be part of
             # conflict if at the beginning of a patch or removerange,
             # but in this case there are two insertions before a
             # list item that will be kept.

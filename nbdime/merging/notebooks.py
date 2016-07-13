@@ -37,7 +37,7 @@ def autoresolve_notebook_conflicts(merged, local_diffs, remote_diffs, args):
     return resolved, local_diffs, remote_diffs
 
 
-def merge_notebooks(base, local, remote, args):
+def merge_notebooks(base, local, remote, args=None):
     """Merge changes introduced by notebooks local and remote from a shared ancestor base.
 
     Return new (partially) merged notebook and unapplied diffs from the local and remote side.
@@ -45,7 +45,7 @@ def merge_notebooks(base, local, remote, args):
     # Compute notebook specific diffs
     local_diffs = diff_notebooks(base, local)
     remote_diffs = diff_notebooks(base, remote)
-    
+
     # Execute a generic merge operation
     merged, local_diffs, remote_diffs = merge_with_diff(base, local, remote, local_diffs, remote_diffs)
 

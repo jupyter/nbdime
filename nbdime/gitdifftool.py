@@ -23,7 +23,7 @@ def enable(global_=False):
     cmd = ['git', 'config']
     if global_:
         cmd.append('--global')
-    
+
     check_call(cmd + ['difftool.nbdime.cmd', 'git-nbdifftool diff "$LOCAL" "$REMOTE"'])
     try:
         previous = check_output(cmd + ['diff.tool']).decode('utf8', 'replace').strip()
@@ -32,8 +32,20 @@ def enable(global_=False):
     else:
         if previous != 'nbdime':
             check_call(cmd + ['difftool.nbdime.previous', previous])
-    check_call(cmd + ['difftool.prompt', 'false'])
     check_call(cmd + ['diff.tool', 'nbdime'])
+
+    check_call(cmd + ['difftool.nbdimeweb.cmd', 'git-nbwebdifftool "$LOCAL" "$REMOTE"'])
+    try:
+        previous = check_output(cmd + ['diff.guitool']).decode('utf8', 'replace').strip()
+    except CalledProcessError:
+        previous = None
+    else:
+        if previous != 'nbdime':
+            check_call(cmd + ['difftool.nbdimeweb.previous', previous])
+    check_call(cmd + ['diff.guitool', 'nbdimeweb'])
+
+    # Common setting:
+    check_call(cmd + ['difftool.prompt', 'false'])
 
 
 def disable(global_=False):
@@ -47,11 +59,17 @@ def disable(global_=False):
         check_call(cmd + ['--unset', 'diff.tool'])
     else:
         check_call(cmd + ['diff.tool', previous])
+    try:
+        previous_gui = check_output(cmd + ['difftool.nbdime.previous_gui']).decode('utf8', 'replace').strip()
+    except CalledProcessError:
+        check_call(cmd + ['--unset', 'diff.guitool'])
+    else:
+        check_call(cmd + ['diff.guitool', previous_gui])
 
 
 def show_diff(before, after):
     """Run the difftool
-    
+
     If we are diffing a notebook, show the diff via nbdiff.
     Otherwise, call out to `git diff`.
     """
