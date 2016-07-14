@@ -19,7 +19,7 @@
 
 .jp-Cell-diff {
   margin-bottom: 20px;
-  border: solid black thin;
+  border-top: solid #ccc 1px;
 }
 
 .jp-Diff-added > div:first-child {
