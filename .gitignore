@@ -8,6 +8,9 @@ htmlcov
 .coverage
 .cache
 
+build
+dist
+
 .spyderproject
 **/.vscode/
 nbdime/webapp/node_modules/
