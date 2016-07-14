@@ -54,6 +54,11 @@ def main():
     cwd = os.path.abspath(os.path.curdir)
     local = arguments.local
     remote = arguments.remote
+    # can't handle non-notebook files
+    # FIXME: ignore for now
+    if not local.endswith('.ipynb') and not remote.endswith('.ipynb'):
+        print("Not notebooks: %r %r" % (local, remote))
+        return
     browse(port)
     run_server(port=port, cwd=cwd,
                difftool_args=dict(base=local, remote=remote))
