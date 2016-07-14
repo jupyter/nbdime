@@ -24,6 +24,8 @@ except ImportError:
 
 from six import string_types
 
+import colorama
+
 from .diff_format import NBDiffFormatError, DiffOp
 from .patching import patch
 
@@ -38,6 +40,10 @@ with_indent = False  #True
 # Change to enable/disable color print etc.
 _git_diff_print_cmd = 'git diff --no-index --color-words'
 
+# colors
+REMOVE = colorama.Fore.RED + '- '
+ADD = colorama.Fore.GREEN + '+ '
+RESET = colorama.Style.RESET_ALL
 
 def present_dict_no_markup(prefix, d, exclude_keys=None):
     """Pretty-print a dict without wrapper keys
@@ -180,16 +186,16 @@ def present_dict_diff(a, di, path):
 
         if op == DiffOp.REMOVE:
             pp.append("delete from {}:".format(nextpath))
-            pp += present_value("- ", a[key])
+            pp += present_value(REMOVE, a[key])
 
         elif op == DiffOp.ADD:
             pp.append("insert at {}:".format(nextpath))
-            pp += present_value("+ ", e.value)
+            pp += present_value(ADD, e.value)
 
         elif op == DiffOp.REPLACE:
             pp.append("replace at {}:".format(nextpath))
-            pp += present_value("- ", a[key])
-            pp += present_value(" +", e.value)
+            pp += present_value(REMOVE, a[key])
+            pp += present_value(ADD, e.value)
 
         elif op == DiffOp.PATCH:
             if with_indent:
@@ -198,6 +204,8 @@ def present_dict_diff(a, di, path):
 
         else:
             raise NBDiffFormatError("Unknown dict diff op {}".format(op))
+        if pp:
+            pp[-1] += RESET
 
     return pp
 
@@ -213,7 +221,7 @@ def present_list_diff(a, d, path):
 
         if op == DiffOp.ADDRANGE:
             pp.append("insert before {}:".format(nextpath))
-            pp += present_value("+ ", e.valuelist)
+            pp += present_value(ADD, e.valuelist)
 
         elif op == DiffOp.REMOVERANGE:
             if e.length > 1:
@@ -221,7 +229,7 @@ def present_list_diff(a, d, path):
             else:
                 r = str(index)
             pp.append("delete {}/{}:".format(path, r))
-            pp += present_value("- ", a[index: index + e.length])
+            pp += present_value(REMOVE, a[index: index + e.length])
 
         elif op == DiffOp.PATCH:
             if with_indent:
@@ -230,6 +238,8 @@ def present_list_diff(a, d, path):
 
         else:
             raise NBDiffFormatError("Unknown list diff op {}".format(op))
+        if pp:
+            pp[-1] += RESET
 
     return pp
 
