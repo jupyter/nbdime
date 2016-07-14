@@ -9,11 +9,12 @@ from six import string_types
 from six.moves import xrange as range
 import operator
 from collections import defaultdict
+import difflib
 
 from ..diff_format import validate_diff, count_consumed_symbols
 from ..diff_format import SequenceDiffBuilder, MappingDiffBuilder
 
-from .sequences import diff_strings, diff_sequence
+from .sequences import diff_strings_by_char, diff_sequence
 from .snakes import compute_snakes_multilevel, compute_diff_from_snakes
 
 __all__ = ["diff"]
@@ -21,7 +22,7 @@ __all__ = ["diff"]
 
 def is_atomic(x):
     "Return True for values that diff should treat as a single atomic value."
-    return not isinstance(x, (string_types) + (list, dict))
+    return not isinstance(x, string_types + (list, dict))
 
 
 def default_predicates():
@@ -30,6 +31,36 @@ def default_predicates():
 
 def default_differs():
     return defaultdict(lambda: diff)
+
+
+def compare_strings_approximate(x, y):
+    "Compare to strings with approximate heuristics."
+    # Cutoff on equality (Python has fast hash functions for strings)
+    if x == y:
+        return True
+
+    # TODO: Investigate performance and quality of this difflib ratio approach,
+    # possibly one of the weakest links of the notebook diffing algorithm.
+    # Alternatives to try are the libraries diff-patch-match and Levenschtein
+    threshold = 0.7  # TODO: Add configuration framework and tune with real world examples?
+
+    # Informal benchmark normalized to operator ==:
+    #    1.0  operator ==
+    #  438.2  real_quick_ratio
+    #  796.5  quick_ratio
+    # 3088.2  ratio
+    # The == cutoff will hit most of the time for long runs of
+    # equal items, at least in the Myers diff algorithm.
+    # Most other comparisons will likely not be very similar,
+    # and the (real_)quick_ratio cutoffs will speed up those.
+    # So the heavy ratio function is only used for close calls.
+    # s = difflib.SequenceMatcher(lambda c: c in (" ", "\t"), x, y, autojunk=False)
+    s = difflib.SequenceMatcher(None, x, y, autojunk=False)
+    if s.real_quick_ratio() < threshold:
+        return False
+    if s.quick_ratio() < threshold:
+        return False
+    return s.ratio() > threshold
 
 
 def diff(a, b, path="", predicates=None, differs=None):
@@ -45,8 +76,9 @@ def diff(a, b, path="", predicates=None, differs=None):
     elif isinstance(a, dict) and isinstance(b, dict):
         d = diff_dicts(a, b, path=path, predicates=predicates, differs=differs)
     elif isinstance(a, string_types) and isinstance(b, string_types):
-        # FIXME: Do we need this string case, and if so do we need to pass on these additional arguments?
-        d = diff_strings(a, b) #, path=path, predicates=predicates, differs=differs)
+        # FIXME: Do we need this string case, and if so do we need to pass on
+        # the additional arguments?
+        d = diff_strings_by_char(a, b)
     else:
         raise RuntimeError("Can currently only diff list, dict, or str objects.")
 

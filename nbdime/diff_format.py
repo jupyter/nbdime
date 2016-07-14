@@ -7,6 +7,8 @@ from __future__ import unicode_literals
 
 from six import string_types
 from six.moves import xrange as range
+import itertools
+import copy
 
 from .log import NBDiffFormatError
 
@@ -21,6 +23,8 @@ class DiffEntry(dict):
     to dicts before any json conversions.
     """
     def __getattr__(self, name):
+        if name.startswith("__") and name.endswith("__"):
+            return self.__getattribute__(name)
         return self[name]
 
     def __setattr__(self, name, value):
@@ -277,6 +281,70 @@ def source_as_string(source):
         source = "\n".join(line.strip("\n") for line in source)
     assert isinstance(source, string_types)
     return source
+
+
+if hasattr(itertools, "accumulate"):
+    _accum = itertools.accumulate
+else:
+    def _accum(seq):
+        total = 0
+        for x in seq:
+            total += x
+            yield total
+
+
+def _check_overlaps(existing, new):
+    """Check whether existing collection of diff ops shares a key with the
+    new diffop, and if they  also have the same op type.
+    Assumes exsiting diff ops are sorted on key.
+    """
+    for oo in reversed(existing):
+        if oo.key == new.key and oo.op == new.op:
+            # Found a match, combine ops
+            return oo
+
+def _combine_ops(existing, new):
+    """Combines new op into existing op
+    """
+    if new.op == DiffOp.ADDRANGE:
+        existing.valuelist += new.valuelist
+    elif new.op == DiffOp.REMOVERANGE:
+        existing.lenght += new.length
+
+
+def flatten_list_of_string_diff(a, diff):
+    """Translates a diff of strings split by str.splitlines() to a diff of
+    the joined multiline string
+    """
+    a_mapping = [0] + list(_accum(len(ia) for ia in a))
+    flattened = []
+    for e in diff:
+        op = e.op
+        new_key = a_mapping[e.key]
+        if op in (DiffOp.ADDRANGE, DiffOp.REMOVERANGE):
+            d = copy.deepcopy(e)
+            d.key = new_key
+            if op == DiffOp.ADDRANGE:
+                d.valuelist = "".join(e.valuelist)
+            else:
+                d.length = a_mapping[e.key + e.length] - d.key
+            oo = _check_overlaps(flattened, d)
+            if oo is None:
+                flattened.append(d)
+            else:
+                _combine_ops(oo, d)
+
+        elif op == DiffOp.PATCH:
+            for p in e.diff:
+                d = copy.deepcopy(p)
+                d.key += new_key
+                oo = _check_overlaps(flattened, d)
+                if oo is None:
+                    flattened.append(d)
+                else:
+                    _combine_ops(oo, d)
+
+    return flattened
 
 
 def to_clean_dicts(di):

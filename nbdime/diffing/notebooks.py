@@ -12,15 +12,15 @@ converted to the same format version, currently v4 at time of writing.
 Up- and down-conversion is handled by nbformat.
 """
 
-import difflib
 import operator
-from six import string_types
+import copy
 from collections import defaultdict
 
-from ..diff_format import source_as_string
+from ..diff_format import source_as_string, MappingDiffBuilder
 
-from .sequences import diff_sequence
-from .generic import diff, diff_lists, diff_dicts, diff_sequence_multilevel
+from .generic import (diff, diff_sequence_multilevel,
+                      compare_strings_approximate)
+from .sequences import diff_strings_linewise
 
 __all__ = ["diff_notebooks"]
 
@@ -35,32 +35,7 @@ def compare_cell_source_approximate(x, y):
     xs = source_as_string(x["source"])
     ys = source_as_string(y["source"])
 
-    # Cutoff on equality (Python has fast hash functions for strings)
-    if xs == ys:
-        return True
-
-    # TODO: Investigate performance and quality of this difflib ratio approach,
-    # possibly one of the weakest links of the notebook diffing algorithm.
-    # Alternatives to try are the libraries diff-patch-match and Levenschtein
-    threshold = 0.7  # TODO: Add configuration framework and tune with real world examples?
-
-    # Informal benchmark normalized to operator ==:
-    #    1.0  operator ==
-    #  438.2  real_quick_ratio
-    #  796.5  quick_ratio
-    # 3088.2  ratio
-    # The == cutoff will hit most of the time for long runs of
-    # equal items, at least in the Myers diff algorithm.
-    # Most other comparisons will likely not be very similar,
-    # and the (real_)quick_ratio cutoffs will speed up those.
-    # So the heavy ratio function is only used for close calls.
-    #s = difflib.SequenceMatcher(lambda c: c in (" ", "\t"), x, y, autojunk=False)
-    s = difflib.SequenceMatcher(None, xs, ys, autojunk=False)
-    if s.real_quick_ratio() < threshold:
-        return False
-    if s.quick_ratio() < threshold:
-        return False
-    return s.ratio() > threshold
+    return compare_strings_approximate(xs, ys)
 
 
 def compare_cell_source_exact(x, y):
@@ -140,23 +115,69 @@ def compare_output_data(x, y):
     return True
 
 
-# Keeping these here for the comments and as as a reminder for possible future extension points:
-def __unused_diff_single_outputs(a, b, path="/cells/*/output/*"):
+def diff_single_outputs(a, b, path="/cells/*/output/*",
+                        predicates=None, differs=None):
     "DiffOp a pair of output cells."
     assert path == "/cells/*/outputs/*"
+    assert a.output_type == b.output_type
+
     # TODO: Handle output diffing with plugins? I.e. image diff, svg diff, json diff, etc.
-    # FIXME: Use linebased diff of some types of outputs:
-    # if a.output_type in ("execute_result", "display_data"):
-    #    a.data.key if key.startswith('text/') or key in _non_text_split_mimes = {
-    #        'application/javascript','image/svg+xml'}
-    #    a.text
-    return diff(a, b)
-def __unused_diff_source(a, b, path, predicates, differs):
+    if a.output_type in ("execute_result", "display_data"):
+        di = MappingDiffBuilder()
+
+        a_conj = copy.deepcopy(a)
+        del a_conj['data']
+        b_conj = copy.deepcopy(b)
+        del b_conj['data']
+        dd_conj = diff(a_conj, b_conj)
+        if dd_conj:
+            for e in dd_conj:
+                di.append(e)
+
+        dd = diff_mime_bundle(a.data, b.data, path=path+"/data")
+        if dd:
+            di.patch("data", dd)
+
+        return di.validated()
+    else:
+        return diff(a, b)
+
+
+def diff_mime_bundle(a, b, path=None):
+    di = MappingDiffBuilder()
+
+    akeys = set(a.keys())
+    bkeys = set(b.keys())
+    # Sorting keys in loops to get a deterministic diff result
+    for key in sorted(akeys - bkeys):
+        di.remove(key)
+
+    # Handle values for keys in both a and b
+    for key in sorted(akeys & bkeys):
+        avalue = a[key]
+        bvalue = b[key]
+
+        # FIXME: Use linebased diff of some types of outputs:
+        # if key.startswith('text/') or key in _non_text_split_mimes = {
+        #    'application/javascript','image/svg+xml'}
+        # For now, simply treat mimedata fields as single blob.
+        if key.startswith('text/'):
+            dd = diff_strings_linewise(avalue, bvalue)
+            if dd:
+                di.patch(key, dd)
+        elif avalue != bvalue:
+            di.replace(key, bvalue)
+
+    for key in sorted(bkeys - akeys):
+        di.add(key, b[key])
+    return di.validated()
+
+
+def diff_source(a, b, path, predicates, differs):
     "DiffOp a pair of sources."
     assert path == "/cells/*/source"
-    # FIXME: Make sure we use linebased diff of sources
     # TODO: Use google-diff-patch-match library to diff the sources?
-    return diff(a, b)
+    return diff_strings_linewise(a, b)
 
 
 # Sequence diffs should be applied with multilevel
@@ -179,11 +200,11 @@ notebook_predicates = defaultdict(lambda: [operator.__eq__], {
 
 # Recursive diffing of substructures should pick a rule from here, with diff as fallback
 notebook_differs = defaultdict(lambda: diff, {
-    #"/cells": diff_sequence_multilevel,
-    #"/cells/*": diff,
-    #"/cells/*/source": diff,
-    #"/cells/*/outputs": diff_sequence_multilevel,
-    #"/cells/*/outputs/*": diff_single_outputs,
+    "/cells": diff_sequence_multilevel,
+    "/cells/*": diff,
+    "/cells/*/source": diff_source,
+    "/cells/*/outputs": diff_sequence_multilevel,
+    "/cells/*/outputs/*": diff_single_outputs,
     })
 
 
