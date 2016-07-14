@@ -47,6 +47,8 @@ for d, _, _ in os.walk(pjoin(here, name)):
 package_data = {
     'nbdime': [
         'tests/files/*.*',
+        'webapp/static/*.*',
+        'webapp/templates/*.*',
     ]
 }
 
@@ -116,6 +118,7 @@ if 'setuptools' in sys.modules:
             'git-nbdifftool = nbdime.gitdifftool:main',
             'git-nbdiffdriver = nbdime.gitdiffdriver:main',
             'git-nbwebdifftool = nbdime.webapp.nbdifftool:main',
+            'nbdiff-web = nbdime.webapp.nbdifftool:main',
         ]
     }
     setup_args.pop('scripts', None)
