@@ -27,9 +27,9 @@ def build_arg_parser():
     """
     description = 'Difftool for Nbdime.'
     parser = ArgumentParser(description=description)
-    parser.add_argument('-p', '--port', default="8888",
+    parser.add_argument('-p', '--port', default=8899,
                         help="Specify the port you want the server "
-                             "to run on. Default is 8888.")
+                             "to run on. Default is 8899.")
     parser.add_argument("local", help="The local file of the diff comparison.")
     parser.add_argument("remote", help="The remote file of the diff comparison.")
     return parser
@@ -50,7 +50,7 @@ def browse(port):
 
 def main():
     arguments = build_arg_parser().parse_args()
-    port = int(arguments.port) if arguments.port else 8888
+    port = arguments.port
     cwd = os.path.abspath(os.path.curdir)
     local = arguments.local
     remote = arguments.remote
