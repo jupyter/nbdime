@@ -21,13 +21,6 @@ def b64text(nbytes):
     """Return n bytes as base64-encoded text"""
     return encodebytes(os.urandom(nbytes)).decode('ascii')
 
-# don't color test output
-no_color = mock.patch.multiple(pp, ADD='+ ', REMOVE='- ', RESET='')
-
-def setup():
-    no_color.start()
-def deardown():
-    no_color.stop()
 
 def test_present_dict_no_markup():
     d = {
@@ -138,7 +131,6 @@ def test_present_code_cell():
         ]
     )
     lines = pp.present_value('+ ', cell)
-    text = '\n'.join(lines)
     assert lines[0] == ''
     assert lines[1] == '+ code cell:'
     
@@ -148,11 +140,12 @@ def test_present_dict_diff():
     b = {'a': 2}
     di = diff(a, b, path='x/y')
     lines = pp.present_diff(a, di, path='x/y')
-    assert lines == [
+    indent = '  ' if pp.with_indent else ''
+    assert lines == [ indent + line for line in [
         'replace at x/y/a:',
         '- 1',
         '+ 2',
-    ]
+    ]]
 
 def test_present_list_diff():
     a = [1]
@@ -160,12 +153,13 @@ def test_present_list_diff():
     path = 'a/b'
     di = diff(a, b, path=path)
     lines = pp.present_diff(a, di, path=path)
-    assert lines == [
+    indent = '  ' if pp.with_indent else ''
+    assert lines == [ indent + line for line in [
         'insert before a/b/0:',
         '+ [2]',
         'delete a/b/0:',
         '- [1]',
-    ]
+    ]]
 
 def test_present_string_diff():
     a = '\n'.join(['line 1', 'line 2', 'line 3', ''])
@@ -184,4 +178,6 @@ def test_present_string_diff_b64():
     path = 'a/b'
     di = diff(a, b, path=path)
     lines = pp.present_diff(a, di, path=path)
-    assert lines[1:] == ['<base64 data changed>']
+    trim_header = int(not pp.with_indent)
+    indent = '  ' * pp.with_indent
+    assert lines[trim_header:] == [indent + '<base64 data changed>']
