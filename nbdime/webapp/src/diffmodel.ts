@@ -745,8 +745,13 @@ export class NotebookDiffModel {
     this.metadata.startCollapsed = true;
     // The notebook metadata MIME type is used for determining the MIME type
     // of source cells, so store it easily accessible:
-    this.mimetype = base.metadata.language_info.mimetype;
-
+    try {
+      this.mimetype = base.metadata.language_info.mimetype;
+    } catch (e) {
+      // missing metadata, guess python (probably old notebook)
+      this.mimetype = 'text/python';
+    }
+    
     // Build cell diff models. Follows similar logic to patching code:
     this.cells = [];
     var take = 0;
