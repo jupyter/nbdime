@@ -35,7 +35,7 @@ except ImportError:
     from backports.shutil_which import which
 
 # Toggle indentation here
-with_indent = False  #True
+with_indent = True
 
 # Change to enable/disable color print etc.
 _git_diff_print_cmd = 'git diff --no-index --color-words'
@@ -246,7 +246,11 @@ def present_list_diff(a, d, path):
 
 def present_string_diff(a, di, path):
     "Pretty-print a nbdime diff."
-    header = ["patch {}:".format(path)]
+
+    header = []
+    if not with_indent:
+        # if we are indenting each level, this is redunant
+        header.append("patch {}:".format(path))
 
     if _base64.match(a):
         return header + ['<base64 data changed>']
