@@ -3,7 +3,7 @@ module.exports = {
   output: {
     path: __dirname + "/static",
     filename: "bundle.js",
-    publicPath: "./build/"
+    publicPath: "./static/"
   },
   debug: true,
   devtool: 'source-map',
