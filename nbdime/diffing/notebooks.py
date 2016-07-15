@@ -142,6 +142,7 @@ def diff_single_outputs(a, b, path="/cells/*/output/*",
     else:
         return diff(a, b)
 
+_non_split_mimes = ('text/', 'image/svg+xml', 'application/javascript')
 
 def diff_mime_bundle(a, b, path=None):
     di = MappingDiffBuilder()
@@ -157,11 +158,7 @@ def diff_mime_bundle(a, b, path=None):
         avalue = a[key]
         bvalue = b[key]
 
-        # FIXME: Use linebased diff of some types of outputs:
-        # if key.startswith('text/') or key in _non_text_split_mimes = {
-        #    'application/javascript','image/svg+xml'}
-        # For now, simply treat mimedata fields as single blob.
-        if key.startswith('text/'):
+        if key.lower().startswith(_non_split_mimes):
             dd = diff_strings_linewise(avalue, bvalue)
             if dd:
                 di.patch(key, dd)

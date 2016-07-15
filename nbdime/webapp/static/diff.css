@@ -19,7 +19,7 @@
 
 .jp-Cell-diff {
   margin-bottom: 20px;
-  border: solid black thin;
+  border-top: solid #ccc 1px;
 }
 
 .jp-Diff-added > div:first-child {
@@ -66,6 +66,10 @@
 .jp-Cellrow-outputs .jp-Diff-twoway .jp-Diff-remote {
   float: right;
   width: 47%;
+}
+
+.jp-Notebook-diff .jp-Output-result img {
+  max-width: 100%;
 }
 
 .jp-Notebook-diff .CodeMirror-merge-r-chunk { background-color: #ffecec; }

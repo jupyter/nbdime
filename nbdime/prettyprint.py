@@ -80,7 +80,7 @@ _base64 = re.compile(r'^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]
 
 def _trim_base64(s):
     """Trim base64 strings"""
-    if len(s) > 64 and _base64.match(s):
+    if len(s) > 64 and _base64.match(s.replace('\n', '')):
         s = s[:16] + '...<snip base64>...' + s[-16:].strip()
     return s
 
