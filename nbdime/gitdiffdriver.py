@@ -62,7 +62,7 @@ def disable(global_=False):
     if global_:
         cmd.append('--global')
     try:
-        check_call(cmd + ['--unset', 'diff.jupyternotebook.command'])
+        check_call(cmd + ['--remove-section', 'diff.jupyternotebook'])
     except CalledProcessError:
         # already unset
         pass

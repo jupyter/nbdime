@@ -38,7 +38,7 @@ def disable(global_=False):
     if global_:
         cmd.append('--global')
     try:
-        check_call(cmd + ['--unset', 'merge.jupyternotebook.driver'])
+        check_call(cmd + ['--remove-section', 'merge.jupyternotebook'])
     except CalledProcessError:
         # already unset
         pass
