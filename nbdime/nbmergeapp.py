@@ -10,10 +10,11 @@ import json
 import os
 import sys
 import argparse
+from pprint import pprint
+
 import nbformat
 from ._version import __version__
 from .merging import merge_notebooks
-
 
 _description = 'Merge two Jupyter notebooks "local" and "remote" with a common ancestor "base".'
 
@@ -44,7 +45,7 @@ def main_merge(args):
     if lc or rc:
         print("Conflicts occured during merge operation.")
     else:
-        print("Merge completed successfully with no conflicts.")
+        print("Merge completed successfully with no unresolvable conflicts.")
 
     if mfn:
         if lc or rc:
@@ -64,9 +65,9 @@ def main_merge(args):
         # FIXME: Display conflicts in a useful way
         if lc or rc:
             print("Local conflicts:")
-            print(lc)
+            pprint(lc)
             print("Remote conflicts:")
-            print(rc)
+            pprint(rc)
     return 0
 
 

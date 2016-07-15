@@ -17,7 +17,7 @@ Use with:
 """
 
 import sys
-from subprocess import check_call
+from subprocess import check_call, CalledProcessError
 
 from . import nbdiffapp
 
@@ -36,7 +36,11 @@ def disable(global_=False):
     cmd = ['git', 'config']
     if global_:
         cmd.append('--global')
-    check_call(cmd + ['--unset', 'diff.jupyternotebook'])
+    try:
+        check_call(cmd + ['--unset', 'diff.jupyternotebook.command'])
+    except CalledProcessError:
+        # already unset
+        pass
 
 
 def show_diff(before, after):

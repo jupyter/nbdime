@@ -119,6 +119,7 @@ if 'setuptools' in sys.modules:
             'nbmerge = nbdime.nbmergeapp:main',
             'git-nbdifftool = nbdime.gitdifftool:main',
             'git-nbdiffdriver = nbdime.gitdiffdriver:main',
+            'git-nbmergedriver = nbdime.gitmergedriver:main',
             'git-nbwebdifftool = nbdime.webapp.nbdifftool:main',
         ]
     }

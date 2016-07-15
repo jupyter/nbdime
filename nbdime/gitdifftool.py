@@ -56,13 +56,21 @@ def disable(global_=False):
     try:
         previous = check_output(cmd + ['difftool.nbdime.previous']).decode('utf8', 'replace').strip()
     except CalledProcessError:
-        check_call(cmd + ['--unset', 'diff.tool'])
+        try:
+            check_call(cmd + ['--unset', 'diff.tool'])
+        except CalledProcessError:
+            # already unset
+            pass
     else:
         check_call(cmd + ['diff.tool', previous])
     try:
         previous_gui = check_output(cmd + ['difftool.nbdime.previous_gui']).decode('utf8', 'replace').strip()
     except CalledProcessError:
-        check_call(cmd + ['--unset', 'diff.guitool'])
+        try:
+            check_call(cmd + ['--unset', 'diff.guitool'])
+        except CalledProcessError:
+            # already unset
+            pass
     else:
         check_call(cmd + ['diff.guitool', previous_gui])
 
