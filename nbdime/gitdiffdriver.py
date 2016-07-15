@@ -16,8 +16,11 @@ Use with:
     git diff [<commit> [<commit>]]
 """
 
+from __future__ import print_function
+
+import os
 import sys
-from subprocess import check_call, CalledProcessError
+from subprocess import check_call, check_output, CalledProcessError
 
 from . import nbdiffapp
 
@@ -29,6 +32,28 @@ def enable(global_=False):
         cmd.append('--global')
 
     check_call(cmd + ['diff.jupyternotebook.command', 'git-nbdiffdriver diff'])
+    if global_:
+        try:
+            bpath = check_output(['git', 'config', '--global', 'core.attributesfile'])
+            gitattributes = os.path.expanduser(bpath.decode('utf8', 'replace').strip())
+        except CalledProcessError:
+            gitattributes = os.path.expanduser('~/.gitattributes')
+    else:
+        # find .gitattributes in current dir
+        path = os.path.abspath('.')
+        if not os.path.exists(os.path.join(path, '.git')):
+            print("No .git directory in %s, skipping git attributes" % path, file=sys.stderr)
+            return
+        gitattributes = os.path.join(path, '.gitattributes')
+
+    if os.path.exists(gitattributes):
+        with open(gitattributes) as f:
+            if 'diff=jupyternotebook' in f.read():
+                # already written, nothing to do
+                return
+
+    with open(gitattributes, 'a') as f:
+        f.write('\n*.ipynb\tdiff=jupyternotebook\n')
 
 
 def disable(global_=False):
