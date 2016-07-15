@@ -17,7 +17,7 @@ Use with:
 """
 
 import sys
-from subprocess import check_call
+from subprocess import check_call, CalledProcessError
 
 from . import nbmergeapp
 
@@ -37,7 +37,11 @@ def disable(global_=False):
     cmd = ['git', 'config']
     if global_:
         cmd.append('--global')
-    check_call(cmd + ['--unset', 'merge.jupyternotebook'])
+    try:
+        check_call(cmd + ['--unset', 'merge.jupyternotebook.driver'])
+    except CalledProcessError:
+        # already unset
+        pass
 
 
 def main():
