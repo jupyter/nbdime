@@ -35,7 +35,7 @@ except ImportError:
     from backports.shutil_which import which
 
 # Toggle indentation here
-with_indent = True
+with_indent = False
 
 # Change to enable/disable color print etc.
 _git_diff_print_cmd = 'git diff --no-index --color-words'
