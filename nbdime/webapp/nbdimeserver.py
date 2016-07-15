@@ -212,7 +212,7 @@ def build_arg_parser():
     """
     description = 'Web interface for Nbdime.'
     parser = ArgumentParser(description=description)
-    parser.add_argument('-p', '--port', default="8888",
+    parser.add_argument('-p', '--port', default=8899,
                         help="Specify the port you want the server "
                              "to run on. Default is 8888.")
     return parser
@@ -220,6 +220,5 @@ def build_arg_parser():
 
 if __name__ == "__main__":
     arguments = build_arg_parser().parse_args()
-    port = int(arguments.port) if arguments.port else 8888
     cwd = os.path.abspath(os.path.curdir)
-    main(port=port, cwd=cwd, outputfilename="")
+    main(port=arguments.port, cwd=cwd, outputfilename="")
