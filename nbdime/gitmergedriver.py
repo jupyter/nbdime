@@ -78,8 +78,8 @@ def main():
         help="disable nbdime merge driver via git config"
     )
     opts = parser.parse_args()
-    opts.output = opts.local
     if opts.subcommand == 'merge':
+        opts.output = opts.local
         nbmergeapp.main_merge(opts)
     elif opts.subcommand == 'config':
         opts.config_func(opts.global_)
