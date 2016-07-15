@@ -3,9 +3,10 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-from __future__ import unicode_literals
+from __future__ import print_function, unicode_literals
 
 from six import string_types
+import sys
 
 from ..diff_format import SequenceDiffBuilder, MappingDiffBuilder, DiffOp, offset_op, op_replace
 from ..diff_format import as_dict_based_diff
@@ -141,6 +142,8 @@ def resolve_dict_item_conflict(value, le, re, strategy, path):
     # Leave this type of conflict for other tool to resolve
     if strategy == "mergetool":
         return (value, le, re)
+
+    print('autoresolving conflict at %s with %s' % (path, strategy), file=sys.stderr)
 
     # The rest here remove the conflicts and provide a new value
     if strategy == "use-base":
