@@ -29,7 +29,6 @@ def main_merge(args):
     for fn in (bfn, lfn, rfn):
         if not os.path.exists(fn):
             print("Cannot find file '{}'".format(fn))
-            print(_usage)
             return 1
 
     b = nbformat.read(bfn, as_version=4)

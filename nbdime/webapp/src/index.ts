@@ -85,7 +85,7 @@ function onDiff(e: Event) {
   var b = (document.getElementById('diff-base') as HTMLInputElement).value;
   var r = (document.getElementById('diff-remote') as HTMLInputElement).value;
   requestDiff(b, r);
-  let uri = '/diff?base=' + encodeURIComponent(b) + 
+  let uri = '/diff?base=' + encodeURIComponent(b) +
     '&remote=' + encodeURIComponent(r);
   history.pushState({base: b, remote: r},
     'Diff: "' + b + '" vs "' + r + '"', uri);
@@ -196,7 +196,7 @@ function getConfigOption(name: string): any {
 /**
  * POSTs to the server that it should shut down if it was launched as a
  * difftool/mergetool.
- * 
+ *
  * Used to indicate that the tool has finished its operation, and that the tool
  * should return to its caller.
  */
@@ -233,7 +233,7 @@ function initialize() {
   }
 
   // If launched as a tool, there should be a close button, to indicate that
-  // the tool has finshed. If present, wire it to events, and connect to 
+  // the tool has finshed. If present, wire it to events, and connect to
   // window unload event as well:
   let close_btn = document.getElementById('nbdime-close') as HTMLButtonElement;
   if (close_btn) {

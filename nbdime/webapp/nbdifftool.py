@@ -22,7 +22,7 @@ _logger = logging.getLogger(__name__)
 
 def build_arg_parser():
     """
-    Creates an argument parser for the diff tool, that also lets the 
+    Creates an argument parser for the diff tool, that also lets the
     user specify a port and displays a help message.
     """
     description = 'Difftool for Nbdime.'
@@ -41,11 +41,11 @@ def browse(port):
     except webbrowser.Error as e:
         _logger.warning('No web browser found: %s.', e)
         browser = None
-    
+
     if browser:
-        b = lambda: browser.open("http://localhost:%s/difftool" % port,
-                                 new=2)
-        threading.Thread(target=b).start()
+        def launch_browser():
+            browser.open("http://localhost:%s/mergetool" % port, new=2)
+        threading.Thread(target=launch_browser).start()
 
 
 def main():
