@@ -10,7 +10,7 @@ import {
   DiffOp, IDiffEntry, IDiffAddRange, IDiffRemoveRange, IDiffPatch, getDiffKey,
   DiffRangeRaw, DiffRangePos, raw2Pos
 } from './diffutil';
-    
+
 import {
   patchStringified, stringify, patch
 } from './patch';
@@ -22,11 +22,11 @@ import * as CodeMirror from 'codemirror';
 /**
  * A chunk is a range of lines in a string based diff
  * that logically belong together.
- * 
+ *
  * Chunks can be used for:
- *  - Correlating diff entries in the base and remote, e.g. 
- *    for aligning lines in two editors. 
- *  - Finding parts of the unchanged text that are not needed 
+ *  - Correlating diff entries in the base and remote, e.g.
+ *    for aligning lines in two editors.
+ *  - Finding parts of the unchanged text that are not needed
  *    as context (can be hidden)
  *  - Navigating a diff ("Go to next diff")
  */
@@ -36,14 +36,14 @@ export class Chunk {
     public editTo: number,
     public origFrom: number,
     public origTo: number) {}
-    
+
   /**
    * Checks whether the given line number is within the range spanned by editFrom - editTo
    */
   inEdit(line: number) {
     return line >= this.editFrom && line <= this.editTo;
   }
-  
+
   /**
    * Checks whether the given line number is within the range spanned by origFrom - origTo
    */
@@ -57,18 +57,18 @@ export class Chunk {
 
 /**
  * Describes a model whose view can be collapsible.
- * 
+ *
  * Intended as hints for a view of the model, and not a requirement.
  */
 export interface ICollapsibleModel {
-  /** 
+  /**
    * Whether a view of the model should be collapsible (hint)
-   */ 
+   */
   collapsible: boolean;
-  
-  /** 
-   * String to show in header of collapser element 
-   */ 
+
+  /**
+   * String to show in header of collapser element
+   */
   collapsibleHeader: string;
 
   /**
@@ -81,65 +81,65 @@ export interface ICollapsibleModel {
  * Base interface for diff models.
  */
 export interface IDiffModel extends ICollapsibleModel {
-  /** 
+  /**
    * Is diff no-op?
-   */ 
+   */
   unchanged: boolean;
 
-  /** 
+  /**
    * Whether diff represents a simple addtion
-   */ 
+   */
   added: boolean;
 
-  /** 
+  /**
    * Whether diff represents a simple deletion
-   */ 
+   */
   deleted: boolean;
 }
 
 
 /**
  * Interface for a string diff models.
- * 
+ *
  * String diff models are used for any content where the final
  * diff should be presented as a difference between strings
  * (as compared to e.g. images). As such, it is NOT restricted
- * to cases where original content is in a string format. 
+ * to cases where original content is in a string format.
  */
-export interface IStringDiffModel extends IDiffModel { 
-  /** 
+export interface IStringDiffModel extends IDiffModel {
+  /**
    * Base value
-   */  
+   */
   base: string;
 
-  /** 
+  /**
    * Remote value
-   */  
+   */
   remote: string;
 
   /**
    * Mimetype of the data the string represents.
-   * 
+   *
    * Can be used for things such as syntax highlighting.
    */
   mimetype: string;
-  
-  /** 
+
+  /**
    * Location of additions, as positions in the remote value.
-   * 
+   *
    * Locations should be sorted on the ranges' `from` position
    */
   additions: DiffRangePos[];
 
-  /** 
+  /**
    * Location of deletions, as positions in the base value.
-   * 
+   *
    * Locations should be sorted on the ranges' `from` position
    */
   deletions: DiffRangePos[];
-  
-  
-  /** 
+
+
+  /**
    * A function that will separate the diff into chunks.
    */
   getChunks(): Chunk[];
@@ -153,11 +153,11 @@ export class StringDiffModel implements IStringDiffModel {
 
   /**
    * StringDiffModel constructor.
-   * 
+   *
    * Will translate additions and deletions from absolute
    * coordinates, into {line, ch} based coordinates.
    * Both should be sorted on the `from` position before passing.
-   * 
+   *
    * Collapsible and collapsed both defaults to false.
    */
   constructor(
@@ -180,7 +180,7 @@ export class StringDiffModel implements IStringDiffModel {
     } else {
       this.additions = raw2Pos(additions, remote);
     }
-    
+
     this.collapsible = collapsible === true;
     if (this.collapsible) {
       this.collapsibleHeader = header ? header : '';
@@ -196,7 +196,7 @@ export class StringDiffModel implements IStringDiffModel {
     var startEdit = 0, startOrig = 0, editOffset = 0;
     var edit = CodeMirror.Pos(0, 0), orig = CodeMirror.Pos(0, 0);
     let ia = 0, id = 0;
-    
+
     let current: Chunk = null;
     let isAddition: boolean = null;
     let range: DiffRangePos = null;
@@ -224,7 +224,7 @@ export class StringDiffModel implements IStringDiffModel {
         if (current) { chunks.push(current); }
         break;
       }
-      
+
       if (isAddition) {
         range = this.additions[ia++];
       } else {
@@ -237,7 +237,7 @@ export class StringDiffModel implements IStringDiffModel {
       let firstLineNew = range.from.ch === 0 && linediff > 0;
 
       let startOffset = range.chunkStartLine ? 0 : 1;
-      let endOffset = 
+      let endOffset =
         range.chunkStartLine && range.endsOnNewline && firstLineNew ?
         0 : 1;
 
@@ -287,26 +287,26 @@ export class StringDiffModel implements IStringDiffModel {
     }
     return chunks;
   }
-    
+
   get unchanged(): boolean {
     return this.base == this.remote;
     //return !this.additions && !this.deletions;
   }
-  
+
   get added(): boolean {
     return this.base === null;
   }
-  
+
   get deleted(): boolean {
     return this.remote === null;
   }
-  
+
   collapsible: boolean;
   collapsibleHeader: string;
   startCollapsed: boolean;
 
   mimetype: string;
-  
+
   additions: DiffRangePos[];
   deletions: DiffRangePos[];
 }
@@ -314,7 +314,7 @@ export class StringDiffModel implements IStringDiffModel {
 
 /**
  * Creates a StringDiffModel based on a patch operation.
- * 
+ *
  * If base is not a string, it is assumed to be a JSON object,
  * and it will be stringified according to JSON stringification
  * rules.
@@ -328,15 +328,15 @@ export function createPatchDiffModel(base: any, diff: IDiffEntry[]) : StringDiff
 
 /**
  * Factory for creating cell diff models for added, removed or unchanged content.
- * 
- * If base is null, it will be treated as added, if remote is null it will be 
- * treated as removed. Otherwise base and remote should be equal, represeting 
+ *
+ * If base is null, it will be treated as added, if remote is null it will be
+ * treated as removed. Otherwise base and remote should be equal, represeting
  * unchanged content.
  */
 export function createDirectDiffModel(base: any, remote: any): StringDiffModel {
-  var base_str = (typeof base == 'string') ? 
+  var base_str = (typeof base == 'string') ?
     base as string : stringify(base);
-  var remote_str = (typeof remote == 'string') ? 
+  var remote_str = (typeof remote == 'string') ?
     remote as string : stringify(remote);
   var additions: DiffRangeRaw[] = [];
   var deletions: DiffRangeRaw[] = []
@@ -350,7 +350,7 @@ export function createDirectDiffModel(base: any, remote: any): StringDiffModel {
     remote_str = null;
     deletions.push(new DiffRangeRaw(0, base_str.length));
   } else if (remote_str !== base_str) {
-    throw 'Invalid arguments to createDirectDiffModel().' + 
+    throw 'Invalid arguments to createDirectDiffModel().' +
       'Either base or remote should be null, or they should be equal!'
   }
   return new StringDiffModel(base_str, remote_str, additions, deletions);
@@ -360,11 +360,11 @@ export function createDirectDiffModel(base: any, remote: any): StringDiffModel {
 
 /**
  * Assign MIME type to an IStringDiffModel based on the cell type.
- * 
+ *
  * The parameter nbMimetype is the MIME type set for the entire notebook, and is used as the
  * MIME type for code cells.
  */
-function setMimetypeFromCellType(model: IStringDiffModel, cell: nbformat.ICell, 
+function setMimetypeFromCellType(model: IStringDiffModel, cell: nbformat.ICell,
       nbMimetype: string) {
   let cellType = cell.cell_type;
   if (cellType === 'code') {
@@ -379,8 +379,8 @@ function setMimetypeFromCellType(model: IStringDiffModel, cell: nbformat.ICell,
 
 /**
  * Diff model for single cell output entries.
- * 
- * Can converted to a StringDiffModel via the method `stringify()`, which also 
+ *
+ * Can converted to a StringDiffModel via the method `stringify()`, which also
  * takes an optional argument `key` which specifies a subpath of the IOutput to
  * make the model from.
  */
@@ -404,33 +404,33 @@ export class OutputDiffModel implements IDiffModel {
       this.startCollapsed = collapsed;
     }
   }
-  
+
   get unchanged() : boolean {
     return this.diff === null;
   }
-  
+
   get added(): boolean {
     return this.base === null;
   }
-  
+
   get deleted(): boolean {
     return this.remote === null;
   }
 
   /**
    * Checks whether the given mimetype is present in the output's mimebundle.
-   * If so, it returns the path/key to that mimetype's data. If not present, 
-   * it returns null. 
-   * 
+   * If so, it returns the path/key to that mimetype's data. If not present,
+   * it returns null.
+   *
    * See also: innerMimeType
    */
   hasMimeType(mimetype: string): string {
     let t = this.base ? this.base.output_type : this.remote.output_type;
-    if (t === 'stream' && 
+    if (t === 'stream' &&
           mimetype == 'application/vnd.jupyter.console-text') {
       return 'text';
     } else if (t === 'execute_result' || t === 'display_data') {
-      let data = this.base ? (this.base as nbformat.IExecuteResult).data : 
+      let data = this.base ? (this.base as nbformat.IExecuteResult).data :
         (this.remote as nbformat.IExecuteResult).data;
       if (mimetype in data) {
         return 'data.' + mimetype;
@@ -442,9 +442,9 @@ export class OutputDiffModel implements IDiffModel {
   /**
    * Returns the expected MIME type of the IOutput subpath specified by `key`,
    * as determined by the notebook format specification.
-   * 
+   *
    * Throws an error for unknown keys.
-   * 
+   *
    * See also: hasMimeType
    */
   innerMimeType(key: string) : string {
@@ -458,9 +458,9 @@ export class OutputDiffModel implements IDiffModel {
     }
     throw 'Unknown MIME type for key: ' + key;
   }
-  
+
   /**
-   * Can converted to a StringDiffModel via the method `stringify()`, which also 
+   * Can converted to a StringDiffModel via the method `stringify()`, which also
    * takes an optional argument `key` which specifies a subpath of the IOutput to
    * make the model from.
    */
@@ -483,7 +483,7 @@ export class OutputDiffModel implements IDiffModel {
     };
     let base = key ? getMemberByPath(this.base, key) : this.base;
     let remote = key ? getMemberByPath(this.remote, key) : this.remote;
-    let diff = this.diff && key ? 
+    let diff = this.diff && key ?
       getMemberByPath(this.diff, key, getDiffKey) :
       this.diff;
     let model: IStringDiffModel = null;
@@ -498,7 +498,7 @@ export class OutputDiffModel implements IDiffModel {
     model.startCollapsed = this.startCollapsed;
     return model;
   }
-  
+
   /**
    * Remote value
    */
@@ -522,11 +522,12 @@ export class OutputDiffModel implements IDiffModel {
  * Diff model for individual Notebook Cells
  */
 export class CellDiffModel {
-  constructor(source: IDiffModel, metadata: IDiffModel, 
-        outputs: IDiffModel[]) {
+  constructor(source: IDiffModel, metadata: IDiffModel,
+        outputs: IDiffModel[], cellType: string) {
     this.source = source;
     this.metadata = metadata;
     this.outputs = outputs;
+    this.cellType = cellType;
     if (this.metadata) {
       this.metadata.collapsible = true;
       this.metadata.collapsibleHeader = 'Metadata changed';
@@ -549,13 +550,18 @@ export class CellDiffModel {
    */
   outputs: IDiffModel[];
 
+  /**
+   * The type of the notebook cell
+   */
+  cellType: string;
+
 
   /**
    * Whether the cell has remained unchanged
    */
   get unchanged(): boolean {
     let unchanged = this.source.unchanged;
-    unchanged = unchanged && 
+    unchanged = unchanged &&
       (this.metadata ? this.metadata.unchanged : true);
     if (this.outputs) {
       for (let o of this.outputs) {
@@ -564,14 +570,14 @@ export class CellDiffModel {
     }
     return unchanged;
   }
-  
+
   /**
    * Whether the cell has been added to the notebook (new cell)
    */
   get added(): boolean {
     return this.source.added;
   }
-  
+
   /**
    * Whether the cell has been deleted/removed from the notebook
    */
@@ -596,8 +602,8 @@ export function createPatchedCellDiffModel(base: nbformat.ICell, diff: IDiffEntr
 
   subDiff = getDiffKey(diff, 'metadata');
   if (base.metadata !== undefined) {
-    metadata = subDiff ? 
-      createPatchDiffModel(base.metadata, subDiff) : 
+    metadata = subDiff ?
+      createPatchDiffModel(base.metadata, subDiff) :
       createDirectDiffModel(base.metadata, base.metadata)
   }
 
@@ -605,14 +611,14 @@ export function createPatchedCellDiffModel(base: nbformat.ICell, diff: IDiffEntr
     outputs = makeOutputModels((base as nbformat.ICodeCell).outputs, null,
       getDiffKey(diff, 'outputs'));
   }
-  return new CellDiffModel(source, metadata, outputs);
+  return new CellDiffModel(source, metadata, outputs, base.cell_type);
 }
 
-export function createUnchangedCellDiffModel(base: nbformat.ICell, 
+export function createUnchangedCellDiffModel(base: nbformat.ICell,
         nbMimetype: string): CellDiffModel {
   let metadata: IDiffModel = null;
   let outputs: IDiffModel[] = null;
-  
+
   let source = createDirectDiffModel(base.source, base.source);
   setMimetypeFromCellType(source as IStringDiffModel, base, nbMimetype);
   if (base.metadata !== undefined) {
@@ -622,10 +628,10 @@ export function createUnchangedCellDiffModel(base: nbformat.ICell,
     outputs = makeOutputModels((base as nbformat.ICodeCell).outputs,
       (base as nbformat.ICodeCell).outputs);
   }
-  return new CellDiffModel(source, metadata, outputs);
+  return new CellDiffModel(source, metadata, outputs, base.cell_type);
 }
 
-export function createAddedCellDiffModel(remote: nbformat.ICell, 
+export function createAddedCellDiffModel(remote: nbformat.ICell,
       nbMimetype: string): CellDiffModel {
   let metadata: IDiffModel = null;
   let outputs: IDiffModel[] = null;
@@ -639,10 +645,10 @@ export function createAddedCellDiffModel(remote: nbformat.ICell,
     outputs = makeOutputModels(
       null, (remote as nbformat.ICodeCell).outputs);
   }
-  return new CellDiffModel(source, metadata, outputs);
+  return new CellDiffModel(source, metadata, outputs, remote.cell_type);
 }
 
-export function createDeletedCellDiffModel(base: nbformat.ICell, 
+export function createDeletedCellDiffModel(base: nbformat.ICell,
       nbMimetype: string): CellDiffModel {
   let source: IDiffModel = null;
   let metadata: IDiffModel = null;
@@ -656,7 +662,7 @@ export function createDeletedCellDiffModel(base: nbformat.ICell,
   if (base.cell_type === 'code' && (base as nbformat.ICodeCell).outputs) {
     outputs = makeOutputModels((base as nbformat.ICodeCell).outputs, null);
   }
-  return new CellDiffModel(source, metadata, outputs);
+  return new CellDiffModel(source, metadata, outputs, base.cell_type);
 }
 
 
@@ -730,8 +736,8 @@ export class NotebookDiffModel {
 
   /**
    * Create a new NotebookDiffModel from a base notebook and a list of diffs.
-   * 
-   * The base as well as the diff entries are normally supplied by the nbdime 
+   *
+   * The base as well as the diff entries are normally supplied by the nbdime
    * server.
    */
   constructor(base: nbformat.INotebookContent, diff: IDiffEntry[]) {
@@ -751,7 +757,7 @@ export class NotebookDiffModel {
       // missing metadata, guess python (probably old notebook)
       this.mimetype = 'text/python';
     }
-    
+
     // Build cell diff models. Follows similar logic to patching code:
     this.cells = [];
     var take = 0;
@@ -759,13 +765,13 @@ export class NotebookDiffModel {
     for (var e of getDiffKey(diff, 'cells')) {
       var op = e.op;
       var index = e.key as number;
-      
+
       // diff is sorted on index, so take any preceding cells as unchanged:
       for (var i=take; i < index; i++) {
         this.cells.push(createUnchangedCellDiffModel(
           base.cells[i], this.mimetype));
       }
-      
+
       // Process according to diff type:
       if (op == DiffOp.SEQINSERT) {
         // One or more inserted/added cells:
@@ -801,7 +807,7 @@ export class NotebookDiffModel {
         base.cells[i], this.mimetype));
     }
   }
-  
+
   /**
    * Diff model of the notebook's root metadata field
    */
@@ -813,7 +819,7 @@ export class NotebookDiffModel {
   mimetype: string;
 
   /**
-   * List of all cell diff models, including unchanged, added/removed and 
+   * List of all cell diff models, including unchanged, added/removed and
    * changed cells, in order.
    */
   cells: CellDiffModel[];
