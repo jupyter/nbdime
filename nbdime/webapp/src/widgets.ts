@@ -361,7 +361,12 @@ class CellDiffWidget extends Panel {
   createView(model: IDiffModel, parent: CellDiffModel, editorClasses: string[]): Widget {
     let view: Widget = null;
     if (model instanceof StringDiffModel) {
-      view = new NbdimeMergeView(model as IStringDiffModel, editorClasses);
+      if (model.unchanged && parent.cellType == 'markdown') {
+        let renderer = this._rendermime.getRenderer('text/markdown');
+        view = renderer.render('text/markdown', model.base);
+      } else {
+        view = new NbdimeMergeView(model as IStringDiffModel, editorClasses);
+      }
     } else if (model instanceof OutputDiffModel) {
       // Take one of three actions, depending on output types
       // 1) Text-type output: Show a MergeView with text diff.
