@@ -16,9 +16,5 @@ Install the [codecov browser extension](https://github.com/codecov/browser-exten
 
     git clone https://github.com/jupyter/nbdime
     cd nbdime
-    # for web-based diff tool:
-      cd nbdime/webapp
-      npm install && npm run build
-      cd ../..
     pip install .
     
