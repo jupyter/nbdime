@@ -8,19 +8,11 @@ htmlcov
 .coverage
 .cache
 
-build
-dist
 
 .spyderproject
 **/.vscode/
 nbdime/webapp/node_modules/
-nbdime/webapp/build/
 nbdime/webapp/test/build/
+nbdime/webapp/build/
 
-nbdime/webapp/static/*bundle.js*
-nbdime/webapp/static/fa396483b7ade73b4727bad6aa027a35.html
-nbdime/webapp/static/5e9fca8da62c2b939b204d8883012664.gif
-nbdime/webapp/static/cdbbf3faea3d6d5b7c7c8a27736254df.gif
-nbdime/webapp/static/28f2f5e6ac027acb7fbd41f7e02ebf90.gif
-nbdime/webapp/static/0662c22d4e544cecf2bc66ee4c761ed6.svg
-nbdime/webapp/static/930dde33391603fade73980cf67feb4e.svg
+nbdime/webapp/static/build/

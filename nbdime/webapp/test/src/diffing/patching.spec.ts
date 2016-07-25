@@ -5,12 +5,12 @@ import expect = require('expect.js');
 
 import {
   patch, patchStringified
-} from '../../../build/patch';
+} from '../../../src/patch';
 
 import {
   IDiffEntry, IDiffAdd, IDiffRemove, IDiffReplace,
   IDiffPatch, IDiffAddRange, IDiffRemoveRange, JSON_INDENT, DiffOp
-} from '../../../build/diffutil'
+} from '../../../src/diffutil'
 
 
 function makeAddRange(key: number, values: string | any[]) : IDiffAddRange {
@@ -230,7 +230,7 @@ describe('nbdime', () => {
         JSON_INDENT + "\"d\": 42\n" +
         "}"
       );
-      let f = "{\n\"a\": 1,\n\"b\": \"test\",\n\"c\": true,\n".length + 
+      let f = "{\n\"a\": 1,\n\"b\": \"test\",\n\"c\": true,\n".length +
         JSON_INDENT.length * 3;
       let t = f + "\"d\": 42\n".length + JSON_INDENT.length;
       expect(value.additions).to.eql([{from: f, to: t}]);
