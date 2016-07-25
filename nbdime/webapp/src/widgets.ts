@@ -105,10 +105,10 @@ class CollapsibleWidget extends Widget {
     let button = document.createElement('span');
     button.className = COLLAPISBLE_HEADER_ICON;
     header.appendChild(button)
-    
+
     return header;
   }
-  
+
   constructor(public inner: Widget, headerTitle?: string, collapsed?: boolean) {
     super();
     let constructor = this.constructor as typeof CollapsibleWidget;
@@ -124,17 +124,17 @@ class CollapsibleWidget extends Widget {
     this.slider.appendChild(inner.node)
     this.container.appendChild(this.slider);
     this.node.appendChild(this.container);
-    
+
     this.slider.classList.add(
-      collapsed === true ? 
-      COLLAPSIBLE_CLOSED : 
+      collapsed === true ?
+      COLLAPSIBLE_CLOSED :
       COLLAPSIBLE_OPEN);
     this.button.classList.add(
-      collapsed === true ? 
-      COLLAPISBLE_HEADER_ICON_CLOSED : 
+      collapsed === true ?
+      COLLAPISBLE_HEADER_ICON_CLOSED :
       COLLAPISBLE_HEADER_ICON_OPEN);
   }
-  
+
   toggleCollapsed(): void {
     let slider = this.slider;
     let button = this.button;
@@ -143,7 +143,7 @@ class CollapsibleWidget extends Widget {
       slider.classList.add(COLLAPSIBLE_OPEN);
       button.classList.remove(COLLAPISBLE_HEADER_ICON_CLOSED);
       button.classList.add(COLLAPISBLE_HEADER_ICON_OPEN);
-        
+
     } else {
       slider.classList.remove(COLLAPSIBLE_OPEN);
       slider.classList.add(COLLAPSIBLE_CLOSED);
@@ -151,11 +151,11 @@ class CollapsibleWidget extends Widget {
       button.classList.add(COLLAPISBLE_HEADER_ICON_CLOSED);
     }
   }
-  
+
   get collapsed(): boolean {
     return this.slider.classList.contains(COLLAPSIBLE_CLOSED);
   }
-  
+
   slider: HTMLElement;
   container: HTMLElement;
   button: HTMLElement;
@@ -184,7 +184,7 @@ class NbdimeMergeView extends Widget {
     if (this._mergeview.merge) {
       this._editors.push(this._mergeview.merge);
     }
-        
+
     if (remote.mimetype) {
       // Set the editor mode to the MIME type.
       for (let e of this._editors) {
@@ -193,7 +193,7 @@ class NbdimeMergeView extends Widget {
       loadModeByMIME(this._mergeview.base, remote.mimetype);
     }
   }
-  
+
   protected _mergeview: MergeView;
   protected _editors: DiffView[];
 }
@@ -202,7 +202,7 @@ class NbdimeMergeView extends Widget {
 /**
  * Widget for outputs with renderable MIME data.
  */
-class RenderableView extends Widget {
+class RenderableOutputView extends Widget {
   constructor(model: OutputDiffModel, editorClass: string[],
               rendermime: RenderMime<Widget>) {
     super();
@@ -292,7 +292,7 @@ class RenderableView extends Widget {
 export
 class CellDiffWidget extends Panel {
   /**
-   * 
+   *
    */
   constructor(model: CellDiffModel, rendermime: RenderMime<Widget>,
         public mimetype: string) {
@@ -300,10 +300,10 @@ class CellDiffWidget extends Panel {
     this.addClass(CELLDIFF_CLASS);
     this._model = model;
     this._rendermime = rendermime;
-    
+
     this.init();
   }
-  
+
   protected init() {
     var model = this.model;
 
@@ -326,13 +326,13 @@ class CellDiffWidget extends Panel {
     } else {
       this.addClass(TWOWAY_DIFF_CLASS);
     }
-    
+
     // Add inputs and outputs, on a row-by-row basis
     let sourceView = this.createView(
       model.source, model, CURR_DIFF_CLASSES);
     sourceView.addClass(SOURCE_ROW_CLASS);
     this.addChild(sourceView);
-    
+
     if (model.metadata && !model.metadata.unchanged) {
       let metadataView = this.createView(
         model.metadata, model, CURR_DIFF_CLASSES);
@@ -354,7 +354,7 @@ class CellDiffWidget extends Panel {
       this.addChild(collapser);
     }
   }
-  
+
   /**
    * Create a new sub-view.
    */
@@ -368,14 +368,14 @@ class CellDiffWidget extends Panel {
       // 2) Renderable types: Side-by-side comparison.
       // 3) Unknown types: Stringified JSON diff.
       let tmodel = model as OutputDiffModel;
-      let renderable = RenderableView.canRenderUntrusted(tmodel);
+      let renderable = RenderableOutputView.canRenderUntrusted(tmodel);
       for (let mt of this._rendermime.order) {
         let key = tmodel.hasMimeType(mt);
         if (key) {
           if (!renderable || valueIn(mt, stringDiffMimeTypes)) {
             view = new NbdimeMergeView(tmodel.stringify(key), editorClasses);
           } else if (renderable) {
-            view = new RenderableView(tmodel, editorClasses, this._rendermime);
+            view = new RenderableOutputView(tmodel, editorClasses, this._rendermime);
           }
           break;
         }
@@ -409,7 +409,7 @@ class CellDiffWidget extends Panel {
     container.addChild(view);
     return container;
   }
-  
+
   /**
    * Get the model for the widget.
    *
@@ -419,7 +419,7 @@ class CellDiffWidget extends Panel {
   get model(): CellDiffModel {
     return this._model;
   }
-  
+
   protected _model: CellDiffModel = null;
   protected _rendermime: RenderMime<Widget> = null;
 }
@@ -467,15 +467,15 @@ class NotebookDiffWidget extends Widget {
     this._model = model;
     this._rendermime = rendermime;
     let layout = this.layout = new PanelLayout();
-    
+
     this.addClass(NBDIFF_CLASS);
-    
+
     layout.addChild(new MetadataDiffWidget(model.metadata));
     for (var c of model.cells) {
       layout.addChild(new CellDiffWidget(c, rendermime, model.mimetype));
     }
   }
-  
+
   /**
    * Get the model for the widget.
    *
@@ -485,7 +485,7 @@ class NotebookDiffWidget extends Widget {
   get model(): NotebookDiffModel {
     return this._model;
   }
-  
+
   private _model: NotebookDiffModel;
   private _rendermime: RenderMime<Widget> = null;
 }
