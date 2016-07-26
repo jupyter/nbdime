@@ -9,28 +9,41 @@ import nbformat
 
 from .generic import merge_with_diff
 from .autoresolve import autoresolve
-from ..patching import patch
+#from ..patching import patch
 from ..diffing.notebooks import diff_notebooks
 
 
 # Strategies for handling conflicts  TODO: Implement these and refine further!
-generic_conflict_strategies = ("mergetool", "fail", "use-base", "use-local", "use-remote", "clear")
-source_conflict_strategies = generic_conflict_strategies # + ("inline-source",)
-transient_conflict_strategies = generic_conflict_strategies # + ()
-output_conflict_strategies = transient_conflict_strategies # + ("join", "inline-outputs")
+generic_conflict_strategies = (
+    "fail",             # Unexpected: crash and burn in case of conflict
+    "mergetool",        # Pass on diff to external difftool (TODO: store in global metadata at end instead of in separate diff dicts?)
+    "use-base",         # Keep base value in case of conflict
+    "use-local",        # Use local value in case of conflict
+    "use-remote",       # Use remote value in case of conflict
+    "clear",            # Discard value in case of conflict
+    "record-conflict",  # Valid for metadata only: produce new metadata with conflicts recorded for external inspection
+    "inline-source",    # Valid for source only: produce new source with inline diff markers
+    "inline-outputs",   # Valid for outputs only: produce new outputs with inline diff markers
+    "join",             # Join values in case of conflict, don't insert new markers.
+    )
 
 
 def autoresolve_notebook_conflicts(merged, local_diffs, remote_diffs, args):
     strategies = {
         "/nbformat": "fail",
         "/nbformat_minor": "fail",
-        "/metadata": "use-base",
+        "/metadata": "record-conflict",
         "/cells/*/cell_type": "fail",
         "/cells/*/execution_count": "clear",
-        "/cells/*/metadata": "use-base",
-        #"/cells/*/source": "inline-source",  # FIXME: Debug this mode
-        "/cells/*/source": "mergetool",
+        "/cells/*/metadata": "record-conflict",
+        "/cells/*/source": "inline-source",  # FIXME: Debug this mode
+        #"/cells/*/source": "mergetool",
         "/cells/*/outputs": "inline-outputs", # "clear", "join"
+
+# FIXME: Find a good way to handle strategies for both parent (outputs) and child (execution_count).
+#        It might be that some strategies can be combined while others don't make sense, e.g. setting use-* on parent.
+        #"/cells/*/outputs/*/execution_count": "clear",
+        #"/cells/*/outputs/*/metadata": "record-conflict",
         }
     resolved, local_diffs, remote_diffs = \
         autoresolve(merged, local_diffs, remote_diffs, strategies, "")

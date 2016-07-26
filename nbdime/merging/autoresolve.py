@@ -24,6 +24,7 @@ def as_text_lines(text):
     assert all(isinstance(t, string_types) for t in text)
     return text
 
+
 # FIXME: Move to utils
 def format_text_merge_display(local, remote,
                               local_title="local", remote_title="remote"):
@@ -31,11 +32,11 @@ def format_text_merge_display(local, remote,
     remote = as_text_lines(remote)
 
     n = 7  # git uses 7
-    pre = "%s %s" % ("<"*n, local_title)
-    mid = "="*n
-    post = "%s %s" % (">"*n, remote_title)
+    pre = "%s %s\n" % ("<"*n, local_title)
+    mid = "="*n + "\n"
+    post = "%s %s\n" % (">"*n, remote_title)
 
-    return "\n".join([pre] + local + [mid] + remote + [post])
+    return "".join([pre] + local + [mid] + remote + [post])
 
 
 # Sentinel object
@@ -121,6 +122,7 @@ def make_inline_source_value(value, le, re):  # FIXME: Test this!
 
 
 def make_cleared_value(value):
+    "Make a new 'cleared' value of the right type."
     if isinstance(value, list):
         # Clearing e.g. an outputs list means setting it to an empty list
         return []
@@ -133,6 +135,22 @@ def make_cleared_value(value):
     else:
         # Clearing anything else (atomic values) means setting it to None
         return None
+
+
+def add_conflicts_record(value, le, re):
+    """Add an item 'nbdime-conflicts' to a metadata dict.
+
+    Simply storing metadata conflicts for mergetool inspection.
+    """
+    assert isinstance(value, dict)
+    c = {}
+    if le is not None:
+        c["local"] = le
+    if re is not None:
+        c["remote"] = re
+    newvalue = dict(value)
+    newvalue["nbdime-conflicts"] = c
+    return newvalue
 
 
 def resolve_dict_item_conflict(value, le, re, strategy, path):
@@ -176,6 +194,8 @@ def resolve_dict_item_conflict(value, le, re, strategy, path):
         newvalue = make_inline_outputs_value(value, le, re)
     elif strategy == "join":
         newvalue = make_join_value(value, le, re)
+    elif strategy == "record-conflict":
+        newvalue = add_conflicts_record(value, le, re)
     # ...
     else:
         raise RuntimeError("Invalid strategy {}.".format(strategy))
