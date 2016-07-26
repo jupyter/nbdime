@@ -159,9 +159,15 @@ def resolve_dict_item_conflict(value, le, re, strategy, path):
         newvalue = patch_item(value, le)
     elif strategy == "use-remote":
         newvalue = patch_item(value, re)
+    # ... cutoffs before cases using changes from both sides
     elif le is None:
+        # Only one sided change, use that
         newvalue = patch_item(value, re)
     elif re is None:
+        # Only one sided change, use that
+        newvalue = patch_item(value, le)
+    elif le == re:
+        # Both changes are equal, just apply
         newvalue = patch_item(value, le)
     # ... cases using changes from both sides
     elif strategy == "inline-source":
