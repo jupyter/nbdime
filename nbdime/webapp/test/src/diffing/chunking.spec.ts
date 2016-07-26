@@ -5,11 +5,11 @@ import expect = require('expect.js');
 
 import {
   DiffRangeRaw, DiffRangePos, raw2Pos
-} from '../../../build/diffutil';
+} from '../../../src/diffutil';
 
 import {
   StringDiffModel
-} from '../../../build/diffmodel';
+} from '../../../src/diffmodel';
 
 import * as CodeMirror from 'codemirror';
 
