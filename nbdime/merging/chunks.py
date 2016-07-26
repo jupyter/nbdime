@@ -103,7 +103,7 @@ def make_chunks(boundaries, diffs):
             sub_diffs.append(dis)
         # Add non-empty chunks
         if j < k or any(sub_diffs):
-            chunks.append((j, k, *sub_diffs))
+            chunks.append((j, k) + tuple(sub_diffs))
     return chunks
 
 
