@@ -387,4 +387,4 @@ def autoresolve(merged, local_diff, remote_diff, strategies, path):
     elif isinstance(merged, list):
         return autoresolve_lists(merged, local_diff, remote_diff, strategies, path)
     else:
-        raise RuntimeError("Invalid merged type {} at path {}".format(type(merged).__name__), path)
+        raise RuntimeError("Invalid merged type {} at path {}".format(type(merged).__name__, path))
