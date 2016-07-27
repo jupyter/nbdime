@@ -42,25 +42,22 @@ def main_merge(args):
 
     m, lc, rc = merge_notebooks(b, l, r, args)
 
+    returncode = -1 if lc or rc else 0
+
     if lc or rc:
         print("Conflicts occured during merge operation.")
     else:
         print("Merge completed successfully with no unresolvable conflicts.")
 
     if mfn:
-        if lc or rc:
-            # Write partial merge and conflicts to a foo.ipynb-merge file
-            result = {
-                "merged": m,
-                "local_conflicts": lc,
-                "remote_conflicts": rc
-                }
-            with open(mfn+"-merge", "w") as mf:
-                json.dump(result, mf)
-        else:
-            # Write fully completed merge to given foo.ipynb filename
-            with open(mfn, "w") as mf:
-                nbformat.write(m, mf)
+        # Add remaining conflicts to metadata
+        if lc:
+            m["metadata"]["nbdime-local-conflicts"] = lc
+        if rc:
+            m["metadata"]["nbdime-remote-conflicts"] = rc
+        # Write partial or fully completed merge to given foo.ipynb filename
+        with open(mfn, "w") as mf:
+            nbformat.write(m, mf)
     else:
         # FIXME: Display conflicts in a useful way
         if lc or rc:
@@ -68,7 +65,9 @@ def main_merge(args):
             pprint(lc)
             print("Remote conflicts:")
             pprint(rc)
-    return 0
+        print("Merge result:")
+        pprint(m)
+    return returncode
 
 
 def _build_arg_parser():

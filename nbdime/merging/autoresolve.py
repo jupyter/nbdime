@@ -8,7 +8,7 @@ from __future__ import print_function, unicode_literals
 from six import string_types
 import sys
 
-from ..diff_format import SequenceDiffBuilder, MappingDiffBuilder, DiffOp, offset_op, op_replace
+from ..diff_format import SequenceDiffBuilder, MappingDiffBuilder, DiffOp, offset_op
 from ..diff_format import as_dict_based_diff
 from ..patching import patch
 from .chunks import make_merge_chunks
@@ -24,24 +24,30 @@ def as_text_lines(text):
     assert all(isinstance(t, string_types) for t in text)
     return text
 
+
 # FIXME: Move to utils
-def format_text_merge_display(local, remote,
-                              local_title="local", remote_title="remote"):
+def format_text_merge_display(base, local, remote,
+                              base_title="base", local_title="local", remote_title="remote"):
     local = as_text_lines(local)
+    base = as_text_lines(base)
     remote = as_text_lines(remote)
 
     n = 7  # git uses 7
-    pre = "%s %s" % ("<"*n, local_title)
-    mid = "="*n
-    post = "%s %s" % (">"*n, remote_title)
+    sep0 = "%s %s\n" % ("<"*n, local_title)
+    sep1 = "%s %s\n" % ("="*n, base_title)
+    sep2 = "%s %s\n" % ("="*n, remote_title)
+    sep3 = "%s\n" % (">"*n,)
 
-    return "\n".join([pre] + local + [mid] + remote + [post])
+    return "".join([sep0] + local + [sep1] + base + [sep2] + remote + [sep3])
 
 
 # Sentinel object
 Deleted = object()
 
+
 def patch_item(value, diffentry):
+    if diffentry is None:
+        return value
     op = diffentry.op
     if op == DiffOp.REPLACE:
         return diffentry.value
@@ -93,11 +99,11 @@ def make_inline_outputs_value(value, le, re,
     return newvalue
 
 
-def make_inline_source_value(value, le, re):  # FIXME: Test this!
+def make_inline_source_value(base, le, re):  # FIXME: Test this!
     if le.op == DiffOp.REPLACE:
         local = le.value
     elif le.op == DiffOp.PATCH:
-        local = patch(value, le.diff)
+        local = patch(base, le.diff)
     elif le.op == DiffOp.REMOVE:
         local = []  # ""
     else:
@@ -106,18 +112,19 @@ def make_inline_source_value(value, le, re):  # FIXME: Test this!
     if re.op == DiffOp.REPLACE:
         remote = re.value
     elif re.op == DiffOp.PATCH:
-        remote = patch(value, re.diff)
+        remote = patch(base, re.diff)
     elif re.op == DiffOp.REMOVE:
         remote = []  # ""
     else:
         raise ValueError("Invalid item patch op {}".format(re.op))
 
-    # FIXME: use format_text_merge_display for each conflicting chunk
-    e = format_text_merge_display(local, remote)
+    # FIXME: use format_text_merge_display for each conflicting chunk?
+    e = format_text_merge_display(base, local, remote)
     return e
 
 
 def make_cleared_value(value):
+    "Make a new 'cleared' value of the right type."
     if isinstance(value, list):
         # Clearing e.g. an outputs list means setting it to an empty list
         return []
@@ -132,36 +139,77 @@ def make_cleared_value(value):
         return None
 
 
+def add_conflicts_record(value, le, re):
+    """Add an item 'nbdime-conflicts' to a metadata dict.
+
+    Simply storing metadata conflicts for mergetool inspection.
+    """
+    assert isinstance(value, dict)
+    c = {}
+    if le is not None:
+        c["local"] = le
+    if re is not None:
+        c["remote"] = re
+    newvalue = dict(value)
+    newvalue["nbdime-conflicts"] = c
+    return newvalue
+
+
 def resolve_dict_item_conflict(value, le, re, strategy, path):
-    assert le.key == re.key
-
-    # Expecting never to get this kind of conflict
-    if strategy == "fail":
-        raise RuntimeError("Not expecting a conflict at path {}.".format(path))
-
-    # Leave this type of conflict for other tool to resolve
-    if strategy == "mergetool":
-        return (value, le, re)
+    assert le is None or re is None or le.key == re.key
 
     print('autoresolving conflict at %s with %s' % (path, strategy), file=sys.stderr)
 
+    # Default values for variables set in strategy 'switch' below
+    noconflict = False  # Sometimes we get here without there being an actual conflict at this level
+    newvalue = None     # Return value, set in all cases below
+
     # The rest here remove the conflicts and provide a new value
-    if strategy == "use-base":
+    # ... cases ignoring changes
+    if strategy == "clear":
+        newvalue = make_cleared_value(value)
+    elif strategy == "use-base":
         newvalue = value
+    # ... cases ignoring changes from one side
     elif strategy == "use-local":
         newvalue = patch_item(value, le)
     elif strategy == "use-remote":
         newvalue = patch_item(value, re)
-    elif strategy == "clear":
-        newvalue = make_cleared_value(value)
+    # ... cutoffs before cases using changes from both sides
+    elif le is None:
+        # Only one sided change, use that
+        noconflict = True
+        newvalue = patch_item(value, re)
+    elif re is None:
+        # Only one sided change, use that
+        noconflict = True
+        newvalue = patch_item(value, le)
+    elif le == re:
+        # Both changes are equal, just apply
+        noconflict = True
+        newvalue = patch_item(value, le)
+    # ... cases using changes from both sides
     elif strategy == "inline-source":
         newvalue = make_inline_source_value(value, le, re)
     elif strategy == "inline-outputs":
         newvalue = make_inline_outputs_value(value, le, re)
     elif strategy == "join":
         newvalue = make_join_value(value, le, re)
+    elif strategy == "record-conflict":
+        newvalue = add_conflicts_record(value, le, re)
+    # ...
+    elif strategy == "mergetool":
+        # Leave this type of conflict for external tool to resolve
+        newvalue = value
+        return (newvalue, le, re)
+    elif strategy == "fail":
+        # Expecting never to get this kind of conflict, raise error
+        raise RuntimeError("Not expecting a conflict at path {}.".format(path))
     else:
         raise RuntimeError("Invalid strategy {}.".format(strategy))
+
+    if noconflict:
+        print('no actual conflict at %s' % (path,), file=sys.stderr)
 
     return (newvalue, None, None)
 
@@ -257,6 +305,11 @@ def autoresolve_lists(merged, lcd, rcd, strategies, path):
                 if rdi:
                     newrcd.patch(j, rdi)
         else:
+            # FIXME: What has happened here? This is hard to follow, enumerate cases!
+            # - at least one side is modified
+            # - only 0 or 1 has a patch
+            # - FIXME: Handle cell source if one cell is patched and one cell is deleted!
+
             # Just keep input and conflicts but offset conflicts
             resolved.extend(merged[j:k])
             for e in d0:
@@ -277,13 +330,15 @@ def autoresolve_dicts(merged, lcd, rcd, strategies, path):
     lcd = as_dict_based_diff(lcd)
     rcd = as_dict_based_diff(rcd)
 
+    # This previous assumption is not valid:
     # We can't have a one-sided conflict so keys must match
-    assert set(lcd) == set(rcd)
+    #assert set(lcd) == set(rcd)
 
     # Get diff keys
     bldkeys = set(lcd.keys())
     brdkeys = set(rcd.keys())
     dkeys = bldkeys | brdkeys
+    #ckeys = bldkeys & brdkeys
 
     # (1) Use base values for all keys with no change
     resolved = {key: merged[key] for key in set(merged.keys()) - dkeys}
@@ -299,10 +354,10 @@ def autoresolve_dicts(merged, lcd, rcd, strategies, path):
 
         # Get value and conflicts
         value = merged[key]
-        le = lcd[key]
-        re = rcd[key]
-        assert le.key == key
-        assert re.key == key
+        le = lcd.get(key)
+        re = rcd.get(key)
+        assert le is None or le.key == key
+        assert re is None or re.key == key
 
         if strategy is not None:
             # Autoresolve conflicts for this key
@@ -311,8 +366,7 @@ def autoresolve_dicts(merged, lcd, rcd, strategies, path):
                 newlcd.append(le)
             if re is not None:
                 newrcd.append(re)
-
-        elif le.op == DiffOp.PATCH and re.op == DiffOp.PATCH:
+        elif le is not None and re is not None and le.op == DiffOp.PATCH and re.op == DiffOp.PATCH:
             # Recurse if we have no strategy for this key but diffs available for the subdocument
             newvalue, ldi, rdi = autoresolve(value, le.diff, re.diff, strategies, subpath)
             if ldi:
@@ -326,8 +380,10 @@ def autoresolve_dicts(merged, lcd, rcd, strategies, path):
             #  - REMOVE: more likely, but resolving subdocument diff will still leave us with a full conflict on parent here
             # No resolution, keep conflicts le, re
             newvalue = value
-            newlcd.append(le)
-            newrcd.append(re)
+            if le is not None:
+                newlcd.append(le)
+            if re is not None:
+                newrcd.append(re)
 
         # Add new value unless deleted
         if newvalue is Deleted:
@@ -347,4 +403,4 @@ def autoresolve(merged, local_diff, remote_diff, strategies, path):
     elif isinstance(merged, list):
         return autoresolve_lists(merged, local_diff, remote_diff, strategies, path)
     else:
-        raise RuntimeError("Invalid merged type {} at path {}".format(type(merged).__name__), path)
+        raise RuntimeError("Invalid merged type {} at path {}".format(type(merged).__name__, path))
