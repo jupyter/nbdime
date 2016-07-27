@@ -65,7 +65,8 @@ def main_merge(args):
             pprint(lc)
             print("Remote conflicts:")
             pprint(rc)
-
+        print("Merge result:")
+        pprint(m)
     return returncode
 
 
