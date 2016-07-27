@@ -12,10 +12,11 @@ import pytest
 
 from nbdime import diff, patch
 
-from nbdime.diff_format import op_patch
+from nbdime.diff_format import op_patch, op_replace
 
 from nbdime.merging.autoresolve import autoresolve
-from nbdime.merging.autoresolve import make_cleared_value, add_conflicts_record, make_inline_source_value, make_inline_outputs_value, make_join_value
+from nbdime.merging.autoresolve import (make_cleared_value, add_conflicts_record,
+    make_inline_source_value, make_inline_outputs_value, make_join_value)
 
 
 # FIXME: Extend tests to more merge situations!
@@ -44,18 +45,23 @@ def test_autoresolve_inline_source():
 def hello():
     print("world!")
 """
-    le = op_patch("source", [])
-    re = op_patch("source", [])
+    le = op_patch("source", [op_replace(24, 'W')])  # FIXME: Character based here, should be linebased?
+    re = op_patch("source", [op_replace(29, '.')])
     expected = """\
 <<<<<<< local
 def hello():
-    print("world!")
-=======
+    print("World!")
+======= base
 def hello():
     print("world!")
->>>>>>> remote
+======= remote
+def hello():
+    print("world.")
+>>>>>>>
 """
-    assert make_inline_source_value(value, le, re) == expected
+    actual = make_inline_source_value(value, le, re)
+    print(actual)
+    assert actual == expected
 
     # FIXME: Add cases!
 

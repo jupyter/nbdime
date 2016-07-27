@@ -36,7 +36,8 @@ def autoresolve_notebook_conflicts(merged, local_diffs, remote_diffs, args):
         "/cells/*/cell_type": "fail",
         "/cells/*/execution_count": "clear",
         "/cells/*/metadata": "record-conflict",
-        "/cells/*/source": "mergetool", # "inline-source"
+        "/cells/*/source": "mergetool",
+        #"/cells/*/source": "inline-source",
         "/cells/*/outputs": "inline-outputs", # "clear", "join"
         # FIXME: Find a good way to handle strategies for both parent (outputs) and child (execution_count).
         #        It might be that some strategies can be combined while others don't make sense, e.g. setting use-* on parent.
