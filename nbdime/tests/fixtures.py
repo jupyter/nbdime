@@ -81,7 +81,7 @@ def _any_nb_pair_names():
     pairs = []
     names = _db.names
     for i in range(len(names)):
-        for j in range(len(names)):
+        for j in range(i, len(names)):
             pairs.append((names[i], names[j]))
     return pairs
 
@@ -90,7 +90,7 @@ def _matching_nb_pair_names():
     pairs = []
     for basename, names in sorted(_db.groups.items()):
         for i in range(len(names)):
-            for j in range(len(names)):
+            for j in range(i, len(names)):
                 pairs.append((names[i], names[j]))
     return pairs
 
