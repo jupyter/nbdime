@@ -45,14 +45,14 @@ def test_git_diff_driver(capsys, noindent):
     # Simulate a call from `git diff` to check basic driver functionality
     test_dir = os.path.abspath(os.path.dirname(__file__))
     mock_argv = ['/mock/path/git-nbdiffdriver', 'diff',
-        pjoin(test_dir, 'files/foo-foe-1.ipynb'),
-        pjoin(test_dir, 'files/foo-foe-1.ipynb'), 'invalid_mock_checksum', '100644',
-        pjoin(test_dir, 'files/foo-foe-2.ipynb'), 'invalid_mock_checksum', '100644']
+        pjoin(test_dir, 'files/foo--1.ipynb'),
+        pjoin(test_dir, 'files/foo--1.ipynb'), 'invalid_mock_checksum', '100644',
+        pjoin(test_dir, 'files/foo--2.ipynb'), 'invalid_mock_checksum', '100644']
     with mock.patch('sys.argv', mock_argv):
         with pytest.raises(SystemExit) as cm:
             gdd_main()
         assert cm.value.code == 0
         cap_out = capsys.readouterr()[0]
         assert cap_out  == expected_output.format(
-            pjoin(test_dir, 'files/foo-foe-1.ipynb'),
-            pjoin(test_dir, 'files/foo-foe-2.ipynb'))
+            pjoin(test_dir, 'files/foo--1.ipynb'),
+            pjoin(test_dir, 'files/foo--2.ipynb'))

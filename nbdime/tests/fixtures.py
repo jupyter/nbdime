@@ -35,10 +35,12 @@ class NBTestDataBase(object):
         names = [os.path.basename(fn).replace(".ipynb", "") for fn in filenames]
         self.names = list(sorted(names))
 
-        r = re.compile("^(.*)-([0-9]+)$")
+        # Build groups on the form {basename: [list of names 'basename--subname']},
+        r = re.compile("^(.*)--(.*)$")
         matches = [r.match(name) for name in self.names]
+        basenames = set(m.groups()[0] for m in matches if m)
         self.groups = {basename: [name for name in self.names if name.startswith(basename)]
-                       for basename in set(m.groups()[0] for m in matches if m)}
+                       for basename in basenames}
 
     def __len__(self):
         return len(self.names)
@@ -95,6 +97,16 @@ def _matching_nb_pair_names():
     return pairs
 
 
+def _matching_nb_triplet_names():
+    triplets = []
+    for basename, names in sorted(_db.groups.items()):
+        if basename in _db.names:
+            for i in range(len(names)):
+                for j in range(i, len(names)):
+                    triplets.append((basename, names[i], names[j]))
+    return triplets
+
+
 @pytest.fixture
 def db():
     return _db
@@ -115,6 +127,13 @@ def any_nb_pair(request):
 def matching_nb_pairs(request):
     a, b = request.param
     return _db[a], _db[b]
+
+
+@pytest.fixture(params=_matching_nb_triplet_names())
+def matching_nb_triplets(request):
+    a, b, c = request.param
+    print(a, b, c)
+    return _db[a], _db[b], _db[c]
 
 
 def assert_is_valid_notebook(nb):

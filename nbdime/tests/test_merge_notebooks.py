@@ -14,10 +14,17 @@ from nbdime import merge_notebooks, merge, diff, patch
 from nbdime.merging.notebooks import autoresolve
 from nbdime.diff_format import (op_patch, op_addrange, op_removerange,
                                 source_as_string)
-from .fixtures import sources_to_notebook
+from .fixtures import sources_to_notebook, matching_nb_triplets
 
 
 # FIXME: Extend tests to more merge situations!
+
+
+def test_merge_matching_notebooks(matching_nb_triplets):
+    "Test merge on pairs of notebooks with the same basename in the test suite."
+    base, local, remote = matching_nb_triplets
+    result = merge_notebooks(base, local, remote)
+    # We can't really automate a generic merge test, at least passing through code here...
 
 
 def test_autoresolve_fail():
@@ -537,3 +544,4 @@ def bar(y):
 
     # Keep it failing
     assert False
+
