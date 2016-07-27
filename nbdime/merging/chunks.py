@@ -72,8 +72,10 @@ def split_diffs_on_boundaries(diffs, boundaries):
     return newdiffs.validated()
 
 
-def make_chunks(boundaries, diff0, diff1):
-    """Make list of chunks on the form (j, k, diffs0, diffs1).
+def make_chunks(boundaries, diffs):
+    """Make list of chunks on the form (j, k, diffs0, diffs1, ..., diffsN),
+    where `j` and `k` are line numbers in the base, and the `diffsX`
+    entries are subsets from `diffs` that are part of the chunk.
 
     Because the diff entries have been split on the union of
     begin/end boundaries of all diff entries, the keys of
@@ -83,8 +85,7 @@ def make_chunks(boundaries, diff0, diff1):
     add/patch pairs occur, i.e. when inserting something
     just before an item that is removed or modified.
     """
-    i0 = 0
-    i1 = 0
+    i_diffs = [0] * len(diffs)
     chunks = []
     nb = len(boundaries)
     for i in range(nb):
@@ -93,29 +94,28 @@ def make_chunks(boundaries, diff0, diff1):
         k = boundaries[i+1] if i < nb-1 else j
         # Collect diff entries from each side
         # starting at beginning of this chunk
-        d0 = ()
-        while i0 < len(diff0) and diff0[i0].key == j:
-            d0 += (diff0[i0],)
-            i0 += 1
-        d1 = ()
-        while i1 < len(diff1) and diff1[i1].key == j:
-            d1 += (diff1[i1],)
-            i1 += 1
+        sub_diffs = []
+        for m, d in enumerate(diffs):
+            dis = ()
+            while i_diffs[m] < len(d) and d[i_diffs[m]].key == j:
+                dis += (d[i_diffs[m]],)
+                i_diffs[m] += 1
+            sub_diffs.append(dis)
         # Add non-empty chunks
-        if j < k or d0 or d1:
-            chunks.append((j, k, d0, d1))
+        if j < k or any(sub_diffs):
+            chunks.append((j, k) + tuple(sub_diffs))
     return chunks
 
 
-def make_merge_chunks(base, base_local_diff, base_remote_diff):
-    """Return list of chunks (i,j,d0,d1) where d0 and d1 are 
+def make_merge_chunks(base, *diffs):
+    """Return list of chunks (i, j, d0, d1, ..., dn) where dX are
     lists of diff entries affecting the range base[i:j].
 
     If d0 and d1 are both empty the chunk is not modified.
 
     Includes full range 0:len(base).
 
-    Each d0,d1 list contain either 0, 1, or 2 entries,
+    Each diff list contains either 0, 1, or 2 entries,
     in case of 2 entries the first will be an insert
     at i (the beginning of the range) and the other a
     removerange or patch covering the full range i:j.
@@ -123,17 +123,18 @@ def make_merge_chunks(base, base_local_diff, base_remote_diff):
     # Split diffs on union of diff entry boundaries such that
     # no diff entry overlaps with more than one other entry.
     # Including 0,N makes loop over chunks cleaner.
-    boundaries = sorted(set((0,len(base)))
-                        | get_section_boundaries(base_local_diff)
-                        | get_section_boundaries(base_remote_diff))
-    diff0 = split_diffs_on_boundaries(base_local_diff, boundaries)
-    diff1 = split_diffs_on_boundaries(base_remote_diff, boundaries)
+    boundaries = set((0, len(base)))
+    for d in diffs:
+        boundaries |= get_section_boundaries(d)
+    boundaries = sorted(boundaries)
 
-    # Make list of chunks on the form (j, k, diffs0, diffs1)
-    chunks = make_chunks(boundaries, diff0, diff1)
+    split_diffs = [split_diffs_on_boundaries(d, boundaries) for d in diffs]
+
+    # Make list of chunks on the form (j, k, diffs)
+    chunks = make_chunks(boundaries, split_diffs)
 
     # Some sanity checking
-    if base or diff0 or diff1:
+    if base or split_diffs:
         assert chunks
         assert chunks[0][0] == 0
         assert chunks[-1][1] == len(base)
