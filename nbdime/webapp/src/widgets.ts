@@ -475,7 +475,9 @@ class NotebookDiffWidget extends Widget {
 
     this.addClass(NBDIFF_CLASS);
 
-    layout.addChild(new MetadataDiffWidget(model.metadata));
+    if (model.metadata) {
+      layout.addChild(new MetadataDiffWidget(model.metadata));
+    }
     for (var c of model.cells) {
       layout.addChild(new CellDiffWidget(c, rendermime, model.mimetype));
     }

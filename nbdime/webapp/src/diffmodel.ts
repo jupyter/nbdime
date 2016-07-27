@@ -7,8 +7,8 @@ import {
 } from 'jupyterlab/lib/notebook/notebook/nbformat';
 
 import {
-  DiffOp, IDiffEntry, IDiffAddRange, IDiffRemoveRange, IDiffPatch, getDiffKey,
-  DiffRangeRaw, DiffRangePos, raw2Pos
+  DiffOp, IDiffEntry, IDiffAddRange, IDiffRemoveRange, IDiffPatch, IDiffAdd,
+  getDiffKey, DiffRangeRaw, DiffRangePos, raw2Pos
 } from './diffutil';
 
 import {
@@ -743,12 +743,16 @@ export class NotebookDiffModel {
   constructor(base: nbformat.INotebookContent, diff: IDiffEntry[]) {
     // Process global notebook metadata field
     let metaDiff = getDiffKey(diff, 'metadata');
-    this.metadata = (base.metadata || metaDiff) ?
-      createPatchDiffModel(base.metadata, metaDiff) :
-      null;
-    this.metadata.collapsible = true;
-    this.metadata.collapsibleHeader = 'Notebook metadata changed';
-    this.metadata.startCollapsed = true;
+    if (base.metadata && metaDiff) {
+      this.metadata = createPatchDiffModel(base.metadata, metaDiff);
+    } else {
+      this.metadata = null;
+    }
+    if (this.metadata) {
+      this.metadata.collapsible = true;
+      this.metadata.collapsibleHeader = 'Notebook metadata changed';
+      this.metadata.startCollapsed = true;
+    }
     // The notebook metadata MIME type is used for determining the MIME type
     // of source cells, so store it easily accessible:
     try {
