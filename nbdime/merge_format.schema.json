@@ -29,7 +29,7 @@
 
         "action": {
           "description": "How the merge was resolved, or for conflicted entries, the \"best\" initial suggestion for resolution",
-          "enum": ["local", "remote", "base", "clear", "custom"]
+          "enum": ["local", "remote", "base", "clear", "either", "local_then_remote", "remote_then_local", "custom"]
         },
 
         "custom_diff": {
