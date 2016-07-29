@@ -197,6 +197,8 @@ def _merge_lists(base, local, remote, base_local_diff, base_remote_diff):
                     merged_offset -= e.length
                 else:
                     raise ValueError("Unexpected diff op {}".format(e.op))
+
+            # If the diffs were inserts, also make sure we keep the base values
             if (all(e.op == DiffOp.ADDRANGE for e in d0) and
                 all(e.op == DiffOp.ADDRANGE for e in d1)):
                 merged.extend(base[j:k])

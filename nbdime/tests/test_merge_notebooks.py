@@ -15,7 +15,7 @@ from nbdime.merging.notebooks import autoresolve
 from nbdime.diff_format import (op_patch, op_addrange, op_removerange,
                                 source_as_string)
 from .fixtures import sources_to_notebook, matching_nb_triplets
-
+from nbdime.merging.autoresolve import make_inline_source_value
 
 # FIXME: Extend tests to more merge situations!
 
@@ -380,9 +380,22 @@ def test_merge_multiline_cell_source_conflict():
     local  = [source + ["local"]]
     base   = [source]
     remote = [source + ["remote"]]
-    expected_partial = base
-    expected_lco = _patch_cell_source(0, [op_addrange(len("\n".join(source)), "\nlocal")])
-    expected_rco = _patch_cell_source(0, [op_addrange(len("\n".join(source)), "\nremote")])
+
+    le = op_addrange(len("\n".join(source)), "\nlocal")
+    re = op_addrange(len("\n".join(source)), "\nremote")
+
+    if 1:
+        expected_partial = base
+        expected_lco = _patch_cell_source(0, [le])
+        expected_rco = _patch_cell_source(0, [re])
+    else:
+        # FIXME: These tests are postphoned until the new merge spec format is in place
+        basesrc = "\n".join(base[0])
+        partial_src = make_inline_source_value(basesrc, op_patch("source", [le]), op_patch("source", [re]))
+        expected_partial = [[line.strip("\n") for line in partial_src.splitlines()]]
+        expected_lco = []
+        expected_rco = []
+
     _check(base, local, remote, expected_partial, expected_lco, expected_rco)
 
 
