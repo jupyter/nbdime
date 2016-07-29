@@ -14,12 +14,14 @@
       "properties": {
         "local_diff": {
           "description": "Local diff description relevant for this decision",
-          "$ref": "#/definitions/diff"
+          "type": "array",
+          "items": { "$ref": "#/definitions/diff" }
         },
 
         "remote_diff": {
           "description": "Remote diff description relevant for this decision",
-          "$ref": "#/definitions/diff"
+          "type": "array",
+          "items": { "$ref": "#/definitions/diff" }
         },
 
         "conflict": {
@@ -34,7 +36,8 @@
 
         "custom_diff": {
           "description": "An optional field use to describe the applied action if action == \"custom\" (e.g. an edit by hand, interleaving)",
-          "$ref": "#/definitions/diff"
+          "type": "array",
+          "items": { "$ref": "#/definitions/diff" }
         },
 
         "common_path": {
