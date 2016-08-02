@@ -25,14 +25,141 @@ Missing = object()
 collection_types = string_types + (list, dict)
 
 
-def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
+class MergeDecision(dict):
+    """For internal usage in nbdime library.
+
+    Minimal class providing attribute access to merge decision keys.
+
+    Tip: If performance dictates, we can easily replace this
+    with a namedtuple during processing of diffs and convert
+    to dicts before any json conversions.
+    """
+    def __getattr__(self, name):
+        if name.startswith("__") and name.endswith("__"):
+            return self.__getattribute__(name)
+        return self[name]
+
+    def __setattr__(self, name, value):
+        self[name] = value
+
+
+class MergeDecisionBuilder(object):
+    def __init__(self):
+        self.decisions = []
+
+    def validated(self):
+        return sorted(self.decisions, key=_sort_key, reverse=True)
+
+    def add_decision(self, path, conflict, action,
+                     local_diff, remote_diff, custom_diff=None):
+        if local_diff is not None and not isinstance(local_diff, (list, tuple)):
+            local_diff = [local_diff]
+        if remote_diff is not None and not isinstance(remote_diff, (list, tuple)):
+            remote_diff = [remote_diff]
+        if custom_diff is not None and not isinstance(custom_diff, (list, tuple)):
+            custom_diff = [custom_diff]
+        path, (local_diff, remote_diff, custom_diff) = \
+            ensure_common_path(path, local_diff, remote_diff, custom_diff)
+        self.decisions.append(MergeDecision(
+            common_path=path,
+            conflict=conflict,
+            action=action,
+            custom_diff=custom_diff,
+            local_diff=local_diff,
+            remote_diff=remote_diff,
+            ))
+
+    def keep(self, path, key, local_diff, remote_diff):
+        self.add_decision(
+            path=path,
+            conflict=False,
+            action="base",
+            local_diff=local_diff,
+            remote_diff=remote_diff
+        )
+
+    def keep_chunk(self, path, key, end_key, local_diff, remote_diff):
+        self.keep(path, key, local_diff, remote_diff)
+
+    def onesided(self, path, key, local_diff, remote_diff):
+        assert local_diff or remote_diff
+        assert not (local_diff and remote_diff)
+        if local_diff:
+            action = "local"
+        elif remote_diff:
+            action = "remote"
+        self.add_decision(
+            path=path,
+            conflict=False,
+            action=action,
+            local_diff=local_diff,
+            remote_diff=remote_diff,
+            )
+
+    def onesided_chunk(self, path, key, end_key, local_diff, remote_diff):
+        self.onesided(path, key, local_diff, remote_diff)
+
+    def local_then_remote(self, path, key, local_diff, remote_diff,
+                          conflict=False):
+        assert local_diff and remote_diff
+        assert local_diff != remote_diff
+        action = "local_then_remote"
+        self.add_decision(
+            path=path,
+            conflict=conflict,
+            action=action,
+            local_diff=local_diff,
+            remote_diff=remote_diff
+            )
+
+    def agreement(self, path, key, local_diff, remote_diff):
+        assert local_diff and remote_diff
+        assert local_diff == remote_diff
+        self.add_decision(
+            path=path,
+            conflict=False,
+            action="either",
+            local_diff=local_diff,
+            remote_diff=remote_diff,
+            )
+
+    def agreement_chunk(self, path, key, end_key, local_diff, remote_diff):
+        self.agreement(path, key, local_diff, remote_diff)
+
+    def conflict(self, path, key, local_diff, remote_diff):
+        assert local_diff and remote_diff
+        assert local_diff != remote_diff
+        action = "base"
+        self.add_decision(
+            path=path,
+            conflict=True,
+            action=action,
+            local_diff=local_diff,
+            remote_diff=remote_diff,
+            )
+
+    def conflict_chunk(self, path, key, end_key, local_diff, remote_diff):
+        self.conflict(path, key, local_diff, remote_diff)
+
+
+# =============================================================================
+#
+# Decision-making code follows
+#
+# =============================================================================
+
+
+def _merge_dicts(base, local, remote, local_diff, remote_diff, path,
+                 decisions):
     """Perform a three-way merge of dicts. See docstring of merge."""
-    assert isinstance(base, dict) and isinstance(local, dict) and isinstance(remote, dict)
+    assert (isinstance(base, dict) and isinstance(local, dict) and
+            isinstance(remote, dict))
 
     # Converting to dict-based diff format for dicts for convenience
-    # This step will be unnecessary if we change the diff format to work this way always
-    base_local_diff = as_dict_based_diff(base_local_diff)
-    base_remote_diff = as_dict_based_diff(base_remote_diff)
+    # This step will be unnecessary if we change the diff format to work this
+    # way always
+    local_diff = as_dict_based_diff(local_diff)
+    remote_diff = as_dict_based_diff(remote_diff)
 
     # Summary of diff entry cases with (#) references to below code
     # r\l | N/A   -   +   :   !
@@ -44,38 +171,27 @@ def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
     #  !  | (3)  (5) (5  (5) (8)
 
     # Get diff keys
-    bldkeys = set(base_local_diff.keys())
-    brdkeys = set(base_remote_diff.keys())
+    bldkeys = set(local_diff.keys())
+    brdkeys = set(remote_diff.keys())
     dkeys = bldkeys | brdkeys
 
     # (1) Use base values for all keys with no change
-    merged = {key: base[key] for key in set(base.keys()) - dkeys}
+    for key in sorted(set(base.keys()) - dkeys):
+        pass
 
-    # (2) Apply one-sided local diffs
-    for key in bldkeys - brdkeys:
-        # Just use local value or remove by not inserting
-        op = base_local_diff[key].op
-        if op != DiffOp.REMOVE:
-            merged[key] = local[key]
-
-    # (3) Apply one-sided remote diffs
-    for key in brdkeys - bldkeys:
-        # Just use remote value or remove by not inserting
-        op = base_remote_diff[key].op
-        if op != DiffOp.REMOVE:
-            merged[key] = remote[key]
-
-    # Data structures for storing conflicts
-    local_conflict_diff = MappingDiffBuilder()
-    remote_conflict_diff = MappingDiffBuilder()
+    # (2)-(3) Apply one-sided diffs
+    for key in sorted(bldkeys ^ brdkeys):
+        decisions.onesided(path, key,
+                           local_diff.get(key),
+                           remote_diff.get(key))
 
     # (4) (5) (6) (7) (8)
     # Then we have the potentially conflicting changes
     for key in sorted(brdkeys & bldkeys):
         # Get diff entries for this key (we know both sides have an
         # entry here because all other cases are covered above)
-        ld = base_local_diff[key]
-        rd = base_remote_diff[key]
+        ld = local_diff[key]
+        rd = remote_diff[key]
 
         # Get values (using Missing as a sentinel to allow None as a value)
         bv = base.get(key, Missing)
@@ -87,82 +203,58 @@ def _merge_dicts(base, local, remote, base_local_diff, base_remote_diff):
         rop = rd.op
         if lop != rop: # Note that this means the below cases always have the same op
             # (5) Conflict: removed one place and edited another, or edited in different ways
-            merged[key] = bv
-            local_conflict_diff.append(ld)
-            remote_conflict_diff.append(rd)
+            decisions.conflict(path, key, ld, rd)
         elif lop == DiffOp.REMOVE:
             # (4) Removed in both local and remote, just don't add it to merge result
-            pass
+            decisions.agreement(path, key, ld, rd)
         elif lop in (DiffOp.ADD, DiffOp.REPLACE, DiffOp.PATCH) and lv == rv:
             # If inserting/replacing/patching produces the same value, just use it
-            merged[key] = lv
+            decisions.agreement(path, key, ld, rd)
         elif lop == DiffOp.ADD:
             # (6) Insert in both local and remote, values are different
-            # Try partially merging the inserted values
-            if type(lv) == type(rv) and isinstance(lv, collection_types):
-                # Use empty collection of the right type as base
-                me, lco, rco = merge(type(lv)(), lv, rv)
-                # Insert partially merged result
-                merged[key] = me
-                # And add patch entries for the conflicting parts
-                if lco or rco:
-                    assert lco and rco
-                    local_conflict_diff.patch(key, lco)
-                    remote_conflict_diff.patch(key, rco)
-            else:
-                # Recursive merge not possible, record conflicting adds (no base value)
-                local_conflict_diff.append(ld)
-                remote_conflict_diff.append(rd)
+            decisions.conflict(path, key, ld, rd)
+            # # Try partially merging the inserted values
+            # if type(lv) == type(rv) and isinstance(lv, collection_types):
+            #     # Use empty collection of the right type as base
+            #     me, lco, rco = merge(type(lv)(), lv, rv)
+            #     # Insert partially merged result
+            #     merged[key] = me
+            #     # And add patch entries for the conflicting parts
+            #     if lco or rco:
+            #         assert lco and rco
+            #         local_conflict_diff.patch(key, lco)
+            #         remote_conflict_diff.patch(key, rco)
+            # else:
+            #     # Recursive merge not possible, record conflicting adds (no base value)
+            #     local_conflict_diff.append(ld)
+            #     remote_conflict_diff.append(rd)
         elif lop == DiffOp.REPLACE:
             # (7) Replace in both local and remote, values are different,
             #     record a conflict against original base value
-            merged[key] = bv
-            local_conflict_diff.append(ld)
-            remote_conflict_diff.append(rd)
+            decisions.conflict(path, key, ld, rd)
         elif lop == DiffOp.PATCH:
             # (8) Patch on both local and remote, values are different
             # Patches produce different values, try merging the substructures
             # (a patch command only occurs when the type is a collection, so we
             # can safely recurse here and know we won't encounter e.g. an int)
-            me, lco, rco = _merge(bv, lv, rv, ld.diff, rd.diff)
-            # Insert partially merged result
-            merged[key] = me
-            # And add patch entries for the conflicting parts
-            if lco or rco:
-                assert lco and rco
-                local_conflict_diff.patch(key, lco)
-                remote_conflict_diff.patch(key, rco)
+            _merge(bv, lv, rv, ld.diff, rd.diff, "/".join((path, key)), decisions)
         else:
-            raise ValueError("Invalid diff ops {} and {].".format(lop, rop))
-
-    return merged, local_conflict_diff.validated(), remote_conflict_diff.validated()
+            raise ValueError("Invalid diff ops {} and {}.".format(lop, rop))
 
 
-def _merge_lists(base, local, remote, base_local_diff, base_remote_diff):
+def _merge_lists(base, local, remote, local_diff, remote_diff, path, decisions):
     """Perform a three-way merge of lists. See docstring of merge."""
     assert isinstance(base, list) and isinstance(local, list) and isinstance(remote, list)
 
-    # Interleave changes that local and remote agrees on in a merged object
-    merged = []
-
-    # Data structures for storing conflicts
-    local_conflict_diff = SequenceDiffBuilder()
-    remote_conflict_diff = SequenceDiffBuilder()
-
-    # Offset of indices between base and merged
-    merged_offset = 0
-
     # Split up and combine diffs into chunks [(begin, end, localdiffs, remotediffs)]
-    chunks = make_merge_chunks(base, base_local_diff, base_remote_diff)
+    chunks = make_merge_chunks(base, local_diff, remote_diff)
 
     # Loop over chunks of base[j:k], grouping insertion at j into
     # the chunk starting with j
     for (j, k, d0, d1) in chunks:
-        assert len(merged) == j + merged_offset
-
-        if not (d0 or d1):
+        if not (bool(d0) or bool(d1)):
             # Unmodified chunk
-            merged.extend(base[j:k])
+            pass   # No-op
 
         elif (all(e.op == DiffOp.ADDRANGE for e in d0) and
               all(e.op == DiffOp.ADDRANGE for e in d1)):
@@ -174,80 +266,84 @@ def _merge_lists(base, local, remote, base_local_diff, base_remote_diff):
             # but in this case there are two insertions before a
             # list item that will be kept.
             assert j <= len(base)
-            for e in d0 + d1:
-                merged.extend(e.valuelist)
-                merged_offset += len(e.valuelist)
-            merged.extend(base[j:k])
+            decisions.local_then_remote(path, j, k, d0, d1)
+            # decisions.local_then_remote(path, j, k, d0, d1, conflict=True)
 
-        elif bool(d0) != bool(d1) or (d0 == d1):  # d0 xor d1 or d0 == d1
-            # One-sided modification of chunk (or exactly the same modifications)
-            d = d0 or d1  # Pick the non-empty one
-            # Apply diff entries (either just one or an add + remove or patch)
-            for e in d:
-                assert j == e.key
-                if e.op == DiffOp.PATCH:
-                    assert j < len(base)
-                    merged.append(patch(base[j], e.diff))
-                elif e.op == DiffOp.ADDRANGE:
-                    assert j <= len(base)
-                    merged.extend(e.valuelist)
-                    merged_offset += len(e.valuelist)
-                elif e.op == DiffOp.REMOVERANGE:
-                    assert j < len(base)
-                    merged_offset -= e.length
-                else:
-                    raise ValueError("Unexpected diff op {}".format(e.op))
+        elif not (bool(d0) and bool(d1)):
+            # One-sided modification of chunk
+            decisions.onesided_chunk(path, j, k, d0, d1)
 
-            # If the diffs were inserts, also make sure we keep the base values
-            if (all(e.op == DiffOp.ADDRANGE for e in d0) and
-                all(e.op == DiffOp.ADDRANGE for e in d1)):
-                merged.extend(base[j:k])
+        elif d0 == d1:
+            # Exactly the same modifications
+            decisions.agreement_chunk(path, j, k, d0, d1)
+
+            # FIXME: do the above two cases fully cover what the below one did?
+        # elif bool(d0) != bool(d1) or (d0 == d1):  # d0 xor d1 or d0 == d1
+        #     # One-sided modification of chunk (or exactly the same modifications)
+        #     d = d0 or d1  # Pick the non-empty one
+        #     # Apply diff entries (either just one or an add + remove or patch)
+        #     for e in d:
+        #         assert j == e.key
+        #         if e.op == DiffOp.PATCH:
+        #             assert j < len(base)
+        #             merged.append(patch(base[j], e.diff))
+        #         elif e.op == DiffOp.ADDRANGE:
+        #             assert j <= len(base)
+        #             merged.extend(e.valuelist)
+        #             merged_offset += len(e.valuelist)
+        #         elif e.op == DiffOp.REMOVERANGE:
+        #             assert j < len(base)
+        #             merged_offset -= e.length
+        #         else:
+        #             raise ValueError("Unexpected diff op {}".format(e.op))
+        #     if (all(e.op == DiffOp.ADDRANGE for e in d0) and
+        #         all(e.op == DiffOp.ADDRANGE for e in d1)):
+        #         merged.extend(base[j:k])
 
         else:
-            # Two-sided modification, i.e. a conflict, keeping diffs with an index offset
+            # Two-sided modification, i.e. a conflict.
             # It's possible that something more clever can be done here to reduce
             # the number of conflicts. For now we leave this up to the autoresolve
             # code and manual conflict resolution.
-            merged.extend(base[j:k])
-            for e in d0:
-                local_conflict_diff.append(offset_op(e, merged_offset))
-            for e in d1:
-                remote_conflict_diff.append(offset_op(e, merged_offset))
-
-    return merged, local_conflict_diff.validated(), remote_conflict_diff.validated()
+            decisions.conflict_chunk(path, j, k, d0, d1)
 
 
-def _merge_strings(base, local, remote, base_local_diff, base_remote_diff):
+def _merge_strings(base, local, remote, local_diff, remote_diff,
+                   path, decisions):
     """Perform a three-way merge of strings. See docstring of merge."""
-    assert isinstance(base, string_types) and isinstance(local, string_types) and isinstance(remote, string_types)
+    assert (isinstance(base, string_types) and
+            isinstance(local, string_types) and
+            isinstance(remote, string_types))
 
     # Merge characters as lists
-    me, lco, rco = _merge_lists(list(base), list(local), list(remote), base_local_diff, base_remote_diff)
-
-    # Convert to string compatible format
-    merged = "".join(me)
-
-    return merged, lco, rco
+    _merge_lists(
+        list(base), list(local), list(remote),
+        local_diff, remote_diff, path, decisions)
 
 
-def _merge(base, local, remote, base_local_diff, base_remote_diff):
+def _merge(base, local, remote, local_diff, remote_diff, path, decisions):
     if not (type(base) == type(local) and type(base) == type(remote)):
         raise ValueError("Expecting matching types, got {}, {}, and {}.".format(
             type(base), type(local), type(remote)))
 
     if isinstance(base, dict):
-        return _merge_dicts(base, local, remote, base_local_diff, base_remote_diff)
+        return _merge_dicts(base, local, remote, local_diff, remote_diff, path, decisions)
     elif isinstance(base, list):
-        return _merge_lists(base, local, remote, base_local_diff, base_remote_diff)
+        return _merge_lists(base, local, remote, local_diff, remote_diff, path, decisions)
     elif isinstance(base, string_types):
-        return _merge_strings(base, local, remote, base_local_diff, base_remote_diff)
+        return _merge_strings(base, local, remote, local_diff, remote_diff, path, decisions)
     else:
         raise ValueError("Cannot handle merge of type {}.".format(type(base)))
 
 
-def merge_with_diff(base, local, remote, base_local_diff, base_remote_diff):
-    """Do a three-way merge of same-type collections b, l, r with given diffs b->l and b->r."""
-    return _merge(base, local, remote, base_local_diff, base_remote_diff)
+def merge_with_diff(base, local, remote, local_diff, remote_diff):
+    """Do a three-way merge of same-type collections b, l, r with given diffs
+    b->l and b->r."""
+    path = ""
+    decisions = MergeDecisionBuilder()
+    _merge(base, local, remote, local_diff, remote_diff, path,
+           decisions)
+    return decisions.validated()
 
 
 def merge(base, local, remote):
@@ -273,41 +369,11 @@ def merge(base, local, remote):
 
     ### Output:
 
-        ad - agreed upon diff
-        cld - part of local diff bld that is in conflict with remote diff brd
-        crd - part of remote diff brd that is in conflict with local diff bld
+        md - list of merge decisions
 
-    The merge result can be computed by patching base with the agreed diff ad.
-    If the conflict diffs cld and crd are empty, the merge result is final,
-    otherwise it is the intermediate agreed upon part.
-
-    Note that the diff indices in the conflict diffs still relate to base,
-    and will have to be mapped appropriately to the intermediate merge output.
-
-
-    ### Alternative output:
-
-        m - merge result (partial, or final if no conflicts)
-        cld - part of local diff bld that is in conflict with remote diff brd
-        crd - part of remote diff brd that is in conflict with local diff bld
-
-    Note that the diff indices in the conflict diffs here relate to the
-    intermediate merge result m, and will have to be mapped appropriately
-    to the intermediate merge output.
-
-
-    ### Combination of the two Output:
-
-        ad - agreed upon diff parts (relating to base)
-        m - merge result (partial, or final if no conflicts)
-        cld - part of local diff bld that is in conflict with remote diff brd
-        crd - part of remote diff brd that is in conflict with local diff bld
-
-    Note that the diff indices in the conflict diffs here relate to the
-    intermediate merge result m, and will have to be mapped appropriately
-    to the intermediate merge output. Postcondition: m == patch(base, ad).
-
-    Critical question: can we be sure the partial merge result is a valid notebook?
+    The merge result can be computed by applying the decisions to the base.
+    If any decisions have the conflict field set to True, the merge result will
+    use the suggested action, which might not always be correct.
 
     ## Trying to figure out problem with diff vs diff entry in recursion:
 
@@ -387,6 +453,6 @@ def merge(base, local, remote):
         replace / patch -- manual resolution needed, will only happen if collection type changes in replace
 
     """
-    base_local_diff = diff(base, local)
-    base_remote_diff = diff(base, remote)
-    return merge_with_diff(base, local, remote, base_local_diff, base_remote_diff)
+    local_diff = diff(base, local)
+    remote_diff = diff(base, remote)
+    return merge_with_diff(base, local, remote, local_diff, remote_diff)
