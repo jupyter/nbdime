@@ -5,10 +5,15 @@
 
 from __future__ import unicode_literals
 
+import copy
+
 from nbdime import patch
 from nbdime.diff_format import op_patch
+from nbdime.merging.decisions import (apply_decisions, ensure_common_path,
+    MergeDecision)
 
 #from nbdime import apply_merge_decisions
+from nbdime import diff
 #from nbdime.diff_format import op_patch, op_add, op_remove, op_replace, op_addrange, op_removerange
 
 
@@ -66,12 +71,6 @@ def gather_merge_decisions(base, decisions):
     return base
 
 
-def apply_merge_decisions(base, decisions):
-    assert not has_merge_conflicts(decisions)
-    for dec in decisions:
-        base = apply_merge_decision(base, dec)
-    return base
-
 
 def create_decision_item(action=None, common_path="", conflict=False,
                          local_diff=None, remote_diff=None, custom_diff=None):
@@ -91,14 +90,14 @@ def create_decision_item(action=None, common_path="", conflict=False,
     else:
         pass
 
-    item = {
+    item = MergeDecision({
             "action": action,
             "common_path": common_path,
             "conflict": conflict,
             "custom_diff": custom_diff,
             "local_diff": local_diff,
             "remote_diff": remote_diff,
-        }
+        })
     return item
 
 
@@ -115,25 +114,11 @@ def _example_decisions():
 def test_apply_merge_empty():
     decisions = []
     base = { "hello": "world" }
-    assert base == apply_merge_decisions(base, decisions)
+    assert base == apply_decisions(base, decisions)
 
 
 def test_apply_merge_on_dicts():
     base = {
-        "metadata": {
-            "a": { "ting": 123 },
-            "b": { "tang": 456 }
-        }
-    }
-
-    local = {
-        "metadata": {
-            "a": { "ting": 123 },
-            "b": { "tang": 456 }
-        }
-    }
-
-    remote = {
         "metadata": {
             "a": { "ting": 123 },
             "b": { "tang": 456 }
@@ -149,37 +134,18 @@ def test_apply_merge_on_dicts():
     bld = diff(base, local)
     brd = diff(base, remote)
 
-    # merge decisions with common path "cells" can modify cells/* indices
-    # merge decisions with common path "cells/*" only edit exactly one of the cells/* objects
-    # applying cells/* before cells means editing first, no indices modified, then moving things around
+    path, (bld, brd) = ensure_common_path("", [bld, brd])
+
     merge_decisions = [
-        ]
-    assert False
-
-
-'''
-merge_decisions = [
-    {
-        # A common path of local_diff and remote_diff. Optional, as both can alternaitvely 
-        # just contain single patch entries down to this path, but should help with opimization:
-        common_path: "cells/2"  
-        
-        # Local and remote diff descriptions that are relevant for this decision:
-        local_diff: DiffEntry or None,          # DiffEntry as currently defined in e.g. diff_format.py
-        remote_diff: DiffEntry or None,
-        
-        # Whether the entry is conflicted or not
-        conflict: True or False,
-        
-        # How the merge was resolved (local_diff or remote_diff):
-        # Note: For conflicted merges, this is the "best" initial suggestion for resolution!
-        action: "local" or "remote" or "base" or "clear" or "local_then_remote" or "remote_then_local" or "custom",
-        
-        # An optional field use to describe the applied action if action == "custom"
-        # (e.g. an edit by hand, interleaving)
-        custom_diff: DiffEntry or None,
-    },
-    ...
+        create_decision_item(
+            action="remote",
+            common_path=path,
+            local_diff=bld,
+            remote_diff=brd)
     ]
-'''
 
+    assert remote == apply_decisions(base, merge_decisions)
+
+# merge decisions with common path "cells" can modify cells/* indices
+# merge decisions with common path "cells/*" only edit exactly one of the cells/* objects
+# applying cells/* before cells means editing first, no indices modified, then moving things around

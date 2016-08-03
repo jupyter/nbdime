@@ -6,14 +6,12 @@
 from __future__ import unicode_literals
 
 from six import string_types
-from six.moves import xrange as range
 import copy
-from collections import namedtuple
 
 from ..diffing import diff
-from ..diff_format import DiffOp, SequenceDiffBuilder, MappingDiffBuilder, DiffEntry, as_dict_based_diff, offset_op
-from ..patching import patch
+from ..diff_format import DiffOp, as_dict_based_diff, op_removerange
 from .chunks import make_merge_chunks
+from ..patching import patch
 
 
 # Set to true to enable some expensive debugging assertions
@@ -140,6 +138,76 @@ class MergeDecisionBuilder(object):
 
     def conflict_chunk(self, path, key, end_key, local_diff, remote_diff):
         self.conflict(path, key, local_diff, remote_diff)
+
+
+def ensure_common_path(path, diffs):
+    popped = _pop_path(diffs)
+    while popped:
+        path = "/".join([path, popped["key"]])
+        diffs = popped["diffs"]
+        popped = _pop_path(diffs)
+    return path, diffs
+
+
+def _pop_path(diffs):
+    key = None
+    popped_diffs = []
+    for d in diffs:
+        # Empty diffs can be skipped
+        if d is None or len(d) == 0:
+            popped_diffs.append(None)
+            continue
+        # Check that we have only one op, which is a patch op
+        if len(d) != 1 or d[0].op != DiffOp.PATCH:
+            return
+        # Ensure all present diffs have the same key
+        if key is None:
+            key = d[0].key
+        elif key != d[0].key:
+            return
+        # Ensure the sub diffs of all ops are suitable as outer layer
+        # if d[0].diff.length > 1:
+        #    return
+        popped_diffs.append(d[0].diff)
+    if not key:
+        return
+    return {'key': key, 'diffs': popped_diffs}
+
+
+def _sort_key(k):
+    """Sort key for common paths. Ensures the correct order for processing,
+    without having to care about offsetting indices.
+
+    Heavily inspired by the natsort package:
+
+    Copyright (c) 2012-2016 Seth M. Morton
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy of
+    this software and associated documentation files (the "Software"), to deal in
+    the Software without restriction, including without limitation the rights to
+    use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+    of the Software, and to permit persons to whom the Software is furnished to do
+    so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+    """
+    subs = k.split('/')
+    ret = []
+    for s in subs:
+        if s.isnumeric():
+            ret.append( ('', -int(s)) )
+        else:
+            ret.append( (s,) )
+    return ret
 
 
 # =============================================================================
@@ -456,3 +524,62 @@ def merge(base, local, remote):
     local_diff = diff(base, local)
     remote_diff = diff(base, remote)
     return merge_with_diff(base, local, remote, local_diff, remote_diff)
+
+
+# =============================================================================
+#
+# Code for applying decisions:
+#
+# =============================================================================
+
+def resolve_action(base, decision):
+    a = decision.action
+    if a == "base":
+        return []   # no-op
+    elif a == "local":
+        return decision.local_diff
+    elif a == "remote":
+        return decision.remote_diff
+    elif a == "custom":
+        return decision.custom_diff
+    elif a == "local_then_remote":
+        return decision.local_diff + decision.remote_diff
+    elif a == "remote_then_local":
+        return decision.remote_diff + decision.local_diff
+    elif a == "clear":
+        assert isinstance(base, list)
+        return [op_removerange(0, len(base))]
+    else:
+        raise NotImplementedError("The action \"%s\" is not defined", a)
+
+
+def apply_decisions(base, decisions):
+    """Apply a list of merge decisions to base.
+    """
+
+    merged = copy.deepcopy(base)
+    prev_path = None
+    parent = None
+    last_key = None
+    resolved = None
+    diffs = None
+    for md in decisions:
+        path = md.common_path
+        if path == prev_path:
+            diffs.extend(resolve_action(resolved, md))
+        else:
+            if prev_path is not None:
+                parent[last_key] = patch(resolved, diffs)
+            prev_path = path
+            # Resolve path in base and output
+            resolved = merged
+            parent = None
+            last_key = None
+            for key in path.strip('/').split('/'):
+                parent = resolved
+                resolved = resolved[key]   # Should raise if key missing
+                last_key = key
+            diffs = resolve_action(resolved, md)
+    if prev_path:
+        parent[last_key] = patch(resolved, diffs)
+    return merged
