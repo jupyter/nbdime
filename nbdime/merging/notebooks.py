@@ -5,9 +5,7 @@
 
 from __future__ import unicode_literals
 
-import nbformat
-
-from .generic import merge_with_diff
+from .decisions import merge_with_diff, apply_decisions
 from .autoresolve import autoresolve
 #from ..patching import patch
 from ..diffing.notebooks import diff_notebooks
@@ -49,21 +47,24 @@ def autoresolve_notebook_conflicts(merged, local_diffs, remote_diffs, args):
     return resolved, local_diffs, remote_diffs
 
 
-def merge_notebooks(base, local, remote, args=None):
-    """Merge changes introduced by notebooks local and remote from a shared ancestor base.
-
-    Return new (partially) merged notebook and unapplied diffs from the local and remote side.
-    """
+def decide_notebook_merge(base, local, remote, args=None):
     # Compute notebook specific diffs
     local_diffs = diff_notebooks(base, local)
     remote_diffs = diff_notebooks(base, remote)
 
     # Execute a generic merge operation
-    merged, local_diffs, remote_diffs = merge_with_diff(base, local, remote, local_diffs, remote_diffs)
+    decisions = merge_with_diff(base, local, remote, local_diffs, remote_diffs)
 
     # Try to resolve conflicts based on behavioural options
-    resolved, local_diffs, remote_diffs = \
-      autoresolve_notebook_conflicts(merged, local_diffs, remote_diffs, args)
+    # decisions = autoresolve_notebook_conflicts(decisions, args)
 
-    resolved = nbformat.from_dict(resolved)
-    return resolved, local_diffs, remote_diffs
+    return decisions
+
+
+def merge_notebooks(base, local, remote, args=None):
+    """Merge changes introduced by notebooks local and remote from a shared ancestor base.
+
+    Return new (partially) merged notebook and unapplied diffs from the local and remote side.
+    """
+    decisions = decide_notebook_merge(base, local, remote, args)
+    return apply_decisions(base, decisions)

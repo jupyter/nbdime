@@ -10,7 +10,7 @@ from argparse import ArgumentParser
 from six import string_types
 from tornado import ioloop, web, escape
 import nbformat
-import nbdime
+import nbdime.merging.notebooks import decide_notebook_merge
 
 
 # TODO: See <notebook>/notebook/services/contents/handlers.py for possibly useful utilities:
@@ -66,12 +66,14 @@ class MainHandler(NbdimeApiHandler):
     def get(self):
         self.render("index.html")
 
+
 class MainDiffHandler(NbdimeApiHandler):
     def get(self):
         args = {}
         args["base"] = self.get_argument("base", "")
         args["remote"] = self.get_argument("remote", "")
         self.render("diff.html", **args)
+
 
 class MainDifftoolHandler(NbdimeApiHandler):
     def get(self):
@@ -84,10 +86,28 @@ class MainDifftoolHandler(NbdimeApiHandler):
             args["remote"] = self.get_argument("remote", "")
         self.render("difftool.html", **args)
 
+
 class MainMergeHandler(NbdimeApiHandler):
     def get(self):
-        # Currently just using the same file for both diff and merge
-        self.render("index.html")
+        args = {}
+        args["base"] = self.get_argument("base", "")
+        args["local"] = self.get_argument("local", "")
+        args["remote"] = self.get_argument("remote", "")
+        self.render("merge.html", **args)
+
+
+class MainMergetoolHandler(NbdimeApiHandler):
+    def get(self):
+        args = {}
+        if "mergetool_args" in self.params:
+            args["base"] = self.params["mergetool_args"]["base"]
+            args["local"] = self.params["mergetool_args"]["local"]
+            args["remote"] = self.params["mergetool_args"]["remote"]
+        else:
+            args["base"] = self.get_argument("base", "")
+            args["local"] = self.get_argument("local", "")
+            args["remote"] = self.get_argument("remote", "")
+        self.render("mergetool.html", **args)
 
 
 class ApiDiffHandler(NbdimeApiHandler):
@@ -114,14 +134,13 @@ class ApiMergeHandler(NbdimeApiHandler):
         remote_nb = self.get_notebook_argument("remote")
 
         try:
-            merged, lco, rco = nbdime.merge_notebooks(base_nb, local_nb, remote_nb)
+            decisions = decide_notebook_merge(base_nb, local_nb, remote_nb)
         except Exception as e:
             raise web.HTTPError(400, "Error while attempting to merge documents: %s" % e)
 
         data = {
             "base": base_nb,
-            "local_conflicts": lco,
-            "remote_conflicts": rco,
+            "merge_decisions": decisions
             }
         self.finish(data)
 
@@ -176,6 +195,7 @@ def make_app(**params):
         (r"/diff", MainDiffHandler, params),
         (r"/difftool", MainDifftoolHandler, params),
         (r"/merge", MainMergeHandler, params),
+        (r"/mergetool", MainMergetoolHandler, params),
         (r"/api/diff", ApiDiffHandler, params),
         (r"/api/merge", ApiMergeHandler, params),
         (r"/api/closetool", ApiCloseHandler, params),
