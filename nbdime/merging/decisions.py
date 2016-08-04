@@ -175,6 +175,24 @@ def _pop_path(diffs):
     return {'key': str(key), 'diffs': popped_diffs}
 
 
+def pop_patch_decision(decision):
+    diffs = [decision.local_diff, decision.remote_diff]
+    if decision.action == "custom":
+        diffs.append(decision.custom_diff)
+    popped = _pop_path(diffs)
+    if popped is None:
+        raise ValueError("Cannot pop patch decision for: " + str(decision))
+    ret = MergeDecision(
+        common_path="/".join((decision.common_path, popped["key"])),
+        local_diff=popped["diffs"][0],
+        remote_diff=popped["diffs"][1],
+        action=decision.action,
+        conflict=decision.conflict)
+    if decision.action == "custom":
+        ret.custom_diff = popped["diffs"][2]
+    return ret
+
+
 def _sort_key(k):
     """Sort key for common paths. Ensures the correct order for processing,
     without having to care about offsetting indices.
