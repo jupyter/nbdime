@@ -9,7 +9,8 @@ from six import string_types
 import copy
 
 from ..diffing import diff
-from ..diff_format import DiffOp, as_dict_based_diff, op_removerange
+from ..diff_format import (DiffOp, as_dict_based_diff, op_removerange,
+                           op_remove, op_patch)
 from .chunks import make_merge_chunks
 from ..patching import patch
 from ..utils import split_path
@@ -191,6 +192,20 @@ def pop_patch_decision(decision):
     if decision.action == "custom":
         ret.custom_diff = popped["diffs"][2]
     return ret
+
+
+def push_patch_decision(decision, prefix):
+    dec = decision.copy()
+    for key in reversed(split_path(prefix)):
+        idx = dec.common_path.rindex("/")
+        assert dec.common_path[idx+1:] == key
+        dec.common_path = dec.common_path[:idx-1]
+        dec.local_diff = [op_patch(key, dec.local_diff)]
+        dec.remote_diff = [op_patch(key, dec.remote_diff)]
+        if dec.action == "custom":
+            dec.custom_diff = [op_patch(key, dec.custom_diff)]
+    return dec
+
 
 
 def _sort_key(k):
