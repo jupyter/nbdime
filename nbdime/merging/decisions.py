@@ -207,40 +207,39 @@ def push_patch_decision(decision, prefix):
     return dec
 
 
-
 def _sort_key(k):
     """Sort key for common paths. Ensures the correct order for processing,
-    without having to care about offsetting indices.
+without having to care about offsetting indices.
 
-    Heavily inspired by the natsort package:
+Heavily inspired by the natsort package:
 
-    Copyright (c) 2012-2016 Seth M. Morton
+Copyright (c) 2012-2016 Seth M. Morton
 
-    Permission is hereby granted, free of charge, to any person obtaining a copy of
-    this software and associated documentation files (the "Software"), to deal in
-    the Software without restriction, including without limitation the rights to
-    use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-    of the Software, and to permit persons to whom the Software is furnished to do
-    so, subject to the following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
 
-    The above copyright notice and this permission notice shall be included in all
-    copies or substantial portions of the Software.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-    SOFTWARE.
-    """
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
     subs = split_path(k.common_path)
     ret = []
     for s in subs:
         if s.isnumeric():
-            ret.append( ('', -int(s)) )
+            ret.append(('', -int(s)))
         else:
-            ret.append( (s,) )
+            ret.append((s,))
     return ret
 
 
@@ -303,14 +302,18 @@ def _merge_dicts(base, local, remote, local_diff, remote_diff, path,
         # Switch on diff ops
         lop = ld.op
         rop = rd.op
-        if lop != rop: # Note that this means the below cases always have the same op
-            # (5) Conflict: removed one place and edited another, or edited in different ways
+        if lop != rop:
+            # Note that this means the below cases always have the same op
+            # (5) Conflict: removed one place and edited another, or edited in
+            #     different ways
             decisions.conflict(path, key, ld, rd)
         elif lop == DiffOp.REMOVE:
-            # (4) Removed in both local and remote, just don't add it to merge result
+            # (4) Removed in both local and remote, just don't add it to merge
+            #     result
             decisions.agreement(path, key, ld, rd)
         elif lop in (DiffOp.ADD, DiffOp.REPLACE, DiffOp.PATCH) and lv == rv:
-            # If inserting/replacing/patching produces the same value, just use it
+            # If inserting/replacing/patching produces the same value, just use
+            # it
             decisions.agreement(path, key, ld, rd)
         elif lop == DiffOp.ADD:
             # (6) Insert in both local and remote, values are different
@@ -327,7 +330,8 @@ def _merge_dicts(base, local, remote, local_diff, remote_diff, path,
             #         local_conflict_diff.patch(key, lco)
             #         remote_conflict_diff.patch(key, rco)
             # else:
-            #     # Recursive merge not possible, record conflicting adds (no base value)
+            #     # Recursive merge not possible, record conflicting adds (no
+            #     # base value)
             #     local_conflict_diff.append(ld)
             #     remote_conflict_diff.append(rd)
         elif lop == DiffOp.REPLACE:
@@ -339,7 +343,8 @@ def _merge_dicts(base, local, remote, local_diff, remote_diff, path,
             # Patches produce different values, try merging the substructures
             # (a patch command only occurs when the type is a collection, so we
             # can safely recurse here and know we won't encounter e.g. an int)
-            _merge(bv, lv, rv, ld.diff, rd.diff, "/".join((path, key)), decisions)
+            _merge(bv, lv, rv, ld.diff, rd.diff,
+                   "/".join((path, key)), decisions)
         else:
             raise ValueError("Invalid diff ops {} and {}.".format(lop, rop))
 
@@ -412,15 +417,19 @@ def _merge_strings(base, local, remote, local_diff, remote_diff,
 
 def _merge(base, local, remote, local_diff, remote_diff, path, decisions):
     if not (type(base) == type(local) and type(base) == type(remote)):
-        raise ValueError("Expecting matching types, got {}, {}, and {}.".format(
-            type(base), type(local), type(remote)))
+        raise ValueError(
+            "Expecting matching types, got {}, {}, and {}.".format(
+                type(base), type(local), type(remote)))
 
     if isinstance(base, dict):
-        return _merge_dicts(base, local, remote, local_diff, remote_diff, path, decisions)
+        return _merge_dicts(
+            base, local, remote, local_diff, remote_diff, path, decisions)
     elif isinstance(base, list):
-        return _merge_lists(base, local, remote, local_diff, remote_diff, path, decisions)
+        return _merge_lists(
+            base, local, remote, local_diff, remote_diff, path, decisions)
     elif isinstance(base, string_types):
-        return _merge_strings(base, local, remote, local_diff, remote_diff, path, decisions)
+        return _merge_strings(
+            base, local, remote, local_diff, remote_diff, path, decisions)
     else:
         raise ValueError("Cannot handle merge of type {}.".format(type(base)))
 
