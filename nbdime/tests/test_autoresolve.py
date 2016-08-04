@@ -5,21 +5,13 @@
 
 from __future__ import unicode_literals
 
-#from six.moves import xrange as range
-
-#import copy
 import pytest
 
-from nbdime import diff, patch
-
+from nbdime import diff, merge_notebooks
 from nbdime.diff_format import op_patch, op_replace
-
 from nbdime.merging.autoresolve import autoresolve
-from nbdime.merging.autoresolve import (make_cleared_value, add_conflicts_record,
-    make_inline_source_value, make_inline_outputs_value, make_join_value)
-
-
-# FIXME: Extend tests to more merge situations!
+from nbdime.merging.autoresolve import (
+    make_cleared_value, add_conflicts_record, make_inline_source_value)
 
 
 # Tests here assume default autoresolve behaviour at time of writing,
@@ -28,16 +20,19 @@ from nbdime.merging.autoresolve import (make_cleared_value, add_conflicts_record
 
 
 def test_autoresolve_cleared_value():
-    assert make_cleared_value(4) == None
+    assert make_cleared_value(4) is None
     assert make_cleared_value([3]) == []
-    assert make_cleared_value({1:2}) == {}
+    assert make_cleared_value({1: 2}) == {}
     assert make_cleared_value("hello") == ""
 
 
 def test_autoresolve_conflicts_record():
-    assert add_conflicts_record({"a":1}, [2], None) == {"a":1, "nbdime-conflicts": {"local": [2]}}
-    assert add_conflicts_record({"a":1}, None, [3]) == {"a":1, "nbdime-conflicts": {"remote": [3]}}
-    assert add_conflicts_record({"a":1}, [2], [3]) == {"a":1, "nbdime-conflicts": {"local": [2], "remote": [3]}}
+    assert add_conflicts_record({"a": 1}, [2], None) == {
+        "a": 1, "nbdime-conflicts": {"local": [2]}}
+    assert add_conflicts_record({"a": 1}, None, [3]) == {
+        "a": 1, "nbdime-conflicts": {"remote": [3]}}
+    assert add_conflicts_record({"a": 1}, [2], [3]) == {
+        "a": 1, "nbdime-conflicts": {"local": [2], "remote": [3]}}
 
 
 def test_autoresolve_inline_source():
@@ -67,78 +62,73 @@ def hello():
 
 
 def xtest_autoresolve_inline_outputs():
-    #value = 
-    #le = 
-    #re = 
-    #expected = 
+    #value =
+    #le =
+    #re =
+    #expected =
     #assert make_inline_outputs_value(value, le, re) == expected
     pass
 
 
 def xtest_autoresolve_join():
-    #value = 
-    #le = 
-    #re = 
-    #expected = 
+    #value =
+    #le =
+    #re =
+    #expected =
     #assert make_join_value(value, le, re) == expected
     pass
 
 
-def xtest_autoresolve_fail():
-    # These are reused in all tests below
-    args = None
-    base = { "foo": 1 }
-    local = { "foo": 2 }
-    remote = { "foo": 3 }
+# These are reused in all tests below
+args = None
+base = {"foo": 1}
+local = {"foo": 2}
+remote = {"foo": 3}
 
+
+def xtest_autoresolve_fail():
     # Check that "fail" strategy results in proper exception raised
-    strategies = { "/foo": "fail" }
+    strategies = {"/foo": "fail"}
     with pytest.raises(RuntimeError):
-        autoresolve(base, diff(base, local), diff(base, remote), args, strategies, "")
+        autoresolve(base, diff(base, local), diff(base, remote),
+                    args, strategies, "")
 
     # Check that fallback to root "fail" strategy works the same way
-    #strategies = { "": "fail" }
-    #with pytest.raises(RuntimeError):
-    #    autoresolve(base, diff(base, local), diff(base, remote), args, strategies, "")
+    # strategies = { "": "fail" }
+    # with pytest.raises(RuntimeError):
+    #     autoresolve(base, diff(base, local), diff(base, remote),
+    #                 args, strategies, "")
 
 
 def xtest_autoresolve_invalidate():
-    # These are reused in all tests below
-    args = None
-    base = { "foo": 1 }
-    local = { "foo": 2 }
-    remote = { "foo": 3 }
-
     # Check strategies invalidate and use-*
-    strategies = { "/foo": "invalidate" }
-    merged, local_conflicts, remote_conflicts = autoresolve(base, diff(base, local), diff(base, remote), args, strategies, "")
-    assert merged == { "foo": None }
+    strategies = {"/foo": "invalidate"}
+    merged, local_conflicts, remote_conflicts = autoresolve(
+        base, diff(base, local), diff(base, remote), args, strategies, "")
+    assert merged == {"foo": None}
     assert local_conflicts == []
     assert remote_conflicts == []
 
 
 def xtest_autoresolve_use_one():
-    # These are reused in all tests below
-    args = None
-    base = { "foo": 1 }
-    local = { "foo": 2 }
-    remote = { "foo": 3 }
-
-    strategies = { "/foo": "use-base" }
-    merged, local_conflicts, remote_conflicts = autoresolve(base, diff(base, local), diff(base, remote), args, strategies, "")
+    strategies = {"/foo": "use-base"}
+    merged, local_conflicts, remote_conflicts = autoresolve(
+        base, diff(base, local), diff(base, remote), args, strategies, "")
     assert local_conflicts == []
     assert remote_conflicts == []
-    assert merged == { "foo": 1 }
+    assert merged == {"foo": 1}
 
-    strategies = { "/foo": "use-local" }
-    merged, local_conflicts, remote_conflicts = autoresolve(base, diff(base, local), diff(base, remote), args, strategies, "")
-    assert merged == { "foo": 2 }
+    strategies = {"/foo": "use-local"}
+    merged, local_conflicts, remote_conflicts = autoresolve(
+        base, diff(base, local), diff(base, remote), args, strategies, "")
+    assert merged == {"foo": 2}
     assert local_conflicts == []
     assert remote_conflicts == []
 
-    strategies = { "/foo": "use-remote" }
-    merged, local_conflicts, remote_conflicts = autoresolve(base, diff(base, local), diff(base, remote), args, strategies, "")
-    assert merged == { "foo": 3 }
+    strategies = {"/foo": "use-remote"}
+    merged, local_conflicts, remote_conflicts = autoresolve(
+        base, diff(base, local), diff(base, remote), args, strategies, "")
+    assert merged == {"foo": 3}
     assert local_conflicts == []
     assert remote_conflicts == []
 
@@ -146,13 +136,10 @@ def xtest_autoresolve_use_one():
 def xtest_autoresolve_notebook_ec():
     # Tests here assume default autoresolve behaviour at time of writing,
     # this may change and tests should then be updated
-    args = None
-
     source = "def foo(x, y):\n    return x**y"
-    base = { "cells": [ { "source": source, "execution_count": 1 } ] }
-    local = { "cells": [ { "source": source, "execution_count": 2 } ] }
-    remote = { "cells": [ { "source": source, "execution_count": 3 } ] }
-    merged, local_conflicts, remote_conflicts = merge_notebooks(base, local, remote, args)
-    assert merged == { "cells": [ { "source": source, "execution_count": None } ] }
-    assert local_conflicts == []
-    assert remote_conflicts == []
+    base = {"cells": [{"source": source, "execution_count": 1}]}
+    local = {"cells": [{"source": source, "execution_count": 2}]}
+    remote = {"cells": [{"source": source, "execution_count": 3}]}
+    merged, decisions = merge_notebooks(base, local, remote, args)
+    assert merged == {"cells": [{"source": source, "execution_count": None}]}
+    assert not any([d.conflict for d in decisions])

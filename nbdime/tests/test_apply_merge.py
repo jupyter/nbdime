@@ -6,15 +6,14 @@
 from __future__ import unicode_literals
 
 import copy
+import re
 
 from nbdime import patch
 from nbdime.diff_format import op_patch
-from nbdime.merging.decisions import (apply_decisions, ensure_common_path,
-    MergeDecision)
+from nbdime.merging.decisions import (
+    apply_decisions, ensure_common_path, MergeDecision)
 
-#from nbdime import apply_merge_decisions
 from nbdime import diff
-#from nbdime.diff_format import op_patch, op_add, op_remove, op_replace, op_addrange, op_removerange
 
 
 def has_merge_conflicts(decisions):
@@ -22,9 +21,9 @@ def has_merge_conflicts(decisions):
     return any(item.conflict for item in decisions)
 
 
-import re
-
 _r_is_int = re.compile("^[0-9]+$")
+
+
 def is_int(n):
     return bool(_r_is_int.match(n))
 
@@ -50,7 +49,7 @@ def pick_merge_decision(base, dec):
                 k = int(k)
             sub = sub[k]
         # "/cells" -> sub = base[cells], sub is a list
-        #patch
+        # patch
 
         # Add patch entries
         base_diff = di
@@ -69,7 +68,6 @@ def gather_merge_decisions(base, decisions):
     for dec in decisions:
         base = pick_merge_decision(base, dec)
     return base
-
 
 
 def create_decision_item(action=None, common_path="", conflict=False,
@@ -113,15 +111,15 @@ def _example_decisions():
 
 def test_apply_merge_empty():
     decisions = []
-    base = { "hello": "world" }
+    base = {"hello": "world"}
     assert base == apply_decisions(base, decisions)
 
 
 def test_apply_merge_on_dicts():
     base = {
         "metadata": {
-            "a": { "ting": 123 },
-            "b": { "tang": 456 }
+            "a": {"ting": 123},
+            "b": {"tang": 456}
         }
     }
 
