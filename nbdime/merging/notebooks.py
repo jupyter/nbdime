@@ -87,4 +87,4 @@ def merge_notebooks(base, local, remote, args=None):
     Return new (partially) merged notebook and unapplied diffs from the local and remote side.
     """
     decisions = decide_notebook_merge(base, local, remote, args)
-    return apply_decisions(base, decisions)
+    return apply_decisions(base, decisions), decisions
