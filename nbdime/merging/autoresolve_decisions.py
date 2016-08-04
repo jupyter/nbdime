@@ -44,6 +44,22 @@ def format_text_merge_display(
     return "".join([sep0] + local + [sep1] + base + [sep2] + remote + [sep3])
 
 
+def add_conflicts_record(value, le, re):
+    """Add an item 'nbdime-conflicts' to a metadata dict.
+
+    Simply storing metadata conflicts for mergetool inspection.
+    """
+    assert isinstance(value, dict)
+    c = {}
+    if le is not None:
+        c["local"] = le
+    if re is not None:
+        c["remote"] = re
+    newvalue = dict(value)
+    newvalue["nbdime-conflicts"] = c
+    return newvalue
+
+
 # Sentinel object
 Deleted = object()
 
@@ -216,6 +232,8 @@ def strategy2action_dict(local_base, le, re, strategy, path, dec):
             newvalue = make_inline_source_value(value, le, re)
         elif strategy == "inline-outputs":
             newvalue = make_inline_outputs_value(value, le, re)
+        elif strategy == "record-conflict":
+            newvalue = add_conflicts_record(value, le, re)
         else:
             raise RuntimeError("Invalid strategy {}.".format(strategy))
         dec.custom_diff = op_replace(key, newvalue)
