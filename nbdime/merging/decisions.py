@@ -358,19 +358,6 @@ def _merge_lists(base, local, remote, local_diff, remote_diff, path, decisions):
             # Unmodified chunk
             pass   # No-op
 
-        elif (all(e.op == DiffOp.ADDRANGE for e in d0) and
-              all(e.op == DiffOp.ADDRANGE for e in d1)):
-            # Treating two-sided insertions as non-conflicting.
-            # NB! This behaviour is possibly contentious, and if
-            # this behaviour is not wanted, this elif block can be deleted.
-            # Note that insertions should definitely always be part of
-            # conflict if at the beginning of a patch or removerange,
-            # but in this case there are two insertions before a
-            # list item that will be kept.
-            assert j <= len(base)
-            decisions.local_then_remote(path, j, d0, d1)
-            # decisions.local_then_remote(path, j, k, d0, d1, conflict=True)
-
         elif not (bool(d0) and bool(d1)):
             # One-sided modification of chunk
             decisions.onesided_chunk(path, j, k, d0, d1)
@@ -581,8 +568,13 @@ def resolve_action(base, decision):
     elif a == "remote_then_local":
         return decision.remote_diff + decision.local_diff
     elif a == "clear":
-        assert isinstance(base, list)
-        return [op_removerange(0, len(base))]
+        if isinstance(base, dict):
+            # Ideally we would do a op_replace on the parent, but this is not
+            # easily combined with this method, so simply remove all keys
+            return [op_remove(key) for key in base.keys()]
+        else:
+            return [op_removerange(0, len(base))]
+
     else:
         raise NotImplementedError("The action \"%s\" is not defined" % a)
 
