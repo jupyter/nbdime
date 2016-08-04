@@ -5,8 +5,8 @@
 
 from __future__ import unicode_literals
 
-from .decisions import merge_with_diff, apply_decisions
-from .autoresolve import autoresolve
+from .decisions import merge_with_diff, apply_decisions, split_path
+from .autoresolve_decisions import autoresolve_decisions
 #from ..patching import patch
 from ..diffing.notebooks import diff_notebooks
 
@@ -26,8 +26,24 @@ generic_conflict_strategies = (
     )
 
 
-def autoresolve_notebook_conflicts(merged, local_diffs, remote_diffs, args):
-    strategies = {
+class Strategies(dict):
+    """Simple dict wrapper for strategies to allow for wildcard matching of
+    list indices.
+    """
+    def get(self, k, d=None):
+        parts = split_path(k)
+        if len(parts) > 1:
+            for i, p in enumerate(parts):
+                if p.isnumeric():
+                    parts[i] = '*'
+            key = "/" + "/".join(parts)
+        else:
+            key = k
+        return super().get(key, d)
+
+
+def autoresolve_notebook_conflicts(base, decisions, args):
+    strategies = Strategies({
         "/nbformat": "fail",
         "/nbformat_minor": "fail",
         "/metadata": "record-conflict",
@@ -41,10 +57,14 @@ def autoresolve_notebook_conflicts(merged, local_diffs, remote_diffs, args):
         #        It might be that some strategies can be combined while others don't make sense, e.g. setting use-* on parent.
         #"/cells/*/outputs/*/execution_count": "clear",
         #"/cells/*/outputs/*/metadata": "record-conflict",
-        }
-    resolved, local_diffs, remote_diffs = \
-        autoresolve(merged, local_diffs, remote_diffs, strategies, "")
-    return resolved, local_diffs, remote_diffs
+        "transients": [
+            "/cells/*/execution_count",
+            "/cells/*/outputs",
+            "/cells/*/metadata/collapsed",
+            "/cells/*/metadata/autoscroll",
+        ]
+    })
+    return autoresolve_decisions(base, decisions, strategies)
 
 
 def decide_notebook_merge(base, local, remote, args=None):
@@ -56,7 +76,7 @@ def decide_notebook_merge(base, local, remote, args=None):
     decisions = merge_with_diff(base, local, remote, local_diffs, remote_diffs)
 
     # Try to resolve conflicts based on behavioural options
-    # decisions = autoresolve_notebook_conflicts(decisions, args)
+    decisions = autoresolve_notebook_conflicts(base, decisions, args)
 
     return decisions
 
