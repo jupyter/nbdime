@@ -57,7 +57,7 @@ class MergeDecisionBuilder(object):
         if custom_diff is not None and not isinstance(custom_diff, (list, tuple)):
             custom_diff = [custom_diff]
         path, (local_diff, remote_diff, custom_diff) = \
-            ensure_common_path(path, local_diff, remote_diff, custom_diff)
+            ensure_common_path(path, [local_diff, remote_diff, custom_diff])
         self.decisions.append(MergeDecision(
             common_path=path,
             conflict=conflict,
@@ -171,7 +171,7 @@ def _pop_path(diffs):
         popped_diffs.append(d[0].diff)
     if not key:
         return
-    return {'key': key, 'diffs': popped_diffs}
+    return {'key': str(key), 'diffs': popped_diffs}
 
 
 def _sort_key(k):
@@ -200,7 +200,7 @@ def _sort_key(k):
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
     """
-    subs = k.split('/')
+    subs = k.common_path.split('/')
     ret = []
     for s in subs:
         if s.isnumeric():
@@ -334,7 +334,7 @@ def _merge_lists(base, local, remote, local_diff, remote_diff, path, decisions):
             # but in this case there are two insertions before a
             # list item that will be kept.
             assert j <= len(base)
-            decisions.local_then_remote(path, j, k, d0, d1)
+            decisions.local_then_remote(path, j, d0, d1)
             # decisions.local_then_remote(path, j, k, d0, d1, conflict=True)
 
         elif not (bool(d0) and bool(d1)):
@@ -536,7 +536,7 @@ def resolve_action(base, decision):
     a = decision.action
     if a == "base":
         return []   # no-op
-    elif a == "local":
+    elif a in ("local", "either"):
         return decision.local_diff
     elif a == "remote":
         return decision.remote_diff
@@ -550,7 +550,7 @@ def resolve_action(base, decision):
         assert isinstance(base, list)
         return [op_removerange(0, len(base))]
     else:
-        raise NotImplementedError("The action \"%s\" is not defined", a)
+        raise NotImplementedError("The action \"%s\" is not defined" % a)
 
 
 def apply_decisions(base, decisions):
@@ -577,6 +577,8 @@ def apply_decisions(base, decisions):
             last_key = None
             for key in path.strip('/').split('/'):
                 parent = resolved
+                if isinstance(resolved, list):
+                    key = int(key)
                 resolved = resolved[key]   # Should raise if key missing
                 last_key = key
             diffs = resolve_action(resolved, md)
