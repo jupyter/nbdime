@@ -31,3 +31,8 @@ def revert_strings_to_lists(obj):
             return [revert_strings_to_lists(v) for v in obj]
     else:
         return obj
+
+
+def split_path(path):
+    "Split a path on the form /foo/bar into ['foo','bar']."
+    return [x for x in path.strip("/").split("/") if x]

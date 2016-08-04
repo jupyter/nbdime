@@ -12,6 +12,7 @@ from ..diffing import diff
 from ..diff_format import DiffOp, as_dict_based_diff, op_removerange
 from .chunks import make_merge_chunks
 from ..patching import patch
+from ..utils import split_path
 
 
 # Set to true to enable some expensive debugging assertions
@@ -200,7 +201,7 @@ def _sort_key(k):
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
     """
-    subs = k.common_path.split('/')
+    subs = split_path(k.common_path)
     ret = []
     for s in subs:
         if s.isnumeric():
@@ -575,7 +576,7 @@ def apply_decisions(base, decisions):
             resolved = merged
             parent = None
             last_key = None
-            for key in path.strip('/').split('/'):
+            for key in split_path(path):
                 parent = resolved
                 if isinstance(resolved, list):
                     key = int(key)

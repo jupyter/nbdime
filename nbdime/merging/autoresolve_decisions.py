@@ -12,6 +12,7 @@ from ..diff_format import SequenceDiffBuilder, MappingDiffBuilder, DiffOp, offse
 from ..diff_format import as_dict_based_diff
 from ..patching import patch
 from .chunks import make_merge_chunks
+from ..utils import split_path
 
 
 # FIXME: Move to utils
@@ -218,10 +219,6 @@ def resolve_dict_item_conflict_decision(value, le, re, strategy, path, dec):
     return [dec]
 
 
-# FIXME: Move to utils
-def split_path(path):
-    "Split a path on the form /foo/bar into ['foo','bar']."
-    return [x for x in path.strip("/").split("/") if x]
 
 
 def autoresolve_decision_on_dict(dec, base, sub, strategies):
