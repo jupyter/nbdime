@@ -7,6 +7,7 @@ from __future__ import print_function, unicode_literals
 
 from six import string_types
 import sys
+import copy
 
 from ..diff_format import DiffOp, op_replace
 from ..patching import patch
@@ -163,7 +164,7 @@ def strategy2action_dict(local_base, le, re, strategy, path, dec):
     print('autoresolving conflict at %s with %s' % (path, strategy), file=sys.stderr)
 
     # Make a shallow copy of dec
-    dec = dec.copy()
+    dec = copy.copy(dec)
 
     # The rest here remove the conflicts and provide a new value
     # ... cases ignoring changes
@@ -227,7 +228,7 @@ def strategy2action_list(strategy, dec):
     "Resolve conflicts for all items in list."
 
     # Make a shallow copy of dec
-    dec = dec.copy()
+    dec = copy.copy(dec)
 
     if strategy == "mergetool":
         # Leave this type of conflict for other tool to resolve
@@ -334,7 +335,7 @@ def autoresolve_decision_on_list(dec, base, sub, strategies):
                     break
             else:
                 # All patches are all transient, pick deletion:
-                dec = dec.copy()
+                dec = copy.copy(dec)
                 dec.action = "local" if rpatches else "remote"
                 dec.conflict = False
                 decs = [dec]
@@ -422,7 +423,7 @@ def autoresolve_decision(base, dec, strategies):
             # Strategy found for intermediate path
             # Bring decision up to same level as strategy:
             dec = push_patch_decision(
-                dec, base.common_path.replace(subpath, ""))
+                dec, dec.common_path.replace(subpath, ""))
             break
         sub = sub[key]
 

@@ -195,7 +195,7 @@ def pop_patch_decision(decision):
 
 
 def push_patch_decision(decision, prefix):
-    dec = decision.copy()
+    dec = copy.copy(decision)
     for key in reversed(split_path(prefix)):
         idx = dec.common_path.rindex("/")
         assert dec.common_path[idx+1:] == key
@@ -595,7 +595,10 @@ def apply_decisions(base, decisions):
             diffs.extend(resolve_action(resolved, md))
         else:
             if prev_path is not None:
-                parent[last_key] = patch(resolved, diffs)
+                if parent is None:
+                    merged = patch(resolved, diffs)
+                else:
+                    parent[last_key] = patch(resolved, diffs)
             prev_path = path
             # Resolve path in base and output
             resolved = merged
@@ -608,6 +611,9 @@ def apply_decisions(base, decisions):
                 resolved = resolved[key]   # Should raise if key missing
                 last_key = key
             diffs = resolve_action(resolved, md)
-    if prev_path:
-        parent[last_key] = patch(resolved, diffs)
+    if prev_path is not None:
+        if parent is None:
+            merged = patch(resolved, diffs)
+        else:
+            parent[last_key] = patch(resolved, diffs)
     return merged
