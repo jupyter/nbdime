@@ -52,12 +52,21 @@ class MergeDecisionBuilder(object):
 
     def add_decision(self, path, conflict, action,
                      local_diff, remote_diff, custom_diff=None):
-        if local_diff is not None and not isinstance(local_diff, (list, tuple)):
-            local_diff = [local_diff]
-        if remote_diff is not None and not isinstance(remote_diff, (list, tuple)):
-            remote_diff = [remote_diff]
-        if custom_diff is not None and not isinstance(custom_diff, (list, tuple)):
-            custom_diff = [custom_diff]
+        if local_diff is not None:
+            if isinstance(local_diff, tuple):
+                local_diff = list(local_diff)
+            elif not isinstance(local_diff, list):
+                local_diff = [local_diff]
+        if remote_diff is not None:
+            if isinstance(remote_diff, tuple):
+                remote_diff = list(remote_diff)
+            elif not isinstance(remote_diff, list):
+                remote_diff = [remote_diff]
+        if custom_diff is not None:
+            if isinstance(custom_diff, tuple):
+                custom_diff = list(custom_diff)
+            elif not isinstance(custom_diff, list):
+                custom_diff = [custom_diff]
         path, (local_diff, remote_diff, custom_diff) = \
             ensure_common_path(path, [local_diff, remote_diff, custom_diff])
         self.decisions.append(MergeDecision(
@@ -171,7 +180,7 @@ def _pop_path(diffs):
         # if d[0].diff.length > 1:
         #    return
         popped_diffs.append(d[0].diff)
-    if not key:
+    if key is None:
         return
     return {'key': str(key), 'diffs': popped_diffs}
 
@@ -209,7 +218,7 @@ def push_patch_decision(decision, prefix):
     for key in reversed(split_path(prefix)):
         idx = dec.common_path.rindex("/")
         assert dec.common_path[idx+1:] == key
-        dec.common_path = dec.common_path[:idx-1]
+        dec.common_path = "/" if idx == 0 else dec.common_path[:idx]
         dec.local_diff = [op_patch(key, dec.local_diff)]
         dec.remote_diff = [op_patch(key, dec.remote_diff)]
         if dec.action == "custom":
@@ -591,7 +600,7 @@ def resolve_action(base, decision):
             # Ideally we would do a op_replace on the parent, but this is not
             # easily combined with this method, so simply remove all keys
             return [op_remove(key) for key in base.keys()]
-        else:
+        elif isinstance(base, (list,) + string_types):
             return [op_removerange(0, len(base))]
 
     else:

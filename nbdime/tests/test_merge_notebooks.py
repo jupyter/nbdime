@@ -11,15 +11,16 @@ from six import string_types
 import nbformat
 
 from nbdime.diff_format import op_patch, op_addrange, op_removerange
-from .fixtures import sources_to_notebook, matching_nb_triplets
+from .fixtures import sources_to_notebook
 from nbdime.merging.autoresolve_decisions import (
     make_inline_source_value, autoresolve_decisions)
+from nbdime.nbmergeapp import _build_arg_parser
 from nbdime import merge_notebooks
 
 # FIXME: Extend tests to more merge situations!
 
 
-def test_merge_matching_notebooks():
+def test_merge_matching_notebooks(matching_nb_triplets):
     "Test merge on pairs of notebooks with the same basename in the test suite."
     base, local, remote = matching_nb_triplets
     result = merge_notebooks(base, local, remote)
@@ -44,18 +45,16 @@ def test_autoresolve_notebook_ec():
     remote["cells"][0]["execution_count"] = 3
     expected["cells"][0]["execution_count"] = None
 
-    merged, local_conflicts, remote_conflicts = merge_notebooks(base, local, remote, args)
+    merged, decisions = merge_notebooks(base, local, remote, args)
 
     if 0:
         print()
         print(merged)
-        print(local_conflicts)
-        print(remote_conflicts)
+        print(decisions)
         print()
 
     assert merged == expected
-    assert local_conflicts == []
-    assert remote_conflicts == []
+    assert not any(d.conflict for d in decisions)
 
 
 def test_merge_cell_sources_neighbouring_inserts():
@@ -100,9 +99,8 @@ def test_merge_cell_sources_neighbouring_inserts():
         ],
         ])
     args = None
-    actual, lco, rco = merge_notebooks(base, local, remote, args)
-    assert not lco
-    assert not rco
+    actual, decisions = merge_notebooks(base, local, remote, args)
+    assert not any([d.conflict for d in decisions])
     assert actual == expected
 
 
@@ -148,9 +146,8 @@ def test_merge_cell_sources_separate_inserts():
         ],
         ])
     args = None
-    actual, lco, rco = merge_notebooks(base, local, remote, args)
-    assert not lco
-    assert not rco
+    actual, decisions = merge_notebooks(base, local, remote, args)
+    assert not any([d.conflict for d in decisions])
     assert actual == expected
 
 
@@ -176,15 +173,14 @@ def _check(base, local, remote, expected_partial, expected_lco, expected_rco):
     expected_partial = src2nb(expected_partial)
 
     args = None
-    partial, lco, rco = merge_notebooks(base, local, remote, args)
+    partial, decisions = merge_notebooks(base, local, remote, args)
 
     sources = [cell["source"] for cell in partial["cells"]]
     expected_sources = [cell["source"] for cell in expected_partial["cells"]]
     assert sources == expected_sources
 
     assert partial == expected_partial
-    assert lco == expected_lco
-    assert rco == expected_rco
+    assert not any([d.conflict for d in decisions])
 
 
 def test_merge_simple_cell_sources():

@@ -5,12 +5,15 @@
 
 from __future__ import unicode_literals
 
+import colorama
 import pytest
 
 from nbdime import merge_notebooks
 from nbdime.merging.decisions import merge, apply_decisions
 from nbdime.merging.autoresolve_decisions import autoresolve_decisions
 
+
+colorama.init()
 
 # FIXME: Extend tests to more merge situations!
 
@@ -66,11 +69,15 @@ def test_autoresolve_clear():
     """Check strategy "clear" in various cases."""
 
     strategies = {"/foo": "clear"}
-    assert apply_decisions(base, conflicted_decisions) == {"foo": 1}
-    assert conflicted_decisions[0].local_diff != []
-    assert conflicted_decisions[0].remote_diff != []
-    decisions = autoresolve_decisions(base, conflicted_decisions, strategies)
-    assert apply_decisions(base, decisions) == {"foo": None}
+    base2 = {"foo": [1, 2]}
+    local2 = {"foo": [1, 4, 2]}
+    remote2 = {"foo": [1, 3, 2]}
+    decisions = merge(base2, local2, remote2)
+    assert apply_decisions(base2, decisions) == {"foo": [1, 2]}
+    assert decisions[0].local_diff != []
+    assert decisions[0].remote_diff != []
+    decisions = autoresolve_decisions(base2, decisions, strategies)
+    assert apply_decisions(base2, decisions) == {"foo": []}
     assert not any([d.conflict for d in decisions])
 
 
@@ -96,17 +103,17 @@ def test_autoresolve_use_one_side():
     conflicted_decisions2 = merge(base2, local2, remote2)
 
     strategies = {"/foo/bar": "use-base"}
-    decisions = autoresolve_decisions(base, conflicted_decisions2, strategies)
+    decisions = autoresolve_decisions(base2, conflicted_decisions2, strategies)
     assert not any([d.conflict for d in decisions])
     assert apply_decisions(base2, decisions) == {"foo": {"bar": 1}}
 
     strategies = {"/foo/bar": "use-local"}
-    decisions = autoresolve_decisions(base, conflicted_decisions2, strategies)
+    decisions = autoresolve_decisions(base2, conflicted_decisions2, strategies)
     assert not any([d.conflict for d in decisions])
     assert apply_decisions(base2, decisions) == {"foo": {"bar": 2}}
 
     strategies = {"/foo/bar": "use-remote"}
-    decisions = autoresolve_decisions(base, conflicted_decisions2, strategies)
+    decisions = autoresolve_decisions(base2, conflicted_decisions2, strategies)
     assert not any([d.conflict for d in decisions])
     assert apply_decisions(base2, decisions) == {"foo": {"bar": 3}}
 
@@ -117,9 +124,15 @@ def test_autoresolve_notebook_ec():
     args = None
 
     source = "def foo(x, y):\n    return x**y"
-    base = {"cells": [{"source": source, "execution_count": 1}]}
-    local = {"cells": [{"source": source, "execution_count": 2}]}
-    remote = {"cells": [{"source": source, "execution_count": 3}]}
+    base = {"cells": [{
+        "source": source, "execution_count": 1, "cell_type": "code",
+        "outputs": None}]}
+    local = {"cells": [{
+        "source": source, "execution_count": 2, "cell_type": "code",
+        "outputs": None}]}
+    remote = {"cells": [{
+        "source": source, "execution_count": 3, "cell_type": "code",
+        "outputs": None}]}
     merged, decisions = merge_notebooks(base, local, remote, args)
     assert merged == {"cells": [{"source": source, "execution_count": None}]}
     assert not any(d.conflict for d in decisions)

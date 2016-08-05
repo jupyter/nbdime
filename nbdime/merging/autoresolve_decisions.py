@@ -315,10 +315,11 @@ def autoresolve_decision_on_list(dec, base, sub, strategies):
             assert k == j + 1
             assert all(e.key == j for e in linserts + rinserts)
 
-            le, = lpatches
-            re, = rpatches
-            subdec = pop_patch_decision(dec)
-            decs = autoresolve_decision(base[j], subdec, strategies)
+            subdec = copy.copy(dec)
+            subdec.local_diff = lpatches
+            subdec.remote_diff = rpatches
+            subdec = pop_patch_decision(subdec)
+            decs = autoresolve_decision(base, subdec, strategies)
 
             # Patch conflicts have been processed, split off inserts if present
             # and insert before patch:
@@ -326,10 +327,11 @@ def autoresolve_decision_on_list(dec, base, sub, strategies):
                 import pdb
                 pdb.set_trace()
                 print("Is this handled correctly for all cases?")
+                conflict = (bool(linserts) == bool(rinserts)) or dec.conflict
                 decs.insert(0, MergeDecision(
                     common_path=dec.common_path,
                     action="local_then_remote",  # Will this suffice?
-                    conflict=True,   # Should this depend on resolution of patches?
+                    conflict=conflict,
                     local_diff=linserts,  # Should these be split up further?
                     remote_diff=rinserts,
                 ))
@@ -388,10 +390,9 @@ def autoresolve_decision_on_dict(dec, base, sub, strategies):
     # Get value and conflicts
     le, = ld
     re, = rd
-    value = sub[key]
 
     if strategy is not None:
-        decs = strategy2action_dict(value, le, re, strategy, subpath, dec)
+        decs = strategy2action_dict(sub, le, re, strategy, subpath, dec)
     elif le.op == DiffOp.PATCH and re.op == DiffOp.PATCH:
         # FIXME: this is not quite right:
         # Recurse if we have no strategy for this key but diffs available for the subdocument
@@ -436,14 +437,17 @@ def autoresolve_decision(base, dec, strategies):
     sub = base
     subpath = "/"
     for key in split_path(dec.common_path):
+        prev_path = subpath
         subpath = join_path(subpath, key)
         strategy = strategies.get(subpath)
         if strategy is not None:
             # Strategy found for intermediate path
             # Bring decision up to same level as strategy:
             dec = push_patch_decision(
-                dec, dec.common_path.replace(subpath, ""))
+                dec, dec.common_path.replace(prev_path, ""))
             break
+        if key.isnumeric():
+            key = int(key)
         sub = sub[key]
 
     if isinstance(sub, dict):
@@ -453,7 +457,8 @@ def autoresolve_decision(base, dec, strategies):
     elif isinstance(sub, string_types):
         raise NotImplementedError()
     else:
-        raise RuntimeError("Expecting ")
+        raise RuntimeError("Expecting dict, list or string type, got " +
+                           str(type(sub)))
 
     return [pop_all_patch_decisions(d) for d in decs]
 
