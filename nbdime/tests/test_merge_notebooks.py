@@ -20,6 +20,9 @@ from nbdime import merge_notebooks
 # FIXME: Extend tests to more merge situations!
 
 
+args = _build_arg_parser()
+args = args.parse_args(["--strategy", "mergetool", "", "", ""])
+
 def test_merge_matching_notebooks(matching_nb_triplets):
     "Test merge on pairs of notebooks with the same basename in the test suite."
     base, local, remote = matching_nb_triplets
@@ -29,7 +32,6 @@ def test_merge_matching_notebooks(matching_nb_triplets):
 
 
 def test_autoresolve_notebook_ec():
-    args = None
     # We need a source here otherwise the cells are not aligned
     source = "def foo(x, y):\n    return x**y"
 
@@ -98,7 +100,6 @@ def test_merge_cell_sources_neighbouring_inserts():
         "    return y + 2",
         ],
         ])
-    args = None
     actual, decisions = merge_notebooks(base, local, remote, args)
     assert not any([d.conflict for d in decisions])
     assert actual == expected
@@ -145,7 +146,6 @@ def test_merge_cell_sources_separate_inserts():
         "print(f(7))",
         ],
         ])
-    args = None
     actual, decisions = merge_notebooks(base, local, remote, args)
     assert not any([d.conflict for d in decisions])
     assert actual == expected
@@ -172,7 +172,6 @@ def _check(base, local, remote, expected_partial, expected_lco, expected_rco):
     remote = src2nb(remote)
     expected_partial = src2nb(expected_partial)
 
-    args = None
     partial, decisions = merge_notebooks(base, local, remote, args)
 
     sources = [cell["source"] for cell in partial["cells"]]
