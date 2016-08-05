@@ -237,7 +237,7 @@ def strategy2action_dict(local_base, le, re, strategy, path, dec):
             newvalue = add_conflicts_record(value, le, re)
         else:
             raise RuntimeError("Invalid strategy {}.".format(strategy))
-        dec.custom_diff = op_replace(key, newvalue)
+        dec.custom_diff = [op_replace(key, newvalue)]
         dec.action = "custom"
 
     return [dec]

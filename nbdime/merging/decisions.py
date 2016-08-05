@@ -13,7 +13,7 @@ from ..diff_format import (DiffOp, as_dict_based_diff, op_removerange,
                            op_remove, op_patch)
 from .chunks import make_merge_chunks
 from ..patching import patch
-from ..utils import split_path
+from ..utils import split_path, join_path
 
 
 # Set to true to enable some expensive debugging assertions
