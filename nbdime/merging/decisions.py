@@ -145,7 +145,7 @@ class MergeDecisionBuilder(object):
 def ensure_common_path(path, diffs):
     popped = _pop_path(diffs)
     while popped:
-        path = "/".join([path, popped["key"]])
+        path = join_path(path, popped["key"])
         diffs = popped["diffs"]
         popped = _pop_path(diffs)
     return path, diffs
@@ -184,7 +184,7 @@ def pop_patch_decision(decision):
     if popped is None:
         raise ValueError("Cannot pop patch decision for: " + str(decision))
     ret = MergeDecision(
-        common_path="/".join((decision.common_path, popped["key"])),
+        common_path=join_path(decision.common_path, popped["key"]),
         local_diff=popped["diffs"][0],
         remote_diff=popped["diffs"][1],
         action=decision.action,
@@ -192,6 +192,16 @@ def pop_patch_decision(decision):
     if decision.action == "custom":
         ret.custom_diff = popped["diffs"][2]
     return ret
+
+
+def pop_all_patch_decisions(decision):
+    try:
+        while 1:
+            decision = pop_patch_decision(decision)
+    except ValueError as e:
+        if not str(e).startswith("Cannot pop patch decision for: "):
+            raise e
+    return decision
 
 
 def push_patch_decision(decision, prefix):
@@ -344,7 +354,7 @@ def _merge_dicts(base, local, remote, local_diff, remote_diff, path,
             # (a patch command only occurs when the type is a collection, so we
             # can safely recurse here and know we won't encounter e.g. an int)
             _merge(bv, lv, rv, ld.diff, rd.diff,
-                   "/".join((path, key)), decisions)
+                   join_path(path, key), decisions)
         else:
             raise ValueError("Invalid diff ops {} and {}.".format(lop, rop))
 

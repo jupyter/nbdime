@@ -30,6 +30,10 @@ class Strategies(dict):
     """Simple dict wrapper for strategies to allow for wildcard matching of
     list indices.
     """
+    def __init__(self, *args, **kwargs):
+        self.transients = kwargs.get("transients", [])
+        super(Strategies, self).__init__(*args, **kwargs)
+
     def get(self, k, d=None):
         parts = split_path(k)
         if len(parts) > 1:
@@ -39,31 +43,41 @@ class Strategies(dict):
             key = "/" + "/".join(parts)
         else:
             key = k
-        return super().get(key, d)
+        return super(Strategies, self).get(key, d)
 
 
 def autoresolve_notebook_conflicts(base, decisions, args):
     strategies = Strategies({
         "/nbformat": "fail",
         "/nbformat_minor": "fail",
-        "/metadata": "record-conflict",
-        "/cells/*/cell_type": "fail",
         "/cells/*/execution_count": "clear",
-        "/cells/*/metadata": "record-conflict",
-        "/cells/*/source": "mergetool",
-        #"/cells/*/source": "inline-source",
-        "/cells/*/outputs": "inline-outputs", # "clear", "join"
-        # FIXME: Find a good way to handle strategies for both parent (outputs) and child (execution_count).
-        #        It might be that some strategies can be combined while others don't make sense, e.g. setting use-* on parent.
-        #"/cells/*/outputs/*/execution_count": "clear",
-        #"/cells/*/outputs/*/metadata": "record-conflict",
-        "transients": [
+        "/cells/*/cell_type": "fail",
+        },
+        transients=[
             "/cells/*/execution_count",
             "/cells/*/outputs",
             "/cells/*/metadata/collapsed",
             "/cells/*/metadata/autoscroll",
-        ]
-    })
+            "/cells/*/outputs/*/execution_count"
+        ])
+    if args and args.strategy == "mergetool":
+        strategies.update({
+            "/cells/*/source": "mergetool",
+            "/cells/*/outputs": "mergetool",
+            "/cells/*/outputs/*/execution_count": "clear",
+        })
+    else:
+        strategies.update({
+            "/metadata": "record-conflict",
+            "/cells/*/metadata": "record-conflict",
+            "/cells/*/source": "mergetool",
+            "/cells/*/source": "inline-source",
+            "/cells/*/outputs": "inline-outputs", # "clear", "join"
+            # FIXME: Find a good way to handle strategies for both parent (outputs) and child (execution_count).
+            #        It might be that some strategies can be combined while others don't make sense, e.g. setting use-* on parent.
+            #"/cells/*/outputs/*/execution_count": "clear",
+            #"/cells/*/outputs/*/metadata": "record-conflict",
+        })
     return autoresolve_decisions(base, decisions, strategies)
 
 
