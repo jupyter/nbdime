@@ -343,10 +343,10 @@ def test_merge_insert_cells_around_conflicting_cell():
                 op_addrange(0, [nbformat.v4.new_code_cell(
                     source=["new local cell"])]),
                 op_patch(0, [op_patch("source", [
-                    op_addrange(len("\n".join(source)), "\nlocal")])]),
+                    op_addrange(len("".join(source)), "local\n")])]),
             ],
             "remote_diff": [op_patch(0, [op_patch('source', [
-                op_addrange(len("\n".join(source)), "\nremote")])])]
+                op_addrange(len("".join(source)), "remote\n")])])]
         }]
     _check(base, local, remote, expected_partial, expected_conflicts)
 
