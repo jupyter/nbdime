@@ -42,8 +42,8 @@
 
         "common_path": {
           "description": "A common path of local_diff and remote_diff. Optional, as both can alternaitvely just contain single patch entries down to this path, but should help with opimization",
-          "type": "string",
-          "pattern": "^(/[^/]+)*$"
+          "type": "array",
+          "items": { "type": ["integer", "string"] }
         }
       }
     },
