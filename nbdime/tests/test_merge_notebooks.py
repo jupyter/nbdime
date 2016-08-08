@@ -12,8 +12,8 @@ import nbformat
 
 from nbdime.diff_format import op_patch, op_addrange, op_removerange
 from .fixtures import sources_to_notebook, matching_nb_triplets
-from nbdime.merging.autoresolve_decisions import (
-    make_inline_source_value, autoresolve_decisions)
+from nbdime.merging.autoresolve import (
+    make_inline_source_value, autoresolve)
 from nbdime.nbmergeapp import _build_arg_parser
 from nbdime import merge_notebooks
 

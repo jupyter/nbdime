@@ -446,7 +446,7 @@ def autoresolve_decision(base, dec, strategies):
     return [pop_all_patch_decisions(d) for d in decs]
 
 
-def autoresolve_decisions(base, decisions, strategies):
+def autoresolve(base, decisions, strategies):
     """Autoresolve a list of decisions with given strategy configuration.
 
     Returns a list of new decisions, with or without further conflicts.

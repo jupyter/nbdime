@@ -6,7 +6,7 @@
 from __future__ import unicode_literals
 
 from .decisions import merge_with_diff, apply_decisions
-from .autoresolve_decisions import autoresolve_decisions
+from .autoresolve import autoresolve
 #from ..patching import patch
 from ..diffing.notebooks import diff_notebooks
 from ..utils import split_path, join_path
@@ -79,7 +79,7 @@ def autoresolve_notebook_conflicts(base, decisions, args):
             #"/cells/*/outputs/*/execution_count": "clear",
             #"/cells/*/outputs/*/metadata": "record-conflict",
         })
-    return autoresolve_decisions(base, decisions, strategies)
+    return autoresolve(base, decisions, strategies)
 
 
 def decide_notebook_merge(base, local, remote, args=None):
