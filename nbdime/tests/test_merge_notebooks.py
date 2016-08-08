@@ -11,7 +11,7 @@ from six import string_types
 import nbformat
 
 from nbdime.diff_format import op_patch, op_addrange, op_removerange
-from .fixtures import sources_to_notebook
+from .fixtures import sources_to_notebook, matching_nb_triplets
 from nbdime.merging.autoresolve_decisions import (
     make_inline_source_value, autoresolve_decisions)
 from nbdime.nbmergeapp import _build_arg_parser
@@ -20,8 +20,8 @@ from nbdime import merge_notebooks
 # FIXME: Extend tests to more merge situations!
 
 
-args = _build_arg_parser()
-args = args.parse_args(["--strategy", "mergetool", "", "", ""])
+builder = _build_arg_parser()
+args = builder.parse_args(["--strategy", "mergetool", "", "", ""])
 
 def test_merge_matching_notebooks(matching_nb_triplets):
     "Test merge on pairs of notebooks with the same basename in the test suite."
@@ -88,21 +88,30 @@ def test_merge_cell_sources_neighbouring_inserts():
         "    return y + 2",
         ],
         ])
-    expected = sources_to_notebook([[
-        "def f(x):",
-        "    return x**2",
-        ], [
-        "print(f(3))",
-        ], [
-        "print(f(7))",
-        ], [
-        "def g(y):",
-        "    return y + 2",
-        ],
-        ])
-    actual, decisions = merge_notebooks(base, local, remote, args)
-    assert not any([d.conflict for d in decisions])
-    assert actual == expected
+    if 1:
+        expected_partial = base
+        expected_conflicts = [{
+            "common_path": ("cells",),
+            "local_diff": [op_addrange(1, [local.cells[1]])],
+            "remote_diff": [op_addrange(1, [remote.cells[1]])]
+        }]
+    else:
+        # Strategy local_then_remote:
+        expected_partial = sources_to_notebook([[
+            "def f(x):",
+            "    return x**2",
+            ], [
+            "print(f(3))",
+            ], [
+            "print(f(7))",
+            ], [
+            "def g(y):",
+            "    return y + 2",
+            ],
+            ])
+        expected_conflicts = []
+
+    _check(base, local, remote, expected_partial, expected_conflicts)
 
 
 def test_merge_cell_sources_separate_inserts():
@@ -166,7 +175,7 @@ def src2nb(src):
     return src
 
 
-def _check(base, local, remote, expected_partial, expected_lco, expected_rco):
+def _check(base, local, remote, expected_partial, expected_conflicts):
     base = src2nb(base)
     local = src2nb(local)
     remote = src2nb(remote)
@@ -179,7 +188,13 @@ def _check(base, local, remote, expected_partial, expected_lco, expected_rco):
     assert sources == expected_sources
 
     assert partial == expected_partial
-    assert not any([d.conflict for d in decisions])
+    conflicts = [d for d in decisions if d.conflict]
+    expected_conflicts = expected_conflicts.copy()
+    assert len(conflicts) == len(expected_conflicts)
+    for e, d in zip(expected_conflicts, conflicts):
+        # Only check keys specified in expectation value
+        for k in e.keys():
+            assert d[k] == e[k]
 
 
 def test_merge_simple_cell_sources():
@@ -190,79 +205,71 @@ def test_merge_simple_cell_sources():
     base = [["same"]]
     remote = [["same"]]
     expected_partial = [["same"]]
-    expected_lco = []
-    expected_rco = []
-    _check(base, local, remote, expected_partial, expected_lco, expected_rco)
+    expected_conflicts = []
+    _check(base, local, remote, expected_partial, expected_conflicts)
 
     # One sided change
     local = [["same"]]
     base = [["same"]]
     remote = [["different"]]
     expected_partial = [["different"]]
-    expected_lco = []
-    expected_rco = []
-    _check(base, local, remote, expected_partial, expected_lco, expected_rco)
+    expected_conflicts = []
+    _check(base, local, remote, expected_partial, expected_conflicts)
 
     # One sided change
     local = [["different"]]
     base = [["same"]]
     remote = [["same"]]
     expected_partial = [["different"]]
-    expected_lco = []
-    expected_rco = []
-    _check(base, local, remote, expected_partial, expected_lco, expected_rco)
+    expected_conflicts = []
+    _check(base, local, remote, expected_partial, expected_conflicts)
 
     # Same change on both sides
     local = [["different"]]
     base = [["same"]]
     remote = [["different"]]
     expected_partial = [["different"]]
-    expected_lco = []
-    expected_rco = []
-    _check(base, local, remote, expected_partial, expected_lco, expected_rco)
+    expected_conflicts = []
+    _check(base, local, remote, expected_partial, expected_conflicts)
 
     # Conflicting cell inserts at same location as removing old cell
     local = [["local"]]
     base = [["base"]]
     remote = [["remote"]]
     expected_partial = [["base"]]
-    expected_lco = [op_patch("cells", [
-        op_addrange(
-            0, [nbformat.v4.new_code_cell(source) for source in local]),
-        op_removerange(0, 1)])]
-    expected_rco = [op_patch("cells", [
-        op_addrange(
-            0, [nbformat.v4.new_code_cell(source) for source in remote]),
-        op_removerange(0, 1)])]
-    _check(base, local, remote, expected_partial, expected_lco, expected_rco)
+    expected_conflicts = [{
+        "common_path": ("cells",),
+        "local_diff": [
+            op_addrange(
+                0, [nbformat.v4.new_code_cell(source) for source in local]),
+            op_removerange(0, 1)],
+        "remote_diff": [
+            op_addrange(
+                0, [nbformat.v4.new_code_cell(source) for source in remote]),
+            op_removerange(0, 1)]
+        }]
+    _check(base, local, remote, expected_partial, expected_conflicts)
 
     # Cell inserts at same location but no other modifications:
     # should this be accepted?
     local = [["base"], ["local"]]
     base = [["base"]]
     remote = [["base"], ["remote"]]
-    if 0:  # Treat as conflict
+    if 1:  # Treat as conflict
         expected_partial = [["base"]]
-        expected_lco = [op_patch("cells", [
-            op_addrange(
-                1, [nbformat.v4.new_code_cell(source) for source in local]),
-            ])]
-        expected_rco = [op_patch("cells", [
-            op_addrange(
-                1, [nbformat.v4.new_code_cell(source) for source in remote]),
-            ])]
+        expected_conflicts = [{
+            "common_path": ("cells",),
+            "local_diff": [op_addrange(
+                1, [nbformat.v4.new_code_cell(local[1])]),
+            ],
+            "remote_diff": [op_addrange(
+                1, [nbformat.v4.new_code_cell(remote[1])]),
+            ]
+        }]
     else:  # Treat as non-conflict (insert both)
         expected_partial = [["base"], ["local"], ["remote"]]
-        expected_lco = []
-        expected_rco = []
-    _check(base, local, remote, expected_partial, expected_lco, expected_rco)
-
-
-def _patch_cell_source(cell_index, source_diff):
-    """Convenience function to create the diff that patches only the source
-    of a specific cell."""
-    return [op_patch("cells", [op_patch(cell_index, [
-        op_patch("source", source_diff)])])]
+        expected_conflicts = []
+    _check(base, local, remote, expected_partial, expected_conflicts)
 
 
 def test_merge_multiline_cell_source_conflict():
@@ -270,62 +277,54 @@ def test_merge_multiline_cell_source_conflict():
     # (this is where heuristics kick in: when is a cell modified and when is
     # it replaced?)
     source = [
-        "def foo(x, y):",
-        "    z = x * y",
-        "    return z",
+        "def foo(x, y):\n",
+        "    z = x * y\n",
+        "    return z\n",
         ]
-    local = [source + ["local"]]
-    base = [source]
-    remote = [source + ["remote"]]
+    local = [source + ["local\n"] + [""]]
+    base = [source + [""]]
+    remote = [source + ["remote\n"] + [""]]
 
-    le = op_addrange(len("\n".join(source)), "\nlocal")
-    re = op_addrange(len("\n".join(source)), "\nremote")
+    le = op_addrange(3, "local\n")
+    re = op_addrange(3, "remote\n")
 
-    if 1:
-        expected_partial = base
-        expected_lco = _patch_cell_source(0, [le])
-        expected_rco = _patch_cell_source(0, [re])
-    else:
-        # FIXME: These tests are postphoned until the new merge spec format is in place
-        basesrc = "\n".join(base[0])
-        partial_src = make_inline_source_value(
-            basesrc, op_patch("source", [le]), op_patch("source", [re]))
-        expected_partial = [[
-            line.strip("\n") for line in partial_src.splitlines()]]
-        expected_lco = []
-        expected_rco = []
-
-    _check(base, local, remote, expected_partial, expected_lco, expected_rco)
+    expected_partial = base
+    expected_conflicts = [{
+        "common_path": ("cells", "0", "source"),
+        "local_diff": [le],
+        "remote_diff": [re]
+    }]
+    _check(base, local, remote, expected_partial, expected_conflicts)
 
 
 def test_merge_insert_cells_around_conflicting_cell():
     # Modifying an original cell and inserting a new cell on both sides
     source = [
-        "def foo(x, y):",
-        "    z = x * y",
-        "    return z",
+        "def foo(x, y):\n",
+        "    z = x * y\n",
+        "    return z\n",
         ]
-    local = [["new local cell"],
-             source + ["local"]]
+    local = [["new local cell\n"],
+             source + ["local\n"]]
     base = [source]
-    remote = [source + ["remote"],
-              ["new remote cell"]]
+    remote = [source + ["remote\n"],
+              ["new remote cell\n"]]
     if 0:
         # This is how it would look if neither source or cell inserts resulted
         # in conflicts:
-        expected_partial = [["new local cell"],
-                            source + ["local", "remote"],
-                            ["new remote cell"]]
-        expected_lco = []
-        expected_rco = []
-    elif 0:
+        expected_partial = [local[0],
+                            source + ["local\n", "remote\n"],
+                            remote[1]]
+        expected_conflicts = []
+    elif 1:
         # This is how it would look if source inserts but not cell inserts
         # resulted in conflicts:
         expected_partial = [local[0], source, remote[1]]
-        expected_lco = _patch_cell_source(
-            1, [op_addrange(len("\n".join(source)), "\nlocal")])
-        expected_rco = _patch_cell_source(
-            1, [op_addrange(len("\n".join(source)), "\nremote")])
+        expected_conflicts = [{
+            "common_path": ("cells", "0", "source"),
+            "local_diff": [op_addrange(len("".join(source)), "local\n")],
+            "remote_diff": [op_addrange(len("".join(source)), "remote\n")]
+        }]
     else:
         # In current behaviour:
         # - base cell 0 is aligned correctly (this is the notebook diff heuristics)
@@ -338,15 +337,18 @@ def test_merge_insert_cells_around_conflicting_cell():
         # - For cells, we might want both inserts to be ok, they are separate new cells after all. (use autoresolve for this?)
         # - Figure out the best behaviour and make it happen!
         expected_partial = [source, remote[1]]
-        expected_lco = [op_patch("cells", [
-            op_addrange(0, [nbformat.v4.new_code_cell(
-                source=["new local cell"])]),
-            op_patch(0, [op_patch(
-                "source", [op_addrange(len("\n".join(source)), "\nlocal")])]),
-            ])]
-        expected_rco = _patch_cell_source(
-            0, [op_addrange(len("\n".join(source)), "\nremote")])
-    _check(base, local, remote, expected_partial, expected_lco, expected_rco)
+        expected_conflicts = [{
+            "common_path": ("cells",),
+            "local_diff": [
+                op_addrange(0, [nbformat.v4.new_code_cell(
+                    source=["new local cell"])]),
+                op_patch(0, [op_patch("source", [
+                    op_addrange(len("\n".join(source)), "\nlocal")])]),
+            ],
+            "remote_diff": [op_patch(0, [op_patch('source', [
+                op_addrange(len("\n".join(source)), "\nremote")])])]
+        }]
+    _check(base, local, remote, expected_partial, expected_conflicts)
 
 
 @pytest.mark.xfail
@@ -380,9 +382,8 @@ def test_merge_interleave_cell_add_remove():
                         ["remote 3"],
                         ["local 3"],
                         ["base 3"]]
-    expected_lco = []
-    expected_rco = []
-    _check(base, local, remote, expected_partial, expected_lco, expected_rco)
+    expected_conflicts = []
+    _check(base, local, remote, expected_partial, expected_conflicts)
 
 
 @pytest.mark.xfail
@@ -399,17 +400,18 @@ def test_merge_conflicts_get_diff_indices_shifted():
     expected_partial = [["different"],
                         source + ["local", "remote"],
                         ["different"]]
-    expected_lco = [
-        op_removerange(1, 1),
-        op_addrange(1, ["left"]),
+    expected_conflicts = [{
+        "common_path": (),
+        "local_diff": [
+            op_removerange(1, 1),
+            op_addrange(1, ["left"]),
+        ],
+        "remote_diff": [
+            op_removerange(1, 1),
+            op_addrange(1, ["right"]),
         ]
-    expected_rco = [
-        op_removerange(1, 1),
-        op_addrange(1, ["right"]),
-        ]
-    expected_lco = []
-    expected_rco = []
-    _check(base, local, remote, expected_partial, expected_lco, expected_rco)
+    }]
+    _check(base, local, remote, expected_partial, expected_conflicts)
 
     # Trying to induce conflicts with shifting of diff indices
     source = [
@@ -429,17 +431,18 @@ def test_merge_conflicts_get_diff_indices_shifted():
     expected_partial = [["different"],
                         source + ["long line with minor change"],
                         ["different"]]
-    expected_lco = [
-        op_removerange(1, 1),
-        op_addrange(1, ["left"]),
+    expected_conflicts = [{
+        "common_path": (),
+        "local_diff": [
+            op_removerange(1, 1),
+            op_addrange(1, ["left"]),
+        ],
+        "remote_diff": [
+            op_removerange(1, 1),
+            op_addrange(1, ["right"]),
         ]
-    expected_rco = [
-        op_removerange(1, 1),
-        op_addrange(1, ["right"]),
-        ]
-    expected_lco = []
-    expected_rco = []
-    _check(base, local, remote, expected_partial, expected_lco, expected_rco)
+    }]
+    _check(base, local, remote, expected_partial, expected_conflicts)
 
 
 @pytest.mark.xfail
@@ -482,11 +485,14 @@ def bar(y):
 """
     else:
         expected_partial = base
-        expected_lco = [op_patch("cells", [op_addrange(
-            0, [nbformat.v4.new_code_cell(local)]), op_removerange(0, 1)])]
-        expected_rco = [op_patch("cells", [op_addrange(
-            0, [nbformat.v4.new_code_cell(remote)]), op_removerange(0, 1)])]
-    _check(base, local, remote, expected_partial, expected_lco, expected_rco)
+        expected_conflicts = [{
+            "common_path": ("cells",),
+            "local_diff": [op_patch("cells", [op_addrange(0, [
+                nbformat.v4.new_code_cell(local)]), op_removerange(0, 1)])],
+            "remote_diff": [op_patch("cells", [op_addrange(0, [
+                nbformat.v4.new_code_cell(remote)]), op_removerange(0, 1)])]
+        }]
+    _check(base, local, remote, expected_partial, expected_conflicts)
 
     # Keep it failing
     assert False

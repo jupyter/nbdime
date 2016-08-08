@@ -14,7 +14,7 @@ from ..patching import patch
 from .chunks import make_merge_chunks
 from ..utils import split_path, join_path
 from .decisions import (pop_patch_decision, push_patch_decision, MergeDecision,
-                        pop_all_patch_decisions)
+                        pop_all_patch_decisions, _sort_key)
 
 
 # FIXME: Move to utils
@@ -143,22 +143,6 @@ def make_inline_source_value(base, le, re):  # FIXME: Test this!
     return e
 
 
-def make_cleared_value(value):
-    "Make a new 'cleared' value of the right type."
-    if isinstance(value, list):
-        # Clearing e.g. an outputs list means setting it to an empty list
-        return []
-    elif isinstance(value, dict):
-        # Clearing e.g. a metadata dict means setting it to an empty dict
-        return {}
-    elif isinstance(value, string_types):
-        # Clearing e.g. a source string means setting it to an empty string
-        return ""
-    else:
-        # Clearing anything else (atomic values) means setting it to None
-        return None
-
-
 def is_diff_all_transients(diff, path, transients):
     # Resolve diff paths and check them vs transients list
     for d in diff:
@@ -187,6 +171,9 @@ def strategy2action_dict(local_base, le, re, strategy, path, dec):
     # ... cases ignoring changes
     if strategy == "clear":
         dec.action = "clear"
+        dec.conflict = False
+    elif strategy == "clear-parent":
+        dec.action = "clear_parent"
         dec.conflict = False
     elif strategy == "use-base":
         dec.action = "base"
@@ -324,10 +311,7 @@ def autoresolve_decision_on_list(dec, base, sub, strategies):
             # Patch conflicts have been processed, split off inserts if present
             # and insert before patch:
             if linserts or rinserts:
-                import pdb
-                pdb.set_trace()
-                print("Is this handled correctly for all cases?")
-                conflict = (bool(linserts) == bool(rinserts)) or dec.conflict
+                conflict = (bool(linserts) == bool(rinserts))
                 decs.insert(0, MergeDecision(
                     common_path=dec.common_path,
                     action="local_then_remote",  # Will this suffice?
@@ -474,4 +458,4 @@ def autoresolve_decisions(base, decisions, strategies):
             newdecisions.extend(autoresolve_decision(base, dec, strategies))
         else:
             newdecisions.append(dec)
-    return newdecisions
+    return sorted(newdecisions, key=_sort_key, reverse=True)

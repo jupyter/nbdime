@@ -68,7 +68,6 @@ def test_autoresolve_fail():
 def test_autoresolve_clear():
     """Check strategy "clear" in various cases."""
 
-    strategies = {"/foo": "clear"}
     base2 = {"foo": [1, 2]}
     local2 = {"foo": [1, 4, 2]}
     remote2 = {"foo": [1, 3, 2]}
@@ -76,9 +75,15 @@ def test_autoresolve_clear():
     assert apply_decisions(base2, decisions) == {"foo": [1, 2]}
     assert decisions[0].local_diff != []
     assert decisions[0].remote_diff != []
-    decisions = autoresolve_decisions(base2, decisions, strategies)
-    assert apply_decisions(base2, decisions) == {"foo": []}
-    assert not any([d.conflict for d in decisions])
+    strategies = {"/foo": "clear-parent"}
+    resolved = autoresolve_decisions(base2, decisions, strategies)
+    assert apply_decisions(base2, resolved) == {"foo": []}
+    assert not any([d.conflict for d in resolved])
+
+    strategies = {"/foo": "clear"}
+    resolved = autoresolve_decisions(base2, decisions, strategies)
+    assert apply_decisions(base2, resolved) == {"foo": [1, None]}
+    assert not any([d.conflict for d in resolved])
 
 
 def test_autoresolve_use_one_side():
@@ -134,5 +139,7 @@ def test_autoresolve_notebook_ec():
         "source": source, "execution_count": 3, "cell_type": "code",
         "outputs": None}]}
     merged, decisions = merge_notebooks(base, local, remote, args)
-    assert merged == {"cells": [{"source": source, "execution_count": None}]}
+    assert merged == {"cells": [{
+        "source": source, "execution_count": None, "outputs": None,
+        "cell_type": "code"}]}
     assert not any(d.conflict for d in decisions)

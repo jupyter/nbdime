@@ -10,7 +10,7 @@ import copy
 
 from ..diffing import diff
 from ..diff_format import (DiffOp, as_dict_based_diff, op_removerange,
-                           op_remove, op_patch)
+                           op_remove, op_patch, op_replace)
 from .chunks import make_merge_chunks
 from ..patching import patch
 from ..utils import split_path, join_path
@@ -50,8 +50,8 @@ class MergeDecisionBuilder(object):
     def validated(self):
         return sorted(self.decisions, key=_sort_key, reverse=True)
 
-    def add_decision(self, path, conflict, action,
-                     local_diff, remote_diff, custom_diff=None):
+    def add_decision(self, path, action, local_diff, remote_diff,
+                     conflict=False, **kwargs):
         if local_diff is not None:
             if isinstance(local_diff, tuple):
                 local_diff = list(local_diff)
@@ -62,6 +62,7 @@ class MergeDecisionBuilder(object):
                 remote_diff = list(remote_diff)
             elif not isinstance(remote_diff, list):
                 remote_diff = [remote_diff]
+        custom_diff = kwargs.pop("custom_diff", None)
         if custom_diff is not None:
             if isinstance(custom_diff, tuple):
                 custom_diff = list(custom_diff)
@@ -69,19 +70,21 @@ class MergeDecisionBuilder(object):
                 custom_diff = [custom_diff]
         path, (local_diff, remote_diff, custom_diff) = \
             ensure_common_path(path, [local_diff, remote_diff, custom_diff])
+        if custom_diff is not None:
+            kwargs["custom_diff"] = custom_diff
+
         self.decisions.append(MergeDecision(
             common_path=path,
             conflict=conflict,
             action=action,
-            custom_diff=custom_diff,
             local_diff=local_diff,
             remote_diff=remote_diff,
+            **kwargs
             ))
 
     def keep(self, path, key, local_diff, remote_diff):
         self.add_decision(
             path=path,
-            conflict=False,
             action="base",
             local_diff=local_diff,
             remote_diff=remote_diff
@@ -99,7 +102,6 @@ class MergeDecisionBuilder(object):
             action = "remote"
         self.add_decision(
             path=path,
-            conflict=False,
             action=action,
             local_diff=local_diff,
             remote_diff=remote_diff,
@@ -126,7 +128,6 @@ class MergeDecisionBuilder(object):
         assert local_diff == remote_diff
         self.add_decision(
             path=path,
-            conflict=False,
             action="either",
             local_diff=local_diff,
             remote_diff=remote_diff,
@@ -262,6 +263,22 @@ SOFTWARE.
     return ret
 
 
+def make_cleared_value(value):
+    "Make a new 'cleared' value of the right type."
+    if isinstance(value, list):
+        # Clearing e.g. an outputs list means setting it to an empty list
+        return []
+    elif isinstance(value, dict):
+        # Clearing e.g. a metadata dict means setting it to an empty dict
+        return {}
+    elif isinstance(value, string_types):
+        # Clearing e.g. a source string means setting it to an empty string
+        return ""
+    else:
+        # Clearing anything else (atomic values) means setting it to None
+        return None
+
+
 # =============================================================================
 #
 # Decision-making code follows
@@ -269,11 +286,9 @@ SOFTWARE.
 # =============================================================================
 
 
-def _merge_dicts(base, local, remote, local_diff, remote_diff, path,
-                 decisions):
+def _merge_dicts(base, local_diff, remote_diff, path, decisions):
     """Perform a three-way merge of dicts. See docstring of merge."""
-    assert (isinstance(base, dict) and isinstance(local, dict) and
-            isinstance(remote, dict))
+    assert isinstance(base, dict)
 
     # Converting to dict-based diff format for dicts for convenience
     # This step will be unnecessary if we change the diff format to work this
@@ -315,8 +330,6 @@ def _merge_dicts(base, local, remote, local_diff, remote_diff, path,
 
         # Get values (using Missing as a sentinel to allow None as a value)
         bv = base.get(key, Missing)
-        lv = local.get(key, Missing)
-        rv = remote.get(key, Missing)
 
         # Switch on diff ops
         lop = ld.op
@@ -330,7 +343,7 @@ def _merge_dicts(base, local, remote, local_diff, remote_diff, path,
             # (4) Removed in both local and remote, just don't add it to merge
             #     result
             decisions.agreement(path, key, ld, rd)
-        elif lop in (DiffOp.ADD, DiffOp.REPLACE, DiffOp.PATCH) and lv == rv:
+        elif lop in (DiffOp.ADD, DiffOp.REPLACE, DiffOp.PATCH) and ld == rd:
             # If inserting/replacing/patching produces the same value, just use
             # it
             decisions.agreement(path, key, ld, rd)
@@ -362,17 +375,17 @@ def _merge_dicts(base, local, remote, local_diff, remote_diff, path,
             # Patches produce different values, try merging the substructures
             # (a patch command only occurs when the type is a collection, so we
             # can safely recurse here and know we won't encounter e.g. an int)
-            _merge(bv, lv, rv, ld.diff, rd.diff,
-                   join_path(path, key), decisions)
+            _merge(bv, ld.diff, rd.diff, path + (key,), decisions)
         else:
             raise ValueError("Invalid diff ops {} and {}.".format(lop, rop))
 
 
-def _merge_lists(base, local, remote, local_diff, remote_diff, path, decisions):
+def _merge_lists(base, local_diff, remote_diff, path, decisions):
     """Perform a three-way merge of lists. See docstring of merge."""
-    assert isinstance(base, list) and isinstance(local, list) and isinstance(remote, list)
+    assert isinstance(base, list)
 
-    # Split up and combine diffs into chunks [(begin, end, localdiffs, remotediffs)]
+    # Split up and combine diffs into chunks
+    # format: [(begin, end, localdiffs, remotediffs)]
     chunks = make_merge_chunks(base, local_diff, remote_diff)
 
     # Loop over chunks of base[j:k], grouping insertion at j into
@@ -421,34 +434,26 @@ def _merge_lists(base, local, remote, local_diff, remote_diff, path, decisions):
             decisions.conflict_chunk(path, j, k, d0, d1)
 
 
-def _merge_strings(base, local, remote, local_diff, remote_diff,
+def _merge_strings(base, local_diff, remote_diff,
                    path, decisions):
     """Perform a three-way merge of strings. See docstring of merge."""
-    assert (isinstance(base, string_types) and
-            isinstance(local, string_types) and
-            isinstance(remote, string_types))
+    assert isinstance(base, string_types)
 
     # Merge characters as lists
     _merge_lists(
-        list(base), list(local), list(remote),
-        local_diff, remote_diff, path, decisions)
+        list(base), local_diff, remote_diff, path, decisions)
 
 
-def _merge(base, local, remote, local_diff, remote_diff, path, decisions):
-    if not (type(base) == type(local) and type(base) == type(remote)):
-        raise ValueError(
-            "Expecting matching types, got {}, {}, and {}.".format(
-                type(base), type(local), type(remote)))
-
+def _merge(base, local_diff, remote_diff, path, decisions):
     if isinstance(base, dict):
         return _merge_dicts(
-            base, local, remote, local_diff, remote_diff, path, decisions)
+            base, local_diff, remote_diff, path, decisions)
     elif isinstance(base, list):
         return _merge_lists(
-            base, local, remote, local_diff, remote_diff, path, decisions)
+            base, local_diff, remote_diff, path, decisions)
     elif isinstance(base, string_types):
         return _merge_strings(
-            base, local, remote, local_diff, remote_diff, path, decisions)
+            base, local_diff, remote_diff, path, decisions)
     else:
         raise ValueError("Cannot handle merge of type {}.".format(type(base)))
 
@@ -458,7 +463,7 @@ def merge_with_diff(base, local, remote, local_diff, remote_diff):
     b->l and b->r."""
     path = ""
     decisions = MergeDecisionBuilder()
-    _merge(base, local, remote, local_diff, remote_diff, path,
+    _merge(base, local_diff, remote_diff, path,
            decisions)
     return decisions.validated()
 
@@ -495,10 +500,10 @@ def merge(base, local, remote):
     ## Trying to figure out problem with diff vs diff entry in recursion:
 
     merge(b, l, r) -> compute bld,brd and call _merge
-    _merge(b, l, r, bld, brd) -> switch on type of b,l,r
-    merge_dicts(b, l, r, bld, brd)
-    merge_lists(b, l, r, bld, brd)
-    merge_strings(b, l, r, bld, brd)
+    _merge(b, bld, brd) -> switch on type of b,l,r
+    _merge_dicts(b, bld, brd)
+    _merge_lists(b, bld, brd)
+    _merge_strings(b, bld, brd)
 
     Case: b,l,r are dicts, bld,brd are dict diffs, keys of bld,brd correspond to keys in b,l,r.
     Case: b,l,r are lists, bld,brd are list diffs, indices in bld,brd entries correspond to indices in b(,l,r).
