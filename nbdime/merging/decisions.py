@@ -361,23 +361,9 @@ def _merge_dicts(base, local_diff, remote_diff, path, decisions):
             decisions.agreement(path, key, ld, rd)
         elif lop == DiffOp.ADD:
             # (6) Insert in both local and remote, values are different
+            # This can possibly be resolved by recursion, but leave that to
+            # autoresolve
             decisions.conflict(path, key, ld, rd)
-            # # Try partially merging the inserted values
-            # if type(lv) == type(rv) and isinstance(lv, collection_types):
-            #     # Use empty collection of the right type as base
-            #     me, lco, rco = merge(type(lv)(), lv, rv)
-            #     # Insert partially merged result
-            #     merged[key] = me
-            #     # And add patch entries for the conflicting parts
-            #     if lco or rco:
-            #         assert lco and rco
-            #         local_conflict_diff.patch(key, lco)
-            #         remote_conflict_diff.patch(key, rco)
-            # else:
-            #     # Recursive merge not possible, record conflicting adds (no
-            #     # base value)
-            #     local_conflict_diff.append(ld)
-            #     remote_conflict_diff.append(rd)
         elif lop == DiffOp.REPLACE:
             # (7) Replace in both local and remote, values are different,
             #     record a conflict against original base value
@@ -476,7 +462,7 @@ def _merge(base, local_diff, remote_diff, path, decisions):
         raise ValueError("Cannot handle merge of type {}.".format(type(base)))
 
 
-def merge_with_diff(base, local, remote, local_diff, remote_diff):
+def decide_merge_with_diff(base, local, remote, local_diff, remote_diff):
     """Do a three-way merge of same-type collections b, l, r with given diffs
     b->l and b->r."""
     path = ()
@@ -486,7 +472,7 @@ def merge_with_diff(base, local, remote, local_diff, remote_diff):
     return decisions.validated()
 
 
-def merge(base, local, remote):
+def decide_merge(base, local, remote):
     """Do a three-way merge of same-type collections b, l, r.
 
     Terminology:
@@ -517,7 +503,7 @@ def merge(base, local, remote):
 
     ## Trying to figure out problem with diff vs diff entry in recursion:
 
-    merge(b, l, r) -> compute bld,brd and call _merge
+    decide_merge(b, l, r) -> compute bld,brd and call _merge
     _merge(b, bld, brd) -> switch on type of b,l,r
     _merge_dicts(b, bld, brd)
     _merge_lists(b, bld, brd)
@@ -595,7 +581,7 @@ def merge(base, local, remote):
     """
     local_diff = diff(base, local)
     remote_diff = diff(base, remote)
-    return merge_with_diff(base, local, remote, local_diff, remote_diff)
+    return decide_merge_with_diff(base, local, remote, local_diff, remote_diff)
 
 
 # =============================================================================

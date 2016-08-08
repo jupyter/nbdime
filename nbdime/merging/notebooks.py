@@ -5,7 +5,7 @@
 
 from __future__ import unicode_literals
 
-from .decisions import merge_with_diff, apply_decisions
+from .decisions import decide_merge_with_diff, apply_decisions
 from .autoresolve import autoresolve
 #from ..patching import patch
 from ..diffing.notebooks import diff_notebooks
@@ -88,7 +88,8 @@ def decide_notebook_merge(base, local, remote, args=None):
     remote_diffs = diff_notebooks(base, remote)
 
     # Execute a generic merge operation
-    decisions = merge_with_diff(base, local, remote, local_diffs, remote_diffs)
+    decisions = decide_merge_with_diff(
+        base, local, remote, local_diffs, remote_diffs)
 
     # Try to resolve conflicts based on behavioural options
     decisions = autoresolve_notebook_conflicts(base, decisions, args)

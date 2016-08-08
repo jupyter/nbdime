@@ -5,7 +5,7 @@
 
 from __future__ import unicode_literals
 
-from .generic import merge
+from .decisions import decide_merge, apply_decisions
 from .notebooks import merge_notebooks
 
-__all__ = ["merge", "merge_notebooks"]
+__all__ = ["decide_merge", "merge_notebooks"]

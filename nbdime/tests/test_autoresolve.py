@@ -9,7 +9,7 @@ import colorama
 import pytest
 
 from nbdime import merge_notebooks
-from nbdime.merging.decisions import merge, apply_decisions
+from nbdime.merging.decisions import decide_merge, apply_decisions
 from nbdime.merging.autoresolve import autoresolve
 
 
@@ -44,7 +44,7 @@ def xtest_autoresolve_join():
 base = {"foo": 1}
 local = {"foo": 2}
 remote = {"foo": 3}
-conflicted_decisions = merge(base, local, remote)
+conflicted_decisions = decide_merge(base, local, remote)
 
 
 def test_autoresolve_fail():
@@ -57,7 +57,7 @@ def test_autoresolve_fail():
     local2 = {"foo": {"bar": 2}}
     remote2 = {"foo": {"bar": 3}}
     strategies = {"/foo/bar": "fail"}
-    decisions = merge(base2, local2, remote2)
+    decisions = decide_merge(base2, local2, remote2)
     with pytest.raises(RuntimeError):
         autoresolve(base2, decisions, strategies)
     strategies = {"/foo": "fail"}
@@ -71,7 +71,7 @@ def test_autoresolve_clear():
     base2 = {"foo": [1, 2]}
     local2 = {"foo": [1, 4, 2]}
     remote2 = {"foo": [1, 3, 2]}
-    decisions = merge(base2, local2, remote2)
+    decisions = decide_merge(base2, local2, remote2)
     assert apply_decisions(base2, decisions) == {"foo": [1, 2]}
     assert decisions[0].local_diff != []
     assert decisions[0].remote_diff != []
@@ -105,7 +105,7 @@ def test_autoresolve_use_one_side():
     base2 = {"foo": {"bar": 1}}
     local2 = {"foo": {"bar": 2}}
     remote2 = {"foo": {"bar": 3}}
-    conflicted_decisions2 = merge(base2, local2, remote2)
+    conflicted_decisions2 = decide_merge(base2, local2, remote2)
 
     strategies = {"/foo/bar": "use-base"}
     decisions = autoresolve(base2, conflicted_decisions2, strategies)
