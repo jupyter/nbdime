@@ -13,7 +13,6 @@ from ..diff_format import (DiffOp, as_dict_based_diff, op_removerange,
                            op_remove, op_patch, op_replace)
 from .chunks import make_merge_chunks
 from ..patching import patch
-from ..utils import split_path, join_path
 
 
 # Set to true to enable some expensive debugging assertions
@@ -34,6 +33,7 @@ class MergeDecision(dict):
     with a namedtuple during processing of diffs and convert
     to dicts before any json conversions.
     """
+
     def __getattr__(self, name):
         if name.startswith("__") and name.endswith("__"):
             return self.__getattribute__(name)
@@ -52,6 +52,10 @@ class MergeDecisionBuilder(object):
 
     def add_decision(self, path, action, local_diff, remote_diff,
                      conflict=False, **kwargs):
+        if isinstance(path, list):
+            path = tuple(path)
+        else:
+            assert isinstance(path, tuple)
         if local_diff is not None:
             if isinstance(local_diff, tuple):
                 local_diff = list(local_diff)
@@ -153,9 +157,10 @@ class MergeDecisionBuilder(object):
 
 
 def ensure_common_path(path, diffs):
+    assert isinstance(path, (tuple, list))
     popped = _pop_path(diffs)
     while popped:
-        path = join_path(path, popped["key"])
+        path = path + (popped["key"],)
         diffs = popped["diffs"]
         popped = _pop_path(diffs)
     return path, diffs
@@ -183,7 +188,7 @@ def _pop_path(diffs):
         popped_diffs.append(d[0].diff)
     if key is None:
         return
-    return {'key': str(key), 'diffs': popped_diffs}
+    return {'key': key, 'diffs': popped_diffs}
 
 
 def pop_patch_decision(decision):
@@ -194,7 +199,7 @@ def pop_patch_decision(decision):
     if popped is None:
         raise ValueError("Cannot pop patch decision for: " + str(decision))
     ret = MergeDecision(
-        common_path=join_path(decision.common_path, popped["key"]),
+        common_path=decision.common_path + (popped["key"],),
         local_diff=popped["diffs"][0],
         remote_diff=popped["diffs"][1],
         action=decision.action,
@@ -215,11 +220,19 @@ def pop_all_patch_decisions(decision):
 
 
 def push_patch_decision(decision, prefix):
+    """Move a path prefix in a merge decision from `common_path` to the diffs.
+
+    This is done by wrapping the diffs in nested patch ops.
+    """
     dec = copy.copy(decision)
-    for key in reversed(split_path(prefix)):
-        idx = dec.common_path.rindex("/")
-        assert dec.common_path[idx+1:] == key
-        dec.common_path = "/" if idx == 0 else dec.common_path[:idx]
+    # We need to start with inner most key to nest correctly, so reverse:
+    for key in reversed(prefix):
+        if len(dec.common_path) == 0:
+            raise ValueError(
+                "Cannot remove key from empty decision path: %s, %s" %
+                (key, dec))
+        assert dec.common_path[-1] == key
+        dec.common_path = dec.common_path[:-1]  # pop key
         dec.local_diff = [op_patch(key, dec.local_diff)]
         dec.remote_diff = [op_patch(key, dec.remote_diff)]
         if dec.action == "custom":
@@ -253,10 +266,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
-    subs = split_path(k.common_path)
     ret = []
-    for s in subs:
-        if s.isnumeric():
+    for s in k.common_path:
+        if isinstance(s, string_types) and s.isnumeric() or isinstance(s, int):
             ret.append(('', -int(s)))
         else:
             ret.append((s,))
@@ -425,7 +437,13 @@ def _merge_lists(base, local_diff, remote_diff, path, decisions):
         #     if (all(e.op == DiffOp.ADDRANGE for e in d0) and
         #         all(e.op == DiffOp.ADDRANGE for e in d1)):
         #         merged.extend(base[j:k])
-
+        elif (len(d0) == len(d1) == 1 and
+                d0[0].op == d1[0].op == DiffOp.PATCH and
+                d0[0].key == d1[0].key):
+            key = d0[0].key
+            bv = base[key]
+            _merge(bv, d0[0].diff, d1[0].diff,
+                   path + (key,), decisions)
         else:
             # Two-sided modification, i.e. a conflict.
             # It's possible that something more clever can be done here to reduce
@@ -461,7 +479,7 @@ def _merge(base, local_diff, remote_diff, path, decisions):
 def merge_with_diff(base, local, remote, local_diff, remote_diff):
     """Do a three-way merge of same-type collections b, l, r with given diffs
     b->l and b->r."""
-    path = ""
+    path = ()
     decisions = MergeDecisionBuilder()
     _merge(base, local_diff, remote_diff, path,
            decisions)
@@ -601,6 +619,14 @@ def resolve_action(base, decision):
     elif a == "remote_then_local":
         return decision.remote_diff + decision.local_diff
     elif a == "clear":
+        key = None
+        for d in decision.local_diff + decision.remote_diff:
+            if key:
+                assert key == d.key
+            else:
+                key = d.key
+        return [op_replace(key, make_cleared_value(base[key]))]
+    elif a == "clear_parent":
         if isinstance(base, dict):
             # Ideally we would do a op_replace on the parent, but this is not
             # easily combined with this method, so simply remove all keys
@@ -637,7 +663,7 @@ def apply_decisions(base, decisions):
             resolved = merged
             parent = None
             last_key = None
-            for key in split_path(path):
+            for key in path:
                 parent = resolved
                 if isinstance(resolved, list):
                     key = int(key)

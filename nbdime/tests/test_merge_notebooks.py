@@ -321,7 +321,7 @@ def test_merge_insert_cells_around_conflicting_cell():
         # resulted in conflicts:
         expected_partial = [local[0], source, remote[1]]
         expected_conflicts = [{
-            "common_path": ("cells", "0", "source"),
+            "common_path": ("cells", 0, "source"),
             "local_diff": [op_addrange(len("".join(source)), "local\n")],
             "remote_diff": [op_addrange(len("".join(source)), "remote\n")]
         }]

@@ -12,7 +12,7 @@ import copy
 from ..diff_format import DiffOp, op_replace
 from ..patching import patch
 from .chunks import make_merge_chunks
-from ..utils import split_path, join_path
+from ..utils import join_path
 from .decisions import (pop_patch_decision, push_patch_decision, MergeDecision,
                         pop_all_patch_decisions, _sort_key)
 
@@ -146,7 +146,8 @@ def make_inline_source_value(base, le, re):  # FIXME: Test this!
 def is_diff_all_transients(diff, path, transients):
     # Resolve diff paths and check them vs transients list
     for d in diff:
-        subpath = join_path(path, d.key)
+        # Convert to string to search transients:
+        subpath = join_path(path + (d.key,))
         if d.op == DiffOp.PATCH:
             # Recurse
             if not is_diff_all_transients(d.diff, subpath, transients):
@@ -273,7 +274,7 @@ def autoresolve_decision_on_list(dec, base, sub, strategies):
     rd = dec.remote_diff
 
     # Query how to handle conflicts in this part of the document
-    strategy = strategies.get(join_path(dec.common_path, '*'))
+    strategy = strategies.get(join_path(dec.common_path + ('*',)))
 
     # Cutting off handling of strategies of subitems if there's a strategy for these list items
     if strategy:
@@ -332,7 +333,8 @@ def autoresolve_decision_on_list(dec, base, sub, strategies):
             # Only action that can be taken is to check whether the patches are
             # all transients, and if so, take the deletion
             for p in (lpatches or rpatches):
-                subpath = join_path(dec.common_path, p.key)
+                # Convert to string to search transients
+                subpath = join_path(dec.common_path + (p.key,))
                 if not is_diff_all_transients(p.diff, subpath,
                                               strategies.transients):
                     # Cannot be auto resolved
@@ -368,7 +370,7 @@ def autoresolve_decision_on_dict(dec, base, sub, strategies):
 
     # Query how to handle conflicts in this part of the document
     key = ld[0].key
-    subpath = join_path(dec.common_path, key)
+    subpath = join_path(dec.common_path + (key,))
     strategy = strategies.get(subpath)
 
     # Get value and conflicts
@@ -419,19 +421,16 @@ def autoresolve_decision(base, dec, strategies):
     # Get object in base that common_path points to, but short-circuit if a
     # strategy is encountered while traversing common_path
     sub = base
-    subpath = "/"
-    for key in split_path(dec.common_path):
-        prev_path = subpath
-        subpath = join_path(subpath, key)
-        strategy = strategies.get(subpath)
+    subpath = ()
+    for key in dec.common_path:
+        subpath = subpath + (key,)
+        strategy = strategies.get(join_path(subpath))
         if strategy is not None:
             # Strategy found for intermediate path
             # Bring decision up to same level as strategy:
             dec = push_patch_decision(
-                dec, dec.common_path.replace(prev_path, ""))
+                dec, dec.common_path[:len(subpath)])
             break
-        if key.isnumeric():
-            key = int(key)
         sub = sub[key]
 
     if isinstance(sub, dict):

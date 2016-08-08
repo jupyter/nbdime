@@ -132,7 +132,7 @@ def test_apply_merge_on_dicts():
     bld = diff(base, local)
     brd = diff(base, remote)
 
-    path, (bld, brd) = ensure_common_path("", [bld, brd])
+    path, (bld, brd) = ensure_common_path((), [bld, brd])
 
     merge_decisions = [
         create_decision_item(

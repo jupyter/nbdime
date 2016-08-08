@@ -5,10 +5,11 @@
 
 from __future__ import unicode_literals
 
-from .decisions import merge_with_diff, apply_decisions, split_path
+from .decisions import merge_with_diff, apply_decisions
 from .autoresolve_decisions import autoresolve_decisions
 #from ..patching import patch
 from ..diffing.notebooks import diff_notebooks
+from ..utils import split_path, join_path
 
 
 # Strategies for handling conflicts  TODO: Implement these and refine further!
@@ -38,9 +39,9 @@ class Strategies(dict):
         parts = split_path(k)
         if len(parts) > 1:
             for i, p in enumerate(parts):
-                if p.isnumeric():
+                if isinstance(p, int) or p.isnumeric():
                     parts[i] = '*'
-            key = "/" + "/".join(parts)
+            key = join_path(parts)
         else:
             key = k
         return super(Strategies, self).get(key, d)
