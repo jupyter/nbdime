@@ -634,16 +634,38 @@ def apply_decisions(base, decisions):
     last_key = None
     resolved = None
     diffs = None
+    # clear_parent actions should override other decisions on same obj, so
+    # we need to track it
+    clear_parent_flag = False
     for md in decisions:
         path = md.common_path
+        # We patch all decisions with the same path in one op
         if path == prev_path:
-            diffs.extend(resolve_action(resolved, md))
+            # Same path as previous, collect entry
+            if clear_parent_flag:
+                # Another entry will clear the parent, all other decisions
+                # should be dropped
+                pass
+            else:
+                if md.action == "clear_parent":
+                    clear_parent_flag = True
+                    # Clear any exisiting decsions!
+                    diffs = []
+                diffs.extend(resolve_action(resolved, md))
+
         else:
+            # Different path, start a new collection
             if prev_path is not None:
+                # First, apply previous diffs
                 if parent is None:
+                    # Operations on root create new merged object
                     merged = patch(resolved, diffs)
                 else:
+                    # If not, overwrite entry in parent (which is an entry in
+                    # merged). This is ok, as no paths should point to
+                    # subobjects of the patched object
                     parent[last_key] = patch(resolved, diffs)
+
             prev_path = path
             # Resolve path in base and output
             resolved = merged
@@ -656,6 +678,8 @@ def apply_decisions(base, decisions):
                 resolved = resolved[key]   # Should raise if key missing
                 last_key = key
             diffs = resolve_action(resolved, md)
+            clear_parent_flag = md.action == "clear_parent"
+    # Apply the last collection of diffs, if present (same as above)
     if prev_path is not None:
         if parent is None:
             merged = patch(resolved, diffs)
