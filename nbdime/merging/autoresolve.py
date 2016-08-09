@@ -257,10 +257,11 @@ def strategy2action_list(strategy, dec):
     elif strategy == "clear":
         dec.action = "clear"
         dec.conflict = False
+    elif strategy == "clear-parent":
+        dec.action = "clear_parent"
+        dec.conflict = False
     elif strategy == "fail":
         raise RuntimeError("Not expecting a conflict at path {}.".format(dec.common_path + '/*'))
-    elif strategy == "inline":
-        raise NotImplementedError()
     else:
         raise RuntimeError("Not expecting strategy {} for list items at path {}.".format(strategy, dec.common_path))
 
@@ -422,6 +423,7 @@ def autoresolve_decision(base, dec, strategies):
     # strategy is encountered while traversing common_path
     sub = base
     subpath = ()
+
     for key in dec.common_path:
         subpath = subpath + (key,)
         strategy = strategies.get(join_path(subpath))
