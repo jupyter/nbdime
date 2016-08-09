@@ -10,7 +10,8 @@ from argparse import ArgumentParser
 from six import string_types
 from tornado import ioloop, web, escape
 import nbformat
-import nbdime.merging.notebooks import decide_notebook_merge
+import nbdime
+from nbdime.merging.notebooks import decide_notebook_merge
 
 
 # TODO: See <notebook>/notebook/services/contents/handlers.py for possibly useful utilities:
