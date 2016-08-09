@@ -257,6 +257,9 @@ def strategy2action_list(strategy, dec):
     elif strategy == "clear":
         dec.action = "clear"
         dec.conflict = False
+    elif strategy == "mergetool":
+        # Leave this type of conflict for external tool to resolve
+        pass
     elif strategy == "clear-parent":
         dec.action = "clear_parent"
         dec.conflict = False
