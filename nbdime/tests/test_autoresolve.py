@@ -5,15 +5,12 @@
 
 from __future__ import unicode_literals
 
-import colorama
 import pytest
 
 from nbdime import merge_notebooks
 from nbdime.merging.decisions import decide_merge, apply_decisions
 from nbdime.merging.autoresolve import autoresolve
 
-
-colorama.init()
 
 # FIXME: Extend tests to more merge situations!
 
@@ -47,7 +44,7 @@ remote = {"foo": 3}
 conflicted_decisions = decide_merge(base, local, remote)
 
 
-def test_autoresolve_fail():
+def test_autoresolve_dict_fail():
     """Check that "fail" strategy results in proper exception raised."""
     strategies = {"/foo": "fail"}
     with pytest.raises(RuntimeError):
@@ -65,7 +62,7 @@ def test_autoresolve_fail():
         autoresolve(base2, decisions, strategies)
 
 
-def test_autoresolve_clear():
+def test_autoresolve_dict_clear():
     """Check strategy "clear" in various cases."""
 
     base2 = {"foo": [1, 2]}
@@ -86,7 +83,7 @@ def test_autoresolve_clear():
     assert not any([d.conflict for d in resolved])
 
 
-def test_autoresolve_use_one_side():
+def test_autoresolve_dict_use_one_side():
     strategies = {"/foo": "use-base"}
     decisions = autoresolve(base, conflicted_decisions, strategies)
     assert not any([d.conflict for d in decisions])
@@ -121,6 +118,121 @@ def test_autoresolve_use_one_side():
     decisions = autoresolve(base2, conflicted_decisions2, strategies)
     assert not any([d.conflict for d in decisions])
     assert apply_decisions(base2, decisions) == {"foo": {"bar": 3}}
+
+
+def test_autoresolve_list_conflicting_insertions_simple():
+    # local and remote adds an entry each
+    b = [1]
+    l = [1, 2]
+    r = [1, 3]
+    decisions = decide_merge(b, l, r)
+
+    strategies = {"/*": "use-local"}
+    resolved = autoresolve(b, decisions, strategies)
+    assert apply_decisions(b, resolved) == l
+    assert not any(d.conflict for d in resolved)
+
+    strategies = {"/*": "use-remote"}
+    resolved = autoresolve(b, decisions, strategies)
+    assert apply_decisions(b, resolved) == r
+    assert not any(d.conflict for d in resolved)
+
+    strategies = {"/*": "use-base"}
+    resolved = autoresolve(b, decisions, strategies)
+    assert apply_decisions(b, resolved) == b
+    assert not any(d.conflict for d in resolved)
+
+    strategies = {"/*": "join"}
+    resolved = autoresolve(b, decisions, strategies)
+    assert apply_decisions(b, resolved) == [1, 2, 3]
+    assert not any(d.conflict for d in resolved)
+
+    strategies = {"/*": "clear-parent"}
+    resolved = autoresolve(b, decisions, strategies)
+    assert apply_decisions(b, resolved) == []
+    assert not any(d.conflict for d in resolved)
+
+
+def test_autoresolve_list_conflicting_insertions_mixed():
+    # local and remote adds an equal entry plus a different entry each
+    # First, test when insertions DO NOT chunk together:
+    b = [1, 9]
+    l = [1, 2, 9, 11]
+    r = [1, 3, 9, 11]
+    decisions = decide_merge(b, l, r)
+
+    # Check strategyless resolution
+    strategies = {}
+    resolved = autoresolve(b, decisions, strategies)
+    expected_partial = [1, 9, 11]
+    assert apply_decisions(b, resolved) == expected_partial
+    assert len(resolved) == 2
+    assert resolved[0].conflict
+    assert not resolved[1].conflict
+
+    strategies = {"/*": "use-local"}
+    resolved = autoresolve(b, decisions, strategies)
+    assert apply_decisions(b, resolved) == l
+    assert not any(d.conflict for d in resolved)
+
+    strategies = {"/*": "use-remote"}
+    resolved = autoresolve(b, decisions, strategies)
+    assert apply_decisions(b, resolved) == r
+    assert not any(d.conflict for d in resolved)
+
+    strategies = {"/*": "use-base"}
+    resolved = autoresolve(b, decisions, strategies)
+    # Strategy is only applied to conflicted decisions:
+    assert apply_decisions(b, resolved) == expected_partial
+    assert not any(d.conflict for d in resolved)
+
+    strategies = {"/*": "join"}
+    resolved = autoresolve(b, decisions, strategies)
+    assert apply_decisions(b, resolved) == [1, 2, 3, 9, 11]
+    assert not any(d.conflict for d in resolved)
+
+    strategies = {"/*": "clear-parent"}
+    resolved = autoresolve(b, decisions, strategies)
+    assert apply_decisions(b, resolved) == []
+    assert not any(d.conflict for d in resolved)
+
+    # Next, test when insertions DO chunk together:
+    b = [1, 9]
+    l = [1, 2, 7, 9]
+    r = [1, 3, 7, 9]
+    decisions = decide_merge(b, l, r)
+
+    # Check strategyless resolution
+    strategies = {}
+    resolved = autoresolve(b, decisions, strategies)
+    assert apply_decisions(b, resolved) == b
+    assert resolved == decisions  # Not able to resolve anything
+
+    strategies = {"/*": "use-local"}
+    resolved = autoresolve(b, decisions, strategies)
+    assert apply_decisions(b, resolved) == l
+    assert not any(d.conflict for d in resolved)
+
+    strategies = {"/*": "use-remote"}
+    resolved = autoresolve(b, decisions, strategies)
+    assert apply_decisions(b, resolved) == r
+    assert not any(d.conflict for d in resolved)
+
+    strategies = {"/*": "use-base"}
+    resolved = autoresolve(b, decisions, strategies)
+    assert apply_decisions(b, resolved) == b
+    assert not any(d.conflict for d in resolved)
+
+    strategies = {"/*": "join"}
+    resolved = autoresolve(b, decisions, strategies)
+    # FIXME: Not ideal "intuitive" resolution?
+    assert apply_decisions(b, resolved) == [1, 2, 7, 3, 7, 9]
+    assert not any(d.conflict for d in resolved)
+
+    strategies = {"/*": "clear-parent"}
+    resolved = autoresolve(b, decisions, strategies)
+    assert apply_decisions(b, resolved) == []
+    assert not any(d.conflict for d in resolved)
 
 
 def test_autoresolve_notebook_ec():
