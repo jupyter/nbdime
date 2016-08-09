@@ -272,6 +272,7 @@ def test_merge_simple_cell_sources():
     _check(base, local, remote, expected_partial, expected_conflicts)
 
 
+@pytest.mark.xfail
 def test_merge_multiline_cell_source_conflict():
     # Modifying cell on both sides interpreted as editing the original cell
     # (this is where heuristics kick in: when is a cell modified and when is
