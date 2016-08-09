@@ -147,14 +147,14 @@ def is_diff_all_transients(diff, path, transients):
     # Resolve diff paths and check them vs transients list
     for d in diff:
         # Convert to string to search transients:
-        subpath = join_path(path + (d.key,))
+        subpath = path + (d.key,)
         if d.op == DiffOp.PATCH:
             # Recurse
             if not is_diff_all_transients(d.diff, subpath, transients):
                 return False
         else:
             # Check path vs transients
-            if subpath not in transients:
+            if join_path(subpath) not in transients:
                 return False
     return True
 
@@ -289,9 +289,11 @@ def autoresolve_decision_on_list(dec, base, sub, strategies):
 
     # Loop over chunks of base[j:k], grouping insertion at j into
     # the chunk starting with j
+    decs = []
     for (j, k, d0, d1) in chunks:
         lpatches = [e for e in d0 if e.op == DiffOp.PATCH]
         rpatches = [e for e in d1 if e.op == DiffOp.PATCH]
+        i = len(decs)
         if not (d0 or d1):
             # Unmodified chunk, no-op
             pass
@@ -311,13 +313,13 @@ def autoresolve_decision_on_list(dec, base, sub, strategies):
             subdec.local_diff = lpatches
             subdec.remote_diff = rpatches
             subdec = pop_patch_decision(subdec)
-            decs = autoresolve_decision(base, subdec, strategies)
+            decs.extend(autoresolve_decision(base, subdec, strategies))
 
             # Patch conflicts have been processed, split off inserts if present
             # and insert before patch:
             if linserts or rinserts:
                 conflict = (bool(linserts) == bool(rinserts))
-                decs.insert(0, MergeDecision(
+                decs.insert(i, MergeDecision(
                     common_path=dec.common_path,
                     action="local_then_remote",  # Will this suffice?
                     conflict=conflict,
@@ -325,39 +327,43 @@ def autoresolve_decision_on_list(dec, base, sub, strategies):
                     remote_diff=rinserts,
                 ))
         elif lpatches or rpatches:
-            # One sided patch, presumably with a deletion on the other side
-            # Check assumption:
+            # One sided patch, with addition/deletions on other
+            # Check that patch side only has one op (the patch)
             if lpatches:
-                assert (lpatches == d0 and
-                        all([e.op == DiffOp.REMOVERANGE for e in d1]))
+                assert tuple(lpatches) == d0
             else:
-                assert (rpatches == d1 and
-                        all([e.op == DiffOp.REMOVERANGE for e in d0]))
+                assert tuple(rpatches) == d1
 
-            # Only action that can be taken is to check whether the patches are
-            # all transients, and if so, take the deletion
+            # Only action that can be taken is to check whether the patch ops
+            # are all transients, and if so, take the other side
             for p in (lpatches or rpatches):
                 # Convert to string to search transients
-                subpath = join_path(dec.common_path + (p.key,))
+                subpath = dec.common_path + (p.key,)
                 if not is_diff_all_transients(p.diff, subpath,
                                               strategies.transients):
                     # Cannot be auto resolved
-                    decs = [dec]
+                    subdec = copy.copy(dec)
+                    subdec.local_diff = list(d0)
+                    subdec.remote_diff = list(d1)
+                    decs.append(subdec)
                     break
             else:
                 # All patches are all transient, pick deletion:
-                dec = copy.copy(dec)
-                dec.action = "local" if rpatches else "remote"
-                dec.conflict = False
-                decs = [dec]
+                subdec = copy.copy(dec)
+                subdec.action = "local" if rpatches else "remote"
+                subdec.conflict = False
+                decs.append(subdec)
 
         else:
             # FIXME: What has happened here? This is hard to follow, enumerate cases!
             # - at least one side is modified
             # - only 0 or 1 has a patch
 
-            # Just keep input and conflicts but offset conflicts
-            decs = [dec]
+            # Just keep chunked decision
+            subdec = copy.copy(dec)
+            subdec.local_diff = list(d0)
+            subdec.remote_diff = list(d1)
+            decs.append(subdec)
 
     return decs
 
@@ -392,8 +398,8 @@ def autoresolve_decision_on_dict(dec, base, sub, strategies):
         # Check for deletion vs. purely ignoreable changes (transients)
         # If not, leave conflicted
         patchop = le if le.op == DiffOp.PATCH else re
-        if is_diff_all_transients(patchop.diff,
-                                  subpath, strategies.transients):
+        if is_diff_all_transients(patchop.diff, dec.common_path + (key,),
+                                  strategies.transients):
             # Go with deletion, and remove conflict
             dec.action = "local" if le.op == DiffOp.REMOVE else "remote"
             dec.conflict = False

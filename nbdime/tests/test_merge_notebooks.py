@@ -30,7 +30,6 @@ def test_merge_matching_notebooks(matching_nb_triplets):
     # We can't really automate a generic merge test, at least passing through code here...
 
 
-
 def test_autoresolve_notebook_ec():
     # We need a source here otherwise the cells are not aligned
     source = "def foo(x, y):\n    return x**y"
