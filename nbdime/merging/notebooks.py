@@ -50,9 +50,10 @@ class Strategies(dict):
 def autoresolve_notebook_conflicts(base, decisions, args):
     strategies = Strategies({
         "/nbformat": "fail",
-        "/nbformat_minor": "fail",
+        # "/nbformat_minor": "fail",
         "/cells/*/execution_count": "clear",
         "/cells/*/cell_type": "fail",
+        "/cells/*/outputs/*/execution_count": "clear",
         },
         transients=[
             "/cells/*/execution_count",
@@ -65,7 +66,6 @@ def autoresolve_notebook_conflicts(base, decisions, args):
         strategies.update({
             "/cells/*/source": "mergetool",
             "/cells/*/outputs": "mergetool",
-            "/cells/*/outputs/*/execution_count": "clear",
         })
     else:
         strategies.update({

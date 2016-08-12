@@ -673,8 +673,6 @@ def apply_decisions(base, decisions):
             last_key = None
             for key in path:
                 parent = resolved
-                if isinstance(resolved, list):
-                    key = int(key)
                 resolved = resolved[key]   # Should raise if key missing
                 last_key = key
             diffs = resolve_action(resolved, md)
