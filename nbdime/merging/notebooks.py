@@ -5,6 +5,8 @@
 
 from __future__ import unicode_literals
 
+import six
+
 from .decisions import decide_merge_with_diff, apply_decisions
 from .autoresolve import autoresolve
 #from ..patching import patch
@@ -39,7 +41,8 @@ class Strategies(dict):
         parts = split_path(k)
         if len(parts) > 1:
             for i, p in enumerate(parts):
-                if isinstance(p, int) or p.isnumeric():
+                p = (p if isinstance(p, six.text_type) else p.decode())
+                if p.isnumeric():
                     parts[i] = '*'
             key = join_path(parts)
         else:

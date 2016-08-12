@@ -5,7 +5,7 @@
 
 from __future__ import unicode_literals
 
-from six import string_types
+from six import string_types, text_type
 import copy
 
 from ..diffing import diff
@@ -268,7 +268,10 @@ SOFTWARE.
 """
     ret = []
     for s in k.common_path:
-        if isinstance(s, string_types) and s.isnumeric() or isinstance(s, int):
+
+        s = (s if isinstance(s, (int, text_type)) else s.decode())
+
+        if isinstance(s, text_type) and s.isnumeric() or isinstance(s, int):
             ret.append(('', -int(s)))
         else:
             ret.append((s,))
