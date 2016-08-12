@@ -595,11 +595,11 @@ def resolve_action(base, decision):
     if a == "base":
         return []   # no-op
     elif a in ("local", "either"):
-        return decision.local_diff.copy()
+        return copy.copy(decision.local_diff)
     elif a == "remote":
-        return decision.remote_diff.copy()
+        return copy.copy(decision.remote_diff)
     elif a == "custom":
-        return decision.custom_diff.copy()
+        return copy.copy(decision.custom_diff)
     elif a == "local_then_remote":
         return decision.local_diff + decision.remote_diff
     elif a == "remote_then_local":

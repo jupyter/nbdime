@@ -188,7 +188,7 @@ def _check(base, local, remote, expected_partial, expected_conflicts):
 
     assert partial == expected_partial
     conflicts = [d for d in decisions if d.conflict]
-    expected_conflicts = expected_conflicts.copy()
+    expected_conflicts = copy.copy(expected_conflicts)
     assert len(conflicts) == len(expected_conflicts)
     for e, d in zip(expected_conflicts, conflicts):
         # Only check keys specified in expectation value
