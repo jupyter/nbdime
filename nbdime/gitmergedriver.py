@@ -17,6 +17,7 @@ Use with:
 """
 
 import sys
+import os
 from subprocess import check_call, CalledProcessError
 
 from . import nbmergeapp
@@ -30,6 +31,29 @@ def enable(global_=False):
 
     check_call(cmd + ['merge.jupyternotebook.driver', 'git-nbmergedriver merge %O %A %B %L %P'])
     check_call(cmd + ['merge.jupyternotebook.name', 'jupyter notebook merge driver'])
+
+    if global_:
+        try:
+            bpath = check_output(['git', 'config', '--global', 'core.attributesfile'])
+            gitattributes = os.path.expanduser(bpath.decode('utf8', 'replace').strip())
+        except CalledProcessError:
+            gitattributes = os.path.expanduser('~/.gitattributes')
+    else:
+        # find .gitattributes in current dir
+        path = os.path.abspath('.')
+        if not os.path.exists(os.path.join(path, '.git')):
+            print("No .git directory in %s, skipping git attributes" % path, file=sys.stderr)
+            return
+        gitattributes = os.path.join(path, '.gitattributes')
+
+    if os.path.exists(gitattributes):
+        with open(gitattributes) as f:
+            if 'merge=jupyternotebook' in f.read():
+                # already written, nothing to do
+                return
+
+    with open(gitattributes, 'a') as f:
+        f.write('\n*.ipynb\tmerge=jupyternotebook\n')
 
 
 def disable(global_=False):
@@ -62,6 +86,23 @@ def main():
     merge_parser.add_argument('remote')
     merge_parser.add_argument('marker')
     merge_parser.add_argument('output', nargs='?')
+    from .merging.notebooks import generic_conflict_strategies
+    merge_parser.add_argument(
+        '-s', '--strategy',
+        choices=generic_conflict_strategies,
+        help="Specify the merge strategy to use.")
+    # merge_parser.add_argument('-m', '--merge-strategy',
+    #                     default="default", choices=("foo", "bar"),
+    #                     help="Specify the merge strategy to use.")
+    merge_parser.add_argument(
+        '-i', '--ignore-transients',
+        action="store_true",
+        default=False,
+        help="Allow automatic deletion of transient data to resolve conflicts "
+             "(output, execution count).")
+    # "The merge driver can learn the pathname in which the merged result will
+    # be stored via placeholder %P" - NOTE: This is not where the driver should
+    # store its output, see below!
 
     config = subparsers.add_parser('config',
         description="Configure git to use nbdime for notebooks in `git merge`")
@@ -79,8 +120,12 @@ def main():
     )
     opts = parser.parse_args()
     if opts.subcommand == 'merge':
+        # "The merge driver is expected to leave the result of the merge in the
+        # file named with %A by overwriting it, and exit with zero status if it
+        # managed to merge them cleanly, or non-zero if there were conflicts."
         opts.output = opts.local
-        nbmergeapp.main_merge(opts)
+        returncode = nbmergeapp.main_merge(opts)
+        sys.exit(returncode)
     elif opts.subcommand == 'config':
         opts.config_func(opts.global_)
     else:
