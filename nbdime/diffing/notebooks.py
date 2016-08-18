@@ -20,7 +20,6 @@ from ..diff_format import source_as_string, MappingDiffBuilder
 
 from .generic import (diff, diff_sequence_multilevel,
                       compare_strings_approximate)
-from .sequences import diff_strings_linewise
 
 __all__ = ["diff_notebooks"]
 
@@ -142,7 +141,8 @@ def diff_single_outputs(a, b, path="/cells/*/output/*",
     else:
         return diff(a, b)
 
-_non_split_mimes = ('text/', 'image/svg+xml', 'application/javascript')
+_split_mimes = ('text/', 'image/svg+xml', 'application/javascript')
+
 
 def diff_mime_bundle(a, b, path=None):
     di = MappingDiffBuilder()
@@ -158,8 +158,8 @@ def diff_mime_bundle(a, b, path=None):
         avalue = a[key]
         bvalue = b[key]
 
-        if key.lower().startswith(_non_split_mimes):
-            dd = diff_strings_linewise(avalue, bvalue)
+        if key.lower().startswith(_split_mimes):
+            dd = diff(avalue, bvalue)
             if dd:
                 di.patch(key, dd)
         elif avalue != bvalue:
@@ -168,13 +168,6 @@ def diff_mime_bundle(a, b, path=None):
     for key in sorted(bkeys - akeys):
         di.add(key, b[key])
     return di.validated()
-
-
-def diff_source(a, b, path, predicates, differs):
-    "DiffOp a pair of sources."
-    assert path == "/cells/*/source"
-    # TODO: Use google-diff-patch-match library to diff the sources?
-    return diff_strings_linewise(a, b)
 
 
 # Sequence diffs should be applied with multilevel
@@ -199,7 +192,6 @@ notebook_predicates = defaultdict(lambda: [operator.__eq__], {
 notebook_differs = defaultdict(lambda: diff, {
     "/cells": diff_sequence_multilevel,
     "/cells/*": diff,
-    "/cells/*/source": diff_source,
     "/cells/*/outputs": diff_sequence_multilevel,
     "/cells/*/outputs/*": diff_single_outputs,
     })

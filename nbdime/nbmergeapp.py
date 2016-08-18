@@ -6,7 +6,6 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
-import json
 import os
 import sys
 import argparse
@@ -35,15 +34,10 @@ def main_merge(args):
     l = nbformat.read(lfn, as_version=4)
     r = nbformat.read(rfn, as_version=4)
 
-    # TODO: Split lines here?
-    # b = split_lines(b)
-    # l = split_lines(l)
-    # r = split_lines(r)
-
     m, decisions = merge_notebooks(b, l, r, args)
     conflicted = [d for d in decisions if d.conflict]
 
-    returncode = -1 if conflicted else 0
+    returncode = 1 if conflicted else 0
 
     if conflicted:
         print("Conflicts occured during merge operation.")

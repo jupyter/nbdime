@@ -293,48 +293,55 @@ else:
             yield total
 
 
+_addops = (DiffOp.ADD, DiffOp.ADDRANGE)
+
+
 def _check_overlaps(existing, new):
     """Check whether existing collection of diff ops shares a key with the
     new diffop, and if they  also have the same op type.
     Assumes exsiting diff ops are sorted on key.
     """
     for oo in reversed(existing):
-        if oo.key == new.key and oo.op == new.op:
-            # Found a match, combine ops
-            return oo
+        if oo.key == new.key:
+            if oo.op == new.op:
+                # Found a match, combine ops
+                return oo
+            elif oo.op in _addops and new.op in _addops:
+                # Addrange and single add can both point to same key
+                return oo
+
 
 def _combine_ops(existing, new):
     """Combines new op into existing op
     """
-    if new.op == DiffOp.ADDRANGE:
-        existing.valuelist += new.valuelist
+    if new.op in _addops:
+        if existing.op == DiffOp.ADD:
+            existing.op == DiffOp.ADDRANGE
+            existing.valuelist = [existing.value]
+            del existing.value
+        if new.op == DiffOp.ADDRANGE:
+            existing.valuelist += new.valuelist
+        else:
+            if isinstance(existing.valuelist, string_types):
+                existing.valuelist += new.value
+            else:
+                existing.valuelist.append(new.value)
     elif new.op == DiffOp.REMOVERANGE:
-        existing.lenght += new.length
+        existing.length += new.length
 
 
 def flatten_list_of_string_diff(a, diff):
     """Translates a diff of strings split by str.splitlines() to a diff of
     the joined multiline string
     """
+    if isinstance(a, string_types):
+        a = a.splitlines(True)
     a_mapping = [0] + list(_accum(len(ia) for ia in a))
     flattened = []
     for e in diff:
         op = e.op
         new_key = a_mapping[e.key]
-        if op in (DiffOp.ADDRANGE, DiffOp.REMOVERANGE):
-            d = copy.deepcopy(e)
-            d.key = new_key
-            if op == DiffOp.ADDRANGE:
-                d.valuelist = "".join(e.valuelist)
-            else:
-                d.length = a_mapping[e.key + e.length] - d.key
-            oo = _check_overlaps(flattened, d)
-            if oo is None:
-                flattened.append(d)
-            else:
-                _combine_ops(oo, d)
-
-        elif op == DiffOp.PATCH:
+        if op == DiffOp.PATCH:
             for p in e.diff:
                 d = copy.deepcopy(p)
                 d.key += new_key
@@ -343,7 +350,19 @@ def flatten_list_of_string_diff(a, diff):
                     flattened.append(d)
                 else:
                     _combine_ops(oo, d)
-
+        else:
+            d = copy.deepcopy(e)
+            d.key = new_key
+            if op == DiffOp.ADDRANGE:
+                d.valuelist = "".join(e.valuelist)
+            elif op == DiffOp.REMOVERANGE:
+                d.length = a_mapping[e.key + e.length] - d.key
+            oo = _check_overlaps(flattened, d)
+            if oo is None:
+                flattened.append(d)
+            else:
+                _combine_ops(oo, d)
+    flattened.sort(key=lambda x: x.key)
     return flattened
 
 

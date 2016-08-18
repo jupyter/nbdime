@@ -6,6 +6,7 @@
 from __future__ import unicode_literals
 
 from six import string_types, text_type
+from six.moves import xrange as range
 import copy
 
 from ..diffing import diff
@@ -47,7 +48,7 @@ class MergeDecisionBuilder(object):
     def __init__(self):
         self.decisions = []
 
-    def validated(self):
+    def validated(self, base):
         return sorted(self.decisions, key=_sort_key, reverse=True)
 
     def add_decision(self, path, action, local_diff, remote_diff,
@@ -94,10 +95,10 @@ class MergeDecisionBuilder(object):
             remote_diff=remote_diff
         )
 
-    def keep_chunk(self, path, key, end_key, local_diff, remote_diff):
-        self.keep(path, key, local_diff, remote_diff)
+    def keep_chunk(self, path, local_diff, remote_diff):
+        self.keep(path, local_diff, remote_diff)
 
-    def onesided(self, path, key, local_diff, remote_diff):
+    def onesided(self, path, local_diff, remote_diff):
         assert local_diff or remote_diff
         assert not (local_diff and remote_diff)
         if local_diff:
@@ -111,10 +112,10 @@ class MergeDecisionBuilder(object):
             remote_diff=remote_diff,
             )
 
-    def onesided_chunk(self, path, key, end_key, local_diff, remote_diff):
-        self.onesided(path, key, local_diff, remote_diff)
+    def onesided_chunk(self, path, local_diff, remote_diff):
+        self.onesided(path, local_diff, remote_diff)
 
-    def local_then_remote(self, path, key, local_diff, remote_diff,
+    def local_then_remote(self, path, local_diff, remote_diff,
                           conflict=False):
         assert local_diff and remote_diff
         assert local_diff != remote_diff
@@ -127,7 +128,7 @@ class MergeDecisionBuilder(object):
             remote_diff=remote_diff
             )
 
-    def agreement(self, path, key, local_diff, remote_diff):
+    def agreement(self, path, local_diff, remote_diff):
         assert local_diff and remote_diff
         assert local_diff == remote_diff
         self.add_decision(
@@ -137,10 +138,10 @@ class MergeDecisionBuilder(object):
             remote_diff=remote_diff,
             )
 
-    def agreement_chunk(self, path, key, end_key, local_diff, remote_diff):
-        self.agreement(path, key, local_diff, remote_diff)
+    def agreement_chunk(self, path, local_diff, remote_diff):
+        self.agreement(path, local_diff, remote_diff)
 
-    def conflict(self, path, key, local_diff, remote_diff):
+    def conflict(self, path, local_diff, remote_diff):
         assert local_diff and remote_diff
         assert local_diff != remote_diff
         action = "base"
@@ -152,11 +153,17 @@ class MergeDecisionBuilder(object):
             remote_diff=remote_diff,
             )
 
-    def conflict_chunk(self, path, key, end_key, local_diff, remote_diff):
-        self.conflict(path, key, local_diff, remote_diff)
+    def conflict_chunk(self, path, local_diff, remote_diff):
+        self.conflict(path, local_diff, remote_diff)
 
 
 def ensure_common_path(path, diffs):
+    """Resolves common paths in a list of diffs.
+
+    If a local and a remote diff both patch a key "a", this will return the
+    common path ("a",), and the inner diffs of the patch operations. Works
+    recursively, so a common chain of patches will be resolved as well.
+    """
     assert isinstance(path, (tuple, list))
     popped = _pop_path(diffs)
     while popped:
@@ -189,6 +196,27 @@ def _pop_path(diffs):
     if key is None:
         return
     return {'key': key, 'diffs': popped_diffs}
+
+
+def push_path(path, diffs):
+    for key in path:
+        diffs = [op_patch(key, diffs)]
+    return diffs
+
+
+def split_string_path(base, path):
+    """Prevent paths from pointing to specific string lines.
+
+    Check if path points to a specific line in a string, if so, split off
+    index.
+
+    Returns a tuple of path and any line key.
+    """
+    for i in range(len(path)):
+        if isinstance(base, string_types):
+            return path[:i], path[i:]
+        base = base[path[i]]
+    return path, ()
 
 
 def pop_patch_decision(decision):
@@ -231,7 +259,8 @@ def push_patch_decision(decision, prefix):
             raise ValueError(
                 "Cannot remove key from empty decision path: %s, %s" %
                 (key, dec))
-        assert dec.common_path[-1] == key
+        assert dec.common_path[-1] == key, "Key %s not at end of %s" % (
+            key, dec.common_path)
         dec.common_path = dec.common_path[:-1]  # pop key
         dec.local_diff = [op_patch(key, dec.local_diff)]
         dec.remote_diff = [op_patch(key, dec.remote_diff)]
@@ -331,7 +360,7 @@ def _merge_dicts(base, local_diff, remote_diff, path, decisions):
 
     # (2)-(3) Apply one-sided diffs
     for key in sorted(bldkeys ^ brdkeys):
-        decisions.onesided(path, key,
+        decisions.onesided(path,
                            local_diff.get(key),
                            remote_diff.get(key))
 
@@ -353,24 +382,24 @@ def _merge_dicts(base, local_diff, remote_diff, path, decisions):
             # Note that this means the below cases always have the same op
             # (5) Conflict: removed one place and edited another, or edited in
             #     different ways
-            decisions.conflict(path, key, ld, rd)
+            decisions.conflict(path, ld, rd)
         elif lop == DiffOp.REMOVE:
             # (4) Removed in both local and remote, just don't add it to merge
             #     result
-            decisions.agreement(path, key, ld, rd)
+            decisions.agreement(path, ld, rd)
         elif lop in (DiffOp.ADD, DiffOp.REPLACE, DiffOp.PATCH) and ld == rd:
             # If inserting/replacing/patching produces the same value, just use
             # it
-            decisions.agreement(path, key, ld, rd)
+            decisions.agreement(path, ld, rd)
         elif lop == DiffOp.ADD:
             # (6) Insert in both local and remote, values are different
             # This can possibly be resolved by recursion, but leave that to
             # autoresolve
-            decisions.conflict(path, key, ld, rd)
+            decisions.conflict(path, ld, rd)
         elif lop == DiffOp.REPLACE:
             # (7) Replace in both local and remote, values are different,
             #     record a conflict against original base value
-            decisions.conflict(path, key, ld, rd)
+            decisions.conflict(path, ld, rd)
         elif lop == DiffOp.PATCH:
             # (8) Patch on both local and remote, values are different
             # Patches produce different values, try merging the substructures
@@ -398,11 +427,11 @@ def _merge_lists(base, local_diff, remote_diff, path, decisions):
 
         elif not (bool(d0) and bool(d1)):
             # One-sided modification of chunk
-            decisions.onesided_chunk(path, j, k, d0, d1)
+            decisions.onesided_chunk(path, d0, d1)
 
         elif d0 == d1:
             # Exactly the same modifications
-            decisions.agreement_chunk(path, j, k, d0, d1)
+            decisions.agreement_chunk(path, d0, d1)
 
             # FIXME: do the above two cases fully cover what the below one did?
         # elif bool(d0) != bool(d1) or (d0 == d1):  # d0 xor d1 or d0 == d1
@@ -438,7 +467,7 @@ def _merge_lists(base, local_diff, remote_diff, path, decisions):
             # It's possible that something more clever can be done here to reduce
             # the number of conflicts. For now we leave this up to the autoresolve
             # code and manual conflict resolution.
-            decisions.conflict_chunk(path, j, k, d0, d1)
+            decisions.conflict_chunk(path, d0, d1)
 
 
 def _merge_strings(base, local_diff, remote_diff,
@@ -446,9 +475,34 @@ def _merge_strings(base, local_diff, remote_diff,
     """Perform a three-way merge of strings. See docstring of merge."""
     assert isinstance(base, string_types)
 
-    # Merge characters as lists
-    _merge_lists(
-        list(base), local_diff, remote_diff, path, decisions)
+    # This functions uses a (static) state variable to track recusrion.
+    # The first time it is called, will be with base as a (potentially)
+    # multi-line string. We then split this string on line endings, and merge
+    # it as a list of lines (giving line-based chunking). However, there if
+    # there are conflicting edits (patches) of a line, we will re-enter this
+    # function, at which point we simply mark it as a conflict on the parent
+    # level (conflicted lines)
+
+    if _merge_strings.recursion:
+        # base is a single line with differing edits. We could merge as list of
+        # characters, but this is unreliable, and will conflict with line-based
+        # chunking.
+
+        # Mark as a conflict on parent (line):
+        k = path[-1]
+        decisions.conflict(path[:-1],
+                           [op_patch(k, local_diff)],
+                           [op_patch(k, remote_diff)])
+        _merge_strings.recursion = False
+    else:
+        # Merge lines as lists
+        _merge_strings.recursion = True
+        base = base.splitlines(True)
+
+        _merge_lists(
+            base, local_diff, remote_diff, path, decisions)
+
+_merge_strings.recursion = False
 
 
 def _merge(base, local_diff, remote_diff, path, decisions):
@@ -472,7 +526,7 @@ def decide_merge_with_diff(base, local, remote, local_diff, remote_diff):
     decisions = MergeDecisionBuilder()
     _merge(base, local_diff, remote_diff, path,
            decisions)
-    return decisions.validated()
+    return decisions.validated(base)
 
 
 def decide_merge(base, local, remote):
@@ -627,6 +681,7 @@ def resolve_action(base, decision):
         raise NotImplementedError("The action \"%s\" is not defined" % a)
 
 
+
 def apply_decisions(base, decisions):
     """Apply a list of merge decisions to base.
     """
@@ -641,7 +696,7 @@ def apply_decisions(base, decisions):
     # we need to track it
     clear_parent_flag = False
     for md in decisions:
-        path = md.common_path
+        path, line = split_string_path(merged, md.common_path)
         # We patch all decisions with the same path in one op
         if path == prev_path:
             # Same path as previous, collect entry
@@ -654,7 +709,10 @@ def apply_decisions(base, decisions):
                     clear_parent_flag = True
                     # Clear any exisiting decsions!
                     diffs = []
-                diffs.extend(resolve_action(resolved, md))
+                ad = resolve_action(resolved, md)
+                if line:
+                    ad = push_path(line, ad)
+                diffs.extend(ad)
 
         else:
             # Different path, start a new collection
@@ -679,6 +737,8 @@ def apply_decisions(base, decisions):
                 resolved = resolved[key]   # Should raise if key missing
                 last_key = key
             diffs = resolve_action(resolved, md)
+            if line:
+                diffs = push_path(line, diffs)
             clear_parent_flag = md.action == "clear_parent"
     # Apply the last collection of diffs, if present (same as above)
     if prev_path is not None:

@@ -440,7 +440,7 @@ def autoresolve_decision(base, dec, strategies):
             # Strategy found for intermediate path
             # Bring decision up to same level as strategy:
             dec = push_patch_decision(
-                dec, dec.common_path[:len(subpath)])
+                dec, dec.common_path[len(subpath)-1:])
             break
         sub = sub[key]
 

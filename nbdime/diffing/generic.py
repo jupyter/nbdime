@@ -14,7 +14,7 @@ import difflib
 from ..diff_format import validate_diff, count_consumed_symbols
 from ..diff_format import SequenceDiffBuilder, MappingDiffBuilder
 
-from .sequences import diff_strings_by_char, diff_sequence
+from .sequences import diff_strings_linewise, diff_sequence
 from .snakes import compute_snakes_multilevel, compute_diff_from_snakes
 
 __all__ = ["diff"]
@@ -78,7 +78,7 @@ def diff(a, b, path="", predicates=None, differs=None):
     elif isinstance(a, string_types) and isinstance(b, string_types):
         # FIXME: Do we need this string case, and if so do we need to pass on
         # the additional arguments?
-        d = diff_strings_by_char(a, b)
+        d = diff_strings_linewise(a, b)
     else:
         raise RuntimeError("Can currently only diff list, dict, or str objects.")
 
