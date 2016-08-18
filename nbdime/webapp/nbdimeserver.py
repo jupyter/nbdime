@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 
 import os
 import json
+import sys
 from argparse import ArgumentParser
 from six import string_types
 from tornado import ioloop, web, escape
@@ -24,6 +25,8 @@ from nbdime.merging.notebooks import decide_notebook_merge
 here = os.path.abspath(os.path.dirname(__file__))
 static_path = os.path.join(here, "static")
 template_path = os.path.join(here, "templates")
+
+exit_code = 0
 
 
 def truncate_filename(name):
@@ -152,17 +155,21 @@ class ApiMergeStoreHandler(NbdimeApiHandler):
         # to write to from the http request, only allowing
         # this operation if the server was run with an output
         # filename as a commandline argument:
-        fn = self.params["outputfilename"]
+        fn = self.params.get("outputfilename", None)
         if not fn:
             raise web.HTTPError(400, "Server does not accept storing merge result.")
         path = os.path.join(self.params["cwd"], fn)
 
         body = json.loads(escape.to_unicode(self.request.body))
-        merged_nb = body["merged"]
+        merged = body["merged"]
+        from pprint import pprint
+        pprint(merged)
+        merged_nb = nbformat.from_dict(merged)
+        # Somehow store unsolved conflicts?
+        # conflicts = body["conflicts"]
 
         with open(path, "w") as f:
             nbformat.write(merged_nb, f)
-
         self.finish()
 
 
@@ -173,6 +180,9 @@ class ApiCloseHandler(NbdimeApiHandler):
                 "mergetool_args" not in self.params):
             raise web.HTTPError(
                 400, "Server is not a tool server, cannot be closed remotely.")
+
+        global exit_code
+        exit_code = self.request.headers.get("exit_code", 0)
 
         print("Closing tool")
         self.finish()
@@ -199,6 +209,7 @@ def make_app(**params):
         (r"/mergetool", MainMergetoolHandler, params),
         (r"/api/diff", ApiDiffHandler, params),
         (r"/api/merge", ApiMergeHandler, params),
+        (r"/api/store", ApiMergeStoreHandler, params),
         (r"/api/closetool", ApiCloseHandler, params),
         (r"/static", web.StaticFileHandler, {"path": static_path}),
     ]
@@ -224,6 +235,7 @@ def main(**params):
     app = make_app(**params)
     app.listen(port)
     ioloop.IOLoop.current().start()
+    sys.exit(exit_code)
 
 
 def build_arg_parser():
