@@ -11,7 +11,7 @@ import copy
 
 from ..diffing import diff
 from ..diff_format import (DiffOp, as_dict_based_diff, op_removerange,
-                           op_remove, op_patch, op_replace)
+                           op_remove, op_patch, op_replace, op_addrange)
 from .chunks import make_merge_chunks
 from ..patching import patch
 
@@ -410,6 +410,77 @@ def _merge_dicts(base, local_diff, remote_diff, path, decisions):
             raise ValueError("Invalid diff ops {} and {}.".format(lop, rop))
 
 
+def _split_addrange_on_equality(key, local, remote, path, decisions):
+    # Here, we need to check for identical inserts, as those are the
+    # only entries that need to be aligned
+    # FIXME: Use concept of longest common subsequence, instead of fifo
+    taken_local = 0
+    taken_remote = 0
+    seqlen_identical = 0
+    for li, lv in enumerate(local):
+        if lv in remote[taken_remote:]:
+            i = remote.index(lv)
+            if seqlen_identical > 0:
+                # We're continuing a sequence of identical insertions
+                pass
+            elif taken_local < li or taken_remote < i:
+                # We're starting a new sequence of identical insertions
+                # and have a preceding unmatched sequence to add
+                ldiff = None
+                rdiff = None
+                if taken_local < li:
+                    ldiff = [op_addrange(key, local[taken_local:li])]
+                    taken_local = li + 1
+                if taken_remote < i:
+                    rdiff = [op_addrange(key, remote[taken_remote:i])]
+                    taken_remote = i + 1
+                if ldiff is None:
+                    decisions.onesided_chunk(path, ldiff, rdiff)
+                elif rdiff is None:
+                    decisions.onesided_chunk(path, ldiff, rdiff)
+                else:
+                    decisions.conflict_chunk(path, ldiff, rdiff)
+            # Add to matched sequence
+            seqlen_identical += 1
+
+        elif seqlen_identical > 0:
+            # We finished a sequence of identical insertions
+            assert seqlen_identical == li - taken_local
+            ri = taken_remote + seqlen_identical
+            decisions.agreement_chunk(
+                path,
+                [op_addrange(key, local[taken_local:li])],
+                [op_addrange(key, remote[taken_remote:ri])])
+            seqlen_identical = 0
+            taken_local = li + 1
+            taken_remote = i + 1
+    # Finished loop, add any remaining sequences
+    if seqlen_identical > 0:
+        # Identical sequence remaining
+        endl = taken_local + seqlen_identical
+        endr = taken_remote + seqlen_identical
+        decisions.agreement_chunk(
+            path,
+            [op_addrange(key, local[taken_local:endl])],
+            [op_addrange(key, remote[taken_remote:endr])])
+        taken_local = endl
+        taken_remote = endr
+    if (len(local) > taken_local or len(remote) > taken_remote):
+        # Have a final stretch of non-equal inserts
+        ldiff = None
+        rdiff = None
+        if taken_local < len(local):
+            ldiff = [op_addrange(key, local[taken_local:])]
+        if taken_remote < len(remote):
+            rdiff = [op_addrange(key, remote[taken_remote:])]
+        if ldiff is None:
+            decisions.onesided_chunk(path, ldiff, rdiff)
+        elif rdiff is None:
+            decisions.onesided_chunk(path, ldiff, rdiff)
+        else:
+            decisions.conflict_chunk(path, ldiff, rdiff)
+
+
 def _merge_lists(base, local_diff, remote_diff, path, decisions):
     """Perform a three-way merge of lists. See docstring of merge."""
     assert isinstance(base, list)
@@ -462,6 +533,43 @@ def _merge_lists(base, local_diff, remote_diff, path, decisions):
             bv = base[key]
             _merge(bv, d0[0].diff, d1[0].diff,
                    path + (key,), decisions)
+        elif len(d0) >= 1 and len(d1) >= 1:
+            # Several special cases need to checked for sequentially
+            # (may be combination)
+            if d0[0] == d1[0]:
+                # First op matches on both sides
+                decisions.agreement_chunk(path, [d0[0]], [d1[0]])
+            elif (d0[0].op == d1[0].op == DiffOp.ADDRANGE and
+                    d0[0].key == d1[0].key):
+                # Both first ops are insertions, check for identical insertions
+                # on both sides
+                _split_addrange_on_equality(
+                    d0[0].key, d0[0].valuelist, d1[0].valuelist,
+                    path, decisions)
+            else:
+                decisions.conflict_chunk(path, [d0[0]], [d1[0]])
+
+            if len(d0) == len(d1) == 1:
+                pass
+            elif len(d0) == 1:
+                decisions.conflict_chunk(path, None, [d1[1]])
+            elif len(d1) == 1:
+                decisions.conflict_chunk(path, [d0[1]], None)
+            # After previous checks, we know d0 and d1 are both length 2
+            elif d0[1] == d1[1]:
+                # Insert + patch/remove on both sides, with last ops matching
+                # (identical)
+                decisions.agreement_chunk(path, [d0[1]], [d1[1]])
+            elif (d0[1].op == d1[1].op == DiffOp.PATCH and
+                    d0[1].key == d1[1].key):
+                # Second ops are both patch ops, recurse
+                key = d0[1].key
+                bv = base[key]
+                _merge(bv, d0[1].diff, d1[1].diff,
+                       path + (key,), decisions)
+            else:
+                raise ValueError("Invalid diff list")
+
         else:
             # Two-sided modification, i.e. a conflict.
             # It's possible that something more clever can be done here to reduce
