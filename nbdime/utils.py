@@ -6,6 +6,7 @@
 from __future__ import unicode_literals
 
 from six import string_types
+import six
 
 
 def strings_to_lists(obj):
@@ -45,3 +46,15 @@ def join_path(*args):
     args = [str(a) for a in args if a not in ["", "/"]]
     ret = "/".join(args)
     return ret if ret.startswith("/") else "/" + ret
+
+
+def star_path(path):
+    path = list(path)
+    for i, p in enumerate(path):
+        if isinstance(p, int):
+            path[i] = '*'
+        else:
+            p = (p if isinstance(p, six.text_type) else p.decode())
+            if p.isnumeric():
+                path[i] = '*'
+    return join_path(path)

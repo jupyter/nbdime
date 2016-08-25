@@ -5,13 +5,11 @@
 
 from __future__ import unicode_literals
 
-import six
-
 from .decisions import decide_merge_with_diff, apply_decisions
 from .autoresolve import autoresolve
 #from ..patching import patch
 from ..diffing.notebooks import diff_notebooks
-from ..utils import split_path, join_path
+from ..utils import split_path, star_path
 
 
 # Strategies for handling conflicts  TODO: Implement these and refine further!
@@ -39,14 +37,7 @@ class Strategies(dict):
 
     def get(self, k, d=None):
         parts = split_path(k)
-        if len(parts) > 1:
-            for i, p in enumerate(parts):
-                p = (p if isinstance(p, six.text_type) else p.decode())
-                if p.isnumeric():
-                    parts[i] = '*'
-            key = join_path(parts)
-        else:
-            key = k
+        key = star_path(parts)
         return super(Strategies, self).get(key, d)
 
 

@@ -12,7 +12,7 @@ import copy
 from ..diff_format import DiffOp, op_replace
 from ..patching import patch
 from .chunks import make_merge_chunks
-from ..utils import join_path
+from ..utils import join_path, star_path
 from .decisions import (pop_patch_decision, push_patch_decision, MergeDecision,
                         pop_all_patch_decisions, _sort_key)
 
@@ -154,7 +154,7 @@ def is_diff_all_transients(diff, path, transients):
                 return False
         else:
             # Check path vs transients
-            if join_path(subpath) not in transients:
+            if star_path(subpath) not in transients:
                 return False
     return True
 
