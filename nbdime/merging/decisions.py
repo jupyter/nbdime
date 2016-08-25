@@ -546,15 +546,16 @@ def _merge_lists(base, local_diff, remote_diff, path, decisions):
                 _split_addrange_on_equality(
                     d0[0].key, d0[0].valuelist, d1[0].valuelist,
                     path, decisions)
+            elif len(d0) != len(d1):
+                decisions.conflict_chunk(path, d0, d1)
+                continue
             else:
                 decisions.conflict_chunk(path, [d0[0]], [d1[0]])
 
+            # Check for diffs #2
             if len(d0) == len(d1) == 1:
+                # We've processed all diffs
                 pass
-            elif len(d0) == 1:
-                decisions.conflict_chunk(path, None, [d1[1]])
-            elif len(d1) == 1:
-                decisions.conflict_chunk(path, [d0[1]], None)
             # After previous checks, we know d0 and d1 are both length 2
             elif d0[1] == d1[1]:
                 # Insert + patch/remove on both sides, with last ops matching
