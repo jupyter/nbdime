@@ -49,9 +49,10 @@ def main_merge(args):
         if conflicted:
             m["metadata"]["nbdime-conflicts"] = conflicted
         # Write partial or fully completed merge to given foo.ipynb filename
-        with open(mfn, "w") as mf:
+        with open(mfn, "wb") as mf:
             nb = nbformat.from_dict(m)
-            nbformat.write(nb, mf)
+            s = nbformat.writes(nb) + u'\n'
+            mf.write(s.encode())
     else:
         # FIXME: Display conflicts in a useful way
         if conflicted:
