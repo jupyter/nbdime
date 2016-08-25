@@ -44,7 +44,7 @@ def browse(port):
 
     if browser:
         def launch_browser():
-            browser.open("http://localhost:%s/mergetool" % port, new=2)
+            browser.open("http://localhost:%s/difftool" % port, new=2)
         threading.Thread(target=launch_browser).start()
 
 
