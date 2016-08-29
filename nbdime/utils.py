@@ -35,12 +35,12 @@ def revert_strings_to_lists(obj):
 
 
 def split_path(path):
-    "Split a path on the form /foo/bar into ['foo','bar']."
+    "Split a path on the form '/foo/bar' into ['foo','bar']."
     return [x for x in path.strip("/").split("/") if x]
 
 
 def join_path(*args):
-    "Split a path on the form /foo/bar into ['foo','bar']."
+    "Join a path on the form ['foo','bar'] into '/foo/bar'."
     if len(args) == 1 and isinstance(args[0], (list, tuple, set)):
         args = args[0]
     args = [str(a) for a in args if a not in ["", "/"]]
