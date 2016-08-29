@@ -1,0 +1,147 @@
+
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Merge decisions",
+  "description": "A list of merge decisions that in their entirety describes a merge of two Jupyter Notebooks",
+  "type": "array",
+  "items": {"$ref": "#/definitions/decision"},
+
+  "definitions": {
+    "decision": {
+      "type": "object",
+      "description": "An individual merge decision",
+      "additionalProperties": false,
+      "properties": {
+        "local_diff": {
+          "description": "Local diff description relevant for this decision",
+          "type": "array",
+          "items": { "$ref": "#/definitions/diff" }
+        },
+
+        "remote_diff": {
+          "description": "Remote diff description relevant for this decision",
+          "type": "array",
+          "items": { "$ref": "#/definitions/diff" }
+        },
+
+        "conflict": {
+          "type": "boolean",
+          "description": "Whether the entry is conflicted or not"
+        },
+
+        "action": {
+          "description": "How the merge was resolved, or for conflicted entries, the \"best\" initial suggestion for resolution",
+          "enum": ["local", "remote", "base", "clear", "either", "local_then_remote", "remote_then_local", "custom"]
+        },
+
+        "custom_diff": {
+          "description": "An optional field use to describe the applied action if action == \"custom\" (e.g. an edit by hand, interleaving)",
+          "type": "array",
+          "items": { "$ref": "#/definitions/diff" }
+        },
+
+        "common_path": {
+          "description": "A common path of local_diff and remote_diff. Optional, as both can alternaitvely just contain single patch entries down to this path, but should help with opimization",
+          "type": "array",
+          "items": { "type": ["integer", "string"] }
+        }
+      }
+    },
+
+    "diff": {
+      "type": ["object", "null"],
+      "description": "A diff entry",
+      "required": ["op", "key"],
+
+      "oneOf": [
+        { "$ref": "#/definitions/diff_add" },
+        { "$ref": "#/definitions/diff_remove" },
+        { "$ref": "#/definitions/diff_replace" },
+        { "$ref": "#/definitions/diff_addrange" },
+        { "$ref": "#/definitions/diff_removerange" },
+        { "$ref": "#/definitions/diff_patch" }
+      ]
+    },
+
+    "diff_add": {
+      "additionalProperties": false,
+      "type": "object",
+
+      "properties": {
+        "op": { "enum": ["add"]},
+        "key": {
+          "type": ["integer", "string"]
+        },
+        "value": {}
+      }
+    },
+
+    "diff_remove": {
+      "additionalProperties": false,
+      "type": "object",
+
+      "properties": {
+        "op": { "enum": ["remove"]},
+        "key": {
+          "type": ["integer", "string"]
+        }
+      }
+    },
+
+    "diff_replace": {
+      "additionalProperties": false,
+      "type": "object",
+
+      "properties": {
+        "op": { "enum": ["remove"]},
+        "key": {
+          "type": ["integer", "string"]
+        },
+        "value": {}
+      }
+    },
+
+    "diff_addrange": {
+      "additionalProperties": false,
+      "type": "object",
+
+      "properties": {
+        "op": { "enum": ["remove"]},
+        "key": {
+          "type": ["integer", "string"]
+        },
+        "valuelist": {
+          "type": "array"
+        }
+      }
+    },
+
+    "diff_removerange": {
+      "additionalProperties": false,
+      "type": "object",
+
+      "properties": {
+        "op": { "enum": ["remove"]},
+        "key": {
+          "type": ["integer", "string"]
+        },
+        "length": {
+          "type": "integer"
+        }
+      }
+    },
+
+    "diff_patch": {
+      "additionalProperties": false,
+      "type": "object",
+
+      "properties": {
+        "op": { "enum": ["remove"]},
+        "key": {
+          "type": ["integer", "string"]
+        },
+        "diff": { "$ref": "#/definitions/diff" }
+      }
+    }
+  }
+}
