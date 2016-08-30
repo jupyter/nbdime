@@ -5,9 +5,9 @@
 
 from __future__ import unicode_literals
 
-from .decisions import decide_merge_with_diff, apply_decisions
+from .generic import decide_merge_with_diff
+from .decisions import apply_decisions
 from .autoresolve import autoresolve
-#from ..patching import patch
 from ..diffing.notebooks import diff_notebooks
 from ..utils import Strategies
 

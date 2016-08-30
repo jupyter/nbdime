@@ -9,12 +9,11 @@ import pytest
 import operator
 from collections import defaultdict
 
-from nbdime import merge_notebooks, diff
-from nbdime.merging.decisions import (
-    decide_merge, apply_decisions, decide_merge_with_diff)
+from nbdime import merge_notebooks, diff, decide_merge, apply_decisions
+
+from nbdime.merging.generic import decide_merge_with_diff
 from nbdime.merging.autoresolve import autoresolve
 from nbdime.utils import Strategies
-from nbdime.diffing.generic import diff_sequence_multilevel
 
 
 # FIXME: Extend tests to more merge situations!
