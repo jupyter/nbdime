@@ -58,3 +58,17 @@ def star_path(path):
             if p.isnumeric():
                 path[i] = '*'
     return join_path(path)
+
+
+class Strategies(dict):
+    """Simple dict wrapper for strategies to allow for wildcard matching of
+    list indices + transients collection.
+    """
+    def __init__(self, *args, **kwargs):
+        self.transients = kwargs.get("transients", [])
+        super(Strategies, self).__init__(*args, **kwargs)
+
+    def get(self, k, d=None):
+        parts = split_path(k)
+        key = star_path(parts)
+        return super(Strategies, self).get(key, d)
