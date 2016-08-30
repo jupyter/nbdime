@@ -34,18 +34,32 @@ class MergeDecision(dict):
 
 
 class MergeDecisionBuilder(object):
+    """A helper class for building a series of decisions to describe a merge.
+    """
     def __init__(self):
         self.decisions = []
 
     def validated(self, base):
+        """Returns decisions in state ready for application.
+
+        Most importantly, this sorts the decisions on the path, so that it is
+        in accordance with the specs.
+        """
         return sorted(self.decisions, key=_sort_key, reverse=True)
 
     def add_decision(self, path, action, local_diff, remote_diff,
                      conflict=False, **kwargs):
+        """Add a decision to the builder with the specified properties.
+
+        Ensures data types and paths are as they should be, before creating a
+        MergeDecision and adding it to its internal store.
+        """
+        # Ensure path is immutable
         if isinstance(path, list):
             path = tuple(path)
         else:
             assert isinstance(path, tuple)
+        # Ensure diffs are lists
         if local_diff is not None:
             if isinstance(local_diff, tuple):
                 local_diff = list(local_diff)
@@ -62,11 +76,13 @@ class MergeDecisionBuilder(object):
                 custom_diff = list(custom_diff)
             elif not isinstance(custom_diff, list):
                 custom_diff = [custom_diff]
+        # Ensure paths are pushed out as far in tree as possible
         path, (local_diff, remote_diff, custom_diff) = \
             ensure_common_path(path, [local_diff, remote_diff, custom_diff])
         if custom_diff is not None:
             kwargs["custom_diff"] = custom_diff
 
+        # Finally store decision
         self.decisions.append(MergeDecision(
             common_path=path,
             conflict=conflict,
@@ -162,6 +178,13 @@ def ensure_common_path(path, diffs):
 
 
 def _pop_path(diffs):
+    """Pops of a common path from patch ops sharing a common key.
+
+    Checks whether all diffs are single patch operations sharing the same key,
+    or alternatively empty diffs. If so, it returns the shared path/key as well
+    as the inner diffs of the patch operations (in the same order as the passed
+    diffs).
+    """
     key = None
     popped_diffs = []
     for d in diffs:
@@ -192,22 +215,16 @@ def push_path(path, diffs):
     return diffs
 
 
-def split_string_path(base, path):
-    """Prevent paths from pointing to specific string lines.
-
-    Check if path points to a specific line in a string, if so, split off
-    index.
-
-    Returns a tuple of path and any line key.
-    """
-    for i in range(len(path)):
-        if isinstance(base, string_types):
-            return path[:i], path[i:]
-        base = base[path[i]]
-    return path, ()
-
-
 def pop_patch_decision(decision):
+    """Create a new decision one level lower in diff tree.
+
+    Checks whether all diffs are single patch operations sharing the same key,
+    or alternatively empty diffs. A new decision is then created at that key.
+
+    Returns the new decision.
+
+    Raises a ValueErorr if a decision can not be created at the lower level.
+    """
     diffs = [decision.local_diff, decision.remote_diff]
     if decision.action == "custom":
         diffs.append(decision.custom_diff)
@@ -226,6 +243,14 @@ def pop_patch_decision(decision):
 
 
 def pop_all_patch_decisions(decision):
+    """Create a new decision at the furthest level in the diff tree.
+
+    Calls `pop_patch_decision` recursively until it is at the lowest possible
+    decision level.
+
+    If the decision is already at the lowest level, it returns the original
+    decision.
+    """
     try:
         while 1:
             decision = pop_patch_decision(decision)
@@ -285,7 +310,6 @@ SOFTWARE.
 """
     ret = []
     for s in k.common_path:
-
         s = (s if isinstance(s, (int, text_type)) else s.decode())
 
         if isinstance(s, text_type) and s.isnumeric() or isinstance(s, int):
@@ -293,6 +317,24 @@ SOFTWARE.
         else:
             ret.append((s,))
     return ret
+
+
+def split_string_path(base, path):
+    """Prevent paths from pointing to specific string lines.
+
+    Since strings are diffed as a sequence of lines without actually splitting
+    the string in base, any path to a specific line will fail to resolve.
+    This checks if path points to a specific line in a string, and splits off
+    the final key of the path (the line number).
+
+    Returns a tuple with the path without any line reference in the first
+    position, and any line key in the second position.
+    """
+    for i in range(len(path)):
+        if isinstance(base, string_types):
+            return path[:i], path[i:]
+        base = base[path[i]]
+    return path, ()
 
 
 def make_cleared_value(value):
