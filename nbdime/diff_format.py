@@ -296,26 +296,29 @@ else:
 _addops = (DiffOp.ADD, DiffOp.ADDRANGE)
 
 
-def _check_overlaps(existing, new):
-    """Check whether existing collection of diff ops shares a key with the
-    new diffop, and if they also have the same op type.
-
-    Assumes exsiting diff ops are sorted on key.
-
-    Returns the index of the overlapping diff op, or None if no overlap was
-    found.
+def _overlaps(existing, new):
+    """Check whether existing diff op shares a key with the new diffop, and if
+    they also have the same op type.
     """
-    for i, oo in reversed(tuple(enumerate(existing))):
-        if oo.op == new.op:
-            if oo.key == new.key:
-                # Found a match, combine ops
-                return i
-            break  # No need to search further than first op match
-        elif oo.op in _addops and new.op in _addops:
-            if oo.key == new.key:
-                # Addrange and single add can both point to same key
-                return i
-            break  # No need to search further than first op match
+    if not existing:
+        return False
+    existing = existing[-1]  # Only need to check last op!
+    if existing.op == new.op:
+        if existing.key == new.key:
+            # Found a match, combine ops
+            return True
+        elif (existing.op == DiffOp.REMOVERANGE and
+                existing.key + existing.length >= new.key):
+            # Overlapping deletes
+            # Above check is open ended to allow sanity check here:
+            assert existing.key + existing.length == new.key
+            return True
+    elif (existing.op in _addops and
+            new.op in _addops and
+            existing.key == new.key):
+        # Addrange and single add can both point to same key
+        return True
+    return False
 
 
 def _combine_ops(existing, new):
@@ -359,11 +362,10 @@ def flatten_list_of_string_diff(a, diff):
                 d = copy.deepcopy(p)
                 d.key += line_offset
                 # If it overlaps with an existing op, combine them to one
-                io = _check_overlaps(flattened, d)
-                if io is None:
-                    flattened.append(d)
+                if _overlaps(flattened, d):
+                    flattened[-1] = _combine_ops(flattened[-1], d)
                 else:
-                    flattened[io] = _combine_ops(flattened[io], d)
+                    flattened.append(d)
         else:
             # Other ops simply have keys which refer to lines
             if op == DiffOp.ADDRANGE:
@@ -378,12 +380,10 @@ def flatten_list_of_string_diff(a, diff):
                 d.key = line_offset
 
             # If it overlaps with an existing op, combine them to one
-            io = _check_overlaps(flattened, d)
-
-            if io is None:
-                flattened.append(d)
+            if _overlaps(flattened, d):
+                flattened[-1] = _combine_ops(flattened[-1], d)
             else:
-                flattened[io] = _combine_ops(flattened[io], d)
+                flattened.append(d)
     flattened.sort(key=lambda x: x.key)
     return flattened
 
