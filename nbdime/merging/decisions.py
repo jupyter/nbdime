@@ -210,7 +210,9 @@ def _pop_path(diffs):
 
 
 def push_path(path, diffs):
-    for key in path:
+    """Wraps the diffs in patch operations matching path.
+    """
+    for key in reversed(path):
         diffs = [op_patch(key, diffs)]
     return diffs
 
