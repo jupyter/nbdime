@@ -97,7 +97,7 @@ def diff_sequence_multilevel(a, b, path="", predicates=None, differs=None):
         differs = default_differs()
 
     # Invoke multilevel snake computation algorithm
-    compares = predicates[path]
+    compares = predicates[path or '/']
     snakes = compute_snakes_multilevel(a, b, compares)
 
     # Convert snakes to diff
@@ -113,7 +113,7 @@ def diff_lists(a, b, path="", predicates=None, differs=None, shallow_diff=None):
         differs = default_differs()
 
     # If multiple compares are provided to this path, delegate to multilevel algorithm
-    compares = predicates[path]
+    compares = predicates[path or '/']
     if len(compares) > 1:
         assert shallow_diff is None
         return diff_sequence_multilevel(a, b, path=path, predicates=predicates, differs=differs)
