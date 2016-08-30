@@ -205,7 +205,8 @@ def test_autoresolve_list_conflicting_insertions_mixed():
     # Check strategyless resolution
     strategies = {}
     resolved = autoresolve(b, decisions, strategies)
-    assert apply_decisions(b, resolved) == b
+    expected_partial = [1, 7, 9]
+    assert apply_decisions(b, resolved) == expected_partial
     assert resolved == decisions  # Not able to resolve anything
 
     strategies = {"/*": "use-local"}
@@ -220,13 +221,12 @@ def test_autoresolve_list_conflicting_insertions_mixed():
 
     strategies = {"/*": "use-base"}
     resolved = autoresolve(b, decisions, strategies)
-    assert apply_decisions(b, resolved) == b
+    assert apply_decisions(b, resolved) == expected_partial
     assert not any(d.conflict for d in resolved)
 
     strategies = {"/*": "join"}
     resolved = autoresolve(b, decisions, strategies)
-    # FIXME: Not ideal "intuitive" resolution?
-    assert apply_decisions(b, resolved) == [1, 2, 7, 3, 7, 9]
+    assert apply_decisions(b, resolved) == [1, 2, 3, 7, 9]
     assert not any(d.conflict for d in resolved)
 
     strategies = {"/*": "clear-parent"}

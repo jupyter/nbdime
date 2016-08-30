@@ -12,8 +12,10 @@ import copy
 from ..diffing import diff
 from ..diff_format import (DiffOp, as_dict_based_diff, op_removerange,
                            op_remove, op_patch, op_replace, op_addrange)
+from ..diffing.notebooks import notebook_predicates, notebook_differs
 from .chunks import make_merge_chunks
 from ..patching import patch
+from ..utils import star_path
 
 
 # Set to true to enable some expensive debugging assertions
@@ -95,10 +97,7 @@ class MergeDecisionBuilder(object):
             remote_diff=remote_diff
         )
 
-    def keep_chunk(self, path, local_diff, remote_diff):
-        self.keep(path, local_diff, remote_diff)
-
-    def onesided(self, path, local_diff, remote_diff):
+    def onesided(self, path, local_diff, remote_diff, conflict=False):
         assert local_diff or remote_diff
         assert not (local_diff and remote_diff)
         if local_diff:
@@ -112,11 +111,7 @@ class MergeDecisionBuilder(object):
             remote_diff=remote_diff,
             )
 
-    def onesided_chunk(self, path, local_diff, remote_diff):
-        self.onesided(path, local_diff, remote_diff)
-
-    def local_then_remote(self, path, local_diff, remote_diff,
-                          conflict=False):
+    def local_then_remote(self, path, local_diff, remote_diff, conflict=False):
         assert local_diff and remote_diff
         assert local_diff != remote_diff
         action = "local_then_remote"
@@ -128,7 +123,19 @@ class MergeDecisionBuilder(object):
             remote_diff=remote_diff
             )
 
-    def agreement(self, path, local_diff, remote_diff):
+    def remote_then_local(self, path, local_diff, remote_diff, conflict=False):
+        assert local_diff and remote_diff
+        assert local_diff != remote_diff
+        action = "remote_then_local"
+        self.add_decision(
+            path=path,
+            conflict=conflict,
+            action=action,
+            local_diff=local_diff,
+            remote_diff=remote_diff
+            )
+
+    def agreement(self, path, local_diff, remote_diff, conflict=False):
         assert local_diff and remote_diff
         assert local_diff == remote_diff
         self.add_decision(
@@ -137,9 +144,6 @@ class MergeDecisionBuilder(object):
             local_diff=local_diff,
             remote_diff=remote_diff,
             )
-
-    def agreement_chunk(self, path, local_diff, remote_diff):
-        self.agreement(path, local_diff, remote_diff)
 
     def conflict(self, path, local_diff, remote_diff):
         assert local_diff and remote_diff
@@ -152,9 +156,6 @@ class MergeDecisionBuilder(object):
             local_diff=local_diff,
             remote_diff=remote_diff,
             )
-
-    def conflict_chunk(self, path, local_diff, remote_diff):
-        self.conflict(path, local_diff, remote_diff)
 
 
 def ensure_common_path(path, diffs):
@@ -410,75 +411,114 @@ def _merge_dicts(base, local_diff, remote_diff, path, decisions):
             raise ValueError("Invalid diff ops {} and {}.".format(lop, rop))
 
 
-def _split_addrange_on_equality(key, local, remote, path, decisions):
-    # Here, we need to check for identical inserts, as those are the
-    # only entries that need to be aligned
-    # FIXME: Use concept of longest common subsequence, instead of fifo
-    taken_local = 0
-    taken_remote = 0
-    seqlen_identical = 0
-    for li, lv in enumerate(local):
-        if lv in remote[taken_remote:]:
-            i = remote.index(lv)
-            if seqlen_identical > 0:
-                # We're continuing a sequence of identical insertions
-                pass
-            elif taken_local < li or taken_remote < i:
-                # We're starting a new sequence of identical insertions
-                # and have a preceding unmatched sequence to add
-                ldiff = None
-                rdiff = None
-                if taken_local < li:
-                    ldiff = [op_addrange(key, local[taken_local:li])]
-                    taken_local = li + 1
-                if taken_remote < i:
-                    rdiff = [op_addrange(key, remote[taken_remote:i])]
-                    taken_remote = i + 1
-                if ldiff is None:
-                    decisions.onesided_chunk(path, ldiff, rdiff)
-                elif rdiff is None:
-                    decisions.onesided_chunk(path, ldiff, rdiff)
-                else:
-                    decisions.conflict_chunk(path, ldiff, rdiff)
-            # Add to matched sequence
-            seqlen_identical += 1
+def _split_addrange_on_equality(key, local, remote, path):
+    """Compares two addrange value lists, and splits decisions on similarity
 
-        elif seqlen_identical > 0:
-            # We finished a sequence of identical insertions
-            assert seqlen_identical == li - taken_local
-            ri = taken_remote + seqlen_identical
-            decisions.agreement_chunk(
-                path,
-                [op_addrange(key, local[taken_local:li])],
-                [op_addrange(key, remote[taken_remote:ri])])
-            seqlen_identical = 0
-            taken_local = li + 1
-            taken_remote = i + 1
-    # Finished loop, add any remaining sequences
-    if seqlen_identical > 0:
-        # Identical sequence remaining
-        endl = taken_local + seqlen_identical
-        endr = taken_remote + seqlen_identical
-        decisions.agreement_chunk(
-            path,
-            [op_addrange(key, local[taken_local:endl])],
-            [op_addrange(key, remote[taken_remote:endr])])
-        taken_local = endl
-        taken_remote = endr
-    if (len(local) > taken_local or len(remote) > taken_remote):
-        # Have a final stretch of non-equal inserts
-        ldiff = None
-        rdiff = None
-        if taken_local < len(local):
-            ldiff = [op_addrange(key, local[taken_local:])]
-        if taken_remote < len(remote):
-            rdiff = [op_addrange(key, remote[taken_remote:])]
-        if ldiff is None:
-            decisions.onesided_chunk(path, ldiff, rdiff)
-        elif rdiff is None:
-            decisions.onesided_chunk(path, ldiff, rdiff)
+    Uses diff of value lists to identify which items to align. Identical,
+    aligned inserts are decided as in agreement, while inserts that are aligned
+    without being identical are treated as conflicts. Non-aligned inserts are
+    treated as conflict free, one-sided inserts.
+    """
+    # First, find diff between local and remote insertion values
+    intermediate_diff = diff(local, remote, path=star_path(path),
+                             predicates=notebook_predicates,
+                             differs=notebook_differs)
+
+    # Next, translate the diff into decisions
+    decisions = MergeDecisionBuilder()
+    taken = 0
+    offset = 0  # Offset between diff keys (ref local) and remote
+    for i, d in enumerate(intermediate_diff):
+        # NOTE: Important to separate passed key, and d.key!
+        # All ops should happen on key, but order need to be correct
+        if d.key < taken:
+            continue
+        if taken < d.key:
+            # Have elements that are inserted on both sides
+            overlap = [op_addrange(key, local[taken:d.key])]
+            decisions.agreement(path, overlap, overlap)
+            taken = d.key
+
+        # Either (1) conflicted, (2) local onesided, or (3) remote onesided
+        if (i + 1 < len(intermediate_diff) and
+                intermediate_diff[i+1].op == DiffOp.REMOVERANGE and
+                intermediate_diff[i+1].key == d.key):
+            # (1) Conflicted addition
+            local_len = intermediate_diff[i+1].length
+            ld = [op_addrange(key, local[d.key:d.key+local_len])]
+            rd = [op_addrange(key, d.valuelist)]
+            decisions.conflict(path, ld, rd)
+            offset += len(d.valuelist) - local_len
+            taken += local_len
+        elif d.op == DiffOp.REPLACE:
+            # (1) Conflict (one element each)
+            ld = [op_addrange(key, [local[d.key]])]
+            rd = [op_addrange(key, [d.value])]
+            decisions.conflict(path, ld, rd)
+            taken += 1
+        elif d.op in (DiffOp.REMOVE, DiffOp.REMOVERANGE):
+            # (2) Local onesided
+            if d.op == DiffOp.REMOVE:
+                vl = [local[d.key]]
+            else:
+                vl = local[d.key:d.key + d.length]
+            decisions.onesided(path, [op_addrange(key, vl)], None)
+            offset -= len(vl)
+            taken += len(vl)
+        elif d.op in (DiffOp.ADD, DiffOp.ADDRANGE):
+            # (3) Remote onesided
+            if d.op == DiffOp.ADD:
+                vl = [d.value]
+            else:
+                vl = d.valuelist
+            decisions.onesided(path, None, [op_addrange(key, vl)])
+            offset += len(vl)
+        elif d.op == DiffOp.PATCH:
+            # This means that local and remote are similar!
+            # Mark as conflcit, and leave to autoresolve to deal with it
+            decisions.conflict(path,
+                               [op_addrange(key, local[d.key])],
+                               [op_addrange(key, remote[d.key + offset])])
+            taken += 1
         else:
-            decisions.conflict_chunk(path, ldiff, rdiff)
+            raise ValueError("Invalid diff op: %s" % d.op)
+
+    # We have made at least one split
+    if taken < len(local):
+        # Have elements that are inserted on both sides
+        overlap = [op_addrange(key, local[taken:])]
+        decisions.agreement(path, overlap, overlap)
+    if len(decisions.decisions) > 1 or not decisions.decisions[0].conflict:
+        return decisions.decisions
+    else:
+        return None
+
+
+def _merge_concurrent_inserts(base, ldiff, rdiff, path, decisions):
+    """Merge concurrent inserts, optionally with one or more removeranges.
+
+    This method compares the addition/removals on both sides, and splits it
+    into individual agreement/onesided/conflict decisions.
+    """
+    assert ldiff[0].op == DiffOp.ADDRANGE and rdiff[0].op == DiffOp.ADDRANGE
+    # First, reconstruct the value lists as they are on local and remote
+    lv = ldiff[0].valuelist
+    rv = rdiff[0].valuelist
+
+    if len(ldiff) != len(rdiff):
+        if len(ldiff) > len(rdiff):
+            rv = rv + base[ldiff[1].key:ldiff[1].key + ldiff[1].length]
+        elif len(rdiff) > len(ldiff):
+            lv = lv + base[rdiff[1].key:rdiff[1].key + rdiff[1].length]
+    subdec = _split_addrange_on_equality(ldiff[0].key, lv, rv, path)
+    if subdec:
+        decisions.decisions.extend(subdec)
+        if len(ldiff) > 1 and len(rdiff) > 1:
+            decisions.agreement(path, ldiff[1:], rdiff[1:])
+        elif len(ldiff) > 1 or len(rdiff) > 1:
+            decisions.onesided(path, ldiff[1:], rdiff[1:])
+    else:
+        decisions.conflict(path, ldiff, rdiff)
 
 
 def _merge_lists(base, local_diff, remote_diff, path, decisions):
@@ -498,85 +538,106 @@ def _merge_lists(base, local_diff, remote_diff, path, decisions):
 
         elif not (bool(d0) and bool(d1)):
             # One-sided modification of chunk
-            decisions.onesided_chunk(path, d0, d1)
+            decisions.onesided(path, d0, d1)
 
         elif d0 == d1:
             # Exactly the same modifications
-            decisions.agreement_chunk(path, d0, d1)
+            decisions.agreement(path, d0, d1)
 
-            # FIXME: do the above two cases fully cover what the below one did?
-        # elif bool(d0) != bool(d1) or (d0 == d1):  # d0 xor d1 or d0 == d1
-        #     # One-sided modification of chunk (or exactly the same modifications)
-        #     d = d0 or d1  # Pick the non-empty one
-        #     # Apply diff entries (either just one or an add + remove or patch)
-        #     for e in d:
-        #         assert j == e.key
-        #         if e.op == DiffOp.PATCH:
-        #             assert j < len(base)
-        #             merged.append(patch(base[j], e.diff))
-        #         elif e.op == DiffOp.ADDRANGE:
-        #             assert j <= len(base)
-        #             merged.extend(e.valuelist)
-        #             merged_offset += len(e.valuelist)
-        #         elif e.op == DiffOp.REMOVERANGE:
-        #             assert j < len(base)
-        #             merged_offset -= e.length
-        #         else:
-        #             raise ValueError("Unexpected diff op {}".format(e.op))
-        #     if (all(e.op == DiffOp.ADDRANGE for e in d0) and
-        #         all(e.op == DiffOp.ADDRANGE for e in d1)):
-        #         merged.extend(base[j:k])
+        # Below notation: A: addition, R: removal, P: patch
+        # Double operations: AP and AR (addition followed by patch or removal)
+        # 15 combinations to cover below:
+        # A/R: addition on one side, removal on other
+        # AR/R: addtion and removal on one side, removal on other
+        # etc.
+        # These can be partially resolved, except for the case of
+        # AR/AR, which is basically a sequence replacement. These are often
+        # complex enough that they are best left as conflicts!
+
         elif (len(d0) == len(d1) == 1 and
-                d0[0].op == d1[0].op == DiffOp.PATCH and
-                d0[0].key == d1[0].key):
-            key = d0[0].key
-            bv = base[key]
-            _merge(bv, d0[0].diff, d1[0].diff,
-                   path + (key,), decisions)
-        elif len(d0) >= 1 and len(d1) >= 1:
-            # Several special cases need to checked for sequentially
-            # (may be combination)
-            if d0[0] == d1[0]:
-                # First op matches on both sides
-                decisions.agreement_chunk(path, [d0[0]], [d1[0]])
-            elif (d0[0].op == d1[0].op == DiffOp.ADDRANGE and
-                    d0[0].key == d1[0].key):
-                # Both first ops are insertions, check for identical insertions
-                # on both sides
-                _split_addrange_on_equality(
-                    d0[0].key, d0[0].valuelist, d1[0].valuelist,
-                    path, decisions)
-            elif len(d0) != len(d1):
-                decisions.conflict_chunk(path, d0, d1)
-                continue
-            else:
-                decisions.conflict_chunk(path, [d0[0]], [d1[0]])
+                not d0[0].op == d1[0].op == DiffOp.ADDRANGE):
+            # A/R, A/P, R/P or P/P
+            # (R/R will always agree above because of chunking)
+            ld, rd = d0[0], d1[0]
+            ops = (ld.op, rd.op)
 
-            # Check for diffs #2
-            if len(d0) == len(d1) == 1:
-                # We've processed all diffs
-                pass
-            # After previous checks, we know d0 and d1 are both length 2
-            elif d0[1] == d1[1]:
-                # Insert + patch/remove on both sides, with last ops matching
-                # (identical)
-                decisions.agreement_chunk(path, [d0[1]], [d1[1]])
-            elif (d0[1].op == d1[1].op == DiffOp.PATCH and
-                    d0[1].key == d1[1].key):
-                # Second ops are both patch ops, recurse
-                key = d0[1].key
+            if ld.op == rd.op == DiffOp.PATCH:
+                # P/P, recurse
+                assert ld.key == rd.key
+                key = ld.key
                 bv = base[key]
-                _merge(bv, d0[1].diff, d1[1].diff,
+                _merge(bv, ld.diff, rd.diff,
                        path + (key,), decisions)
+            elif DiffOp.REMOVERANGE in ops and DiffOp.PATCH in ops:
+                # R/P, always conflict
+                decisions.conflict(path, d0, d1)
             else:
-                raise ValueError("Invalid diff list")
+                # A/R or A/P, by eliminiation
+                # Simply perform addition first, then patch/removal
+                # Mark conflicted, as this is suspect
+                assert DiffOp.ADDRANGE in ops
+                if ld.op == DiffOp.ADDRANGE:
+                    # Addition locally
+                    decisions.local_then_remote(path, d0, d1, conflict=True)
+                else:
+                    # Addition remotely
+                    decisions.remote_then_local(path, d0, d1, conflict=True)
+
+        elif d0[0].op != d1[0].op:
+            # AR/R, AP/R, AR/P or AP/P
+            if len(d0) > 1:
+                ddouble = d0
+                dsingle = d1[0]
+            else:
+                dsingle = d0[0]
+                ddouble = d1
+            double_ops = [d.op for d in ddouble]
+            if double_ops[1] != dsingle.op:
+                # AR/P or AP/R
+                # Onesided addition + conflicted patch/delete as above
+                # TODO: Should we make addition conflicted as well?
+                if dsingle == d1[0]:
+                    # Addition is locally
+                    decisions.onesided(path, d0[0:1], None)
+                    decisions.conflict(path, d0[1:], d1)
+                else:
+                    # Addtion is remotely
+                    decisions.onesided(path, None, d1[0:1])
+                    decisions.conflict(path, d0, d1[1:])
+            elif dsingle.op == DiffOp.REMOVERANGE:
+                # AR/R
+                # As chunking assures identical Rs, there is no conflict
+                # here! Simply split into onesided A + agreement R
+                if dsingle == d1[0]:
+                    # Addition is locally
+                    decisions.onesided(path, d0[0:1], None)
+                    decisions.agreement(path, d0[1:], d1)
+                else:
+                    # Addtion is remotely
+                    decisions.onesided(path, None, d1[0:1])
+                    decisions.agreement(path, d0, d1[1:])
+            else:
+                # AP/P, by eliminiation
+                assert dsingle.op == DiffOp.PATCH
+                # Simply mark as conflict, and let auto resolve deal with this
+                decisions.conflict(path, d0, d1)
 
         else:
-            # Two-sided modification, i.e. a conflict.
-            # It's possible that something more clever can be done here to reduce
-            # the number of conflicts. For now we leave this up to the autoresolve
-            # code and manual conflict resolution.
-            decisions.conflict_chunk(path, d0, d1)
+            # A/AR, A/AP, AR/AP, AR/AR, AP/AP
+            ops = [d.op for d in d0 + d1]
+            if DiffOp.PATCH in ops:
+                # A/AP, AR/AP or AP/AP:
+                # In these cases, simply merge the As, then conflict remaining
+                # op for autoresolve to deal with
+                _merge_concurrent_inserts(base, d0[:1], d1[:1], path, decisions)
+                decisions.conflict(path, d0[1:], d1[1:])
+            elif len(d0) < 2 or len(d1) < 2:
+                # A/A or A/AR
+                # This is in principle a range substitution!
+                _merge_concurrent_inserts(base, d0, d1, path, decisions)
+            else:
+                # AR/AR
+                decisions.conflict(path, d0, d1)
 
 
 def _merge_strings(base, local_diff, remote_diff,
