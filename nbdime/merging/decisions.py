@@ -421,8 +421,8 @@ def _split_addrange_on_equality(key, local, remote, path):
     """
     # First, find diff between local and remote insertion values
     intermediate_diff = diff(local, remote, path=star_path(path),
-                             predicates=notebook_predicates,
-                             differs=notebook_differs)
+                             predicates=notebook_predicates.copy(),
+                             differs=notebook_differs.copy())
 
     # Next, translate the diff into decisions
     decisions = MergeDecisionBuilder()
