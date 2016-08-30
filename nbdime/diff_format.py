@@ -298,70 +298,92 @@ _addops = (DiffOp.ADD, DiffOp.ADDRANGE)
 
 def _check_overlaps(existing, new):
     """Check whether existing collection of diff ops shares a key with the
-    new diffop, and if they  also have the same op type.
+    new diffop, and if they also have the same op type.
+
     Assumes exsiting diff ops are sorted on key.
+
+    Returns the index of the overlapping diff op, or None if no overlap was
+    found.
     """
-    for oo in reversed(existing):
-        if oo.key == new.key:
-            if oo.op == new.op:
+    for i, oo in reversed(tuple(enumerate(existing))):
+        if oo.op == new.op:
+            if oo.key == new.key:
                 # Found a match, combine ops
-                return oo
-            elif oo.op in _addops and new.op in _addops:
+                return i
+            break  # No need to search further than first op match
+        elif oo.op in _addops and new.op in _addops:
+            if oo.key == new.key:
                 # Addrange and single add can both point to same key
-                return oo
+                return i
+            break  # No need to search further than first op match
 
 
 def _combine_ops(existing, new):
-    """Combines new op into existing op
+    """Combines two ops into a new one that does the same
     """
     if new.op in _addops:
         if existing.op == DiffOp.ADD:
-            existing.op == DiffOp.ADDRANGE
-            existing.valuelist = [existing.value]
-            del existing.value
-        if new.op == DiffOp.ADDRANGE:
-            existing.valuelist += new.valuelist
+            # Convert to range for compatibility
+            d = op_addrange(existing.key, [existing.value])
         else:
-            if isinstance(existing.valuelist, string_types):
-                existing.valuelist += new.value
+            d = copy.deepcopy(existing)
+        if new.op == DiffOp.ADDRANGE:
+            d.valuelist += new.valuelist
+        else:
+            if isinstance(d.valuelist, string_types):
+                d.valuelist += new.value
             else:
-                existing.valuelist.append(new.value)
+                d.valuelist.append(new.value)
+        return d
     elif new.op == DiffOp.REMOVERANGE:
-        existing.length += new.length
+        assert existing.op == DiffOp.REMOVERANGE
+        return op_removerange(existing.key, existing.length + new.length)
 
 
 def flatten_list_of_string_diff(a, diff):
     """Translates a diff of strings split by str.splitlines() to a diff of
-    the joined multiline string
+    the joined multiline string.
     """
     if isinstance(a, string_types):
         a = a.splitlines(True)
-    a_mapping = [0] + list(_accum(len(ia) for ia in a))
+
+    line_to_char = [0] + list(_accum(len(ia) for ia in a))
     flattened = []
     for e in diff:
         op = e.op
-        new_key = a_mapping[e.key]
+        line_offset = line_to_char[e.key]
         if op == DiffOp.PATCH:
+            # For patches, each entry will have keys relative to line start
+            # So we simply need to offset each key with line offset
             for p in e.diff:
                 d = copy.deepcopy(p)
-                d.key += new_key
-                oo = _check_overlaps(flattened, d)
-                if oo is None:
+                d.key += line_offset
+                # If it overlaps with an existing op, combine them to one
+                io = _check_overlaps(flattened, d)
+                if io is None:
                     flattened.append(d)
                 else:
-                    _combine_ops(oo, d)
+                    flattened[io] = _combine_ops(flattened[io], d)
         else:
-            d = copy.deepcopy(e)
-            d.key = new_key
+            # Other ops simply have keys which refer to lines
             if op == DiffOp.ADDRANGE:
-                d.valuelist = "".join(e.valuelist)
+                d = op_addrange(line_offset, "".join(e.valuelist))
             elif op == DiffOp.REMOVERANGE:
-                d.length = a_mapping[e.key + e.length] - d.key
-            oo = _check_overlaps(flattened, d)
-            if oo is None:
+                d = op_removerange(
+                    line_offset, line_to_char[e.key + e.length] - line_offset)
+            else:
+                # Other ops simply need to adjust key as add/replace's value
+                # will already be a string
+                d = copy.deepcopy(e)
+                d.key = line_offset
+
+            # If it overlaps with an existing op, combine them to one
+            io = _check_overlaps(flattened, d)
+
+            if io is None:
                 flattened.append(d)
             else:
-                _combine_ops(oo, d)
+                flattened[io] = _combine_ops(flattened[io], d)
     flattened.sort(key=lambda x: x.key)
     return flattened
 
