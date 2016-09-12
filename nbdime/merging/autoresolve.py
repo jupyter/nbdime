@@ -264,9 +264,11 @@ def strategy2action_list(strategy, dec):
         dec.action = "clear_parent"
         dec.conflict = False
     elif strategy == "fail":
-        raise RuntimeError("Not expecting a conflict at path {}.".format(dec.common_path + '/*'))
+        raise RuntimeError("Not expecting a conflict at path {}.".format(
+          join_path(dec.common_path) + '/*'))
     else:
-        raise RuntimeError("Not expecting strategy {} for list items at path {}.".format(strategy, dec.common_path))
+        raise RuntimeError("Not expecting strategy {} for list items at path {}.".format(
+          strategy, join_path(dec.common_path)))
 
     return [dec]
 
