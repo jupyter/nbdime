@@ -16,33 +16,33 @@ from nbdime.diff_format import op_patch, op_add, op_remove, op_replace, op_addra
 
 def test_patch_str():
     # Test +, single item insertion
-    assert patch("42", [op_add(0, "3"), op_remove(1)]) == "34"
+    assert patch("42", [op_patch(0, [op_add(0, "3"), op_remove(1)])]) == "34"
 
     # Test -, single item deletion
-    assert patch("3", [op_remove(0)]) == ""
-    assert patch("42", [op_remove(0)]) == "2"
-    assert patch("425", [op_remove(0)]) == "25"
-    assert patch("425", [op_remove(1)]) == "45"
-    assert patch("425", [op_remove(2)]) == "42"
+    assert patch("3", [op_patch(0, [op_remove(0)])]) == ""
+    assert patch("42", [op_patch(0, [op_remove(0)])]) == "2"
+    assert patch("425", [op_patch(0, [op_remove(0)])]) == "25"
+    assert patch("425", [op_patch(0, [op_remove(1)])]) == "45"
+    assert patch("425", [op_patch(0, [op_remove(2)])]) == "42"
 
     # Test :, single item replace
-    assert patch("52", [op_replace(0, "4")]) == "42"
-    assert patch("41", [op_replace(1, "2")]) == "42"
-    assert patch("42", [op_replace(0, "3"), op_replace(1, "5")]) == "35"
-    assert patch("hello", [op_replace(0, "H")]) == "Hello"
+    assert patch("52", [op_patch(0, [op_replace(0, "4")])]) == "42"
+    assert patch("41", [op_patch(0, [op_replace(1, "2")])]) == "42"
+    assert patch("42", [op_patch(0, [op_replace(0, "3"), op_replace(1, "5")])]) == "35"
+    assert patch("hello", [op_patch(0, [op_replace(0, "H")])]) == "Hello"
     # Replace by delete-then-insert
-    assert patch("world", [op_remove(0), op_add(0, "W")]) == "World"
+    assert patch("world", [op_patch(0, [op_remove(0), op_add(0, "W")])]) == "World"
 
     # Test !, item patch (doesn't make sense for str)
     pass
 
     # Test ++, sequence insertion
-    assert patch("", [op_addrange( 0, "34"), op_add(0, "5"), op_addrange( 0, "67")]) == "34567"
+    assert patch("", [op_patch(0, [op_addrange( 0, "34"), op_add(0, "5"), op_addrange( 0, "67")])]) == "34567"
 
     # Test --, sequence deletion
-    assert patch("abcd", [op_removerange(0, 2)]) == "cd"
-    assert patch("abcd", [op_removerange(1, 2)]) == "ad"
-    assert patch("abcd", [op_removerange(2, 2)]) == "ab"
+    assert patch("abcd", [op_patch(0, [op_removerange(0, 2)])]) == "cd"
+    assert patch("abcd", [op_patch(0, [op_removerange(1, 2)])]) == "ad"
+    assert patch("abcd", [op_patch(0, [op_removerange(2, 2)])]) == "ab"
 
 
 def test_patch_list():
@@ -62,8 +62,8 @@ def test_patch_list():
     pass
 
     # Test !, item patch
-    assert patch(["hello", "world"], [op_patch(0, [op_replace(0, "H")]),
-                                      op_patch(1, [op_remove(0), op_add(0, "W")])]) == ["Hello", "World"]
+    assert patch(["hello", "world"], [op_patch(0, [op_patch(0, [op_replace(0, "H")])]),
+                                      op_patch(1, [op_patch(0, [op_remove(0), op_add(0, "W")])])]) == ["Hello", "World"]
 
     # Test ++, sequence insertion
     assert patch([], [op_addrange( 0, [3, 4]), op_add(0, 5), op_addrange( 0, [6, 7])]) == [3, 4, 5, 6, 7]
@@ -90,5 +90,5 @@ def test_patch_dict():
     assert patch({"a": 1, "b": 2}, [op_replace("a", 3), op_replace("b", 5)]) == {"a": 3, "b": 5}
 
     # Test !, item patch
-    subdiff = [op_patch(0, [op_replace(0, "H")]), op_patch(1, [op_remove(0), op_add(0, "W")])]
+    subdiff = [op_patch(0, [op_patch(0, [op_replace(0, "H")])]), op_patch(1, [op_patch(0, [op_remove(0), op_add(0, "W")])])]
     assert patch({"a": ["hello", "world"], "b": 3}, [op_patch("a", subdiff)]) == {"a": ["Hello", "World"], "b": 3}

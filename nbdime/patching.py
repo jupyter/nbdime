@@ -9,7 +9,8 @@ from six import string_types
 import copy
 import nbformat
 
-from .diff_format import DiffOp, NBDiffFormatError
+from .diff_format import DiffOp, NBDiffFormatError, flatten_list_of_string_diff
+
 
 
 __all__ = ["patch", "patch_notebook"]
@@ -68,6 +69,9 @@ def patch_list(obj, diff):
 def patch_string(obj, diff):
     # This can possibly be optimized for str if wanted, but
     # waiting until patch_list has been tested and debugged better
+
+    # String diffs are line-based, so flatten diff to character based first!
+    diff = flatten_list_of_string_diff(obj, diff)
     return "".join(patch_list(list(obj), diff))
 
 

@@ -33,10 +33,6 @@ def main_diff(args):
     a = nbformat.read(afn, as_version=4)
     b = nbformat.read(bfn, as_version=4)
 
-    # TODO: Split lines here?
-    #a = split_lines(a)
-    #b = split_lines(b)
-
     d = diff_notebooks(a, b)
 
     verbose = True
@@ -63,9 +59,9 @@ def add_generic_args(parser):
     if 0:  # TODO: Use verbose and quiet across nbdime and enable these:
         qv_group = parser.add_mutually_exclusive_group()
         qv_group.add_argument('-v', '--verbose',
-                             default=False,
-                             action="store_true",
-                             help="increase verbosity of console output.")
+                              default=False,
+                              action="store_true",
+                              help="increase verbosity of console output.")
         qv_group.add_argument('-q', '--quiet',
                               default=False,
                               action="store_true",

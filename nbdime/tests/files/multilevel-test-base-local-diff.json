@@ -6,14 +6,20 @@
           {
             "diff": [
               {
-                "length": 1,
-                "key": 4,
-                "op": "removerange"
-              },
-              {
-                "key": 4,
-                "valuelist": "5",
-                "op": "addrange"
+                "diff": [
+                  {
+                    "length": 1,
+                    "key": 4,
+                    "op": "removerange"
+                  },
+                  {
+                    "key": 4,
+                    "valuelist": "5",
+                    "op": "addrange"
+                  }
+                ],
+                "key": 0,
+                "op": "patch"
               }
             ],
             "key": "source",

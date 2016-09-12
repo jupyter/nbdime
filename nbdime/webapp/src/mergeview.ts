@@ -61,7 +61,7 @@ class DiffView {
           del: 'CodeMirror-merge-r-deleted',
           connect: 'CodeMirror-merge-r-connect'};
   }
-  
+
   init(pane: HTMLElement, edit: CodeMirror.Editor, options: CodeMirror.MergeView.MergeViewEditorConfiguration) {
     this.edit = edit;
     (this.edit.state.diffViews || (this.edit.state.diffViews = [])).push(this);
@@ -77,7 +77,7 @@ class DiffView {
     this.setScrollLock(true, false);
     this.registerScroll();
   }
-  
+
   setShowDifferences(val) {
     val = val !== false;
     if (val != this.showDifferences) {
@@ -85,7 +85,7 @@ class DiffView {
       this.forceUpdate('full');
     }
   }
-  
+
   registerUpdate() {
     var editState = {from: 0, to: 0, marked: []};
     var origState = {from: 0, to: 0, marked: []};
@@ -147,7 +147,7 @@ class DiffView {
     update();
     return update;
   }
-  
+
   buildGap(): HTMLElement {
     var lock = this.lockButton = elt('div', null, 'CodeMirror-merge-scrolllock');
     lock.title = 'Toggle locked scrolling';
@@ -171,7 +171,7 @@ class DiffView {
 
     return this.gap = elt('div', gapElts, 'CodeMirror-merge-gap');
   }
-  
+
   registerScroll(): void {
     var self = this;
     this.edit.on('scroll', function() {
@@ -199,15 +199,15 @@ class DiffView {
       editor = this.orig;
       other = this.edit;
     }
-    
+
     if (editor.state.scrollSetBy === this) {
       editor.state.scrollSetBy = null;
       return;
     }
-    
+
     // Position to update to
     other.state.scrollPosition = editor.getScrollInfo();
-    
+
     // If ticking, we already have a scroll queued
     if (other.state.scrollTicking) {
       return;
@@ -215,7 +215,7 @@ class DiffView {
 
     var sInfo = other.getScrollInfo();
     // Don't queue an event if already synced.
-    if (other.state.scrollPosition.top == sInfo.top && 
+    if (other.state.scrollPosition.top == sInfo.top &&
         other.state.scrollPosition.left == sInfo.left) {
       return;
     }
@@ -236,8 +236,8 @@ class DiffView {
     if (val && action != false) this.syncScroll(EventDirection.OUTGOING);
     this.lockButton.innerHTML = val ? '\u21db\u21da' : '\u21db&nbsp;&nbsp;\u21da';
   }
-  
-  
+
+
 
   // FIXME maybe add a margin around viewport to prevent too many updates
   updateMarks(editor: CodeMirror.Editor, diff: DiffRangePos[],
@@ -270,7 +270,7 @@ class DiffView {
       }
     });
   }
-  
+
   classes: DiffClasses;
   showDifferences: boolean;
   dealigned: boolean;
@@ -336,15 +336,15 @@ function getMatchingOrigLine(editLine: number, chunks: Chunk[]): number {
 }
 
 /**
- * Find which line numbers align which each other, in the 
+ * Find which line numbers align which each other, in the
  * set of DiffViews. The returned array is of the format:
- * 
+ *
  * [ aligned line #1:[Edit line number, (DiffView#1 line number, DiffView#2 line number,) ...],
  *   algined line #2 ..., etc.]
  */
 function findAlignedLines(dvs: DiffView[]): number[][] {
   var linesToAlign: number[][] = [];
-  
+
   // First fill directly from first DiffView
   let dv = dvs[0];
   let others = dvs.slice(1);
@@ -445,12 +445,12 @@ export interface MergeViewEditorConfiguration extends CodeMirror.EditorConfigura
    * To create a diff view, omit local.
    */
   local?: IStringDiffModel;
-  
+
   /**
    * Provides the partial merge input for a three-way merge.
    */
   //merged?: IEditorModel;
-  
+
   /**
    * When true, the base of a three-way merge is shown. Defaults to true.
    */
@@ -470,7 +470,7 @@ class MergeView {
     var remote = options.remote;
     var local = options.local;
     var merged = null; //options.merged;
-    
+
     var wrap = []
     var left: DiffView = this.left = null;
     var right: DiffView = this.right = null;
@@ -482,8 +482,8 @@ class MergeView {
     options.value = (options.remote.base !== null ?
       options.remote.base : options.remote.remote);
     options.lineNumbers = options.lineNumbers !== false;
-    
-    /** 
+
+    /**
      * Different cases possible:
      *   - Local and merged supplied: Merge:
      *     - Always use left, right and merge panes
@@ -493,33 +493,33 @@ class MergeView {
      *     - Entire content added/deleted: Use only base editor,
      *       but with different classes
      *     - Partial changes: Use base + right editor
-     * */ 
-    
+     * */
+
     var hasMerge = local !== null && merged !== null;
     if (hasMerge) {
       console.assert(remote.base == local.base);
-      
+
       left = this.left = new DiffView(local, 'left', this.alignChunks);
       this.diffViews.push(left);
       //wrap.push(left.buildGap());
       var leftPane = elt('div', null, 'CodeMirror-merge-pane');
       wrap.push(leftPane);
-      
+
       let showBase = options.showBase !== false;
       if (showBase) {
         var basePane = elt('div', null, 'CodeMirror-merge-pane');
         wrap.push(basePane);
       }
-      
+
       right = this.right = new DiffView(remote, 'right', this.alignChunks);
       this.diffViews.push(right);
       //wrap.push(right.buildGap());
       var rightPane = elt('div', null, 'CodeMirror-merge-pane');
       wrap.push(rightPane);
       rightPane.className += ' CodeMirror-merge-pane-rightmost';
-      
+
       wrap.push(elt('div', null, null, 'height: 0; clear: both;'));
-      
+
       /*merge = this.merge = new DiffView(merged, 'merge', this.alignChunks);
       var mergePane = elt('div', null, 'CodeMirror-merge-pane');
       wrap.push(mergePane);*/
@@ -554,7 +554,7 @@ class MergeView {
       this.base = CodeMirror(basePane, copyObj(options));
     }
 
-    if (left) left.init(leftPane, this.base, 
+    if (left) left.init(leftPane, this.base,
       copyObj({readOnly: true}, copyObj(options)) as CodeMirror.MergeView.MergeViewEditorConfiguration);
     if (right) right.init(rightPane, this.base,
       copyObj({readOnly: true}, copyObj(options)) as CodeMirror.MergeView.MergeViewEditorConfiguration);
@@ -578,13 +578,13 @@ class MergeView {
         dv.dealigned = false;
       }
     }
-    
+
     if (!dealigned && !force) {
       return; // Nothing to do
     }
     // Find matching lines
     var linesToAlign = findAlignedLines(this.diffViews);
-    
+
     // Function modifying DOM to perform alignment:
     let self: MergeView = this;
     let f = function () {
@@ -614,17 +614,17 @@ class MergeView {
         cm[i].scrollTo(null, scroll[i]);
       }
     };
-    
+
     // All editors should have an operation (simultaneously),
     // so set up nested operation calls.
     if (!this.base.curOp) {
-      f = function(fn) { 
-        return function() { self.base.operation(fn) } 
+      f = function(fn) {
+        return function() { self.base.operation(fn) }
       }(f);
     }
     for (let dv of this.diffViews) {
       if (!dv.orig.curOp) {
-        f = function(fn) { 
+        f = function(fn) {
           return function() { dv.orig.operation(fn) }
         }(f);
       }
@@ -632,12 +632,12 @@ class MergeView {
     // Perform alignment
     f();
   }
-  
-  remoteEditor() { 
-    return this.right && this.right.orig; 
+
+  remoteEditor() {
+    return this.right && this.right.orig;
   }
 
-  localEditor() { 
+  localEditor() {
     return this.left && this.left.orig;
   }
 
@@ -651,17 +651,17 @@ class MergeView {
   }
 
   rightChunks() {
-    if (this.right) { 
+    if (this.right) {
       return this.right.chunks;
     }
   }
 
   leftChunks() {
-    if (this.left) { 
-      return this.left.chunks; 
+    if (this.left) {
+      return this.left.chunks;
     }
   }
-  
+
   left: DiffView;
   right: DiffView;
   merge: DiffView;
@@ -822,10 +822,10 @@ function goNearbyDiff(cm, dir): void | any {
   var found = null, views = cm.state.diffViews, line = cm.getCursor().line;
   if (views) for (var i = 0; i < views.length; i++) {
     var dv = views[i], isOrig = cm == dv.orig;
-    var pos = dir < 0 ? 
-      findPrevDiff(dv.chunks, line, isOrig) : 
+    var pos = dir < 0 ?
+      findPrevDiff(dv.chunks, line, isOrig) :
       findNextDiff(dv.chunks, line, isOrig);
-    if (pos !== null && (found === null || 
+    if (pos !== null && (found === null ||
           (dir < 0 ? pos > found : pos < found))) {
       found = pos;
     }
