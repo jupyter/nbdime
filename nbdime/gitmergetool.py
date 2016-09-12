@@ -67,7 +67,7 @@ def show_merge(base, local, remote, merged):
     Otherwise, exit with error code.
     """
     # TODO: handle /dev/null (Windows equivalent?) for new or deleted files
-    if any([not f.endswith('.ipynb') for f in [base, local, remote, merged]]):
+    if any(not f.endswith('.ipynb') for f in [base, local, remote, merged]):
         return nbmergeapp.main([base, local, remote, merged])
     else:
         sys.exit(1)
