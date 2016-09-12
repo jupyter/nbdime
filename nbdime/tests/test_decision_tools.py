@@ -100,6 +100,7 @@ def test_pop_patch_single_level():
         remote_diff=[op_patch("c", [op_remove("e")])]
     )
     dec = pop_patch_decision(md)
+    assert dec is not None
     assert dec.common_path == ("a", "b", "c")
     assert dec.local_diff == [op_remove("d")]
     assert dec.remote_diff == [op_remove("e")]

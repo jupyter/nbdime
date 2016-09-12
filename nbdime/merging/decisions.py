@@ -225,7 +225,7 @@ def pop_patch_decision(decision):
 
     Returns the new decision.
 
-    Raises a ValueErorr if a decision can not be created at the lower level.
+    Returns None if a decision can not be created at the lower level.
     """
     diffs = [decision.local_diff, decision.remote_diff]
     if decision.action == "custom":
@@ -253,12 +253,9 @@ def pop_all_patch_decisions(decision):
     If the decision is already at the lowest level, it returns the original
     decision.
     """
-    try:
-        while 1:
-            decision = pop_patch_decision(decision)
-    except ValueError as e:
-        if not str(e).startswith("Cannot pop patch decision for: "):
-            raise e
+    decision = pop_patch_decision(decision)
+    while decision is not None:
+        decision = pop_patch_decision(decision)
     return decision
 
 

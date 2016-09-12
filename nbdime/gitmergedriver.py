@@ -18,7 +18,7 @@ Use with:
 
 import sys
 import os
-from subprocess import check_call, CalledProcessError
+from subprocess import check_call, check_output, CalledProcessError
 
 from . import nbmergeapp
 
