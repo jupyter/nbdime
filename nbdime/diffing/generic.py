@@ -76,8 +76,9 @@ def diff(a, b, path="", predicates=None, differs=None):
     elif isinstance(a, dict) and isinstance(b, dict):
         d = diff_dicts(a, b, path=path, predicates=predicates, differs=differs)
     elif isinstance(a, string_types) and isinstance(b, string_types):
-        # FIXME: Do we need this string case, and if so do we need to pass on
-        # the additional arguments?
+        # Don't pass differs/predicates as the only possible use case is to
+        # use a different character differ within each line or predicates
+        # for comparing lines
         d = diff_strings_linewise(a, b)
     else:
         raise RuntimeError("Can currently only diff list, dict, or str objects.")
