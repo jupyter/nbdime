@@ -232,7 +232,7 @@ def pop_patch_decision(decision):
         diffs.append(decision.custom_diff)
     popped = _pop_path(diffs)
     if popped is None:
-        raise ValueError("Cannot pop patch decision for: " + str(decision))
+        return None
     ret = MergeDecision(
         common_path=decision.common_path + (popped["key"],),
         local_diff=popped["diffs"][0],
@@ -253,9 +253,10 @@ def pop_all_patch_decisions(decision):
     If the decision is already at the lowest level, it returns the original
     decision.
     """
-    decision = pop_patch_decision(decision)
-    while decision is not None:
-        decision = pop_patch_decision(decision)
+    popped = pop_patch_decision(decision)
+    while popped is not None:
+        decision = popped
+        popped = pop_patch_decision(decision)
     return decision
 
 
