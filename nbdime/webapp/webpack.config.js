@@ -5,8 +5,7 @@ module.exports = {
   output: {
     path: __dirname + "/static/build",
     filename: "[name].js",
-    publicPath: "./static/",
-    libraryTarget: 'commonjs2',
+    publicPath: "./static/"
   },
   debug: true,
   devtool: 'source-map',
