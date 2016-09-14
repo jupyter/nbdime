@@ -376,6 +376,40 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
    */
   deleteCell: boolean;
 
+  get agreedSource(): boolean {
+    return this.local.source.remote === this.remote.source.remote;
+  }
+
+  get agreedMetadata(): boolean {
+    if (!this.local.metadata || !this.remote.metadata) {
+      return !this.local.metadata && !this.remote.metadata;
+    }
+    return this.local.metadata.remote === this.remote.metadata.remote;
+  }
+
+  get agreedOutputs(): boolean {
+    let lo = this.local.outputs;
+    let ro = this.remote.outputs;
+    let localEmpty = !lo || lo.length === 0;
+    let remoteEmpty = !ro || ro.length === 0;
+    if (localEmpty || remoteEmpty) {
+      return localEmpty && remoteEmpty;
+    }
+    if (lo.length !== ro.length) {
+      return false;
+    }
+    for (let i=0; i < lo.length; ++i) {
+      if (JSON.stringify(lo[i].remote) !== JSON.stringify(ro[i].remote)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  get agreedCell(): boolean {
+    return this.agreedSource && this.agreedMetadata && this.agreedOutputs;
+  }
+
   /**
    *
    */

@@ -812,7 +812,7 @@ class CellMergeWidget extends Panel {
           model.local.unchanged && model.remote.unchanged &&
           model.merged.unchanged) ||  // Unchanged
           model.local.added !== model.remote.added ||  // Onesided addition
-          model.local.added ||  // Implies identical addition
+          model.local.added && model.agreedCell || // Identical additions
           model.local.deleted && model.remote.deleted   // Deletion on both
           ) {
       // Add single view of source:
@@ -883,7 +883,7 @@ class CellMergeWidget extends Panel {
       if (outputsChanged || (
             model.merged.outputs && model.merged.outputs.length > 0)) {
         // TODO: Figure out how to deal with outputs
-        let baseOut = CellMergeWidget.getOutputs(model.merged.outputs, true);
+        let baseOut = CellMergeWidget.getOutputs(model.local.outputs, true);
         let localOut = CellMergeWidget.getOutputs(model.local.outputs);
         let remoteOut = CellMergeWidget.getOutputs(model.remote.outputs);
         let mergedOut = CellMergeWidget.getOutputs(model.merged.outputs);
