@@ -582,8 +582,9 @@ class CellDiffWidget extends Panel {
         container.addWidget(outputsWidget);
         changed = changed || !o.unchanged || o.added || o.deleted;
       }
+      let collapsed = !changed || model.added || model.deleted;
       let header = changed ? 'Outputs changed' : 'Outputs unchanged';
-      let collapser = new CollapsiblePanel(container, header, !changed);
+      let collapser = new CollapsiblePanel(container, header, collapsed);
       collapser.addClass(OUTPUTS_ROW_CLASS);
       this.addWidget(collapser);
     }
