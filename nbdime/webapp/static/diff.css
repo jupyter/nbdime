@@ -1,4 +1,8 @@
 
+body {
+  --jp-layout-color3: white;
+  overflow: scroll !important;
+}
 
 .jp-Notebook-diff {
   width: 90%;
@@ -8,8 +12,13 @@
 
 /* Alternative for showing single cell when cells are equal */
 .jp-Diff-unchanged {
-  margin-left: 25%;
-  width: 50%;
+  margin-left: 10%;
+  width: 80%;
+}
+
+.jp-Diff-unchanged .jp-Diff-unchanged {
+  margin-left: 0;
+  width: 100%;
 }
 
 .jp-Metadata-diff {
@@ -44,12 +53,24 @@
   display: none;
 }
 
+/*
 .jp-Diff-added .jp-Cellrow-outputs {
   display: none;
 }
 
 .jp-Diff-deleted .jp-Cellrow-outputs {
   display: none;
+}
+*/
+
+.jp-Diff-added .jp-Diff-unchanged {
+  margin-left: 25%;
+  width: 75%;
+}
+
+.jp-Diff-deleted .jp-Diff-unchanged {
+  margin-left: 0;
+  width: 75%;
 }
 
 .jp-Diff-unchanged .jp-Output-result > * {
@@ -98,6 +119,10 @@
 
 .jp-Diff-added .CodeMirror {
   background-color: #dbffdb;
+}
+
+.jp-Diff-added .CodeMirror-merge-pane-added {
+  width: 100%;
 }
 
 #nbdime-header {

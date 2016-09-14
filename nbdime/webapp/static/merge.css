@@ -10,8 +10,8 @@
 
 /* Alternative for showing single cell when cells are equal */
 .jp-Diff-unchanged {
-  margin-left: 25%;
-  width: 50%;
+  margin-left: 10%;
+  width: 80%;
 }
 
 .jp-Metadata-diff {
@@ -25,6 +25,7 @@
 .jp-Cell-merge {
   margin-bottom: 20px;
   border-top: solid #ccc 1px;
+  background-color: white;
 }
 
 .CodeMirror-merge-pane-local,.CodeMirror-merge-pane-remote,.CodeMirror-merge-pane-base {
@@ -38,10 +39,6 @@
 
 .jp-Notebook-merge .jp-Output-result img {
   max-width: 100%;
-}
-
-.jp-Cell-merge.p-mod-drag-image {
-  background-color: white;
 }
 
 .jp-Merge-cellHeader {
