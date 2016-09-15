@@ -54,7 +54,7 @@
   flex-grow: 1;
 }
 
-.jp-Notebook-merge .jp-DragOrderPanel-dragHandle {
+.jp-Notebook-merge .jp-DragWidget-dragHandle {
   height: 18px;
   width: 12px;
 }

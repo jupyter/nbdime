@@ -23,6 +23,10 @@ import {
 } from 'jupyterlab/lib/notebook/notebook/nbformat';
 
 import {
+  DragDropPanel, DragWidget, findChild
+} from './upstreaming/dragpanel';
+
+import {
   Widget
 } from 'phosphor/lib/ui/widget';
 
@@ -43,10 +47,6 @@ import {
 } from './util';
 
 import {
-  DragOrderPanel
-} from './dragorderpanel';
-
-import {
   CellDiffModel, NotebookDiffModel, IDiffModel,
   IStringDiffModel, StringDiffModel, OutputDiffModel
 } from './diffmodel';
@@ -60,6 +60,7 @@ import 'phosphor/styles/base.css';
 import 'codemirror/lib/codemirror.css';
 import 'jupyterlab/lib/index.css';
 import 'jupyterlab/lib/theme.css';
+import './upstreaming/dragpanel.css';
 import 'jupyterlab/lib/notebook/index.css';
 import 'jupyterlab/lib/notebook/theme.css';
 
@@ -326,12 +327,12 @@ class RenderableOutputView extends Widget {
 /**
  * Widget for showing side by side comparison and picking of merge outputs
  */
-class RenderableOutputsMergeView extends DragOrderPanel {
+class RenderableOutputsMergeView extends DragDropPanel {
 
   static makeOutputsDraggable(area: OutputAreaWidget): void {
     let i = area.layout.iter();
     for (let w = i.next(); w !== undefined; w = i.next()) {
-      DragOrderPanel.makeHandle(w);
+      DragWidget.makeHandle(w);
     }
   }
 
@@ -416,26 +417,17 @@ class RenderableOutputsMergeView extends DragOrderPanel {
   /**
    * Overrided version to allow drag and drop from source lists to merged list
    */
-  protected findDragTargetKey(node: HTMLElement): any {
+  protected findDragTarget(handle: HTMLElement): HTMLElement {
     // First check for a drag handle
-    let handle = this.findDragHandle(node);
     if (handle === null) {
       return null;
     }
 
     // Next find out which pane it belongs to, and which output it belongs to
-    return this.keyFromTarget(handle);
-  }
-
-  /**
-   * Overrided version to allow identifying source pane and source output
-   */
-  protected keyFromTarget(node: HTMLElement): any {
     for (let pane of this.panes) {
-      let child = DragOrderPanel.findChild(pane.node, node);
+      let child = findChild(pane.node, handle);
       if (child !== null) {
-        let paneIndex = this.panes.indexOf(pane);
-        return [paneIndex, DragOrderPanel.getIndexOfChildNode(pane, child)];
+        return child;
       }
     }
     return null;
@@ -452,11 +444,25 @@ class RenderableOutputsMergeView extends DragOrderPanel {
     return (pane.layout as PanelLayout).widgets.at(outputIndex);
   }
 
+  protected getIndexOfChildNode(node: HTMLElement, parent?: PanelLayout): any {
+    for (let pane of this.panes) {
+      let child = findChild(pane.node, node);
+      if (child !== null) {
+        let paneIndex = this.panes.indexOf(pane);
+        return [paneIndex, super.getIndexOfChildNode(child,
+                pane.layout as PanelLayout)];
+      }
+    }
+    return null;
+  }
+
 
   /**
    * Called when something has been dropped in the panel.
+   *
+   * As only internal moves are supported, we know the type of the keys
    */
-  protected onMove(from: number[], to: number[]): void {
+  protected move(from: number[], to: number[]): void {
     let paneFrom = from[0];
     let paneTo = to[0];
     if (this.panes[paneTo] !== this.mergePane) {
@@ -470,6 +476,7 @@ class RenderableOutputsMergeView extends DragOrderPanel {
       if (outputTo > outputFrom) {
         // Have to adjust index for insertWidget in same instance
         adjustedTo -= 1;
+        to[1] = adjustedTo;
       } else if (outputFrom === outputTo) {
         // No-op, same position
         return;
@@ -499,7 +506,7 @@ class RenderableOutputsMergeView extends DragOrderPanel {
    */
   protected findDropTarget(node: HTMLElement): HTMLElement {
     // Only valid drop target is in merge pane!
-    return DragOrderPanel.findChild(this.mergePane.node, node);
+    return findChild(this.mergePane.node, node);
   }
 
   base: OutputAreaModel = null;
@@ -905,7 +912,7 @@ class CellMergeWidget extends Panel {
     header.addClass(CELL_HEADER_CLASS);
 
     // Add drag handle
-    let w = DragOrderPanel.createDefaultHandle();
+    let w = DragWidget.createDefaultHandle();
     header.addWidget(w);
 
     // Add title widget
@@ -1000,7 +1007,7 @@ class MetadataMergeWidget extends Panel {
  * NotebookMergeWidget
  */
 export
-class NotebookMergeWidget extends DragOrderPanel {
+class NotebookMergeWidget extends DragDropPanel {
   constructor(model: NotebookMergeModel,
               rendermime: IRenderMime) {
     super();
@@ -1028,10 +1035,10 @@ class NotebookMergeWidget extends DragOrderPanel {
     return this._model;
   }
 
-  protected onMove(from: number, to: number): void {
+  protected move(from: number, to: number): void {
     // Move cell in model list
     this._model.cells.splice(to, 0, this._model.cells.splice(from, 1)[0]);
-    super.onMove(from, to);
+    super.move(from, to);
   }
 
   private _model: NotebookMergeModel;
