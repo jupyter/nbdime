@@ -57,12 +57,15 @@ import {
 
 
 import 'phosphor/styles/base.css';
-import 'codemirror/lib/codemirror.css';
-import 'jupyterlab/lib/index.css';
-import 'jupyterlab/lib/theme.css';
 import './upstreaming/dragpanel.css';
+import './upstreaming/flexpanel.css';
+import 'jupyterlab/lib/basestyle/materialcolors.css';
+import 'jupyterlab/lib/default-theme/variables.css';
+import 'jupyterlab/lib/markdownwidget/index.css';
 import 'jupyterlab/lib/notebook/index.css';
-import 'jupyterlab/lib/notebook/theme.css';
+import 'jupyterlab/lib/renderers/index.css';
+import 'jupyterlab/lib/editorwidget/index.css';
+import 'jupyterlab/lib/editorwidget/index.css';
 
 
 const NBDIFF_CLASS = 'jp-Notebook-diff';
@@ -202,37 +205,33 @@ class CollapsiblePanel extends Panel {
 /**
  * A wrapper view for showing StringDiffModels in a MergeView
  */
-class NbdimeMergeView extends Widget {
-  constructor(remote: IStringDiffModel, editorClasses: string[],
-              local?: IStringDiffModel, merged?: IStringDiffModel) {
-    super();
-    let opts: IMergeViewEditorConfiguration = {remote: remote};
-    opts.collapseIdentical = true;
-    opts.local = local ? local : null;
-    opts.merged = merged ? merged : null;
-    this._mergeview = new MergeView(this.node, opts);
-    this._editors = [];
-    if (this._mergeview.left) {
-      this._editors.push(this._mergeview.left);
-    }
-    if (this._mergeview.right) {
-      this._editors.push(this._mergeview.right);
-    }
-    if (this._mergeview.merge) {
-      this._editors.push(this._mergeview.merge);
-    }
-
-    if (remote.mimetype) {
-      // Set the editor mode to the MIME type.
-      for (let e of this._editors) {
-        loadModeByMIME(e.orig, remote.mimetype);
-      }
-      loadModeByMIME(this._mergeview.base, remote.mimetype);
-    }
+function createNbdimeMergeView(
+      remote: IStringDiffModel, editorClasses: string[],
+      local?: IStringDiffModel, merged?: IStringDiffModel): MergeView {
+  let opts: IMergeViewEditorConfiguration = {remote: remote, orig: null};
+  opts.collapseIdentical = true;
+  opts.local = local ? local : null;
+  opts.merged = merged ? merged : null;
+  let mergeview = new MergeView(opts);
+  let editors: DiffView[] = [];
+  if (mergeview.left) {
+    editors.push(mergeview.left);
+  }
+  if (mergeview.right) {
+    editors.push(mergeview.right);
+  }
+  if (mergeview.merge) {
+    editors.push(mergeview.merge);
   }
 
-  protected _mergeview: MergeView;
-  protected _editors: DiffView[];
+  if (remote.mimetype) {
+    // Set the editor mode to the MIME type.
+    for (let e of editors) {
+      loadModeByMIME(e.orig, remote.mimetype);
+    }
+    loadModeByMIME(mergeview.base.editor, remote.mimetype);
+  }
+  return mergeview;
 }
 
 
@@ -608,7 +607,7 @@ class CellDiffWidget extends Panel {
       if (model.unchanged && parent.cellType === 'markdown') {
         view = rendermime.render({'text/markdown': model.base});
       } else {
-        view = new NbdimeMergeView(model as IStringDiffModel, editorClasses);
+        view = createNbdimeMergeView(model as IStringDiffModel, editorClasses);
       }
     } else if (model instanceof OutputDiffModel) {
       // Take one of three actions, depending on output types
@@ -621,7 +620,7 @@ class CellDiffWidget extends Panel {
         let key = tmodel.hasMimeType(mt);
         if (key) {
           if (!renderable || valueIn(mt, stringDiffMimeTypes)) {
-            view = new NbdimeMergeView(tmodel.stringify(key), editorClasses);
+            view = createNbdimeMergeView(tmodel.stringify(key), editorClasses);
           } else if (renderable) {
             view = new RenderableOutputView(tmodel, editorClasses, rendermime);
           }
@@ -629,7 +628,7 @@ class CellDiffWidget extends Panel {
         }
       }
       if (!view) {
-        view = new NbdimeMergeView(tmodel.stringify(), editorClasses);
+        view = createNbdimeMergeView(tmodel.stringify(), editorClasses);
       }
     } else {
       throw 'Unrecognized model type.';
@@ -695,7 +694,7 @@ class MetadataDiffWidget extends Panel {
     let model = this._model;
     if (!model.unchanged) {
       this.addClass(TWOWAY_DIFF_CLASS);
-      let view: Widget = new NbdimeMergeView(
+      let view: Widget = createNbdimeMergeView(
         model, DIFF_CLASSES);
       if (model.collapsible) {
         view = new CollapsiblePanel(
@@ -754,7 +753,7 @@ class CellMergeWidget extends Panel {
                          editorClasses: string[]): Widget {
     let view: Widget = null;
     if (merged instanceof StringDiffModel) {
-      view = new NbdimeMergeView(remote as IStringDiffModel, editorClasses,
+      view = createNbdimeMergeView(remote as IStringDiffModel, editorClasses,
         local as IStringDiffModel, merged);
     }
     return view;
@@ -992,7 +991,7 @@ class MetadataMergeWidget extends Panel {
     let model = this._model;
     let CURR_CLASSES = MERGE_CLASSES.slice();  // copy
 
-    let view: Widget = new NbdimeMergeView(
+    let view: Widget = createNbdimeMergeView(
       model.remote, CURR_CLASSES, model.local, model.merged);
     view = new CollapsiblePanel(
       view, 'Notebook metadata changed', true);

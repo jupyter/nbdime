@@ -243,7 +243,7 @@ declare namespace CodeMirror {
         /** Programatically set the size of the editor (overriding the applicable CSS rules).
         width and height height can be either numbers(interpreted as pixels) or CSS units ("100%", for example).
         You can pass null for either of them to indicate that that dimension should not be changed. */
-        setSize(width: any, height: any): void;
+        setSize(width?: any, height?: any): void;
 
         /** Scroll the editor to a given(pixel) position.Both arguments may be left as null or undefined to have no effect. */
         scrollTo(x: number, y: number): void;

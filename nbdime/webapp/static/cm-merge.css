@@ -33,7 +33,7 @@
   z-index: 1;
 }
 
-.CodeMirror-merge-gap {
+.p-Widget.CodeMirror-merge-gap {
   z-index: 2;
   display: inline-block;
   height: 100%;

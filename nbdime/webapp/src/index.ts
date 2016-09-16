@@ -15,9 +15,6 @@ import {
   closeTool, getConfigOption
 } from './common';
 
-import 'jupyterlab/lib/index.css';
-import 'jupyterlab/lib/theme.css';
-
 /** */
 function initialize() {
   let onclose = (ev) => { closeTool(); };

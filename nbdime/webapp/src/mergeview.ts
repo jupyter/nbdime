@@ -7,8 +7,22 @@
 
 'use strict';
 
+import 'codemirror/lib/codemirror.css';
+import 'jupyterlab/lib/codemirror/index.css';
+
 import * as CodeMirror from 'codemirror';
-import 'codemirror/addon/display/autorefresh';
+
+import {
+  Widget, ResizeMessage
+} from 'phosphor/lib/ui/widget';
+
+import {
+  Panel
+} from 'phosphor/lib/ui/panel';
+
+import {
+  CodeMirrorWidget
+} from 'jupyterlab/lib/codemirror/widget';
 
 import {
   IStringDiffModel
@@ -35,6 +49,11 @@ import {
 } from './mergedecision';
 
 
+const PICKER_SYMBOL = '\u27ad';
+
+const CONFLICT_MARKER = '\u26A0'; // '\u2757'
+
+
 export enum DIFF_OP {
   DIFF_DELETE = -1,
   DIFF_INSERT = 1,
@@ -59,7 +78,18 @@ export type DiffClasses = {
 };
 
 
-CodeMirror.defaults.autoRefresh = true;
+class Editor extends CodeMirrorWidget {
+  /**
+   * A message handler invoked on an `'resize'` message.
+   */
+  protected onResize(msg: ResizeMessage): void {
+    if (msg.width < 0 || msg.height < 0) {
+      this.editor.setSize();
+    } else {
+      super.onResize(msg);
+    }
+  }
+}
 
 
 const GUTTER_PICKER_CLASS = 'jp-Merge-gutter-picker';
@@ -94,17 +124,18 @@ const mergeClassPrefix: DiffClasses = {chunk: 'CodeMirror-merge-m-chunk',
 export
 class DiffView {
   constructor(public model: IStringDiffModel, public type: string,
-              public alignChunks: (force?: boolean) => void) {
+              public alignChunks: (force?: boolean) => void,
+              options: CodeMirror.MergeView.MergeViewEditorConfiguration) {
     this.classes = type === 'left' ?
       leftClasses : type === 'right' ? rightClasses : null;
+    let orig = this.model.remote || '';
+    this.origWidget = new Editor(copyObj({value: orig}, copyObj(options)));
+    this.showDifferences = options.showDifferences !== false;
   }
 
-  init(pane: HTMLElement, edit: CodeMirror.Editor,
-       options: CodeMirror.MergeView.MergeViewEditorConfiguration) {
+  init(edit: CodeMirror.Editor) {
     this.edit = edit;
     (this.edit.state.diffViews || (this.edit.state.diffViews = [])).push(this);
-    let orig = this.model.remote || '';
-    this.orig = CodeMirror(pane, copyObj({value: orig}, copyObj(options)));
     this.orig.state.diffViews = [this];
 
     this.edit.on('gutterClick', this.onGutterClick.bind(this));
@@ -114,7 +145,6 @@ class DiffView {
     this.chunks = lineToNormalChunks(this.lineChunks);
     this.dealigned = false;
 
-    this.showDifferences = options.showDifferences !== false;
     this.forceUpdate = this.registerUpdate();
     this.setScrollLock(true, false);
     this.registerScroll();
@@ -382,13 +412,13 @@ class DiffView {
           editor.addLineClass(line, 'background', classes.start);
           if (self.type !== 'merge') {
             // For all editors except merge editor, add a picker button
-            let picker = elt('div', '\u27ad', classes.gutter);
+            let picker = elt('div', PICKER_SYMBOL, classes.gutter);
             (picker as any).sources = sources;
             picker.classList.add(GUTTER_PICKER_CLASS);
             editor.setGutterMarker(line, GUTTER_PICKER_CLASS, picker);
           } else if (conflict && editor === self.orig) {
             // Add conflict markers on editor, if conflicted
-            let conflictMarker = elt('div', '\u2757', '');
+            let conflictMarker = elt('div', CONFLICT_MARKER, '');
             (conflictMarker as any).sources = sources;
             conflictMarker.classList.add(GUTTER_CONFLICT_CLASS);
             editor.setGutterMarker(line, GUTTER_CONFLICT_CLASS, conflictMarker);
@@ -403,13 +433,13 @@ class DiffView {
       if (from === to) {
         let line = editor.addLineClass(from, 'background', classes.start);
         if (self.type !== 'merge') {
-          let picker = elt('div', '\u27ad', classes.gutter);
+          let picker = elt('div', PICKER_SYMBOL, classes.gutter);
           (picker as any).sources = sources;
           picker.classList.add(GUTTER_PICKER_CLASS);
           editor.setGutterMarker(line, GUTTER_PICKER_CLASS, picker);
         } else if (conflict) {
           // Add conflict markers on editor, if conflicted
-          let conflictMarker = elt('div', '\u2757', '');
+          let conflictMarker = elt('div', CONFLICT_MARKER, '');
           (conflictMarker as any).sources = sources;
           conflictMarker.classList.add(GUTTER_CONFLICT_CLASS);
           editor.setGutterMarker(line, GUTTER_CONFLICT_CLASS, conflictMarker);
@@ -436,11 +466,16 @@ class DiffView {
     });
   }
 
+  origWidget: CodeMirrorWidget;
+
+  get orig(): CodeMirror.Editor {
+    return this.origWidget.editor;
+  }
+
   classes: DiffClasses;
   showDifferences: boolean;
   dealigned: boolean;
   forceUpdate: Function;
-  orig: CodeMirror.Editor;
   edit: CodeMirror.Editor;
   chunks: Chunk[];
   lineChunks: Chunk[];
@@ -676,9 +711,9 @@ interface IMergeViewEditorConfiguration extends CodeMirror.EditorConfiguration {
   collapseIdentical?: boolean | number;
 
   /**
-   * Callback for when stretches of unchanged text are collapsed.
+   * Original value
    */
-  onCollapse?(mergeView: MergeView, line: number, size: number, mark: CodeMirror.TextMarker): void;
+  orig: any;
 
   /**
    * Provides remote diff of document to be shown on the right of the base.
@@ -710,14 +745,15 @@ interface IMergeViewEditorConfiguration extends CodeMirror.EditorConfiguration {
 
 // Merge view, containing 1 or 2 diff views.
 export
-class MergeView {
-  constructor(node: Node, options: IMergeViewEditorConfiguration) {
+class MergeView extends Panel {
+  constructor(options: IMergeViewEditorConfiguration) {
+    super();
     this.options = options;
     let remote = options.remote;
     let local = options.local;
     let merged = options.merged;
 
-    let wrap = [];
+    let panes: number = 0;
     let left: DiffView = this.left = null;
     let right: DiffView = this.right = null;
     let merge: DiffView = this.merge = null;
@@ -742,100 +778,104 @@ class MergeView {
      */
 
     let hasMerge = local !== null && merged !== null;
+    let dvOptions = options as CodeMirror.MergeView.MergeViewEditorConfiguration;
+
+    if (hasMerge) {
+      options.gutters = [GUTTER_CONFLICT_CLASS, GUTTER_PICKER_CLASS];
+    }
+
+    let showBase = options.showBase !== false;
+    if (showBase || !hasMerge) {
+      this.base = new Editor(copyObj(options));
+      this.base.addClass('CodeMirror-merge-pane');
+      this.base.addClass('CodeMirror-merge-pane-base');
+      if (hasMerge) {
+        this.base.editor.setOption('readOnly', true);
+      }
+    }
+
     if (hasMerge) {
       console.assert(remote.base === local.base);
-      options.gutters = [GUTTER_CONFLICT_CLASS, GUTTER_PICKER_CLASS];
 
+      let leftWidget: Widget;
       if (local.remote === null) {
         // Local value was deleted
         left = this.left = null;
-        var leftPane = elt('div', 'Value missing',
-                           'CodeMirror-merge-pane jp-mod-missing');
+        leftWidget = new Widget({node: elt('div', 'Value missing', 'jp-mod-missing')});
       } else {
-        left = this.left = new DiffView(local, 'left', this.alignViews.bind(this));
+        left = this.left = new DiffView(local, 'left', this.alignViews.bind(this),
+          copyObj({readOnly: true}, copyObj(dvOptions)) as CodeMirror.MergeView.MergeViewEditorConfiguration);
         this.diffViews.push(left);
-        var leftPane = elt('div', null, 'CodeMirror-merge-pane');
+        leftWidget = left.origWidget;
       }
-      leftPane.className += ' CodeMirror-merge-pane-local';
-      wrap.push(leftPane);
+      leftWidget.addClass('CodeMirror-merge-pane');
+      leftWidget.addClass('CodeMirror-merge-pane-local');
+      this.addWidget(leftWidget);
 
-      let showBase = options.showBase !== false;
       if (showBase) {
-        // wrap.push(left.buildGap());
-        var basePane = elt('div', null, 'CodeMirror-merge-pane');
-        basePane.className += ' CodeMirror-merge-pane-base';
-        wrap.push(basePane);
+        this.addWidget(this.base);
       }
 
+      let rightWidget: Widget;
       if (remote.remote === null) {
         // Remote value was deleted
         right = this.right = null;
-        var rightPane = elt('div', 'Value missing',
-                            'CodeMirror-merge-pane jp-mod-missing');
+        rightWidget = new Widget({node: elt('div', 'Value missing', 'jp-mod-missing')});
       } else {
-        right = this.right = new DiffView(remote, 'right', this.alignViews.bind(this));
+        right = this.right = new DiffView(remote, 'right', this.alignViews.bind(this),
+          copyObj({readOnly: false}, copyObj(dvOptions)) as CodeMirror.MergeView.MergeViewEditorConfiguration);
         this.diffViews.push(right);
-        var rightPane = elt('div', null, 'CodeMirror-merge-pane');
-        // wrap.push(right.buildGap());
+        rightWidget = right.origWidget;
       }
-      rightPane.className += ' CodeMirror-merge-pane-remote';
-      wrap.push(rightPane);
+      rightWidget.addClass('CodeMirror-merge-pane');
+      rightWidget.addClass('CodeMirror-merge-pane-remote');
+      this.addWidget(rightWidget);
 
-      wrap.push(elt('div', null, 'CodeMirror-merge-clear', 'height: 0; clear: both;'));
+      //this.push(elt('div', null, 'CodeMirror-merge-clear', 'height: 0; clear: both;'));
 
-      merge = this.merge = new DiffView(merged, 'merge', this.alignViews.bind(this));
+      merge = this.merge = new DiffView(merged, 'merge', this.alignViews.bind(this), dvOptions);
       this.diffViews.push(merge);
-      var mergePane = elt('div', null, 'CodeMirror-merge-pane');
-      mergePane.className += ' CodeMirror-merge-pane-final';
-      // wrap.push(merge.buildGap());
-      wrap.push(mergePane);
+      let mergeWidget = merge.origWidget;
+      mergeWidget.addClass('CodeMirror-merge-pane');
+      mergeWidget.addClass('CodeMirror-merge-pane-final');
+      this.addWidget(mergeWidget);
 
-      var panes = 3 + (showBase ? 1 : 0);
+      panes = 3 + (showBase ? 1 : 0);
     } else {
-      // Base always used
-      var basePane = elt('div', null, 'CodeMirror-merge-pane');
-      wrap.push(basePane);
+      this.addWidget(this.base);
       if (remote.unchanged || remote.added || remote.deleted) {
         if (remote.unchanged) {
-          basePane.className += ' CodeMirror-merge-pane-unchanged';
+          this.base.addClass('CodeMirror-merge-pane-unchanged');
         } else if (remote.added) {
-          basePane.className += ' CodeMirror-merge-pane-added';
+          this.base.addClass('CodeMirror-merge-pane-added');
         } else if (remote.deleted) {
-          basePane.className += ' CodeMirror-merge-pane-deleted';
+          this.base.addClass('CodeMirror-merge-pane-deleted');
         }
-        var panes = 1;
+        panes = 1;
       } else {
-        right = this.right = new DiffView(remote, 'right', this.alignViews.bind(this));
+        right = this.right = new DiffView(remote, 'right', this.alignViews.bind(this), dvOptions);
         this.diffViews.push(right);
-        var rightPane = elt('div', null, 'CodeMirror-merge-pane');
-        rightPane.className += ' CodeMirror-merge-pane-remote';
-        wrap.push(right.buildGap());
-        wrap.push(rightPane);
-        var panes = 2;
+        let rightWidget = right.origWidget;
+        rightWidget.addClass('CodeMirror-merge-pane');
+        rightWidget.addClass('CodeMirror-merge-pane-remote');
+        this.addWidget(new Widget({node: right.buildGap()}));
+        this.addWidget(rightWidget);
+        panes = 2;
       }
-      wrap.push(elt('div', null, 'CodeMirror-merge-clear', 'height: 0; clear: both;'));
+      //this.push(elt('div', null, 'CodeMirror-merge-clear', 'height: 0; clear: both;'));
     }
 
-    this.wrap = node.appendChild(elt('div', wrap, 'CodeMirror-merge CodeMirror-merge-' + panes + 'pane'));
-    if (basePane !== undefined) {
-      this.base = CodeMirror(basePane, copyObj(options));
-    }
+    this.addClass('CodeMirror-merge');
+    this.addClass('CodeMirror-merge-' + panes + 'pane');
 
-    if (left) {
-      left.init(leftPane, this.base,
-        copyObj({readOnly: true}, copyObj(options)) as CodeMirror.MergeView.MergeViewEditorConfiguration);
-    }
-    if (right) {
-      right.init(rightPane, this.base,
-        copyObj({readOnly: true}, copyObj(options)) as CodeMirror.MergeView.MergeViewEditorConfiguration);
-    }
-    if (merge) {
-      merge.init(mergePane, this.base,
-        copyObj({readOnly: false}, copyObj(options)) as CodeMirror.MergeView.MergeViewEditorConfiguration);
+    for (let dv of [left, right, merge]) {
+      if (dv) {
+        dv.init(this.base.editor);
+      }
     }
 
     if (options.collapseIdentical) {
-      this.base.operation(function() {
+      this.base.editor.operation(function() {
           collapseIdenticalStretches(self, options.collapseIdentical);
       });
     }
@@ -877,7 +917,7 @@ class MergeView {
 
       // Editors (order is important, so it matches
       // format of linesToAlign)
-      let cm: CodeMirror.Editor[] = [self.base];
+      let cm: CodeMirror.Editor[] = [self.base.editor];
       let scroll = [];
       for (let dv of self.diffViews) {
         cm.push(dv.orig);
@@ -897,9 +937,9 @@ class MergeView {
 
     // All editors should have an operation (simultaneously),
     // so set up nested operation calls.
-    if (!this.base.curOp) {
+    if (!this.base.editor.curOp) {
       f = function(fn) {
-        return function() { self.base.operation(fn); };
+        return function() { self.base.editor.operation(fn); };
       }(f);
     }
     for (let dv of this.diffViews) {
@@ -925,8 +965,7 @@ class MergeView {
   left: DiffView;
   right: DiffView;
   merge: DiffView;
-  wrap: Node;
-  base: CodeMirror.Editor;
+  base: CodeMirrorWidget;
   options: any;
   diffViews: DiffView[];
   aligners: CodeMirror.LineWidget[];
@@ -989,7 +1028,7 @@ function collapseIdenticalStretches(mv: MergeView, margin: boolean | number): vo
     margin = 2;
   }
   let clear = [];
-  let edit = mv.base;
+  let edit = mv.base.editor;
   let off = edit.getDoc().firstLine();
   for (let l = off, e = edit.getDoc().lastLine(); l <= e; l++) {
     clear.push(true);
