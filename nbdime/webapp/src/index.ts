@@ -2,7 +2,6 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-
 import {
   initialize_diff
 } from './diff';

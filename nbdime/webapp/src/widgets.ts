@@ -36,7 +36,7 @@ import {
 
 import {
   FlexPanel
-} from './flexpanel';
+} from './upstreaming/flexpanel';
 
 import {
   DiffView, MergeView, IMergeViewEditorConfiguration
@@ -375,7 +375,7 @@ class RenderableOutputsMergeView extends DragDropPanel {
   }
 
   init(classes: string[]): void {
-    let row = new FlexPanel({direction: 'left-to-right'});
+    let row = new FlexPanel({direction: 'left-to-right', evenSizes: true});
     if (this.local) {
       let leftPane = new OutputAreaWidget({rendermime: this.rendermime});
       leftPane.addClass(classes[1]);
@@ -399,7 +399,7 @@ class RenderableOutputsMergeView extends DragDropPanel {
     }
     if (row.widgets.length > 0) {
       this.addWidget(row);
-      row = new FlexPanel({direction: 'left-to-right'});
+      row = new FlexPanel({direction: 'left-to-right', evenSizes: true});
     }
     this.mergePane = new OutputAreaWidget({rendermime: this.rendermime});
     this.mergePane.addClass(classes[3]);
