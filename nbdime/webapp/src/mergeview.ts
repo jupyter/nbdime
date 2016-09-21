@@ -269,9 +269,7 @@ class DiffView {
       if (gutter === GUTTER_PICKER_CLASS) {
         if (instance === this.orig) {
           for (let s of ss) {
-            if (s.action !== 'mixed') {
-              s.decision.action = s.action as Action;
-            }
+            s.decision.action = s.action as Action;
           }
         } else if (instance === this.edit) {
           for (let s of ss) {
@@ -379,7 +377,7 @@ class DiffView {
       if (!givenClasses && sources.length > 0) {
         classes = copyObj(mergeClassPrefix) as DiffClasses;
         // First, figure out 'action' state of chunk
-        let s = sources[0].action;
+        let s: string = sources[0].action;
         if (sources.length > 1) {
           for (let si of sources.slice(1)) {
             if (si.action !== s) {
@@ -530,7 +528,7 @@ function highlightChars(editor: CodeMirror.Editor, ranges: DiffRangePos[],
   }
   for (let r of ranges) {
     if (origCls !== null) {
-      cls = origCls + (r.source ? '-' + r.source : '');
+      cls = origCls + (r.source ? '-' + r.source.action : '');
     }
     markers.push(doc.markText(r.from, r.to, {className: cls}));
   }

@@ -461,6 +461,10 @@ function combineOps(a: IDiffEntry, b: IDiffEntry): IDiffEntry {
     } else {
       aTyped = opAddRange(a.key as number, (a as IDiffAddRange).valuelist);
     }
+    aTyped.source = a.source;
+    if (b.source !== a.source) {
+      throw 'Cannot combine diff ops with different sources in one string line';
+    }
     if (b.op === DiffOp.SEQINSERT) {
       let bTyped = b as IDiffAddRange;
       // valuelist can also be string, but string also has concat:
@@ -541,6 +545,7 @@ function flattenStringDiff(val: string[] | string, diff: IDiffEntry[]): IDiffEnt
         d = opRemoveRange(lineOffset,
                           lineToChar[idx] - lineOffset);
       }
+      d.source = e.source;
 
       if (overlaps(flattened, d)) {
         flattened[-1] = combineOps(flattened[-1], d);

@@ -19,7 +19,7 @@ import {
 export
 type ChunkSource = {
   decision: MergeDecision;
-  action: 'local' | 'remote' | 'either' | 'custom' | 'mixed';
+  action: 'local' | 'remote' | 'either' | 'custom';
 };
 
 /**
@@ -181,6 +181,9 @@ class Chunker {
     let endOffset =
       range.chunkStartLine && range.endsOnNewline && firstLineNew ?
       0 : 1;
+    if (!isAddition) {
+      endOffset += linediff;
+    }
 
     let current = this._currentGhost;
     // Subtract offset from other editor
@@ -251,6 +254,10 @@ class LineChunker extends Chunker {
   }
 }
 
+
+/**
+ * Transform an array of lines to normal chunks
+ */
 export
 function lineToNormalChunks(lineChunks: Chunk[]): Chunk[] {
     // We already have line chunks, so simply merge those chunks that overlap
@@ -264,6 +271,7 @@ function lineToNormalChunks(lineChunks: Chunk[]): Chunk[] {
           // Overlaps, combine
           current.origTo = Math.max(current.origTo, c.origTo);
           current.editTo = Math.max(current.editTo, c.editTo);
+          current.sources = current.sources.concat(c.sources);
         } else {
           // No overlap, start new
           ret.push(current);
