@@ -294,10 +294,12 @@ namespace StringDiffModel {
       this.models = models;
       this.iterators = [];
       this.values = [];
+      this.offsets = [];
       // Set up iterator and dummy chunkers for other models
       for (let m of models) {
         let it = m.iterateDiffs();
         this.iterators.push(it);
+        this.offsets.push(0);
         this.values.push(it.next());
       }
     }
@@ -314,6 +316,9 @@ namespace StringDiffModel {
       }
       this.i = i;
       let ret = this.values[i];
+      // Store the edit offset before taking next value
+      this.currentOffset = this.offsets[i];
+      this.offsets[i] = this.iterators[i].editOffset;
       // Check if complete
       if (ret === null) {
         this.done = true;
@@ -323,13 +328,11 @@ namespace StringDiffModel {
       return ret;
     }
 
-    currentOffset(): number {
-      return this.iterators[this.i].editOffset;
-    }
-
     currentModel(): IStringDiffModel {
       return this.models[this.i];
     }
+
+    currentOffset = 0;
 
     done = false;
 
@@ -338,6 +341,7 @@ namespace StringDiffModel {
     protected models: IStringDiffModel[];
     protected iterators: DiffIter[];
     protected values: DiffIterValue[];
+    protected offsets: number[];
   }
 }
 

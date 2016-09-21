@@ -112,7 +112,7 @@ class DecisionStringDiffModel extends StringDiffModel {
           continue;
         }
         // Other model
-        chunker.addGhost(v.range, v.isAddition, iter.currentOffset());
+        chunker.addGhost(v.range, v.isAddition, iter.currentOffset);
       }
     }
     return chunker.chunks;
