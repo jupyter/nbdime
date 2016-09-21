@@ -4,15 +4,15 @@
 
 import {
   initialize_diff
-} from './diff';
+} from './app/diff';
 
 import {
   initialize_merge, closeMerge
-} from './merge';
+} from './app/merge';
 
 import {
   closeTool, getConfigOption
-} from './common';
+} from './app/common';
 
 /** */
 function initialize() {

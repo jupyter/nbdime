@@ -8,16 +8,23 @@ import {
 
 import {
   DiffOp, IDiffEntry, IDiffAddRange, IDiffRemoveRange, IDiffPatch,
-  getDiffKey, DiffRangeRaw, DiffRangePos, raw2Pos
-} from './diffutil';
+} from './diffentries';
+
+import {
+  DiffRangeRaw, DiffRangePos, raw2Pos
+} from './range';
+
+import {
+  getDiffKey
+} from './util';
 
 import {
   Chunk, LineChunker
-} from './chunking';
+} from '../chunking';
 
 import {
   patchStringified, stringify, patch
-} from './patch';
+} from '../patch';
 
 
 
@@ -167,7 +174,7 @@ export class StringDiffModel implements IStringDiffModel {
   /**
    * Chunk additions/deletions into line-based chunks
    */
-  getLineChunks(): Chunk[]{
+  getLineChunks(): Chunk[] {
     let chunker = new LineChunker();
     let i = this.iterateDiffs();
     for (let v = i.next(); v !== null; v = i.next()) {
@@ -421,12 +428,13 @@ function setMimetypeFromCellType(model: IStringDiffModel, cell: nbformat.ICell,
  */
 export class OutputDiffModel implements IDiffModel {
   constructor(
-        public base: nbformat.IOutput,
+        base: nbformat.IOutput,
         remote: nbformat.IOutput,
         diff?: IDiffEntry[],
         collapsible?: boolean,
         header?: string,
         collapsed?: boolean) {
+    this.base = base;
     if (!remote && diff) {
       this.remote = patch(base, diff) as nbformat.IOutput;
     } else {
@@ -535,6 +543,11 @@ export class OutputDiffModel implements IDiffModel {
     model.startCollapsed = this.startCollapsed;
     return model;
   }
+
+  /**
+   * Base value
+   */
+  base: nbformat.IOutput;
 
   /**
    * Remote value

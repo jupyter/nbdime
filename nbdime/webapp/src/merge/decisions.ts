@@ -9,17 +9,20 @@
 
 
 import {
-  IDiffEntry, IDiffPatch, opRemove, opReplace, opRemoveRange, opPatch,
+  IDiffEntry, IDiffPatch, opRemove, opReplace, opRemoveRange, opPatch
+} from '../diff/diffentries';
+
+import {
   getDiffKey
-} from './diffutil';
+} from '../diff/util';
 
 import {
   patch
-} from './patch';
+} from '../patch';
 
 import {
   deepCopy, valueIn, isPrefixArray, findSharedPrefix
-} from './util';
+} from '../common/util';
 
 export
 type DecisionPath = (string | number)[];
@@ -153,7 +156,7 @@ function popPath(diffs: IDiffEntry[][], popInner?: boolean): {
     return null;
   }
   // Find first non-null, non-empty diff list:
-  let i = 0, j = 0;
+  let i = 0;
   for (let di of diffs) {
     if (di !== null && di.length > 0) {
       break;
@@ -488,7 +491,7 @@ function buildDiffs(base: any, decisions: MergeDecision[], which: 'local' | 'rem
           matchDiff.push.apply(matchDiff, subdiffs);
         } else {
           subdiffs = pushPath(subdiffs, line);
-          tree[strPath].diff.push(subdiffs[0])
+          tree[strPath].diff.push(subdiffs[0]);
         }
       } else {
         tree[strPath].diff = tree[strPath].diff.concat(subdiffs);

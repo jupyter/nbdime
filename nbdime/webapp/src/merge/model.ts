@@ -7,35 +7,41 @@ import {
 } from 'jupyterlab/lib/notebook/notebook/nbformat';
 
 import {
-  IDiffAddRange, IDiffPatch, IDiffRemoveRange, DiffOp, DiffRangePos, raw2Pos,
-  IDiffEntry
-} from './diffutil';
+  IDiffAddRange, IDiffPatch, IDiffRemoveRange, DiffOp, IDiffEntry
+} from '../diff/diffentries';
+
+import {
+  DiffRangePos, raw2Pos
+} from '../diff/range';
 
 import {
   CellDiffModel, createAddedCellDiffModel, StringDiffModel, IStringDiffModel,
   createDeletedCellDiffModel, createPatchedCellDiffModel,
   createUnchangedCellDiffModel, setMimetypeFromCellType, OutputDiffModel,
   makeOutputModels, createPatchDiffModel, createDirectDiffModel
-} from './diffmodel';
+} from '../diff/model';
 
 import {
   IMergeDecision, MergeDecision, resolveCommonPaths, buildDiffs,
   filterDecisions, pushPatchDecision, popPath, applyDecisions, Action
-} from './mergedecision';
+} from '../merge/decisions';
 
 import {
    LineChunker, Chunk, labelSource
-} from './chunking';
+} from '../chunking';
 
 import {
   stringify, patchStringified, patch
-} from './patch';
+} from '../patch';
 
 import {
   arraysEqual, valueIn
-} from './util';
+} from '../common/util';
 
 
+/**
+ * A string diff model based on merge decisions.
+ */
 export
 class DecisionStringDiffModel extends StringDiffModel {
   constructor(base: any, decisions: MergeDecision[],
@@ -131,10 +137,14 @@ class DecisionStringDiffModel extends StringDiffModel {
   protected _deletions: DiffRangePos[];
   protected _remote: string;
   protected _outdated: boolean;
-  protected _sourceModels: IStringDiffModel[]
+  protected _sourceModels: IStringDiffModel[];
 }
 
 
+/**
+ * Create a cell diff model based on a set of merge
+ * decisions that patch the cell.
+ */
 function createPatchedCellDecisionDiffModel(
     base: nbformat.ICell, decisions: MergeDecision[], mimetype: string,
     local: CellDiffModel, remote: CellDiffModel):
@@ -170,7 +180,7 @@ function createPatchedCellDecisionDiffModel(
     let mergedDiff = buildDiffs(outputBase, outputDec, 'merged');
     let merged: nbformat.IOutput[] = null;
     if (mergedDiff && mergedDiff.length > 0) {
-      merged = patch(outputBase, mergedDiff)
+      merged = patch(outputBase, mergedDiff);
     } else {
       merged = outputBase;
     }
@@ -347,7 +357,7 @@ abstract class ObjectMergeModel<ObjectType, DiffModelType> {
 export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
   constructor(base: nbformat.ICell, decisions: MergeDecision[], mimetype: string) {
     // TODO: Remove/extend whitelist once we support more
-    super(base, decisions, mimetype, ['source', 'metadata', 'outputs'])
+    super(base, decisions, mimetype, ['source', 'metadata', 'outputs']);
     this.onesided = false;
     this.deleteCell = false;
 
@@ -938,7 +948,7 @@ class NotebookMergeModel {
     // Simply copy all root-level fields except cells/metadata
     for (let key in this.base) {
       if (!valueIn(key, ['cells', 'metadata'])) {
-        nb[key] = this.base[key]
+        nb[key] = this.base[key];
       }
     }
 

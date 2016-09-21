@@ -3,7 +3,7 @@
 
 import expect = require('expect.js');
 
-import * as util from '../../../src/util';
+import * as util from '../../../src/common/util';
 
 describe('nbdime', () => {
 
@@ -59,7 +59,7 @@ describe('nbdime', () => {
     describe('findSharedPrefix', () => {
 
       it('should return a copy on identical input', () => {
-        let a = [1, 2, 3]
+        let a = [1, 2, 3];
         let value = util.findSharedPrefix(a, a);
         expect(value).to.eql(a);
         expect(value).to.not.equal(a);  // Checking for instance equality

@@ -9,8 +9,12 @@ import {
 
 import {
   IDiffEntry, IDiffAdd, IDiffRemove, IDiffReplace,
-  IDiffPatch, IDiffAddRange, IDiffRemoveRange, JSON_INDENT, DiffOp
-} from '../../../src/diffutil';
+  IDiffPatch, IDiffAddRange, IDiffRemoveRange, DiffOp
+} from '../../../src/diff/diffentries';
+
+import {
+  JSON_INDENT
+} from '../../../src/diff/util';
 
 
 function makeAddRange(key: number, values: string | any[]) : IDiffAddRange {

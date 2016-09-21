@@ -4,13 +4,20 @@
 
 import {
   valueIn, deepCopy, repeatString
-} from './util';
+} from '../common/util';
 
 import {
-  DiffRangeRaw, JSON_INDENT, IDiffEntry, IDiffAdd, IDiffPatch,
-  IDiffAddRange, IDiffRemoveRange, DiffOp, flattenStringDiff,
-  validateObjectOp, validateSequenceOp
-} from './diffutil';
+  JSON_INDENT, flattenStringDiff
+} from '../diff/util';
+
+import {
+  IDiffEntry, IDiffAdd, IDiffPatch, IDiffAddRange, IDiffRemoveRange,
+  DiffOp, validateObjectOp, validateSequenceOp
+} from '../diff/diffentries';
+
+import {
+  DiffRangeRaw
+} from '../diff/range';
 
 
 import stableStringify = require('json-stable-stringify');
@@ -22,7 +29,8 @@ import stableStringify = require('json-stable-stringify');
  * Contains the resulting remote string, as well as ranges describing which
  * parts of the string were changed.
  */
-export type StringifiedPatchResult = {
+export
+type StringifiedPatchResult = {
   /**
    * The patched string value
    */
@@ -43,7 +51,8 @@ export type StringifiedPatchResult = {
 /**
  * Patch a base JSON object according to diff. Returns the patched object.
  */
-export function patch(base: (string | Array<any> | any), diff: IDiffEntry[]) : (string | Array<any> | any) {
+export
+function patch(base: (string | Array<any> | any), diff: IDiffEntry[]) : (string | Array<any> | any) {
   if (typeof base === 'string') {
     return patchString(base, diff, 0, false).remote;
   } else if (base instanceof Array) {
@@ -56,6 +65,9 @@ export function patch(base: (string | Array<any> | any), diff: IDiffEntry[]) : (
 }
 
 
+/**
+ * Patch an array according to the diff.
+ */
 function patchSequence(base: Array<any>, diff: IDiffEntry[]): Array<any> {
   // The patched sequence to build and return
   let patched = [];
@@ -101,6 +113,9 @@ function patchSequence(base: Array<any>, diff: IDiffEntry[]): Array<any> {
 }
 
 
+/**
+ * Patch an object (dictionary type) according to the diff.
+ */
 function patchObject(base: Object, diff: IDiffEntry[]) : Object {
   let patched: any = {};
   let keysToCopy = Object.keys(base);
@@ -159,6 +174,9 @@ export function patchStringified(base: (string | Array<any> | any), diff: IDiffE
   }
 }
 
+/**
+ * Patch a stringified object according to the object diff
+ */
 function patchStringifiedObject(base: Object, diff: IDiffEntry[], level: number) : StringifiedPatchResult {
   if (level === undefined) {
     level = 0;
@@ -272,7 +290,7 @@ function patchStringifiedObject(base: Object, diff: IDiffEntry[], level: number)
   }
 
   // Stringify correctly
-  if (remote.slice(remote.length - postfix.length) == postfix) {
+  if (remote.slice(remote.length - postfix.length) === postfix) {
     remote = remote.slice(0, remote.length - postfix.length);
   }
   let indent = repeatString(JSON_INDENT, level);
@@ -281,6 +299,9 @@ function patchStringifiedObject(base: Object, diff: IDiffEntry[], level: number)
   return {remote: remote, additions: additions, deletions: deletions};
 }
 
+/**
+ * Patch a stringified list according to the list diff
+ */
 function patchStringifiedList(base: Array<any>, diff: IDiffEntry[], level: number) : StringifiedPatchResult {
   let remote = '';
   let additions: DiffRangeRaw[] = [];
@@ -361,7 +382,7 @@ function patchStringifiedList(base: Array<any>, diff: IDiffEntry[], level: numbe
   }
 
   // Stringify correctly
-  if (remote.slice(remote.length - postfix.length) == postfix) {
+  if (remote.slice(remote.length - postfix.length) === postfix) {
     remote = remote.slice(0, remote.length - postfix.length);
   }
   let indent = repeatString(JSON_INDENT, level);
@@ -370,6 +391,9 @@ function patchStringifiedList(base: Array<any>, diff: IDiffEntry[], level: numbe
   return {remote: remote, additions: additions, deletions: deletions};
 }
 
+/**
+ * Patch a string according to a line based diff
+ */
 function patchString(base: string, diff: IDiffEntry[], level: number, stringifyPatch?: boolean) : StringifiedPatchResult {
   let additions: DiffRangeRaw[] = [];
   let deletions: DiffRangeRaw[] = [];
@@ -429,8 +453,9 @@ function patchString(base: string, diff: IDiffEntry[], level: number, stringifyP
  * Ordered stringify. Wraps stableStringify(), but handles indentation, and
  * turns null input into empty string.
  */
-export function stringify(values: string | any[] | { [key: string] : any},
-                          level?: number, indentFirst?: boolean) : string {
+export
+function stringify(values: string | any[] | { [key: string] : any},
+                   level?: number, indentFirst?: boolean) : string {
   let ret = (values === null) ? '' : stableStringify(values, {space: JSON_INDENT});
   if (level) {
     ret = _indent(ret, level, indentFirst);

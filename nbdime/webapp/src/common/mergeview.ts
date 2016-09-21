@@ -25,28 +25,32 @@ import {
 } from 'jupyterlab/lib/codemirror/widget';
 
 import {
+  loadModeByMIME
+} from 'jupyterlab/lib/codemirror';
+
+import {
   IStringDiffModel
-} from './diffmodel';
+} from '../diff/model';
 
 import {
   DecisionStringDiffModel
-} from './mergemodel';
+} from '../merge/model';
 
 import {
   DiffRangePos
-} from './diffutil';
+} from '../diff/range';
 
 import {
   ChunkSource, Chunk, lineToNormalChunks
-} from './chunking';
+} from '../chunking';
 
 import {
   valueIn
-} from './util';
+} from '../common/util';
 
 import {
   Action
-} from './mergedecision';
+} from '../merge/decisions';
 
 
 const PICKER_SYMBOL = '\u27ad';
@@ -119,6 +123,40 @@ const mergeClassPrefix: DiffClasses = {chunk: 'CodeMirror-merge-m-chunk',
           del: 'CodeMirror-merge-m-deleted',
           connect: 'CodeMirror-merge-m-connect',
           gutter: 'CodeMirror-merge-m-gutter'};
+
+
+/**
+ * A wrapper view for showing StringDiffModels in a MergeView
+ */
+export
+function createNbdimeMergeView(
+      remote: IStringDiffModel, editorClasses: string[],
+      local?: IStringDiffModel, merged?: IStringDiffModel): MergeView {
+  let opts: IMergeViewEditorConfiguration = {remote: remote, orig: null};
+  opts.collapseIdentical = true;
+  opts.local = local ? local : null;
+  opts.merged = merged ? merged : null;
+  let mergeview = new MergeView(opts);
+  let editors: DiffView[] = [];
+  if (mergeview.left) {
+    editors.push(mergeview.left);
+  }
+  if (mergeview.right) {
+    editors.push(mergeview.right);
+  }
+  if (mergeview.merge) {
+    editors.push(mergeview.merge);
+  }
+
+  if (remote.mimetype) {
+    // Set the editor mode to the MIME type.
+    for (let e of editors) {
+      loadModeByMIME(e.orig, remote.mimetype);
+    }
+    loadModeByMIME(mergeview.base.editor, remote.mimetype);
+  }
+  return mergeview;
+}
 
 
 export

@@ -4,16 +4,20 @@
 
 
 import {
-  DiffRangePos, IDiffEntry, IDiffPatch
-} from './diffutil';
+  IDiffEntry, IDiffPatch
+} from '../diff/diffentries';
+
+import {
+  DiffRangePos
+} from '../diff/range';
 
 import {
   MergeDecision
-} from './mergedecision';
+} from '../merge/decisions';
 
 import {
   valueIn, shallowCopy
-} from './util';
+} from '../common/util';
 
 
 export
@@ -260,30 +264,30 @@ class LineChunker extends Chunker {
  */
 export
 function lineToNormalChunks(lineChunks: Chunk[]): Chunk[] {
-    // We already have line chunks, so simply merge those chunks that overlap
-    let current: Chunk = null;
-    let ret: Chunk[] = [];
-    for (let c of lineChunks) {
-      if (current === null) {
-        current = shallowCopy(c);
+  // We already have line chunks, so simply merge those chunks that overlap
+  let current: Chunk = null;
+  let ret: Chunk[] = [];
+  for (let c of lineChunks) {
+    if (current === null) {
+      current = shallowCopy(c);
+    } else {
+      if (current.inEdit(c.editFrom)) {
+        // Overlaps, combine
+        current.origTo = Math.max(current.origTo, c.origTo);
+        current.editTo = Math.max(current.editTo, c.editTo);
+        current.sources = current.sources.concat(c.sources);
       } else {
-        if (current.inEdit(c.editFrom)) {
-          // Overlaps, combine
-          current.origTo = Math.max(current.origTo, c.origTo);
-          current.editTo = Math.max(current.editTo, c.editTo);
-          current.sources = current.sources.concat(c.sources);
-        } else {
-          // No overlap, start new
-          ret.push(current);
-          current = shallowCopy(c);
-        }
+        // No overlap, start new
+        ret.push(current);
+        current = shallowCopy(c);
       }
     }
-    if (current !== null) {
-      ret.push(current);
-    }
-    return ret;
   }
+  if (current !== null) {
+    ret.push(current);
+  }
+  return ret;
+}
 
 
 /**

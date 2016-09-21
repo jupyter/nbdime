@@ -5,11 +5,11 @@ import expect = require('expect.js');
 
 import {
   DiffRangeRaw, raw2Pos
-} from '../../../src/diffutil';
+} from '../../../src/diff/range';
 
 import {
   StringDiffModel
-} from '../../../src/diffmodel';
+} from '../../../src/diff/model';
 
 
 describe('nbdime', () => {

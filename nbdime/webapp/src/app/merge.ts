@@ -30,15 +30,15 @@ import {
 
 import {
   NotebookMergeModel
-} from './mergemodel';
+} from '../merge/model';
 
 import {
   IMergeDecision
-} from './mergedecision';
+} from '../merge/decisions';
 
 import {
   NotebookMergeWidget
-} from './widgets';
+} from '../merge/widgets';
 
 import {
   requestJson, getConfigOption, closeTool

@@ -30,15 +30,15 @@ import {
 
 import {
   IDiffEntry
-} from './diffutil';
+} from '../diff/diffentries';
 
 import {
   NotebookDiffModel
-} from './diffmodel';
+} from '../diff/model';
 
 import {
   NotebookDiffWidget
-} from './widgets';
+} from '../diff/widgets';
 
 import {
   requestJson, getConfigOption

@@ -3,15 +3,15 @@
 
 import expect = require('expect.js');
 
-import * as decisions from '../../../src/mergedecision';
+import * as decisions from '../../../src/merge/decisions';
 
 import {
   opAdd, opPatch, IDiffEntry, IDiffPatch
-} from '../../../src/diffutil';
+} from '../../../src/diff/diffentries';
 
 import {
   arraysEqual
-} from '../../../src/util';
+} from '../../../src/common/util';
 
 
 describe('nbdime', () => {
