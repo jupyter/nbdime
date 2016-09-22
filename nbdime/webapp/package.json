@@ -8,6 +8,7 @@
     "clean": "rimraf build && rimraf node_modules && rimraf static/build",
     "postinstall": "npm dedupe",
     "update": "rimraf node_modules/jupyter-nbdime && npm install",
+    "lint": "tslint **/*.ts --exclude node_modules/**/*.ts --exclude **/*.d.ts",
     "test": "npm run test:firefox",
     "test:chrome": "npm run build:test && karma start --browsers=Chrome test/karma.conf.js",
     "test:debug": "npm run build:test && karma start --browsers=Chrome --singleRun=false --debug=true test/karma.conf.js",
@@ -32,6 +33,7 @@
     "rimraf": "^2.5.2",
     "source-map-loader": "^0.1.5",
     "style-loader": "^0.13.1",
+    "tslint": "^3.15.1",
     "typescript": "^1.8.10",
     "url-loader": "^0.5.7",
     "webpack": "^1.13.1"
