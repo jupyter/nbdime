@@ -15,6 +15,17 @@ module.exports = function(config) {
     remapCoverageReporter: {
       'text-summary': null,
       lcovonly: 'coverage.lcov'
-     }
+     },
+
+     customLaunchers: {
+        Chrome_travis_ci: {
+            base: 'Chrome',
+            flags: ['--no-sandbox']
+        }
+    },
   });
+
+  if (process.env.TRAVIS && !config.browsers) {
+    config.browsers = ['Chrome_travis_ci'];
+  }
 };

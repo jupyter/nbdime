@@ -26,9 +26,13 @@ install:
     - 'if [[ $GROUP == python ]]; then pip install -e ./; fi'
     - 'if [[ $GROUP == js ]]; then cd ./nbdime/webapp; fi'
     - 'if [[ $GROUP == js ]]; then npm install; fi'
+before_script:
+    # Set up a virtual screen for Firefox browser testing:
+    - export CHROME_BIN=chromium-browser
+    - 'if [[ $GROUP == js ]]; then export DISPLAY=:99.0; fi'
+    - 'if [[ $GROUP == js ]]; then sh -e /etc/init.d/xvfb start; fi'
 script:
     - 'if [[ $GROUP == python ]]; then py.test -l --cov-report html --cov=nbdime; fi'
-    - 'if [[ $GROUP == js ]]; then cd ./nbdime/webapp; fi'
     - 'if [[ $GROUP == js ]]; then npm run build:test; fi'
     - 'if [[ $GROUP == js ]]; then npm run test:coverage; fi'
 after_success:
