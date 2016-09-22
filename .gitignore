@@ -16,3 +16,4 @@ nbdime/webapp/test/build/
 nbdime/webapp/build/
 
 nbdime/webapp/static/build/
+nbdime/webapp/coverage.lcov
