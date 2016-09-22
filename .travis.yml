@@ -5,6 +5,17 @@ python:
     - 3.3
     - 2.7
 sudo: false
+env:
+    matrix:
+        - GROUP=python
+matrix:
+    include:
+        - python: 3.5
+          env: GROUP=js
+cache:
+    pip: true
+    directories:
+        - nbdime/webapp/node_modules # NPM packages
 before_install:
     - nvm install 4
     - pip install -r requirements.txt
@@ -12,8 +23,13 @@ before_install:
     - pip install pytest-cov
     - pip install codecov
 install:
-    - pip install -e .
+    - 'if [[ $GROUP == python ]]; then pip install -e ./; fi'
+    - 'if [[ $GROUP == js ]]; then cd ./nbdime/webapp; fi'
+    - 'if [[ $GROUP == js ]]; then npm install; fi'
 script:
-    - py.test -l --cov-report html --cov=nbdime
+    - 'if [[ $GROUP == python ]]; then py.test -l --cov-report html --cov=nbdime; fi'
+    - 'if [[ $GROUP == js ]]; then cd ./nbdime/webapp; fi'
+    - 'if [[ $GROUP == js ]]; then npm run build:test; fi'
+    - 'if [[ $GROUP == js ]]; then npm run test:coverage; fi'
 after_success:
     - codecov
