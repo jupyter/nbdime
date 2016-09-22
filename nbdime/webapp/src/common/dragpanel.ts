@@ -30,20 +30,16 @@ import {
   Drag, IDragEvent, DropAction, SupportedActions
 } from 'phosphor/lib/dom/dragdrop';
 
-import {
-  applyMixins
-} from './utils';
-
 
 /**
- * The class name added to the DropWidget
+ * The class name added to the DropPanel
  */
-const DROP_WIDGET_CLASS = 'jp-DropWidget';
+const DROP_WIDGET_CLASS = 'jp-DropPanel';
 
 /**
- * The class name added to the DragWidget
+ * The class name added to the DragPanel
  */
-const DRAG_WIDGET_CLASS = 'jp-DragWidget';
+const DRAG_WIDGET_CLASS = 'jp-DragPanel';
 
 /**
  * The class name added to something which can be used to drag a box
@@ -53,7 +49,7 @@ const DRAG_HANDLE = 'jp-mod-dragHandle';
 /**
  * The class name of the default drag handle
  */
-const DEFAULT_DRAG_HANDLE_CLASS = 'jp-DragWidget-dragHandle';
+const DEFAULT_DRAG_HANDLE_CLASS = 'jp-DragPanel-dragHandle';
 
 
 /**
@@ -71,12 +67,6 @@ const MIME_INDEX = 'application/vnd.jupyter.dragindex';
  * The threshold in pixels to start a drag event.
  */
 const DRAG_THRESHOLD = 5;
-
-
-// Turn Panel shape into interface, use for simulating mixins
-export
-interface IPanel extends Panel {}
-const PANEL_CLASS = 'p-Panel';
 
 
 /**
@@ -124,7 +114,7 @@ function findChild(parent: HTMLElement | HTMLElement[], node: HTMLElement): HTML
 
 
 /**
- * A widget class which allows the user to drop mime data onto it.
+ * A panel class which allows the user to drop mime data onto it.
  *
  * To complete the class, the following functions need to be implemented:
  *  - processDrop: Process pre-screened drop events
@@ -137,11 +127,11 @@ function findChild(parent: HTMLElement | HTMLElement[], node: HTMLElement): HTML
  * For maximum control, `evtDrop` can be overriden.
  */
 export
-abstract class DropWidget extends Widget {
+abstract class DropPanel extends Panel {
   /**
    * Construct a drop widget.
    */
-  constructor(options: DropWidget.IOptions={}) {
+  constructor(options: DropPanel.IOptions={}) {
     super(options);
     this.acceptDropsFromExternalSource =
       options.acceptDropsFromExternalSource === true;
@@ -326,15 +316,16 @@ abstract class DropWidget extends Widget {
 };
 
 /**
- * An internal base class for implementing drag operations.
+ * An internal base class for implementing drag operations on top
+ * of drop class.
  */
 export
-abstract class DragDropWidgetBase extends DropWidget {
+abstract class DragDropPanelBase extends DropPanel {
 
   /**
    * Construct a drag and drop base widget.
    */
-  constructor(options: DragDropWidget.IOptions={}) {
+  constructor(options: DragDropPanel.IOptions={}) {
     super(options);
     this.childrenAreDragHandles = options.childrenAreDragHandles === true;
     this.addClass(DRAG_WIDGET_CLASS);
@@ -569,11 +560,11 @@ abstract class DragDropWidgetBase extends DropWidget {
 }
 
 /**
- * A widget which allows the user to initiate drag operations.
+ * A panel which allows the user to initiate drag operations.
  *
  * Any descendant element with the drag handle class `'jp-mod-dragHandle'`
- * will serve as a handle that can be used for dragging. If DragWidgets are
- * nested, handles will only belong to the closest parent DragWidget. For
+ * will serve as a handle that can be used for dragging. If DragPanels are
+ * nested, handles will only belong to the closest parent DragPanel. For
  * convenience, the functions `makeHandle`, `unmakeHandle` and
  * `createDefaultHandle` can be used to indicate which elements should be
  * made handles. `createDefaultHandle` will create a new element as a handle
@@ -592,24 +583,24 @@ abstract class DragDropWidgetBase extends DropWidget {
  *  - onDragComplete(): Callback on drag source when a drag has completed.
  */
 export
-abstract class DragWidget extends DragDropWidgetBase {
+abstract class DragPanel extends DragDropPanelBase {
   /**
    * Construct a drag widget.
    */
-  constructor(options: DragWidget.IOptions={}) {
-    // Implementation removes DropWidget options
+  constructor(options: DragPanel.IOptions={}) {
+    // Implementation removes DropPanel options
     super(options);
   }
 
   /**
-   * No-op on DragWidget, as it does not support dropping
+   * No-op on DragPanel, as it does not support dropping
    */
   protected processDrop(dropTarget: HTMLElement, event: IDragEvent): void {
     // Intentionally empty
   }
 
   /**
-   * Simply returns null for DragWidget, as it does not support dropping
+   * Simply returns null for DragPanel, as it does not support dropping
    */
   protected findDropTarget(input: HTMLElement, mimeData: MimeData): HTMLElement {
     return null;
@@ -619,21 +610,19 @@ abstract class DragWidget extends DragDropWidgetBase {
 
 
 /**
- * A widget which allows the user to rearrange elements by drag and drop.
+ * A widget which allows the user to rearrange widgets in the panel by
+ * drag and drop. An internal drag and drop of a widget will cause it
+ * to be inserted (by `insertWidget`) in the index of the widget it was
+ * dropped on.
  *
  * Any descendant element with the drag handle class `'jp-mod-dragHandle'`
- * will serve as a handle that can be used for dragging. If DragWidgets are
- * nested, handles will only belong to the closest parent DragWidget. For
+ * will serve as a handle that can be used for dragging. If DragPanels are
+ * nested, handles will only belong to the closest parent DragPanel. For
  * convenience, the functions `makeHandle`, `unmakeHandle` and
  * `createDefaultHandle` can be used to indicate which elements should be
  * made handles. `createDefaultHandle` will create a new element as a handle
  * with a default styling class applied. Optionally, `childrenAreDragHandles`
  * can be set to indicate that all direct children are themselve drag handles.
- *
- * To complete the class, the following functions need to be implemented:
- * - getIndexOfChildNode(): Returns a key representing the drag and drop targets
- * - move(): Called when a widget should be moved as a consequence of an
- *   internal drag event.
  *
  * The functionallity of the class can be extended by overriding the following
  * functions:
@@ -647,36 +636,58 @@ abstract class DragWidget extends DragDropWidgetBase {
  *    of the widget's node are to be drag targets.
  *  - findDropTarget(): Override if anything other than the direct children
  *    of the widget's node are to be the drop targets.
+ *  - getIndexOfChildNode(): Override to change the key used to represent
+ *    the drag and drop target (default is index of child widget).
+ *  - move(): Override to change how a move is handled.
  *  - getDragImage: Override to change the drag image (the default is a
  *    copy of the drag target).
  *  - onDragComplete(): Callback on drag source when a drag has completed.
  *
- * For maximum control, `startDrag` and `evtDrop` can also be overriden.
+ * To drag and drop other things than all direct children, the following functions
+ * should be overriden: `findDragTarget`, `findDropTarget` and possibly
+ * `getIndexOfChildNode` and `move` to allow for custom to/from keys.
+ *
+ * For maximum control, `startDrag` and `evtDrop` can be overriden.
  */
 export
-abstract class DragDropWidget extends DragDropWidgetBase {
-
-  /**
-   * Signal that is emitted after a widget has been moved internally in the list.
-   *
-   * The first argument is the panel in which the move occurred.
-   * The second argument is the old and the new keys of the widget.
-   *
-   * In the default implementation the keys are indices to the widget positions
-   */
-  moved: ISignal<DragWidget, {from: any, to: any}>;
+class DragDropPanel extends DragDropPanelBase {
 
   /**
    * Called when a widget should be moved as a consequence of an internal drag event.
+   *
+   * The default implementation assumes the keys `from` and `to` are numbers
+   * indexing the drag panel's direct children. It then moves the child at the
+   * `to` key to the location of the `from` key.
+   * Finally, it emits the `moved` signal with the same keys.
    */
-  protected abstract move(from: any, to: any): void;
+  protected move(from: any, to: any): void {
+    if (to !== from) {
+      // Adjust for the shifting of elements once 'from' is removed
+      if (to > from) {
+        to -= 1;
+      }
+      this.insertWidget(to, this.widgets.at(from));
+    }
+  }
 
   /**
    * Returns a key used to represent the child node.
    *
+   * The default implementation returns the index of node in
+   * `this.layout.widgets`.
+   *
    * Returns null if not found.
    */
-  protected abstract getIndexOfChildNode(node: HTMLElement, parent?: PanelLayout): any;
+  protected getIndexOfChildNode(node: HTMLElement, parent?: PanelLayout): any {
+    parent = parent || this.layout as PanelLayout;
+    for (let i = 0; i < parent.widgets.length; i++) {
+      if (parent.widgets.at(i).node === node) {
+        return i;
+      }
+    }
+    return null;
+  }
+
 
   /**
    * Adds mime data represeting the drag data to the drag event's MimeData bundle.
@@ -715,7 +726,7 @@ abstract class DragDropWidget extends DragDropWidgetBase {
    * Override this if you need to handle other mime data than the default.
    */
   protected processDrop(dropTarget: HTMLElement, event: IDragEvent): void {
-    if (!DropWidget.isValidAction(event.supportedActions, 'move') ||
+    if (!DropPanel.isValidAction(event.supportedActions, 'move') ||
         event.proposedAction === 'none') {
       // The default implementation only handles move action
       // OR Accept proposed none action, and perform no-op
@@ -742,191 +753,19 @@ abstract class DragDropWidget extends DragDropWidgetBase {
     event.dropAction = 'move';
   }
 }
-defineSignal(DragDropWidget.prototype, 'moved');
-
-
-/**
- * A widget which allows the user to rearrange widgets in the panel by
- * drag and drop. An internal drag and drop of a widget will cause it
- * to be inserted (by `insertWidget`) in the index of the widget it was
- * dropped on.
- *
- * Any descendant element with the drag handle class `'jp-mod-dragHandle'`
- * will serve as a handle that can be used for dragging. If DragWidgets are
- * nested, handles will only belong to the closest parent DragWidget. For
- * convenience, the functions `makeHandle`, `unmakeHandle` and
- * `createDefaultHandle` can be used to indicate which elements should be
- * made handles. `createDefaultHandle` will create a new element as a handle
- * with a default styling class applied. Optionally, `childrenAreDragHandles`
- * can be set to indicate that all direct children are themselve drag handles.
- *
- * The functionallity of the class can be extended by overriding the following
- * functions:
- *  - addMimeData: Override to add other drag data to the mime bundle.
- *    This is often a necessary step for allowing dragging to external
- *    drop targets.
- *  - processDrop: Override if you need to handle other mime data than the
- *    default. For allowing drops from external sources, the field
- *    `acceptDropsFromExternalSource` should be set as well.
- *  - findDragTarget(): Override if anything other than the direct children
- *    of the widget's node are to be drag targets.
- *  - findDropTarget(): Override if anything other than the direct children
- *    of the widget's node are to be the drop targets.
- *  - getIndexOfChildNode(): Override to change the key used to represent
- *    the drag and drop target (default is index of child widget).
- *  - move(): Override to change how a move is handled.
- *  - getDragImage: Override to change the drag image (the default is a
- *    copy of the drag target).
- *  - onDragComplete(): Callback on drag source when a drag has completed.
- *
- * To drag and drop other things than all direct children, the following functions
- * should be overriden: `findDragTarget`, `findDropTarget` and possibly
- * `getIndexOfChildNode` and `move` to allow for custom to/from keys.
- *
- * For maximum control, `startDrag` and `evtDrop` can be overriden.
- */
-export
-class DragDropPanel extends DragDropWidget implements IPanel {
-  /**
-   * Construct a drag and drop panel.
-   */
-  constructor(options: DragDropPanel.IOptions={}) {
-    super(options);
-    this.addClass(PANEL_CLASS);
-    this.layout = Private.createLayout(options);
-  }
-
-  // Shims for applyMixins:
-  widgets: ISequence<Widget>;
-  addWidget(widget: Widget): void { /* shim */ };
-  insertWidget(index: number, widget: Widget): void { /* shim */ };
-
-  /**
-   * Called when a widget should be moved as a consequence of an internal drag event.
-   *
-   * The default implementation assumes the keys `from` and `to` are numbers
-   * indexing the drag panel's direct children. It then moves the child at the
-   * `to` key to the location of the `from` key.
-   * Finally, it emits the `moved` signal with the same keys.
-   */
-  protected move(from: any, to: any): void {
-    if (to !== from) {
-      // Adjust for the shifting of elements once 'from' is removed
-      if (to > from) {
-        to -= 1;
-      }
-      this.insertWidget(to, this.widgets.at(from));
-      this.moved.emit({from: from, to: to});
-    }
-  }
-
-  /**
-   * Returns a key used to represent the child node.
-   *
-   * The default implementation returns the index of node in
-   * `this.layout.widgets`.
-   *
-   * Returns null if not found.
-   */
-  protected getIndexOfChildNode(node: HTMLElement, parent?: PanelLayout): any {
-    parent = parent || this.layout as PanelLayout;
-    for (let i = 0; i < parent.widgets.length; i++) {
-      if (parent.widgets.at(i).node === node) {
-        return i;
-      }
-    }
-    return null;
-  }
-}
-applyMixins(DragDropPanel, [Panel]);
-
-
-/**
- * A panel class which allows the user to drop mime data onto it.
- *
- * To complete the class, the following functions need to be implemented:
- *  - processDrop: Process pre-screened drop events
- *
- * The functionallity of the class can be extended by overriding the following
- * functions:
- *  - findDropTarget(): Override if anything other than the direct children
- *    of the widget's node are to be the drop targets.
- *
- * For maximum control, `evtDrop` can be overriden.
- */
-export
-abstract class DropPanel extends DropWidget implements IPanel {
-  /**
-   * Construct a drop panel.
-   */
-  constructor(options: DropPanel.IOptions={}) {
-    super(options);  // DropWidget ctor
-    this.addClass(PANEL_CLASS);
-    this.layout = Private.createLayout(options);
-  }
-
-  // Shims for applyMixins:
-  widgets: ISequence<Widget>;
-  addWidget(widget: Widget): void;
-  insertWidget(index: number, widget: Widget): void;
-}
-applyMixins(DropPanel, [Panel]);
-
-
-/**
- * A panel which allows the user to initiate drag operations.
- *
- * Any descendant element with the drag handle class `'jp-mod-dragHandle'`
- * will serve as a handle that can be used for dragging. If DragWidgets are
- * nested, handles will only belong to the closest parent DragWidget. For
- * convenience, the functions `makeHandle`, `unmakeHandle` and
- * `createDefaultHandle` can be used to indicate which elements should be
- * made handles. `createDefaultHandle` will create a new element as a handle
- * with a default styling class applied. Optionally, `childrenAreDragHandles`
- * can be set to indicate that all direct children are themselve drag handles.
- *
- * To complete the class, the following functions need to be implemented:
- * - addMimeData: Adds mime data to new drag events
- *
- * The functionallity of the class can be extended by overriding the following
- * functions:
- *  - findDragTarget(): Override if anything other than the direct children
- *    of the widget's node are to be drag targets.
- *  - getDragImage: Override to change the drag image (the default is a
- *    copy of the drag target).
- *  - onDragComplete(): Callback on drag source when a drag has completed.
- */
-export
-abstract class DragPanel extends DragWidget implements IPanel {
-  /**
-   * Construct a drag panel.
-   */
-  constructor(options: DragPanel.IOptions={}) {
-    super(options);
-    this.addClass(PANEL_CLASS);
-    this.layout = Private.createLayout(options);
-  }
-
-  // Shims for applyMixins:
-  widgets: ISequence<Widget>;
-  addWidget(widget: Widget): void;
-  insertWidget(index: number, widget: Widget): void;
-}
-applyMixins(DragPanel, [Panel]);
-
 
 
 
 /**
- * The namespace for the `DropWidget` class statics.
+ * The namespace for the `DropPanel` class statics.
  */
 export
-namespace DropWidget {
+namespace DropPanel {
   /**
    * An options object for initializing a drag panel widget.
    */
   export
-  interface IOptions extends Widget.IOptions {
+  interface IOptions extends Panel.IOptions {
     /**
      * Whether the lsit should accept drops from an external source.
      * Defaults to false.
@@ -958,28 +797,15 @@ namespace DropWidget {
 }
 
 /**
- * The namespace for the `DropPanel` class statics.
+ * The namespace for the `DragPanel` class statics.
  */
 export
-namespace DropPanel {
+namespace DragPanel {
   /**
    * An options object for initializing a drag panel widget.
    */
   export
-  interface IOptions extends DropWidget.IOptions, Panel.IOptions {
-  }
-}
-
-/**
- * The namespace for the `DragWidget` class statics.
- */
-export
-namespace DragWidget {
-  /**
-   * An options object for initializing a drag panel widget.
-   */
-  export
-  interface IOptions {
+  interface IOptions extends Panel.IOptions {
     /**
      * Whether all direct children of the list are handles, or only those widgets
      * designated as handles. Defaults to false.
@@ -991,7 +817,7 @@ namespace DragWidget {
    * Mark a widget as a drag handle.
    *
    * Using this, any child-widget can be a drag handle, as long as mouse events
-   * are propagated from it to the DragWidget.
+   * are propagated from it to the DragPanel.
    */
   export
   function makeHandle(handle: Widget) {
@@ -1007,7 +833,7 @@ namespace DragWidget {
   }
 
   /**
-   * Create a default handle widget for dragging (see styling in DragWidget.css).
+   * Create a default handle widget for dragging (see styling in DragPanel.css).
    *
    * The handle will need to be styled to ensure a minimum size
    */
@@ -1020,28 +846,6 @@ namespace DragWidget {
   }
 }
 
-/**
- * The namespace for the `DragPanel` class statics.
- */
-export
-namespace DragPanel {
-  /**
-   * An options object for initializing a drag panel widget.
-   */
-  export
-  interface IOptions extends DragWidget.IOptions, Panel.IOptions {
-  }
-}
-
-/**
- * The namespace for the `DragDropWidget` class statics.
- */
-export
-namespace DragDropWidget {
-  export
-  interface IOptions extends DragWidget.IOptions, DropWidget.IOptions {
-  }
-}
 
 /**
  * The namespace for the `DragDropPanel` class statics.
@@ -1049,16 +853,6 @@ namespace DragDropWidget {
 export
 namespace DragDropPanel {
   export
-  interface IOptions extends DragDropWidget.IOptions, Panel.IOptions {
-  }
-}
-
-/**
- * The namespace for private statics
- */
-namespace Private {
-  export
-  function createLayout(options: Panel.IOptions) {
-    return options.layout || new PanelLayout();
+  interface IOptions extends DragPanel.IOptions, DropPanel.IOptions {
   }
 }

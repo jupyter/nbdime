@@ -47,6 +47,7 @@ import 'jupyterlab/lib/notebook/index.css';
 import 'jupyterlab/lib/renderers/index.css';
 import 'jupyterlab/lib/editorwidget/index.css';
 import 'jupyterlab/lib/editorwidget/index.css';
+import '../common/collapsible.css';
 
 
 const NBDIFF_CLASS = 'jp-Notebook-diff';

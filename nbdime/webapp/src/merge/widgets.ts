@@ -19,8 +19,8 @@ import {
 } from 'jupyterlab/lib/notebook/notebook/nbformat';
 
 import {
-  DragDropPanel, DragWidget, findChild
-} from '../upstreaming/dragpanel';
+  DragDropPanel, DragPanel, findChild
+} from '../common/dragpanel';
 
 import {
   Widget
@@ -60,7 +60,8 @@ import {
 
 
 import 'phosphor/styles/base.css';
-import '../upstreaming/dragpanel.css';
+import '../common/dragpanel.css';
+import '../common/collapsible.css';
 import '../upstreaming/flexpanel.css';
 import 'jupyterlab/lib/basestyle/materialcolors.css';
 import 'jupyterlab/lib/default-theme/variables.css';
@@ -103,7 +104,7 @@ class RenderableOutputsMergeView extends DragDropPanel {
   static makeOutputsDraggable(area: OutputAreaWidget): void {
     let i = area.layout.iter();
     for (let w = i.next(); w !== undefined; w = i.next()) {
-      DragWidget.makeHandle(w);
+      DragPanel.makeHandle(w);
     }
   }
 
@@ -267,7 +268,6 @@ class RenderableOutputsMergeView extends DragDropPanel {
     }
     (this.panes[paneTo] as any)._updateChild(adjustedTo);
     RenderableOutputsMergeView.makeOutputsDraggable(this.panes[paneTo]);
-    this.moved.emit({from: from, to: to});
   }
 
   /**
@@ -463,7 +463,7 @@ class CellMergeWidget extends Panel {
     header.addClass(CELL_HEADER_CLASS);
 
     // Add drag handle
-    let w = DragWidget.createDefaultHandle();
+    let w = DragPanel.createDefaultHandle();
     header.addWidget(w);
 
     // Add title widget

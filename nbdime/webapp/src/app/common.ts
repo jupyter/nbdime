@@ -2,6 +2,8 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
+import '../common/cm-merge.css';
+
 
 /**
  * Make a POST request passing a JSON argument and receiving a JSON result.
