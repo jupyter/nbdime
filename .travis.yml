@@ -21,7 +21,8 @@ before_install:
     - pip install -r requirements.txt
     - pip install pytest
     - pip install pytest-cov
-    - pip install codecov
+    - 'if [[ $GROUP == python ]]; then pip install codecov; fi'
+    - 'if [[ $GROUP == js ]]; then npm install codecov; fi'
 install:
     - 'if [[ $GROUP == python ]]; then pip install -e ./; fi'
     - 'if [[ $GROUP == js ]]; then cd ./nbdime/webapp; fi'
