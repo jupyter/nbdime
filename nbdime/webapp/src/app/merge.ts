@@ -2,6 +2,18 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
+import 'phosphor/styles/base.css';
+import 'nbdime/lib/common/dragpanel.css';
+import 'nbdime/lib/common/collapsible.css';
+import 'nbdime/lib/upstreaming/flexpanel.css';
+import 'jupyterlab/lib/basestyle/materialcolors.css';
+import 'jupyterlab/lib/default-theme/variables.css';
+import 'jupyterlab/lib/markdownwidget/index.css';
+import 'jupyterlab/lib/notebook/index.css';
+import 'jupyterlab/lib/renderers/index.css';
+import 'jupyterlab/lib/editorwidget/index.css';
+import 'jupyterlab/lib/editorwidget/index.css';
+import 'nbdime/lib/styles/merge.css';
 import './merge.css';
 
 
@@ -32,18 +44,22 @@ import {
 
 import {
   NotebookMergeModel
-} from '../merge/model';
+} from 'nbdime/lib/merge/model';
 
 import {
   IMergeDecision
-} from '../merge/decisions';
+} from 'nbdime/lib/merge/decisions';
 
 import {
   NotebookMergeWidget
-} from '../merge/widgets';
+} from 'nbdime/lib/merge/widgets';
 
 import {
-  requestJson, getConfigOption, closeTool
+  requestMerge, requestJson
+} from 'nbdime/lib/request';
+
+import {
+  getConfigOption, closeTool
 } from './common';
 
 
@@ -92,6 +108,13 @@ function showMerge(data: {
 }
 
 /**
+ * Calls `requestMerge` with our response handlers
+ */
+function getMerge(base: string, local: string, remote: string) {
+  requestMerge(base, local, remote, onMergeRequestCompleted, onMergeRequestFailed);
+}
+
+/**
  * Merge form submission callback. Sends a request for a merge to the server
  * based on the content of the form.
  *
@@ -102,7 +125,7 @@ function onMerge(e: Event) {
   let b = (document.getElementById('merge-base') as HTMLInputElement).value;
   let c = (document.getElementById('merge-local') as HTMLInputElement).value;
   let r = (document.getElementById('merge-remote') as HTMLInputElement).value;
-  requestMerge(b, c, r);
+  getMerge(b, c, r);
   let uri = '/merge?base=' + encodeURIComponent(b) +
     '&local=' + encodeURIComponent(c) +
     '&remote=' + encodeURIComponent(r);
@@ -123,19 +146,8 @@ function onPopState(e: PopStateEvent) {
     eb.value = e.state.base;
     el.value = e.state.local;
     er.value = e.state.remote;
-    requestMerge(e.state.base, e.state.local, e.state.remote);
+    getMerge(e.state.base, e.state.local, e.state.remote);
   }
-}
-
-
-/**
- * Make a diff request for the given base/remote specifiers (filenames)
- */
-function requestMerge(base: string, local: string, remote: string) {
-  requestJson('/api/merge',
-              {base: base, local: local, remote: remote},
-              onMergeRequestCompleted,
-              onMergeRequestFailed);
 }
 
 /**
@@ -241,7 +253,7 @@ function initialize_merge() {
   let local = getConfigOption('local');  // Only available for merge
   let remote = getConfigOption('remote');
   if (base && local && remote) {
-    requestMerge(base, local, remote);
+    getMerge(base, local, remote);
   }
   let saveBtn = document.getElementById('nbdime-save') as HTMLButtonElement;
   if (saveBtn) {

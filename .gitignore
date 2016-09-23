@@ -14,5 +14,7 @@ htmlcov
 nbdime/webapp/node_modules/
 nbdime/webapp/test/build/
 nbdime/webapp/build/
+nbdime-web/lib/
+nbdime-web/test/build/
 
 nbdime/webapp/static/build/

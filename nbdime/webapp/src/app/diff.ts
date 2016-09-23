@@ -2,6 +2,16 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
+import 'phosphor/styles/base.css';
+import 'jupyterlab/lib/basestyle/materialcolors.css';
+import 'jupyterlab/lib/default-theme/variables.css';
+import 'jupyterlab/lib/markdownwidget/index.css';
+import 'jupyterlab/lib/notebook/index.css';
+import 'jupyterlab/lib/renderers/index.css';
+import 'jupyterlab/lib/editorwidget/index.css';
+import 'jupyterlab/lib/editorwidget/index.css';
+import 'nbdime/lib/common/collapsible.css';
+import 'nbdime/lib/styles/diff.css';
 import './diff.css';
 
 
@@ -32,18 +42,22 @@ import {
 
 import {
   IDiffEntry
-} from '../diff/diffentries';
+} from 'nbdime/lib/diff/diffentries';
 
 import {
   NotebookDiffModel
-} from '../diff/model';
+} from 'nbdime/lib/diff/model';
 
 import {
   NotebookDiffWidget
-} from '../diff/widgets';
+} from 'nbdime/lib/diff/widgets';
 
 import {
-  requestJson, getConfigOption
+  requestDiff
+} from 'nbdime/lib/request';
+
+import {
+  getConfigOption
 } from './common';
 
 
@@ -84,7 +98,6 @@ function showDiff(data: {base: nbformat.INotebookContent, diff: IDiffEntry[]}) {
   window.onresize = () => { panel.update(); };
 }
 
-
 /**
  * Diff form submission callback. Sends a request for a diff to the server based
  * on the content of the form.
@@ -93,7 +106,7 @@ function onDiff(e: Event) {
   e.preventDefault();
   let b = (document.getElementById('diff-base') as HTMLInputElement).value;
   let r = (document.getElementById('diff-remote') as HTMLInputElement).value;
-  requestDiff(b, r);
+  getDiff(b, r);
   let uri = '/diff?base=' + encodeURIComponent(b) +
     '&remote=' + encodeURIComponent(r);
   history.pushState({base: b, remote: r},
@@ -101,28 +114,11 @@ function onDiff(e: Event) {
   return false;
 };
 
-
 /**
- * Called when a 'back' is requested
+ * Calls `requestDiff` with our response handlers
  */
-function onPopState(e: PopStateEvent) {
-  if (e.state) {
-    let eb = (document.getElementById('diff-base') as HTMLInputElement);
-    let er = (document.getElementById('diff-remote') as HTMLInputElement);
-    eb.value = e.state.base;
-    er.value = e.state.remote;
-    requestDiff(e.state.base, e.state.remote);
-  }
-}
-
-/**
- * Make a diff request for the given base/remote specifiers (filenames)
- */
-function requestDiff(base: string, remote: string) {
-  requestJson('/api/diff',
-              {base: base, remote: remote},
-              onDiffRequestCompleted,
-              onDiffRequestFailed);
+function getDiff(base: string, remote: string) {
+  requestDiff(base, remote, onDiffRequestCompleted, onDiffRequestFailed);
 }
 
 /**
@@ -139,6 +135,20 @@ function onDiffRequestFailed(response: string) {
   console.log('Diff request failed.');
   let root = document.getElementById('nbdime-root');
   root.innerHTML = '<pre>' + response + '</pre>';
+}
+
+
+/**
+ * Called when a 'back' is requested
+ */
+function onPopState(e: PopStateEvent) {
+  if (e.state) {
+    let eb = (document.getElementById('diff-base') as HTMLInputElement);
+    let er = (document.getElementById('diff-remote') as HTMLInputElement);
+    eb.value = e.state.base;
+    er.value = e.state.remote;
+    getDiff(e.state.base, e.state.remote);
+  }
 }
 
 
@@ -163,6 +173,6 @@ function initialize_diff() {
   let base = getConfigOption('base');
   let remote = getConfigOption('remote');
   if (base && remote) {
-    requestDiff(base, remote);
+    getDiff(base, remote);
   }
 }

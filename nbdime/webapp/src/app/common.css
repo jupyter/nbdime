@@ -1,0 +1,13 @@
+
+
+body {
+  --jp-layout-color3: white;
+  overflow: scroll !important;
+}
+
+
+/* Alternative for showing single cell when cells are equal */
+.jp-Diff-unchanged {
+  margin-left: 10%;
+  width: 80%;
+}

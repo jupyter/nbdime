@@ -7,9 +7,6 @@
 
 'use strict';
 
-import 'codemirror/lib/codemirror.css';
-import 'jupyterlab/lib/codemirror/index.css';
-
 import * as CodeMirror from 'codemirror';
 
 import {
