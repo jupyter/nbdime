@@ -37,4 +37,5 @@ script:
     - 'if [[ $GROUP == js ]]; then npm run build:test; fi'
     - 'if [[ $GROUP == js ]]; then npm run test:coverage; fi'
 after_success:
+    - 'if [[ $GROUP == js ]]; then cd ../..; fi'
     - codecov
