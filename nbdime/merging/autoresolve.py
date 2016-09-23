@@ -315,6 +315,7 @@ def autoresolve_decision_on_list(dec, base, sub, strategies):
             subdec.local_diff = lpatches
             subdec.remote_diff = rpatches
             subdec = pop_patch_decision(subdec)
+            assert subdec is not None
             decs.extend(autoresolve_decision(base, subdec, strategies))
 
             # Patch conflicts have been processed, split off inserts if present
@@ -396,6 +397,7 @@ def autoresolve_decision_on_dict(dec, base, sub, strategies):
         # FIXME: this is not quite right:
         # Recurse if we have no strategy for this key but diffs available for the subdocument
         newdec = pop_patch_decision(dec)
+        assert newdec is not None
         decs = autoresolve_decision(base, newdec, strategies)
     elif (DiffOp.PATCH in (le.op, re.op)) and (DiffOp.REMOVE in (le.op, re.op)):
         # Check for deletion vs. purely ignoreable changes (transients)

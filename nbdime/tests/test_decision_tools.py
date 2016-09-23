@@ -86,9 +86,8 @@ def test_pop_patch_unpoppable():
         local_diff=[op_remove("c")],
         remote_diff=[op_patch("c", [op_remove("d")])]
     )
-    with pytest.raises(ValueError) as e:
-        pop_patch_decision(md)
-    assert str(e.value).startswith("Cannot pop patch decision for:")
+    dec = pop_patch_decision(md)
+    assert dec is None
 
 
 def test_pop_patch_single_level():
@@ -100,6 +99,7 @@ def test_pop_patch_single_level():
         remote_diff=[op_patch("c", [op_remove("e")])]
     )
     dec = pop_patch_decision(md)
+    assert dec is not None
     assert dec.common_path == ("a", "b", "c")
     assert dec.local_diff == [op_remove("d")]
     assert dec.remote_diff == [op_remove("e")]

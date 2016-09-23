@@ -175,8 +175,8 @@ def _split_addrange_on_equality(key, local, remote, path):
             # This means that local and remote are similar!
             # Mark as conflcit, and leave to autoresolve to deal with it
             decisions.conflict(path,
-                               [op_addrange(key, local[d.key])],
-                               [op_addrange(key, remote[d.key + offset])])
+                               [op_addrange(key, [local[d.key]])],
+                               [op_addrange(key, [remote[d.key + offset]])])
             taken += 1
         else:
             raise ValueError("Invalid diff op: %s" % d.op)
