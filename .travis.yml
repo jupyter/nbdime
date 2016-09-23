@@ -22,7 +22,7 @@ before_install:
     - pip install pytest
     - pip install pytest-cov
     - 'if [[ $GROUP == python ]]; then pip install codecov; fi'
-    - 'if [[ $GROUP == js ]]; then npm install codecov; fi'
+    - 'if [[ $GROUP == js ]]; then npm install -g codecov; fi'
 install:
     - 'if [[ $GROUP == python ]]; then pip install -e ./; fi'
     - 'if [[ $GROUP == js ]]; then cd ./nbdime/webapp; fi'
