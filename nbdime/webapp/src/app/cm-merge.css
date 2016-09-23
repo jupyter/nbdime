@@ -11,8 +11,11 @@
   max-height: calc(100vh - 4em);
 }
 
+.CodeMirror-merge-4pane .CodeMirror-merge-pane-deleted {
+  display: none;
+}
+
 .CodeMirror-merge-pane-unchanged { width: 100%; }
-.CodeMirror-merge-pane-deleted, .CodeMirror-merge-pane-added { width: 94%; }
 .CodeMirror-merge-1pane .CodeMirror-merge-gap { width: 6%; }
 .CodeMirror-merge-2pane .CodeMirror-merge-pane { width: 47%; }
 .CodeMirror-merge-2pane .CodeMirror-merge-gap { width: 6%; }
@@ -30,7 +33,7 @@
   z-index: 1;
 }
 
-.CodeMirror-merge-gap {
+.p-Widget.CodeMirror-merge-gap {
   z-index: 2;
   display: inline-block;
   height: 100%;
@@ -55,35 +58,16 @@
   line-height: 1;
 }
 
-.CodeMirror-merge-copybuttons-left, .CodeMirror-merge-copybuttons-right {
-  position: absolute;
-  left: 0; top: 0;
-  right: 0; bottom: 0;
-  line-height: 1;
-}
-
-.CodeMirror-merge-copy {
-  position: absolute;
-  cursor: pointer;
-  color: #44c;
-  z-index: 3;
-}
-
-.CodeMirror-merge-copy-reverse {
-  position: absolute;
-  cursor: pointer;
-  color: #44c;
-}
-
-.CodeMirror-merge-copybuttons-left .CodeMirror-merge-copy { left: 2px; }
-.CodeMirror-merge-copybuttons-right .CodeMirror-merge-copy { right: 2px; }
-
 .CodeMirror-merge-r-inserted, .CodeMirror-merge-l-inserted {
     background-color: #a6f3a6;
 }
 
 .CodeMirror-merge-r-deleted, .CodeMirror-merge-l-deleted {
     background-color: #f8cbcb;
+}
+
+.jp-Merge-gutter-buttons {
+  width: 16px;
 }
 
 .CodeMirror-merge-r-chunk { background: #ffffe0; }
@@ -96,9 +80,9 @@
 .CodeMirror-merge-l-chunk-end { border-bottom: 1px solid #88e; }
 .CodeMirror-merge-l-connect { fill: #eef; stroke: #88e; stroke-width: 1px; }
 
-.CodeMirror-merge-l-chunk.CodeMirror-merge-r-chunk { background: #dfd; }
-.CodeMirror-merge-l-chunk-start.CodeMirror-merge-r-chunk-start { border-top: 1px solid #4e4; }
-.CodeMirror-merge-l-chunk-end.CodeMirror-merge-r-chunk-end { border-bottom: 1px solid #4e4; }
+.CodeMirror-merge-l-chunk.CodeMirror-merge-r-chunk { background: #ffdddd; }
+.CodeMirror-merge-l-chunk-start.CodeMirror-merge-r-chunk-start { border-top: 1px solid #f88888; }
+.CodeMirror-merge-l-chunk-end.CodeMirror-merge-r-chunk-end { border-bottom: 1px solid #f88888; }
 
 .CodeMirror-merge-collapsed-widget:before {
   content: "(...)";

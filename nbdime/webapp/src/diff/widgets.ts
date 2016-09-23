@@ -3,48 +3,51 @@
 'use strict';
 
 import {
-  RenderMime
+  IRenderMime
 } from 'jupyterlab/lib/rendermime';
 
 import {
   OutputWidget
 } from 'jupyterlab/lib/notebook/output-area';
 
-
-import {
-  loadModeByMIME
-} from 'jupyterlab/lib/codemirror';
-
-import {
-  Widget
-} from 'phosphor-widget';
-
-import {
-  Panel, PanelLayout
-} from 'phosphor-panel';
-
-import 'codemirror/lib/codemirror.css';
-
-import {
-  DiffView, MergeView, MergeViewEditorConfiguration
-} from './mergeview';
-
-import {
-  sanitize
-} from 'sanitizer';
-
 import {
   nbformat
 } from 'jupyterlab/lib/notebook/notebook/nbformat';
 
 import {
+  Widget
+} from 'phosphor/lib/ui/widget';
+
+import {
+  Panel, PanelLayout
+} from 'phosphor/lib/ui/panel';
+
+import {
+  createNbdimeMergeView
+} from '../common/mergeview';
+
+import {
+  CollapsiblePanel
+} from '../common/collapsiblepanel';
+
+import {
   valueIn
-} from './util';
+} from '../common/util';
 
 import {
   CellDiffModel, NotebookDiffModel, IDiffModel,
   IStringDiffModel, StringDiffModel, OutputDiffModel
-} from './diffmodel';
+} from './model';
+
+import 'phosphor/styles/base.css';
+import 'jupyterlab/lib/basestyle/materialcolors.css';
+import 'jupyterlab/lib/default-theme/variables.css';
+import 'jupyterlab/lib/markdownwidget/index.css';
+import 'jupyterlab/lib/notebook/index.css';
+import 'jupyterlab/lib/renderers/index.css';
+import 'jupyterlab/lib/editorwidget/index.css';
+import 'jupyterlab/lib/editorwidget/index.css';
+import '../common/collapsible.css';
 
 
 const NBDIFF_CLASS = 'jp-Notebook-diff';
@@ -62,15 +65,6 @@ const DELETED_DIFF_CLASS = 'jp-Diff-deleted';
 const UNCHANGED_DIFF_CLASS = 'jp-Diff-unchanged';
 
 const DIFF_CLASSES = ['jp-Diff-base', 'jp-Diff-remote'];
-
-const COLLAPISBLE_HEADER = 'jp-Collapsible-header';
-const COLLAPISBLE_HEADER_ICON = 'jp-Collapsible-header-icon';
-const COLLAPISBLE_HEADER_ICON_OPEN = 'jp-Collapsible-header-icon-opened';
-const COLLAPISBLE_HEADER_ICON_CLOSED = 'jp-Collapsible-header-icon-closed';
-const COLLAPISBLE_SLIDER = 'jp-Collapsible-slider';
-const COLLAPSIBLE_OPEN = 'jp-Collapsible-opened';
-const COLLAPSIBLE_CLOSED = 'jp-Collapsible-closed';
-const COLLAPSIBLE_CONTAINER = 'jp-Collapsible-container';
 
 
 /**
@@ -90,121 +84,13 @@ const sanitizable = ['text/svg', 'text/html'];
 const stringDiffMimeTypes = ['text/html', 'text/plain'];
 
 
-/**
- * CollapsibleWidget
- */
-class CollapsibleWidget extends Widget {
-  static createHeader(headerTitle?: string): HTMLSpanElement {
-    let header = document.createElement('div');
-    header.className = COLLAPISBLE_HEADER;
-    if (headerTitle) {
-      //let title = document.createElement('span');
-      header.innerText = headerTitle;
-      //header.appendChild(title);
-    }
-    let button = document.createElement('span');
-    button.className = COLLAPISBLE_HEADER_ICON;
-    header.appendChild(button)
-
-    return header;
-  }
-
-  constructor(public inner: Widget, headerTitle?: string, collapsed?: boolean) {
-    super();
-    let constructor = this.constructor as typeof CollapsibleWidget;
-    let header = constructor.createHeader(headerTitle);
-    this.button = header.getElementsByClassName(
-      COLLAPISBLE_HEADER_ICON)[0] as HTMLElement;
-    header.onclick = this.toggleCollapsed.bind(this);
-    this.node.appendChild(header);
-    this.container = document.createElement('div');
-    this.container.className = COLLAPSIBLE_CONTAINER;
-    this.slider = document.createElement('div');
-    this.slider.classList.add(COLLAPISBLE_SLIDER);
-    this.slider.appendChild(inner.node)
-    this.container.appendChild(this.slider);
-    this.node.appendChild(this.container);
-
-    this.slider.classList.add(
-      collapsed === true ?
-      COLLAPSIBLE_CLOSED :
-      COLLAPSIBLE_OPEN);
-    this.button.classList.add(
-      collapsed === true ?
-      COLLAPISBLE_HEADER_ICON_CLOSED :
-      COLLAPISBLE_HEADER_ICON_OPEN);
-  }
-
-  toggleCollapsed(): void {
-    let slider = this.slider;
-    let button = this.button;
-    if (this.collapsed) {
-      slider.classList.remove(COLLAPSIBLE_CLOSED);
-      slider.classList.add(COLLAPSIBLE_OPEN);
-      button.classList.remove(COLLAPISBLE_HEADER_ICON_CLOSED);
-      button.classList.add(COLLAPISBLE_HEADER_ICON_OPEN);
-
-    } else {
-      slider.classList.remove(COLLAPSIBLE_OPEN);
-      slider.classList.add(COLLAPSIBLE_CLOSED);
-      button.classList.remove(COLLAPISBLE_HEADER_ICON_OPEN);
-      button.classList.add(COLLAPISBLE_HEADER_ICON_CLOSED);
-    }
-  }
-
-  get collapsed(): boolean {
-    return this.slider.classList.contains(COLLAPSIBLE_CLOSED);
-  }
-
-  slider: HTMLElement;
-  container: HTMLElement;
-  button: HTMLElement;
-}
-
-
-/**
- * A wrapper view for showing StringDiffModels in a MergeView
- */
-class NbdimeMergeView extends Widget {
-  constructor(remote: IStringDiffModel, editorClasses: string[],
-              local?: IStringDiffModel, merged?: any) {
-    super();
-    let opts: MergeViewEditorConfiguration = {remote: remote};
-    opts.collapseIdentical = true;
-    opts.local = local ? local : null;
-    //opts.merged = merged ? merged : null;
-    this._mergeview = new MergeView(this.node, opts);
-    this._editors = [];
-    if (this._mergeview.left) {
-      this._editors.push(this._mergeview.left);
-    }
-    if (this._mergeview.right) {
-      this._editors.push(this._mergeview.right);
-    }
-    if (this._mergeview.merge) {
-      this._editors.push(this._mergeview.merge);
-    }
-
-    if (remote.mimetype) {
-      // Set the editor mode to the MIME type.
-      for (let e of this._editors) {
-        loadModeByMIME(e.orig, remote.mimetype);
-      }
-      loadModeByMIME(this._mergeview.base, remote.mimetype);
-    }
-  }
-
-  protected _mergeview: MergeView;
-  protected _editors: DiffView[];
-}
-
 
 /**
  * Widget for outputs with renderable MIME data.
  */
 class RenderableOutputView extends Widget {
   constructor(model: OutputDiffModel, editorClass: string[],
-              rendermime: RenderMime<Widget>) {
+              rendermime: IRenderMime) {
     super();
     this._rendermime = rendermime;
     let bdata = model.base as nbformat.IOutput;
@@ -212,14 +98,14 @@ class RenderableOutputView extends Widget {
     this.layout = new PanelLayout();
 
     let ci = 0;
-    if (bdata){
+    if (bdata) {
       let widget = this.createOutput(bdata, false);
-      (this.layout as PanelLayout).addChild(widget);
+      (this.layout as PanelLayout).addWidget(widget);
       widget.addClass(editorClass[ci++]);
     }
     if (rdata && rdata !== bdata) {
       let widget = this.createOutput(rdata, false);
-      (this.layout as PanelLayout).addChild(widget);
+      (this.layout as PanelLayout).addWidget(widget);
       widget.addClass(editorClass[ci++]);
     }
   }
@@ -282,9 +168,8 @@ class RenderableOutputView extends Widget {
   }
 
   _sanitized: boolean;
-  _rendermime: RenderMime<Widget>;
+  _rendermime: IRenderMime;
 }
-
 
 /**
  * CellDiffWidget for cell changes
@@ -294,31 +179,32 @@ class CellDiffWidget extends Panel {
   /**
    *
    */
-  constructor(model: CellDiffModel, rendermime: RenderMime<Widget>,
-        public mimetype: string) {
+  constructor(model: CellDiffModel, rendermime: IRenderMime,
+              mimetype: string) {
     super();
     this.addClass(CELLDIFF_CLASS);
     this._model = model;
     this._rendermime = rendermime;
+    this.mimetype = mimetype;
 
     this.init();
   }
 
   protected init() {
-    var model = this.model;
+    let model = this.model;
 
     // Add 'cell added/deleted' notifiers, as appropriate
-    var CURR_DIFF_CLASSES = DIFF_CLASSES.slice();  // copy
+    let CURR_DIFF_CLASSES = DIFF_CLASSES.slice();  // copy
     if (model.added) {
       let widget = new Widget();
       widget.node.textContent = 'Cell added';
-      this.addChild(widget);
+      this.addWidget(widget);
       this.addClass(ADDED_DIFF_CLASS);
       CURR_DIFF_CLASSES = DIFF_CLASSES.slice(0, 1);
     } else if (model.deleted) {
       let widget = new Widget();
       widget.node.textContent = 'Cell deleted';
-      this.addChild(widget);
+      this.addWidget(widget);
       this.addClass(DELETED_DIFF_CLASS);
       CURR_DIFF_CLASSES = DIFF_CLASSES.slice(1, 2);
     } else if (model.unchanged) {
@@ -328,44 +214,47 @@ class CellDiffWidget extends Panel {
     }
 
     // Add inputs and outputs, on a row-by-row basis
-    let sourceView = this.createView(
-      model.source, model, CURR_DIFF_CLASSES);
+    let ctor = this.constructor as typeof CellDiffWidget;
+    let sourceView = ctor.createView(
+      model.source, model, CURR_DIFF_CLASSES, this._rendermime);
     sourceView.addClass(SOURCE_ROW_CLASS);
-    this.addChild(sourceView);
+    this.addWidget(sourceView);
 
     if (model.metadata && !model.metadata.unchanged) {
-      let metadataView = this.createView(
-        model.metadata, model, CURR_DIFF_CLASSES);
+      let metadataView = ctor.createView(
+        model.metadata, model, CURR_DIFF_CLASSES, this._rendermime);
       metadataView.addClass(METADATA_ROW_CLASS);
-      this.addChild(metadataView);
+      this.addWidget(metadataView);
     }
     if (model.outputs && model.outputs.length > 0) {
       let container = new Panel();
       let changed = false;
       for (let o of model.outputs) {
-        let outputsWidget = this.createView(
-          o, model, CURR_DIFF_CLASSES);
-        container.addChild(outputsWidget);
+        let outputsWidget = ctor.createView(
+          o, model, CURR_DIFF_CLASSES, this._rendermime);
+        container.addWidget(outputsWidget);
         changed = changed || !o.unchanged || o.added || o.deleted;
       }
-      let header = changed ? 'Outputs changed' : 'Outputs unchanged'
-      let collapser = new CollapsibleWidget(container, header, !changed);
+      let collapsed = !changed || model.added || model.deleted;
+      let header = changed ? 'Outputs changed' : 'Outputs unchanged';
+      let collapser = new CollapsiblePanel(container, header, collapsed);
       collapser.addClass(OUTPUTS_ROW_CLASS);
-      this.addChild(collapser);
+      this.addWidget(collapser);
     }
   }
 
   /**
    * Create a new sub-view.
    */
-  createView(model: IDiffModel, parent: CellDiffModel, editorClasses: string[]): Widget {
+  static
+  createView(model: IDiffModel, parent: CellDiffModel,
+             editorClasses: string[], rendermime: IRenderMime): Widget {
     let view: Widget = null;
     if (model instanceof StringDiffModel) {
-      if (model.unchanged && parent.cellType == 'markdown') {
-        let renderer = this._rendermime.getRenderer('text/markdown');
-        view = renderer.render('text/markdown', model.base);
+      if (model.unchanged && parent.cellType === 'markdown') {
+        view = rendermime.render({'text/markdown': model.base});
       } else {
-        view = new NbdimeMergeView(model as IStringDiffModel, editorClasses);
+        view = createNbdimeMergeView(model as IStringDiffModel, editorClasses);
       }
     } else if (model instanceof OutputDiffModel) {
       // Take one of three actions, depending on output types
@@ -374,46 +263,51 @@ class CellDiffWidget extends Panel {
       // 3) Unknown types: Stringified JSON diff.
       let tmodel = model as OutputDiffModel;
       let renderable = RenderableOutputView.canRenderUntrusted(tmodel);
-      for (let mt of this._rendermime.order) {
+      for (let mt of rendermime.order) {
         let key = tmodel.hasMimeType(mt);
         if (key) {
           if (!renderable || valueIn(mt, stringDiffMimeTypes)) {
-            view = new NbdimeMergeView(tmodel.stringify(key), editorClasses);
+            view = createNbdimeMergeView(tmodel.stringify(key), editorClasses);
           } else if (renderable) {
-            view = new RenderableOutputView(tmodel, editorClasses, this._rendermime);
+            view = new RenderableOutputView(tmodel, editorClasses, rendermime);
           }
           break;
         }
       }
       if (!view) {
-        view = new NbdimeMergeView(tmodel.stringify(), editorClasses);
+        view = createNbdimeMergeView(tmodel.stringify(), editorClasses);
       }
     } else {
-      throw 'Unrecognized model type.'
+      throw 'Unrecognized model type.';
     }
     if (model.collapsible) {
-      view = new CollapsibleWidget(
-        view, model.collapsibleHeader, model.startCollapsed);
+      view = new CollapsiblePanel(
+          view, model.collapsibleHeader, model.startCollapsed);
     }
     let container = new Panel();
     if (model.added && !parent.added) {
-      let addSpacer = new Widget()
+      // Implies this is added output
+      let addSpacer = new Widget();
       addSpacer.node.textContent = 'Output added';
-      container.addChild(addSpacer);
+      container.addWidget(addSpacer);
       container.addClass(ADDED_DIFF_CLASS);
     } else if (model.deleted && !parent.deleted) {
-      let delSpacer = new Widget()
+      // Implies this is deleted output
+      let delSpacer = new Widget();
       delSpacer.node.textContent = 'Output deleted';
-      container.addChild(delSpacer);
+      container.addWidget(delSpacer);
       container.addClass(DELETED_DIFF_CLASS);
-    } else if (model.unchanged && !parent.unchanged) {
+    } else if (model.unchanged) {
       container.addClass(UNCHANGED_DIFF_CLASS);
     } else {
       container.addClass(TWOWAY_DIFF_CLASS);
     }
-    container.addChild(view);
+    container.addWidget(view);
     return container;
   }
+
+
+  mimetype: string;
 
   /**
    * Get the model for the widget.
@@ -426,7 +320,7 @@ class CellDiffWidget extends Panel {
   }
 
   protected _model: CellDiffModel = null;
-  protected _rendermime: RenderMime<Widget> = null;
+  protected _rendermime: IRenderMime = null;
 }
 
 
@@ -435,7 +329,7 @@ class CellDiffWidget extends Panel {
  */
 export
 class MetadataDiffWidget extends Panel {
-  constructor(model: IDiffModel) {
+  constructor(model: IStringDiffModel) {
     super();
     this._model = model;
     console.assert(!model.added && !model.deleted);
@@ -447,18 +341,17 @@ class MetadataDiffWidget extends Panel {
     let model = this._model;
     if (!model.unchanged) {
       this.addClass(TWOWAY_DIFF_CLASS);
-      console.assert(model instanceof StringDiffModel)
-      let view: Widget = new NbdimeMergeView(
-        model as StringDiffModel, DIFF_CLASSES);
+      let view: Widget = createNbdimeMergeView(
+        model, DIFF_CLASSES);
       if (model.collapsible) {
-        view = new CollapsibleWidget(
+        view = new CollapsiblePanel(
           view, model.collapsibleHeader, model.startCollapsed);
       }
-      this.addChild(view);
+      this.addWidget(view);
     }
   }
 
-  private _model: IDiffModel;
+  private _model: IStringDiffModel;
 }
 
 
@@ -467,7 +360,7 @@ class MetadataDiffWidget extends Panel {
  */
 export
 class NotebookDiffWidget extends Widget {
-  constructor(model: NotebookDiffModel, rendermime: RenderMime<Widget>) {
+  constructor(model: NotebookDiffModel, rendermime: IRenderMime) {
     super();
     this._model = model;
     this._rendermime = rendermime;
@@ -476,10 +369,10 @@ class NotebookDiffWidget extends Widget {
     this.addClass(NBDIFF_CLASS);
 
     if (model.metadata) {
-      layout.addChild(new MetadataDiffWidget(model.metadata));
+      layout.addWidget(new MetadataDiffWidget(model.metadata));
     }
-    for (var c of model.cells) {
-      layout.addChild(new CellDiffWidget(c, rendermime, model.mimetype));
+    for (let c of model.cells) {
+      layout.addWidget(new CellDiffWidget(c, rendermime, model.mimetype));
     }
   }
 
@@ -494,5 +387,5 @@ class NotebookDiffWidget extends Widget {
   }
 
   private _model: NotebookDiffModel;
-  private _rendermime: RenderMime<Widget> = null;
+  private _rendermime: IRenderMime = null;
 }

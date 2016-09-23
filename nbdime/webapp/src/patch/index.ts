@@ -2,14 +2,22 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import { 
-  valueIn
-} from './util'; 
+import {
+  valueIn, deepCopy, repeatString
+} from '../common/util';
 
 import {
-  DiffRangeRaw, JSON_INDENT, repeatString, IDiffEntry, IDiffAdd, IDiffPatch,
-  IDiffAddRange, IDiffRemoveRange, DiffOp
-} from './diffutil';
+  JSON_INDENT, flattenStringDiff
+} from '../diff/util';
+
+import {
+  IDiffEntry, IDiffAdd, IDiffPatch, IDiffAddRange, IDiffRemoveRange,
+  DiffOp, validateObjectOp, validateSequenceOp
+} from '../diff/diffentries';
+
+import {
+  DiffRangeRaw
+} from '../diff/range';
 
 
 import stableStringify = require('json-stable-stringify');
@@ -17,11 +25,12 @@ import stableStringify = require('json-stable-stringify');
 
 /**
  * The result of a patch operation of a stringified object.
- * 
+ *
  * Contains the resulting remote string, as well as ranges describing which
  * parts of the string were changed.
  */
-export type StringifiedPatchResult = {
+export
+type StringifiedPatchResult = {
   /**
    * The patched string value
    */
@@ -31,7 +40,7 @@ export type StringifiedPatchResult = {
    * Position ranges indicating added content, as indices into the remote value
    */
   additions: DiffRangeRaw[],
-  
+
   /**
    * Position ranges indicating removed content, as indices into the base value
    */
@@ -42,17 +51,23 @@ export type StringifiedPatchResult = {
 /**
  * Patch a base JSON object according to diff. Returns the patched object.
  */
-export function patch(base: (string | Array<any> | any), diff: IDiffEntry[]) : (string | Array<any> | any) {
-  if (typeof base == 'string') {
+export
+function patch(base: (string | Array<any> | any), diff: IDiffEntry[]) : (string | Array<any> | any) {
+  if (typeof base === 'string') {
     return patchString(base, diff, 0, false).remote;
   } else if (base instanceof Array) {
-    return patchSequence(base, diff)
+    return patchSequence(base, diff);
+  } else if (valueIn(typeof base, ['number', 'boolean'])) {
+    throw 'Cannot patch an atomic type: ' + typeof base;
   } else {
     return patchObject(base, diff);
   }
 }
 
 
+/**
+ * Patch an array according to the diff.
+ */
 function patchSequence(base: Array<any>, diff: IDiffEntry[]): Array<any> {
   // The patched sequence to build and return
   let patched = [];
@@ -60,19 +75,21 @@ function patchSequence(base: Array<any>, diff: IDiffEntry[]): Array<any> {
   let take = 0;
   let skip = 0;
   for (let e of diff) {
+    // Check for valid entry first:
+    validateSequenceOp(base, e);
     let op = e.op;
     let index = e.key as number;
 
     // Take values from base not mentioned in diff, up to not including
     // index
     for (let value of base.slice(take, index)) {
-      patched.push(_deepCopy(value));
+      patched.push(deepCopy(value));
     }
 
     if (op === DiffOp.SEQINSERT) {
       // Extend with new values directly
       patched = patched.concat(
-        (e as IDiffAddRange).valuelist as Array<any>)
+        (e as IDiffAddRange).valuelist as Array<any>);
       skip = 0;
     } else if (op === DiffOp.SEQDELETE) {
       // Delete a number of values by skipping
@@ -80,8 +97,6 @@ function patchSequence(base: Array<any>, diff: IDiffEntry[]): Array<any> {
     } else if (op === DiffOp.PATCH) {
       patched.push(patch(base[index], (e as IDiffPatch).diff));
       skip = 1;
-    } else {
-      throw 'Invalid op: ' + op;
     }
 
     // Skip the specified number of elements, but never decrement take.
@@ -92,49 +107,54 @@ function patchSequence(base: Array<any>, diff: IDiffEntry[]): Array<any> {
 
   // Take values at end not mentioned in diff
   for (let value of base.slice(take)) {
-    patched.push(_deepCopy(value));
+    patched.push(deepCopy(value));
   }
   return patched;
 }
 
 
+/**
+ * Patch an object (dictionary type) according to the diff.
+ */
 function patchObject(base: Object, diff: IDiffEntry[]) : Object {
   let patched: any = {};
   let keysToCopy = Object.keys(base);
 
-  for (let e of diff) {
-    let op = e.op, key = e.key as string;
+  if (diff) {
+    for (let e of diff) {
+      // Check for valid entry first:
+      validateObjectOp(base, e, keysToCopy);
+      let op = e.op;
+      let key = e.key as string;
 
-    if (op == DiffOp.ADD) {
-      console.assert(!(key in keysToCopy));
-      patched[key] = (e as IDiffAdd).value
-    } else if (op == DiffOp.REMOVE) {
-      keysToCopy.splice(keysToCopy.indexOf(key), 1);   // Remove key
-    } else if (op == DiffOp.REPLACE) {
-      keysToCopy.splice(keysToCopy.indexOf(key), 1);   // Remove key
-      patched[key] = (e as IDiffAdd).value;
-    } else if (op == DiffOp.PATCH) {
-      keysToCopy.splice(keysToCopy.indexOf(key), 1);   // Remove key
-      patched[key] = patch(base[key], (e as IDiffPatch).diff)
-    } else {
-      throw 'Invalid op ' + op;
+      if (op === DiffOp.ADD) {
+        patched[key] = (e as IDiffAdd).value;
+      } else if (op === DiffOp.REMOVE) {
+        keysToCopy.splice(keysToCopy.indexOf(key), 1);   // Remove key
+      } else if (op === DiffOp.REPLACE) {
+        keysToCopy.splice(keysToCopy.indexOf(key), 1);   // Remove key
+        patched[key] = (e as IDiffAdd).value;
+      } else if (op === DiffOp.PATCH) {
+        keysToCopy.splice(keysToCopy.indexOf(key), 1);   // Remove key
+        patched[key] = patch(base[key], (e as IDiffPatch).diff);
+      }
     }
   }
 
   // Take items not mentioned in diff
   for (let key of keysToCopy) {
-    patched[key] = _deepCopy(base[key]);
+    patched[key] = deepCopy(base[key]);
   }
-  return patched
+  return patched;
 }
 
 /**
  * Patch a stringified JSON object.
- * 
- * Returns the stringified value of the patched JSON object, as well as 
- * position ranges indicating which parts of the string that was added or 
+ *
+ * Returns the stringified value of the patched JSON object, as well as
+ * position ranges indicating which parts of the string that was added or
  * removed.
- * 
+ *
  * Internally, this builds the ranges based on the actual supplied diff, which
  * can therefore differ from a straigh string-based diff of stringified JSON
  * objects.
@@ -143,89 +163,121 @@ export function patchStringified(base: (string | Array<any> | any), diff: IDiffE
   if (level === undefined) {
     level = 0;
   }
-  if (typeof base == 'string') {
+  if (typeof base === 'string') {
     // Only stringify if level > 0
     let stringifyPatch = level > 0;
     return patchString(base, diff, level, stringifyPatch);
   } else if (base instanceof Array) {
-    return patchStringifiedList(base, diff, level)
+    return patchStringifiedList(base, diff, level);
   } else {
     return patchStringifiedObject(base, diff, level);
   }
 }
 
+/**
+ * Patch a stringified object according to the object diff
+ */
 function patchStringifiedObject(base: Object, diff: IDiffEntry[], level: number) : StringifiedPatchResult {
   if (level === undefined) {
-    var level = 0;
+    level = 0;
   }
   let map: { [key: string]: any; } = base;
-  var remote = '';
-  var additions: DiffRangeRaw[] = [];
-  var deletions: DiffRangeRaw[] = [];
+  let remote = '';
+  let additions: DiffRangeRaw[] = [];
+  let deletions: DiffRangeRaw[] = [];
   let postfix = ',\n';
-  
-  var baseIndex = 0;
-  
+
+  let baseIndex = 0;
+
   // Short-circuit if diff is empty
   if (diff === null || diff === undefined) {
     return {remote: stringify(base, level, true), additions: additions, deletions: deletions};
   }
-  
+
   // Object is dict. As diff keys should be unique, create map for easy processing
-  var ops: { [key: string]: IDiffEntry} = {};
-  var op_keys : string[] = [];
-  for (var d of diff) {
-    op_keys.push(d.key as string);
+  let ops: { [key: string]: IDiffEntry} = {};
+  let opKeys : string[] = [];
+  for (let d of diff) {
+    opKeys.push(d.key as string);
     ops[d.key as string] = d;
   }
-  var all_keys = _getAllKeys(base, op_keys);
-  
-  for (;;) {
-    let key = all_keys.shift();
-    if (key === undefined){
+  let baseKeys = Object.keys(base);
+  let remainingKeys = _getAllKeys(base, opKeys);
+
+  for (; ; ) {
+    let key = remainingKeys.shift();
+    if (key === undefined) {
       break;
     }
     let keyString = _makeKeyString(key, level + 1);
-    if (valueIn(key, op_keys)) {
+    if (valueIn(key, opKeys)) {
       // Entry has a change
       let e = ops[key];
+      // Check for valid entry first:
+      validateObjectOp(base, e, baseKeys);
       let op = e.op;
-      
+
       if (valueIn(op, [DiffOp.ADD, DiffOp.REPLACE, DiffOp.REMOVE])) {
+        // Replace is simply an add + remove, but without modifying keystring
+        let isReplace = op === DiffOp.REPLACE;
         if (valueIn(op, [DiffOp.ADD, DiffOp.REPLACE])) {
-          let valr = stringify((e as IDiffAdd).value, level + 1, false) + 
+          let valr = stringify((e as IDiffAdd).value, level + 1, false) +
               postfix;
-          let length = keyString.length + valr.length;
-          if (!_entriesAfter(all_keys, ops, true)) {
-            length -= postfix.length - 1; // Newline will still be included
+          let start = remote.length;
+          let length = valr.length;
+          // Modify range depending on add or replace:
+          if (isReplace) {
+            start += keyString.length;
+          } else {
+            length += keyString.length;
           }
-          additions.push(new DiffRangeRaw(remote.length, length));
+          // Check if postfix should be included or not
+          if (!_entriesAfter(remainingKeys, ops, true) || isReplace) {
+            length -= postfix.length;
+            if (op === DiffOp.ADD) {
+              length += 1;  // Newline will still be added
+            }
+          }
+          additions.push(new DiffRangeRaw(start, length, e.source));
           remote += keyString + valr;
         }
         if (valueIn(op, [DiffOp.REMOVE, DiffOp.REPLACE])) {
           let valb = stringify(map[key], level + 1, false) + postfix;
-          let length = keyString.length + valb.length;
-          if (!_entriesAfter(all_keys, ops, false)) {
-            length -= postfix.length - 1; // Newline will still be included
+          let start = baseIndex;
+          let length = valb.length;
+          // Modify range depending on remove or replace:
+          if (isReplace) {
+            start += keyString.length;
+          } else {
+            length += keyString.length;
           }
-          deletions.push(new DiffRangeRaw(baseIndex, length));
-          baseIndex += valb.length;
+          // Check if postfix should be included or not
+          if (!_entriesAfter(remainingKeys, ops, false) || isReplace) {
+            length -= postfix.length;
+            if (op === DiffOp.REMOVE) {
+              length += 1; // Newline will still be removed
+            }
+          }
+          deletions.push(new DiffRangeRaw(start, length, e.source));
+          baseIndex += keyString.length + valb.length;
+          baseKeys.splice(baseKeys.indexOf(key), 1);
         }
-      } else if (op == DiffOp.PATCH) {
+      } else if (op === DiffOp.PATCH) {
         let pd = patchStringified(map[key], (e as IDiffPatch).diff, level + 1);
         let valr = pd.remote;
         // Insert key string:
-        valr = keyString + valr.slice((level + 1) * JSON_INDENT.length) + 
+        valr = keyString + valr.slice((level + 1) * JSON_INDENT.length) +
             postfix;
-        let offset = remote.length + keyString.length - 
+        let offset = remote.length + keyString.length -
             (level + 1) * JSON_INDENT.length;
         _offsetRanges(offset, pd.additions, pd.deletions);
         remote += valr;
         additions = additions.concat(pd.additions);
         deletions = deletions.concat(pd.deletions);
-          
+
         baseIndex += stringify(map[key], level + 1, false).length +
             keyString.length + postfix.length;
+        baseKeys.splice(baseKeys.indexOf(key), 1);
       } else {
         throw 'Invalid op ' + op;
       }
@@ -236,10 +288,10 @@ function patchStringifiedObject(base: Object, diff: IDiffEntry[], level: number)
       baseIndex += val.length;
     }
   }
-  
+
   // Stringify correctly
-  if (remote.slice(remote.length - postfix.length) == postfix) {
-    remote = remote.slice(0, remote.length - postfix.length)
+  if (remote.slice(remote.length - postfix.length) === postfix) {
+    remote = remote.slice(0, remote.length - postfix.length);
   }
   let indent = repeatString(JSON_INDENT, level);
   remote = indent + '{\n' + remote + '\n' + indent + '}';
@@ -247,34 +299,39 @@ function patchStringifiedObject(base: Object, diff: IDiffEntry[], level: number)
   return {remote: remote, additions: additions, deletions: deletions};
 }
 
+/**
+ * Patch a stringified list according to the list diff
+ */
 function patchStringifiedList(base: Array<any>, diff: IDiffEntry[], level: number) : StringifiedPatchResult {
-  var remote = '';
-  var additions: DiffRangeRaw[] = [];
-  var deletions: DiffRangeRaw[] = [];
-  var baseIndex = 0;  // Position in base string
+  let remote = '';
+  let additions: DiffRangeRaw[] = [];
+  let deletions: DiffRangeRaw[] = [];
+  let baseIndex = 0;  // Position in base string
   let postfix = ',\n';
-  
+
   // Short-circuit if diff is empty
   if (diff === null || diff === undefined) {
-    return {remote: stringify(base, level), 
+    return {remote: stringify(base, level),
             additions: additions,
             deletions: deletions};
   }
   // Index into obj, the next item to take unless diff says otherwise
-  var take = 0;
-  var skip = 0;
-  for (var e of diff) {
-    var op = e.op;
-    var index = e.key as number;
+  let take = 0;
+  let skip = 0;
+  for (let e of diff) {
+    // Check for valid entry first:
+    validateSequenceOp(base, e);
+    let op = e.op;
+    let index = e.key as number;
 
     // Take values from obj not mentioned in diff, up to not including index
-    for (;index > take; take++) {
+    for (; index > take; take++) {
       let unchanged = stringify(base[take], level + 1) + postfix;
       remote += unchanged;
       baseIndex += unchanged.length;
     }
 
-    if (op == DiffOp.SEQINSERT) {
+    if (op === DiffOp.SEQINSERT) {
       // Extend with new values directly
       let val = '';
       for (let v of (e as IDiffAddRange).valuelist) {
@@ -284,11 +341,10 @@ function patchStringifiedList(base: Array<any>, diff: IDiffEntry[], level: numbe
       if (index === base.length) {
         difflen -= 1; // No comma if at end
       }
-      additions.push(new DiffRangeRaw(remote.length, difflen));
+      additions.push(new DiffRangeRaw(remote.length, difflen, e.source));
       remote += val;
       skip = 0;
-    }
-    else if (op == DiffOp.SEQDELETE) {
+    } else if (op === DiffOp.SEQDELETE) {
       // Delete a number of values by skipping
       let val = '';
       let len = (e as IDiffRemoveRange).length;
@@ -299,14 +355,13 @@ function patchStringifiedList(base: Array<any>, diff: IDiffEntry[], level: numbe
       if (len + index === base.length) {
         difflen -= 1; // No comma if at end
       }
-      deletions.push(new DiffRangeRaw(baseIndex, difflen));
+      deletions.push(new DiffRangeRaw(baseIndex, difflen, e.source));
       baseIndex += val.length;
       skip = (e as IDiffRemoveRange).length;
-    }
-    else if (op == DiffOp.PATCH) {
+    } else if (op === DiffOp.PATCH) {
       let pd = patchStringified(base[index], (e as IDiffPatch).diff, level + 1);
       skip = 1;
-      
+
       let val = pd.remote + postfix;
       _offsetRanges(remote.length, pd.additions, pd.deletions);
       additions = additions.concat(pd.additions);
@@ -322,13 +377,13 @@ function patchStringifiedList(base: Array<any>, diff: IDiffEntry[], level: numbe
   }
 
   // Take unchanged values at end
-  for (;base.length > take; take++) {
+  for (; base.length > take; take++) {
     remote += stringify(base[take], level + 1) + postfix;
   }
-  
+
   // Stringify correctly
-  if (remote.slice(remote.length - postfix.length) == postfix) {
-    remote = remote.slice(0, remote.length - postfix.length)
+  if (remote.slice(remote.length - postfix.length) === postfix) {
+    remote = remote.slice(0, remote.length - postfix.length);
   }
   let indent = repeatString(JSON_INDENT, level);
   remote = indent + '[\n' + remote + '\n' + indent + ']';
@@ -336,39 +391,45 @@ function patchStringifiedList(base: Array<any>, diff: IDiffEntry[], level: numbe
   return {remote: remote, additions: additions, deletions: deletions};
 }
 
+/**
+ * Patch a string according to a line based diff
+ */
 function patchString(base: string, diff: IDiffEntry[], level: number, stringifyPatch?: boolean) : StringifiedPatchResult {
-  var additions: DiffRangeRaw[] = [];
-  var deletions: DiffRangeRaw[] = [];
-  var baseIndex= 0;
+  let additions: DiffRangeRaw[] = [];
+  let deletions: DiffRangeRaw[] = [];
+  let baseIndex = 0;
 
   // Short-circuit if diff is empty
   if (diff === null || diff === undefined) {
-    return {remote: stringify(base, level),
+    return {remote: stringifyPatch ? stringify(base, level) : base,
             additions: additions,
             deletions: deletions};
   }
+  // Diffs are line-based, so flatten to character based:
+  diff = flattenStringDiff(base, diff);
+
   // Index into obj, the next item to take unless diff says otherwise
-  var take = 0;
-  var skip = 0;
-  var remote = '';
-  for (var e of diff) {
-    var op = e.op;
-    var index = e.key as number;
-    
+  let take = 0;
+  let skip = 0;
+  let remote = '';
+  for (let e of diff) {
+    let op = e.op;
+    let index = e.key as number;
+
     // Take values from obj not mentioned in diff, up to not including index
     let unchanged = base.slice(take, index);
     remote += unchanged;
     baseIndex += unchanged.length;
-    
-    if (op == DiffOp.SEQINSERT) {
+
+    if (op === DiffOp.SEQINSERT) {
       let added = (e as IDiffAddRange).valuelist;
-      additions.push(new DiffRangeRaw(remote.length, added.length));
+      additions.push(new DiffRangeRaw(remote.length, added.length, e.source));
       remote += added;
       skip = 0;
-    } else if (op == DiffOp.SEQDELETE) {
+    } else if (op === DiffOp.SEQDELETE) {
       // Delete a number of values by skipping
       skip = (e as IDiffRemoveRange).length;
-      deletions.push(new DiffRangeRaw(baseIndex, skip));
+      deletions.push(new DiffRangeRaw(baseIndex, skip, e.source));
       baseIndex += skip;
     } else {
       throw 'Invalid diff op on string: ' + op;
@@ -392,9 +453,10 @@ function patchString(base: string, diff: IDiffEntry[], level: number, stringifyP
  * Ordered stringify. Wraps stableStringify(), but handles indentation, and
  * turns null input into empty string.
  */
-export function stringify(values: string | any[] | { [key: string] : any},
-                        level?: number, indentFirst?: boolean) : string {
-  var ret = (values === null) ? '' : stableStringify(values, {space: JSON_INDENT});
+export
+function stringify(values: string | any[] | { [key: string] : any},
+                   level?: number, indentFirst?: boolean) : string {
+  let ret = (values === null) ? '' : stableStringify(values, {space: JSON_INDENT});
   if (level) {
     ret = _indent(ret, level, indentFirst);
   }
@@ -405,11 +467,11 @@ export function stringify(values: string | any[] | { [key: string] : any},
 // Utility functions and variables:
 
 /**
- * Function that checks whether any dict entries will remain after 
- * applying the given ops. 
+ * Function that checks whether any dict entries will remain after
+ * applying the given ops.
  */
 function _entriesAfter(remainingKeys: string[], ops: { [key: string]: IDiffEntry},
-                    isAddition?: boolean): boolean {
+                       isAddition?: boolean): boolean {
   let cop = isAddition !== false ? DiffOp.REMOVE : DiffOp.ADD;
   for (let key of remainingKeys) {
     if (!(key in ops) || ops[key].op !== cop) {
@@ -421,18 +483,18 @@ function _entriesAfter(remainingKeys: string[], ops: { [key: string]: IDiffEntry
 
 /**
  * Indent a (multiline) string with `JSON_INDENT` given number of times.
- * 
+ *
  * indentFirst controls whether the first line is indented as well, and
  * defaults to true.
  */
 function _indent(str: string, levels: number, indentFirst?: boolean) : string {
   indentFirst = indentFirst !== false;
   let lines = str.split('\n');
-  var ret: string[] = new Array(lines.length);
+  let ret: string[] = new Array(lines.length);
   if (!indentFirst) {
     ret[0] = lines[0];
   }
-  for (var i = indentFirst ? 0 : 1; i < lines.length; i++) {
+  for (let i = indentFirst ? 0 : 1; i < lines.length; i++) {
     ret[i] = repeatString(JSON_INDENT, levels) + lines[i];
   }
   return ret.join('\n');
@@ -442,10 +504,10 @@ function _indent(str: string, levels: number, indentFirst?: boolean) : string {
  * The keys present in a Object class. Equivalent to Object.keys, but with a
  * fallback if not defined.
  */
-var _objectKeys = Object.keys || function (obj) {
-  var has = Object.prototype.hasOwnProperty || function () { return true };
-  var keys: any[] = [];
-  for (var key in obj) {
+let _objectKeys = Object.keys || function (obj) {
+  let has = Object.prototype.hasOwnProperty || function () { return true; };
+  let keys: any[] = [];
+  for (let key in obj) {
     if (has.call(obj, key)) {
       keys.push(key);
     }
@@ -454,7 +516,7 @@ var _objectKeys = Object.keys || function (obj) {
 };
 
 /** Filter function for _getAllKeys */
-function _onlyUnique(value: any, index: any, self: any) { 
+function _onlyUnique(value: any, index: any, self: any) {
   return self.indexOf(value) === index;
 }
 
@@ -462,7 +524,7 @@ function _onlyUnique(value: any, index: any, self: any) {
  * Get all unique keys that are either in `obj`, `diffKeys` or both.
  * Returned as a sorted list.
  */
-function _getAllKeys(obj: Object, diffKeys: string[]){
+function _getAllKeys(obj: Object, diffKeys: string[]) {
   return _objectKeys(obj).concat(diffKeys).filter(_onlyUnique).sort();
 }
 
@@ -473,10 +535,10 @@ function _makeKeyString(key: string, level: number) {
 
 /** Shift all positions in given ranges by same amount */
 function _offsetRanges(offset: number, additions: DiffRangeRaw[], deletions: DiffRangeRaw[]) {
-  for (var a of additions) {
+  for (let a of additions) {
     a.offset(offset);
   }
-  for (var d of deletions) {
+  for (let d of deletions) {
     d.offset(offset);
   }
 }
@@ -487,22 +549,24 @@ function _offsetRanges(offset: number, additions: DiffRangeRaw[], deletions: Dif
  */
 function _adjustRangesByJSONEscapes(jsonString: string, ranges: DiffRangeRaw[]) {
   // First find all escaped characters, and expansion coefficients
-  var simpleEscapes = [
+  let simpleEscapes = [
       '\\\"', '\\\\', '\\/', '\\b', '\\f', '\\n', '\\r', '\\t'];
-  var surrogateUnicodes = /\\uD[89A-Fa-f][0-9a-fA-F]{2}\\uD[c-fC-F][0-9a-fA-F]{2}/g;
+  let surrogateUnicodes = /\\uD[89A-Fa-f][0-9a-fA-F]{2}\\uD[c-fC-F][0-9a-fA-F]{2}/g;
   // Look for unicodes that are not part of a surrogate:
-  var unicodes = /(?!\\uD[c-fC-F][0-9a-fA-F]{2})\\u(?!D[89A-Fa-f][0-9a-fA-F]{2})\d{4}/g;
+  let unicodes = /(?!\\uD[c-fC-F][0-9a-fA-F]{2})\\u(?!D[89A-Fa-f][0-9a-fA-F]{2})\d{4}/g;
   const SIMPLE_ESCAPE_LENGTH = 2;
   const UNICODE_ESCAPE_LENGTH = 6;
   const SURROGATE_ESCAPE_LENGTH = 12;
-  
-  // Equal sized arrays identifying location and expansion 
+
+  // Equal sized arrays identifying location and expansion
   // factor of each escaped character:
-  var indices: number[] = [];
-  var expansions: number[] = [];
-  
-  for (var e of simpleEscapes) {
-    var len = JSON.parse('"' + e + '"').length as number;
+  let indices: number[] = [];
+  let expansions: number[] = [];
+
+
+  for (let e of simpleEscapes) {
+    let len = JSON.parse('"' + e + '"').length as number;
+    let i = 0;
     while (1) {
       i = jsonString.indexOf(e, i);
       if (i < 0) {
@@ -517,21 +581,22 @@ function _adjustRangesByJSONEscapes(jsonString: string, ranges: DiffRangeRaw[]) 
   while ((match = unicodes.exec(jsonString)) !== null) {
     indices.push(match.index);
     expansions.push(
-      UNICODE_ESCAPE_LENGTH - 
+      UNICODE_ESCAPE_LENGTH -
       JSON.parse('"' + match[0] + '"').length);
   }
   while ((match = surrogateUnicodes.exec(jsonString)) !== null) {
     indices.push(match.index);
     expansions.push(
-      SURROGATE_ESCAPE_LENGTH - 
+      SURROGATE_ESCAPE_LENGTH -
       JSON.parse('"' + match[0] + '"').length);
   }
-  
+
   // Now adjust differences
   // TODO: Optimize this algorithm?
-  for (var i = 0; i < indices.length; i++) {
+  for (let i = 0; i < indices.length; i++) {
     for (let r of ranges) {
-      var idx = indices[i], exp = expansions[i];
+      let idx = indices[i];
+      let exp = expansions[i];
       if (r.from > idx) {
         r.from += exp;
       }
@@ -540,28 +605,4 @@ function _adjustRangesByJSONEscapes(jsonString: string, ranges: DiffRangeRaw[]) 
       }
     }
   }
-}
-
-/**
- * Deepcopy routine for JSON-able data types
- */
-function _deepCopy(obj) {
-  if (typeof obj == 'object') {
-    if (obj instanceof Array) {
-      var l = obj.length;
-      var o = new Array(l);
-      for (var i = 0; i < l; i++) {
-        o[i] = _deepCopy(obj[i]);
-      }
-      return o;
-    } else {
-      var r: any = {};
-      r.prototype = obj.prototype;
-      for (var k in obj) {
-        r[k] = _deepCopy(obj[k]);
-      }
-      return r;
-    }
-  }
-  return obj;
 }

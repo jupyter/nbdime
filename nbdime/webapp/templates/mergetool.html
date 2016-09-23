@@ -12,12 +12,13 @@
 
   <body> <!-- onload="nbdime.init()" -->
     <div id="nbdime-header">
-      <h3>Notebook Diff</h3>
+      <h3>Notebook Merge</h3>
       <div id="nbdime-header-buttonrow">
         <button id="nbdime-save" class="nbdime-header-button">Save</button>
         <button id="nbdime-close" class="nbdime-header-button">Close tool</button>
       </div>
       <div id=nbdime-header-banner>
+        <span id="nbdime-header-local">Local</span>
         <span id="nbdime-header-base">Base</span>
         <span id="nbdime-header-remote">Remote</span>
       </div>
@@ -26,7 +27,7 @@
     <div id="nbdime-root">
     </div>
     <script id='jupyter-config-data' type="application/json">{ "baseUrl": "{{ static_url }}" }</script>
-    <script id='nbdime-config-data' type="application/json">{ "base": "{{ base }}", "remote": "{{remote}}"}</script>
+    <script id='nbdime-config-data' type="application/json">{ "base": "{{ base }}", "local": "{{ local }}", "remote": "{{remote}}"}</script>
     <script src="{{ static_url('build/nbdime.js') }}"></script>
     <noscript>Nbdime relies on javascript for diff/merge views!</noscript>
   </body>

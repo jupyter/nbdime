@@ -1,0 +1,188 @@
+
+
+.jp-Notebook-merge {
+  width: 90%;
+  margin: auto;
+  position: relative;
+  z-index: 0;
+}
+
+
+/* Alternative for showing single cell when cells are equal */
+.jp-Diff-unchanged {
+  margin-left: 10%;
+  width: 80%;
+}
+
+.jp-Metadata-diff {
+  margin-bottom: 20px;
+}
+
+.jp-Metadata-diff .jp-CollapsiblePanel {
+  border: solid black thin;
+}
+
+.jp-Cell-merge {
+  margin-bottom: 20px;
+  border-top: solid #ccc 1px;
+  background-color: white;
+}
+
+.CodeMirror-merge-pane-local,.CodeMirror-merge-pane-remote,.CodeMirror-merge-pane-base {
+  width: 33%;
+}
+
+.CodeMirror-merge-pane-final {
+  width: 100%;
+  border-top: solid #ddd 1px;
+}
+
+.jp-Notebook-merge .jp-Output-result img {
+  max-width: 100%;
+}
+
+.jp-Merge-cellHeader {
+  display: flex;
+  background-color: #f7f7f7; /* Matches CodeMirror gutter */
+}
+
+.jp-Merge-cellHeader > .p-Widget {
+  margin-right: .5em;
+}
+
+.jp-Merge-cellHeader-title {
+  flex-grow: 1;
+}
+
+.jp-Notebook-merge .jp-DragWidget-dragHandle {
+  height: 18px;
+  width: 12px;
+}
+
+.CodeMirror-merge-pane-deleted, .CodeMirror-merge-pane-added { width: 100%; }
+
+.jp-Notebook-merge .CodeMirror-merge-spacer { background-color: #eee; }
+
+.jp-Notebook-merge .CodeMirror-merge-r-chunk { background-color: #dfd; }
+.jp-Notebook-merge .CodeMirror-merge-r-chunk-start,
+.jp-Notebook-merge .CodeMirror-merge-m-chunk-start-remote { border-top: 1px solid #beb; }
+.jp-Notebook-merge .CodeMirror-merge-r-chunk-end,
+.jp-Notebook-merge .CodeMirror-merge-m-chunk-end-remote { border-bottom: 1px solid #beb; }
+.jp-Notebook-merge .CodeMirror-merge-r-connect { fill: #dfd; stroke: #beb; stroke-width: 1px; }
+.jp-Notebook-merge .CodeMirror-line .CodeMirror-merge-r-inserted { background-color: #beb; }
+
+.jp-Notebook-merge .CodeMirror-merge-l-chunk { background-color: #ececff; }
+.jp-Notebook-merge .CodeMirror-merge-l-chunk-start,
+.jp-Notebook-merge .CodeMirror-merge-m-chunk-start-local { border-top: 1px solid #cbcbf8; }
+.jp-Notebook-merge .CodeMirror-merge-l-chunk-end,
+.jp-Notebook-merge .CodeMirror-merge-m-chunk-end-local { border-bottom: 1px solid #cbcbf8; }
+.jp-Notebook-merge .CodeMirror-merge-l-connect { fill: #ececff; stroke: #cbcbf8; stroke-width: 1px; }
+.jp-Notebook-merge .CodeMirror-line .CodeMirror-merge-l-inserted { background-color: #cbcbf8 }
+
+
+.CodeMirror-merge-m-chunk-start-either { border-top: 1px solid #aee; }
+.CodeMirror-merge-m-chunk-end-either { border-bottom: 1px solid #aee }
+
+.CodeMirror-merge-pane-base .CodeMirror-line .CodeMirror-merge-m-deleted,
+.CodeMirror-merge-pane-base .CodeMirror-line .CodeMirror-merge-l-deleted,
+.CodeMirror-merge-pane-base .CodeMirror-line .CodeMirror-merge-r-deleted {
+  background-color: initial;
+  color: #b00
+}
+
+.jp-Merge-oneway-local,.jp-Merge-oneway-remote {
+  width: 75%;
+}
+
+.jp-Merge-oneway-remote {
+  margin-left: 25%;
+}
+
+.jp-Merge-oneway-local .CodeMirror {
+  background-color: #ececff;
+}
+
+.jp-Merge-oneway-remote .CodeMirror {
+  background-color: #dfd;
+}
+
+.jp-Diff-deleted .CodeMirror {
+  background-color: #ffecec;
+}
+
+.jp-Diff-added .CodeMirror {
+  background-color: #dbffdb;
+}
+
+
+.jp-Merge-gutter-picker {
+  width: 16px;
+  text-align: right;
+}
+
+.jp-Merge-gutter-conflict {
+  width: 16px;
+  color: #b00;
+  text-align: right;
+}
+
+.jp-Merge-conflict {
+  background-color: #ffdddd;
+}
+
+.CodeMirror-merge-pane.jp-mod-missing {
+  background-color: #ffdddd;
+}
+
+.jp-Cell-merge.jp-mod-todelete > .p-Widget:not(.jp-Merge-cellHeader) {
+  opacity: 0.5;
+  filter: alpha(opacity = 50);
+}
+
+.jp-Cell-merge.jp-mod-todelete .jp-Merge-cellHeader {
+  background-color: #ffdddd;
+}
+
+.jp-Cellrow-outputs .jp-OutputArea {
+  border: #666 solid 1pt;
+}
+
+.jp-Cellrow-outputs .p-FlexPanel:last-of-type .jp-OutputArea {
+  margin-top: 5px;
+}
+
+
+#nbdime-header {
+  margin: auto;
+  width: 90%;
+  margin-bottom: 20px;
+}
+
+.nbdime-header-button{
+  display: inline-block;
+  margin-right: 10px;
+}
+
+#nbdime-header-banner {
+  margin-top: 10px;
+}
+
+
+#nbdime-header-base,
+#nbdime-header-remote,
+#nbdime-header-local {
+  display: inline-block;
+  width: 33%;
+}
+
+#nbdime-header-local {
+  background-color: #cbcbf8;
+}
+
+#nbdime-header-base {
+  background-color: #eee;
+}
+
+#nbdime-header-remote {
+  background-color: #beb;
+}

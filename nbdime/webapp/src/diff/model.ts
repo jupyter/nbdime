@@ -7,50 +7,25 @@ import {
 } from 'jupyterlab/lib/notebook/notebook/nbformat';
 
 import {
-  DiffOp, IDiffEntry, IDiffAddRange, IDiffRemoveRange, IDiffPatch, IDiffAdd,
-  getDiffKey, DiffRangeRaw, DiffRangePos, raw2Pos
-} from './diffutil';
+  DiffOp, IDiffEntry, IDiffAddRange, IDiffRemoveRange, IDiffPatch,
+} from './diffentries';
+
+import {
+  DiffRangeRaw, DiffRangePos, raw2Pos
+} from './range';
+
+import {
+  getDiffKey
+} from './util';
+
+import {
+  Chunk, LineChunker
+} from '../chunking';
 
 import {
   patchStringified, stringify, patch
-} from './patch';
+} from '../patch';
 
-import * as CodeMirror from 'codemirror';
-
-// CHUNKING
-
-/**
- * A chunk is a range of lines in a string based diff
- * that logically belong together.
- *
- * Chunks can be used for:
- *  - Correlating diff entries in the base and remote, e.g.
- *    for aligning lines in two editors.
- *  - Finding parts of the unchanged text that are not needed
- *    as context (can be hidden)
- *  - Navigating a diff ("Go to next diff")
- */
-export class Chunk {
-  constructor(
-    public editFrom: number,
-    public editTo: number,
-    public origFrom: number,
-    public origTo: number) {}
-
-  /**
-   * Checks whether the given line number is within the range spanned by editFrom - editTo
-   */
-  inEdit(line: number) {
-    return line >= this.editFrom && line <= this.editTo;
-  }
-
-  /**
-   * Checks whether the given line number is within the range spanned by origFrom - origTo
-   */
-  inOrig(line: number) {
-    return line >= this.origFrom && line <= this.origTo;
-  }
-};
 
 
 // DIFF MODELS:
@@ -99,7 +74,7 @@ export interface IDiffModel extends ICollapsibleModel {
 
 
 /**
- * Interface for a string diff models.
+ * Interface for a string diff model.
  *
  * String diff models are used for any content where the final
  * diff should be presented as a difference between strings
@@ -138,11 +113,15 @@ export interface IStringDiffModel extends IDiffModel {
    */
   deletions: DiffRangePos[];
 
-
   /**
    * A function that will separate the diff into chunks.
    */
-  getChunks(): Chunk[];
+  getLineChunks(): Chunk[];
+
+  /**
+   * Create an iterator for iterating over the diffs in order
+   */
+  iterateDiffs(): StringDiffModel.DiffIter;
 }
 
 
@@ -162,7 +141,7 @@ export class StringDiffModel implements IStringDiffModel {
    */
   constructor(
         public base: string,
-        public remote:string,
+        public remote: string,
         additions: DiffRangeRaw[],
         deletions: DiffRangeRaw[],
         collapsible?: boolean,
@@ -188,109 +167,24 @@ export class StringDiffModel implements IStringDiffModel {
     }
   }
 
+  iterateDiffs(): StringDiffModel.DiffIter  {
+    return new StringDiffModel.DiffIter(this);
+  }
+
   /**
-   * Uses Chunk.inOrig/inEdit to determine diff entry overlap.
+   * Chunk additions/deletions into line-based chunks
    */
-  getChunks(): Chunk[] {
-    var chunks: Chunk[] = [];
-    var startEdit = 0, startOrig = 0, editOffset = 0;
-    var edit = CodeMirror.Pos(0, 0), orig = CodeMirror.Pos(0, 0);
-    let ia = 0, id = 0;
-
-    let current: Chunk = null;
-    let isAddition: boolean = null;
-    let range: DiffRangePos = null;
-    for (;;) {
-      // Figure out which element to take next
-      if (ia < this.additions.length) {
-        if (id < this.deletions.length) {
-          let ra = this.additions[ia], rd = this.deletions[id];
-          if (ra.from.line < rd.from.line - editOffset ||
-                (ra.from.line == rd.from.line - editOffset &&
-                 ra.from.ch <= rd.from.ch)) {
-            // TODO: Character editOffset should also be used
-            isAddition = true;
-          } else {
-            isAddition = false;
-          }
-        } else {
-          // No more deletions
-          isAddition = true;
-        }
-      } else if (id < this.deletions.length) {
-        // No more additions
-        isAddition = false;
-      } else {
-        if (current) { chunks.push(current); }
-        break;
-      }
-
-      if (isAddition) {
-        range = this.additions[ia++];
-      } else {
-        range = this.deletions[id++];
-      }
-      let linediff = range.to.line - range.from.line;
-      if (range.endsOnNewline) {
-        linediff += 1;
-      }
-      let firstLineNew = range.from.ch === 0 && linediff > 0;
-
-      let startOffset = range.chunkStartLine ? 0 : 1;
-      let endOffset =
-        range.chunkStartLine && range.endsOnNewline && firstLineNew ?
-        0 : 1;
-
-      if (current) {
-        if (isAddition) {
-          if (current.inOrig(range.from.line)) {
-            current.origTo = Math.max(current.origTo,
-                                      range.to.line + 1);
-          } else {
-            // No overlap with chunk, start new one
-            chunks.push(current);
-            current = null;
-          }
-        } else {
-          if (current.inEdit(range.from.line)) {
-            current.editTo = Math.max(current.editTo,
-                                      range.to.line + 1);
-          } else {
-            // No overlap with chunk, start new one
-            chunks.push(current);
-            current = null;
-          }
-        }
-      }
-      if (!current) {
-        if (isAddition) {
-          startOrig = range.from.line;
-          startEdit = startOrig + editOffset;
-          current = new Chunk(
-            startEdit + startOffset,
-            startEdit + endOffset,
-            startOrig + startOffset,
-            startOrig + endOffset + linediff
-          );
-        } else {
-          startEdit = range.from.line;
-          startOrig = startEdit - editOffset;
-          current = new Chunk(
-            startEdit + startOffset,
-            startEdit + endOffset + linediff,
-            startOrig + startOffset,
-            startOrig + endOffset
-          );
-        }
-      }
-      editOffset += isAddition ? -linediff : linediff;
+  getLineChunks(): Chunk[] {
+    let chunker = new LineChunker();
+    let i = this.iterateDiffs();
+    for (let v = i.next(); v !== null; v = i.next()) {
+      chunker.addDiff(v.range, v.isAddition);
     }
-    return chunks;
+    return chunker.chunks;
   }
 
   get unchanged(): boolean {
-    return this.base == this.remote;
-    //return !this.additions && !this.deletions;
+    return this.base === this.remote;
   }
 
   get added(): boolean {
@@ -312,6 +206,153 @@ export class StringDiffModel implements IStringDiffModel {
 }
 
 
+export
+namespace StringDiffModel {
+  export
+  type DiffIterValue = {range: DiffRangePos, isAddition: boolean};
+
+  export
+  interface IIterator<T> {
+    next(): T;
+    done: boolean;
+  }
+
+  export
+  class DiffIter implements IIterator<DiffIterValue> {
+    constructor(model: IStringDiffModel) {
+      this.model = model;
+    }
+
+    next(): DiffIterValue {
+      // Figure out which element to take next
+      let isAddition: boolean = null;
+      let range: DiffRangePos = null;
+      let additions = this.model.additions;
+      let deletions = this.model.deletions;
+      if (this.ia < this.model.additions.length) {
+        if (this.id < deletions.length) {
+          let ra = additions[this.ia];
+          let rd = deletions[this.id];
+          if (ra.from.line < rd.from.line - this.editOffset ||
+                (ra.from.line === rd.from.line - this.editOffset &&
+                  ra.from.ch <= rd.from.ch)) {
+            // TODO: Character editOffset should also be used
+            isAddition = true;
+          } else {
+            isAddition = false;
+          }
+        } else {
+          // No more deletions
+          isAddition = true;
+        }
+      } else if (this.id < deletions.length) {
+        // No more additions
+        isAddition = false;
+      } else {
+        // Out of ranges!
+        this.done = true;
+        return null;
+      }
+
+      if (isAddition) {
+        range = additions[this.ia++];
+      } else {
+        range = deletions[this.id++];
+      }
+      let linediff = range.to.line - range.from.line;
+      if (range.endsOnNewline) {
+        linediff += 1;
+      }
+      this.editOffset += isAddition ? -linediff : linediff;
+      return {range: range, isAddition: isAddition};
+    }
+
+    editOffset = 0;
+    done = false;
+
+    protected model: IStringDiffModel;
+    protected ia = 0;
+    protected id = 0;
+  }
+
+  export
+  class SyncedDiffIter implements IIterator<DiffIterValue> {
+    static cmp(a: DiffIterValue, b: DiffIterValue,
+               offsetA: number, offsetB: number) {
+      if (a === null && b === null) {
+        return 0;
+      } else if (a === null) {
+        return 1;
+      } else if (b === null) {
+        return -1;
+      }
+      let lineA = a.range.from.line  + (a.isAddition ? offsetA : 0);
+      let lineB = b.range.from.line  + (b.isAddition ? offsetB : 0);
+      if (lineA < lineB || a.range.from.ch < b.range.from.ch) {
+        return -1;
+      } else if (lineA > lineB || a.range.from.ch > b.range.from.ch) {
+        return 1;
+      } else {
+        return 0;
+      }
+    }
+
+    constructor(models: IStringDiffModel[]) {
+      this.models = models;
+      this.iterators = [];
+      this.values = [];
+      this.offsets = [];
+      // Set up iterator and dummy chunkers for other models
+      for (let m of models) {
+        let it = m.iterateDiffs();
+        this.iterators.push(it);
+        this.offsets.push(0);
+        this.values.push(it.next());
+      }
+    }
+
+    next(): DiffIterValue {
+      // Compare in base index to see which diff is next
+      let i = 0;
+      for (let j = 1; j < this.values.length; ++j) {
+        if (0 > SyncedDiffIter.cmp(this.values[j], this.values[i],
+                                   this.iterators[j].editOffset,
+                                   this.iterators[i].editOffset)) {
+          i = j;
+        }
+      }
+      this.i = i;
+      let ret = this.values[i];
+      // Store the edit offset before taking next value
+      this.currentOffset = this.offsets[i];
+      this.offsets[i] = this.iterators[i].editOffset;
+      // Check if complete
+      if (ret === null) {
+        this.done = true;
+      } else {
+        this.values[i] = this.iterators[i].next();
+      }
+      return ret;
+    }
+
+    currentModel(): IStringDiffModel {
+      return this.models[this.i];
+    }
+
+    currentOffset = 0;
+
+    done = false;
+
+    protected i: number;
+
+    protected models: IStringDiffModel[];
+    protected iterators: DiffIter[];
+    protected values: DiffIterValue[];
+    protected offsets: number[];
+  }
+}
+
+
 /**
  * Creates a StringDiffModel based on a patch operation.
  *
@@ -321,10 +362,11 @@ export class StringDiffModel implements IStringDiffModel {
  */
 export function createPatchDiffModel(base: any, diff: IDiffEntry[]) : StringDiffModel {
   console.assert(!!diff, 'Patch model needs diff.');
-  var base_str = (typeof base == 'string') ? base as string : stringify(base);
+  let baseStr = (typeof base === 'string') ? base as string : stringify(base);
   let out = patchStringified(base, diff);
-  return new StringDiffModel(base_str, out.remote, out.additions, out.deletions);
+  return new StringDiffModel(baseStr, out.remote, out.additions, out.deletions);
 }
+
 
 /**
  * Factory for creating cell diff models for added, removed or unchanged content.
@@ -334,38 +376,38 @@ export function createPatchDiffModel(base: any, diff: IDiffEntry[]) : StringDiff
  * unchanged content.
  */
 export function createDirectDiffModel(base: any, remote: any): StringDiffModel {
-  var base_str = (typeof base == 'string') ?
+  let baseStr = (typeof base === 'string') ?
     base as string : stringify(base);
-  var remote_str = (typeof remote == 'string') ?
+  let remoteStr = (typeof remote === 'string') ?
     remote as string : stringify(remote);
-  var additions: DiffRangeRaw[] = [];
-  var deletions: DiffRangeRaw[] = []
+  let additions: DiffRangeRaw[] = [];
+  let deletions: DiffRangeRaw[] = [];
 
   if (base === null) {
     // Added cell
-    base_str = null;
-    additions.push(new DiffRangeRaw(0, remote_str.length));
+    baseStr = null;
+    additions.push(new DiffRangeRaw(0, remoteStr.length, undefined));
   } else if (remote === null) {
     // Deleted cell
-    remote_str = null;
-    deletions.push(new DiffRangeRaw(0, base_str.length));
-  } else if (remote_str !== base_str) {
+    remoteStr = null;
+    deletions.push(new DiffRangeRaw(0, baseStr.length, undefined));
+  } else if (remoteStr !== baseStr) {
     throw 'Invalid arguments to createDirectDiffModel().' +
-      'Either base or remote should be null, or they should be equal!'
+      'Either base or remote should be null, or they should be equal!';
   }
-  return new StringDiffModel(base_str, remote_str, additions, deletions);
+  return new StringDiffModel(baseStr, remoteStr, additions, deletions);
 }
-
 
 
 /**
  * Assign MIME type to an IStringDiffModel based on the cell type.
  *
- * The parameter nbMimetype is the MIME type set for the entire notebook, and is used as the
- * MIME type for code cells.
+ * The parameter nbMimetype is the MIME type set for the entire notebook, and is
+ * used as the MIME type for code cells.
  */
+export
 function setMimetypeFromCellType(model: IStringDiffModel, cell: nbformat.ICell,
-      nbMimetype: string) {
+                                 nbMimetype: string) {
   let cellType = cell.cell_type;
   if (cellType === 'code') {
     model.mimetype = nbMimetype;
@@ -386,12 +428,13 @@ function setMimetypeFromCellType(model: IStringDiffModel, cell: nbformat.ICell,
  */
 export class OutputDiffModel implements IDiffModel {
   constructor(
-        public base: nbformat.IOutput,
+        base: nbformat.IOutput,
         remote: nbformat.IOutput,
         diff?: IDiffEntry[],
         collapsible?: boolean,
         header?: string,
         collapsed?: boolean) {
+    this.base = base;
     if (!remote && diff) {
       this.remote = patch(base, diff) as nbformat.IOutput;
     } else {
@@ -427,7 +470,7 @@ export class OutputDiffModel implements IDiffModel {
   hasMimeType(mimetype: string): string {
     let t = this.base ? this.base.output_type : this.remote.output_type;
     if (t === 'stream' &&
-          mimetype == 'application/vnd.jupyter.console-text') {
+          mimetype === 'application/vnd.jupyter.console-text') {
       return 'text';
     } else if (t === 'execute_result' || t === 'display_data') {
       let data = this.base ? (this.base as nbformat.IExecuteResult).data :
@@ -466,16 +509,18 @@ export class OutputDiffModel implements IDiffModel {
    */
   stringify(key?: string) : IStringDiffModel {
     let getMemberByPath = function(obj: any, key: string, f?: (obj: any, key: string) => any) {
-      if (!obj) return obj;
+      if (!obj) {
+        return obj;
+      }
       let i = key.indexOf('.');
       if (i >= 0) {
         console.assert(i < key.length);
         if (f) {
           return getMemberByPath(
-            f(obj, key.slice(0, i)), key.slice(i+1), f);
+            f(obj, key.slice(0, i)), key.slice(i + 1), f);
         }
         return getMemberByPath(
-          obj[key.slice(0, i)], key.slice(i+1), f);
+          obj[key.slice(0, i)], key.slice(i + 1), f);
       } else if (f) {
         return f(obj, key);
       }
@@ -483,8 +528,8 @@ export class OutputDiffModel implements IDiffModel {
     };
     let base = key ? getMemberByPath(this.base, key) : this.base;
     let remote = key ? getMemberByPath(this.remote, key) : this.remote;
-    let diff = this.diff && key ?
-      getMemberByPath(this.diff, key, getDiffKey) :
+    let diff = (this.diff && key) ?
+      getMemberByPath(this.diff, key, getDiffKey) as IDiffEntry[] :
       this.diff;
     let model: IStringDiffModel = null;
     if (this.unchanged || this.added || this.deleted || !diff) {
@@ -498,6 +543,11 @@ export class OutputDiffModel implements IDiffModel {
     model.startCollapsed = this.startCollapsed;
     return model;
   }
+
+  /**
+   * Base value
+   */
+  base: nbformat.IOutput;
 
   /**
    * Remote value
@@ -522,8 +572,8 @@ export class OutputDiffModel implements IDiffModel {
  * Diff model for individual Notebook Cells
  */
 export class CellDiffModel {
-  constructor(source: IDiffModel, metadata: IDiffModel,
-        outputs: IDiffModel[], cellType: string) {
+  constructor(source: IStringDiffModel, metadata: IStringDiffModel,
+              outputs: OutputDiffModel[], cellType: string) {
     this.source = source;
     this.metadata = metadata;
     this.outputs = outputs;
@@ -538,17 +588,17 @@ export class CellDiffModel {
   /**
    * Diff model for the source field.
    */
-  source: IDiffModel;
+  source: IStringDiffModel;
 
   /**
    * Diff model for the metadata field. Can be null.
    */
-  metadata: IDiffModel;
+  metadata: IStringDiffModel;
 
   /**
    * Diff model for the outputs field. Can be null.
    */
-  outputs: IDiffModel[];
+  outputs: OutputDiffModel[];
 
   /**
    * The type of the notebook cell
@@ -586,11 +636,11 @@ export class CellDiffModel {
   }
 }
 
-export function createPatchedCellDiffModel(base: nbformat.ICell, diff: IDiffEntry[],
-      nbMimetype: string): CellDiffModel {
-  let source: IDiffModel = null;
-  let metadata: IDiffModel = null;
-  let outputs: IDiffModel[] = null;
+export function createPatchedCellDiffModel(
+    base: nbformat.ICell, diff: IDiffEntry[], nbMimetype: string): CellDiffModel {
+  let source: StringDiffModel = null;
+  let metadata: StringDiffModel = null;
+  let outputs: OutputDiffModel[] = null;
 
   let subDiff = getDiffKey(diff, 'source');
   if (subDiff) {
@@ -598,13 +648,13 @@ export function createPatchedCellDiffModel(base: nbformat.ICell, diff: IDiffEntr
   } else {
     source = createDirectDiffModel(base.source, base.source);
   }
-  setMimetypeFromCellType(source as IStringDiffModel, base, nbMimetype);
+  setMimetypeFromCellType(source, base, nbMimetype);
 
   subDiff = getDiffKey(diff, 'metadata');
   if (base.metadata !== undefined) {
     metadata = subDiff ?
       createPatchDiffModel(base.metadata, subDiff) :
-      createDirectDiffModel(base.metadata, base.metadata)
+      createDirectDiffModel(base.metadata, base.metadata);
   }
 
   if (base.cell_type === 'code' && (base as nbformat.ICodeCell).outputs) {
@@ -614,13 +664,13 @@ export function createPatchedCellDiffModel(base: nbformat.ICell, diff: IDiffEntr
   return new CellDiffModel(source, metadata, outputs, base.cell_type);
 }
 
-export function createUnchangedCellDiffModel(base: nbformat.ICell,
-        nbMimetype: string): CellDiffModel {
-  let metadata: IDiffModel = null;
-  let outputs: IDiffModel[] = null;
+export function createUnchangedCellDiffModel(
+      base: nbformat.ICell, nbMimetype: string): CellDiffModel {
+  let metadata: StringDiffModel = null;
+  let outputs: OutputDiffModel[] = null;
 
   let source = createDirectDiffModel(base.source, base.source);
-  setMimetypeFromCellType(source as IStringDiffModel, base, nbMimetype);
+  setMimetypeFromCellType(source, base, nbMimetype);
   if (base.metadata !== undefined) {
     metadata = createDirectDiffModel(base.metadata, base.metadata);
   }
@@ -631,13 +681,13 @@ export function createUnchangedCellDiffModel(base: nbformat.ICell,
   return new CellDiffModel(source, metadata, outputs, base.cell_type);
 }
 
-export function createAddedCellDiffModel(remote: nbformat.ICell,
-      nbMimetype: string): CellDiffModel {
-  let metadata: IDiffModel = null;
-  let outputs: IDiffModel[] = null;
+export function createAddedCellDiffModel(
+      remote: nbformat.ICell, nbMimetype: string): CellDiffModel {
+  let metadata: StringDiffModel = null;
+  let outputs: OutputDiffModel[] = null;
 
   let source = createDirectDiffModel(null, remote.source);
-  setMimetypeFromCellType(source as IStringDiffModel, remote, nbMimetype);
+  setMimetypeFromCellType(source, remote, nbMimetype);
   if (remote.metadata !== undefined) {
     metadata = createDirectDiffModel(null, remote.metadata);
   }
@@ -648,14 +698,14 @@ export function createAddedCellDiffModel(remote: nbformat.ICell,
   return new CellDiffModel(source, metadata, outputs, remote.cell_type);
 }
 
-export function createDeletedCellDiffModel(base: nbformat.ICell,
-      nbMimetype: string): CellDiffModel {
-  let source: IDiffModel = null;
-  let metadata: IDiffModel = null;
-  let outputs: IDiffModel[] = null;
+export function createDeletedCellDiffModel(
+      base: nbformat.ICell, nbMimetype: string): CellDiffModel {
+  let source: StringDiffModel = null;
+  let metadata: StringDiffModel = null;
+  let outputs: OutputDiffModel[] = null;
 
   source = createDirectDiffModel(base.source, null);
-  setMimetypeFromCellType(source as IStringDiffModel, base, nbMimetype);
+  setMimetypeFromCellType(source, base, nbMimetype);
   if (base.metadata !== undefined) {
     metadata = createDirectDiffModel(base.metadata, null);
   }
@@ -666,9 +716,10 @@ export function createDeletedCellDiffModel(base: nbformat.ICell,
 }
 
 
+export
 function makeOutputModels(base: nbformat.IOutput[], remote: nbformat.IOutput[],
-      diff?: IDiffEntry[]) : IDiffModel[] {
-  let models: IDiffModel[] = [];
+                          diff?: IDiffEntry[]) : OutputDiffModel[] {
+  let models: OutputDiffModel[] = [];
   if (remote === null && !diff) {
     // Cell deleted
     for (let o of base) {
@@ -764,36 +815,34 @@ export class NotebookDiffModel {
 
     // Build cell diff models. Follows similar logic to patching code:
     this.cells = [];
-    var take = 0;
-    var skip = 0;
-    for (var e of getDiffKey(diff, 'cells')) {
-      var op = e.op;
-      var index = e.key as number;
+    let take = 0;
+    let skip = 0;
+    for (let e of getDiffKey(diff, 'cells') || []) {
+      let op = e.op;
+      let index = e.key as number;
 
       // diff is sorted on index, so take any preceding cells as unchanged:
-      for (var i=take; i < index; i++) {
+      for (let i=take; i < index; i++) {
         this.cells.push(createUnchangedCellDiffModel(
           base.cells[i], this.mimetype));
       }
 
       // Process according to diff type:
-      if (op == DiffOp.SEQINSERT) {
+      if (op === DiffOp.SEQINSERT) {
         // One or more inserted/added cells:
-        for (var e_i of (e as IDiffAddRange).valuelist) {
+        for (let ei of (e as IDiffAddRange).valuelist) {
           this.cells.push(createAddedCellDiffModel(
-            e_i as nbformat.ICell, this.mimetype));
+            ei as nbformat.ICell, this.mimetype));
         }
         skip = 0;
-      }
-      else if (op == DiffOp.SEQDELETE) {
+      } else if (op === DiffOp.SEQDELETE) {
         // One or more removed/deleted cells:
         skip = (e as IDiffRemoveRange).length;
-        for (var i=index; i < index + skip; i++) {
+        for (let i=index; i < index + skip; i++) {
           this.cells.push(createDeletedCellDiffModel(
             base.cells[i], this.mimetype));
         }
-      }
-      else if (op == DiffOp.PATCH) {
+      } else if (op === DiffOp.PATCH) {
         // A cell has changed:
         this.cells.push(createPatchedCellDiffModel(
           base.cells[index], (e as IDiffPatch).diff, this.mimetype));
@@ -806,7 +855,7 @@ export class NotebookDiffModel {
       take = Math.max(take, index + skip);
     }
     // Take unchanged values at end
-    for (var i=take; i < base.cells.length; i++) {
+    for (let i=take; i < base.cells.length; i++) {
       this.cells.push(createUnchangedCellDiffModel(
         base.cells[i], this.mimetype));
     }
@@ -815,7 +864,7 @@ export class NotebookDiffModel {
   /**
    * Diff model of the notebook's root metadata field
    */
-  metadata: IDiffModel;
+  metadata: IStringDiffModel;
 
   /**
    * The default MIME type according to the notebook's root metadata

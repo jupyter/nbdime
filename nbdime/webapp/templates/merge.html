@@ -14,17 +14,19 @@
 
   <body> <!-- onload="nbdime.init()" -->
     <div id="nbdime-header">
-      <h3>Notebook Diff</h3>
+      <h3>Notebook Merge</h3>
       Enter notebook filenames in one of the forms below to get started.
 
-      <form id="nbdime-diff-form" class="nbdime-forms">
+      <form id="nbdime-merge-form" class="nbdime-forms">
         <fieldset>
           <legend>Please input filenames of notebooks to diff:</legend>
           Base:
-          <input id="diff-base" type="text" name="base" value="{{ base }}">
+          <input id="merge-base" type="text" name="base" value="{{ base }}">
+          Local:
+          <input id="merge-local" type="text" name="local" value="{{ local }}">
           Remote:
-          <input id="diff-remote" type="text" name="remote" value="{{ remote }}">
-          <input id="nbdime-run-diff" type="submit" name="diff" value="Diff files"></button>
+          <input id="merge-remote" type="text" name="remote" value="{{ remote }}">
+          <input id="nbdime-run-merge" type="submit" name="merge" value="Merge files"></button>
         </fieldset>
       </form> <!-- nbdime-forms -->
     </div> <!-- ndime-header -->
@@ -32,7 +34,7 @@
     <div id="nbdime-root">
     </div>
     <script id='jupyter-config-data' type="application/json">{ "baseUrl": "{{ static_url }}" }</script>
-    <script id='nbdime-config-data' type="application/json">{ "base": "{{ base }}", "remote": "{{remote}}"}</script>
+    <script id='nbdime-config-data' type="application/json">{ "base": "{{ base }}", "local": "{{local}}", "remote": "{{remote}}"}</script>
     <script src="{{ static_url('build/nbdime.js') }}"></script>
     <noscript>Nbdime relies on javascript for diff/merge views!</noscript>
   </body>
