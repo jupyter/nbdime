@@ -11,10 +11,11 @@ htmlcov
 
 .spyderproject
 **/.vscode/
-nbdime/webapp/node_modules/
+**/node_modules/
 nbdime/webapp/test/build/
 nbdime/webapp/build/
 nbdime-web/lib/
+nbdime-web/coverage/
 nbdime-web/test/build/
 
 nbdime/webapp/static/build/
