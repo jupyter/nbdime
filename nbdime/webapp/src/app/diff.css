@@ -1,136 +1,9 @@
 
-body {
-  --jp-layout-color3: white;
-  overflow: scroll !important;
-}
+
 
 .jp-Notebook-diff {
   width: 90%;
   margin: auto;
-}
-
-
-/* Alternative for showing single cell when cells are equal */
-.jp-Diff-unchanged {
-  margin-left: 10%;
-  width: 80%;
-}
-
-.jp-Diff-unchanged .jp-Output *:first-child {
-  margin-left: auto;
-}
-
-.jp-Diff-unchanged .jp-Output *:last-child {
-  margin-right: auto;
-}
-
-.jp-Diff-unchanged .jp-Diff-unchanged {
-  margin-left: 0;
-  width: 100%;
-}
-
-.jp-Metadata-diff {
-  margin-bottom: 20px;
-  border: solid black thin;
-}
-
-.jp-Cell-diff {
-  margin-bottom: 20px;
-  border-top: solid #ccc 1px;
-}
-
-.jp-Diff-added > div:first-child {
-  float: left;
-  width: 25%;
-}
-
-.jp-Diff-deleted > div:first-child {
-  float: right;
-  width: 25%;
-}
-
-.jp-Diff-added .jp-Cellrow-metadata {
-  display: none;
-}
-
-.jp-Diff-deleted .jp-Cellrow-metadata {
-  display: none;
-}
-
-.jp-Diff-unchanged .jp-Cellrow-outputs {
-  display: none;
-}
-
-/*
-.jp-Diff-added .jp-Cellrow-outputs {
-  display: none;
-}
-
-.jp-Diff-deleted .jp-Cellrow-outputs {
-  display: none;
-}
-*/
-
-.jp-Diff-added .jp-Diff-unchanged {
-  margin-left: 25%;
-  width: 75%;
-}
-
-.jp-Diff-deleted .jp-Diff-unchanged {
-  margin-left: 0;
-  width: 75%;
-}
-
-.jp-Diff-unchanged .jp-Output-result > * {
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.jp-Cellrow-outputs .jp-Diff-twoway .jp-Diff-base {
-  float: left;
-  width: 47%;
-}
-
-.jp-Cellrow-outputs .jp-Diff-twoway .jp-Diff-remote {
-  float: right;
-  width: 47%;
-}
-
-.jp-Notebook-diff .jp-Output-result img {
-  max-width: 100%;
-}
-
-.jp-Notebook-diff .CodeMirror-merge-pane-remote {
-  position: relative;
-  left: 6%;
-}
-
-.CodeMirror-merge-pane-deleted, .CodeMirror-merge-pane-added { width: 75%; }
-
-.jp-Notebook-diff .CodeMirror-merge-r-chunk { background-color: #ffecec; }
-.jp-Notebook-diff .CodeMirror-merge-r-chunk-start { border-top: 1px solid #f8cbcb; }
-.jp-Notebook-diff .CodeMirror-merge-r-chunk-end { border-bottom: 1px solid #f8cbcb; }
-.jp-Notebook-diff .CodeMirror-merge-r-connect { fill: #ffffe0; stroke: #f8cbcb; stroke-width: 1px; }
-.jp-Notebook-diff .CodeMirror-merge-spacer { background-color: #ffecec; }
-
-.jp-Notebook-diff .CodeMirror-merge-pane-remote .CodeMirror-merge-r-chunk { background-color: #dbffdb; }
-.jp-Notebook-diff .CodeMirror-merge-pane-remote .CodeMirror-merge-r-chunk-start { border-top: 1px solid #a6f3a6; }
-.jp-Notebook-diff .CodeMirror-merge-pane-remote .CodeMirror-merge-r-chunk-end { border-bottom: 1px solid #a6f3a6; }
-.jp-Notebook-diff .CodeMirror-merge-pane-remote .CodeMirror-merge-r-connect { fill: #ffffe0; stroke: #a6f3a6; stroke-width: 1px; }
-.jp-Notebook-diff .CodeMirror-merge-pane-remote .CodeMirror-merge-spacer { background-color: #dbffdb; }
-
-
-.jp-Diff-deleted .CodeMirror {
-  background-color: #ffecec;
-}
-
-.jp-Diff-added .CodeMirror {
-  background-color: #dbffdb;
-}
-
-.jp-Diff-added .CodeMirror-merge-pane-added {
-  width: 100%;
 }
 
 #nbdime-header {
@@ -159,3 +32,4 @@ body {
 #nbdime-header-banner {
   margin-top: 10px;
 }
+

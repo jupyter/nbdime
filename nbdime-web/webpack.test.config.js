@@ -1,12 +1,17 @@
+var path = require('path');
+
 module.exports = {
-  entry: './src/index.ts',
+  context: __dirname,
+  entry: './test/src/index.ts',
   output: {
-    path: __dirname + "/static/build",
-    filename: "nbdime.js",
-    publicPath: "./static/"
+    path: __dirname + "/test/build",
+    filename: "test.js",
+    devtoolModuleFilenameTemplate: __dirname.replace('\\', '/') + '/[resource-path]'
   },
+  bail: true,
   debug: true,
-  devtool: 'source-map',
+  verbose: true,
+  devtool: 'inline-source-map',
   module: {
     loaders: [
       { test: /\.css$/, loader: 'style-loader!css-loader' },
@@ -21,15 +26,12 @@ module.exports = {
       { test: /\.ttf(\?v=\d+\.\d+\.\d+)?$/, loader: 'url-loader?limit=10000&mimetype=application/octet-stream' },
       { test: /\.eot(\?v=\d+\.\d+\.\d+)?$/, loader: 'file-loader' },
       { test: /\.svg(\?v=\d+\.\d+\.\d+)?$/, loader: 'url-loader?limit=10000&mimetype=image/svg+xml' }
-    ],
-    preLoaders: [
-      // All output '.js' files will have any sourcemaps re-processed by 'source-map-loader'.
-      { test: /\.js$/, loader: "source-map-loader" }
     ]
+
   },
   resolve: {
     // Add '.ts' and '.tsx' as resolvable extensions.
-    extensions: ["", ".webpack.js", ".web.js", ".ts", ".js"]
+    extensions: ['', '.ts', '.js'],
+    modulesDirectories: ['node_modules']
   }
-
 }

@@ -1,9 +1,11 @@
 {
   "compilerOptions": {
-    "target": "ES5",
+    "declaration": true,
+    "target": "es5",
     "module": "commonjs",
     "moduleResolution": "node",
-    "outDir": "../build",
+    "sourceMap": true,
+    "outDir": "../lib",
     "noImplicitAny": false,
     "noEmitOnError": true
   }

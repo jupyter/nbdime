@@ -2,28 +2,10 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import './cm-merge.css';
-
-
-/**
- * Make a POST request passing a JSON argument and receiving a JSON result.
- */
-export function requestJson(url: string, argument: any, callback: any, onError: any) {
-  let xhttp = new XMLHttpRequest();
-  xhttp.onreadystatechange = function() {
-    if (xhttp.readyState === 4) {
-      if (xhttp.status === 200) {
-        let result = JSON.parse(xhttp.responseText);
-        callback(result);
-      } else {
-        onError(xhttp.responseText);
-      }
-    }
-  };
-  xhttp.open('POST', url, true);
-  xhttp.setRequestHeader('Content-type', 'application/json');
-  xhttp.send(JSON.stringify(argument));
-}
+import 'codemirror/lib/codemirror.css';
+import 'jupyterlab/lib/codemirror/index.css';
+import 'nbdime/lib/styles/common.css';
+import './common.css';
 
 /**
  * Global config data for the Nbdime application.

@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "target": "ES5",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "outDir": "../build",
+    "noImplicitAny": false,
+    "noEmitOnError": true,
+    "inlineSourceMap": true
+  }
+}
