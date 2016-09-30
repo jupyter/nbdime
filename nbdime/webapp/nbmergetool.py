@@ -5,11 +5,14 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from argparse import ArgumentParser
+import nbformat
 import os.path
 import webbrowser
 import logging
 import threading
 
+from ..args import (add_generic_args, add_diff_args,
+    add_merge_args, add_web_args)
 from .nbdimeserver import main as run_server
 
 
@@ -27,13 +30,10 @@ def build_arg_parser():
     """
     description = 'mergetool for Nbdime.'
     parser = ArgumentParser(description=description)
-    parser.add_argument('-p', '--port', default=8898,
-                        help="Specify the port you want the server "
-                             "to run on. Default is 8898.")
-    parser.add_argument("local", help="The local file of the merge.")
-    parser.add_argument("remote", help="The remote file of the merge.")
-    parser.add_argument("base", help="The base file of the merge.")
-    parser.add_argument("merged", help="The output file of the merge.")
+    add_generic_args(parser)
+    add_diff_args(parser)
+    add_merge_args(parser)
+    add_web_args(parser, 8898)
     return parser
 
 
@@ -58,12 +58,6 @@ def main():
     local = arguments.local
     remote = arguments.remote
     merged = arguments.merged
-    # can't handle non-notebook files
-    # FIXME: ignore for now
-    if (not base.endswith('.ipynb') and not local.endswith('.ipynb') and
-            not remote.endswith('.ipynb')):
-        print("Not notebooks: %r %r" % (local, remote))
-        return
     browse(port)
     run_server(port=port, cwd=cwd,
                mergetool_args=dict(base=base, local=local, remote=remote),

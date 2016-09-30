@@ -60,19 +60,6 @@ def disable(global_=False):
         check_call(cmd + ['merge.tool', previous])
 
 
-def show_merge(base, local, remote, merged):
-    """Run the mergetool
-
-    If we are merging a notebook, show the merge via nbmerge.
-    Otherwise, exit with error code.
-    """
-    # TODO: handle /dev/null (Windows equivalent?) for new or deleted files
-    if any(not f.endswith('.ipynb') for f in [base, local, remote, merged]):
-        return nbmergeapp.main([base, local, remote, merged])
-    else:
-        sys.exit(1)
-
-
 def main():
     import argparse
     parser = argparse.ArgumentParser('git-nbmergetool', description=__doc__,
@@ -104,7 +91,7 @@ def main():
     )
     opts = parser.parse_args()
     if opts.subcommand == 'merge':
-        show_merge(opts.base, opts.local, opts.remote, opts.merged)
+        nbmergeapp.main([opts.base, opts.local, opts.remote, opts.merged])
     elif opts.subcommand == 'config':
         opts.config_func(opts.global_)
     else:

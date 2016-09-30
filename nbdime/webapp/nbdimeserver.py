@@ -13,7 +13,9 @@ from tornado import ioloop, web, escape
 import nbformat
 import nbdime
 from nbdime.merging.notebooks import decide_notebook_merge
-from nbdime.nbmergeapp import _build_arg_parser
+from nbdime.nbmergeapp import _build_arg_parser as build_merge_parser
+
+from nbdime.args import add_generic_args, add_web_args
 
 
 # TODO: See <notebook>/notebook/services/contents/handlers.py for possibly useful utilities:
@@ -27,8 +29,8 @@ here = os.path.abspath(os.path.dirname(__file__))
 static_path = os.path.join(here, "static")
 template_path = os.path.join(here, "templates")
 
-builder = _build_arg_parser()
-merge_args = builder.parse_args(["--strategy", "mergetool", "", "", ""])
+merge_args = build_merge_parser().parse_args(
+    ["--merge-strategy", "mergetool", "", "", ""])
 
 exit_code = 0
 
@@ -243,20 +245,18 @@ def main(**params):
     sys.exit(exit_code)
 
 
-def build_arg_parser():
+def _build_arg_parser():
     """
     Creates an argument parser that lets the user specify a port
     and displays a help message.
     """
     description = 'Web interface for Nbdime.'
     parser = ArgumentParser(description=description)
-    parser.add_argument('-p', '--port', default=8899,
-                        help="Specify the port you want the server "
-                             "to run on. Default is 8888.")
+    add_generic_args(parser)
+    add_web_args(parser)
     return parser
 
 
 if __name__ == "__main__":
-    arguments = build_arg_parser().parse_args()
-    cwd = os.path.abspath(os.path.curdir)
-    main(port=arguments.port, cwd=cwd, outputfilename="")
+    arguments = _build_arg_parser().parse_args()
+    main(port=arguments.port, cwd=arguments.workdirectory)
