@@ -19,8 +19,6 @@ some issues to discuss.
 
 Other tasks (will make issues of these):
 
-  - Pretty-printing of diff for commandline output.
-
   - Plugin framework for mime type specific diffing.
 
   - Diffing of common output types (png, svg, etc.)

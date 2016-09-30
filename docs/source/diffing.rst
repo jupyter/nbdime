@@ -2,12 +2,6 @@
 diff format
 ===========
 
-.. note::
-
-   The diff format is experimental. If you have comments on the proposed
-   format, please raise them ASAP while the project is in its early
-   stages.
-
 Basics
 ------
 
@@ -28,7 +22,8 @@ The diff objects in nbdime are:
    - lists of values with heterogeneous datatypes (strings, ints, floats).
 
 The difference between these input objects is represented by a
-json-compatible results object.
+json-compatible results object. A JSON schema for validating diff
+entries are available in :doc:`../nbdime/diff_format.schema.json`.
 
 Diff format for mappings
 ------------------------
