@@ -41,7 +41,7 @@
         },
 
         "common_path": {
-          "description": "A common path of local_diff and remote_diff. Optional, as both can alternaitvely just contain single patch entries down to this path, but should help with opimization",
+          "description": "A common path of local_diff and remote_diff. Optional, as both can alternatively just contain single patch entries down to this path, but should help with opimization",
           "type": "array",
           "items": { "type": ["integer", "string"] }
         }
@@ -93,7 +93,7 @@
       "type": "object",
 
       "properties": {
-        "op": { "enum": ["remove"]},
+        "op": { "enum": ["replace"]},
         "key": {
           "type": ["integer", "string"]
         },
@@ -106,9 +106,9 @@
       "type": "object",
 
       "properties": {
-        "op": { "enum": ["remove"]},
+        "op": { "enum": ["addrange"]},
         "key": {
-          "type": ["integer", "string"]
+          "type": "integer"
         },
         "valuelist": {
           "type": "array"
@@ -121,9 +121,9 @@
       "type": "object",
 
       "properties": {
-        "op": { "enum": ["remove"]},
+        "op": { "enum": ["removerange"]},
         "key": {
-          "type": ["integer", "string"]
+          "type": "integer"
         },
         "length": {
           "type": "integer"
@@ -136,7 +136,7 @@
       "type": "object",
 
       "properties": {
-        "op": { "enum": ["remove"]},
+        "op": { "enum": ["patch"]},
         "key": {
           "type": ["integer", "string"]
         },
