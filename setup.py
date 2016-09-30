@@ -170,6 +170,11 @@ extras_require = setuptools_args['extras_require'] = {
         'pytest',
         'mock',
     ],
+    'docs': [
+        'sphinx',
+        'recommonmark',
+        'sphinx_rtd_theme'
+    ],
 
     ':python_version == "2.7"': [
         'backports.shutil_which',
