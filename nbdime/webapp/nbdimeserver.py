@@ -199,7 +199,7 @@ class ApiCloseHandler(NbdimeApiHandler):
 class NbdimeApp(web.Application):
     @property
     def connection_url(self):
-        ip = self.ip if self.ip else 'localhost'
+        ip = self.ip if self.ip else '127.0.0.1'
         return self._url(ip)
 
     def _url(self, ip):

@@ -5,7 +5,6 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from argparse import ArgumentParser
-import nbformat
 import os.path
 import webbrowser
 import logging
@@ -19,7 +18,6 @@ from .nbdimeserver import main as run_server
 _logger = logging.getLogger(__name__)
 
 
-# TODO: Tool server starts on random port (in optionally specified port range)
 # TODO: Tool server is passed a (mandatory?) single-use access token, which is
 #       used to authenticate the browser session.
 
@@ -33,7 +31,12 @@ def build_arg_parser():
     add_generic_args(parser)
     add_diff_args(parser)
     add_merge_args(parser)
-    add_web_args(parser, 8898)
+    add_web_args(parser, 0)
+    parser.add_argument(
+        '-o', '--output',
+        default=None,
+        help="if supplied, the merged notebook is written "
+             "to this file. Otherwise it cannot be saved.")
     return parser
 
 
@@ -46,14 +49,14 @@ def browse(port):
 
     if browser:
         def launch_browser():
-            browser.open("http://localhost:%s/mergetool" % port, new=2)
+            browser.open("http://127.0.0.1:%s/mergetool" % port, new=2)
         threading.Thread(target=launch_browser).start()
 
 
 def main():
     arguments = build_arg_parser().parse_args()
     port = arguments.port
-    cwd = os.path.abspath(os.path.curdir)
+    cwd = arguments.workdirectory
     base = arguments.base
     local = arguments.local
     remote = arguments.remote

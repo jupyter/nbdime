@@ -3,6 +3,8 @@
 # Copyright (c) IPython Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+import os
+
 from ._version import __version__
 
 
@@ -30,12 +32,16 @@ def add_generic_args(parser):
 def add_web_args(parser, default_port=8888):
     """Adds a set of arguments common to all commands that show a web gui.
     """
+    port_help = ("specify the port you want the server "
+                "to run on. Default is %d%s." % (
+                    default_port,
+                    " (random)" if default_port == 0 else ""
+    ))
     parser.add_argument(
         '-p', '--port',
         default=default_port,
         type=int,
-        help="specify the port you want the server "
-                "to run on. Default is %d." % default_port)
+        help=port_help)
     cwd = os.path.abspath(os.path.curdir)
     parser.add_argument(
         '-w', '--workdirectory',

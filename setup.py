@@ -186,6 +186,7 @@ if 'setuptools' in sys.modules:
             'nbdiff-web = nbdime.webapp.nbdiffweb:main',
             'nbpatch = nbdime.nbpatchapp:main',
             'nbmerge = nbdime.nbmergeapp:main',
+            'nbmerge-web = nbdime.webappnbmergeapp:main',
             'git-nbdifftool = nbdime.gitdifftool:main',
             'git-nbmergetool = nbdime.gitmergetool:main',
             'git-nbdiffdriver = nbdime.gitdiffdriver:main',
