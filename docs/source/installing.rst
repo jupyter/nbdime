@@ -5,9 +5,11 @@ Installation
 Dependencies
 ------------
 
-  - Python version 2.7.1, 3.3, 3.4, 3.5
+  - Python version 2.7.1, 3.3, 3.4 or 3.5
   - six
   - nbformat
+  - tornado
+  - colorama
 
 Note the requirement 2.7.1, not 2.7.0, this is because
 2.7.1 fixes a bug in :mod:`difflib <py3.difflib>` in an interface-breaking way.

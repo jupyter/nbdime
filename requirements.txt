@@ -1,2 +1,4 @@
 six
 nbformat
+tornado
+colorama
