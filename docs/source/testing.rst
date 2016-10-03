@@ -13,6 +13,7 @@ Dependencies for running python tests:
   - pytest
   - pytest-cov
   - mock
+  - jsonschema
 
 Running tests locally
 ---------------------

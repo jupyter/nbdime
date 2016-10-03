@@ -3,7 +3,7 @@
   "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "Notebook diff format",
   "description": "A list of diff entries that each describe a difference between two Jupyter Notebooks",
-  "type": ["array", "object"],
+  "type": ["array", "object", "null"],
   "items": {"$ref": "#/definitions/diff"},
 
   "definitions": {
@@ -70,7 +70,7 @@
           "type": "integer"
         },
         "valuelist": {
-          "type": "array"
+          "type": ["array", "string"]
         }
       }
     },
@@ -99,7 +99,10 @@
         "key": {
           "type": ["integer", "string"]
         },
-        "diff": { "$ref": "#/definitions/diff" }
+        "diff": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/diff"}
+        }
       }
     }
   }
