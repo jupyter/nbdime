@@ -12,8 +12,8 @@ import logging
 import threading
 from tornado.httputil import url_concat
 
-from ..args import (add_generic_args, add_diff_args,
-    add_merge_args, add_web_args)
+from ..args import add_generic_args, add_diff_args
+from ..args import add_merge_args, add_web_args, add_filename_args
 from .nbdimeserver import main as run_server
 
 
@@ -22,7 +22,7 @@ _logger = logging.getLogger(__name__)
 
 def build_arg_parser():
     """
-    Creates an argument parser for the diff tool, that also lets the
+    Creates an argument parser for the merge tool, that also lets the
     user specify a port and displays a help message.
     """
     description = 'Mergetool for Nbdime.'
@@ -34,11 +34,7 @@ def build_arg_parser():
     add_diff_args(parser)
     add_merge_args(parser)
     add_web_args(parser, 0)
-    parser.add_argument(
-        '-o', '--output',
-        default=None,
-        help="if supplied, the merged notebook is written "
-             "to this file. Otherwise it cannot be saved.")
+    add_filename_args(parser, ["base", "local", "remote"])
     return parser
 
 

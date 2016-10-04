@@ -101,8 +101,8 @@ def main(args=None):
     diff_parser = subparsers.add_parser('diff',
         description="The actual entrypoint for the diff tool. Git will call this."
     )
-    diff_parser.add_argument('local')
-    diff_parser.add_argument('remote')
+    from .args import add_filename_args
+    add_filename_args(diff_parser, ["local", "remote"])
 
     config = subparsers.add_parser('config',
         description="Configure git to use nbdime via `git difftool`")

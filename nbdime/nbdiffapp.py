@@ -14,7 +14,7 @@ import json
 
 from .diffing.notebooks import diff_notebooks
 from .prettyprint import pretty_print_notebook_diff
-from .args import add_generic_args, add_diff_args
+from .args import add_generic_args, add_diff_args, add_filename_args
 
 
 _description = "Compute the difference between two Jupyter notebooks."
@@ -56,6 +56,7 @@ def _build_arg_parser():
         )
     add_generic_args(parser)
     add_diff_args(parser)
+    add_filename_args(parser, ["base", "remote"])
 
     parser.add_argument(
         '-o', '--output',
@@ -73,7 +74,4 @@ def main(args=None):
         import colorama
         colorama.init()
     arguments = _build_arg_parser().parse_args(args)
-    if arguments.local:
-        print("Please use base and remote for diff, not local.")
-        return 1
     return main_diff(arguments)

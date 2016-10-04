@@ -13,7 +13,7 @@ import threading
 from tornado.httputil import url_concat
 
 from .nbdimeserver import main as run_server
-from ..args import add_generic_args, add_web_args, add_diff_args
+from ..args import add_generic_args, add_web_args, add_diff_args, add_filename_args
 
 
 _logger = logging.getLogger(__name__)
@@ -32,6 +32,7 @@ def build_arg_parser():
     add_generic_args(parser)
     add_web_args(parser, 0)
     add_diff_args(parser)
+    add_filename_args(parser, ["base", "remote"])
     return parser
 
 

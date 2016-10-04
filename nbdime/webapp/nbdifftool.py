@@ -11,8 +11,8 @@ import webbrowser
 import logging
 import threading
 
-from ..args import (add_generic_args, add_diff_args,
-    add_web_args)
+from ..args import add_generic_args, add_diff_args
+from ..args import add_web_args, add_filename_args
 from .nbdimeserver import main as run_server
 
 
@@ -35,6 +35,7 @@ def build_arg_parser():
     add_generic_args(parser)
     add_web_args(parser, 0)
     add_diff_args(parser)
+    add_filename_args(parser, ["base", "remote"])
     return parser
 
 
@@ -55,9 +56,6 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
     arguments = build_arg_parser().parse_args(args)
-    if arguments.local:
-        print("Please use base and remote for diff, not local.")
-        return 1
     port = arguments.port
     cwd = arguments.workdirectory
     base = arguments.base

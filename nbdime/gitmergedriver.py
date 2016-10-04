@@ -24,7 +24,7 @@ import argparse
 from subprocess import check_call, check_output, CalledProcessError
 
 from . import nbmergeapp
-from .args import add_generic_args, add_diff_args, add_merge_args
+from .args import add_generic_args, add_diff_args, add_merge_args, add_filename_args
 
 
 def enable(global_=False):
@@ -85,8 +85,11 @@ def main(args=None):
     )
     add_diff_args(merge_parser)
     add_merge_args(merge_parser)
+
     # Argument list
     # we are given base, local remote
+    add_filename_args(merge_parser, ["base", "local", "remote"])
+
     # TODO: support git-config-specified conflict markers inside sources
     merge_parser.add_argument('marker')
     merge_parser.add_argument('output', nargs='?')

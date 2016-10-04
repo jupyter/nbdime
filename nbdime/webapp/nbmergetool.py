@@ -11,8 +11,8 @@ import webbrowser
 import logging
 import threading
 
-from ..args import (add_generic_args, add_diff_args,
-    add_merge_args, add_web_args)
+from ..args import add_generic_args, add_filename_args
+from ..args import add_diff_args, add_merge_args, add_web_args, 
 from .nbdimeserver import main as run_server
 
 
@@ -41,6 +41,7 @@ def build_arg_parser():
         default=None,
         help="if supplied, the merged notebook is written "
              "to this file. Otherwise it cannot be saved.")
+    add_filename_args(parser, ["base", "local", "remote", "merged"])
     return parser
 
 
