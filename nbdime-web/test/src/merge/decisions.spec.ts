@@ -14,7 +14,7 @@ import {
 } from '../../../src/common/util';
 
 
-describe('nbdime', () => {
+describe('merge', () => {
 
   describe('decisions', () => {
 

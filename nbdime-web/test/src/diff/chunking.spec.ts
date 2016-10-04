@@ -12,7 +12,7 @@ import {
 } from '../../../src/diff/model';
 
 
-describe('nbdime', () => {
+describe('diff', () => {
 
   describe('chunking', () => {
 

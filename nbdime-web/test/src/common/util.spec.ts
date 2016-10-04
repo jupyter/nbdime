@@ -5,7 +5,7 @@ import expect = require('expect.js');
 
 import * as util from '../../../src/common/util';
 
-describe('nbdime', () => {
+describe('common', () => {
 
   describe('util', () => {
 

@@ -42,7 +42,7 @@ function makePatch(key: number | string, diff: IDiffEntry[]) : IDiffPatch {
 }
 
 
-describe('nbdime', () => {
+describe('patch', () => {
 
   describe('patchStringified', () => {
 
