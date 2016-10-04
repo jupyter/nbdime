@@ -72,34 +72,18 @@ def _build_arg_parser():
         description=_description,
         add_help=True,
         )
-    from .nbdiffapp import add_generic_args, add_diff_args  # , add_webgui_args
+    from .args import add_generic_args, add_diff_args, add_merge_args
     add_generic_args(parser)
-    # add_webgui_args(parser)
     add_diff_args(parser)
+    add_merge_args(parser)
 
-    # TODO: Define sensible strategy variables and implement
-    from .merging.notebooks import generic_conflict_strategies
     parser.add_argument(
-        '-s', '--strategy',
-        default="mergetool",
-        choices=generic_conflict_strategies,
-        help="Specify the merge strategy to use.")
-    # parser.add_argument('-m', '--merge-strategy',
-    #                     default="default", choices=("foo", "bar"),
-    #                     help="Specify the merge strategy to use.")
-    parser.add_argument(
-        '-i', '--ignore-transients',
-        action="store_true",
-        default=False,
-        help="Allow automatic deletion of transient data to resolve conflicts "
-             "(output, execution count).")
+        '-o', '--output',
+        default=None,
+        help="if supplied, the merged notebook is written "
+             "to this file. Otherwise it is printed to the "
+             "terminal.")
 
-    parser.add_argument('base',
-                        help="The base notebook filename.")
-    parser.add_argument('local',
-                        help="The local modified notebook filename.")
-    parser.add_argument('remote',
-                        help="The remote modified notebook filename.")
     return parser
 
 

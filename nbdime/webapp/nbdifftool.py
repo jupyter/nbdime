@@ -10,13 +10,14 @@ import webbrowser
 import logging
 import threading
 
+from ..args import (add_generic_args, add_diff_args,
+    add_web_args)
 from .nbdimeserver import main as run_server
 
 
 _logger = logging.getLogger(__name__)
 
 
-# TODO: Tool server starts on random port (in optionally specified port range)
 # TODO: Tool server is passed a (mandatory?) single-use access token, which is
 #       used to authenticate the browser session.
 
@@ -25,13 +26,11 @@ def build_arg_parser():
     Creates an argument parser for the diff tool, that also lets the
     user specify a port and displays a help message.
     """
-    description = 'Difftool for Nbdime.'
+    description = 'difftool for Nbdime.'
     parser = ArgumentParser(description=description)
-    parser.add_argument('-p', '--port', default=8899,
-                        help="Specify the port you want the server "
-                             "to run on. Default is 8899.")
-    parser.add_argument("local", help="The local file of the diff comparison.")
-    parser.add_argument("remote", help="The remote file of the diff comparison.")
+    add_generic_args(parser)
+    add_web_args(parser, 0)
+    add_diff_args(parser)
     return parser
 
 
@@ -44,21 +43,16 @@ def browse(port):
 
     if browser:
         def launch_browser():
-            browser.open("http://localhost:%s/difftool" % port, new=2)
+            browser.open("http://127.0.0.1:%s/difftool" % port, new=2)
         threading.Thread(target=launch_browser).start()
 
 
 def main():
     arguments = build_arg_parser().parse_args()
     port = arguments.port
-    cwd = os.path.abspath(os.path.curdir)
+    cwd = arguments.workdirectory
     local = arguments.local
     remote = arguments.remote
-    # can't handle non-notebook files
-    # FIXME: ignore for now
-    if not local.endswith('.ipynb') and not remote.endswith('.ipynb'):
-        print("Not notebooks: %r %r" % (local, remote))
-        return
     browse(port)
     run_server(port=port, cwd=cwd,
                difftool_args=dict(base=local, remote=remote))

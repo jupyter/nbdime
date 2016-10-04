@@ -4,18 +4,20 @@ Testing
 See latest automated build, test and coverage status at:
 
     - `Build and test on Travis <https://travis-ci.org/jupyter/nbdime>`_
-    - `Coverage on Coveralls <https://coveralls.io/github/jupyter/nbdime?branch=master>`_
+    - `Coverage on codecov <https://codecov.io/github/jupyter/nbdime?branch=master>`_
 
 Dependencies
 ------------
-Dependencies for running tests:
+Dependencies for running python tests:
 
   - pytest
   - pytest-cov
+  - mock
+  - jsonschema
 
 Running tests locally
 ---------------------
-To run tests, locally, enter::
+To run python tests, locally, enter::
 
     py.test
 
@@ -26,6 +28,12 @@ you may need to enter::
 
 to run the tests with Python 3. See the `pytest documentation`_ for more
 options.
+
+To run javascript/typescript tests, enter::
+
+    npm test
+
+from the nbdime-web folder.
 
 Submitting test cases
 ---------------------

@@ -18,9 +18,11 @@ Use with:
 
 import sys
 import os
+import argparse
 from subprocess import check_call, check_output, CalledProcessError
 
 from . import nbmergeapp
+from .args import add_generic_args, add_diff_args, add_merge_args
 
 
 def enable(global_=False):
@@ -69,7 +71,6 @@ def disable(global_=False):
 
 
 def main():
-    import argparse
     parser = argparse.ArgumentParser('git-nbmergedriver', description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -78,31 +79,16 @@ def main():
     merge_parser = subparsers.add_parser('merge',
         description="The actual entrypoint for the merge tool. Git will call this."
     )
+    add_diff_args(merge_parser)
+    add_merge_args(merge_parser)
     # Argument list
     # we are given base, local remote
     # TODO: support git-config-specified conflict markers inside sources
-    merge_parser.add_argument('base')
-    merge_parser.add_argument('local')
-    merge_parser.add_argument('remote')
     merge_parser.add_argument('marker')
     merge_parser.add_argument('output', nargs='?')
-    from .merging.notebooks import generic_conflict_strategies
-    merge_parser.add_argument(
-        '-s', '--strategy',
-        choices=generic_conflict_strategies,
-        help="Specify the merge strategy to use.")
-    # merge_parser.add_argument('-m', '--merge-strategy',
-    #                     default="default", choices=("foo", "bar"),
-    #                     help="Specify the merge strategy to use.")
-    merge_parser.add_argument(
-        '-i', '--ignore-transients',
-        action="store_true",
-        default=False,
-        help="Allow automatic deletion of transient data to resolve conflicts "
-             "(output, execution count).")
     # "The merge driver can learn the pathname in which the merged result will
-    # be stored via placeholder %P" - NOTE: This is not where the driver should
-    # store its output, see below!
+    # be stored via placeholder %P"
+    # - NOTE: This is not where the driver should store its output, see below!
 
     config = subparsers.add_parser('config',
         description="Configure git to use nbdime for notebooks in `git merge`")

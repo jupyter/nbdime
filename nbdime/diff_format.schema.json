@@ -1,0 +1,109 @@
+
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Notebook diff format",
+  "description": "A list of diff entries that each describe a difference between two Jupyter Notebooks",
+  "type": ["array", "object", "null"],
+  "items": {"$ref": "#/definitions/diff"},
+
+  "definitions": {
+    "diff": {
+      "type": ["object", "null"],
+      "description": "A diff entry",
+      "required": ["op", "key"],
+
+      "oneOf": [
+        { "$ref": "#/definitions/diff_add" },
+        { "$ref": "#/definitions/diff_remove" },
+        { "$ref": "#/definitions/diff_replace" },
+        { "$ref": "#/definitions/diff_addrange" },
+        { "$ref": "#/definitions/diff_removerange" },
+        { "$ref": "#/definitions/diff_patch" }
+      ]
+    },
+
+    "diff_add": {
+      "additionalProperties": false,
+      "type": "object",
+
+      "properties": {
+        "op": { "enum": ["add"]},
+        "key": {
+          "type": ["integer", "string"]
+        },
+        "value": {}
+      }
+    },
+
+    "diff_remove": {
+      "additionalProperties": false,
+      "type": "object",
+
+      "properties": {
+        "op": { "enum": ["remove"]},
+        "key": {
+          "type": ["integer", "string"]
+        }
+      }
+    },
+
+    "diff_replace": {
+      "additionalProperties": false,
+      "type": "object",
+
+      "properties": {
+        "op": { "enum": ["replace"]},
+        "key": {
+          "type": ["integer", "string"]
+        },
+        "value": {}
+      }
+    },
+
+    "diff_addrange": {
+      "additionalProperties": false,
+      "type": "object",
+
+      "properties": {
+        "op": { "enum": ["addrange"]},
+        "key": {
+          "type": "integer"
+        },
+        "valuelist": {
+          "type": ["array", "string"]
+        }
+      }
+    },
+
+    "diff_removerange": {
+      "additionalProperties": false,
+      "type": "object",
+
+      "properties": {
+        "op": { "enum": ["removerange"]},
+        "key": {
+          "type": "integer"
+        },
+        "length": {
+          "type": "integer"
+        }
+      }
+    },
+
+    "diff_patch": {
+      "additionalProperties": false,
+      "type": "object",
+
+      "properties": {
+        "op": { "enum": ["patch"]},
+        "key": {
+          "type": ["integer", "string"]
+        },
+        "diff": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/diff"}
+        }
+      }
+    }
+  }
+}

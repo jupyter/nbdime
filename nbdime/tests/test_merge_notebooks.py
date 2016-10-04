@@ -21,7 +21,7 @@ from nbdime import merge_notebooks
 
 
 builder = _build_arg_parser()
-args = builder.parse_args(["--strategy", "mergetool", "", "", ""])
+args = builder.parse_args(["--merge-strategy", "mergetool", "", "", ""])
 
 def test_merge_matching_notebooks(matching_nb_triplets):
     "Test merge on pairs of notebooks with the same basename in the test suite."

@@ -39,6 +39,7 @@ from distutils.command.sdist import sdist
 
 pjoin = os.path.join
 here = os.path.abspath(os.path.dirname(__file__))
+is_repo = os.path.exists(os.path.join(here, '.git'))
 pkg_root = pjoin(here, name)
 
 
@@ -52,13 +53,29 @@ def run(cmd, cwd=None):
     check_call(cmd.split(), shell=shell, cwd=cwd, stdout=sys.stdout, stderr=sys.stderr)
 
 
-def js_prerelease(command):
+def js_prerelease(command, strict=False):
     """Decorator for building minified js/css prior to another command"""
     class DecoratedCommand(command):
         def run(self):
-            self.distribution.run_command('jsdeps')
-            command.run(self)
+            jsdeps = self.distribution.get_command_obj('jsdeps')
+            if not is_repo and all(os.path.exists(t) for t in jsdeps.targets):
+                # sdist, nothing to do
+                command.run(self)
+                return
 
+            try:
+                self.distribution.run_command('jsdeps')
+            except Exception as e:
+                missing = [t for t in jsdeps.targets if not os.path.exists(t)]
+                if strict or missing:
+                    log.warn('rebuilding js and css failed')
+                    if missing:
+                        log.error('missing files: %s' % missing)
+                    raise e
+                else:
+                    log.warn('rebuilding js and css failed (not a problem)')
+                    log.warn(str(e))
+            command.run(self)
     return DecoratedCommand
 
 
@@ -91,12 +108,32 @@ def install_npm(path):
             if not has_npm:
                 log.error("`npm` unavailable.  If you're running this command "
                           "using sudo, make sure `npm` is availble to sudo")
-            if not os.path.exists(self.node_modules):
-                log.info('Installing build dependencies with npm.  This may '
-                         'take a while...')
-                run('npm install', cwd=self.node_package)
-            run('npm build', cwd=self.node_package)
+            log.info('Installing build dependencies with npm.  This may '
+                        'take a while...')
+            run('npm install', cwd=self.node_package)
+            run('npm run build', cwd=self.node_package)
     return NPM
+
+def combine_commands(*commands):
+    """Return a Command that combines several commands."""
+
+    class CombinedCommand(Command):
+
+        def initialize_options(self):
+            self.commands = []
+            for C in commands:
+                self.commands.append(C(self.distribution))
+            for c in self.commands:
+                c.initialize_options()
+        
+        def finalize_options(self):
+            for c in self.commands:
+                c.finalize_options()
+
+        def run(self):
+            for c in self.commands:
+                c.run()
+    return CombinedCommand
 
 packages = []
 for d, _, _ in os.walk(pjoin(here, name)):
@@ -109,6 +146,7 @@ package_data = {
         'webapp/build/*.*',
         'webapp/static/*.*',
         'webapp/templates/*.*',
+        'webapp/testnotebooks/*.*',
     ]
 }
 
@@ -147,7 +185,10 @@ setup_args = dict(
 cmdclass = dict(
     build  = js_prerelease(build),
     sdist  = js_prerelease(sdist),
-    jsdeps = install_npm(pjoin(here, 'nbdime', 'webapp')),
+    jsdeps = combine_commands(
+        install_npm(pjoin(here, 'nbdime', 'webapp')),
+        install_npm(pjoin(here, 'nbdime-web')),
+    ),
 )
 
 if 'develop' in sys.argv or any(a.startswith('bdist') for a in sys.argv):
@@ -163,12 +204,20 @@ install_requires = setuptools_args['install_requires'] = [
     'nbformat',
     'six',
     'colorama',
+    'tornado',
 ]
 
 extras_require = setuptools_args['extras_require'] = {
     'test': [
         'pytest',
+        'pytest-cov',
         'mock',
+        'jsonschema',
+    ],
+    'docs': [
+        'sphinx',
+        'recommonmark',
+        'sphinx_rtd_theme'
     ],
 
     ':python_version == "2.7"': [
@@ -186,6 +235,7 @@ if 'setuptools' in sys.modules:
             'nbdiff-web = nbdime.webapp.nbdiffweb:main',
             'nbpatch = nbdime.nbpatchapp:main',
             'nbmerge = nbdime.nbmergeapp:main',
+            'nbmerge-web = nbdime.webappnbmergeapp:main',
             'git-nbdifftool = nbdime.gitdifftool:main',
             'git-nbmergetool = nbdime.gitmergetool:main',
             'git-nbdiffdriver = nbdime.gitdiffdriver:main',

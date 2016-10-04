@@ -42,7 +42,7 @@ def autoresolve_notebook_conflicts(base, decisions, args):
             "/cells/*/metadata/autoscroll",
             "/cells/*/outputs/*/execution_count"
         ])
-    if args and args.strategy == "mergetool":
+    if args and args.merge_strategy == "mergetool":
         strategies.update({
             "/cells/*/source": "mergetool",
             "/cells/*/outputs": "mergetool",

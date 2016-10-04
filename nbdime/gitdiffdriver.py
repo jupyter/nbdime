@@ -68,13 +68,6 @@ def disable(global_=False):
         pass
 
 
-def show_diff(before, after):
-    """Run the diff
-    """
-    # TODO: handle /dev/null (Windows equivalent?) for new or deleted files
-    nbdiffapp.main([before, after])
-
-
 def main():
     import argparse
     parser = argparse.ArgumentParser('git-nbdiffdriver', description=__doc__,
@@ -114,7 +107,7 @@ def main():
     )
     opts = parser.parse_args()
     if opts.subcommand == 'diff':
-        show_diff(opts.a, opts.b)
+        nbdiffapp.main([opts.a, opts.b])
     elif opts.subcommand == 'config':
         opts.config_func(opts.global_)
     else:

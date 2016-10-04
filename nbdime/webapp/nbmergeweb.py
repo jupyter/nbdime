@@ -11,8 +11,9 @@ import logging
 import threading
 from tornado.httputil import url_concat
 
+from ..args import (add_generic_args, add_diff_args,
+    add_merge_args, add_web_args)
 from .nbdimeserver import main as run_server
-from ..args import add_generic_args, add_web_args, add_diff_args
 
 
 _logger = logging.getLogger(__name__)
@@ -26,12 +27,18 @@ def build_arg_parser():
     description = 'Difftool for Nbdime.'
     parser = ArgumentParser(description=description)
     add_generic_args(parser)
-    add_web_args(parser, 0)
     add_diff_args(parser)
+    add_merge_args(parser)
+    add_web_args(parser, 0)
+    parser.add_argument(
+        '-o', '--output',
+        default=None,
+        help="if supplied, the merged notebook is written "
+             "to this file. Otherwise it cannot be saved.")
     return parser
 
 
-def browse(port, base, remote):
+def browse(port, base, local, remote):
     try:
         browser = webbrowser.get(None)
     except webbrowser.Error as e:
@@ -41,7 +48,8 @@ def browse(port, base, remote):
     if browser:
         b = lambda: browser.open(
             url_concat("http://127.0.0.1:%s/diff" % port,
-                       dict(base=base, remote=remote)),
+                       dict(base=base, local=local,
+                            remote=remote)),
             new=2)
         threading.Thread(target=b).start()
 
@@ -50,9 +58,10 @@ def main():
     arguments = build_arg_parser().parse_args()
     port = arguments.port
     cwd = arguments.workdirectory
+    base = arguments.base
     local = arguments.local
     remote = arguments.remote
-    browse(port, local, remote)
+    browse(port, base, local, remote)
     run_server(port=port, cwd=cwd)
 
 if __name__ == "__main__":

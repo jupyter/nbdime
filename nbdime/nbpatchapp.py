@@ -19,27 +19,24 @@ _description = "Apply patch from nbdiff to a Jupyter notebook."
 
 
 def main_patch(args):
-    bfn = args.base
-    dfn = args.patch
-    afn = args.output
+    base_filename = args.base
+    path_filename = args.patch
+    output_filename = args.output
 
-    for fn in (bfn, dfn):
+    for fn in (base_filename, path_filename):
         if not os.path.exists(fn):
             print("Missing file {}".format(fn))
             return 1
 
-    before = nbformat.read(bfn, as_version=4)
-    with open(dfn) as df:
-        d = json.load(df)
-    d = to_diffentry_dicts(d)
+    before = nbformat.read(base_filename, as_version=4)
+    with open(path_filename) as patch_file:
+        diff = json.load(patch_file)
+    diff = to_diffentry_dicts(diff)
 
-    # TODO: Split lines here? Must be consistent with the diff for patch_notebook to work correctly!?
-    #before = split_lines(before)
+    after = patch_notebook(before, diff)
 
-    after = patch_notebook(before, d)
-
-    if afn:
-        nbformat.write(after, afn)
+    if output_filename:
+        nbformat.write(after, output_filename)
     else:
         print(after)
 
@@ -52,13 +49,21 @@ def _build_arg_parser():
         description=_description,
         add_help=True,
         )
-    from .nbdiffapp import add_generic_args
+    from .args import add_generic_args
     add_generic_args(parser)
 
-    parser.add_argument('base',
-                        help="The base notebook filename.")
-    parser.add_argument('patch',
-                        help="The patch filename, output from nbdiff.")
+    parser.add_argument(
+        'base',
+        help="The base notebook filename.")
+    parser.add_argument(
+        'patch',
+        help="The patch filename, output from nbdiff.")
+    parser.add_argument(
+        '-o', '--output',
+        default=None,
+        help="if supplied, the patched notebook is written "
+             "to this file. Otherwise it is printed to the "
+             "terminal.")
     return parser
 
 
