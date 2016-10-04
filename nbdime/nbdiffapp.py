@@ -63,17 +63,17 @@ def _build_arg_parser():
         help="if supplied, the diff is written to this file. "
              "Otherwise it is printed to the terminal.")
 
-    parser.add_argument('base',
-                        help="the base notebook file.")
-    parser.add_argument('remote',
-                        help="the modified notebook file.")
     return parser
 
 
-def main(argv=None):
+def main(args=None):
+    if args is None:
+        args = sys.argv[1:]
     if sys.platform.startswith('win'):
         import colorama
         colorama.init()
-    args = _build_arg_parser().parse_args(argv)
-    r = main_diff(args)
-    sys.exit(r)
+    arguments = _build_arg_parser().parse_args(args)
+    if arguments.local:
+        print("Please use base and remote for diff, not local.")
+        return 1
+    return main_diff(arguments)

@@ -15,6 +15,7 @@ def add_generic_args(parser):
         '--version',
         action="version",
         version="%(prog)s " + __version__)
+
     if 0:  # TODO: Use verbose and quiet across nbdime and enable these:
         qv_group = parser.add_mutually_exclusive_group()
         qv_group.add_argument(
@@ -27,6 +28,16 @@ def add_generic_args(parser):
             default=False,
             action="store_true",
             help="silence console output.")
+
+    parser.add_argument(
+        'base',
+        help="The base notebook filename.")
+    parser.add_argument(
+        'local',
+        help="The local modified notebook filename (merge only).")
+    parser.add_argument(
+        'remote',
+        help="The remote modified notebook filename.")
 
 
 def add_web_args(parser, default_port=8888):
@@ -45,7 +56,7 @@ def add_web_args(parser, default_port=8888):
     cwd = os.path.abspath(os.path.curdir)
     parser.add_argument(
         '-w', '--workdirectory',
-        default=cwd,  # TODO: Are there any security implications of doing this?
+        default=cwd,
         help="specify the working directory you want "
                 "the server to run from. Default is the "
                 "actual cwd at program start.")
@@ -65,7 +76,6 @@ def add_diff_args(parser):
     #parser.add_argument('-d', '--diff-strategy',
     #                    default="default", choices=("foo", "bar"),
     #                    help="specify the diff strategy to use.")
-    pass
 
 
 def add_merge_args(parser):
@@ -83,13 +93,3 @@ def add_merge_args(parser):
         default=False,
         help="Allow deletion of transient data such as outputs and "
              "execution counts in order to resolve conflicts.")
-
-    parser.add_argument(
-        'base',
-        help="The base notebook filename.")
-    parser.add_argument(
-        'local',
-        help="The local modified notebook filename.")
-    parser.add_argument(
-        'remote',
-        help="The remote modified notebook filename.")

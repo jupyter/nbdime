@@ -83,12 +83,15 @@ def show_diff(before, after):
     """
     # TODO: handle /dev/null (Windows equivalent?) for new or deleted files
     if before.endswith('.ipynb') or after.endswith('ipynb'):
-        nbdiffapp.main([before, after])
+        return nbdiffapp.main([before, after])
     else:
+        # Never returns
         os.execvp('git', ['git', 'diff', before, after])
 
 
-def main():
+def main(args=None):
+    if args is None:
+        args = sys.argv[1:]
     import argparse
     parser = argparse.ArgumentParser('git-nbdifftool', description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -115,14 +118,12 @@ def main():
         dest='config_func', const=disable,
         help="disable nbdime difftool via git config"
     )
-    opts = parser.parse_args()
+    opts = parser.parse_args(args)
     if opts.subcommand == 'diff':
-        show_diff(opts.local, opts.remote)
+        return show_diff(opts.local, opts.remote)
     elif opts.subcommand == 'config':
         opts.config_func(opts.global_)
+        return 0
     else:
         parser.print_help()
-        sys.exit(1)
-
-if __name__ == '__main__':
-    main()
+        return 1

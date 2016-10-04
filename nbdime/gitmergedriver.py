@@ -16,6 +16,8 @@ Use with:
     git merge [<commit> [<commit>]]
 """
 
+from __future__ import print_function
+
 import sys
 import os
 import argparse
@@ -70,7 +72,9 @@ def disable(global_=False):
         pass
 
 
-def main():
+def main(args=None):
+    if args is None:
+        args = sys.argv[1:]
     parser = argparse.ArgumentParser('git-nbmergedriver', description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -104,19 +108,16 @@ def main():
         dest='config_func', const=disable,
         help="disable nbdime merge driver via git config"
     )
-    opts = parser.parse_args()
+    opts = parser.parse_args(args)
     if opts.subcommand == 'merge':
         # "The merge driver is expected to leave the result of the merge in the
         # file named with %A by overwriting it, and exit with zero status if it
         # managed to merge them cleanly, or non-zero if there were conflicts."
         opts.output = opts.local
-        returncode = nbmergeapp.main_merge(opts)
-        sys.exit(returncode)
+        return nbmergeapp.main_merge(opts)
     elif opts.subcommand == 'config':
         opts.config_func(opts.global_)
+        return 0
     else:
         parser.print_help()
-        sys.exit(1)
-
-if __name__ == '__main__':
-    main()
+        return 1

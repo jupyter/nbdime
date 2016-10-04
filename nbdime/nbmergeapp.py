@@ -87,7 +87,8 @@ def _build_arg_parser():
     return parser
 
 
-def main():
-    args = _build_arg_parser().parse_args()
-    r = main_merge(args)
-    sys.exit(r)
+def main(args=None):
+    if args is None:
+        args = sys.argv[1:]
+    arguments = _build_arg_parser().parse_args(args)
+    return main_merge(arguments)

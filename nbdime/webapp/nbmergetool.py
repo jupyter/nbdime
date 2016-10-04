@@ -4,6 +4,7 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import sys
 from argparse import ArgumentParser
 import os.path
 import webbrowser
@@ -27,7 +28,10 @@ def build_arg_parser():
     user specify a port and displays a help message.
     """
     description = 'mergetool for Nbdime.'
-    parser = ArgumentParser(description=description)
+    parser = ArgumentParser(
+        description=description,
+        add_help=True
+        )
     add_generic_args(parser)
     add_diff_args(parser)
     add_merge_args(parser)
@@ -53,7 +57,9 @@ def browse(port):
         threading.Thread(target=launch_browser).start()
 
 
-def main():
+def main(args=None):
+    if args is None:
+        args = sys.argv[1:]
     arguments = build_arg_parser().parse_args()
     port = arguments.port
     cwd = arguments.workdirectory
@@ -62,9 +68,6 @@ def main():
     remote = arguments.remote
     merged = arguments.merged
     browse(port)
-    run_server(port=port, cwd=cwd,
-               mergetool_args=dict(base=base, local=local, remote=remote),
-               outputfilename=merged)
-
-if __name__ == "__main__":
-    main()
+    return run_server(port=port, cwd=cwd,
+                      mergetool_args=dict(base=base, local=local, remote=remote),
+                      outputfilename=merged)

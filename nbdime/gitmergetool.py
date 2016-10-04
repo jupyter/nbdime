@@ -60,7 +60,9 @@ def disable(global_=False):
         check_call(cmd + ['merge.tool', previous])
 
 
-def main():
+def main(args=None):
+    if args is None:
+        args = sys.argv[1:]
     import argparse
     parser = argparse.ArgumentParser('git-nbmergetool', description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -89,15 +91,12 @@ def main():
         dest='config_func', const=disable,
         help="disable nbdime mergetool via git config"
     )
-    opts = parser.parse_args()
+    opts = parser.parse_args(args)
     if opts.subcommand == 'merge':
-        nbmergeapp.main([opts.base, opts.local, opts.remote, opts.merged])
+        return nbmergeapp.main([opts.base, opts.local, opts.remote, opts.merged])
     elif opts.subcommand == 'config':
         opts.config_func(opts.global_)
+        return 0
     else:
         parser.print_help()
-        sys.exit(1)
-
-
-if __name__ == '__main__':
-    main()
+        return 1
