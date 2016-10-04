@@ -52,7 +52,7 @@ import {
 
 import {
   NotebookMergeWidget
-} from 'nbdime/lib/merge/widgets';
+} from 'nbdime/lib/merge/widget';
 
 import {
   requestMerge, requestJson

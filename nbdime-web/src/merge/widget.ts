@@ -56,7 +56,7 @@ import {
 
 import {
   CellDiffWidget
-} from '../diff/widgets';
+} from '../diff/widget';
 
 
 const NBMERGE_CLASS = 'jp-Notebook-merge';
