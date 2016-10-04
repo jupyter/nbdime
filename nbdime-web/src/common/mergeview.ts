@@ -783,8 +783,8 @@ class MergeView extends Panel {
     super();
     this.options = options;
     let remote = options.remote;
-    let local = options.local;
-    let merged = options.merged;
+    let local = options.local || null;
+    let merged = options.merged || null;
 
     let panes: number = 0;
     let left: DiffView = this.left = null;

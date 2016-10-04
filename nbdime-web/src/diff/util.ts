@@ -22,7 +22,8 @@ export const JSON_INDENT = '  ';
  *
  * Returns the first found entry, or null if not entry was found.
  */
-export function getDiffKey(diff: IDiffEntry[], key: string | number) : IDiffEntry[] {
+export
+function getDiffKey(diff: IDiffEntry[], key: string | number) : IDiffEntry[] {
   for (let i=0; i < diff.length; ++i) {
     if (diff[i].key === key) {
       return (diff[i] as IDiffPatch).diff;
