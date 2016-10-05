@@ -75,3 +75,7 @@ def main(args=None):
         colorama.init()
     arguments = _build_arg_parser().parse_args(args)
     return main_diff(arguments)
+
+
+if __name__ == "__main__":
+    main()

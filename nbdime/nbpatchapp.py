@@ -66,3 +66,7 @@ def main(args=None):
         args = sys.argv[1:]
     arguments = _build_arg_parser().parse_args(args)
     return main_patch(arguments)
+
+
+if __name__ == "__main__":
+    main()

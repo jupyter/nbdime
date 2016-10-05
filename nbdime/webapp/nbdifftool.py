@@ -63,3 +63,7 @@ def main(args=None):
     browse(port)
     return run_server(port=port, cwd=cwd,
                       difftool_args=dict(base=base, remote=remote))
+
+
+if __name__ == "__main__":
+    main()

@@ -99,3 +99,7 @@ def main(args=None):
     else:
         parser.print_help()
         return 1
+
+
+if __name__ == "__main__":
+    main()

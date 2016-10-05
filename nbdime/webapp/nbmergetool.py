@@ -72,3 +72,7 @@ def main(args=None):
     return run_server(port=port, cwd=cwd,
                       mergetool_args=dict(base=base, local=local, remote=remote),
                       outputfilename=merged)
+
+
+if __name__ == "__main__":
+    main()

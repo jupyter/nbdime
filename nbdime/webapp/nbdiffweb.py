@@ -61,3 +61,7 @@ def main(args=None):
     remote = arguments.remote
     browse(port, base, remote)
     return run_server(port=port, cwd=cwd)
+
+
+if __name__ == "__main__":
+    main()
