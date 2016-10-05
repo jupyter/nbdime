@@ -72,10 +72,11 @@ def _build_arg_parser():
         description=_description,
         add_help=True,
         )
-    from .args import add_generic_args, add_diff_args, add_merge_args
+    from .args import add_generic_args, add_diff_args, add_merge_args, add_filename_args
     add_generic_args(parser)
     add_diff_args(parser)
     add_merge_args(parser)
+    add_filename_args(parser, ["base", "local", "remote"])
 
     parser.add_argument(
         '-o', '--output',
@@ -87,7 +88,12 @@ def _build_arg_parser():
     return parser
 
 
-def main():
-    args = _build_arg_parser().parse_args()
-    r = main_merge(args)
-    sys.exit(r)
+def main(args=None):
+    if args is None:
+        args = sys.argv[1:]
+    arguments = _build_arg_parser().parse_args(args)
+    return main_merge(arguments)
+
+
+if __name__ == "__main__":
+    main()

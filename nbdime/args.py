@@ -15,6 +15,7 @@ def add_generic_args(parser):
         '--version',
         action="version",
         version="%(prog)s " + __version__)
+
     if 0:  # TODO: Use verbose and quiet across nbdime and enable these:
         qv_group = parser.add_mutually_exclusive_group()
         qv_group.add_argument(
@@ -45,7 +46,7 @@ def add_web_args(parser, default_port=8888):
     cwd = os.path.abspath(os.path.curdir)
     parser.add_argument(
         '-w', '--workdirectory',
-        default=cwd,  # TODO: Are there any security implications of doing this?
+        default=cwd,
         help="specify the working directory you want "
                 "the server to run from. Default is the "
                 "actual cwd at program start.")
@@ -84,12 +85,18 @@ def add_merge_args(parser):
         help="Allow deletion of transient data such as outputs and "
              "execution counts in order to resolve conflicts.")
 
-    parser.add_argument(
-        'base',
-        help="The base notebook filename.")
-    parser.add_argument(
-        'local',
-        help="The local modified notebook filename.")
-    parser.add_argument(
-        'remote',
-        help="The remote modified notebook filename.")
+
+def add_filename_args(parser, names):
+    """Add the base, local, remote, and merged positional arguments.
+
+    Helps getting consistent doc strings.
+    """
+    helps = {
+        "base":   "The base notebook filename.",
+        "local":  "The local modified notebook filename.",
+        "remote": "The remote modified notebook filename.",
+        "merged": "The merge result notebook filename.",
+        "patch":  "The patch filename, output from nbdiff.",
+        }
+    for name in names:
+        parser.add_argument(name, help=helps[name])

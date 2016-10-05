@@ -49,15 +49,9 @@ def _build_arg_parser():
         description=_description,
         add_help=True,
         )
-    from .args import add_generic_args
+    from .args import add_generic_args, add_filename_args
     add_generic_args(parser)
-
-    parser.add_argument(
-        'base',
-        help="The base notebook filename.")
-    parser.add_argument(
-        'patch',
-        help="The patch filename, output from nbdiff.")
+    add_filename_args(parser, ["base", "patch"])
     parser.add_argument(
         '-o', '--output',
         default=None,
@@ -67,7 +61,12 @@ def _build_arg_parser():
     return parser
 
 
-def main():
-    args = _build_arg_parser().parse_args()
-    r = main_patch(args)
-    sys.exit(r)
+def main(args=None):
+    if args is None:
+        args = sys.argv[1:]
+    arguments = _build_arg_parser().parse_args(args)
+    return main_patch(arguments)
+
+
+if __name__ == "__main__":
+    main()

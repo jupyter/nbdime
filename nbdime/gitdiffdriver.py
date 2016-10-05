@@ -68,7 +68,9 @@ def disable(global_=False):
         pass
 
 
-def main():
+def main(args=None):
+    if args is None:
+        args = sys.argv[1:]
     import argparse
     parser = argparse.ArgumentParser('git-nbdiffdriver', description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -105,14 +107,16 @@ def main():
         dest='config_func', const=disable,
         help="disable nbdime diff driver via git config"
     )
-    opts = parser.parse_args()
+    opts = parser.parse_args(args)
     if opts.subcommand == 'diff':
-        nbdiffapp.main([opts.a, opts.b])
+        return nbdiffapp.main([opts.a, opts.b])
     elif opts.subcommand == 'config':
         opts.config_func(opts.global_)
+        return 0
     else:
         parser.print_help()
-        sys.exit(1)
+        return 1
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

@@ -4,14 +4,15 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import sys
 from argparse import ArgumentParser
 import os.path
 import webbrowser
 import logging
 import threading
 
-from ..args import (add_generic_args, add_diff_args,
-    add_web_args)
+from ..args import add_generic_args, add_diff_args
+from ..args import add_web_args, add_filename_args
 from .nbdimeserver import main as run_server
 
 
@@ -27,10 +28,14 @@ def build_arg_parser():
     user specify a port and displays a help message.
     """
     description = 'difftool for Nbdime.'
-    parser = ArgumentParser(description=description)
+    parser = ArgumentParser(
+        description=description,
+        add_help=True
+        )
     add_generic_args(parser)
     add_web_args(parser, 0)
     add_diff_args(parser)
+    add_filename_args(parser, ["base", "remote"])
     return parser
 
 
@@ -47,15 +52,18 @@ def browse(port):
         threading.Thread(target=launch_browser).start()
 
 
-def main():
-    arguments = build_arg_parser().parse_args()
+def main(args=None):
+    if args is None:
+        args = sys.argv[1:]
+    arguments = build_arg_parser().parse_args(args)
     port = arguments.port
     cwd = arguments.workdirectory
-    local = arguments.local
+    base = arguments.base
     remote = arguments.remote
     browse(port)
-    run_server(port=port, cwd=cwd,
-               difftool_args=dict(base=local, remote=remote))
+    return run_server(port=port, cwd=cwd,
+                      difftool_args=dict(base=base, remote=remote))
+
 
 if __name__ == "__main__":
     main()

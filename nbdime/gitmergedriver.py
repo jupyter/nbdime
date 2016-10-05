@@ -16,13 +16,15 @@ Use with:
     git merge [<commit> [<commit>]]
 """
 
+from __future__ import print_function
+
 import sys
 import os
 import argparse
 from subprocess import check_call, check_output, CalledProcessError
 
 from . import nbmergeapp
-from .args import add_generic_args, add_diff_args, add_merge_args
+from .args import add_generic_args, add_diff_args, add_merge_args, add_filename_args
 
 
 def enable(global_=False):
@@ -70,7 +72,9 @@ def disable(global_=False):
         pass
 
 
-def main():
+def main(args=None):
+    if args is None:
+        args = sys.argv[1:]
     parser = argparse.ArgumentParser('git-nbmergedriver', description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -81,8 +85,11 @@ def main():
     )
     add_diff_args(merge_parser)
     add_merge_args(merge_parser)
+
     # Argument list
     # we are given base, local remote
+    add_filename_args(merge_parser, ["base", "local", "remote"])
+
     # TODO: support git-config-specified conflict markers inside sources
     merge_parser.add_argument('marker')
     merge_parser.add_argument('output', nargs='?')
@@ -104,19 +111,20 @@ def main():
         dest='config_func', const=disable,
         help="disable nbdime merge driver via git config"
     )
-    opts = parser.parse_args()
+    opts = parser.parse_args(args)
     if opts.subcommand == 'merge':
         # "The merge driver is expected to leave the result of the merge in the
         # file named with %A by overwriting it, and exit with zero status if it
         # managed to merge them cleanly, or non-zero if there were conflicts."
         opts.output = opts.local
-        returncode = nbmergeapp.main_merge(opts)
-        sys.exit(returncode)
+        return nbmergeapp.main_merge(opts)
     elif opts.subcommand == 'config':
         opts.config_func(opts.global_)
+        return 0
     else:
         parser.print_help()
-        sys.exit(1)
+        return 1
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

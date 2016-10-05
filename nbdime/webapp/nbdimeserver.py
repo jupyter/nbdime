@@ -235,14 +235,14 @@ def make_app(**params):
     return web.Application(handlers, **settings)
 
 
-def main(**params):
+def main_server(**params):
     print("Using params:")
     print(params)
     port = params.pop("port")
     app = make_app(**params)
     app.listen(port)
     ioloop.IOLoop.current().start()
-    sys.exit(exit_code)
+    return exit_code
 
 
 def _build_arg_parser():
@@ -257,6 +257,12 @@ def _build_arg_parser():
     return parser
 
 
+def main(args=None):
+    if args is None:
+        args = sys.argv[1:]
+    arguments = _build_arg_parser().parse_args(args)
+    return main_server(port=arguments.port, cwd=arguments.workdirectory)
+
+
 if __name__ == "__main__":
-    arguments = _build_arg_parser().parse_args()
-    main(port=arguments.port, cwd=arguments.workdirectory)
+    main()
