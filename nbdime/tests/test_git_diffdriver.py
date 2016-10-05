@@ -49,9 +49,11 @@ def test_git_diff_driver(capsys, noindent):
         pjoin(test_dir, 'files/foo--1.ipynb'), 'invalid_mock_checksum', '100644',
         pjoin(test_dir, 'files/foo--2.ipynb'), 'invalid_mock_checksum', '100644']
     with mock.patch('sys.argv', mock_argv):
-        with pytest.raises(SystemExit) as cm:
-            gdd_main()
-        assert cm.value.code == 0
+        r = gdd_main()
+        assert r == 0
+        #with pytest.raises(SystemExit) as cm:
+        #    gdd_main()
+        #assert cm.value.code == 0
         cap_out = capsys.readouterr()[0]
         assert cap_out  == expected_output.format(
             pjoin(test_dir, 'files/foo--1.ipynb'),
