@@ -35,6 +35,11 @@ def build_arg_parser():
     add_merge_args(parser)
     add_web_args(parser, 0)
     add_filename_args(parser, ["base", "local", "remote"])
+    parser.add_argument(
+        '-o', '--output',
+        default=None,
+        help="if supplied, the merged notebook is written "
+             "to this file. Otherwise it cannot be saved.")
     return parser
 
 
@@ -63,8 +68,9 @@ def main(args=None):
     base = arguments.base
     local = arguments.local
     remote = arguments.remote
+    output = arguments.output
     browse(port, base, local, remote)
-    return run_server(port=port, cwd=cwd)
+    return run_server(port=port, cwd=cwd, outputfilename=output)
 
 
 if __name__ == "__main__":

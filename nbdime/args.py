@@ -66,6 +66,7 @@ def add_diff_args(parser):
     #parser.add_argument('-d', '--diff-strategy',
     #                    default="default", choices=("foo", "bar"),
     #                    help="specify the diff strategy to use.")
+    pass
 
 
 def add_merge_args(parser):
