@@ -12,6 +12,14 @@ function valueIn(value: any, array: Array<any>) {
 
 
 /**
+ * Check whether array is null or empty, and type guards agains null
+ */
+export
+function hasEntries<T>(array: T[] | null): array is T[] {
+  return array !== null && array.length !== 0;
+}
+
+/**
  * Deepcopy routine for JSON-able data types
  */
 export

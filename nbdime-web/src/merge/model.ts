@@ -35,7 +35,7 @@ import {
 } from '../patch';
 
 import {
-  arraysEqual, valueIn
+  arraysEqual, valueIn, hasEntries
 } from '../common/util';
 
 
@@ -408,10 +408,8 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
     }
     let lo = this.local.outputs;
     let ro = this.remote.outputs;
-    let localEmpty = !lo || lo.length === 0;
-    let remoteEmpty = !ro || ro.length === 0;
-    if (localEmpty || remoteEmpty) {
-      return localEmpty && remoteEmpty;
+    if (!hasEntries(lo) || !hasEntries(ro)) {
+      return !hasEntries(lo) && !hasEntries(ro);
     }
     if (lo.length !== ro.length) {
       return false;
@@ -444,9 +442,6 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
       throw 'Not a valid path for a cell decision';
     }
 
-    let ldlen = decision.localDiff ? decision.localDiff.length : 0;
-    let rdlen = decision.remoteDiff ? decision.remoteDiff.length : 0;
-
     // Check if descision is on cell level or not:
     if (arraysEqual(decision.absolutePath, ['cells']) ) {
       // Cell level decision (addrange/removerange):
@@ -456,13 +451,18 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
         md.level = 2;
         this.decisions.push(md);
       }
-    } else if (decision.absolutePath.length === 2 && (ldlen > 1 || rdlen > 1)) {
-      console.assert(valueIn(0, [ldlen, rdlen]));
+    } else if (decision.absolutePath.length === 2 && (
+        hasEntries(decision.localDiff) || hasEntries(decision.remoteDiff))) {
+      if (hasEntries(decision.localDiff) && hasEntries(decision.remoteDiff)) {
+        throw 'Invalid merge decision: ' + decision;
+      }
       // More than one diff op on cell level, split decisions on key
       // Translate decision to format taken by _splitPatch, and apply:
       decision = pushPatchDecision(decision, decision.absolutePath.slice(1, 2));
-      let diff = (ldlen ? decision.localDiff : decision.remoteDiff)[0] as IDiffPatch;
-      let decisions = this.splitPatch(decision, diff, !rdlen);
+      let diff = ((hasEntries(decision.localDiff) ?
+        decision.localDiff : decision.remoteDiff) as IDiffPatch[])[0];
+      let decisions = this.splitPatch(decision, diff,
+                                      hasEntries(decision.localDiff));
       resolveCommonPaths(decisions);
       for (let md of decisions) {
         md.level = 2;
@@ -530,9 +530,7 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
     console.assert(!this.onesided,
                    'Cannot have multiple cell decisions on one cell!');
     this.onesided = true;  // We set this to distinguish case 3 from normal
-    let ld = md.localDiff !== null && md.localDiff.length !== 0;
-    let rd = md.remoteDiff !== null && md.remoteDiff.length !== 0;
-    if (!ld) {
+    if (!hasEntries(md.localDiff)) {
       // 1. or 2.:
       this._local = null;
       if (!md.remoteDiff || md.remoteDiff.length !== 1) {
@@ -550,7 +548,7 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
         this._merged = createDeletedCellDiffModel(this.base, this.mimetype);
         this.deleteCell = valueIn(md.action, ['remote', 'either']);
       }
-    } else if (!rd) {
+    } else if (!hasEntries(md.remoteDiff)) {
       // 1. or 2.:
       this._remote = null;
       if (!md.localDiff || md.localDiff.length !== 1) {
@@ -569,7 +567,7 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
         this.deleteCell = valueIn(md.action, ['local', 'either']);
       }
     } else {
-      console.assert(ld && rd);
+      console.assert(hasEntries(md.localDiff) && hasEntries(md.remoteDiff));
       console.assert(md.localDiff.length === 1 && md.remoteDiff.length === 1);
       // 3. or 4.
       if (md.localDiff[0].op === md.remoteDiff[0].op) {
@@ -733,8 +731,8 @@ function splitCellRemovals(mergeDecisions: MergeDecision[]): MergeDecision[] {
       continue;
     }
 
-    let dl = md.localDiff && md.localDiff.length > 0 ? md.localDiff[md.localDiff.length - 1] : null;
-    let dr = md.remoteDiff && md.remoteDiff.length > 0 ? md.remoteDiff[md.remoteDiff.length - 1] : null;
+    let dl = hasEntries(md.localDiff) ? md.localDiff[md.localDiff.length - 1] : null;
+    let dr = hasEntries(md.remoteDiff) ? md.remoteDiff[md.remoteDiff.length - 1] : null;
     // TODO: Does it make sense to split on custom?
 
     if (dl && !dr || dr && !dl) {
@@ -809,9 +807,12 @@ function splitCellInsertions(mergeDecisions: MergeDecision[]): MergeDecision[] {
                                local: boolean, remote: boolean): MergeDecision {
     let newMd = new MergeDecision(md.absolutePath.slice(), null, null,
                                   md.action, md.conflict);
-    let key = (local ? md.localDiff : md.remoteDiff)[0].key as number;
+    if ((local && !hasEntries(md.localDiff)) || !hasEntries(md.remoteDiff)) {
+      throw 'Invalid input: ' + md;
+    }
+    let key = (local ? md.localDiff : md.remoteDiff)![0].key;
     let newDiff: IDiffAddRange[] = [{
-        key: key,
+        key: key as number,
         op: 'addrange',
         valuelist: [value]
     }];

@@ -401,6 +401,7 @@ class CellMergeWidget extends Panel {
       let outputsChanged = false;
       for (let m of model.subModels) {
         if (!m || m.deleted) {
+          // Don't consider deleted cells
           continue;
         }
         metadataChanged = metadataChanged || (
