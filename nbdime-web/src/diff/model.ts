@@ -363,7 +363,7 @@ namespace StringDiffModel {
  * and it will be stringified according to JSON stringification
  * rules.
  */
-export function createPatchDiffModel(base: any, diff: IDiffEntry[]) : StringDiffModel {
+export function createPatchDiffModel(base: string | JSONObject | JSONArray | null, diff: IDiffEntry[]) : StringDiffModel {
   console.assert(!!diff, 'Patch model needs diff.');
   let baseStr = (typeof base === 'string') ? base as string : stringify(base);
   let out = patchStringified(base, diff);

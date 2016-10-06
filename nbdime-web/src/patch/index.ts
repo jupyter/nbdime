@@ -3,6 +3,10 @@
 'use strict';
 
 import {
+  JSONValue, JSONArray, JSONObject
+} from 'phosphor/lib/algorithm/json';
+
+import {
   valueIn, deepCopy, repeatString
 } from '../common/util';
 
@@ -51,16 +55,15 @@ type StringifiedPatchResult = {
 /**
  * Patch a base JSON object according to diff. Returns the patched object.
  */
-export
-function patch(base: (string | Array<any> | any), diff: IDiffEntry[]) : (string | Array<any> | any) {
+export function patch<T extends JSONValue>(base: T | null, diff: IDiffEntry[] | null): T {
   if (typeof base === 'string') {
-    return patchString(base, diff, 0, false).remote;
-  } else if (base instanceof Array) {
-    return patchSequence(base, diff);
-  } else if (valueIn(typeof base, ['number', 'boolean'])) {
+    return patchString(base as string, diff, 0, false).remote as T;
+  } else if (Array.isArray(base)) {
+    return patchSequence(base, diff) as T;
+  } else if (typeof base === 'number' || typeof base === 'boolean') {
     throw 'Cannot patch an atomic type: ' + typeof base;
   } else {
-    return patchObject(base, diff);
+    return patchObject(base as JSONObject, diff) as T;
   }
 }
 
@@ -68,7 +71,7 @@ function patch(base: (string | Array<any> | any), diff: IDiffEntry[]) : (string 
 /**
  * Patch an array according to the diff.
  */
-function patchSequence(base: Array<any>, diff: IDiffEntry[]): Array<any> {
+function patchSequence(base: JSONArray, diff: IDiffEntry[] | null): JSONArray {
   if (diff === null) {
     return deepCopy(base);
   }
@@ -119,7 +122,7 @@ function patchSequence(base: Array<any>, diff: IDiffEntry[]): Array<any> {
 /**
  * Patch an object (dictionary type) according to the diff.
  */
-function patchObject(base: Object, diff: IDiffEntry[]) : Object {
+function patchObject(base: JSONObject, diff: IDiffEntry[] | null) : JSONObject {
   let patched: any = {};
   let keysToCopy = Object.keys(base);
 
@@ -139,7 +142,7 @@ function patchObject(base: Object, diff: IDiffEntry[]) : Object {
         patched[key] = (e as IDiffAdd).value;
       } else if (op === 'patch') {
         keysToCopy.splice(keysToCopy.indexOf(key), 1);   // Remove key
-        patched[key] = patch(base[key], (e as IDiffPatch).diff);
+        patched[key] = patch(base[key]!, (e as IDiffPatch).diff);
       }
     }
   }
@@ -162,7 +165,7 @@ function patchObject(base: Object, diff: IDiffEntry[]) : Object {
  * can therefore differ from a straigh string-based diff of stringified JSON
  * objects.
  */
-export function patchStringified(base: (string | Array<any> | any), diff: IDiffEntry[], level?: number) : StringifiedPatchResult {
+export function patchStringified(base: JSONValue | null, diff: IDiffEntry[] | null, level?: number) : StringifiedPatchResult {
   if (level === undefined) {
     level = 0;
   }
@@ -174,6 +177,8 @@ export function patchStringified(base: (string | Array<any> | any), diff: IDiffE
     return patchStringifiedList(base, diff, level);
   } else if (typeof base === 'number' || typeof base === 'boolean') {
     throw 'Cannot patch an atomic type: ' + typeof base;
+  } else if (base === null) {
+    throw 'Cannot patch a null value';
   } else {
     return patchStringifiedObject(base, diff, level);
   }
@@ -182,7 +187,7 @@ export function patchStringified(base: (string | Array<any> | any), diff: IDiffE
 /**
  * Patch a stringified object according to the object diff
  */
-function patchStringifiedObject(base: Object, diff: IDiffEntry[], level: number) : StringifiedPatchResult {
+function patchStringifiedObject(base: JSONObject, diff: IDiffEntry[] | null, level: number) : StringifiedPatchResult {
   if (level === undefined) {
     level = 0;
   }
@@ -307,7 +312,7 @@ function patchStringifiedObject(base: Object, diff: IDiffEntry[], level: number)
 /**
  * Patch a stringified list according to the list diff
  */
-function patchStringifiedList(base: Array<any>, diff: IDiffEntry[], level: number) : StringifiedPatchResult {
+function patchStringifiedList(base: JSONArray, diff: IDiffEntry[] | null, level: number) : StringifiedPatchResult {
   let remote = '';
   let additions: DiffRangeRaw[] = [];
   let deletions: DiffRangeRaw[] = [];
@@ -399,7 +404,7 @@ function patchStringifiedList(base: Array<any>, diff: IDiffEntry[], level: numbe
 /**
  * Patch a string according to a line based diff
  */
-function patchString(base: string, diff: IDiffEntry[], level: number, stringifyPatch?: boolean) : StringifiedPatchResult {
+function patchString(base: string, diff: IDiffEntry[] | null, level: number, stringifyPatch?: boolean) : StringifiedPatchResult {
   let additions: DiffRangeRaw[] = [];
   let deletions: DiffRangeRaw[] = [];
   let baseIndex = 0;
@@ -459,7 +464,7 @@ function patchString(base: string, diff: IDiffEntry[], level: number, stringifyP
  * turns null input into empty string.
  */
 export
-function stringify(values: string | any[] | { [key: string] : any},
+function stringify(values: JSONValue | null,
                    level?: number, indentFirst?: boolean) : string {
   let ret = (values === null) ? '' : stableStringify(values, {space: JSON_INDENT});
   if (level) {
