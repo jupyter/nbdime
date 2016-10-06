@@ -69,6 +69,9 @@ function patch(base: (string | Array<any> | any), diff: IDiffEntry[]) : (string 
  * Patch an array according to the diff.
  */
 function patchSequence(base: Array<any>, diff: IDiffEntry[]): Array<any> {
+  if (diff === null) {
+    return deepCopy(base);
+  }
   // The patched sequence to build and return
   let patched = [];
   // Index into obj, the next item to take unless diff says otherwise
@@ -169,6 +172,8 @@ export function patchStringified(base: (string | Array<any> | any), diff: IDiffE
     return patchString(base, diff, level, stringifyPatch);
   } else if (base instanceof Array) {
     return patchStringifiedList(base, diff, level);
+  } else if (typeof base === 'number' || typeof base === 'boolean') {
+    throw 'Cannot patch an atomic type: ' + typeof base;
   } else {
     return patchStringifiedObject(base, diff, level);
   }

@@ -396,8 +396,12 @@ abstract class DragDropPanelBase extends DropPanel {
    *
    * The default implementation returns a clone of the drag target.
    */
-  protected getDragImage(handle: HTMLElement): HTMLElement {
-    return this.findDragTarget(handle).cloneNode(true) as HTMLElement;
+  protected getDragImage(handle: HTMLElement): HTMLElement | null {
+    let target = this.findDragTarget(handle);
+    if (target) {
+      return target.cloneNode(true) as HTMLElement;
+    }
+    return null;
   }
 
   /**

@@ -24,6 +24,9 @@ export const JSON_INDENT = '  ';
  */
 export
 function getDiffKey(diff: IDiffEntry[], key: string | number) : IDiffEntry[] {
+  if (!diff) {
+    return null;
+  }
   for (let i=0; i < diff.length; ++i) {
     if (diff[i].key === key) {
       return (diff[i] as IDiffPatch).diff;
@@ -40,8 +43,10 @@ function validateStringDiff(base: string[], entry: IDiffEntry, lineToChar: numbe
   if (entry.op === 'patch') {
     let line = base[entry.key as number];
     let diff = (entry as IDiffPatch).diff;
-    for (let d of diff) {
-      validateSequenceOp(line, d);
+    if (diff !== null) {
+      for (let d of diff) {
+        validateSequenceOp(line, d);
+      }
     }
   }
 }
@@ -121,6 +126,7 @@ function combineOps(a: IDiffEntry, b: IDiffEntry): IDiffEntry {
     let bTyped = b as IDiffRemoveRange;
     return opRemoveRange(aTyped.key, aTyped.length + bTyped.length);
   }
+  throw 'Invalid string lines op: ' + b;
 }
 
 
@@ -133,7 +139,12 @@ function flattenStringDiff(val: string[] | string, diff: IDiffEntry[]): IDiffEnt
 
   if (typeof val === 'string') {
     // Split lines (retaining newlines):
-    val = (val as string).match(/^.*([\n\r]|$)/gm);
+    let lines = (val as string).match(/^.*([\n\r]|$)/gm);
+    if (lines) {
+      val = lines;
+    } else {
+      val = [val];
+    }
   }
   let a = val as string[];
   let lineToChar = [0].concat(accumulateLengths(a));
@@ -144,13 +155,16 @@ function flattenStringDiff(val: string[] | string, diff: IDiffEntry[]): IDiffEnt
     let op = e.op;
     let lineOffset = lineToChar[e.key];
     if (op === 'patch') {
-      for (let p of (e as IDiffPatch).diff) {
-        let d = shallowCopy(p);
-        d.key += lineOffset;
-        if (overlaps(flattened, d)) {
-          flattened[-1] = combineOps(flattened[-1], d);
-        } else {
-          flattened.push(d);
+      let pdiff = (e as IDiffPatch).diff;
+      if (pdiff !== null) {
+        for (let p of pdiff) {
+          let d = shallowCopy(p);
+          d.key += lineOffset;
+          if (overlaps(flattened, d)) {
+            flattened[-1] = combineOps(flattened[-1], d);
+          } else {
+            flattened.push(d);
+          }
         }
       }
     } else {
@@ -165,6 +179,8 @@ function flattenStringDiff(val: string[] | string, diff: IDiffEntry[]): IDiffEnt
         let idx = et.key + et.length;
         d = opRemoveRange(lineOffset,
                           lineToChar[idx] - lineOffset);
+      } else {
+        throw 'Invalid string lines op: ' + e;
       }
       d.source = e.source;
 

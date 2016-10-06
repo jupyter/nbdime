@@ -4,7 +4,7 @@ module.exports = {
   context: __dirname,
   entry: './test/src/index.ts',
   output: {
-    path: __dirname + "/test/build",
+    path: __dirname + "/build",
     filename: "test.js",
     devtoolModuleFilenameTemplate: __dirname.replace('\\', '/') + '/[resource-path]'
   },
@@ -30,8 +30,8 @@ module.exports = {
 
   },
   resolve: {
-    // Add '.ts' and '.tsx' as resolvable extensions.
-    extensions: ['', '.ts', '.js'],
+    // Add '.ts' as resolvable extensions.
+    extensions: ['', '.webpack.js', '.web.js', '.js', '.ts'],
     modulesDirectories: ['node_modules']
   }
 }

@@ -309,8 +309,8 @@ class CellDiffWidget extends Panel {
     return this._model;
   }
 
-  protected _model: CellDiffModel = null;
-  protected _rendermime: IRenderMime = null;
+  protected _model: CellDiffModel;
+  protected _rendermime: IRenderMime;
 }
 
 
@@ -377,5 +377,5 @@ class NotebookDiffWidget extends Widget {
   }
 
   private _model: NotebookDiffModel;
-  private _rendermime: IRenderMime = null;
+  private _rendermime: IRenderMime;
 }

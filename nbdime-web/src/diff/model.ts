@@ -7,6 +7,10 @@ import {
 } from 'jupyterlab/lib/notebook/notebook/nbformat';
 
 import {
+  JSONObject, JSONArray
+} from 'phosphor/lib/algorithm/json';
+
+import {
   IDiffEntry, IDiffAddRange, IDiffRemoveRange, IDiffPatch,
 } from './diffentries';
 
@@ -163,7 +167,7 @@ export class StringDiffModel implements IStringDiffModel {
     this.collapsible = collapsible === true;
     if (this.collapsible) {
       this.collapsibleHeader = header ? header : '';
-      this.startCollapsed = collapsed;
+      this.startCollapsed = collapsed === true;
     }
   }
 
@@ -177,7 +181,7 @@ export class StringDiffModel implements IStringDiffModel {
   getLineChunks(): Chunk[] {
     let chunker = new LineChunker();
     let i = this.iterateDiffs();
-    for (let v = i.next(); v !== null; v = i.next()) {
+    for (let v = i.next(); v !== undefined; v = i.next()) {
       chunker.addDiff(v.range, v.isAddition);
     }
     return chunker.chunks;
@@ -214,7 +218,6 @@ namespace StringDiffModel {
   export
   interface IIterator<T> {
     next(): T;
-    done: boolean;
   }
 
   export
@@ -251,7 +254,7 @@ namespace StringDiffModel {
       } else {
         // Out of ranges!
         this.done = true;
-        return null;
+        return undefined;
       }
 
       if (isAddition) {
@@ -279,11 +282,11 @@ namespace StringDiffModel {
   class SyncedDiffIter implements IIterator<DiffIterValue> {
     static cmp(a: DiffIterValue, b: DiffIterValue,
                offsetA: number, offsetB: number) {
-      if (a === null && b === null) {
+      if (a === undefined && b === undefined) {
         return 0;
-      } else if (a === null) {
+      } else if (a === undefined) {
         return 1;
-      } else if (b === null) {
+      } else if (b === undefined) {
         return -1;
       }
       let lineA = a.range.from.line  + (a.isAddition ? offsetA : 0);
@@ -298,12 +301,16 @@ namespace StringDiffModel {
     }
 
     constructor(models: IStringDiffModel[]) {
-      this.models = models;
+      this.models = [];
       this.iterators = [];
       this.values = [];
       this.offsets = [];
       // Set up iterator and dummy chunkers for other models
       for (let m of models) {
+        if (m === null) {
+          continue;
+        }
+        this.models.push(m);
         let it = m.iterateDiffs();
         this.iterators.push(it);
         this.offsets.push(0);
@@ -327,9 +334,7 @@ namespace StringDiffModel {
       this.currentOffset = this.offsets[i];
       this.offsets[i] = this.iterators[i].editOffset;
       // Check if complete
-      if (ret === null) {
-        this.done = true;
-      } else {
+      if (ret !== undefined) {
         this.values[i] = this.iterators[i].next();
       }
       return ret;
@@ -340,8 +345,6 @@ namespace StringDiffModel {
     }
 
     currentOffset = 0;
-
-    done = false;
 
     protected i: number;
 
@@ -356,7 +359,7 @@ namespace StringDiffModel {
 /**
  * Creates a StringDiffModel based on a patch operation.
  *
- * If base is not a string, it is assumed to be a JSON object,
+ * If base is not a string, it is assumed to be a JSON object/array,
  * and it will be stringified according to JSON stringification
  * rules.
  */
@@ -444,7 +447,7 @@ export class OutputDiffModel implements IDiffModel {
     this.collapsible = collapsible === true;
     if (this.collapsible) {
       this.collapsibleHeader = header ? header : '';
-      this.startCollapsed = collapsed;
+      this.startCollapsed = collapsed === true;
     }
   }
 
@@ -721,11 +724,17 @@ function makeOutputModels(base: nbformat.IOutput[], remote: nbformat.IOutput[],
                           diff?: IDiffEntry[]) : OutputDiffModel[] {
   let models: OutputDiffModel[] = [];
   if (remote === null && !diff) {
+    if (base === null) {
+      throw 'Either base or remote need to be specififed!';
+    }
     // Cell deleted
     for (let o of base) {
       models.push(new OutputDiffModel(o, null));
     }
   } else if (base === null) {
+    if (remote === null) {
+      throw 'Either base or remote need to be specififed!';
+    }
     // Cell added
     for (let o of remote) {
       models.push(new OutputDiffModel(null, o));

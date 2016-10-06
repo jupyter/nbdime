@@ -170,8 +170,9 @@ function popPath(diffs: IDiffEntry[][], popInner?: boolean): {
   }
 
   // Check if ops and keys are equal for all non-null diffs
-  let op = diffs[i][0].op;
-  let key = diffs[i][0].key;
+  let d = diffs[i] as IDiffEntry[];
+  let op = d[0].op;
+  let key = d[0].key;
   for (let di of diffs) {
     if (di && di.length > 0) {
       // Note that while diff lists can have 2 entries, they should never cause
@@ -189,7 +190,8 @@ function popPath(diffs: IDiffEntry[][], popInner?: boolean): {
     if (popInner !== true) {
       for (let di of diffs) {
         if (di && di.length > 0 && (di.length !== 1 ||
-            (di[0] as IDiffPatch).diff.length !== 1)) {
+            !(di[0] as IDiffPatch).diff ||
+            ((di[0] as IDiffPatch).diff as IDiffEntry[]).length !== 1)) {
           return null;
         }
       }
@@ -261,32 +263,49 @@ function _getSubObject(obj: any, path: DecisionPath) {
 }
 
 
+function _combineDiffs(a: IDiffEntry[] | null, b: IDiffEntry[] | null): IDiffEntry[] {
+  if (a && b) {
+      return a.concat(b);
+    } else if (a) {
+      return a.slice();
+    } else if (b) {
+      return b.slice();
+    } else {
+      return [];
+    }
+}
+
+
 function resolveAction(base: any, decision: MergeDecision): IDiffEntry[] {
   let a = decision.action;
   if (a === 'base') {
     return [];   // no-op
   } else if (valueIn(a, ['local', 'either'])) {
-    return decision.localDiff.slice();
+    return decision.localDiff ? decision.localDiff.slice() : [];
   } else if (a === 'remote') {
-    return decision.remoteDiff.slice();
+    return decision.remoteDiff ? decision.remoteDiff.slice() : [];
   } else if (a === 'custom') {
-    return decision.customDiff.slice();
+    return decision.customDiff ? decision.customDiff.slice() : [];
   } else if (a === 'local_then_remote') {
-    return decision.localDiff.concat(decision.remoteDiff);
+    return _combineDiffs(decision.localDiff, decision.remoteDiff);
   } else if (a === 'remote_then_local') {
-    return decision.remoteDiff.concat(decision.localDiff);
+    return _combineDiffs(decision.remoteDiff, decision.localDiff);
   } else if (a === 'clear') {
-    let key = null;
-    for (let d of decision.localDiff.concat(decision.remoteDiff)) {
+    let key: string | number | null = null;
+    for (let d of _combineDiffs(decision.localDiff, decision.remoteDiff)) {
       if (key) {
         console.assert(key === d.key);
       } else {
         key = d.key;
       }
     }
-    let d = opReplace(key, makeClearedValue(base[key]));
-    d.source = {decision: decision, action: 'custom'};
-    return [d];
+    if (key) {
+      let d = opReplace(key, makeClearedValue(base[key]));
+      d.source = {decision: decision, action: 'custom'};
+      return [d];
+    } else {
+      return [];
+    }
   } else if (a === 'clear_parent') {
     if (typeof(base) === typeof([])) {
       let d = opRemoveRange(0, base.length);
@@ -340,7 +359,7 @@ function applyDecisions(base: any, decisions: MergeDecision[]): any {
   let parent: any = null;
   let lastKey: string | number = null;
   let resolved: any = null;
-  let diffs: IDiffEntry[] = null;
+  let diffs: IDiffEntry[] = [];
   // clear_parent actions should override other decisions on same obj, so
   // we need to track it
   let clearParent: boolean = false;
@@ -445,7 +464,7 @@ function _mergeTree(tree: DiffTree, sortedPaths: string[]): IDiffEntry[] {
       let newTrunk = _mergeTree(tree, sortedPaths.slice(i + 1));
       nextPath = tree[sortedPaths[sortedPaths.length - 1]].path;
       let prefix = findSharedPrefix(path, nextPath);
-      let pl = prefix.length;
+      let pl = prefix ? prefix.length : 0;
       trunk = pushPath(trunk, path.slice(pl)).concat(
         pushPath(newTrunk, nextPath.slice(pl)));
       break;  // Recursion will exhaust sortedPaths

@@ -399,13 +399,13 @@ class CellMergeWidget extends Panel {
       let metadataChanged = false;
       let outputsChanged = false;
       for (let m of model.subModels) {
-        if (m.deleted) {
+        if (!m || m.deleted) {
           continue;
         }
         metadataChanged = metadataChanged || (
-          m && m.metadata && !m.metadata.unchanged);
+          !!m.metadata && !m.metadata.unchanged);
 
-        if (m && m.outputs && m.outputs.length > 0) {
+        if (m.outputs && m.outputs.length > 0) {
           for (let o of m.outputs) {
             outputsChanged = outputsChanged || !o.unchanged;
           }
@@ -510,8 +510,8 @@ class CellMergeWidget extends Panel {
     return this._model;
   }
 
-  protected _model: CellMergeModel = null;
-  protected _rendermime: IRenderMime = null;
+  protected _model: CellMergeModel;
+  protected _rendermime: IRenderMime;
 }
 
 /**
@@ -580,5 +580,5 @@ class NotebookMergeWidget extends DragDropPanel {
   }
 
   private _model: NotebookMergeModel;
-  private _rendermime: IRenderMime = null;
+  private _rendermime: IRenderMime;
 }

@@ -131,8 +131,8 @@ function createNbdimeMergeView(
       local?: IStringDiffModel, merged?: IStringDiffModel): MergeView {
   let opts: IMergeViewEditorConfiguration = {remote: remote, orig: null};
   opts.collapseIdentical = true;
-  opts.local = local ? local : null;
-  opts.merged = merged ? merged : null;
+  opts.local = local ? local : undefined;
+  opts.merged = merged ? merged : undefined;
   let mergeview = new MergeView(opts);
   let editors: DiffView[] = [];
   if (mergeview.left) {
@@ -287,7 +287,7 @@ class DiffView {
   }
 
   buildGap(): HTMLElement {
-    let lock = this.lockButton = elt('div', null, 'CodeMirror-merge-scrolllock');
+    let lock = this.lockButton = elt('div', undefined, 'CodeMirror-merge-scrolllock');
     lock.title = 'Toggle locked scrolling';
     let lockWrap = elt('div', [lock], 'CodeMirror-merge-scrolllock-wrap');
     let self: DiffView = this;
@@ -405,16 +405,19 @@ class DiffView {
 
   updateMarks(editor: CodeMirror.Editor, diff: DiffRangePos[],
               markers: any[], type: DIFF_OP) {
-    let classes = this.classes;
-    let givenClasses = classes !== null;
-    if (!givenClasses) {
+    let classes: DiffClasses;
+    if (this.classes === null) {
+      // Only store prefixes here, will be completed later
       classes = copyObj(mergeClassPrefix) as DiffClasses;
+    } else {
+      classes = this.classes;
     }
 
     let self = this;
     function markChunk(editor: CodeMirror.Editor, from: number, to: number,
                        sources: ChunkSource[]) {
-      if (!givenClasses && sources.length > 0) {
+      if (self.classes === null && sources.length > 0) {
+        // Complete merge class prefixes here
         classes = copyObj(mergeClassPrefix) as DiffClasses;
         // First, figure out 'action' state of chunk
         let s: string = sources[0].action;
@@ -795,7 +798,6 @@ class MergeView extends Panel {
     let left: DiffView = this.left = null;
     let right: DiffView = this.right = null;
     let merge: DiffView = this.merge = null;
-    this.base = null;
     let self = this;
     this.diffViews = [];
     this.aligners = [];
@@ -815,25 +817,26 @@ class MergeView extends Panel {
      *     - Partial changes: Use base + right editor
      */
 
-    let hasMerge = local !== null && merged !== null;
+    let hasMerge = !!local && !!merged;
     let dvOptions = options as CodeMirror.MergeView.MergeViewEditorConfiguration;
 
     if (hasMerge) {
       options.gutters = [GUTTER_CONFLICT_CLASS, GUTTER_PICKER_CLASS];
     }
 
-    let showBase = options.showBase !== false;
-    if (showBase || !hasMerge) {
-      this.base = new Editor(copyObj(options));
-      this.base.addClass('CodeMirror-merge-pane');
-      this.base.addClass('CodeMirror-merge-pane-base');
-      if (hasMerge) {
-        this.base.editor.setOption('readOnly', true);
-      }
+    this.base = new Editor(copyObj(options));
+    this.base.addClass('CodeMirror-merge-pane');
+    this.base.addClass('CodeMirror-merge-pane-base');
+    if (hasMerge) {
+      this.base.editor.setOption('readOnly', true);
     }
 
     if (hasMerge) {
       console.assert(remote.base === local.base);
+      let showBase = options.showBase !== false;
+      if (!showBase) {
+        this.base.node.style.display = 'hidden';
+      }
 
       let leftWidget: Widget;
       if (local.remote === null) {
@@ -1155,6 +1158,7 @@ function findPrevDiff(chunks: Chunk[], start: number, isOrig: boolean): number {
       return to;
     }
   }
+  return null;
 }
 
 function findNextDiff(chunks: Chunk[], start: number, isOrig: boolean): number {
@@ -1165,6 +1169,7 @@ function findNextDiff(chunks: Chunk[], start: number, isOrig: boolean): number {
       return from;
     }
   }
+  return null;
 }
 
 function goNearbyDiff(cm: CodeMirror.Editor, dir): void | any {

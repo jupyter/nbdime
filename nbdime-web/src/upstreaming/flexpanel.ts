@@ -998,7 +998,7 @@ namespace FlexLayout {
     if (value === 'auto') {
       return 'auto';
     } else {
-      return value ? parseInt(value.replace('px', ''), 10) : undefined;
+      return value ? parseInt(value.replace('px', ''), 10) : null;
     }
   }
 
@@ -1013,6 +1013,8 @@ namespace FlexLayout {
   function setSizeBasis(widget: Widget, value: number | 'auto', fit=true) {
     if (value === 'auto') {
       widget.node.style.flexBasis = value as string;
+    } else if (value === null) {
+      widget.node.style.flexBasis = '';
     } else {
       widget.node.style.flexBasis = value.toString() + 'px';
     }

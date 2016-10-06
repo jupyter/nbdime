@@ -108,7 +108,7 @@ class DecisionStringDiffModel extends StringDiffModel {
     let models = [this as IStringDiffModel].concat(this._sourceModels);
     let chunker = new LineChunker();
     let iter = new StringDiffModel.SyncedDiffIter(models);
-    for (let v = iter.next(); !iter.done; v = iter.next()) {
+    for (let v = iter.next(); v !== undefined; v = iter.next()) {
       if (iter.currentModel() === this) {
         // Chunk diffs in own model normally
         chunker.addDiff(v.range, v.isAddition);
@@ -129,7 +129,7 @@ class DecisionStringDiffModel extends StringDiffModel {
     let diff = buildDiffs(this.rawBase, this.decisions, 'merged');
     let out = patchStringified(this.rawBase, diff);
     this._additions = raw2Pos(out.additions, out.remote);
-    this._deletions = raw2Pos(out.deletions, this.base);
+    this._deletions = raw2Pos(out.deletions, this.base || '');
     this._remote = out.remote;
   }
 
@@ -156,7 +156,9 @@ function createPatchedCellDecisionDiffModel(
   for (let md of decisions) {
     if (md.localPath.length === 0) {
       let val = popPath(md.diffs, true);
-      console.assert(val !== null);
+      if (val === null) {
+        throw 'Invalid diffs for patching cell!';
+      }
       md.diffs = val.diffs;
       md.pushPath(val.key);
     }
@@ -164,14 +166,16 @@ function createPatchedCellDecisionDiffModel(
 
   source = new DecisionStringDiffModel(
     base.source, filterDecisions(decisions, ['source'], 2),
-    [local.source, remote.source]);
+    [local ? local.source : null,
+     remote ? remote.source : null]);
   setMimetypeFromCellType(source, base, mimetype);
 
   let metadataDec = filterDecisions(decisions, ['metadata'], 2);
   if (metadataDec.length > 0) {
     metadata = new DecisionStringDiffModel(
       base.metadata, metadataDec,
-      [local.metadata, remote.metadata]);
+      [local ? local.metadata : null,
+       remote ? remote.metadata : null]);
   }
 
   if (base.cell_type === 'code' && (base as nbformat.ICodeCell).outputs) {
@@ -319,6 +323,9 @@ abstract class ObjectMergeModel<ObjectType, DiffModelType> {
   protected splitPatch(md: MergeDecision, patch: IDiffPatch, local: boolean): MergeDecision[] {
     // Split patch on source, metadata and outputs, and make new decisions
     let diff = patch.diff;
+    if (!diff) {
+      return [];
+    }
     let out: MergeDecision[] = [];
     for (let d of diff) {
       if (this._whitelist && !valueIn(d.key, this._whitelist)) {
@@ -387,10 +394,14 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
   deleteCell: boolean;
 
   get agreedSource(): boolean {
-    return this.local.source.remote === this.remote.source.remote;
+    return !!this.local && !!this.remote &&
+      this.local.source.remote === this.remote.source.remote;
   }
 
   get agreedMetadata(): boolean {
+    if (!this.local || !this.remote) {
+      return false;
+    }
     if (!this.local.metadata || !this.remote.metadata) {
       return !this.local.metadata && !this.remote.metadata;
     }
@@ -398,6 +409,9 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
   }
 
   get agreedOutputs(): boolean {
+    if (!this.local || !this.remote) {
+      return false;
+    }
     let lo = this.local.outputs;
     let ro = this.remote.outputs;
     let localEmpty = !lo || lo.length === 0;
@@ -439,7 +453,7 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
     let ldlen = decision.localDiff ? decision.localDiff.length : 0;
     let rdlen = decision.remoteDiff ? decision.remoteDiff.length : 0;
 
-    // Check if cell level or not:
+    // Check if descision is on cell level or not:
     if (arraysEqual(decision.absolutePath, ['cells']) ) {
       // Cell level decision (addrange/removerange):
       let decisions = this._applyCellDecision(decision);
@@ -521,7 +535,9 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
     if (!ld) {
       // 1. or 2.:
       this._local = null;
-      console.assert(md.remoteDiff.length === 1);
+      if (!md.remoteDiff || md.remoteDiff.length !== 1) {
+        throw 'Merge decision does not conform to expectation: ' + md;
+      }
       if (this.base === null) {
         // 1.
         console.assert(md.remoteDiff[0].op === 'addrange');
@@ -537,7 +553,9 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
     } else if (!rd) {
       // 1. or 2.:
       this._remote = null;
-      console.assert(md.localDiff.length === 1);
+      if (!md.localDiff || md.localDiff.length !== 1) {
+        throw 'Merge decision does not conform to expectation: ' + md;
+      }
       if (this.base === null) {
         // 1.
         console.assert(md.localDiff[0].op === 'addrange');
@@ -575,6 +593,10 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
         let ops = [md.localDiff[0].op, md.remoteDiff[0].op];
         console.assert(
           valueIn('removerange', ops) && valueIn('patch', ops));
+        if (this.base === null) {
+          throw 'Invalid merge decision, ' +
+            'cannot have null base for deleted cell: ' + md;
+        }
         if (ops[0] === 'removerange') {
           this._local = createDeletedCellDiffModel(this.base, this.mimetype);
           this.deleteCell = md.action === 'local';
@@ -717,7 +739,7 @@ function splitCellRemovals(mergeDecisions: MergeDecision[]): MergeDecision[] {
 
     if (dl && !dr || dr && !dl) {
       // One-way diff
-      let d = dl ? dl : dr;
+      let d = (dl ? dl : dr) as IDiffEntry;
 
       if (d.op === 'removerange' && (d as IDiffRemoveRange).length > 1) {
         // Found a one-way diff to split!
@@ -839,8 +861,8 @@ function splitCellInsertions(mergeDecisions: MergeDecision[]): MergeDecision[] {
 
     if (dl && !dr || dr && !dl) {
       // One-way diff
-      let d = dl ? md.localDiff[0] : md.remoteDiff[0];
-      let insert = (d as IDiffAddRange).valuelist;
+      let d = (dl ? dl : dr) as IDiffAddRange;
+      let insert = d.valuelist;
       for (let v of insert) {
         output.push(makeSplitPart(md, v, !!dl, !!dr));
       }
