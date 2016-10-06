@@ -583,7 +583,10 @@ function highlightChars(editor: CodeMirror.Editor, ranges: DiffRangePos[],
 // Updating the gap between editor and original
 
 
-function getMatchingOrigLine(editLine: number, chunks: Chunk[]): number | null {
+/**
+ * From a line in base, find the matching line in another editor by chunks.
+ */
+function getMatchingOrigLine(editLine: number, chunks: Chunk[]): number {
   let editStart = 0;
   let origStart = 0;
   // Start values correspond to either the start of the chunk,
@@ -592,7 +595,7 @@ function getMatchingOrigLine(editLine: number, chunks: Chunk[]): number | null {
   for (let i = 0; i < chunks.length; i++) {
     let chunk = chunks[i];
     if (chunk.baseTo > editLine && chunk.baseFrom <= editLine) {
-      return null;
+      return 0;
     }
     if (chunk.baseFrom > editLine) {
       break;
@@ -1041,7 +1044,7 @@ function collapseSingle(cm: CodeMirror.Editor, from: number, to: number): {mark:
   return {mark: mark, clear: clear};
 }
 
-function collapseStretch(size: number, editors: {line: number | null, cm: CodeMirror.Editor}[]): CodeMirror.TextMarker {
+function collapseStretch(size: number, editors: {line: number, cm: CodeMirror.Editor}[]): CodeMirror.TextMarker {
   let marks: {mark: CodeMirror.TextMarker, clear: () => void}[] = [];
   function clear() {
     for (let i = 0; i < marks.length; i++) {
@@ -1098,7 +1101,7 @@ function collapseIdenticalStretches(mv: MergeView, margin?: boolean | number): v
         // Just finding size
       }
       if (size > margin) {
-        let editors: {line: number | null, cm: CodeMirror.Editor}[] =
+        let editors: {line: number, cm: CodeMirror.Editor}[] =
           [{line: line, cm: edit}];
         if (mv.left) {
           editors.push({line: getMatchingOrigLine(line, mv.left.chunks),
