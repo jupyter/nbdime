@@ -546,6 +546,9 @@ abstract class DragDropPanelBase extends DropPanel {
 
     // Check for a drag initialization.
     let data = this._clickData;
+    if (!data) {
+      throw 'Missing drag data';
+    }
     let dx = Math.abs(event.clientX - data.pressX);
     let dy = Math.abs(event.clientY - data.pressY);
     if (dx < DRAG_THRESHOLD && dy < DRAG_THRESHOLD) {
