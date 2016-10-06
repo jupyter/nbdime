@@ -7,7 +7,7 @@ import {
 } from 'jupyterlab/lib/notebook/notebook/nbformat';
 
 import {
-  DiffOp, IDiffEntry, IDiffAddRange, IDiffRemoveRange, IDiffPatch,
+  IDiffEntry, IDiffAddRange, IDiffRemoveRange, IDiffPatch,
 } from './diffentries';
 
 import {
@@ -745,20 +745,20 @@ function makeOutputModels(base: nbformat.IOutput[], remote: nbformat.IOutput[],
         // Add unchanged outputs
         models.push(new OutputDiffModel(o, o));
       }
-      if (d.op === DiffOp.SEQINSERT) {
+      if (d.op === 'addrange') {
         // Outputs added
         for (let o of (d as IDiffAddRange).valuelist) {
           models.push(new OutputDiffModel(null, o));
         }
         skip = 0;
-      } else if (d.op === DiffOp.SEQDELETE) {
+      } else if (d.op === 'removerange') {
         // Outputs removed
         let len = (d as IDiffRemoveRange).length;
         for (let i = index; i < index + len; i++) {
           models.push(new OutputDiffModel(base[i], null));
         }
         skip = len;
-      } else if (d.op === DiffOp.PATCH) {
+      } else if (d.op === 'patch') {
         // Output changed
         models.push(new OutputDiffModel(
           base[index], null, (d as IDiffPatch).diff));
@@ -828,21 +828,21 @@ export class NotebookDiffModel {
       }
 
       // Process according to diff type:
-      if (op === DiffOp.SEQINSERT) {
+      if (op === 'addrange') {
         // One or more inserted/added cells:
         for (let ei of (e as IDiffAddRange).valuelist) {
           this.cells.push(createAddedCellDiffModel(
             ei as nbformat.ICell, this.mimetype));
         }
         skip = 0;
-      } else if (op === DiffOp.SEQDELETE) {
+      } else if (op === 'removerange') {
         // One or more removed/deleted cells:
         skip = (e as IDiffRemoveRange).length;
         for (let i=index; i < index + skip; i++) {
           this.cells.push(createDeletedCellDiffModel(
             base.cells[i], this.mimetype));
         }
-      } else if (op === DiffOp.PATCH) {
+      } else if (op === 'patch') {
         // A cell has changed:
         this.cells.push(createPatchedCellDiffModel(
           base.cells[index], (e as IDiffPatch).diff, this.mimetype));

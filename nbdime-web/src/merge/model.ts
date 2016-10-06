@@ -7,7 +7,7 @@ import {
 } from 'jupyterlab/lib/notebook/notebook/nbformat';
 
 import {
-  IDiffAddRange, IDiffPatch, IDiffRemoveRange, DiffOp, IDiffEntry
+  IDiffAddRange, IDiffPatch, IDiffRemoveRange, IDiffEntry
 } from '../diff/diffentries';
 
 import {
@@ -524,7 +524,7 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
       console.assert(md.remoteDiff.length === 1);
       if (this.base === null) {
         // 1.
-        console.assert(md.remoteDiff[0].op === DiffOp.SEQINSERT);
+        console.assert(md.remoteDiff[0].op === 'addrange');
         let v = (md.remoteDiff[0] as IDiffAddRange).valuelist[0];
         this._remote = createAddedCellDiffModel(v, this.mimetype);
         this._merged = createAddedCellDiffModel(v, this.mimetype);
@@ -540,7 +540,7 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
       console.assert(md.localDiff.length === 1);
       if (this.base === null) {
         // 1.
-        console.assert(md.localDiff[0].op === DiffOp.SEQINSERT);
+        console.assert(md.localDiff[0].op === 'addrange');
         let v = (md.localDiff[0] as IDiffAddRange).valuelist[0];
         this._local = createAddedCellDiffModel(v, this.mimetype);
         this._merged = createAddedCellDiffModel(v, this.mimetype);
@@ -574,8 +574,8 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
         // 3., by method of elimination
         let ops = [md.localDiff[0].op, md.remoteDiff[0].op];
         console.assert(
-          valueIn(DiffOp.SEQDELETE, ops) && valueIn(DiffOp.PATCH, ops));
-        if (ops[0] === DiffOp.SEQDELETE) {
+          valueIn('removerange', ops) && valueIn('patch', ops));
+        if (ops[0] === 'removerange') {
           this._local = createDeletedCellDiffModel(this.base, this.mimetype);
           this.deleteCell = md.action === 'local';
           // The patch op will be on cell level. Split it on sub keys!
@@ -690,9 +690,9 @@ function splitCellRemovals(mergeDecisions: MergeDecision[]): MergeDecision[] {
                                local: boolean, remote: boolean): MergeDecision {
     let newMd = new MergeDecision(md.absolutePath.slice(), null, null,
                                   md.action, md.conflict);
-    let newDiff = [{
+    let newDiff: IDiffRemoveRange[] = [{
         key: key,
-        op: DiffOp.SEQDELETE,
+        op: 'removerange',
         length: 1
     }];
     console.assert(local || remote);
@@ -719,7 +719,7 @@ function splitCellRemovals(mergeDecisions: MergeDecision[]): MergeDecision[] {
       // One-way diff
       let d = dl ? dl : dr;
 
-      if (d.op === DiffOp.SEQDELETE && (d as IDiffRemoveRange).length > 1) {
+      if (d.op === 'removerange' && (d as IDiffRemoveRange).length > 1) {
         // Found a one-way diff to split!
         for (let i = 0; i < (d as IDiffRemoveRange).length; ++i) {
           output.push(makeSplitPart(md, (d.key as number) + i, !!dl, !!dr));
@@ -731,7 +731,7 @@ function splitCellRemovals(mergeDecisions: MergeDecision[]): MergeDecision[] {
       }
     } else if (dr && dl) {
       // Two way diff, keys need to be matched
-      if (dl.op !== DiffOp.SEQDELETE && dr.op !== DiffOp.SEQDELETE) {
+      if (dl.op !== 'removerange' && dr.op !== 'removerange') {
         // Not a removerange type:
         output.push(md);
         continue;
@@ -751,10 +751,10 @@ function splitCellRemovals(mergeDecisions: MergeDecision[]): MergeDecision[] {
         }
       } else {
         // One side has removerange, the other a patch op (implied)
-        let remLocal = dl.op === DiffOp.SEQDELETE;
+        let remLocal = dl.op === 'removerange';
         let rOp = (remLocal ? dl : dr) as IDiffRemoveRange;
         let pOp = (remLocal ? dr : dl) as IDiffPatch;
-        console.assert(pOp.op === DiffOp.PATCH);
+        console.assert(pOp.op === 'patch');
 
         let pidx = pOp.key as number;
         let start = rOp.key as number;
@@ -787,10 +787,10 @@ function splitCellInsertions(mergeDecisions: MergeDecision[]): MergeDecision[] {
                                local: boolean, remote: boolean): MergeDecision {
     let newMd = new MergeDecision(md.absolutePath.slice(), null, null,
                                   md.action, md.conflict);
-    let key = (local ? md.localDiff : md.remoteDiff)[0].key;
-    let newDiff = [{
+    let key = (local ? md.localDiff : md.remoteDiff)[0].key as number;
+    let newDiff: IDiffAddRange[] = [{
         key: key,
-        op: DiffOp.SEQINSERT,
+        op: 'addrange',
         valuelist: [value]
     }];
 
@@ -815,7 +815,7 @@ function splitCellInsertions(mergeDecisions: MergeDecision[]): MergeDecision[] {
     let correctType = true;
     if (md.localDiff) {
       for (let dl of md.localDiff) {
-        if (dl.op !== DiffOp.SEQINSERT) {
+        if (dl.op !== 'addrange') {
           correctType = false;
           break;
         }
@@ -823,7 +823,7 @@ function splitCellInsertions(mergeDecisions: MergeDecision[]): MergeDecision[] {
     }
     if (md.remoteDiff) {
       for (let dl of md.remoteDiff) {
-        if (dl.op !== DiffOp.SEQINSERT) {
+        if (dl.op !== 'addrange') {
           correctType = false;
           break;
         }
@@ -1045,7 +1045,7 @@ class NotebookMergeModel {
           }
           // All keys should be the same since we run splitCellChunks first
           idx = (di[0].key as number);
-          if (di[0].op === DiffOp.SEQINSERT) {
+          if (di[0].op === 'addrange') {
             // Rely on preprocessing splitting to cell level!
             let insertedCell = new CellMergeModel(null, [md], this.mimetype);
 

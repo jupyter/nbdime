@@ -14,43 +14,15 @@ import {
  * The different diff operations available
  */
 export
-namespace DiffOp {
-  /**
-   * An added object entry
-   */
-  export const ADD = 'add';
-
-  /**
-   * A removed object entry
-   */
-  export const REMOVE = 'remove';
-
-  /**
-   * A replaced object entry
-   */
-  export const REPLACE = 'replace';
-
-  /**
-   * A patched entry (object entry or list entry)
-   */
-  export const PATCH = 'patch';
-
-  /**
-   * An added sequence of list entries, or an added substring
-   */
-  export const SEQINSERT = 'addrange';
-
-  /**
-   * A removed sequence of list entries, or a removed substring
-   */
-  export const SEQDELETE = 'removerange';
-}
+type DiffOp = 'add' | 'remove' | 'replace' | 'patch' |
+  'addrange' | 'removerange';
 
 
 /**
- * Base class for all diff entries
+ * Base interface for all diff entries
  */
-export interface IDiffEntryBase {
+export
+interface IDiffEntryBase {
   /**
    * The key of the diff entry: Either the field name in an object, or the
    * index in a list/string.
@@ -60,7 +32,7 @@ export interface IDiffEntryBase {
   /**
    * A string identifying the diff operation type, as defined by DiffOp.
    */
-  op: string;
+  op: DiffOp;
 
   /**
    * Optional: Source of diff, for use when merging.
@@ -74,8 +46,10 @@ export interface IDiffEntryBase {
 /**
  * Diff representing an added sequence of list entries, or an added substring
  */
-export interface IDiffAddRange extends IDiffEntryBase {
+export
+interface IDiffAddRange extends IDiffEntryBase {
   key: number;
+  op: 'addrange';
   /**
    * The sequence of values that were added
    */
@@ -86,6 +60,7 @@ export interface IDiffAddRange extends IDiffEntryBase {
  * Diff representing an added object entry
  */
 export interface IDiffAdd extends IDiffEntryBase {
+  op: 'add';
   /**
    * The value that was added
    */
@@ -97,7 +72,7 @@ export interface IDiffAdd extends IDiffEntryBase {
  * Diff representing a removed object entry
  */
 export interface IDiffRemove extends IDiffEntryBase {
-  // No extra info needed
+  op: 'remove';
 }
 
 
@@ -105,6 +80,7 @@ export interface IDiffRemove extends IDiffEntryBase {
  * Diff representing a replaced object entry
  */
 export interface IDiffReplace extends IDiffEntryBase {
+  op: 'replace';
   /**
    * The new value
    */
@@ -116,6 +92,7 @@ export interface IDiffReplace extends IDiffEntryBase {
  * Diff representing a removed sequence of list entries, or a removed substring
  */
 export interface IDiffRemoveRange extends IDiffEntryBase {
+  op: 'removerange';
   key: number;
 
   /**
@@ -129,6 +106,7 @@ export interface IDiffRemoveRange extends IDiffEntryBase {
  * Diff representing a patched entry (object entry or list entry)
  */
 export interface IDiffPatch extends IDiffEntryBase {
+  op: 'patch';
   /**
    * The collection of sub-diffs describing the patch of the object
    */
@@ -144,37 +122,37 @@ export type IDiffEntry = (IDiffAddRange | IDiffRemoveRange | IDiffPatch | IDiffA
 /** Create a replacement diff entry */
 export
 function opReplace(key: string | number, value: any): IDiffReplace {
-  return {op: DiffOp.REPLACE, key: key, value: value};
+  return {op: 'replace', key: key, value: value};
 }
 
 /** Create an addition diff entry */
 export
 function opAdd(key: string | number, value: any): IDiffAdd {
-  return {op: DiffOp.ADD, key: key, value: value};
+  return {op: 'add', key: key, value: value};
 }
 
 /** Create a removal diff entry */
 export
 function opRemove(key: string | number): IDiffRemove {
-  return {op: DiffOp.REMOVE, key: key};
+  return {op: 'remove', key: key};
 }
 
 /** Create a removal diff entry */
 export
 function opAddRange(key: number, valuelist: string | any[]): IDiffAddRange {
-  return {op: DiffOp.SEQINSERT, key: key, valuelist: valuelist};
+  return {op: 'addrange', key: key, valuelist: valuelist};
 }
 
 /** Create a range removal diff entry */
 export
 function opRemoveRange(key: number, length: number): IDiffRemoveRange {
-  return {op: DiffOp.SEQDELETE, key: key, length: length};
+  return {op: 'removerange', key: key, length: length};
 }
 
 /** Create a range removal diff entry */
 export
 function opPatch(key: string | number, diff: IDiffEntry[]): IDiffPatch {
-  return {op: DiffOp.PATCH, key: key, diff: diff};
+  return {op: 'patch', key: key, diff: diff};
 }
 
 
@@ -188,11 +166,11 @@ function validateSequenceOp(base: Array<any> | string, entry: IDiffEntry): void 
       throw 'Invalid patch sequence op: Key is not a number: ' + entry.key;
   }
   let index = entry.key as number;
-  if (op === DiffOp.SEQINSERT) {
+  if (op === 'addrange') {
     if (index < 0 || index > base.length || isNaN(index)) {
       throw 'Invalid add range diff op: Key out of range: ' + index;
     }
-  } else if (op === DiffOp.SEQDELETE) {
+  } else if (op === 'removerange') {
     if (index < 0 || index >= base.length || isNaN(index)) {
       throw 'Invalid remove range diff op: Key out of range: ' + index;
     }
@@ -200,7 +178,7 @@ function validateSequenceOp(base: Array<any> | string, entry: IDiffEntry): void 
     if (index + skip > base.length || isNaN(index)) {
       throw 'Invalid remove range diff op: Range too long!';
     }
-  } else if (op === DiffOp.PATCH) {
+  } else if (op === 'patch') {
     if (index < 0 || index >= base.length || isNaN(index)) {
       throw 'Invalid patch diff op: Key out of range: ' + index;
     }
@@ -220,19 +198,19 @@ function validateObjectOp(base: Object, entry: IDiffEntry, keys: string[]): void
   }
   let key = entry.key as string;
 
-  if (op === DiffOp.ADD) {
+  if (op === 'add') {
     if (valueIn(key, keys)) {
       throw 'Invalid add key diff op: Key already present: ' + key;
     }
-  } else if (op === DiffOp.REMOVE) {
+  } else if (op === 'remove') {
     if (!valueIn(key, keys)) {
       throw 'Invalid remove key diff op: Missing key: ' + key;
     }
-  } else if (op === DiffOp.REPLACE) {
+  } else if (op === 'replace') {
     if (!valueIn(key, keys)) {
       throw 'Invalid replace key diff op: Missing key: ' + key;
     }
-  } else if (op === DiffOp.PATCH) {
+  } else if (op === 'patch') {
     if (!valueIn(key, keys)) {
       throw 'Invalid patch key diff op: Missing key: ' + key;
     }

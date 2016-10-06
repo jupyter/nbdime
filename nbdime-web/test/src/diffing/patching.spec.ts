@@ -9,7 +9,7 @@ import {
 
 import {
   IDiffEntry, IDiffAdd, IDiffRemove, IDiffReplace,
-  IDiffPatch, IDiffAddRange, IDiffRemoveRange, DiffOp
+  IDiffPatch, IDiffAddRange, IDiffRemoveRange
 } from '../../../src/diff/diffentries';
 
 import {
@@ -18,27 +18,27 @@ import {
 
 
 function makeAddRange(key: number, values: string | any[]) : IDiffAddRange {
-  return {key: key, op: DiffOp.SEQINSERT, valuelist: values, source: null};
+  return {key: key, op: 'addrange', valuelist: values, source: null};
 }
 
 function makeRemoveRange(key: number, length: number) : IDiffRemoveRange {
-  return {key: key, op: DiffOp.SEQDELETE, length: length, source: null};
+  return {key: key, op: 'removerange', length: length, source: null};
 }
 
 function makeAdd(key: number | string, value: any) : IDiffAdd {
-  return {key: key, op: DiffOp.ADD, value: value, source: null};
+  return {key: key, op: 'add', value: value, source: null};
 }
 
 function makeRemove(key: number | string) : IDiffRemove {
-  return {key: key, op: DiffOp.REMOVE, source: null};
+  return {key: key, op: 'remove', source: null};
 }
 
 function makeReplace(key: number | string, value: any) : IDiffReplace {
-  return {key: key, op: DiffOp.REPLACE, value: value, source: null};
+  return {key: key, op: 'replace', value: value, source: null};
 }
 
 function makePatch(key: number | string, diff: IDiffEntry[]) : IDiffPatch {
-  return {key: key, op: DiffOp.PATCH, diff: diff, source: null};
+  return {key: key, op: 'patch', diff: diff, source: null};
 }
 
 
@@ -878,7 +878,7 @@ describe('nbdime', () => {
 
       it('should fail to patch a string with an invalid character diff op', () => {
         let base = 'abc\ndef\ngh\n';
-        let diff = [makePatch(0, [{op: 'typo', value: 22, key: 0}])];
+        let diff = [makePatch(0, [{op: 'typo', value: 22, key: 0}] as any)];
         expect(patch).withArgs(base, diff).to.throwException(/Invalid op: typo/);
       });
 

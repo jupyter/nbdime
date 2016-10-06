@@ -12,7 +12,7 @@ import {
 
 import {
   IDiffEntry, IDiffAdd, IDiffPatch, IDiffAddRange, IDiffRemoveRange,
-  DiffOp, validateObjectOp, validateSequenceOp
+  validateObjectOp, validateSequenceOp
 } from '../diff/diffentries';
 
 import {
@@ -86,15 +86,15 @@ function patchSequence(base: Array<any>, diff: IDiffEntry[]): Array<any> {
       patched.push(deepCopy(value));
     }
 
-    if (op === DiffOp.SEQINSERT) {
+    if (op === 'addrange') {
       // Extend with new values directly
       patched = patched.concat(
         (e as IDiffAddRange).valuelist as Array<any>);
       skip = 0;
-    } else if (op === DiffOp.SEQDELETE) {
+    } else if (op === 'removerange') {
       // Delete a number of values by skipping
       skip = (e as IDiffRemoveRange).length;
-    } else if (op === DiffOp.PATCH) {
+    } else if (op === 'patch') {
       patched.push(patch(base[index], (e as IDiffPatch).diff));
       skip = 1;
     }
@@ -127,14 +127,14 @@ function patchObject(base: Object, diff: IDiffEntry[]) : Object {
       let op = e.op;
       let key = e.key as string;
 
-      if (op === DiffOp.ADD) {
+      if (op === 'add') {
         patched[key] = (e as IDiffAdd).value;
-      } else if (op === DiffOp.REMOVE) {
+      } else if (op === 'remove') {
         keysToCopy.splice(keysToCopy.indexOf(key), 1);   // Remove key
-      } else if (op === DiffOp.REPLACE) {
+      } else if (op === 'replace') {
         keysToCopy.splice(keysToCopy.indexOf(key), 1);   // Remove key
         patched[key] = (e as IDiffAdd).value;
-      } else if (op === DiffOp.PATCH) {
+      } else if (op === 'patch') {
         keysToCopy.splice(keysToCopy.indexOf(key), 1);   // Remove key
         patched[key] = patch(base[key], (e as IDiffPatch).diff);
       }
@@ -217,10 +217,10 @@ function patchStringifiedObject(base: Object, diff: IDiffEntry[], level: number)
       validateObjectOp(base, e, baseKeys);
       let op = e.op;
 
-      if (valueIn(op, [DiffOp.ADD, DiffOp.REPLACE, DiffOp.REMOVE])) {
+      if (valueIn(op, ['add', 'replace', 'remove'])) {
         // Replace is simply an add + remove, but without modifying keystring
-        let isReplace = op === DiffOp.REPLACE;
-        if (valueIn(op, [DiffOp.ADD, DiffOp.REPLACE])) {
+        let isReplace = op === 'replace';
+        if (valueIn(op, ['add', 'replace'])) {
           let valr = stringify((e as IDiffAdd).value, level + 1, false) +
               postfix;
           let start = remote.length;
@@ -234,14 +234,14 @@ function patchStringifiedObject(base: Object, diff: IDiffEntry[], level: number)
           // Check if postfix should be included or not
           if (!_entriesAfter(remainingKeys, ops, true) || isReplace) {
             length -= postfix.length;
-            if (op === DiffOp.ADD) {
+            if (op === 'add') {
               length += 1;  // Newline will still be added
             }
           }
           additions.push(new DiffRangeRaw(start, length, e.source));
           remote += keyString + valr;
         }
-        if (valueIn(op, [DiffOp.REMOVE, DiffOp.REPLACE])) {
+        if (valueIn(op, ['remove', 'replace'])) {
           let valb = stringify(map[key], level + 1, false) + postfix;
           let start = baseIndex;
           let length = valb.length;
@@ -254,7 +254,7 @@ function patchStringifiedObject(base: Object, diff: IDiffEntry[], level: number)
           // Check if postfix should be included or not
           if (!_entriesAfter(remainingKeys, ops, false) || isReplace) {
             length -= postfix.length;
-            if (op === DiffOp.REMOVE) {
+            if (op === 'remove') {
               length += 1; // Newline will still be removed
             }
           }
@@ -262,7 +262,7 @@ function patchStringifiedObject(base: Object, diff: IDiffEntry[], level: number)
           baseIndex += keyString.length + valb.length;
           baseKeys.splice(baseKeys.indexOf(key), 1);
         }
-      } else if (op === DiffOp.PATCH) {
+      } else if (op === 'patch') {
         let pd = patchStringified(map[key], (e as IDiffPatch).diff, level + 1);
         let valr = pd.remote;
         // Insert key string:
@@ -331,7 +331,7 @@ function patchStringifiedList(base: Array<any>, diff: IDiffEntry[], level: numbe
       baseIndex += unchanged.length;
     }
 
-    if (op === DiffOp.SEQINSERT) {
+    if (op === 'addrange') {
       // Extend with new values directly
       let val = '';
       for (let v of (e as IDiffAddRange).valuelist) {
@@ -344,7 +344,7 @@ function patchStringifiedList(base: Array<any>, diff: IDiffEntry[], level: numbe
       additions.push(new DiffRangeRaw(remote.length, difflen, e.source));
       remote += val;
       skip = 0;
-    } else if (op === DiffOp.SEQDELETE) {
+    } else if (op === 'removerange') {
       // Delete a number of values by skipping
       let val = '';
       let len = (e as IDiffRemoveRange).length;
@@ -358,7 +358,7 @@ function patchStringifiedList(base: Array<any>, diff: IDiffEntry[], level: numbe
       deletions.push(new DiffRangeRaw(baseIndex, difflen, e.source));
       baseIndex += val.length;
       skip = (e as IDiffRemoveRange).length;
-    } else if (op === DiffOp.PATCH) {
+    } else if (op === 'patch') {
       let pd = patchStringified(base[index], (e as IDiffPatch).diff, level + 1);
       skip = 1;
 
@@ -421,12 +421,12 @@ function patchString(base: string, diff: IDiffEntry[], level: number, stringifyP
     remote += unchanged;
     baseIndex += unchanged.length;
 
-    if (op === DiffOp.SEQINSERT) {
+    if (op === 'addrange') {
       let added = (e as IDiffAddRange).valuelist;
       additions.push(new DiffRangeRaw(remote.length, added.length, e.source));
       remote += added;
       skip = 0;
-    } else if (op === DiffOp.SEQDELETE) {
+    } else if (op === 'removerange') {
       // Delete a number of values by skipping
       skip = (e as IDiffRemoveRange).length;
       deletions.push(new DiffRangeRaw(baseIndex, skip, e.source));
@@ -472,7 +472,7 @@ function stringify(values: string | any[] | { [key: string] : any},
  */
 function _entriesAfter(remainingKeys: string[], ops: { [key: string]: IDiffEntry},
                        isAddition?: boolean): boolean {
-  let cop = isAddition !== false ? DiffOp.REMOVE : DiffOp.ADD;
+  let cop = isAddition !== false ? 'remove' : 'add';
   for (let key of remainingKeys) {
     if (!(key in ops) || ops[key].op !== cop) {
       return true;
