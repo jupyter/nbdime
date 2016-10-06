@@ -116,11 +116,11 @@ class RenderableOutputsMergeView extends DragDropPanel {
           this.base.add(output);
       }
       this.remote = new OutputAreaModel();
-      for (let output of remote) {
+      for (let output of remote!) {
           this.remote.add(output);
       }
       this.local = new OutputAreaModel();
-      for (let output of local) {
+      for (let output of local!) {
           this.local.add(output);
       }
     }
@@ -176,7 +176,7 @@ class RenderableOutputsMergeView extends DragDropPanel {
   /**
    * Overrided version to allow drag and drop from source lists to merged list
    */
-  protected findDragTarget(handle: HTMLElement): HTMLElement {
+  protected findDragTarget(handle: HTMLElement): HTMLElement | null {
     // First check for a drag handle
     if (handle === null) {
       return null;
@@ -262,16 +262,16 @@ class RenderableOutputsMergeView extends DragDropPanel {
    *
    * Returns null if no valid drop target was found.
    */
-  protected findDropTarget(node: HTMLElement): HTMLElement {
+  protected findDropTarget(node: HTMLElement): HTMLElement | null {
     // Only valid drop target is in merge pane!
     return findChild(this.mergePane.node, node);
   }
 
-  base: OutputAreaModel = null;
+  base: OutputAreaModel | null = null;
 
-  remote: OutputAreaModel = null;
+  remote: OutputAreaModel | null = null;
 
-  local: OutputAreaModel = null;
+  local: OutputAreaModel | null = null;
 
   merged: OutputAreaModel;
 
@@ -289,8 +289,8 @@ export
 class CellMergeWidget extends Panel {
 
   static createMergeView(local: IDiffModel, remote: IDiffModel, merged: IDiffModel,
-                         editorClasses: string[]): Widget {
-    let view: Widget = null;
+                         editorClasses: string[]): Widget | null {
+    let view: Widget | null = null;
     if (merged instanceof StringDiffModel) {
       view = createNbdimeMergeView(remote as IStringDiffModel, editorClasses,
         local as IStringDiffModel, merged);
@@ -298,7 +298,7 @@ class CellMergeWidget extends Panel {
     return view;
   }
 
-  protected static getOutputs(models: OutputDiffModel[], base?: boolean): nbformat.IOutput[] {
+  protected static getOutputs(models: OutputDiffModel[], base?: boolean): nbformat.IOutput[] | null {
     if (!models) {
       return null;
     }
@@ -355,11 +355,11 @@ class CellMergeWidget extends Panel {
     }
 
     if (valueIn(null, model.subModels) || (  // One sided change
-          model.local.unchanged && model.remote.unchanged &&
+          model.local!.unchanged && model.remote!.unchanged &&
           model.merged.unchanged) ||  // Unchanged
-          model.local.added !== model.remote.added ||  // Onesided addition
-          model.local.added && model.agreedCell || // Identical additions
-          model.local.deleted && model.remote.deleted   // Deletion on both
+          model.local!.added !== model.remote!.added ||  // Onesided addition
+          model.local!.added && model.agreedCell || // Identical additions
+          model.local!.deleted && model.remote!.deleted   // Deletion on both
           ) {
       // Add single view of source:
       let view = CellDiffWidget.createView(
@@ -380,7 +380,7 @@ class CellMergeWidget extends Panel {
     } else {
       // Setup full 4-way mergeview of source, metadata and outputs
       // as needed (if changed). Source/metadata/output are each a "row"
-      let sourceView: Widget = null;
+      let sourceView: Widget | null = null;
       if (model.local.source.unchanged && model.remote.source.unchanged &&
           model.merged.source.unchanged) {
         // Use single unchanged view of source

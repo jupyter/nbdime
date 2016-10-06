@@ -23,7 +23,7 @@ export const JSON_INDENT = '  ';
  * Returns the first found entry, or null if not entry was found.
  */
 export
-function getDiffKey(diff: IDiffEntry[], key: string | number) : IDiffEntry[] {
+function getDiffKey(diff: IDiffEntry[] | null, key: string | number) : IDiffEntry[] | null {
   if (!diff) {
     return null;
   }
@@ -95,7 +95,7 @@ function overlaps(existing: IDiffEntry[], newv: IDiffEntry): boolean {
  */
 function combineOps(a: IDiffEntry, b: IDiffEntry): IDiffEntry {
   if (valueIn(b.op, addops)) {
-    let aTyped: IDiffAddRange = null;
+    let aTyped: IDiffAddRange | null = null;
     if (a.op === 'add') {
       aTyped = opAddRange(a.key as number, [(a as IDiffAdd).value]);
     } else {
@@ -169,7 +169,7 @@ function flattenStringDiff(val: string[] | string, diff: IDiffEntry[]): IDiffEnt
       }
     } else {
       // Other ops simply have keys which refer to lines
-      let d: IDiffEntry = null;
+      let d: IDiffEntry | null = null;
       if (op === 'addrange') {
         let et = e as IDiffAddRange;
         d = opAddRange(lineOffset,

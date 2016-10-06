@@ -186,7 +186,7 @@ declare namespace CodeMirror {
 
         /** Sets the gutter marker for the given gutter (identified by its CSS class, see the gutters option) to the given value.
         Value can be either null, to clear the marker, or a DOM element, to set it. The DOM element will be shown in the specified gutter next to the specified line. */
-        setGutterMarker(line: any, gutterID: string, value: HTMLElement): CodeMirror.LineHandle;
+        setGutterMarker(line: any, gutterID: string, value: HTMLElement | null): CodeMirror.LineHandle;
 
         /** Remove all gutter markers in the gutter with the given ID. */
         clearGutter(gutterID: string): void;
@@ -245,8 +245,9 @@ declare namespace CodeMirror {
         You can pass null for either of them to indicate that that dimension should not be changed. */
         setSize(width?: any, height?: any): void;
 
-        /** Scroll the editor to a given(pixel) position.Both arguments may be left as null or undefined to have no effect. */
-        scrollTo(x: number, y: number): void;
+        /** Scroll the editor to a given(pixel) position.
+         * Both arguments may be left as null or undefined to have no effect. */
+        scrollTo(x: number | null | undefined, y: number | null | undefined): void;
 
         /** Get an { left , top , width , height , clientWidth , clientHeight } object that represents the current scroll position, the size of the scrollable area,
         and the size of the visible area(minus scrollbars). */
@@ -686,7 +687,6 @@ declare namespace CodeMirror {
     interface LineHandle {
         text: string;
     }
-
     interface ScrollInfo {
         left: number;
         top: number;

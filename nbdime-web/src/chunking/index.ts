@@ -228,7 +228,7 @@ class Chunker {
   chunks: Chunk[];
   editOffset: number;
 
-  protected _currentGhost: Chunk = null;
+  protected _currentGhost: Chunk | null = null;
 }
 
 
@@ -265,7 +265,7 @@ class LineChunker extends Chunker {
 export
 function lineToNormalChunks(lineChunks: Chunk[]): Chunk[] {
   // We already have line chunks, so simply merge those chunks that overlap
-  let current: Chunk = null;
+  let current: Chunk | null = null;
   let ret: Chunk[] = [];
   for (let c of lineChunks) {
     if (current === null) {
@@ -294,7 +294,7 @@ function lineToNormalChunks(lineChunks: Chunk[]): Chunk[] {
  * Label a set of diffs with a source, recursively.
  */
 export
-function labelSource(diff: IDiffEntry[], source: ChunkSource): IDiffEntry[] {
+function labelSource(diff: IDiffEntry[] | null, source: ChunkSource): IDiffEntry[] | null {
   if (diff) {
     for (let d of diff) {
       d.source = source;

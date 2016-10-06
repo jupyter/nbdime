@@ -138,11 +138,11 @@ class FlexPanel extends Panel {
   /**
    * Controls how to align children in the direction of the layout.
    */
-  get justifyContent(): FlexPanel.ContentJustification {
+  get justifyContent(): FlexPanel.ContentJustification | null {
     return this.layout.justifyContent;
   };
 
-  set justifyContent(value: FlexPanel.ContentJustification) {
+  set justifyContent(value: FlexPanel.ContentJustification | null) {
     this.layout.justifyContent = value;
   }
 
@@ -151,11 +151,11 @@ class FlexPanel extends Panel {
    * of the layout (for a horizontal layout the will be the vertical align,
    * and vice-versa).
    */
-  get alignItems(): FlexPanel.ItemAlignment {
+  get alignItems(): FlexPanel.ItemAlignment | null {
     return this.layout.alignItems;
   };
 
-  set alignItems(value: FlexPanel.ItemAlignment) {
+  set alignItems(value: FlexPanel.ItemAlignment | null) {
     this.layout.alignItems = value;
   }
 
@@ -163,22 +163,22 @@ class FlexPanel extends Panel {
    * If layout is set to wrap, this defines how the wrapped lines will be
    * aligned in relation ro each other.
    */
-  get alignContent(): FlexPanel.ContentAlignment {
+  get alignContent(): FlexPanel.ContentAlignment | null {
     return this.layout.alignContent;
   };
 
-  set alignContent(value: FlexPanel.ContentAlignment) {
+  set alignContent(value: FlexPanel.ContentAlignment | null) {
     this.layout.alignContent = value;
   }
 
   /**
    * Describe how to stretch items to fit into flex panel.
    */
-  get stretchType(): FlexPanel.StretchType {
+  get stretchType(): FlexPanel.StretchType | null {
     return this.layout.stretchType;
   };
 
-  set stretchType(value: FlexPanel.StretchType) {
+  set stretchType(value: FlexPanel.StretchType | null) {
     this.layout.stretchType = value;
   }
 
@@ -277,7 +277,7 @@ namespace FlexPanel {
    * @returns The flex panel grow factor for the widget.
    */
   export
-  function getGrow(widget: Widget): number {
+  function getGrow(widget: Widget): number | null {
     return FlexLayout.getGrow(widget);
   }
 
@@ -289,7 +289,7 @@ namespace FlexPanel {
    * @param value - The value for the grow factor.
    */
   export
-  function setGrow(widget: Widget, value: number): void {
+  function setGrow(widget: Widget, value: number | null): void {
     FlexLayout.setGrow(widget, value);
   }
 
@@ -301,7 +301,7 @@ namespace FlexPanel {
    * @returns The flex panel shrink factor for the widget.
    */
   export
-  function getShrink(widget: Widget): number {
+  function getShrink(widget: Widget): number | null {
     return FlexLayout.getShrink(widget);
   }
 
@@ -313,7 +313,7 @@ namespace FlexPanel {
    * @param value - The value for the shrink factor.
    */
   export
-  function setShrink(widget: Widget, value: number): void {
+  function setShrink(widget: Widget, value: number | null): void {
     FlexLayout.setShrink(widget, value);
   }
 
@@ -325,7 +325,7 @@ namespace FlexPanel {
    * @returns The flex panel size basis for the widget.
    */
   export
-  function getSizeBasis(widget: Widget): number | "auto" {
+  function getSizeBasis(widget: Widget): number | 'auto' | null {
     return FlexLayout.getSizeBasis(widget);
   }
 
@@ -337,7 +337,7 @@ namespace FlexPanel {
    * @param value - The value for the size basis.
    */
   export
-  function setSizeBasis(widget: Widget, value: number | "auto"): void {
+  function setSizeBasis(widget: Widget, value: number | 'auto' | null): void {
     FlexLayout.setSizeBasis(widget, value);
   }
 }
@@ -457,11 +457,11 @@ class FlexLayout extends PanelLayout {
   /**
    * Controls how to align children in the direction of the layout.
    */
-  get justifyContent(): FlexLayout.ContentJustification {
+  get justifyContent(): FlexLayout.ContentJustification | null {
     return this._justifyContent;
   }
 
-  set justifyContent(value: FlexLayout.ContentJustification) {
+  set justifyContent(value: FlexLayout.ContentJustification | null) {
     if (this._justifyContent !== value) {
       this._justifyContent = value;
       let flex = Private.translateFlexString(value as string);
@@ -475,11 +475,11 @@ class FlexLayout extends PanelLayout {
    * of the layout (for a horizontal layout the will be the vertical align,
    * and vice-versa).
    */
-  get alignItems(): FlexLayout.ItemAlignment {
+  get alignItems(): FlexLayout.ItemAlignment | null {
     return this._alignItems;
   }
 
-  set alignItems(value: FlexLayout.ItemAlignment) {
+  set alignItems(value: FlexLayout.ItemAlignment | null) {
     if (this._alignItems !== value) {
       this._alignItems = value;
       let flex = Private.translateFlexString(value as string);
@@ -492,11 +492,11 @@ class FlexLayout extends PanelLayout {
    * If layout is set to wrap, this defines how the wrapped lines will be
    * aligned in relation ro each other.
    */
-  get alignContent(): FlexLayout.ContentAlignment {
+  get alignContent(): FlexLayout.ContentAlignment | null {
     return this._alignContent;
   }
 
-  set alignContent(value: FlexLayout.ContentAlignment) {
+  set alignContent(value: FlexLayout.ContentAlignment | null) {
     if (this._alignContent !== value) {
       this._alignContent = value;
       let flex = Private.translateFlexString(value as string);
@@ -516,11 +516,11 @@ class FlexLayout extends PanelLayout {
   /**
    * Describe how to stretch items to fit into flex panel.
    */
-  get stretchType(): FlexLayout.StretchType {
+  get stretchType(): FlexLayout.StretchType | null {
     return this._stretchType;
   }
 
-  set stretchType(value: FlexLayout.StretchType) {
+  set stretchType(value: FlexLayout.StretchType | null) {
     if (this._stretchType !== value) {
       this._stretchType = value;
       if (this.parent) {
@@ -728,7 +728,7 @@ class FlexLayout extends PanelLayout {
    * attribute `order`, while keeping the internal DOM order
    * intact.
    */
-  protected order: Vector<Widget> = null;
+  protected order: Vector<Widget> | null = null;
 
   /**
    * Fit the layout to the total size required by the widgets.
@@ -780,9 +780,9 @@ class FlexLayout extends PanelLayout {
 
     // Update stretch styles if set
     if (this._evenSizes || this.stretchType) {
-      let basis: number = null;
-      let grow: number = null;
-      let shrink: number = null;
+      let basis: number | null = null;
+      let grow: number | null = null;
+      let shrink: number | null = null;
       if (this._evenSizes) {
         basis = 0;
         grow = 1;
@@ -836,12 +836,12 @@ class FlexLayout extends PanelLayout {
 
   private _wrap = false;
   private _minimumSpacing = 4;
-  private _justifyContent: FlexLayout.ContentJustification = null;
-  private _alignItems: FlexLayout.ItemAlignment = null;
-  private _alignContent: FlexLayout.ContentAlignment = null;
+  private _justifyContent: FlexLayout.ContentJustification | null = null;
+  private _alignItems: FlexLayout.ItemAlignment | null = null;
+  private _alignContent: FlexLayout.ContentAlignment | null = null;
   private _dirty = false;
   private _direction: FlexLayout.Direction = 'top-to-bottom';
-  private _stretchType: FlexLayout.StretchType = null;
+  private _stretchType: FlexLayout.StretchType | null = null;
   private _evenSizes: boolean = false;
 }
 
@@ -953,7 +953,7 @@ namespace FlexLayout {
    * Get the flex-grow number of the widget
    */
   export
-  function getGrow(widget: Widget): number {
+  function getGrow(widget: Widget): number | null {
     let value = widget.node.style.flexGrow;
     return value ? parseInt(value, 10) : null;
   }
@@ -962,7 +962,7 @@ namespace FlexLayout {
    * Set the flex-grow number of the widget
    */
   export
-  function setGrow(widget: Widget, value: number, fit=true) {
+  function setGrow(widget: Widget, value: number | null, fit=true) {
     widget.node.style.flexGrow = value === null ? '' : value.toString();
     if (fit && widget.parent) {
       widget.parent.fit();
@@ -973,7 +973,7 @@ namespace FlexLayout {
    * Get the flex-shrink number of the widget
    */
   export
-  function getShrink(widget: Widget): number {
+  function getShrink(widget: Widget): number | null {
     let value = widget.node.style.flexShrink;
     return value ? parseInt(value, 10) : null;
   }
@@ -982,7 +982,7 @@ namespace FlexLayout {
    * Set the flex-shrink number of the widget
    */
   export
-  function setShrink(widget: Widget, value: number, fit=true) {
+  function setShrink(widget: Widget, value: number | null, fit=true) {
     widget.node.style.flexShrink = value === null ? '' : value.toString();
     if (fit && widget.parent) {
       widget.parent.fit();
@@ -993,7 +993,7 @@ namespace FlexLayout {
    * Get the size basis of the widget.
    */
   export
-  function getSizeBasis(widget: Widget): number | 'auto' {
+  function getSizeBasis(widget: Widget): number | 'auto' | null {
     let value = widget.node.style.flexBasis;
     if (value === 'auto') {
       return 'auto';
@@ -1010,7 +1010,7 @@ namespace FlexLayout {
    * `'auto'` uses the `width`/`height` field of the box as the basis.
    */
   export
-  function setSizeBasis(widget: Widget, value: number | 'auto', fit=true) {
+  function setSizeBasis(widget: Widget, value: number | 'auto' | null, fit=true) {
     if (value === 'auto') {
       widget.node.style.flexBasis = value as string;
     } else if (value === null) {
@@ -1050,7 +1050,7 @@ namespace Private {
    * and returns other strings untouched.
    */
   export
-  function translateFlexString(value: string): string {
+  function translateFlexString(value: string | null): string | null {
     if (value === 'start' || value === 'end') {
       value = 'flex-' + value;
     }

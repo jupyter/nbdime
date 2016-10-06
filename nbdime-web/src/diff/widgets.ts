@@ -239,10 +239,10 @@ class CellDiffWidget extends Panel {
   static
   createView(model: IDiffModel, parent: CellDiffModel,
              editorClasses: string[], rendermime: IRenderMime): Widget {
-    let view: Widget = null;
+    let view: Widget | null = null;
     if (model instanceof StringDiffModel) {
       if (model.unchanged && parent.cellType === 'markdown') {
-        view = rendermime.render({bundle: {'text/markdown': model.base}});
+        view = rendermime.render({bundle: {'text/markdown': model.base!}});
       } else {
         view = createNbdimeMergeView(model as IStringDiffModel, editorClasses);
       }

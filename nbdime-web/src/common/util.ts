@@ -71,7 +71,7 @@ function shallowCopy<T>(original: T): T {
  * Do a shallow, element-wise equality comparison on two arrays.
  */
 export
-function arraysEqual(a: any[], b: any[]) {
+function arraysEqual(a: any[] | null, b: any[] | null) {
   if (a === b) {
     return true;
   }
@@ -94,7 +94,7 @@ function arraysEqual(a: any[], b: any[]) {
  * Find the shared common starting sequence in two arrays
  */
 export
-function findSharedPrefix(a: any[], b: any[]): any[] {
+function findSharedPrefix(a: any[] | null, b: any[] | null): any[] | null {
   if (a === null || b === null) {
     return null;
   }
@@ -118,7 +118,7 @@ function findSharedPrefix(a: any[], b: any[]): any[] {
  * is a subsequence of child.
  */
 export
-function isPrefixArray(parent: any[], child: any[]): boolean {
+function isPrefixArray(parent: any[] | null, child: any[] | null): boolean {
   if (parent === child) {
     return true;
   }

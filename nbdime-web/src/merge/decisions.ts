@@ -28,9 +28,12 @@ export
 type DecisionPath = (string | number)[];
 
 export
+type DiffCollection = (IDiffEntry[] | null)[];
+
+export
 interface IMergeDecision {
-  local_diff?: IDiffEntry[];
-  remote_diff?: IDiffEntry[];
+  local_diff?: IDiffEntry[] | null;
+  remote_diff?: IDiffEntry[] | null;
 
   conflict?: boolean;
 
@@ -38,7 +41,7 @@ interface IMergeDecision {
 
   common_path?: DecisionPath;
 
-  custom_diff?: IDiffEntry[];
+  custom_diff?: IDiffEntry[] | null;
 }
 
 export
@@ -59,11 +62,11 @@ export
 class MergeDecision {
 
   constructor(obj: DecisionPath | IMergeDecision | MergeDecision,
-              localDiff: IDiffEntry[] = null,
-              remoteDiff: IDiffEntry[] = null,
+              localDiff: IDiffEntry[] | null = null,
+              remoteDiff: IDiffEntry[] | null = null,
               action: Action = 'base',
               conflict = false,
-              customDiff: IDiffEntry[] = null) {
+              customDiff: IDiffEntry[] | null = null) {
     this.level = 0;
     if (obj instanceof Array) {
       this._path = obj as DecisionPath;
@@ -104,11 +107,11 @@ class MergeDecision {
 
   action: Action;
 
-  localDiff: IDiffEntry[];
+  localDiff: IDiffEntry[] | null;
 
-  remoteDiff: IDiffEntry[];
+  remoteDiff: IDiffEntry[] | null;
 
-  customDiff: IDiffEntry[];
+  customDiff: IDiffEntry[] | null;
 
   conflict: boolean;
 
@@ -118,7 +121,7 @@ class MergeDecision {
     this._path.push(key);
   }
 
-  get diffs(): IDiffEntry[][] {
+  get diffs(): DiffCollection {
     let diffs = [this.localDiff, this.remoteDiff];
     if (this.customDiff) {
       diffs.push(this.customDiff);
@@ -126,7 +129,7 @@ class MergeDecision {
     return diffs;
   }
 
-  set diffs(value: IDiffEntry[][]) {
+  set diffs(value: DiffCollection) {
     this.localDiff = value[0];
     this.remoteDiff = value[1];
     if (value.length > 2) {
@@ -150,8 +153,8 @@ class MergeDecision {
 
 
 export
-function popPath(diffs: IDiffEntry[][], popInner?: boolean): {
-      diffs: IDiffEntry[][], key: string | number} {
+function popPath(diffs: DiffCollection, popInner?: boolean):
+      {diffs: DiffCollection, key: string | number} | null {
   if (diffs.length < 1) {
     return null;
   }
@@ -196,7 +199,7 @@ function popPath(diffs: IDiffEntry[][], popInner?: boolean): {
         }
       }
     }
-    let retDiffs = [];
+    let retDiffs: DiffCollection = [];
     for (let di of diffs) {
       if (di && di.length > 0) {
         retDiffs.push((di[0] as IDiffPatch).diff);
@@ -225,7 +228,7 @@ function resolveCommonPaths(decisions: MergeDecision[]) {
   for (let md of decisions) {
     let diffs = md.diffs;
     let path = md.absolutePath || [];
-    let popped: {diffs: IDiffEntry[][], key: string | number} = null;
+    let popped: {diffs: DiffCollection, key: string | number} | null = null;
     while (popped = popPath(diffs, true)) {
       path.push(popped.key);
       diffs = popped.diffs;
@@ -336,7 +339,7 @@ function resolveAction(base: any, decision: MergeDecision): IDiffEntry[] {
  * Returns a tuple of path and any line key.
  */
 function splitDiffStringPath(base: any, path: DecisionPath):
-    [DecisionPath, DecisionPath] {
+    [DecisionPath, DecisionPath | null] {
   for (let i = 0; i < path.length; ++i) {
     if (typeof base === 'string') {
       return [path.slice(0, i), path.slice(i)];
@@ -355,9 +358,9 @@ function splitDiffStringPath(base: any, path: DecisionPath):
 export
 function applyDecisions(base: any, decisions: MergeDecision[]): any {
   let merged = deepCopy(base);
-  let prevPath: DecisionPath = null;
+  let prevPath: DecisionPath | null = null;
   let parent: any = null;
-  let lastKey: string | number = null;
+  let lastKey: string | number | null = null;
   let resolved: any = null;
   let diffs: IDiffEntry[] = [];
   // clear_parent actions should override other decisions on same obj, so
@@ -394,7 +397,7 @@ function applyDecisions(base: any, decisions: MergeDecision[]): any {
           // If not, overwrite entry in parent (which is an entry in merged).
           // This is ok, as no paths should point to subobjects of the patched
           // object.
-          parent[lastKey] = patch(resolved, diffs);
+          parent[lastKey!] = patch(resolved, diffs);
         }
       }
 
@@ -421,7 +424,7 @@ function applyDecisions(base: any, decisions: MergeDecision[]): any {
     if (parent === null) {
       merged = patch(resolved, diffs);
     } else {
-      parent[lastKey] = patch(resolved, diffs);
+      parent[lastKey!] = patch(resolved, diffs);
     }
   }
   return merged;
@@ -438,11 +441,11 @@ type DiffTree = {[prefix: string]: {path: DecisionPath, diff: IDiffEntry[]}};
  */
 function _mergeTree(tree: DiffTree, sortedPaths: string[]): IDiffEntry[] {
   let trunk: IDiffEntry[] = [];
-  let root: DecisionPath = null;
+  let root: DecisionPath | null = null;
   for (let i = 0; i < sortedPaths.length; ++i) {
     let pathStr = sortedPaths[i];
     let path = tree[pathStr].path;
-    let nextPath: DecisionPath = null;
+    let nextPath: DecisionPath | null = null;
     if (i === sortedPaths.length - 1) {
       nextPath = root;
     } else {
@@ -479,16 +482,16 @@ function _mergeTree(tree: DiffTree, sortedPaths: string[]): IDiffEntry[] {
  * selects the 'local', 'remote' or 'merged' diffs.
  */
 export
-function buildDiffs(base: any, decisions: MergeDecision[], which: 'local' | 'remote' | 'merged'): IDiffEntry[] {
+function buildDiffs(base: any, decisions: MergeDecision[], which: 'local' | 'remote' | 'merged'): IDiffEntry[] | null {
   let tree: DiffTree = {};
-  let sortedPaths = [];
+  let sortedPaths: string[] = [];
   let local = which === 'local';
   let merged = which === 'merged';
   if (!local && !merged) {
     console.assert(which === 'remote');
   }
   for (let md of decisions) {
-    let subdiffs: IDiffEntry[] = null;
+    let subdiffs: IDiffEntry[] | null = null;
     let spl = splitDiffStringPath(base, md.localPath);
     let path = spl[0];
     let line = spl[1];

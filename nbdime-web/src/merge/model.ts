@@ -45,7 +45,7 @@ import {
 export
 class DecisionStringDiffModel extends StringDiffModel {
   constructor(base: any, decisions: MergeDecision[],
-              sourceModels: IStringDiffModel[],
+              sourceModels: (IStringDiffModel | null)[],
               collapsible?: boolean, header?: string, collapsed?: boolean) {
     // Set up initial parameters for super call
     let baseStr = (typeof base === 'string') ? base as string : stringify(base);
@@ -105,7 +105,8 @@ class DecisionStringDiffModel extends StringDiffModel {
    * chunks from source models where the decision is a no-op (action 'base').
    */
   getLineChunks(): Chunk[] {
-    let models = [this as IStringDiffModel].concat(this._sourceModels);
+    let models: (IStringDiffModel | null)[] = [this as IStringDiffModel];
+    models = models.concat(this._sourceModels);
     let chunker = new LineChunker();
     let iter = new StringDiffModel.SyncedDiffIter(models);
     for (let v = iter.next(); v !== undefined; v = iter.next()) {
@@ -137,7 +138,7 @@ class DecisionStringDiffModel extends StringDiffModel {
   protected _deletions: DiffRangePos[];
   protected _remote: string;
   protected _outdated: boolean;
-  protected _sourceModels: IStringDiffModel[];
+  protected _sourceModels: (IStringDiffModel | null)[];
 }
 
 
@@ -146,12 +147,13 @@ class DecisionStringDiffModel extends StringDiffModel {
  * decisions that patch the cell.
  */
 function createPatchedCellDecisionDiffModel(
-    base: nbformat.ICell, decisions: MergeDecision[], mimetype: string,
-    local: CellDiffModel, remote: CellDiffModel):
+    base: nbformat.ICell, decisions: MergeDecision[],
+    mimetype: string,
+    local: CellDiffModel | null, remote: CellDiffModel | null):
     CellDiffModel {
-  let source: DecisionStringDiffModel = null;
-  let metadata: DecisionStringDiffModel = null;
-  let outputs: OutputDiffModel[] = null;
+  let source: DecisionStringDiffModel | null = null;
+  let metadata: DecisionStringDiffModel | null = null;
+  let outputs: OutputDiffModel[] | null = null;
 
   for (let md of decisions) {
     if (md.localPath.length === 0) {
@@ -182,7 +184,7 @@ function createPatchedCellDecisionDiffModel(
     let outputBase = (base as nbformat.ICodeCell).outputs;
     let outputDec = filterDecisions(decisions, ['outputs'], 2);
     let mergedDiff = buildDiffs(outputBase, outputDec, 'merged');
-    let merged: nbformat.IOutput[] = null;
+    let merged: nbformat.IOutput[] | null = null;
     if (mergedDiff && mergedDiff.length > 0) {
       merged = patch(outputBase, mergedDiff);
     } else {
@@ -208,7 +210,7 @@ abstract class ObjectMergeModel<ObjectType, DiffModelType> {
    * Create a diff model of the correct type given the diff (which might be
    * null)
    */
-  protected abstract createDiffModel(diff: IDiffEntry[]): DiffModelType;
+  protected abstract createDiffModel(diff: IDiffEntry[] | null): DiffModelType;
 
   /**
    * Create a diff model of the correct type for the merge given the diff
@@ -218,7 +220,7 @@ abstract class ObjectMergeModel<ObjectType, DiffModelType> {
   /**
    *
    */
-  constructor(base: ObjectType, decisions: MergeDecision[], mimetype: string,
+  constructor(base: ObjectType | null, decisions: MergeDecision[], mimetype: string,
               whitelist?: string[]) {
     this.base = base;
     this.mimetype = mimetype;
@@ -230,7 +232,7 @@ abstract class ObjectMergeModel<ObjectType, DiffModelType> {
   /**
    * Base value of the object
    */
-  base: ObjectType;
+  base: ObjectType | null;
 
   /**
    * The mimetype to use for the source
@@ -252,7 +254,7 @@ abstract class ObjectMergeModel<ObjectType, DiffModelType> {
   /**
    * Model of the local diff vs. base
    */
-  get local(): DiffModelType {
+  get local(): DiffModelType | null {
     if (this._local === undefined) {
       // We're builiding from decisions
       this._finalizeDecisions();
@@ -265,7 +267,7 @@ abstract class ObjectMergeModel<ObjectType, DiffModelType> {
   /**
    * Model of the remote diff vs. base
    */
-  get remote(): DiffModelType {
+  get remote(): DiffModelType | null {
     if (this._remote === undefined) {
       this._finalizeDecisions();
       let diff = buildDiffs(this.base, this.decisions, 'remote');
@@ -290,7 +292,7 @@ abstract class ObjectMergeModel<ObjectType, DiffModelType> {
   /**
    *
    */
-  get subModels(): DiffModelType[] {
+  get subModels(): [DiffModelType | null, DiffModelType | null, DiffModelType] {
     return [this.local, this.remote, this.merged];
   }
 
@@ -348,11 +350,11 @@ abstract class ObjectMergeModel<ObjectType, DiffModelType> {
   /**
    * List of fields to handle
    */
-  protected _whitelist: string[];
+  protected _whitelist: string[] | null;
 
-  protected _local: DiffModelType;
-  protected _remote: DiffModelType;
-  protected _merged: DiffModelType;
+  protected _local?: DiffModelType | null;
+  protected _remote?: DiffModelType | null;
+  protected _merged?: DiffModelType;
 
   protected _finalized: boolean = false;
 }
@@ -362,7 +364,7 @@ abstract class ObjectMergeModel<ObjectType, DiffModelType> {
  * CellMergeModel
  */
 export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
-  constructor(base: nbformat.ICell, decisions: MergeDecision[], mimetype: string) {
+  constructor(base: nbformat.ICell | null, decisions: MergeDecision[], mimetype: string) {
     // TODO: Remove/extend whitelist once we support more
     super(base, decisions, mimetype, ['source', 'metadata', 'outputs']);
     this.onesided = false;
@@ -514,7 +516,7 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
    * This creates the revelant kinds of models
    */
   protected _applyCellDecision(md: MergeDecision): MergeDecision[] {
-    let newDecisions = [];
+    let newDecisions: MergeDecision[] = [];
     /* Possibilities:
      1. Insertion: base is null! Null diff of missing side (unchanged).
      2. Deletion: Null diff of present side (unchanged). Set deleteCell
@@ -1058,7 +1060,7 @@ class NotebookMergeModel {
       }
 
       if (arraysEqual(key, ['cells'])) {
-        let idx: number = null;
+        let idx: number | null = null;
         let insertion = false;
         for (let di of md.diffs) {
           // Ensure diff has exactly one item:

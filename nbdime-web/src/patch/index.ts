@@ -73,7 +73,7 @@ function patchSequence(base: Array<any>, diff: IDiffEntry[]): Array<any> {
     return deepCopy(base);
   }
   // The patched sequence to build and return
-  let patched = [];
+  let patched: any[] = [];
   // Index into obj, the next item to take unless diff says otherwise
   let take = 0;
   let skip = 0;
@@ -92,7 +92,7 @@ function patchSequence(base: Array<any>, diff: IDiffEntry[]): Array<any> {
     if (op === 'addrange') {
       // Extend with new values directly
       patched = patched.concat(
-        (e as IDiffAddRange).valuelist as Array<any>);
+        (e as IDiffAddRange).valuelist as any[]);
       skip = 0;
     } else if (op === 'removerange') {
       // Delete a number of values by skipping
@@ -582,7 +582,7 @@ function _adjustRangesByJSONEscapes(jsonString: string, ranges: DiffRangeRaw[]) 
       i++;
     }
   }
-  let match: RegExpExecArray;
+  let match: RegExpExecArray | null;
   while ((match = unicodes.exec(jsonString)) !== null) {
     indices.push(match.index);
     expansions.push(

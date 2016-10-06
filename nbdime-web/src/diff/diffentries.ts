@@ -110,7 +110,7 @@ export interface IDiffPatch extends IDiffEntryBase {
   /**
    * The collection of sub-diffs describing the patch of the object
    */
-  diff: IDiffEntry[];
+  diff: IDiffEntry[] | null;
 }
 
 /**
@@ -151,7 +151,7 @@ function opRemoveRange(key: number, length: number): IDiffRemoveRange {
 
 /** Create a range removal diff entry */
 export
-function opPatch(key: string | number, diff: IDiffEntry[]): IDiffPatch {
+function opPatch(key: string | number, diff: IDiffEntry[] | null): IDiffPatch {
   return {op: 'patch', key: key, diff: diff};
 }
 
