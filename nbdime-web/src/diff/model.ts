@@ -417,7 +417,7 @@ function setMimetypeFromCellType(model: IStringDiffModel, cell: nbformat.ICell,
   } else if (cellType === 'markdown') {
     model.mimetype = 'text/markdown';
   } else if (cellType === 'raw') {
-    model.mimetype = (cell as nbformat.IRawCell).metadata.format;
+    model.mimetype = (cell as nbformat.IRawCell).metadata.format || 'text/python';
   }
 }
 
@@ -672,7 +672,7 @@ function createPatchedCellDiffModel(
 
 export
 function createUnchangedCellDiffModel(
-      base: nbformat.ICell, nbMimetype?: string): CellDiffModel {
+      base: nbformat.ICell, nbMimetype: string): CellDiffModel {
   let source = createDirectDiffModel(base.source, base.source);
   setMimetypeFromCellType(source, base, nbMimetype);
   let metadata = createDirectDiffModel(base.metadata, base.metadata);
@@ -686,7 +686,7 @@ function createUnchangedCellDiffModel(
 
 export
 function createAddedCellDiffModel(
-      remote: nbformat.ICell, nbMimetype?: string): CellDiffModel {
+      remote: nbformat.ICell, nbMimetype: string): CellDiffModel {
   let source = createDirectDiffModel(null, remote.source);
   setMimetypeFromCellType(source, remote, nbMimetype);
   let metadata = createDirectDiffModel(null, remote.metadata);
@@ -700,7 +700,7 @@ function createAddedCellDiffModel(
 
 export
 function createDeletedCellDiffModel(
-      base: nbformat.ICell, nbMimetype?: string): CellDiffModel {
+      base: nbformat.ICell, nbMimetype: string): CellDiffModel {
   let source = createDirectDiffModel(base.source, null);
   setMimetypeFromCellType(source, base, nbMimetype);
   let metadata = createDirectDiffModel(base.metadata, null);
@@ -809,12 +809,13 @@ export class NotebookDiffModel {
     }
     // The notebook metadata MIME type is used for determining the MIME type
     // of source cells, so store it easily accessible:
+    let mimetype: string | undefined;
     try {
-      this.mimetype = base.metadata.language_info.mimetype;
+      mimetype = base.metadata.language_info.mimetype;
     } catch (e) {
-      // missing metadata, guess python (probably old notebook)
-      this.mimetype = 'text/python';
+      // missing metadata (probably old notebook)
     }
+    this.mimetype = mimetype || 'text/python';
 
     // Build cell diff models. Follows similar logic to patching code:
     this.cells = [];

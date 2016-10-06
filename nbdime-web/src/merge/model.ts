@@ -948,12 +948,13 @@ class NotebookMergeModel {
 
     // The notebook metadata MIME type is used for determining the MIME type
     // of source cells, so store it easily accessible:
+    let mimetype: string | undefined;
     try {
-      this.mimetype = base.metadata.language_info.mimetype;
+      mimetype = base.metadata.language_info.mimetype;
     } catch (e) {
-      // missing metadata, guess python (probably old notebook)
-      this.mimetype = 'text/python';
+      // missing metadata(probably old notebook)
     }
+    this.mimetype = mimetype || 'text/python';
 
     this.cells = this.buildCellList(decisions);
 
