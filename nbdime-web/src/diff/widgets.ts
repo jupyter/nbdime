@@ -210,7 +210,7 @@ class CellDiffWidget extends Panel {
     sourceView.addClass(SOURCE_ROW_CLASS);
     this.addWidget(sourceView);
 
-    if (model.metadata && !model.metadata.unchanged) {
+    if (!model.metadata.unchanged) {
       let metadataView = ctor.createView(
         model.metadata, model, CURR_DIFF_CLASSES, this._rendermime);
       metadataView.addClass(METADATA_ROW_CLASS);

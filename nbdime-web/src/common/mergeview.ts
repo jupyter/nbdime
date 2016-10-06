@@ -129,10 +129,12 @@ export
 function createNbdimeMergeView(
       remote: IStringDiffModel, editorClasses: string[],
       local?: IStringDiffModel, merged?: IStringDiffModel): MergeView {
-  let opts: IMergeViewEditorConfiguration = {remote: remote, orig: null};
+  let opts: IMergeViewEditorConfiguration = {
+    remote,
+    local,
+    merged,
+    orig: null};
   opts.collapseIdentical = true;
-  opts.local = local ? local : undefined;
-  opts.merged = merged ? merged : undefined;
   let mergeview = new MergeView(opts);
   let editors: DiffView[] = [];
   if (mergeview.left) {

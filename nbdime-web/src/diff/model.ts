@@ -575,17 +575,18 @@ export class OutputDiffModel implements IDiffModel {
  * Diff model for individual Notebook Cells
  */
 export class CellDiffModel {
-  constructor(source: IStringDiffModel, metadata: IStringDiffModel | null,
+  constructor(source: IStringDiffModel, metadata: IStringDiffModel,
               outputs: OutputDiffModel[] | null, cellType: string) {
     this.source = source;
     this.metadata = metadata;
     this.outputs = outputs;
     this.cellType = cellType;
-    if (this.metadata) {
-      this.metadata.collapsible = true;
-      this.metadata.collapsibleHeader = 'Metadata changed';
-      this.metadata.startCollapsed = true;
+    if (outputs === null && cellType !== 'code') {
+      throw 'Invalid code cell, missing outputs!';
     }
+    this.metadata.collapsible = true;
+    this.metadata.collapsibleHeader = 'Metadata changed';
+    this.metadata.startCollapsed = true;
   }
 
   /**
@@ -594,12 +595,15 @@ export class CellDiffModel {
   source: IStringDiffModel;
 
   /**
-   * Diff model for the metadata field. Can be null.
+   * Diff model for the metadata field.
    */
-  metadata: IStringDiffModel | null;
+  metadata: IStringDiffModel;
 
   /**
    * Diff model for the outputs field. Can be null.
+   *
+   * A null value signifies that the cell is not a
+   * code cell type.
    */
   outputs: OutputDiffModel[] | null;
 
@@ -655,13 +659,11 @@ function createPatchedCellDiffModel(
   setMimetypeFromCellType(source, base, nbMimetype);
 
   subDiff = getDiffKey(diff, 'metadata');
-  if (base.metadata !== undefined) {
-    metadata = subDiff ?
-      createPatchDiffModel(base.metadata, subDiff) :
-      createDirectDiffModel(base.metadata, base.metadata);
-  }
+  metadata = subDiff ?
+    createPatchDiffModel(base.metadata, subDiff) :
+    createDirectDiffModel(base.metadata, base.metadata);
 
-  if (base.cell_type === 'code' && (base as nbformat.ICodeCell).outputs) {
+  if (base.cell_type === 'code') {
     outputs = makeOutputModels((base as nbformat.ICodeCell).outputs, null,
       getDiffKey(diff, 'outputs'));
   }
@@ -670,16 +672,12 @@ function createPatchedCellDiffModel(
 
 export
 function createUnchangedCellDiffModel(
-      base: nbformat.ICell, nbMimetype: string): CellDiffModel {
-  let metadata: StringDiffModel | null = null;
-  let outputs: OutputDiffModel[] | null = null;
-
+      base: nbformat.ICell, nbMimetype?: string): CellDiffModel {
   let source = createDirectDiffModel(base.source, base.source);
   setMimetypeFromCellType(source, base, nbMimetype);
-  if (base.metadata !== undefined) {
-    metadata = createDirectDiffModel(base.metadata, base.metadata);
-  }
-  if (base.cell_type === 'code' && (base as nbformat.ICodeCell).outputs) {
+  let metadata = createDirectDiffModel(base.metadata, base.metadata);
+  let outputs: OutputDiffModel[] | null = null;
+  if (base.cell_type === 'code') {
     outputs = makeOutputModels((base as nbformat.ICodeCell).outputs,
       (base as nbformat.ICodeCell).outputs);
   }
@@ -688,16 +686,12 @@ function createUnchangedCellDiffModel(
 
 export
 function createAddedCellDiffModel(
-      remote: nbformat.ICell, nbMimetype: string): CellDiffModel {
-  let metadata: StringDiffModel | null = null;
-  let outputs: OutputDiffModel[] | null = null;
-
+      remote: nbformat.ICell, nbMimetype?: string): CellDiffModel {
   let source = createDirectDiffModel(null, remote.source);
   setMimetypeFromCellType(source, remote, nbMimetype);
-  if (remote.metadata !== undefined) {
-    metadata = createDirectDiffModel(null, remote.metadata);
-  }
-  if (remote.cell_type === 'code' && (remote as nbformat.ICodeCell).outputs) {
+  let metadata = createDirectDiffModel(null, remote.metadata);
+  let outputs: OutputDiffModel[] | null = null;
+  if (remote.cell_type === 'code') {
     outputs = makeOutputModels(
       null, (remote as nbformat.ICodeCell).outputs);
   }
@@ -706,17 +700,12 @@ function createAddedCellDiffModel(
 
 export
 function createDeletedCellDiffModel(
-      base: nbformat.ICell, nbMimetype: string): CellDiffModel {
-  let source: StringDiffModel | null = null;
-  let metadata: StringDiffModel | null = null;
-  let outputs: OutputDiffModel[] | null = null;
-
-  source = createDirectDiffModel(base.source, null);
+      base: nbformat.ICell, nbMimetype?: string): CellDiffModel {
+  let source = createDirectDiffModel(base.source, null);
   setMimetypeFromCellType(source, base, nbMimetype);
-  if (base.metadata !== undefined) {
-    metadata = createDirectDiffModel(base.metadata, null);
-  }
-  if (base.cell_type === 'code' && (base as nbformat.ICodeCell).outputs) {
+  let metadata = createDirectDiffModel(base.metadata, null);
+  let outputs: OutputDiffModel[] | null = null;
+  if (base.cell_type === 'code') {
     outputs = makeOutputModels((base as nbformat.ICodeCell).outputs, null);
   }
   return new CellDiffModel(source, metadata, outputs, base.cell_type);

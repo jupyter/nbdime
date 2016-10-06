@@ -151,9 +151,6 @@ function createPatchedCellDecisionDiffModel(
     mimetype: string,
     local: CellDiffModel | null, remote: CellDiffModel | null):
     CellDiffModel {
-  let source: DecisionStringDiffModel | null = null;
-  let metadata: DecisionStringDiffModel | null = null;
-  let outputs: OutputDiffModel[] | null = null;
 
   for (let md of decisions) {
     if (md.localPath.length === 0) {
@@ -166,25 +163,23 @@ function createPatchedCellDecisionDiffModel(
     }
   }
 
-  source = new DecisionStringDiffModel(
+  let source = new DecisionStringDiffModel(
     base.source, filterDecisions(decisions, ['source'], 2),
     [local ? local.source : null,
      remote ? remote.source : null]);
   setMimetypeFromCellType(source, base, mimetype);
 
-  let metadataDec = filterDecisions(decisions, ['metadata'], 2);
-  if (metadataDec.length > 0) {
-    metadata = new DecisionStringDiffModel(
-      base.metadata, metadataDec,
-      [local ? local.metadata : null,
-       remote ? remote.metadata : null]);
-  }
+  let metadata = new DecisionStringDiffModel(
+    base.metadata, filterDecisions(decisions, ['metadata'], 2),
+    [local ? local.metadata : null,
+      remote ? remote.metadata : null]);
 
+  let outputs: OutputDiffModel[] | null = null;
   if (base.cell_type === 'code' && (base as nbformat.ICodeCell).outputs) {
     let outputBase = (base as nbformat.ICodeCell).outputs;
     let outputDec = filterDecisions(decisions, ['outputs'], 2);
     let mergedDiff = buildDiffs(outputBase, outputDec, 'merged');
-    let merged: nbformat.IOutput[] | null = null;
+    let merged: nbformat.IOutput[];
     if (mergedDiff && mergedDiff.length > 0) {
       merged = patch(outputBase, mergedDiff);
     } else {
@@ -404,9 +399,6 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
     if (!this.local || !this.remote) {
       return false;
     }
-    if (!this.local.metadata || !this.remote.metadata) {
-      return !this.local.metadata && !this.remote.metadata;
-    }
     return this.local.metadata.remote === this.remote.metadata.remote;
   }
 
@@ -498,14 +490,20 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
   }
 
   protected createDiffModel(diff: IDiffEntry[]): CellDiffModel {
-      if (diff && diff.length > 0) {
-        return createPatchedCellDiffModel(this.base, diff, this.mimetype);
-      } else {
-        return createUnchangedCellDiffModel(this.base, this.mimetype);
-      }
+    if (this.base === null) {
+      throw 'Cannot create a patched or unchanged diff model with null base!';
+    }
+    if (diff && diff.length > 0) {
+      return createPatchedCellDiffModel(this.base, diff, this.mimetype);
+    } else {
+      return createUnchangedCellDiffModel(this.base, this.mimetype);
+    }
   }
 
   protected createMergedDiffModel(): CellDiffModel {
+    if (this.base === null) {
+      throw 'Cannot create a patched or unchanged merged diff model with null base!';
+    }
     return createPatchedCellDecisionDiffModel(
         this.base, this.decisions, this.mimetype, this.local, this.remote);
   }

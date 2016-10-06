@@ -100,8 +100,8 @@ class RenderableOutputsMergeView extends DragDropPanel {
    */
   constructor(merged: nbformat.IOutput[],
               classes: string[], rendermime: IRenderMime,
-              base?: nbformat.IOutput[], remote?: nbformat.IOutput[],
-              local?: nbformat.IOutput[]) {
+              base: nbformat.IOutput[] | null, remote: nbformat.IOutput[] | null,
+              local: nbformat.IOutput[] | null) {
     super();
 
     if (!base !== !remote || !base !== !local) {
@@ -298,10 +298,7 @@ class CellMergeWidget extends Panel {
     return view;
   }
 
-  protected static getOutputs(models: OutputDiffModel[], base?: boolean): nbformat.IOutput[] | null {
-    if (!models) {
-      return null;
-    }
+  protected static getOutputs(models: OutputDiffModel[], base?: boolean): nbformat.IOutput[] {
     let raw: nbformat.IOutput[] = [];
     for (let m of models) {
       if (base === true) {
@@ -354,12 +351,13 @@ class CellMergeWidget extends Panel {
       this.headerTitle = radd ? 'Cell added remotely' : 'Cell deleted remotely';
     }
 
-    if (valueIn(null, model.subModels) || (  // One sided change
-          model.local!.unchanged && model.remote!.unchanged &&
+    if (model.local === null || model.remote === null || (  // One sided change
+          model.local.unchanged && model.remote!.unchanged &&
           model.merged.unchanged) ||  // Unchanged
-          model.local!.added !== model.remote!.added ||  // Onesided addition
-          model.local!.added && model.agreedCell || // Identical additions
-          model.local!.deleted && model.remote!.deleted   // Deletion on both
+          model.local.added !== model.remote.added ||  // Onesided addition
+          model.local.deleted !== model.remote.deleted ||  // Onesided deletion
+          model.local.added && model.agreedCell || // Identical additions
+          model.local.deleted && model.remote.deleted   // Deletion on both
           ) {
       // Add single view of source:
       let view = CellDiffWidget.createView(
@@ -393,6 +391,9 @@ class CellMergeWidget extends Panel {
           model.merged.source,
           CURR_CLASSES);
       }
+      if (sourceView === null) {
+        throw 'Was not able to create merge view for cell!';
+      }
       sourceView.addClass(SOURCE_ROW_CLASS);
       this.addWidget(sourceView);
 
@@ -418,6 +419,9 @@ class CellMergeWidget extends Panel {
             model.remote.metadata,
             model.merged.metadata,
             CURR_CLASSES);
+        if (metadataView === null) {
+          throw 'Was not able to create merge view for cell metadata!';
+        }
         let container = new Panel();
         container.addWidget(metadataView);
 
@@ -426,13 +430,13 @@ class CellMergeWidget extends Panel {
         collapser.addClass(METADATA_ROW_CLASS);
         this.addWidget(collapser);
       }
-      if (outputsChanged || (
-            model.merged.outputs && model.merged.outputs.length > 0)) {
-        // TODO: Figure out how to deal with outputs
-        let baseOut = CellMergeWidget.getOutputs(model.local.outputs, true);
-        let localOut = CellMergeWidget.getOutputs(model.local.outputs);
-        let remoteOut = CellMergeWidget.getOutputs(model.remote.outputs);
-        let mergedOut = CellMergeWidget.getOutputs(model.merged.outputs);
+      if (outputsChanged || model.merged.outputs && model.merged.outputs.length > 0) {
+        // We know here that we have code cell
+        // -> all have outputs !== null
+        let baseOut = CellMergeWidget.getOutputs(model.local.outputs!, true);
+        let localOut = CellMergeWidget.getOutputs(model.local.outputs!);
+        let remoteOut = CellMergeWidget.getOutputs(model.remote.outputs!);
+        let mergedOut = CellMergeWidget.getOutputs(model.merged.outputs!);
         let view = new RenderableOutputsMergeView(
           mergedOut, MERGE_CLASSES, this._rendermime,
           baseOut, remoteOut, localOut);
@@ -530,8 +534,10 @@ class MetadataMergeWidget extends Panel {
     let model = this._model;
     let CURR_CLASSES = MERGE_CLASSES.slice();  // copy
 
+    // We know/assume that MetadataMergeModel never has
+    // null values for local/remote:
     let view: Widget = createNbdimeMergeView(
-      model.remote, CURR_CLASSES, model.local, model.merged);
+      model.remote!, CURR_CLASSES, model.local!, model.merged);
     view = new CollapsiblePanel(
       view, 'Notebook metadata changed', true);
     this.addWidget(view);
@@ -555,7 +561,7 @@ class NotebookMergeWidget extends DragDropPanel {
 
     this.addClass(NBMERGE_CLASS);
 
-    if (model.metadata) {
+    if (model.metadata.decisions.length > 0) {
       layout.addWidget(new MetadataMergeWidget(model.metadata));
     }
     for (let c of model.cells) {
