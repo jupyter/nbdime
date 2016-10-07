@@ -26,6 +26,7 @@ Contents
 
    installing
    cli
+   vcs
    testing
    glossary
 
