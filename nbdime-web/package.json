@@ -38,7 +38,7 @@
     "mocha": "^3.0.2",
     "rimraf": "^2.5.2",
     "style-loader": "^0.13.1",
-    "typescript": "^1.8.10",
+    "typescript": "^2.0.3",
     "url-loader": "^0.5.7",
     "webpack": "^1.13.1"
   },
@@ -46,7 +46,7 @@
     "codemirror": "^5.17.0",
     "json-stable-stringify": "^1.0.1",
     "jupyter-js-services": "^0.18.0",
-    "jupyterlab": "^0.3.0",
+    "jupyterlab": "^0.4.1",
     "phosphor": "^0.6.1"
   }
 }

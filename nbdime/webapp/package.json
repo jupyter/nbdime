@@ -15,12 +15,15 @@
     "file-loader": "^0.9.0",
     "json-loader": "^0.5.4",
     "rimraf": "^2.5.2",
+    "source-map-loader": "^0.1.5",
     "style-loader": "^0.13.1",
-    "typescript": "^1.8.10",
+    "typescript": "^2.0.3",
     "url-loader": "^0.5.7",
     "webpack": "^1.13.1"
   },
   "dependencies": {
-    "nbdime": "file:../../nbdime-web"
+    "nbdime": "file:../../nbdime-web",
+    "jupyterlab": "^0.4.1",
+    "phosphor": "^0.6.1"
   }
 }
