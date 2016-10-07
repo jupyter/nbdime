@@ -18,31 +18,19 @@ from subprocess import check_call, check_output, CalledProcessError
 
 from . import nbdiffapp
 
-def enable(global_=False):
+def enable(global_=False, set_default=False):
     """Enable nbdime git difftool"""
     cmd = ['git', 'config']
     if global_:
         cmd.append('--global')
 
     check_call(cmd + ['difftool.nbdime.cmd', 'git-nbdifftool diff "$LOCAL" "$REMOTE"'])
-    try:
-        previous = check_output(cmd + ['diff.tool']).decode('utf8', 'replace').strip()
-    except CalledProcessError:
-        previous = None
-    else:
-        if previous != 'nbdime':
-            check_call(cmd + ['difftool.nbdime.previous', previous])
-    check_call(cmd + ['diff.tool', 'nbdime'])
+    if set_default:
+        check_call(cmd + ['diff.tool', 'nbdime'])
 
     check_call(cmd + ['difftool.nbdimeweb.cmd', 'git-nbwebdifftool "$LOCAL" "$REMOTE"'])
-    try:
-        previous = check_output(cmd + ['diff.guitool']).decode('utf8', 'replace').strip()
-    except CalledProcessError:
-        previous = None
-    else:
-        if previous != 'nbdime':
-            check_call(cmd + ['difftool.nbdimeweb.previous', previous])
-    check_call(cmd + ['diff.guitool', 'nbdimeweb'])
+    if set_default:
+        check_call(cmd + ['diff.guitool', 'nbdimeweb'])
 
     # Common setting:
     check_call(cmd + ['difftool.prompt', 'false'])
@@ -54,25 +42,27 @@ def disable(global_=False):
     if global_:
         cmd.append('--global')
     try:
-        previous = check_output(cmd + ['difftool.nbdime.previous']).decode('utf8', 'replace').strip()
+        tool = check_output(cmd + ['diff.tool']).decode('utf8', 'replace').strip()
     except CalledProcessError:
-        try:
-            check_call(cmd + ['--unset', 'diff.tool'])
-        except CalledProcessError:
-            # already unset
-            pass
+        pass
     else:
-        check_call(cmd + ['diff.tool', previous])
+        if tool in ('nbdime', 'nbdimeweb'):
+            try:
+                check_call(cmd + ['--unset', 'diff.tool'])
+            except CalledProcessError:
+                # already unset
+                pass
     try:
-        previous_gui = check_output(cmd + ['difftool.nbdime.previous_gui']).decode('utf8', 'replace').strip()
+        tool = check_output(cmd + ['diff.guitool']).decode('utf8', 'replace').strip()
     except CalledProcessError:
-        try:
-            check_call(cmd + ['--unset', 'diff.guitool'])
-        except CalledProcessError:
-            # already unset
-            pass
+        pass
     else:
-        check_call(cmd + ['diff.guitool', previous_gui])
+        if tool in ('nbdime', 'nbdimeweb'):
+            try:
+                check_call(cmd + ['--unset', 'diff.guitool'])
+            except CalledProcessError:
+                # already unset
+                pass
 
 
 def show_diff(before, after):
@@ -108,6 +98,9 @@ def main(args=None):
         description="Configure git to use nbdime via `git difftool`")
     config.add_argument('--global', action='store_true', dest='global_',
         help="configure your global git config instead of the current repo"
+    )
+    config.add_argument('--set-default', action='store_true', dest='set_default',
+        help="set nbdime as default difftool and nbdimeweb as default guidifftool"
     )
     enable_disable = config.add_mutually_exclusive_group(required=True)
     enable_disable.add_argument('--enable', action='store_const',

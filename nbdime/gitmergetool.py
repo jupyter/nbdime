@@ -18,7 +18,7 @@ from subprocess import check_call, check_output, CalledProcessError
 from . import nbmergeapp
 from .args import add_filename_args
 
-def enable(global_=False):
+def enable(global_=False, set_default=False):
     """Enable nbdime git mergetool"""
     cmd = ['git', 'config']
     if global_:
@@ -26,13 +26,6 @@ def enable(global_=False):
 
     # Register CLI tool
     check_call(cmd + ['mergetool.nbdime.cmd', 'git-nbmergetool merge "$LOCAL" "$REMOTE" "$BASE" "$MERGED"'])
-    try:
-        previous = check_output(cmd + ['merge.tool']).decode('utf8', 'replace').strip()
-    except CalledProcessError:
-        previous = None
-    else:
-        if previous != 'nbdime':
-            check_call(cmd + ['mergetool.nbdime.previous', previous])
 
     # Register webapp tool
     check_call(cmd + ['mergetool.nbdimeweb.cmd', 'git-nbwebmergetool "$LOCAL" "$REMOTE" "$BASE" "$MERGED"'])
@@ -40,8 +33,10 @@ def enable(global_=False):
     # Common setting:
     check_call(cmd + ['mergetool.prompt', 'false'])
 
-    # Set default tool to webapp
-    check_call(cmd + ['merge.tool', 'nbdimeweb'])
+    if set_default: 
+        # Set default tool to webapp
+        check_call(cmd + ['merge.tool', 'nbdimeweb'])
+
 
 
 def disable(global_=False):
@@ -80,6 +75,9 @@ def main(args=None):
         description="Configure git to use nbdime via `git mergetool`")
     config.add_argument('--global', action='store_true', dest='global_',
         help="configure your global git config instead of the current repo"
+    )
+    config.add_argument('--set-default', action='store_true', dest='set_default',
+        help="set nbdimeweb as default mergetool"
     )
     enable_disable = config.add_mutually_exclusive_group(required=True)
     enable_disable.add_argument('--enable', action='store_const',
