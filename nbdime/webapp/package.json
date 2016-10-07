@@ -7,7 +7,7 @@
     "build:test": "webpack --config test/webpack.config.js",
     "clean": "rimraf build && rimraf node_modules && rimraf static/build",
     "postinstall": "npm dedupe",
-    "update": "rimraf node_modules/jupyter-nbdime && npm install"
+    "update": "rimraf node_modules/nbdime && npm install"
   },
   "devDependencies": {
     "awesome-typescript-loader": "2.1.1",
