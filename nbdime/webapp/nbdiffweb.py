@@ -12,7 +12,7 @@ import logging
 import threading
 from tornado.httputil import url_concat
 
-from .nbdimeserver import main as run_server
+from .nbdimeserver import main_server as run_server
 from ..args import add_generic_args, add_web_args, add_diff_args, add_filename_args
 
 

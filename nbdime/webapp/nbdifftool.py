@@ -13,7 +13,7 @@ import threading
 
 from ..args import add_generic_args, add_diff_args
 from ..args import add_web_args, add_filename_args
-from .nbdimeserver import main as run_server
+from .nbdimeserver import main_server as run_server
 
 
 _logger = logging.getLogger(__name__)
