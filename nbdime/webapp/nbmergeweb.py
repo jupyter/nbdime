@@ -69,8 +69,9 @@ def main(args=None):
     local = arguments.local
     remote = arguments.remote
     output = arguments.output
-    browse(port, base, local, remote)
-    return run_server(port=port, cwd=cwd, outputfilename=output)
+    return run_server(
+        port=port, cwd=cwd, outputfilename=output,
+        on_port=lambda port: browse(port, base, local, remote))
 
 
 if __name__ == "__main__":

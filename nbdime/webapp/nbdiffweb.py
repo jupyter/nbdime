@@ -59,8 +59,9 @@ def main(args=None):
     cwd = arguments.workdirectory
     base = arguments.base
     remote = arguments.remote
-    browse(port, base, remote)
-    return run_server(port=port, cwd=cwd)
+    return run_server(
+        port=port, cwd=cwd,
+        on_port=lambda port: browse(port, base, remote))
 
 
 if __name__ == "__main__":

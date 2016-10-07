@@ -9,7 +9,7 @@ import json
 import sys
 from argparse import ArgumentParser
 from six import string_types
-from tornado import ioloop, web, escape
+from tornado import ioloop, web, escape, netutil, httpserver
 import nbformat
 import nbdime
 from nbdime.merging.notebooks import decide_notebook_merge
@@ -235,12 +235,22 @@ def make_app(**params):
     return web.Application(handlers, **settings)
 
 
-def main_server(**params):
+def main_server(on_port=None, **params):
     print("Using params:")
     print(params)
     port = params.pop("port")
     app = make_app(**params)
-    app.listen(port)
+    if port != 0 or on_port is None:
+        app.listen(port, address='127.0.0.1')
+    else:
+        sockets = netutil.bind_sockets(0, '127.0.0.1')
+        server = httpserver.HTTPServer(app)
+        server.add_sockets(sockets)
+        for s in sockets:
+            print('Listening on %s, port %d' % s.getsockname()[:2])
+            port = s.getsockname()[1]
+    if on_port is not None:
+        on_port(port)
     ioloop.IOLoop.current().start()
     return exit_code
 

@@ -68,10 +68,10 @@ def main(args=None):
     local = arguments.local
     remote = arguments.remote
     merged = arguments.merged
-    browse(port)
     return run_server(port=port, cwd=cwd,
                       mergetool_args=dict(base=base, local=local, remote=remote),
-                      outputfilename=merged)
+                      outputfilename=merged,
+                      on_port=browse)
 
 
 if __name__ == "__main__":
