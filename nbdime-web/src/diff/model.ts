@@ -7,11 +7,11 @@ import {
 } from 'jupyterlab/lib/notebook/notebook/nbformat';
 
 import {
-  JSONObject, JSONArray
+  JSONObject, JSONArray, JSONValue
 } from 'phosphor/lib/algorithm/json';
 
 import {
-  IDiffEntry, IDiffAddRange, IDiffRemoveRange, IDiffPatch,
+  IDiffEntry, IDiffAddRange, IDiffRemoveRange, IDiffPatch, IDiffArrayEntry
 } from './diffentries';
 
 import {
@@ -365,7 +365,7 @@ namespace StringDiffModel {
  */
 export function createPatchDiffModel(base: string | JSONObject | JSONArray | null, diff: IDiffEntry[]) : StringDiffModel {
   console.assert(!!diff, 'Patch model needs diff.');
-  let baseStr = (typeof base === 'string') ? base as string : stringify(base);
+  let baseStr = (typeof base === 'string') ? base : stringify(base);
   let out = patchStringified(base, diff);
   return new StringDiffModel(baseStr, out.remote, out.additions, out.deletions);
 }
@@ -378,11 +378,11 @@ export function createPatchDiffModel(base: string | JSONObject | JSONArray | nul
  * treated as removed. Otherwise base and remote should be equal, represeting
  * unchanged content.
  */
-export function createDirectDiffModel(base: any, remote: any): StringDiffModel {
+export function createDirectDiffModel(base: JSONValue | null, remote: JSONValue | null): StringDiffModel {
   let baseStr: string | null = (typeof base === 'string') ?
-    base as string : stringify(base);
+    base : stringify(base);
   let remoteStr: string | null = (typeof remote === 'string') ?
-    remote as string : stringify(remote);
+    remote : stringify(remote);
   let additions: DiffRangeRaw[] = [];
   let deletions: DiffRangeRaw[] = [];
 
@@ -442,7 +442,7 @@ export class OutputDiffModel implements IDiffModel {
     }
     this.base = base;
     if (!remote && diff) {
-      this.remote = patch(base!, diff) as nbformat.IOutput;
+      this.remote = patch(base!, diff);
     } else {
       this.remote = remote;
     }
@@ -474,13 +474,12 @@ export class OutputDiffModel implements IDiffModel {
    * See also: innerMimeType
    */
   hasMimeType(mimetype: string): string | null {
-    let t = (this.base || this.remote!).output_type;
-    if (t === 'stream' &&
+    let outputs = this.base || this.remote!;
+    if (outputs.output_type === 'stream' &&
           mimetype === 'application/vnd.jupyter.console-text') {
       return 'text';
-    } else if (t === 'execute_result' || t === 'display_data') {
-      let data = this.base ? (this.base as nbformat.IExecuteResult).data :
-        (this.remote as nbformat.IExecuteResult).data;
+    } else if (outputs.output_type === 'execute_result' || outputs.output_type === 'display_data') {
+      let data = outputs.data;
       if (mimetype in data) {
         return 'data.' + mimetype;
       }
@@ -532,8 +531,8 @@ export class OutputDiffModel implements IDiffModel {
       }
       return obj[key];
     };
-    let base = key ? getMemberByPath(this.base, key) as nbformat.IOutput | null : this.base;
-    let remote = key ? getMemberByPath(this.remote, key) as nbformat.IOutput | null : this.remote;
+    let base = key ? getMemberByPath(this.base, key) as any : this.base;
+    let remote = key ? getMemberByPath(this.remote, key) as any : this.remote;
     let diff = (this.diff && key) ?
       getMemberByPath(this.diff, key, getDiffKey) as IDiffEntry[] | null :
       this.diff;
@@ -668,7 +667,7 @@ function createPatchedCellDiffModel(
 
   if (base.cell_type === 'code') {
     outputs = makeOutputModels((base as nbformat.ICodeCell).outputs, null,
-      getDiffKey(diff, 'outputs'));
+      getDiffKey(diff, 'outputs') as IDiffArrayEntry[]);
   }
   return new CellDiffModel(source, metadata, outputs, base.cell_type);
 }
@@ -718,7 +717,7 @@ function createDeletedCellDiffModel(
 export
 function makeOutputModels(base: nbformat.IOutput[] | null,
                           remote: nbformat.IOutput[] | null,
-                          diff?: IDiffEntry[] | null) : OutputDiffModel[] {
+                          diff?: IDiffArrayEntry[] | null) : OutputDiffModel[] {
   let models: OutputDiffModel[] = [];
   if (remote === null && !diff) {
     if (base === null) {
@@ -746,20 +745,20 @@ function makeOutputModels(base: nbformat.IOutput[] | null,
     let consumed = 0;
     let skip = 0;
     for (let d of diff) {
-      let index = d.key as number;
+      let index = d.key;
       for (let o of base.slice(consumed, index)) {
         // Add unchanged outputs
         models.push(new OutputDiffModel(o, o));
       }
       if (d.op === 'addrange') {
         // Outputs added
-        for (let o of (d as IDiffAddRange).valuelist) {
+        for (let o of d.valuelist) {
           models.push(new OutputDiffModel(null, o));
         }
         skip = 0;
       } else if (d.op === 'removerange') {
         // Outputs removed
-        let len = (d as IDiffRemoveRange).length;
+        let len = d.length;
         for (let i = index; i < index + len; i++) {
           models.push(new OutputDiffModel(base[i], null));
         }
@@ -767,7 +766,7 @@ function makeOutputModels(base: nbformat.IOutput[] | null,
       } else if (d.op === 'patch') {
         // Output changed
         models.push(new OutputDiffModel(
-          base[index], null, (d as IDiffPatch).diff));
+          base[index], null, d.diff));
         skip = 1;
       } else {
         throw 'Invalid diff operation: ' + d;
@@ -824,9 +823,8 @@ export class NotebookDiffModel {
     this.cells = [];
     let take = 0;
     let skip = 0;
-    for (let e of getDiffKey(diff, 'cells') || []) {
-      let op = e.op;
-      let index = e.key as number;
+    for (let e of getDiffKey(diff, 'cells') as IDiffArrayEntry[] || []) {
+      let index = e.key;
 
       // diff is sorted on index, so take any preceding cells as unchanged:
       for (let i=take; i < index; i++) {
@@ -835,24 +833,24 @@ export class NotebookDiffModel {
       }
 
       // Process according to diff type:
-      if (op === 'addrange') {
+      if (e.op === 'addrange') {
         // One or more inserted/added cells:
-        for (let ei of (e as IDiffAddRange).valuelist) {
+        for (let ei of e.valuelist) {
           this.cells.push(createAddedCellDiffModel(
             ei as nbformat.ICell, this.mimetype));
         }
         skip = 0;
-      } else if (op === 'removerange') {
+      } else if (e.op === 'removerange') {
         // One or more removed/deleted cells:
-        skip = (e as IDiffRemoveRange).length;
+        skip = e.length;
         for (let i=index; i < index + skip; i++) {
           this.cells.push(createDeletedCellDiffModel(
             base.cells[i], this.mimetype));
         }
-      } else if (op === 'patch') {
+      } else if (e.op === 'patch') {
         // A cell has changed:
         this.cells.push(createPatchedCellDiffModel(
-          base.cells[index], (e as IDiffPatch).diff, this.mimetype));
+          base.cells[index], e.diff, this.mimetype));
         skip = 1;
       }
 

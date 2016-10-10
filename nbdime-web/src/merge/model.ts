@@ -7,7 +7,7 @@ import {
 } from 'jupyterlab/lib/notebook/notebook/nbformat';
 
 import {
-  IDiffAddRange, IDiffPatch, IDiffRemoveRange, IDiffEntry
+  IDiffAddRange, IDiffPatch, IDiffRemoveRange, IDiffEntry, IDiffArrayEntry
 } from '../diff/diffentries';
 
 import {
@@ -48,7 +48,7 @@ class DecisionStringDiffModel extends StringDiffModel {
               sourceModels: (IStringDiffModel | null)[],
               collapsible?: boolean, header?: string, collapsed?: boolean) {
     // Set up initial parameters for super call
-    let baseStr = (typeof base === 'string') ? base as string : stringify(base);
+    let baseStr = (typeof base === 'string') ? base : stringify(base);
     super(baseStr, '', [], [],
       collapsible, header, collapsed);
     this.rawBase = base;
@@ -105,7 +105,7 @@ class DecisionStringDiffModel extends StringDiffModel {
    * chunks from source models where the decision is a no-op (action 'base').
    */
   getLineChunks(): Chunk[] {
-    let models: (IStringDiffModel | null)[] = [this as IStringDiffModel];
+    let models: (IStringDiffModel | null)[] = [this];
     models = models.concat(this._sourceModels);
     let chunker = new LineChunker();
     let iter = new StringDiffModel.SyncedDiffIter(models);
@@ -178,7 +178,7 @@ function createPatchedCellDecisionDiffModel(
   if (base.cell_type === 'code' && (base as nbformat.ICodeCell).outputs) {
     let outputBase = (base as nbformat.ICodeCell).outputs;
     let outputDec = filterDecisions(decisions, ['outputs'], 2);
-    let mergedDiff = buildDiffs(outputBase, outputDec, 'merged');
+    let mergedDiff = buildDiffs(outputBase, outputDec, 'merged') as IDiffArrayEntry[];
     let merged: nbformat.IOutput[];
     if (mergedDiff && mergedDiff.length > 0) {
       merged = patch(outputBase, mergedDiff);
@@ -242,8 +242,8 @@ abstract class ObjectMergeModel<ObjectType, DiffModelType> {
   /**
    * Apply merge decisions to create the merged cell
    */
-  serialize(): ObjectType {
-    return applyDecisions(this.base, this.decisions) as ObjectType;
+  serialize(): ObjectType | null {
+    return applyDecisions(this.base, this.decisions);
   }
 
   /**
@@ -459,8 +459,8 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
       // More than one diff op on cell level, split decisions on key
       // Translate decision to format taken by _splitPatch, and apply:
       decision = pushPatchDecision(decision, decision.absolutePath.slice(1, 2));
-      let diff = ((hasEntries(decision.localDiff) ?
-        decision.localDiff : decision.remoteDiff) as IDiffPatch[])[0];
+      let diff = (hasEntries(decision.localDiff) ?
+        decision.localDiff : decision.remoteDiff!)[0] as IDiffPatch;
       let decisions = this.splitPatch(decision, diff,
                                       hasEntries(decision.localDiff));
       resolveCommonPaths(decisions);
@@ -479,14 +479,14 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
   /**
    * Apply merge decisions to create the merged cell
    */
-  serialize(): nbformat.ICell {
+  serialize(): nbformat.ICell | null {
     let decisions: MergeDecision[] = [];
     for (let md of this.decisions) {
       let nmd = new MergeDecision(md);
       nmd.level = 2;
       decisions.push(nmd);
     }
-    return applyDecisions(this.base, decisions) as nbformat.ICell;
+    return applyDecisions(this.base, decisions);
   }
 
   protected createDiffModel(diff: IDiffEntry[]): CellDiffModel {
@@ -538,8 +538,11 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
       }
       if (this.base === null) {
         // 1.
-        console.assert(md.remoteDiff[0].op === 'addrange');
-        let v = (md.remoteDiff[0] as IDiffAddRange).valuelist[0];
+        let first = md.remoteDiff[0];
+        if (first.op !== 'addrange') {
+          throw 'Merge decision does not conform to expectation: ' + md;
+        }
+        let v = first.valuelist[0];
         this._remote = createAddedCellDiffModel(v, this.mimetype);
         this._merged = createAddedCellDiffModel(v, this.mimetype);
       } else {
@@ -556,8 +559,11 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
       }
       if (this.base === null) {
         // 1.
-        console.assert(md.localDiff[0].op === 'addrange');
-        let v = (md.localDiff[0] as IDiffAddRange).valuelist[0];
+        let first = md.localDiff[0];
+        if (first.op !== 'addrange') {
+          throw 'Merge decision does not conform to expectation: ' + md;
+        }
+        let v = first.valuelist[0];
         this._local = createAddedCellDiffModel(v, this.mimetype);
         this._merged = createAddedCellDiffModel(v, this.mimetype);
       } else {
@@ -731,18 +737,18 @@ function splitCellRemovals(mergeDecisions: MergeDecision[]): MergeDecision[] {
       continue;
     }
 
-    let dl = hasEntries(md.localDiff) ? md.localDiff[md.localDiff.length - 1] : null;
-    let dr = hasEntries(md.remoteDiff) ? md.remoteDiff[md.remoteDiff.length - 1] : null;
+    let dl = hasEntries(md.localDiff) ? md.localDiff[md.localDiff.length - 1] as IDiffArrayEntry : null;
+    let dr = hasEntries(md.remoteDiff) ? md.remoteDiff[md.remoteDiff.length - 1] as IDiffArrayEntry : null;
     // TODO: Does it make sense to split on custom?
 
     if (dl && !dr || dr && !dl) {
       // One-way diff
-      let d = (dl ? dl : dr) as IDiffEntry;
+      let d = (dl ? dl : dr!);
 
-      if (d.op === 'removerange' && (d as IDiffRemoveRange).length > 1) {
+      if (d.op === 'removerange' && d.length > 1) {
         // Found a one-way diff to split!
-        for (let i = 0; i < (d as IDiffRemoveRange).length; ++i) {
-          output.push(makeSplitPart(md, (d.key as number) + i, !!dl, !!dr));
+        for (let i = 0; i < d.length; ++i) {
+          output.push(makeSplitPart(md, d.key + i, !!dl, !!dr));
         }
       } else {
         // Not a removerange type:
@@ -758,8 +764,8 @@ function splitCellRemovals(mergeDecisions: MergeDecision[]): MergeDecision[] {
       } else if (dl.op === dr.op) {
         // Both sides have removerange, just match keys/length
         // Note: Assume that ranges have overlap, since they are in one decision
-        let klStart = dl.key as number;
-        let krStart = dr.key as number;
+        let klStart = dl.key;
+        let krStart = dr.key;
         let start = Math.min(klStart, krStart);
         let klEnd = klStart + (dl as IDiffRemoveRange).length;
         let krEnd = krStart + (dr as IDiffRemoveRange).length;
@@ -776,8 +782,8 @@ function splitCellRemovals(mergeDecisions: MergeDecision[]): MergeDecision[] {
         let pOp = (remLocal ? dr : dl) as IDiffPatch;
         console.assert(pOp.op === 'patch');
 
-        let pidx = pOp.key as number;
-        let start = rOp.key as number;
+        let pidx = pOp.key;
+        let start = rOp.key;
         for (let i = start; i < start + rOp.length; ++i) {
           let newMd = makeSplitPart(md, i, remLocal, !remLocal);
           if (i === pidx) {
@@ -810,9 +816,9 @@ function splitCellInsertions(mergeDecisions: MergeDecision[]): MergeDecision[] {
     if ((local && !hasEntries(md.localDiff)) || !hasEntries(md.remoteDiff)) {
       throw 'Invalid input: ' + md;
     }
-    let key = (local ? md.localDiff : md.remoteDiff)![0].key;
+    let key = (local ? md.localDiff : md.remoteDiff)![0].key as number;
     let newDiff: IDiffAddRange[] = [{
-        key: key as number,
+        key: key,
         op: 'addrange',
         valuelist: [value]
     }];
@@ -857,12 +863,12 @@ function splitCellInsertions(mergeDecisions: MergeDecision[]): MergeDecision[] {
       continue;
     }
 
-    let dl = md.localDiff && md.localDiff.length === 1 ? md.localDiff[0]  as IDiffAddRange : null;
+    let dl = md.localDiff && md.localDiff.length === 1 ? md.localDiff[0] as IDiffAddRange : null;
     let dr = md.remoteDiff && md.remoteDiff.length === 1 ? md.remoteDiff[0] as IDiffAddRange : null;
 
     if (dl && !dr || dr && !dl) {
       // One-way diff
-      let d = (dl ? dl : dr) as IDiffAddRange;
+      let d = (dl ? dl : dr!);
       let insert = d.valuelist;
       for (let v of insert) {
         output.push(makeSplitPart(md, v, !!dl, !!dr));
@@ -880,7 +886,7 @@ function splitCellInsertions(mergeDecisions: MergeDecision[]): MergeDecision[] {
         // Next, check decision for ruling on order (e.g.
         // local_then_remote, which we will use as the default).
 
-        let start = dl.key as number;
+        let start = dl.key;
         console.assert(start === dr.key);
         if (md.action === 'remote_then_local') {
           // Only case where we need to switch order!
@@ -980,7 +986,7 @@ class NotebookMergeModel {
     nb['metadata'] = this.metadata.serialize();
 
     // Serialzie cell list
-    let cells: nbformat.ICell[] = [];
+    let cells: (nbformat.ICell | null)[] = [];
     for (let c of this.cells) {
       cells.push(c.serialize());
     }
@@ -1068,7 +1074,7 @@ class NotebookMergeModel {
             continue;
           }
           // All keys should be the same since we run splitCellChunks first
-          idx = (di[0].key as number);
+          idx = di[0].key as number;
           if (di[0].op === 'addrange') {
             // Rely on preprocessing splitting to cell level!
             let insertedCell = new CellMergeModel(null, [md], this.mimetype);

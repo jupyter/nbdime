@@ -45,10 +45,6 @@ import {
   valueIn
 } from '../common/util';
 
-import {
-  Action
-} from '../merge/decisions';
-
 
 const PICKER_SYMBOL = '\u27ad';
 
@@ -260,7 +256,7 @@ class DiffView {
     }
     function change(_cm: CodeMirror.Editor, change: CodeMirror.EditorChangeLinkedList) {
       if (self.model instanceof DecisionStringDiffModel) {
-        (self.model as DecisionStringDiffModel).invalidate();
+        self.model.invalidate();
       }
       // Update faster when a line was added/removed
       setDealign(change.text.length - 1 !== change.to.line - change.from.line);
@@ -279,7 +275,7 @@ class DiffView {
 
   modelInvalid(): boolean {
     return this.model instanceof DecisionStringDiffModel &&
-            (this.model as DecisionStringDiffModel).invalid;
+            this.model.invalid;
   }
 
   syncModel() {
@@ -312,7 +308,7 @@ class DiffView {
       if (gutter === GUTTER_PICKER_CLASS) {
         if (instance === this.ownEditor) {
           for (let s of ss) {
-            s.decision.action = s.action as Action;
+            s.decision.action = s.action;
           }
         } else if (instance === this.baseEditor) {
           for (let s of ss) {
@@ -326,7 +322,7 @@ class DiffView {
       }
       for (let dv of this.baseEditor.state.diffViews as DiffView[]) {
         if (dv.model instanceof DecisionStringDiffModel) {
-          (dv.model as DecisionStringDiffModel).invalidate();
+          dv.model.invalidate();
           dv.forceUpdate('full');
         }
       }
@@ -412,7 +408,7 @@ class DiffView {
     let classes: DiffClasses;
     if (this.classes === null) {
       // Only store prefixes here, will be completed later
-      classes = copyObj(mergeClassPrefix) as DiffClasses;
+      classes = copyObj(mergeClassPrefix);
     } else {
       classes = this.classes;
     }
@@ -422,7 +418,7 @@ class DiffView {
                        sources: ChunkSource[]) {
       if (self.classes === null && sources.length > 0) {
         // Complete merge class prefixes here
-        classes = copyObj(mergeClassPrefix) as DiffClasses;
+        classes = copyObj(mergeClassPrefix);
         // First, figure out 'action' state of chunk
         let s: string = sources[0].action;
         if (sources.length > 1) {
@@ -537,7 +533,7 @@ class DiffView {
 
 function clearMergeMarks(editor: CodeMirror.Editor, arr: any[]) {
   for (let postfix of ['-local', '-remote', '-either', '-custom']) {
-    let classes = copyObj(mergeClassPrefix) as DiffClasses;
+    let classes = copyObj(mergeClassPrefix);
     for (let k of Object.keys(classes)) {
       classes[k] += postfix;
     }
@@ -852,7 +848,7 @@ class MergeView extends Panel {
         leftWidget = new Widget({node: elt('div', 'Value missing', 'jp-mod-missing')});
       } else {
         left = this.left = new DiffView(local, 'left', this.alignViews.bind(this),
-          copyObj({readOnly: true}, copyObj(dvOptions)) as CodeMirror.MergeView.MergeViewEditorConfiguration);
+          copyObj({readOnly: true}, copyObj(dvOptions)));
         this.diffViews.push(left);
         leftWidget = left.ownWidget;
       }
@@ -861,7 +857,7 @@ class MergeView extends Panel {
       this.addWidget(leftWidget);
 
       if (showBase) {
-        this.addWidget(this.base as Editor);
+        this.addWidget(this.base);
       }
 
       let rightWidget: Widget;
@@ -871,7 +867,7 @@ class MergeView extends Panel {
         rightWidget = new Widget({node: elt('div', 'Value missing', 'jp-mod-missing')});
       } else {
         right = this.right = new DiffView(remote, 'right', this.alignViews.bind(this),
-          copyObj({readOnly: false}, copyObj(dvOptions)) as CodeMirror.MergeView.MergeViewEditorConfiguration);
+          copyObj({readOnly: false}, copyObj(dvOptions)));
         this.diffViews.push(right);
         rightWidget = right.ownWidget;
       }
@@ -1086,13 +1082,13 @@ function collapseIdenticalStretches(mv: MergeView, margin?: boolean | number): v
     clear.push(true);
   }
   if (mv.left) {
-    unclearNearChunks(mv.left, margin as number, off, clear);
+    unclearNearChunks(mv.left, margin, off, clear);
   }
   if (mv.right) {
-    unclearNearChunks(mv.right, margin as number, off, clear);
+    unclearNearChunks(mv.right, margin, off, clear);
   }
   if (mv.merge) {
-    unclearNearChunks(mv.merge, margin as number, off, clear);
+    unclearNearChunks(mv.merge, margin, off, clear);
   }
 
   for (let i = 0; i < clear.length; i++) {
@@ -1137,16 +1133,19 @@ function elt(tag: string, content?: string | HTMLElement[] | null, className?: s
     e.style.cssText = style;
   }
   if (typeof content === 'string') {
-    e.appendChild(document.createTextNode(content as string));
+    e.appendChild(document.createTextNode(content));
   } else if (content) {
     for (let i = 0; i < content.length; ++i) {
-      e.appendChild((content as HTMLElement[])[i]);
+      e.appendChild((content)[i]);
     }
   }
   return e;
 }
 
-function copyObj(obj: any, target?: any): Object {
+function copyObj<T extends {[key: string]: any}>(obj: T): T;
+function copyObj<T extends {[key: string]: any}, U extends {[key: string]: any}>
+(obj: T, target?: U): T & U;
+function copyObj(obj: {[key: string]: any}, target?: {[key: string]: any}): Object {
   if (!target) {
     target = {};
   }

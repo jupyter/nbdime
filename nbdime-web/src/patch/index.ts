@@ -67,7 +67,7 @@ export function patch(base: JSONValue, diff: IDiffEntry[] | null): JSONValue {
   } else if (typeof base === 'number' || typeof base === 'boolean') {
     throw 'Cannot patch an atomic type: ' + typeof base;
   } else {
-    return patchObject(base as JSONObject, diff as IDiffObjectEntry[]);
+    return patchObject(base, diff as IDiffObjectEntry[]);
   }
 }
 

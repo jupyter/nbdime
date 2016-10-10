@@ -184,29 +184,28 @@ function opPatch(key: string | number, diff: IDiffEntry[] | null): IDiffPatch {
  */
 export
 function validateSequenceOp(base: Array<any> | string, entry: IDiffEntry): void {
-  let op = entry.op;
   if (typeof entry.key !== 'number') {
       throw 'Invalid patch sequence op: Key is not a number: ' + entry.key;
   }
-  let index = entry.key as number;
-  if (op === 'addrange') {
+  let index = entry.key;
+  if (entry.op === 'addrange') {
     if (index < 0 || index > base.length || isNaN(index)) {
       throw 'Invalid add range diff op: Key out of range: ' + index;
     }
-  } else if (op === 'removerange') {
+  } else if (entry.op === 'removerange') {
     if (index < 0 || index >= base.length || isNaN(index)) {
       throw 'Invalid remove range diff op: Key out of range: ' + index;
     }
-    let skip = (entry as IDiffRemoveRange).length;
+    let skip = entry.length;
     if (index + skip > base.length || isNaN(index)) {
       throw 'Invalid remove range diff op: Range too long!';
     }
-  } else if (op === 'patch') {
+  } else if (entry.op === 'patch') {
     if (index < 0 || index >= base.length || isNaN(index)) {
       throw 'Invalid patch diff op: Key out of range: ' + index;
     }
   } else {
-    throw 'Invalid op: ' + op;
+    throw 'Invalid op: ' + entry.op;
   }
 }
 
@@ -219,7 +218,7 @@ function validateObjectOp(base: Object, entry: IDiffEntry, keys: string[]): void
   if (typeof entry.key !== 'string') {
       throw 'Invalid patch object op: Key is not a string: ' + entry.key;
   }
-  let key = entry.key as string;
+  let key = entry.key;
 
   if (op === 'add') {
     if (valueIn(key, keys)) {

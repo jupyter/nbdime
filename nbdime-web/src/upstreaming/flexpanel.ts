@@ -464,7 +464,7 @@ class FlexLayout extends PanelLayout {
   set justifyContent(value: FlexLayout.ContentJustification | null) {
     if (this._justifyContent !== value) {
       this._justifyContent = value;
-      let flex = Private.translateFlexString(value as string);
+      let flex = Private.translateFlexString(value);
       this.parent.node.style.justifyContent = flex;
       this.parent.fit();
     }
@@ -482,7 +482,7 @@ class FlexLayout extends PanelLayout {
   set alignItems(value: FlexLayout.ItemAlignment | null) {
     if (this._alignItems !== value) {
       this._alignItems = value;
-      let flex = Private.translateFlexString(value as string);
+      let flex = Private.translateFlexString(value);
       this.parent.node.style.alignItems = flex;
       this.parent.fit();
     }
@@ -499,7 +499,7 @@ class FlexLayout extends PanelLayout {
   set alignContent(value: FlexLayout.ContentAlignment | null) {
     if (this._alignContent !== value) {
       this._alignContent = value;
-      let flex = Private.translateFlexString(value as string);
+      let flex = Private.translateFlexString(value);
       if (!this.parent) {
         return;
       }
@@ -1012,7 +1012,7 @@ namespace FlexLayout {
   export
   function setSizeBasis(widget: Widget, value: number | 'auto' | null, fit=true) {
     if (value === 'auto') {
-      widget.node.style.flexBasis = value as string;
+      widget.node.style.flexBasis = value;
     } else if (value === null) {
       widget.node.style.flexBasis = '';
     } else {

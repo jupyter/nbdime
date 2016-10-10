@@ -298,8 +298,8 @@ function labelSource(diff: IDiffEntry[] | null, source: ChunkSource): IDiffEntry
   if (diff) {
     for (let d of diff) {
       d.source = source;
-      if ((d as IDiffPatch).diff !== undefined) {
-        labelSource((d as IDiffPatch).diff, source);
+      if (d.op === 'patch') {
+        labelSource(d.diff, source);
       }
     }
   }

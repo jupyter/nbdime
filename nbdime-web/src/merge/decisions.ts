@@ -69,7 +69,7 @@ class MergeDecision {
               customDiff: IDiffEntry[] | null = null) {
     this.level = 0;
     if (obj instanceof Array) {
-      this._path = obj as DecisionPath;
+      this._path = obj;
     } else if (obj instanceof MergeDecision) {
       this._path = obj.absolutePath.slice();
       localDiff = obj.localDiff;
@@ -173,7 +173,7 @@ function popPath(diffs: DiffCollection, popInner?: boolean):
   }
 
   // Check if ops and keys are equal for all non-null diffs
-  let d = diffs[i] as IDiffEntry[];
+  let d = diffs[i]!;
   let op = d[0].op;
   let key = d[0].key;
   for (let di of diffs) {
@@ -194,7 +194,7 @@ function popPath(diffs: DiffCollection, popInner?: boolean):
       for (let di of diffs) {
         if (di && di.length > 0 && (di.length !== 1 ||
             !(di[0] as IDiffPatch).diff ||
-            ((di[0] as IDiffPatch).diff as IDiffEntry[]).length !== 1)) {
+            (di[0] as IDiffPatch).diff!.length !== 1)) {
           return null;
         }
       }
@@ -360,8 +360,8 @@ function splitDiffStringPath(base: any, path: DecisionPath):
  *
  * Returns a new, patched object, leaving the base unmodified.
  */
-export
-function applyDecisions(base: any, decisions: MergeDecision[]): any {
+export function applyDecisions<T>(base: T, decisions: MergeDecision[]): T;
+export function applyDecisions(base: any, decisions: MergeDecision[]): any {
   let merged = deepCopy(base);
   let prevPath: DecisionPath | null = null;
   let parent: any = null;
