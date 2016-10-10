@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc --project src && node scripts/copy-files.js",
     "build:test": "webpack --config webpack.test.config.js",
-    "clean": "rimraf build && rimraf node_modules && rimraf static/build",
+    "clean": "rimraf test/build && rimraf node_modules && rimraf static/build",
     "postinstall": "npm dedupe",
     "test": "npm run test:firefox",
     "posttest": "node scripts/fix-coverage.js",
@@ -17,7 +17,7 @@
     "test:ie": "npm run build:test && karma start --browsers=IE test/karma.conf.js"
   },
   "devDependencies": {
-    "awesome-typescript-loader": "2.2.4",
+    "awesome-typescript-loader": "^2.2.4",
     "css-loader": "^0.25.0",
     "expect.js": "^0.3.1",
     "file-loader": "^0.9.0",

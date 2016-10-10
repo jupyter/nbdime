@@ -4,7 +4,7 @@ module.exports = {
   context: __dirname,
   entry: './test/src/index.ts',
   output: {
-    path: __dirname + "/build",
+    path: __dirname + "/test/build",
     filename: "test.js",
     devtoolModuleFilenameTemplate: __dirname.replace('\\', '/') + '/[resource-path]'
   },
