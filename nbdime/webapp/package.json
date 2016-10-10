@@ -10,8 +10,8 @@
     "update": "rimraf node_modules/nbdime && npm install"
   },
   "devDependencies": {
-    "awesome-typescript-loader": "2.1.1",
-    "css-loader": "^0.23.1",
+    "awesome-typescript-loader": "^2.2.4",
+    "css-loader": "^0.25.0",
     "file-loader": "^0.9.0",
     "json-loader": "^0.5.4",
     "rimraf": "^2.5.2",
