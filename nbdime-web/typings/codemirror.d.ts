@@ -18,7 +18,7 @@ declare namespace CodeMirror {
     var version: string;
 
     interface modespec {
-      [ key: string ]: string;
+      [ key: string ]: string | undefined;
       name?: string;
       mode: string;
       mime: string;
