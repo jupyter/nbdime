@@ -17,6 +17,7 @@
     "test:ie": "npm run build:test && karma start --browsers=IE test/karma.conf.js"
   },
   "devDependencies": {
+    "@types/node": "6.0.45",
     "awesome-typescript-loader": "^2.2.4",
     "css-loader": "^0.25.0",
     "expect.js": "^0.3.1",
