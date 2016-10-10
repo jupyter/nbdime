@@ -25,15 +25,15 @@ function makeRemoveRange(key: number, length: number) : IDiffRemoveRange {
   return {key: key, op: 'removerange', length: length, source: null};
 }
 
-function makeAdd(key: number | string, value: any) : IDiffAdd {
+function makeAdd(key: string, value: any) : IDiffAdd {
   return {key: key, op: 'add', value: value, source: null};
 }
 
-function makeRemove(key: number | string) : IDiffRemove {
+function makeRemove(key: string) : IDiffRemove {
   return {key: key, op: 'remove', source: null};
 }
 
-function makeReplace(key: number | string, value: any) : IDiffReplace {
+function makeReplace(key: string, value: any) : IDiffReplace {
   return {key: key, op: 'replace', value: value, source: null};
 }
 
@@ -329,7 +329,7 @@ describe('nbdime', () => {
 
       it('should fail to patch an object with a non-string key', () => {
         let base = {a: 55, b: 43};
-        let diff = [makeRemove(32)];
+        let diff = [makeRemove(32 as any)];
         expect(patch).withArgs(base, diff).to.throwException(
           /Invalid patch object op: Key is not a string: 32/);
       });

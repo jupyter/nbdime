@@ -437,9 +437,12 @@ export class OutputDiffModel implements IDiffModel {
         collapsible?: boolean,
         header?: string,
         collapsed?: boolean) {
+    if (!remote && !base) {
+      throw 'Either remote or base value need to be given';
+    }
     this.base = base;
     if (!remote && diff) {
-      this.remote = patch(base, diff) as nbformat.IOutput;
+      this.remote = patch(base!, diff) as nbformat.IOutput;
     } else {
       this.remote = remote;
     }
@@ -511,7 +514,7 @@ export class OutputDiffModel implements IDiffModel {
    * make the model from.
    */
   stringify(key?: string) : IStringDiffModel {
-    let getMemberByPath = function(obj: any, key: string, f?: (obj: any, key: string) => any) {
+    let getMemberByPath = function(obj: any, key: string, f?: (obj: any, key: string) => any): any {
       if (!obj) {
         return obj;
       }
@@ -529,10 +532,10 @@ export class OutputDiffModel implements IDiffModel {
       }
       return obj[key];
     };
-    let base = key ? getMemberByPath(this.base, key) : this.base;
-    let remote = key ? getMemberByPath(this.remote, key) : this.remote;
+    let base = key ? getMemberByPath(this.base, key) as nbformat.IOutput | null : this.base;
+    let remote = key ? getMemberByPath(this.remote, key) as nbformat.IOutput | null : this.remote;
     let diff = (this.diff && key) ?
-      getMemberByPath(this.diff, key, getDiffKey) as IDiffEntry[] :
+      getMemberByPath(this.diff, key, getDiffKey) as IDiffEntry[] | null :
       this.diff;
     let model: IStringDiffModel | null = null;
     if (this.unchanged || this.added || this.deleted || !diff) {

@@ -9,7 +9,7 @@
 
 
 import {
-  IDiffEntry, IDiffPatch, opRemove, opReplace, opRemoveRange, opPatch
+  IDiffEntry, IDiffObjectEntry, IDiffPatch, opRemove, opReplace, opRemoveRange, opPatch
 } from '../diff/diffentries';
 
 import {
@@ -294,17 +294,22 @@ function resolveAction(base: any, decision: MergeDecision): IDiffEntry[] {
   } else if (a === 'remote_then_local') {
     return _combineDiffs(decision.remoteDiff, decision.localDiff);
   } else if (a === 'clear') {
-    let key: string | number | null = null;
-    for (let d of _combineDiffs(decision.localDiff, decision.remoteDiff)) {
+    let key: string | null = null;
+    if (typeof base !== 'object') {
+      throw 'Can only use `\'clear\'` action on objects/dicts';
+    }
+    for (let d of _combineDiffs(decision.localDiff, decision.remoteDiff) as IDiffObjectEntry[]) {
       if (key) {
-        console.assert(key === d.key);
+        if (key !== d.key) {
+          throw 'Cannot combine diffs with different keys';
+        }
       } else {
         key = d.key;
       }
     }
     if (key) {
       let d = opReplace(key, makeClearedValue(base[key]));
-      d.source = {decision: decision, action: 'custom'};
+      d.source = {decision, action: 'custom'};
       return [d];
     } else {
       return [];
@@ -312,7 +317,7 @@ function resolveAction(base: any, decision: MergeDecision): IDiffEntry[] {
   } else if (a === 'clear_parent') {
     if (typeof(base) === typeof([])) {
       let d = opRemoveRange(0, base.length);
-      d.source = {decision: decision, action: 'custom'};
+      d.source = {decision, action: 'custom'};
       return [d];
     } else {
       // Ideally we would do a opReplace on the parent, but this is not
@@ -320,7 +325,7 @@ function resolveAction(base: any, decision: MergeDecision): IDiffEntry[] {
       let diff: IDiffEntry[] = [];
       for (let key of base) {
         let d = opRemove(key);
-        d.source = {decision: decision, action: 'custom'};
+        d.source = {decision, action: 'custom'};
         diff.push(d);
       }
       return diff;

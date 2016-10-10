@@ -48,8 +48,8 @@ interface IDiffEntryBase {
  */
 export
 interface IDiffAddRange extends IDiffEntryBase {
-  key: number;
   op: 'addrange';
+  key: number;
   /**
    * The sequence of values that were added
    */
@@ -59,8 +59,10 @@ interface IDiffAddRange extends IDiffEntryBase {
 /**
  * Diff representing an added object entry
  */
-export interface IDiffAdd extends IDiffEntryBase {
+export
+interface IDiffAdd extends IDiffEntryBase {
   op: 'add';
+  key: string;
   /**
    * The value that was added
    */
@@ -71,16 +73,20 @@ export interface IDiffAdd extends IDiffEntryBase {
 /**
  * Diff representing a removed object entry
  */
-export interface IDiffRemove extends IDiffEntryBase {
+export
+interface IDiffRemove extends IDiffEntryBase {
   op: 'remove';
+  key: string;
 }
 
 
 /**
  * Diff representing a replaced object entry
  */
-export interface IDiffReplace extends IDiffEntryBase {
+export
+interface IDiffReplace extends IDiffEntryBase {
   op: 'replace';
+  key: string;
   /**
    * The new value
    */
@@ -91,7 +97,8 @@ export interface IDiffReplace extends IDiffEntryBase {
 /**
  * Diff representing a removed sequence of list entries, or a removed substring
  */
-export interface IDiffRemoveRange extends IDiffEntryBase {
+export
+interface IDiffRemoveRange extends IDiffEntryBase {
   op: 'removerange';
   key: number;
 
@@ -105,35 +112,51 @@ export interface IDiffRemoveRange extends IDiffEntryBase {
 /**
  * Diff representing a patched entry (object entry or list entry)
  */
-export interface IDiffPatch extends IDiffEntryBase {
+export
+interface IDiffPatch extends IDiffEntryBase {
   op: 'patch';
   /**
    * The collection of sub-diffs describing the patch of the object
    */
   diff: IDiffEntry[] | null;
 }
+export
+interface IDiffPatchArray extends IDiffPatch {
+  key: number;
+}
+export
+interface IDiffPatchObject extends IDiffPatch {
+  key: string;
+}
 
 /**
  * Describes a diff entry of a single JSON value (object, list, string)
  */
-export type IDiffEntry = (IDiffAddRange | IDiffRemoveRange | IDiffPatch | IDiffAdd | IDiffRemove | IDiffReplace);
+export
+type IDiffEntry = IDiffAddRange | IDiffRemoveRange | IDiffPatch | IDiffAdd | IDiffRemove | IDiffReplace;
+
+export
+type IDiffArrayEntry = IDiffAddRange | IDiffRemoveRange | IDiffPatchArray;
+
+export
+type IDiffObjectEntry = IDiffPatchObject | IDiffAdd | IDiffRemove | IDiffReplace;
 
 
 /** Create a replacement diff entry */
 export
-function opReplace(key: string | number, value: any): IDiffReplace {
+function opReplace(key: string, value: any): IDiffReplace {
   return {op: 'replace', key: key, value: value};
 }
 
 /** Create an addition diff entry */
 export
-function opAdd(key: string | number, value: any): IDiffAdd {
+function opAdd(key: string, value: any): IDiffAdd {
   return {op: 'add', key: key, value: value};
 }
 
 /** Create a removal diff entry */
 export
-function opRemove(key: string | number): IDiffRemove {
+function opRemove(key: string): IDiffRemove {
   return {op: 'remove', key: key};
 }
 

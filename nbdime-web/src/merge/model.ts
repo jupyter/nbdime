@@ -968,7 +968,7 @@ class NotebookMergeModel {
 
 
   serialize(): nbformat.INotebookContent {
-    let nb = {};
+    let nb: any = {};
     // Simply copy all root-level fields except cells/metadata
     for (let key in this.base) {
       if (!valueIn(key, ['cells', 'metadata'])) {
@@ -1096,7 +1096,7 @@ class NotebookMergeModel {
         // Has a path into a cell
         // Format specifies that these always comes before decisions that
         // change the order of cells, so index is straight forward!
-        let idx = key[1];
+        let idx = key[1] as number;
         let c = cells[idx];
         c.addDecision(md);
       }
