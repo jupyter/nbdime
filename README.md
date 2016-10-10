@@ -6,7 +6,7 @@
 
 NB! This project is highly experimental and rapidly changing.
 
-See the latest documentation at http://nbdime.readthedocs.org.
+See the latest documentation at https://nbdime.readthedocs.io.
 
 See also description and discussion in the [Jupyter Enhancement Proposal](https://github.com/jupyter/enhancement-proposals/pull/8).
 
