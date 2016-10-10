@@ -13,7 +13,7 @@ import threading
 
 from ..args import add_generic_args, add_filename_args
 from ..args import add_diff_args, add_merge_args, add_web_args
-from .nbdimeserver import main as run_server
+from .nbdimeserver import main_server as run_server
 
 
 _logger = logging.getLogger(__name__)
@@ -68,10 +68,10 @@ def main(args=None):
     local = arguments.local
     remote = arguments.remote
     merged = arguments.merged
-    browse(port)
     return run_server(port=port, cwd=cwd,
                       mergetool_args=dict(base=base, local=local, remote=remote),
-                      outputfilename=merged)
+                      outputfilename=merged,
+                      on_port=browse)
 
 
 if __name__ == "__main__":

@@ -153,7 +153,7 @@ class RenderableOutputView extends Widget {
    */
   protected createOutput(output: nbformat.IOutput, trusted: boolean): Widget {
     let widget = new OutputWidget({rendermime: this._rendermime});
-    widget.render(output, trusted);
+    widget.render({output, trusted});
     return widget;
   }
 
@@ -242,7 +242,7 @@ class CellDiffWidget extends Panel {
     let view: Widget = null;
     if (model instanceof StringDiffModel) {
       if (model.unchanged && parent.cellType === 'markdown') {
-        view = rendermime.render({'text/markdown': model.base});
+        view = rendermime.render({bundle: {'text/markdown': model.base}});
       } else {
         view = createNbdimeMergeView(model as IStringDiffModel, editorClasses);
       }

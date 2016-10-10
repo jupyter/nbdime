@@ -864,7 +864,9 @@ class MergeView extends Panel {
       rightWidget.addClass('CodeMirror-merge-pane-remote');
       this.addWidget(rightWidget);
 
-      //this.push(elt('div', null, 'CodeMirror-merge-clear', 'height: 0; clear: both;'));
+      this.addWidget(new Widget({
+        node: elt('div', null, 'CodeMirror-merge-clear', 'height: 0; clear: both;')
+      }));
 
       merge = this.merge = new DiffView(merged, 'merge', this.alignViews.bind(this), dvOptions);
       this.diffViews.push(merge);
@@ -895,7 +897,9 @@ class MergeView extends Panel {
         this.addWidget(rightWidget);
         panes = 2;
       }
-      //this.push(elt('div', null, 'CodeMirror-merge-clear', 'height: 0; clear: both;'));
+      this.addWidget(new Widget({
+        node: elt('div', null, 'CodeMirror-merge-clear', 'height: 0; clear: both;')
+      }));
     }
 
     this.addClass('CodeMirror-merge');

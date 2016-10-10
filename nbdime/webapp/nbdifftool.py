@@ -13,7 +13,7 @@ import threading
 
 from ..args import add_generic_args, add_diff_args
 from ..args import add_web_args, add_filename_args
-from .nbdimeserver import main as run_server
+from .nbdimeserver import main_server as run_server
 
 
 _logger = logging.getLogger(__name__)
@@ -60,9 +60,9 @@ def main(args=None):
     cwd = arguments.workdirectory
     base = arguments.base
     remote = arguments.remote
-    browse(port)
     return run_server(port=port, cwd=cwd,
-                      difftool_args=dict(base=base, remote=remote))
+                      difftool_args=dict(base=base, remote=remote),
+                      on_port=browse)
 
 
 if __name__ == "__main__":
