@@ -45,7 +45,7 @@
     "codemirror": "^5.17.0",
     "json-stable-stringify": "^1.0.1",
     "jupyter-js-services": "^0.21.0",
-    "jupyterlab": "^0.4.1",
+    "jupyterlab": "~0.4.1",
     "phosphor": "^0.6.1"
   }
 }
