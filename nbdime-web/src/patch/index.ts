@@ -65,7 +65,7 @@ export function patch(base: JSONValue, diff: IDiffEntry[] | null): JSONValue {
   } else if (Array.isArray(base)) {
     return patchSequence(base, diff as IDiffArrayEntry[]);
   } else if (typeof base === 'number' || typeof base === 'boolean') {
-    throw 'Cannot patch an atomic type: ' + typeof base;
+    throw new TypeError('Cannot patch an atomic type: ' + typeof base);
   } else {
     return patchObject(base, diff as IDiffObjectEntry[]);
   }
@@ -177,9 +177,7 @@ export function patchStringified(base: JSONValue | null, diff: IDiffEntry[] | nu
   } else if (base instanceof Array) {
     return patchStringifiedList(base, diff as IDiffArrayEntry[] | null, level);
   } else if (typeof base === 'number' || typeof base === 'boolean') {
-    throw 'Cannot patch an atomic type: ' + typeof base;
-  } else if (base === null) {
-    throw 'Cannot patch a null value';
+    throw new TypeError('Cannot patch an atomic type: ' + typeof base);
   } else {
     return patchStringifiedObject(base, diff as IDiffObjectEntry[] | null, level);
   }
@@ -288,8 +286,6 @@ function patchStringifiedObject(base: JSONObject, diff: IDiffObjectEntry[] | nul
         baseIndex += stringify(map[key], level + 1, false).length +
             keyString.length + postfix.length;
         baseKeys.splice(baseKeys.indexOf(key), 1);
-      } else {
-        throw 'Invalid op ' + e.op;
       }
     } else {
       // Entry unchanged
@@ -439,8 +435,6 @@ function patchString(base: string, diff: IDiffArrayEntry[] | null, level: number
       skip = e.length;
       deletions.push(new DiffRangeRaw(baseIndex, skip, e.source));
       baseIndex += skip;
-    } else {
-      throw 'Invalid diff op on string: ' + e.op;
     }
     take = Math.max(take, index + skip);
   }

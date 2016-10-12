@@ -54,7 +54,7 @@ function validateAction(action: string): Action {
   'remote_then_local', 'custom', 'clear', 'clear_parent', 'either'])) {
     return action as Action;
   }
-  throw 'Invalid merge decision action: ' + action;
+  throw new Error('Invalid merge decision action: ' + action);
 }
 
 
@@ -296,12 +296,12 @@ function resolveAction(base: any, decision: MergeDecision): IDiffEntry[] {
   } else if (a === 'clear') {
     let key: string | null = null;
     if (typeof base !== 'object') {
-      throw 'Can only use `\'clear\'` action on objects/dicts';
+      throw new TypeError('Can only use `\'clear\'` action on objects/dicts');
     }
     for (let d of _combineDiffs(decision.localDiff, decision.remoteDiff) as IDiffObjectEntry[]) {
       if (key) {
         if (key !== d.key) {
-          throw 'Cannot combine diffs with different keys';
+          throw new Error('Cannot combine diffs with different keys');
         }
       } else {
         key = d.key;
@@ -331,7 +331,7 @@ function resolveAction(base: any, decision: MergeDecision): IDiffEntry[] {
       return diff;
     }
   } else {
-    throw 'The action \"' + a + '\" is not defined';
+    throw new Error('The action \"' + a + '\" is not defined');
   }
 }
 
@@ -556,7 +556,7 @@ function pushPatchDecision(decision: MergeDecision, prefix: DecisionPath): Merge
   // We need to start with inner most key to nest correctly, so reverse:
   for (let key of prefix.slice().reverse()) {
     if (dec.absolutePath.length === 0) {
-      throw 'Cannot remove key from empty decision path: ' + key + ', ' + dec;
+      throw new Error('Cannot remove key from empty decision path: ' + key + ', ' + dec);
     }
     console.assert(dec.absolutePath.pop() === key);  // Pop and assert
     let ld = dec.localDiff && dec.localDiff.length > 0;

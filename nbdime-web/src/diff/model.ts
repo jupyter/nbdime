@@ -395,8 +395,8 @@ export function createDirectDiffModel(base: JSONValue | null, remote: JSONValue 
     remoteStr = null;
     deletions.push(new DiffRangeRaw(0, baseStr.length, undefined));
   } else if (remoteStr !== baseStr) {
-    throw 'Invalid arguments to createDirectDiffModel().' +
-      'Either base or remote should be null, or they should be equal!';
+    throw new Error('Invalid arguments to createDirectDiffModel(). ' +
+      'Either base or remote should be null, or they should be equal!');
   }
   return new StringDiffModel(baseStr, remoteStr, additions, deletions);
 }
@@ -438,7 +438,7 @@ export class OutputDiffModel implements IDiffModel {
         header?: string,
         collapsed?: boolean) {
     if (!remote && !base) {
-      throw 'Either remote or base value need to be given';
+      throw new Error('Either remote or base value need to be given');
     }
     this.base = base;
     if (!remote && diff) {
@@ -504,7 +504,7 @@ export class OutputDiffModel implements IDiffModel {
           key.indexOf('data.') === 0) {
       return key.slice('data.'.length);
     }
-    throw 'Unknown MIME type for key: ' + key;
+    throw new Error('Unknown MIME type for key: ' + key);
   }
 
   /**
@@ -584,7 +584,7 @@ export class CellDiffModel {
     this.outputs = outputs;
     this.cellType = cellType;
     if (outputs === null && cellType !== 'code') {
-      throw 'Invalid code cell, missing outputs!';
+      throw new Error('Invalid code cell, missing outputs!');
     }
     this.metadata.collapsible = true;
     this.metadata.collapsibleHeader = 'Metadata changed';
@@ -721,7 +721,7 @@ function makeOutputModels(base: nbformat.IOutput[] | null,
   let models: OutputDiffModel[] = [];
   if (remote === null && !diff) {
     if (base === null) {
-      throw 'Either base or remote need to be specififed!';
+      throw new Error('Either base or remote need to be specififed!');
     }
     // Cell deleted
     for (let o of base) {
@@ -729,7 +729,7 @@ function makeOutputModels(base: nbformat.IOutput[] | null,
     }
   } else if (base === null) {
     if (remote === null) {
-      throw 'Either base or remote need to be specififed!';
+      throw new Error('Either base or remote need to be specififed!');
     }
     // Cell added
     for (let o of remote) {
@@ -769,7 +769,7 @@ function makeOutputModels(base: nbformat.IOutput[] | null,
           base[index], null, d.diff));
         skip = 1;
       } else {
-        throw 'Invalid diff operation: ' + d;
+        throw new Error('Invalid diff operation: ' + d);
       }
       consumed = Math.max(consumed, index + skip);
     }
@@ -778,7 +778,7 @@ function makeOutputModels(base: nbformat.IOutput[] | null,
       models.push(new OutputDiffModel(o, o));
     }
   } else {
-    throw 'Invalid arguments to OutputsDiffModel';
+    throw new Error('Invalid arguments to OutputsDiffModel');
   }
   return models;
 }

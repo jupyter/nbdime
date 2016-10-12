@@ -809,7 +809,8 @@ class FlexLayout extends PanelLayout {
           shrink = 0;
           break;
         default:
-          throw 'Invalid stretch type: ' + this._stretchType;
+          throw new TypeError(
+            'Invalid stretch type: ' + this._stretchType);
         }
       }
       for (let i = 0; i < widgets.length; ++i) {

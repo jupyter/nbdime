@@ -71,8 +71,8 @@ function overlaps(existing: IDiffArrayEntry[], newv: IDiffArrayEntry): boolean {
           // Overlapping deletes
           // Above check is open ended to allow for sanity check here:
           if (first.key + first.length !== last.key) {
-            throw 'Overlapping delete diff ops: ' +
-              'Two operation remove same characters!';
+            throw new Error('Overlapping delete diff ops: ' +
+              'Two operation remove same characters!');
           }
           return true;
         }
@@ -95,15 +95,15 @@ function combineOps(a: IDiffArrayEntry, b: IDiffArrayEntry): IDiffArrayEntry {
     return combined;
   } else if (b.op === 'removerange') {
     if (a.op !== 'removerange') {
-      throw 'Cannot combine operations: ' + a + ', ' + b;
+      throw new Error('Cannot combine operations: ' + a + ', ' + b);
     }
     combined = opRemoveRange(a.key, a.length + b.length);
   } else {
-    throw 'Invalid string lines op to combine: ' + b;
+    throw new Error('Invalid string lines op to combine: ' + b);
   }
   combined.source = a.source;
   if (b.source !== a.source) {
-    throw 'Cannot combine diff ops with different sources in one string line';
+    throw new Error('Cannot combine diff ops with different sources in one string line');
   }
   return combined;
 }
@@ -154,8 +154,6 @@ function flattenStringDiff(val: string[] | string, diff: IDiffArrayEntry[]): IDi
         let idx = e.key + e.length;
         d = opRemoveRange(lineOffset,
                           lineToChar[idx] - lineOffset);
-      } else {
-        throw 'Invalid string lines op: ' + e;
       }
       d.source = e.source;
 

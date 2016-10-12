@@ -38,7 +38,7 @@ export function deepCopy<T extends DeepCopyableValue>(obj: T | null): T | null {
     if (valueIn(typeof obj, ['string', 'number', 'boolean'])) {
       return obj;
     }
-    throw 'Cannot deepcopy non-object';
+    throw new TypeError('Cannot deepcopy non-object');
   }
   if (obj === null) {
     return null;

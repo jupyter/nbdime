@@ -156,7 +156,7 @@ function createPatchedCellDecisionDiffModel(
     if (md.localPath.length === 0) {
       let val = popPath(md.diffs, true);
       if (val === null) {
-        throw 'Invalid diffs for patching cell!';
+        throw new Error('Invalid diffs for patching cell!');
       }
       md.diffs = val.diffs;
       md.pushPath(val.key);
@@ -326,8 +326,8 @@ abstract class ObjectMergeModel<ObjectType, DiffModelType> {
     let out: MergeDecision[] = [];
     for (let d of diff) {
       if (this._whitelist && !valueIn(d.key, this._whitelist)) {
-        throw 'Currently not able to handle decisions on variable \"' +
-              d.key + '\"';
+        throw new Error('Currently not able to handle decisions on variable \"' +
+              d.key + '\"');
       }
       let action: Action = (md.action === 'base' ?
         local ? 'local' : 'remote' :
@@ -433,13 +433,13 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
     // Don't allow additional decision if we've already made models!
     if (this._local || this._remote || this._merged) {
       if (this._finalized) {
-        throw 'Cannot add a decision to a finalized cell merge model';
+        throw new Error('Cannot add a decision to a finalized cell merge model');
       } else {
-        throw 'Cannot add more than one cell level decision to one cell';
+        throw new Error('Cannot add more than one cell level decision to one cell');
       }
     } else if (decision.absolutePath.length < 1 ||
                decision.absolutePath[0] !== 'cells') {
-      throw 'Not a valid path for a cell decision';
+      throw new Error('Not a valid path for a cell decision');
     }
 
     // Check if descision is on cell level or not:
@@ -454,7 +454,7 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
     } else if (decision.absolutePath.length === 2 && (
         hasEntries(decision.localDiff) || hasEntries(decision.remoteDiff))) {
       if (hasEntries(decision.localDiff) && hasEntries(decision.remoteDiff)) {
-        throw 'Invalid merge decision: ' + decision;
+        throw new Error('Invalid merge decision: ' + decision);
       }
       // More than one diff op on cell level, split decisions on key
       // Translate decision to format taken by _splitPatch, and apply:
@@ -491,7 +491,7 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
 
   protected createDiffModel(diff: IDiffEntry[]): CellDiffModel {
     if (this.base === null) {
-      throw 'Cannot create a patched or unchanged diff model with null base!';
+      throw new Error('Cannot create a patched or unchanged diff model with null base!');
     }
     if (diff && diff.length > 0) {
       return createPatchedCellDiffModel(this.base, diff, this.mimetype);
@@ -502,7 +502,7 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
 
   protected createMergedDiffModel(): CellDiffModel {
     if (this.base === null) {
-      throw 'Cannot create a patched or unchanged merged diff model with null base!';
+      throw new Error('Cannot create a patched or unchanged merged diff model with null base!');
     }
     return createPatchedCellDecisionDiffModel(
         this.base, this.decisions, this.mimetype, this.local, this.remote);
@@ -534,13 +534,13 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
       // 1. or 2.:
       this._local = null;
       if (!md.remoteDiff || md.remoteDiff.length !== 1) {
-        throw 'Merge decision does not conform to expectation: ' + md;
+        throw new Error('Merge decision does not conform to expectation: ' + md);
       }
       if (this.base === null) {
         // 1.
         let first = md.remoteDiff[0];
         if (first.op !== 'addrange') {
-          throw 'Merge decision does not conform to expectation: ' + md;
+          throw new Error('Merge decision does not conform to expectation: ' + md);
         }
         let v = first.valuelist[0];
         this._remote = createAddedCellDiffModel(v, this.mimetype);
@@ -555,13 +555,13 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
       // 1. or 2.:
       this._remote = null;
       if (!md.localDiff || md.localDiff.length !== 1) {
-        throw 'Merge decision does not conform to expectation: ' + md;
+        throw new Error('Merge decision does not conform to expectation: ' + md);
       }
       if (this.base === null) {
         // 1.
         let first = md.localDiff[0];
         if (first.op !== 'addrange') {
-          throw 'Merge decision does not conform to expectation: ' + md;
+          throw new Error('Merge decision does not conform to expectation: ' + md);
         }
         let v = first.valuelist[0];
         this._local = createAddedCellDiffModel(v, this.mimetype);
@@ -598,8 +598,8 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
         console.assert(
           valueIn('removerange', ops) && valueIn('patch', ops));
         if (this.base === null) {
-          throw 'Invalid merge decision, ' +
-            'cannot have null base for deleted cell: ' + md;
+          throw new Error('Invalid merge decision, ' +
+            'cannot have null base for deleted cell: ' + md);
         }
         if (ops[0] === 'removerange') {
           this._local = createDeletedCellDiffModel(this.base, this.mimetype);
@@ -814,7 +814,7 @@ function splitCellInsertions(mergeDecisions: MergeDecision[]): MergeDecision[] {
     let newMd = new MergeDecision(md.absolutePath.slice(), null, null,
                                   md.action, md.conflict);
     if ((local && !hasEntries(md.localDiff)) || !hasEntries(md.remoteDiff)) {
-      throw 'Invalid input: ' + md;
+      throw new Error('Invalid input: ' + md);
     }
     let key = (local ? md.localDiff : md.remoteDiff)![0].key as number;
     let newDiff: IDiffAddRange[] = [{
@@ -1094,7 +1094,7 @@ class NotebookMergeModel {
         }
         // If we reach this point, it is not an insertion merge!
         if (idx === null) {
-          throw 'No index could be found for merge decision!';
+          throw new Error('No index could be found for merge decision!');
         }
         let c = cells[idx + insertOffset];
         c.addDecision(md);
