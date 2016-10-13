@@ -15,7 +15,7 @@ import {
 } from '../../../src/merge/decisions';
 
 import {
-  opAddRange, opRemoveRange, opPatch, opReplace
+  opAddRange, opRemoveRange, opPatch, opReplace, IDiffPatch
 } from '../../../src/diff/diffentries';
 
 import {
@@ -198,12 +198,19 @@ describe('merge', () => {
           expect(stripSource(subdec.localDiff)).to.eql([expected]);
 
           subdec = model.decisions[1];
-          expected = opPatch('source', [
+          let expectedSub = [
             opAddRange(1, ['l += 2\n']),
             opPatch(1, [opAddRange('print(l)'.length, ['\n'])]),
             opAddRange(2, [''])
-          ]);
-          expect(stripSource(subdec.localDiff)).to.eql([expected]);
+          ];
+          let value = stripSource(subdec.localDiff)!;
+          expect(value.length).to.be(1);
+          expect(value[0].op).to.be('patch');
+          value = (value[0] as IDiffPatch).diff!;
+          expect(value.length).to.be(3);
+          for (let i=0; i < value.length; ++i) {
+            expect(value[i]).to.eql(expectedSub[i]);
+          }
         });
 
         it('can add decisions iteratively', () => {
