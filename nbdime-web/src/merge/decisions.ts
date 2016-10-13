@@ -283,7 +283,7 @@ function resolveAction(base: any, decision: MergeDecision): IDiffEntry[] {
   let a = decision.action;
   if (a === 'base') {
     return [];   // no-op
-  } else if (valueIn(a, ['local', 'either'])) {
+  } else if (a === 'local' || a === 'either') {
     return decision.localDiff ? decision.localDiff.slice() : [];
   } else if (a === 'remote') {
     return decision.remoteDiff ? decision.remoteDiff.slice() : [];

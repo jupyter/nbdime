@@ -150,7 +150,7 @@ function flattenStringDiff(val: string[] | string, diff: IDiffArrayEntry[]): IDi
       if (e.op === 'addrange') {
         d = opAddRange(lineOffset,
                        (e.valuelist as any[]).join(''));
-      } else if (e.op === 'removerange') {
+      } else { // e.op === 'removerange'
         let idx = e.key + e.length;
         d = opRemoveRange(lineOffset,
                           lineToChar[idx] - lineOffset);

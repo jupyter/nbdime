@@ -39,7 +39,8 @@ import {
  *
  * Intended as hints for a view of the model, and not a requirement.
  */
-export interface ICollapsibleModel {
+export
+interface ICollapsibleModel {
   /**
    * Whether a view of the model should be collapsible (hint)
    */
@@ -59,7 +60,8 @@ export interface ICollapsibleModel {
 /**
  * Base interface for diff models.
  */
-export interface IDiffModel extends ICollapsibleModel {
+export
+interface IDiffModel extends ICollapsibleModel {
   /**
    * Is diff no-op?
    */
@@ -85,7 +87,8 @@ export interface IDiffModel extends ICollapsibleModel {
  * (as compared to e.g. images). As such, it is NOT restricted
  * to cases where original content is in a string format.
  */
-export interface IStringDiffModel extends IDiffModel {
+export
+interface IStringDiffModel extends IDiffModel {
   /**
    * Base value
    */
@@ -132,7 +135,8 @@ export interface IStringDiffModel extends IDiffModel {
 /**
  * Standard implementation of the IStringDiffModel interface.
  */
-export class StringDiffModel implements IStringDiffModel {
+export
+class StringDiffModel implements IStringDiffModel {
 
   /**
    * StringDiffModel constructor.
@@ -429,14 +433,12 @@ function setMimetypeFromCellType(model: IStringDiffModel, cell: nbformat.ICell,
  * takes an optional argument `key` which specifies a subpath of the IOutput to
  * make the model from.
  */
-export class OutputDiffModel implements IDiffModel {
+export
+class OutputDiffModel implements IDiffModel {
   constructor(
         base: nbformat.IOutput | null,
         remote: nbformat.IOutput | null,
-        diff?: IDiffEntry[] | null,
-        collapsible?: boolean,
-        header?: string,
-        collapsed?: boolean) {
+        diff?: IDiffEntry[] | null) {
     if (!remote && !base) {
       throw new Error('Either remote or base value need to be given');
     }
@@ -446,12 +448,8 @@ export class OutputDiffModel implements IDiffModel {
     } else {
       this.remote = remote;
     }
-    this.diff = !!diff ? diff : null;
-    this.collapsible = collapsible === true;
-    if (this.collapsible) {
-      this.collapsibleHeader = header ? header : '';
-      this.startCollapsed = collapsed === true;
-    }
+    this.diff = diff || null;
+    this.collapsible = false;
   }
 
   get unchanged() : boolean {
