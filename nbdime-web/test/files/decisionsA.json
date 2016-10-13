@@ -1,0 +1,176 @@
+[
+  {
+    "local_diff": null,
+    "remote_diff": [
+      {
+        "key": 13,
+        "valuelist": " ",
+         "op": "addrange"
+      },
+      {
+        "key": 14,
+        "valuelist": " ",
+        "op": "addrange"
+      }
+    ],
+    "conflict": false,
+    "action": "remote",
+    "common_path": ["cells", 0, "source", 3]
+  },
+  {
+    "local_diff": [
+      {
+        "key": "outputs",
+        "diff": [
+          {
+            "key": 0,
+            "diff": [
+              {
+                "key": "text",
+                "diff": [
+                  {
+                    "key": 0,
+                    "valuelist": ["7.61577310586\n"],
+                    "op": "addrange"
+                  },
+                  {
+                    "key": 0,
+                    "length": 1,
+                    "op": "removerange"
+                  }
+                ],
+                "op": "patch"
+              }
+            ],
+            "op": "patch"
+          }
+        ],
+        "op": "patch"
+      },
+      {
+        "key": "source",
+        "diff": [
+          {
+            "key": 0,
+            "diff": [
+              {
+                "key": 9,
+                "valuelist": "7",
+                "op": "addrange"
+              },
+              {
+                "key": 9,
+                "length": 1,
+                "op": "removerange"
+              }
+            ],
+            "op": "patch"
+          },
+          {
+            "key": 1,
+            "valuelist": ["\n"],
+            "op": "addrange"
+          }
+        ],
+        "op": "patch"
+      }
+    ],
+    "remote_diff": null,
+    "conflict": false,
+    "action": "local",
+    "common_path": ["cells", 1]
+  },
+  {
+    "local_diff": [
+      {
+        "key": "outputs",
+        "diff": [
+          {
+            "key": 0,
+            "diff": [
+              {
+                "key": "data",
+                "diff": [
+                  {
+                    "key": "text/plain",
+                    "diff": [
+                      {
+                        "key": 0,
+                        "valuelist": ["84.0"],
+                        "op": "addrange"
+                      },
+                      {
+                        "key": 0,
+                        "length": 1,
+                        "op": "removerange"
+                      }
+                    ],
+                    "op": "patch"
+                  }
+                ],
+                "op": "patch"
+              }
+            ],
+            "op": "patch"
+          }
+        ],
+        "op": "patch"
+      },
+      {
+        "key": "source",
+        "diff": [
+          {
+            "key": 2,
+            "diff": [
+              {
+                "key": 2,
+                "valuelist": "9",
+                "op": "addrange"
+              },
+              {
+                "key": 2,
+                "length": 1,
+                "op": "removerange"
+              }
+            ],
+            "op": "patch"
+          }
+        ],
+        "op": "patch"
+      }
+    ],
+    "remote_diff": null,
+    "conflict": false,
+    "action": "local",
+    "common_path": ["cells", 2]
+  },
+  {
+    "local_diff": [
+      {
+        "key": 0,
+        "length": 1,
+        "op": "removerange"
+      },
+      {
+        "key": 1,
+        "diff": [
+          {
+            "key": 13,
+            "length": 1,
+            "op": "removerange"
+          },
+          {
+            "key": 19,
+            "length": 1,
+            "op": "removerange"
+          }
+        ],
+        "op": "patch"
+      }
+    ],
+    "remote_diff": null,
+    "conflict": false,
+    "action": "local",
+    "common_path": ["cells", 4, "source"]
+  }
+]
