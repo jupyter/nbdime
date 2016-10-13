@@ -3,12 +3,12 @@
 'use strict';
 
 import {
-  valueIn, sortByKey, shallowCopy, accumulateLengths
+  sortByKey, shallowCopy, accumulateLengths
 } from '../common/util';
 
 import {
   IDiffEntry, IDiffArrayEntry, IDiffPatch, IDiffAddRange, IDiffRemoveRange,
-  IDiffAdd, opAddRange, opRemoveRange, validateSequenceOp
+  opAddRange, opRemoveRange, validateSequenceOp
 } from './diffentries';
 
 /**
@@ -29,7 +29,7 @@ function getDiffKey(diff: IDiffEntry[] | null, key: string | number) : IDiffEntr
   }
   for (let i=0; i < diff.length; ++i) {
     if (diff[i].key === key) {
-      return (diff[i] as IDiffPatch).diff;
+      return (diff[i] as IDiffPatch).diff || null;
     }
   }
   return null;
@@ -61,21 +61,19 @@ function overlaps(existing: IDiffArrayEntry[], newv: IDiffArrayEntry): boolean {
   }
   for (let e of existing) {
     if (e.op === newv.op) {
-      if (e.key === newv.key) {
-        // Found a match
-        return true;
-      } else if (e.op === 'removerange') {
-        let first = e.key < newv.key ? e : newv as IDiffRemoveRange;
-        let last = e.key > newv.key ? e : newv as IDiffRemoveRange;
-        if (first.key + first.length >= last.key) {
+      if (e.op === 'removerange') {
+        if (e.key + e.length >= newv.key) {
           // Overlapping deletes
           // Above check is open ended to allow for sanity check here:
-          if (first.key + first.length !== last.key) {
+          if (e.key + e.length !== newv.key) {
             throw new Error('Overlapping delete diff ops: ' +
               'Two operation remove same characters!');
           }
           return true;
         }
+      } else if (e.key === newv.key) {
+        // Found a match
+        return true;
       }
     }
   }
@@ -86,13 +84,12 @@ function overlaps(existing: IDiffArrayEntry[], newv: IDiffArrayEntry): boolean {
 /**
  * Combines two ops into a new one that does the same
  */
-function combineOps(a: IDiffArrayEntry, b: IDiffArrayEntry): IDiffArrayEntry {
+function combineOps(a: IDiffArrayEntry, b: IDiffArrayEntry): IDiffAddRange | IDiffRemoveRange {
   let combined: IDiffArrayEntry;
   if (b.op === 'addrange') {
     combined = opAddRange(a.key, (a as IDiffAddRange).valuelist);
     // valuelist can also be string, but string also has concat:
-    (combined.valuelist as any[]).concat(b.valuelist as any[]);
-    return combined;
+    combined.valuelist = (combined.valuelist as any[]).concat(b.valuelist as any[]);
   } else if (b.op === 'removerange') {
     if (a.op !== 'removerange') {
       throw new Error('Cannot combine operations: ' + a + ', ' + b);
@@ -118,12 +115,8 @@ function flattenStringDiff(val: string[] | string, diff: IDiffArrayEntry[]): IDi
 
   if (typeof val === 'string') {
     // Split lines (retaining newlines):
-    let lines = val.match(/^.*([\n\r]|$)/gm);
-    if (lines) {
-      val = lines;
-    } else {
-      val = [val];
-    }
+    let lines = val.match(/^.*(\r\n|\r|\n|$)/gm);
+    val = lines!;  // Since we match end of line, we never get null
   }
   let lineToChar = [0].concat(accumulateLengths(val));
   let flattened: IDiffArrayEntry[] = [];
@@ -138,7 +131,8 @@ function flattenStringDiff(val: string[] | string, diff: IDiffArrayEntry[]): IDi
           let d = shallowCopy(p);
           d.key += lineOffset;
           if (overlaps(flattened, d)) {
-            flattened[-1] = combineOps(flattened[-1], d);
+            let end = flattened.length - 1;
+            flattened[end] = combineOps(flattened[end], d);
           } else {
             flattened.push(d);
           }
@@ -158,7 +152,8 @@ function flattenStringDiff(val: string[] | string, diff: IDiffArrayEntry[]): IDi
       d.source = e.source;
 
       if (overlaps(flattened, d)) {
-        flattened[-1] = combineOps(flattened[-1], d);
+        let end = flattened.length - 1;
+        flattened[end] = combineOps(flattened[end], d);
       } else {
         flattened.push(d);
       }

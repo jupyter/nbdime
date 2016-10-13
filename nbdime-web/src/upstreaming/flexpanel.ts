@@ -432,7 +432,6 @@ class FlexLayout extends PanelLayout {
     }
     this._minimumSpacing = value;
     if (this.parent) {
-      this.parent.node.style.flexWrap = value ? 'wrap' : 'nowrap';
       this.parent.fit();
     }
   }
@@ -449,6 +448,7 @@ class FlexLayout extends PanelLayout {
     if (this._wrap !== value) {
       this._wrap = value;
       if (this.parent) {
+        this.parent.node.style.flexWrap = value ? 'wrap' : 'nowrap';
         this.parent.fit();
       }
     }
@@ -831,7 +831,7 @@ class FlexLayout extends PanelLayout {
     // Update display order
     for (let i = 0; i < widgets.length; ++i) {
       let widget = widgets.at(i);
-      widget.node.style.order = this.order ?  i.toString() : '';
+      widget.node.style.order = this.order ?  i.toString() : null;
     }
   }
 

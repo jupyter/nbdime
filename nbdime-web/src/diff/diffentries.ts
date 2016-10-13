@@ -142,6 +142,10 @@ export
 type IDiffObjectEntry = IDiffPatchObject | IDiffAdd | IDiffRemove | IDiffReplace;
 
 
+export
+type DiffCollection = (IDiffEntry[] | null)[];
+
+
 /** Create a replacement diff entry */
 export
 function opReplace(key: string, value: any): IDiffReplace {

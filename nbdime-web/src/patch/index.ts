@@ -166,7 +166,7 @@ function patchObject(base: JSONObject, diff: IDiffObjectEntry[] | null) : JSONOb
  * can therefore differ from a straigh string-based diff of stringified JSON
  * objects.
  */
-export function patchStringified(base: JSONValue | null, diff: IDiffEntry[] | null, level?: number) : StringifiedPatchResult {
+export function patchStringified(base: JSONValue, diff: IDiffEntry[] | null, level?: number) : StringifiedPatchResult {
   if (level === undefined) {
     level = 0;
   }
@@ -187,9 +187,6 @@ export function patchStringified(base: JSONValue | null, diff: IDiffEntry[] | nu
  * Patch a stringified object according to the object diff
  */
 function patchStringifiedObject(base: JSONObject, diff: IDiffObjectEntry[] | null, level: number) : StringifiedPatchResult {
-  if (level === undefined) {
-    level = 0;
-  }
   let map: { [key: string]: JSONValue; } = base;
   let remote = '';
   let additions: DiffRangeRaw[] = [];
@@ -199,8 +196,10 @@ function patchStringifiedObject(base: JSONObject, diff: IDiffObjectEntry[] | nul
   let baseIndex = 0;
 
   // Short-circuit if diff is empty
-  if (diff === null || diff === undefined) {
-    return {remote: stringify(base, level, true), additions: additions, deletions: deletions};
+  if (diff === null) {
+    return { remote: stringify(base, level),
+             additions: additions,
+             deletions: deletions};
   }
 
   // Object is dict. As diff keys should be unique, create map for easy processing
@@ -316,7 +315,7 @@ function patchStringifiedList(base: JSONArray, diff: IDiffArrayEntry[] | null, l
   let postfix = ',\n';
 
   // Short-circuit if diff is empty
-  if (diff === null || diff === undefined) {
+  if (diff === null) {
     return {remote: stringify(base, level),
             additions: additions,
             deletions: deletions};
@@ -405,7 +404,7 @@ function patchString(base: string, diff: IDiffArrayEntry[] | null, level: number
   let baseIndex = 0;
 
   // Short-circuit if diff is empty
-  if (diff === null || diff === undefined) {
+  if (diff === null) {
     return {remote: stringifyPatch ? stringify(base, level) : base,
             additions: additions,
             deletions: deletions};

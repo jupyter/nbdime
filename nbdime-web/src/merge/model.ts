@@ -35,7 +35,7 @@ import {
 } from '../patch';
 
 import {
-  arraysEqual, valueIn, hasEntries
+  arraysEqual, valueIn, hasEntries, DeepCopyableObject
 } from '../common/util';
 
 
@@ -199,7 +199,7 @@ function createPatchedCellDecisionDiffModel(
  * createMergedDiffModel.
  */
 export
-abstract class ObjectMergeModel<ObjectType, DiffModelType> {
+abstract class ObjectMergeModel<ObjectType extends DeepCopyableObject, DiffModelType> {
 
   /**
    * Create a diff model of the correct type given the diff (which might be
@@ -243,6 +243,9 @@ abstract class ObjectMergeModel<ObjectType, DiffModelType> {
    * Apply merge decisions to create the merged cell
    */
   serialize(): ObjectType | null {
+    if (this.base === null) {
+      return null;
+    }
     return applyDecisions(this.base, this.decisions);
   }
 
@@ -480,6 +483,9 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
    * Apply merge decisions to create the merged cell
    */
   serialize(): nbformat.ICell | null {
+    if (this.base === null) {
+      return null;
+    }
     let decisions: MergeDecision[] = [];
     for (let md of this.decisions) {
       let nmd = new MergeDecision(md);
@@ -643,6 +649,8 @@ class MetadataMergeModel extends ObjectMergeModel<nbformat.INotebookMetadata, IS
       this.base, this.decisions,
       [this.local, this.remote]);
   }
+
+  base: nbformat.INotebookMetadata;
 }
 
 
@@ -965,10 +973,8 @@ class NotebookMergeModel {
     this.cells = this.buildCellList(decisions);
 
     let metadataDecs = filterDecisions(decisions, ['metadata']);
-    if (metadataDecs.length > 0) {
-      this.metadata = new MetadataMergeModel(base.metadata, metadataDecs,
-        this.mimetype);
-    }
+    this.metadata = new MetadataMergeModel(base.metadata, metadataDecs,
+      this.mimetype);
     this.unsavedChanges = false;
   }
 
@@ -997,7 +1003,7 @@ class NotebookMergeModel {
     return nb as nbformat.INotebookContent;
   }
 
-  decisions(): MergeDecision[] {
+  get decisions(): MergeDecision[] {
     let ret: MergeDecision[] = [];
     for (let c of this.cells) {
       ret = ret.concat(c.decisions);
@@ -1005,9 +1011,9 @@ class NotebookMergeModel {
     return ret;
   }
 
-  conflicts(): MergeDecision[] {
+  get conflicts(): MergeDecision[] {
     let ret: MergeDecision[] = [];
-    for (let md of this.decisions()) {
+    for (let md of this.decisions) {
       if (md.conflict) {
         ret.push(md);
       }

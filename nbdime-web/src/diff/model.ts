@@ -367,7 +367,7 @@ namespace StringDiffModel {
  * and it will be stringified according to JSON stringification
  * rules.
  */
-export function createPatchDiffModel(base: string | JSONObject | JSONArray | null, diff: IDiffEntry[]) : StringDiffModel {
+export function createPatchDiffModel(base: string | JSONObject | JSONArray, diff: IDiffEntry[]) : StringDiffModel {
   console.assert(!!diff, 'Patch model needs diff.');
   let baseStr = (typeof base === 'string') ? base : stringify(base);
   let out = patchStringified(base, diff);
@@ -390,7 +390,10 @@ export function createDirectDiffModel(base: JSONValue | null, remote: JSONValue 
   let additions: DiffRangeRaw[] = [];
   let deletions: DiffRangeRaw[] = [];
 
-  if (base === null) {
+  if (base === null && remote === null) {
+    throw new Error('Invalid arguments to createDirectDiffModel(). ' +
+      'Both base and remote cannot be equal!');
+  } else if (base === null) {
     // Added cell
     baseStr = null;
     additions.push(new DiffRangeRaw(0, remoteStr.length, undefined));
@@ -421,7 +424,7 @@ function setMimetypeFromCellType(model: IStringDiffModel, cell: nbformat.ICell,
   } else if (cellType === 'markdown') {
     model.mimetype = 'text/markdown';
   } else if (cellType === 'raw') {
-    model.mimetype = (cell as nbformat.IRawCell).metadata.format || 'text/python';
+    model.mimetype = (cell as nbformat.IRawCell).metadata.format || 'text/plain';
   }
 }
 
@@ -453,7 +456,7 @@ class OutputDiffModel implements IDiffModel {
   }
 
   get unchanged() : boolean {
-    return this.diff === null;
+    return this.diff === null && this.base !== null && this.remote !== null;
   }
 
   get added(): boolean {
@@ -581,7 +584,7 @@ export class CellDiffModel {
     this.metadata = metadata;
     this.outputs = outputs;
     this.cellType = cellType;
-    if (outputs === null && cellType !== 'code') {
+    if (outputs === null && cellType === 'code') {
       throw new Error('Invalid code cell, missing outputs!');
     }
     this.metadata.collapsible = true;
