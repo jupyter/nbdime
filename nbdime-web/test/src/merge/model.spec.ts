@@ -133,8 +133,7 @@ describe('merge', () => {
           opPatch('outputs', [opRemoveRange(0, 1)]),
           opPatch('source', [
             opAddRange(1, ['l += 2\n']),
-            opPatch(1, [opAddRange('print(l)'.length, '\n')]),
-            opAddRange(2, [''])
+            opPatch(1, [opAddRange('print(l)'.length, '\n')])
           ])
         ])],
         remote_diff: [opRemoveRange(0, 1)],
@@ -149,8 +148,7 @@ describe('merge', () => {
           opPatch('outputs', [opRemoveRange(0, 1)]),
           opPatch('source', [
             opAddRange(1, ['l += 2\n']),
-            opPatch(1, [opAddRange('print(l)'.length, '\n')]),
-            opAddRange(2, [''])
+            opPatch(1, [opAddRange('print(l)'.length, '\n')])
           ])
         ])],
         remote_diff: [opRemoveRange(0, 1)],
@@ -200,14 +198,13 @@ describe('merge', () => {
           subdec = model.decisions[1];
           let expectedSub = [
             opAddRange(1, ['l += 2\n']),
-            opPatch(1, [opAddRange('print(l)'.length, ['\n'])]),
-            opAddRange(2, [''])
+            opPatch(1, [opAddRange('print(l)'.length, '\n')])
           ];
           let value = stripSource(subdec.localDiff)!;
           expect(value.length).to.be(1);
           expect(value[0].op).to.be('patch');
           value = (value[0] as IDiffPatch).diff!;
-          expect(value.length).to.be(3);
+          expect(value.length).to.be(2);
           for (let i=0; i < value.length; ++i) {
             expect(value[i]).to.eql(expectedSub[i]);
           }
