@@ -109,15 +109,21 @@ def _merge_dicts(base, local_diff, remote_diff, path, decisions):
             raise ValueError("Invalid diff ops {} and {}.".format(lop, rop))
 
 
-def _split_addrange_on_equality(key, local, remote, path):
+def _split_addrange(key, local, remote, path):
     """Compares two addrange value lists, and splits decisions on similarity
 
     Uses diff of value lists to identify which items to align. Identical,
     aligned inserts are decided as in agreement, while inserts that are aligned
-    without being identical are treated as conflicts. Non-aligned inserts are
-    treated as conflict free, one-sided inserts.
+    without being identical are treated as conflicts (possibly to be resolved
+    by autoresolve). Non-aligned inserts are treated as conflict free,
+    one-sided inserts.
     """
-    # First, find diff between local and remote insertion values
+    # FIXME: This uses notebook predicates and differs, which
+    #        doesn't really belong in a generic merge algorithm...
+
+    # First, find diff between local and remote insertion values.
+    # This will align common subsequences according to the similarity
+    # measures defined in notebook predicates.
     intermediate_diff = diff(local, remote, path=star_path(path),
                              predicates=notebook_predicates.copy(),
                              differs=notebook_differs.copy())
@@ -127,28 +133,34 @@ def _split_addrange_on_equality(key, local, remote, path):
     taken = 0
     offset = 0  # Offset between diff keys (ref local) and remote
     for i, d in enumerate(intermediate_diff):
-        # NOTE: Important to separate passed key, and d.key!
-        # All ops should happen on key, but order need to be correct
+        # This should only occur after (*) marked below:
         if d.key < taken:
             continue
         if taken < d.key:
-            # Have elements that are inserted on both sides
+            # No diff, which means elements are inserted on both sides
             overlap = [op_addrange(key, local[taken:d.key])]
             decisions.agreement(path, overlap, overlap)
             taken = d.key
 
         # Either (1) conflicted, (2) local onesided, or (3) remote onesided
+        # First checks whether the next op is a removal on the same key
+        # as the current one (i.e. a range substitution).
         if (i + 1 < len(intermediate_diff) and
                 intermediate_diff[i+1].op == DiffOp.REMOVERANGE and
                 intermediate_diff[i+1].key == d.key):
+            # This indicates a non-similar subequence, acoording
+            # to the predicates.
             # (1) Conflicted addition
             local_len = intermediate_diff[i+1].length
             ld = [op_addrange(key, local[d.key:d.key+local_len])]
             rd = [op_addrange(key, d.valuelist)]
             decisions.conflict(path, ld, rd)
             offset += len(d.valuelist) - local_len
+            # (*) Here we treat two ops in one go, which we mark
+            # by setting taken beyond the key of the next op:
             taken += local_len
         elif d.op == DiffOp.REPLACE:
+            # Same as above, but length of one, so simpler
             # (1) Conflict (one element each)
             ld = [op_addrange(key, [local[d.key]])]
             rd = [op_addrange(key, [d.value])]
@@ -172,8 +184,8 @@ def _split_addrange_on_equality(key, local, remote, path):
             decisions.onesided(path, None, [op_addrange(key, vl)])
             offset += len(vl)
         elif d.op == DiffOp.PATCH:
-            # This means that local and remote are similar!
-            # Mark as conflcit, and leave to autoresolve to deal with it
+            # Predicates indicate that local and remote are similar!
+            # Mark as conflcit, possibly for autoresolve to deal with
             decisions.conflict(path,
                                [op_addrange(key, [local[d.key]])],
                                [op_addrange(key, [remote[d.key + offset]])])
@@ -198,24 +210,33 @@ def _merge_concurrent_inserts(base, ldiff, rdiff, path, decisions):
     This method compares the addition/removals on both sides, and splits it
     into individual agreement/onesided/conflict decisions.
     """
+    # Assume first ops are always inserts
     assert ldiff[0].op == DiffOp.ADDRANGE and rdiff[0].op == DiffOp.ADDRANGE
     # First, reconstruct the value lists as they are on local and remote
     lv = ldiff[0].valuelist
     rv = rdiff[0].valuelist
 
+    # Check for one-sided removal (A/AR in notation from _merge_lists)
     if len(ldiff) != len(rdiff):
+        # Add the removed entries to the value from the other side
+        # (e.g. entries removed in local gets added to rv and opposite)
         if len(ldiff) > len(rdiff):
             rv = rv + base[ldiff[1].key:ldiff[1].key + ldiff[1].length]
         elif len(rdiff) > len(ldiff):
             lv = lv + base[rdiff[1].key:rdiff[1].key + rdiff[1].length]
-    subdec = _split_addrange_on_equality(ldiff[0].key, lv, rv, path)
+    subdec = _split_addrange(ldiff[0].key, lv, rv, path)
     if subdec:
+        # We were able to split insertion [+ onesided removal]
         decisions.decisions.extend(subdec)
         if len(ldiff) > 1 and len(rdiff) > 1:
+            # If AR/AR, removals should agree
             decisions.agreement(path, ldiff[1:], rdiff[1:])
         elif len(ldiff) > 1 or len(rdiff) > 1:
+            # Add the one-sided removal at end
             decisions.onesided(path, ldiff[1:], rdiff[1:])
     else:
+        # Were not able to infer any additional information,
+        # simply add as they are (conflicted).
         decisions.conflict(path, ldiff, rdiff)
 
 
@@ -332,10 +353,10 @@ def _merge_lists(base, local_diff, remote_diff, path, decisions):
                 decisions.conflict(path, d0[1:], d1[1:])
             elif len(d0) < 2 or len(d1) < 2:
                 # A/A or A/AR
-                # This is in principle a range substitution!
                 _merge_concurrent_inserts(base, d0, d1, path, decisions)
             else:
                 # AR/AR
+                # This is in principle a range substitution!
                 decisions.conflict(path, d0, d1)
 
 
