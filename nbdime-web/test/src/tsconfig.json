@@ -3,9 +3,12 @@
     "target": "ES5",
     "module": "commonjs",
     "moduleResolution": "node",
+    "lib": ["dom", "es5", "es2015.promise"],
     "outDir": "../build",
-    "noImplicitAny": false,
+    "noImplicitAny": true,
     "noEmitOnError": true,
-    "inlineSourceMap": true
+    "sourceMap": true,
+    "strictNullChecks": true,
+    "skipLibCheck": true
   }
 }

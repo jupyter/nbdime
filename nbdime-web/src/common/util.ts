@@ -33,12 +33,13 @@ function hasEntries<T>(array: T[] | null): array is T[] {
  */
 export function deepCopy(obj: null): null;
 export function deepCopy<T extends DeepCopyableValue>(obj: T): T;
+export function deepCopy<T extends DeepCopyableValue>(obj: T | null): T | null;
 export function deepCopy<T extends DeepCopyableValue>(obj: T | null): T | null {
   if (typeof obj !== 'object') {
     if (valueIn(typeof obj, ['string', 'number', 'boolean'])) {
       return obj;
     }
-    throw 'Cannot deepcopy non-object';
+    throw new TypeError('Cannot deepcopy non-object');
   }
   if (obj === null) {
     return null;
@@ -73,7 +74,7 @@ function shallowCopy< T extends { [key: string]: any } >(original: T): T {
 
   for (let k in original) {
     // Don't copy function
-    if (original[k] !== null &&
+    if (original[k] !== null && original[k] !== undefined &&
         original[k].hasOwnProperty('constructor') &&
         original[k].constructor === Function) {
       continue;

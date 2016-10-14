@@ -142,6 +142,10 @@ export
 type IDiffObjectEntry = IDiffPatchObject | IDiffAdd | IDiffRemove | IDiffReplace;
 
 
+export
+type DiffCollection = (IDiffEntry[] | null)[];
+
+
 /** Create a replacement diff entry */
 export
 function opReplace(key: string, value: any): IDiffReplace {
@@ -185,27 +189,27 @@ function opPatch(key: string | number, diff: IDiffEntry[] | null): IDiffPatch {
 export
 function validateSequenceOp(base: Array<any> | string, entry: IDiffEntry): void {
   if (typeof entry.key !== 'number') {
-      throw 'Invalid patch sequence op: Key is not a number: ' + entry.key;
+      throw new TypeError('Invalid patch sequence op: Key is not a number: ' + entry.key);
   }
   let index = entry.key;
   if (entry.op === 'addrange') {
     if (index < 0 || index > base.length || isNaN(index)) {
-      throw 'Invalid add range diff op: Key out of range: ' + index;
+      throw new RangeError('Invalid add range diff op: Key out of range: ' + index);
     }
   } else if (entry.op === 'removerange') {
     if (index < 0 || index >= base.length || isNaN(index)) {
-      throw 'Invalid remove range diff op: Key out of range: ' + index;
+      throw new RangeError('Invalid remove range diff op: Key out of range: ' + index);
     }
     let skip = entry.length;
     if (index + skip > base.length || isNaN(index)) {
-      throw 'Invalid remove range diff op: Range too long!';
+      throw new RangeError('Invalid remove range diff op: Range too long!');
     }
   } else if (entry.op === 'patch') {
     if (index < 0 || index >= base.length || isNaN(index)) {
-      throw 'Invalid patch diff op: Key out of range: ' + index;
+      throw new RangeError('Invalid patch diff op: Key out of range: ' + index);
     }
   } else {
-    throw 'Invalid op: ' + entry.op;
+    throw new Error('Invalid op: ' + entry.op);
   }
 }
 
@@ -216,27 +220,27 @@ export
 function validateObjectOp(base: Object, entry: IDiffEntry, keys: string[]): void {
   let op = entry.op;
   if (typeof entry.key !== 'string') {
-      throw 'Invalid patch object op: Key is not a string: ' + entry.key;
+      throw new TypeError('Invalid patch object op: Key is not a string: ' + entry.key);
   }
   let key = entry.key;
 
   if (op === 'add') {
     if (valueIn(key, keys)) {
-      throw 'Invalid add key diff op: Key already present: ' + key;
+      throw new Error('Invalid add key diff op: Key already present: ' + key);
     }
   } else if (op === 'remove') {
     if (!valueIn(key, keys)) {
-      throw 'Invalid remove key diff op: Missing key: ' + key;
+      throw new Error('Invalid remove key diff op: Missing key: ' + key);
     }
   } else if (op === 'replace') {
     if (!valueIn(key, keys)) {
-      throw 'Invalid replace key diff op: Missing key: ' + key;
+      throw new Error('Invalid replace key diff op: Missing key: ' + key);
     }
   } else if (op === 'patch') {
     if (!valueIn(key, keys)) {
-      throw 'Invalid patch key diff op: Missing key: ' + key;
+      throw new Error('Invalid patch key diff op: Missing key: ' + key);
     }
   } else {
-    throw 'Invalid op: ' + op;
+    throw new Error('Invalid op: ' + op);
   }
 }

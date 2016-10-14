@@ -50,7 +50,7 @@ import {
 
 import {
   NotebookDiffWidget
-} from 'nbdime/lib/diff/widgets';
+} from 'nbdime/lib/diff/widget';
 
 import {
   requestDiff

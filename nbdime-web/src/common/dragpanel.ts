@@ -547,7 +547,7 @@ abstract class DragDropPanelBase extends DropPanel {
     // Check for a drag initialization.
     let data = this._clickData;
     if (!data) {
-      throw 'Missing drag data';
+      throw new Error('Missing drag data');
     }
     let dx = Math.abs(event.clientX - data.pressX);
     let dy = Math.abs(event.clientY - data.pressY);
@@ -744,7 +744,7 @@ class DragDropPanel extends DragDropPanelBase {
     }
     if (event.source !== this) {
       // Source indicates external drop, incorrect use in subclass
-      throw 'Invalid source!';
+      throw new Error('Invalid source!');
     }
     let sourceKey = event.mimeData.getData(MIME_INDEX);
     let targetKey = this.getIndexOfChildNode(dropTarget);

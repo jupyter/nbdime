@@ -9,7 +9,8 @@
 
 
 import {
-  IDiffEntry, IDiffObjectEntry, IDiffPatch, opRemove, opReplace, opRemoveRange, opPatch
+  IDiffEntry, IDiffObjectEntry, IDiffPatch, opRemove, opReplace,
+  opRemoveRange, opPatch, DiffCollection
 } from '../diff/diffentries';
 
 import {
@@ -26,9 +27,6 @@ import {
 
 export
 type DecisionPath = (string | number)[];
-
-export
-type DiffCollection = (IDiffEntry[] | null)[];
 
 export
 interface IMergeDecision {
@@ -54,13 +52,49 @@ function validateAction(action: string): Action {
   'remote_then_local', 'custom', 'clear', 'clear_parent', 'either'])) {
     return action as Action;
   }
-  throw 'Invalid merge decision action: ' + action;
+  throw new Error('Invalid merge decision action: ' + action);
+}
+
+/**
+ * Take the value, or take default if value is undefined
+ */
+function valueOrDefault<T>(value: T | undefined, defaultValue: T): T {
+  return value === undefined ? defaultValue : value;
 }
 
 
 export
 class MergeDecision {
 
+  /**
+   * Create a MergeDecision from JSON structure.
+   *
+   * If any of the JSON fields are undefined, the values
+   * will be set to default values. The default values
+   * of all values except the common path can be overridden
+   * by the additional parameters to this function.
+   */
+  constructor(decision: IMergeDecision,
+              localDiff?: IDiffEntry[] | null,
+              remoteDiff?: IDiffEntry[] | null,
+              action?: Action,
+              conflict?: boolean,
+              customDiff?: IDiffEntry[] | null);
+  /**
+   * Create a MergeDecision from values.
+   *
+   * Default values are used for any missing parameters.
+   */
+  constructor(commonPath: DecisionPath,
+              localDiff?: IDiffEntry[] | null,
+              remoteDiff?: IDiffEntry[] | null,
+              action?: Action,
+              conflict?: boolean,
+              customDiff?: IDiffEntry[] | null);
+  /**
+   * MergeDecision copy constructor.
+   */
+  constructor(decision: MergeDecision);
   constructor(obj: DecisionPath | IMergeDecision | MergeDecision,
               localDiff: IDiffEntry[] | null = null,
               remoteDiff: IDiffEntry[] | null = null,
@@ -79,12 +113,13 @@ class MergeDecision {
       customDiff = obj.customDiff;
       this.level = obj.level;
     } else {
-      this._path = obj.common_path || [];
-      localDiff = obj.local_diff || localDiff;
-      remoteDiff = obj.remote_diff || remoteDiff;
-      action = validateAction(obj.action || action);
-      conflict = obj.conflict || conflict;
-      customDiff = obj.custom_diff || customDiff;
+      this._path = valueOrDefault(obj.common_path, []);
+      localDiff = valueOrDefault(obj.local_diff, localDiff);
+      remoteDiff = valueOrDefault(obj.remote_diff, remoteDiff);
+      action = validateAction(
+        valueOrDefault(obj.action, action));
+      conflict = valueOrDefault(obj.conflict, conflict);
+      customDiff = valueOrDefault(obj.custom_diff, customDiff);
     }
     this.localDiff = localDiff;
     this.remoteDiff = remoteDiff;
@@ -283,7 +318,7 @@ function resolveAction(base: any, decision: MergeDecision): IDiffEntry[] {
   let a = decision.action;
   if (a === 'base') {
     return [];   // no-op
-  } else if (valueIn(a, ['local', 'either'])) {
+  } else if (a === 'local' || a === 'either') {
     return decision.localDiff ? decision.localDiff.slice() : [];
   } else if (a === 'remote') {
     return decision.remoteDiff ? decision.remoteDiff.slice() : [];
@@ -296,12 +331,12 @@ function resolveAction(base: any, decision: MergeDecision): IDiffEntry[] {
   } else if (a === 'clear') {
     let key: string | null = null;
     if (typeof base !== 'object') {
-      throw 'Can only use `\'clear\'` action on objects/dicts';
+      throw new TypeError('Can only use `\'clear\'` action on objects/dicts');
     }
     for (let d of _combineDiffs(decision.localDiff, decision.remoteDiff) as IDiffObjectEntry[]) {
       if (key) {
         if (key !== d.key) {
-          throw 'Cannot combine diffs with different keys';
+          throw new Error('Cannot combine diffs with different keys');
         }
       } else {
         key = d.key;
@@ -315,8 +350,13 @@ function resolveAction(base: any, decision: MergeDecision): IDiffEntry[] {
       return [];
     }
   } else if (a === 'clear_parent') {
-    if (typeof(base) === typeof([])) {
+    if (Array.isArray(base)) {
       let d = opRemoveRange(0, base.length);
+      d.source = {decision, action: 'custom'};
+      return [d];
+    } else if (typeof(base) === 'string') {
+      let len = base.match(/^.*(\r\n|\r|\n|$)/gm)!.length;
+      let d = opRemoveRange(0, len);
       d.source = {decision, action: 'custom'};
       return [d];
     } else {
@@ -331,7 +371,7 @@ function resolveAction(base: any, decision: MergeDecision): IDiffEntry[] {
       return diff;
     }
   } else {
-    throw 'The action \"' + a + '\" is not defined';
+    throw new Error('The action \"' + a + '\" is not defined');
   }
 }
 
@@ -556,16 +596,20 @@ function pushPatchDecision(decision: MergeDecision, prefix: DecisionPath): Merge
   // We need to start with inner most key to nest correctly, so reverse:
   for (let key of prefix.slice().reverse()) {
     if (dec.absolutePath.length === 0) {
-      throw 'Cannot remove key from empty decision path: ' + key + ', ' + dec;
+      throw new Error('Cannot remove key from empty decision path: ' + key + ', ' + dec);
     }
-    console.assert(dec.absolutePath.pop() === key);  // Pop and assert
+    let popped = dec.absolutePath.pop()!;
+    if (popped !== key) {  // Pop and assert
+      throw Error('Cannot push a patch that doesn\'t correspond to ' +
+        'a key in the decision path! Key: ' + key +
+        '; Remaining path: ' + dec.absolutePath.concat([popped]));
+    }
     let ld = dec.localDiff && dec.localDiff.length > 0;
     let rd = dec.remoteDiff && dec.remoteDiff.length > 0;
+    let cd = dec.customDiff && dec.customDiff.length > 0;
     dec.localDiff = ld ? [opPatch(key, dec.localDiff)] : null;
     dec.remoteDiff = rd ? [opPatch(key, dec.remoteDiff)] : null;
-    if (dec.action === 'custom') {
-      dec.customDiff = [opPatch(key, dec.customDiff)];
-    }
+    dec.customDiff = cd ? [opPatch(key, dec.customDiff)] : null;
   }
   return dec;
 }

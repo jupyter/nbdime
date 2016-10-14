@@ -5,7 +5,7 @@ import expect = require('expect.js');
 
 import * as util from '../../../src/common/util';
 
-describe('nbdime', () => {
+describe('common', () => {
 
   describe('util', () => {
 
@@ -229,6 +229,30 @@ describe('nbdime', () => {
       it('should handle multiple strings with newlines randomly placed', () => {
         let value = util.accumulateLengths(['\nabc', 'foo\n', '0xde\nad']);
         expect(value).to.eql([4, 8, 15]);
+      });
+
+    });
+
+    describe('hasEntries', () => {
+
+      it('should return false for null', () => {
+        let value = util.hasEntries(null);
+        expect(value).to.be(false);
+      });
+
+      it('should return false for empty array', () => {
+        let value = util.hasEntries([]);
+        expect(value).to.be(false);
+      });
+
+      it('should return true for array with falsy entry', () => {
+        let value = util.hasEntries([0]);
+        expect(value).to.be(true);
+      });
+
+      it('should return true for array with truthy entry', () => {
+        let value = util.hasEntries([4]);
+        expect(value).to.be(true);
       });
 
     });

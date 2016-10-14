@@ -56,7 +56,7 @@ import {
 
 import {
   CellDiffWidget
-} from '../diff/widgets';
+} from '../diff/widget';
 
 
 const NBMERGE_CLASS = 'jp-Notebook-merge';
@@ -106,8 +106,9 @@ class RenderableOutputsMergeView extends DragDropPanel {
 
     if (!base !== !remote || !base !== !local) {
       // Assert that either none, or all of base/remote/local are given
-      throw 'Renderable outputs merge-view either takes only merged output ' +
-        'or a full set of four output lists.';
+      throw new Error(
+        'Renderable outputs merge-view either takes only merged output ' +
+        'or a full set of four output lists.');
     }
 
     if (base) {
@@ -392,7 +393,7 @@ class CellMergeWidget extends Panel {
           CURR_CLASSES);
       }
       if (sourceView === null) {
-        throw 'Was not able to create merge view for cell!';
+        throw new Error('Was not able to create merge view for cell!');
       }
       sourceView.addClass(SOURCE_ROW_CLASS);
       this.addWidget(sourceView);
@@ -421,7 +422,7 @@ class CellMergeWidget extends Panel {
             model.merged.metadata,
             CURR_CLASSES);
         if (metadataView === null) {
-          throw 'Was not able to create merge view for cell metadata!';
+          throw new Error('Was not able to create merge view for cell metadata!');
         }
         let container = new Panel();
         container.addWidget(metadataView);

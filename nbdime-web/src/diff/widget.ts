@@ -268,7 +268,7 @@ class CellDiffWidget extends Panel {
         view = createNbdimeMergeView(model.stringify(), editorClasses);
       }
     } else {
-      throw 'Unrecognized model type.';
+      throw new Error('Unrecognized model type.');
     }
     if (model.collapsible) {
       view = new CollapsiblePanel(

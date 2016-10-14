@@ -12,7 +12,7 @@
     "test": "npm run test:firefox",
     "posttest": "node scripts/fix-coverage.js",
     "test:chrome": "npm run build:test && karma start --browsers=Chrome test/karma.conf.js",
-    "test:debug": "npm run build:test && karma start --browsers=Chrome --singleRun=false --debug=true test/karma.conf.js",
+    "test:debug": "npm run build:test && karma start --browsers=Chrome --singleRun=false --debug=true test/karma-nocov.conf.js",
     "test:firefox": "npm run build:test && karma start --browsers=Firefox test/karma.conf.js",
     "test:ie": "npm run build:test && karma start --browsers=IE test/karma.conf.js"
   },

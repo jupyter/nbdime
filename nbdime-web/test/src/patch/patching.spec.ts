@@ -18,31 +18,31 @@ import {
 
 
 function makeAddRange(key: number, values: string | any[]) : IDiffAddRange {
-  return {key: key, op: 'addrange', valuelist: values, source: null};
+  return {key: key, op: 'addrange', valuelist: values};
 }
 
 function makeRemoveRange(key: number, length: number) : IDiffRemoveRange {
-  return {key: key, op: 'removerange', length: length, source: null};
+  return {key: key, op: 'removerange', length: length};
 }
 
 function makeAdd(key: string, value: any) : IDiffAdd {
-  return {key: key, op: 'add', value: value, source: null};
+  return {key: key, op: 'add', value: value};
 }
 
 function makeRemove(key: string) : IDiffRemove {
-  return {key: key, op: 'remove', source: null};
+  return {key: key, op: 'remove'};
 }
 
 function makeReplace(key: string, value: any) : IDiffReplace {
-  return {key: key, op: 'replace', value: value, source: null};
+  return {key: key, op: 'replace', value: value};
 }
 
-function makePatch(key: number | string, diff: IDiffEntry[]) : IDiffPatch {
-  return {key: key, op: 'patch', diff: diff, source: null};
+function makePatch(key: number | string, diff: IDiffEntry[] | null) : IDiffPatch {
+  return {key: key, op: 'patch', diff: diff};
 }
 
 
-describe('nbdime', () => {
+describe('patch', () => {
 
   describe('patchStringified', () => {
 
@@ -51,7 +51,7 @@ describe('nbdime', () => {
       let diff = makePatch(0, [makeAddRange(3, 'ghi')]);
       let value = patchStringified(base, [diff]);
       expect(value.remote).to.be('abcghidef');
-      expect(value.additions).to.eql([{from: 3, to: 6, source: null}]);
+      expect(value.additions).to.eql([{from: 3, to: 6, source: undefined}]);
       expect(value.deletions).to.be.empty();
     });
 
@@ -61,7 +61,29 @@ describe('nbdime', () => {
       let value = patchStringified(base, [diff]);
       expect(value.remote).to.be('abef');
       expect(value.additions).to.be.empty();
-      expect(value.deletions).to.eql([{from: 2, to: 4, source: null}]);
+      expect(value.deletions).to.eql([{from: 2, to: 4, source: undefined}]);
+    });
+
+    it('should patch a string with null diff', () => {
+      let base = 'abcdef';
+      let diff = null;
+      let value = patchStringified(base, diff);
+      expect(value.remote).to.be('abcdef');
+      expect(value.additions).to.be.empty();
+      expect(value.deletions).to.be.empty();
+    });
+
+    it('should patch a nested string with null diff', () => {
+      let base = {a: 'abcdef'};
+      let diff = [makePatch('a', null)];
+      let value = patchStringified(base, diff);
+      expect(value.remote).to.be(
+        '{\n' +
+        JSON_INDENT + '\"a\": \"abcdef\"\n' +
+        '}'
+      );
+      expect(value.additions).to.be.empty();
+      expect(value.deletions).to.be.empty();
     });
 
     it('should patch a simple string with simple escapes', () => {
@@ -95,7 +117,7 @@ describe('nbdime', () => {
       );
       let f = '[\n1,\n2,\n'.length + JSON_INDENT.length * 2;
       let t = f + '-1,\n-2,\n'.length + JSON_INDENT.length * 2;
-      expect(value.additions).to.eql([{from: f, to: t, source: null}]);
+      expect(value.additions).to.eql([{from: f, to: t, source: undefined}]);
       expect(value.deletions).to.be.empty();
     });
 
@@ -114,7 +136,7 @@ describe('nbdime', () => {
       );
       let f = '[\n'.length;
       let t = f + '-1,\n-2,\n'.length + JSON_INDENT.length * 2;
-      expect(value.additions).to.eql([{from: f, to: t, source: null}]);
+      expect(value.additions).to.eql([{from: f, to: t, source: undefined}]);
       expect(value.deletions).to.be.empty();
     });
 
@@ -133,7 +155,7 @@ describe('nbdime', () => {
       );
       let f = '[\n1,\n2,\n3,\n'.length + JSON_INDENT.length * 3;
       let t = f + '-1,\n-2\n'.length + JSON_INDENT.length * 2;
-      expect(value.additions).to.eql([{from: f, to: t, source: null}]);
+      expect(value.additions).to.eql([{from: f, to: t, source: undefined}]);
       expect(value.deletions).to.be.empty();
     });
 
@@ -151,7 +173,7 @@ describe('nbdime', () => {
       let f = '[\n1,\n2,\n'.length + JSON_INDENT.length * 2;
       let t = f + '3,\n4,\n'.length + JSON_INDENT.length * 2;
       expect(value.additions).to.be.empty();
-      expect(value.deletions).to.eql([{from: f, to: t, source: null}]);
+      expect(value.deletions).to.eql([{from: f, to: t, source: undefined}]);
     });
 
     it('should patch a list deletion at start', () => {
@@ -168,7 +190,7 @@ describe('nbdime', () => {
       let f = '[\n'.length;
       let t = f + '1,\n2,\n'.length + JSON_INDENT.length * 2;
       expect(value.additions).to.be.empty();
-      expect(value.deletions).to.eql([{from: f, to: t, source: null}]);
+      expect(value.deletions).to.eql([{from: f, to: t, source: undefined}]);
     });
 
     it('should patch a list deletion at end', () => {
@@ -185,7 +207,22 @@ describe('nbdime', () => {
       let f = '[\n1,\n2,\n3\n,'.length + JSON_INDENT.length * 3;
       let t = f + '4,\n5\n'.length + JSON_INDENT.length * 2;
       expect(value.additions).to.be.empty();
-      expect(value.deletions).to.eql([{from: f, to: t, source: null}]);
+      expect(value.deletions).to.eql([{from: f, to: t, source: undefined}]);
+    });
+
+    it('should patch a list with null diff', () => {
+      let base = [1, 2, 3];
+      let diff = null;
+      let value = patchStringified(base, diff);
+      expect(value.remote).to.be(
+        '[\n' +
+        JSON_INDENT + '1,\n' +
+        JSON_INDENT + '2,\n' +
+        JSON_INDENT + '3\n' +
+        ']'
+      );
+      expect(value.additions).to.be.empty();
+      expect(value.deletions).to.be.empty();
     });
 
     it('should patch an object addition', () => {
@@ -202,7 +239,7 @@ describe('nbdime', () => {
       );
       let f = '{\n\"a\": 1,\n'.length + JSON_INDENT.length;
       let t = f + '\"b\": 42,\n'.length + JSON_INDENT.length;
-      expect(value.additions).to.eql([{from: f, to: t, source: null}]);
+      expect(value.additions).to.eql([{from: f, to: t, source: undefined}]);
       expect(value.deletions).to.be.empty();
     });
 
@@ -220,7 +257,7 @@ describe('nbdime', () => {
       );
       let f = '{\n'.length;
       let t = f + '\"a\": 42,\n'.length + JSON_INDENT.length;
-      expect(value.additions).to.eql([{from: f, to: t, source: null}]);
+      expect(value.additions).to.eql([{from: f, to: t, source: undefined}]);
       expect(value.deletions).to.be.empty();
     });
 
@@ -239,7 +276,171 @@ describe('nbdime', () => {
       let f = '{\n\"a\": 1,\n\"b\": \"test\",\n\"c\": true,\n'.length +
         JSON_INDENT.length * 3;
       let t = f + '\"d\": 42\n'.length + JSON_INDENT.length;
-      expect(value.additions).to.eql([{from: f, to: t, source: null}]);
+      expect(value.additions).to.eql([{from: f, to: t, source: undefined}]);
+      expect(value.deletions).to.be.empty();
+    });
+
+    it('should patch an object removal', () => {
+      let base = {a: 1, d: 'test', c: true};
+      let diff = makeRemove('c');
+      let value = patchStringified(base, [diff]);
+      expect(value.remote).to.be(
+        '{\n' +
+        JSON_INDENT + '\"a\": 1,\n' +
+        JSON_INDENT + '\"d\": \"test\"\n' +
+        '}'
+      );
+      let f = '{\n\"a\": 1,\n'.length + JSON_INDENT.length;
+      let t = f + '\"c\": true,\n'.length + JSON_INDENT.length;
+      expect(value.additions).to.be.empty();
+      expect(value.deletions).to.eql([{from: f, to: t, source: undefined}]);
+    });
+
+    it('should patch an object removal at start', () => {
+      let base = {a: 1, d: 'test', c: true};
+      let diff = makeRemove('a');
+      let value = patchStringified(base, [diff]);
+      expect(value.remote).to.be(
+        '{\n' +
+        JSON_INDENT + '\"c\": true,\n' +
+        JSON_INDENT + '\"d\": \"test\"\n' +
+        '}'
+      );
+      let f = '{\n'.length;
+      let t = f + '\"a\": 1,\n'.length + JSON_INDENT.length;
+      expect(value.additions).to.be.empty();
+      expect(value.deletions).to.eql([{from: f, to: t, source: undefined}]);
+    });
+
+    it('should patch an object removal at end', () => {
+      let base = {a: 1, d: 'test', c: true};
+      let diff = makeRemove('d');
+      let value = patchStringified(base, [diff]);
+      expect(value.remote).to.be(
+        '{\n' +
+        JSON_INDENT + '\"a\": 1,\n' +
+        JSON_INDENT + '\"c\": true\n' +
+        '}'
+      );
+      let f = '{\n\"a\": 1,\n'.length + JSON_INDENT.length;
+      f += '\"c\": true,\n'.length + JSON_INDENT.length;
+      let t = f + '\"d\": \"test\"\n'.length + JSON_INDENT.length;
+      expect(value.additions).to.be.empty();
+      expect(value.deletions).to.eql([{from: f, to: t, source: undefined}]);
+    });
+
+    it('should patch an object replacement', () => {
+      let base = {a: 1, d: 'test', c: true};
+      let diff = makeReplace('c', false);
+      let value = patchStringified(base, [diff]);
+      expect(value.remote).to.be(
+        '{\n' +
+        JSON_INDENT + '\"a\": 1,\n' +
+        JSON_INDENT + '\"c\": false,\n' +
+        JSON_INDENT + '\"d\": \"test\"\n' +
+        '}'
+      );
+      let f = '{\n\"a\": 1,\n'.length + JSON_INDENT.length;
+      f += '\"c\": '.length + JSON_INDENT.length;
+      let tAdd = f + 'false'.length;
+      let tDel = f + 'true'.length;
+      expect(value.additions).to.eql([{from: f, to: tAdd, source: undefined}]);
+      expect(value.deletions).to.eql([{from: f, to: tDel, source: undefined}]);
+    });
+
+    it('should patch an object replacement at start', () => {
+      let base = {a: 1, d: 'test', c: true};
+      let diff = makeReplace('a', 1234);
+      let value = patchStringified(base, [diff]);
+      expect(value.remote).to.be(
+        '{\n' +
+        JSON_INDENT + '\"a\": 1234,\n' +
+        JSON_INDENT + '\"c\": true,\n' +
+        JSON_INDENT + '\"d\": \"test\"\n' +
+        '}'
+      );
+      let f = '{\n\"a\": '.length + JSON_INDENT.length;
+      let tAdd = f + '1234'.length;
+      let tDel = f + '1'.length;
+      expect(value.additions).to.eql([{from: f, to: tAdd, source: undefined}]);
+      expect(value.deletions).to.eql([{from: f, to: tDel, source: undefined}]);
+    });
+
+    it('should patch an object replacement at end', () => {
+      let base = {a: 1, d: 'test', c: true};
+      let diff = makeReplace('d', 'foobar');
+      let value = patchStringified(base, [diff]);
+      expect(value.remote).to.be(
+        '{\n' +
+        JSON_INDENT + '\"a\": 1,\n' +
+        JSON_INDENT + '\"c\": true,\n' +
+        JSON_INDENT + '\"d\": \"foobar\"\n' +
+        '}'
+      );
+      let f = '{\n\"a\": 1,\n'.length + JSON_INDENT.length;
+      f += '\"c\": true,\n'.length + JSON_INDENT.length;
+      f += '\"d\": '.length + JSON_INDENT.length;
+      let tAdd = f + '\"foobar\"'.length;
+      let tDel = f + '\"test\"'.length;
+      expect(value.additions).to.eql([{from: f, to: tAdd, source: undefined}]);
+      expect(value.deletions).to.eql([{from: f, to: tDel, source: undefined}]);
+    });
+
+    it('should patch an object replacement with changing type', () => {
+      let base = {a: 1, d: 'test', c: true};
+      let diff = makeReplace('c', ['foo', 'bar']);
+      let value = patchStringified(base, [diff]);
+      expect(value.remote).to.be(
+        '{\n' +
+        JSON_INDENT + '\"a\": 1,\n' +
+        JSON_INDENT + '\"c\": [\n' +
+        JSON_INDENT + JSON_INDENT + '\"foo\",\n' +
+        JSON_INDENT + JSON_INDENT + '\"bar\"\n' +
+        JSON_INDENT + '],\n' +
+        JSON_INDENT + '\"d\": \"test\"\n' +
+        '}'
+      );
+      let f = '{\n\"a\": 1,\n'.length + JSON_INDENT.length;
+      f += '\"c\": '.length + JSON_INDENT.length;
+      let tAdd = f + '[\n\"foo\",\n\"bar\"\n]'.length + 5 * JSON_INDENT.length;
+      let tDel = f + 'true'.length;
+      expect(value.additions).to.eql([{from: f, to: tAdd, source: undefined}]);
+      expect(value.deletions).to.eql([{from: f, to: tDel, source: undefined}]);
+    });
+
+    it('should patch an object with combined addition and removal at end', () => {
+      let base = {a: 1, d: 'test', b: true};
+      // For this diff, a naive stringifier might get confused
+      // whether there should be a comma at the end of 'c' entry.
+      let diff = [makeAdd('c', 42), makeRemove('d')];
+      let value = patchStringified(base, diff);
+      expect(value.remote).to.be(
+        '{\n' +
+        JSON_INDENT + '\"a\": 1,\n' +
+        JSON_INDENT + '\"b\": true,\n' +
+        JSON_INDENT + '\"c\": 42\n' +
+        '}'
+      );
+      let f = '{\n\"a\": 1,\n'.length + JSON_INDENT.length;
+      f += '\"b\": true,\n'.length + JSON_INDENT.length;
+      let tAdd = f + '\"c\": 42\n'.length + JSON_INDENT.length;
+      let tDel = f + '\"d\": \"test\"\n'.length + JSON_INDENT.length;
+      expect(value.additions).to.eql([{from: f, to: tAdd, source: undefined}]);
+      expect(value.deletions).to.eql([{from: f, to: tDel, source: undefined}]);
+    });
+
+    it('should patch an object with null diff', () => {
+      let base = {a: 1, d: 'test', c: true};
+      let diff = null;
+      let value = patchStringified(base, diff);
+      expect(value.remote).to.be(
+        '{\n' +
+        JSON_INDENT + '\"a\": 1,\n' +
+        JSON_INDENT + '\"c\": true,\n' +
+        JSON_INDENT + '\"d\": \"test\"\n' +
+        '}'
+      );
+      expect(value.additions).to.be.empty();
       expect(value.deletions).to.be.empty();
     });
 
@@ -276,9 +477,25 @@ describe('nbdime', () => {
       ).length + JSON_INDENT.length * 11;
       let t = f + 'patched'.length;
       console.log(value.remote.slice(value.additions[0].from, value.additions[0].to));
-      expect(value.additions).to.eql([{from: f, to: t, source: null}]);
+      expect(value.additions).to.eql([{from: f, to: t, source: undefined}]);
       t = f + 'valid'.length;
-      expect(value.deletions).to.eql([{from: f, to: t, source: null}]);
+      expect(value.deletions).to.eql([{from: f, to: t, source: undefined}]);
+    });
+
+    it('should fail to patch atomic types', () => {
+      let diff = makeReplace('toString', () => {/* */});
+
+      // Number
+      let base: any = 5;
+      expect(patchStringified).withArgs(base, diff).to.throwException(
+        /Cannot patch an atomic type: /
+      );
+
+      // Boolean
+      base = true;
+      expect(patchStringified).withArgs(base, diff).to.throwException(
+        /Cannot patch an atomic type: /
+      );
     });
 
   });
@@ -325,6 +542,15 @@ describe('nbdime', () => {
         let expected = {a: 55, b: {c: 22}};
         let value = patch(base, diff);
         expect(value).to.eql(expected);
+      });
+
+      it('should patch an object with a null diff', () => {
+        let base = {a: 55, b: 43};
+        let diff = null;
+        let patched = patch(base, diff);
+        expect(patched).to.eql(base);
+        // Should return a copy
+        expect(patched).to.not.equal(base);
       });
 
       it('should fail to patch an object with a non-string key', () => {
@@ -493,6 +719,15 @@ describe('nbdime', () => {
           expect(value).to.eql(expected);
         });
 
+      });
+
+      it('should patch a sequence with a null diff', () => {
+        let base = [55, 43];
+        let diff = null;
+        let patched = patch(base, diff);
+        expect(patched).to.eql(base);
+        // Should return a copy
+        expect(patched).to.not.equal(base);
       });
 
       it('should fail to patch a sequence with a non-number key', () => {
