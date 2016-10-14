@@ -6,7 +6,9 @@
     "moduleResolution": "node",
     "sourceMap": true,
     "outDir": "../lib",
-    "noImplicitAny": false,
-    "noEmitOnError": true
+    "noImplicitAny": true,
+    "noEmitOnError": true,
+    "strictNullChecks": true,
+    "skipLibCheck": true
   }
 }

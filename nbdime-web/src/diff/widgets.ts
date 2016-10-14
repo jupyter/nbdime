@@ -83,19 +83,19 @@ class RenderableOutputView extends Widget {
               rendermime: IRenderMime) {
     super();
     this._rendermime = rendermime;
-    let bdata = model.base as nbformat.IOutput;
-    let rdata = model.remote as nbformat.IOutput;
+    let bdata = model.base;
+    let rdata = model.remote;
     this.layout = new PanelLayout();
 
     let ci = 0;
     if (bdata) {
       let widget = this.createOutput(bdata, false);
-      (this.layout as PanelLayout).addWidget(widget);
+      this.layout.addWidget(widget);
       widget.addClass(editorClass[ci++]);
     }
     if (rdata && rdata !== bdata) {
       let widget = this.createOutput(rdata, false);
-      (this.layout as PanelLayout).addWidget(widget);
+      this.layout.addWidget(widget);
       widget.addClass(editorClass[ci++]);
     }
   }
@@ -135,8 +135,8 @@ class RenderableOutputView extends Widget {
       toTest.push(model.remote);
     }
     for (let o of toTest) {
-      if (valueIn(o.output_type, ['execute_result', 'display_data'])) {
-        let bundle = (o as any).data as nbformat.MimeBundle;
+      if (o.output_type === 'execute_result' || o.output_type === 'display_data') {
+        let bundle = o.data;
         if (!this.safeOrSanitizable(bundle)) {
           return false;
         }
@@ -147,6 +147,8 @@ class RenderableOutputView extends Widget {
     }
     return true;
   }
+
+  layout: PanelLayout;
 
   /**
    * Create a widget which renders the given cell output
@@ -204,14 +206,13 @@ class CellDiffWidget extends Panel {
     }
 
     // Add inputs and outputs, on a row-by-row basis
-    let ctor = this.constructor as typeof CellDiffWidget;
-    let sourceView = ctor.createView(
+    let sourceView = CellDiffWidget.createView(
       model.source, model, CURR_DIFF_CLASSES, this._rendermime);
     sourceView.addClass(SOURCE_ROW_CLASS);
     this.addWidget(sourceView);
 
-    if (model.metadata && !model.metadata.unchanged) {
-      let metadataView = ctor.createView(
+    if (!model.metadata.unchanged) {
+      let metadataView = CellDiffWidget.createView(
         model.metadata, model, CURR_DIFF_CLASSES, this._rendermime);
       metadataView.addClass(METADATA_ROW_CLASS);
       this.addWidget(metadataView);
@@ -220,7 +221,7 @@ class CellDiffWidget extends Panel {
       let container = new Panel();
       let changed = false;
       for (let o of model.outputs) {
-        let outputsWidget = ctor.createView(
+        let outputsWidget = CellDiffWidget.createView(
           o, model, CURR_DIFF_CLASSES, this._rendermime);
         container.addWidget(outputsWidget);
         changed = changed || !o.unchanged || o.added || o.deleted;
@@ -239,33 +240,32 @@ class CellDiffWidget extends Panel {
   static
   createView(model: IDiffModel, parent: CellDiffModel,
              editorClasses: string[], rendermime: IRenderMime): Widget {
-    let view: Widget = null;
+    let view: Widget | null = null;
     if (model instanceof StringDiffModel) {
       if (model.unchanged && parent.cellType === 'markdown') {
-        view = rendermime.render({bundle: {'text/markdown': model.base}});
+        view = rendermime.render({bundle: {'text/markdown': model.base!}});
       } else {
-        view = createNbdimeMergeView(model as IStringDiffModel, editorClasses);
+        view = createNbdimeMergeView(model, editorClasses);
       }
     } else if (model instanceof OutputDiffModel) {
       // Take one of three actions, depending on output types
       // 1) Text-type output: Show a MergeView with text diff.
       // 2) Renderable types: Side-by-side comparison.
       // 3) Unknown types: Stringified JSON diff.
-      let tmodel = model as OutputDiffModel;
-      let renderable = RenderableOutputView.canRenderUntrusted(tmodel);
+      let renderable = RenderableOutputView.canRenderUntrusted(model);
       for (let mt of rendermime.order) {
-        let key = tmodel.hasMimeType(mt);
+        let key = model.hasMimeType(mt);
         if (key) {
           if (!renderable || valueIn(mt, stringDiffMimeTypes)) {
-            view = createNbdimeMergeView(tmodel.stringify(key), editorClasses);
+            view = createNbdimeMergeView(model.stringify(key), editorClasses);
           } else if (renderable) {
-            view = new RenderableOutputView(tmodel, editorClasses, rendermime);
+            view = new RenderableOutputView(model, editorClasses, rendermime);
           }
           break;
         }
       }
       if (!view) {
-        view = createNbdimeMergeView(tmodel.stringify(), editorClasses);
+        view = createNbdimeMergeView(model.stringify(), editorClasses);
       }
     } else {
       throw 'Unrecognized model type.';
@@ -309,8 +309,8 @@ class CellDiffWidget extends Panel {
     return this._model;
   }
 
-  protected _model: CellDiffModel = null;
-  protected _rendermime: IRenderMime = null;
+  protected _model: CellDiffModel;
+  protected _rendermime: IRenderMime;
 }
 
 
@@ -377,5 +377,5 @@ class NotebookDiffWidget extends Widget {
   }
 
   private _model: NotebookDiffModel;
-  private _rendermime: IRenderMime = null;
+  private _rendermime: IRenderMime;
 }

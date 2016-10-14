@@ -21,7 +21,7 @@ export class DiffRangeRaw {
   /**
    * Create a new range [from, to = from + length)
    */
-  constructor(from: number, length: number, source: ChunkSource) {
+  constructor(from: number, length: number, source?: ChunkSource) {
     this.from = from;
     this.to = from + length;
     this.source = source;
@@ -48,7 +48,7 @@ export class DiffRangeRaw {
   /**
    * Diff source for merging
    */
-  source: ChunkSource;
+  source?: ChunkSource;
 }
 
 /**
@@ -89,7 +89,7 @@ class DiffRangePos {
   /**
    * Diff source for merging
    */
-  source: ChunkSource;
+  source?: ChunkSource;
 }
 
 /**
@@ -100,7 +100,7 @@ function findLineNumber(nlPos: number[], index: number): number {
   if (nlPos.length === 0) {
     return 0;
   }
-  let lineNo: number = null;
+  let lineNo: number | null = null;
   nlPos.some(function(el, i) {
     if (el >= index) {
       lineNo = i;

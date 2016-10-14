@@ -7,7 +7,7 @@ import {
 } from '../common/util';
 
 import {
-  DiffOp, IDiffEntry, IDiffPatch, IDiffAddRange, IDiffRemoveRange,
+  IDiffEntry, IDiffArrayEntry, IDiffPatch, IDiffAddRange, IDiffRemoveRange,
   IDiffAdd, opAddRange, opRemoveRange, validateSequenceOp
 } from './diffentries';
 
@@ -22,7 +22,11 @@ export const JSON_INDENT = '  ';
  *
  * Returns the first found entry, or null if not entry was found.
  */
-export function getDiffKey(diff: IDiffEntry[], key: string | number) : IDiffEntry[] {
+export
+function getDiffKey(diff: IDiffEntry[] | null, key: string | number) : IDiffEntry[] | null {
+  if (!diff) {
+    return null;
+  }
   for (let i=0; i < diff.length; ++i) {
     if (diff[i].key === key) {
       return (diff[i] as IDiffPatch).diff;
@@ -32,26 +36,26 @@ export function getDiffKey(diff: IDiffEntry[], key: string | number) : IDiffEntr
 }
 
 
-function validateStringDiff(base: string[], entry: IDiffEntry, lineToChar: number[]): void {
+function validateStringDiff(base: string[], entry: IDiffArrayEntry, lineToChar: number[]): void {
   // First valdiate line ops:
   validateSequenceOp(base, entry);
 
-  if (entry.op === DiffOp.PATCH) {
-    let line = base[entry.key as number];
-    let diff = (entry as IDiffPatch).diff;
-    for (let d of diff) {
-      validateSequenceOp(line, d);
+  if (entry.op === 'patch') {
+    let line = base[entry.key];
+    let diff = entry.diff;
+    if (diff !== null) {
+      for (let d of diff) {
+        validateSequenceOp(line, d);
+      }
     }
   }
 }
-
-let addops = [DiffOp.ADD, DiffOp.SEQINSERT];
 
 /**
  * Check whether existing collection of diff ops shares a key with the new
  * diffop, and if they  also have the same op type.
  */
-function overlaps(existing: IDiffEntry[], newv: IDiffEntry): boolean {
+function overlaps(existing: IDiffArrayEntry[], newv: IDiffArrayEntry): boolean {
   if (existing.length < 1) {
     return false;
   }
@@ -60,10 +64,9 @@ function overlaps(existing: IDiffEntry[], newv: IDiffEntry): boolean {
       if (e.key === newv.key) {
         // Found a match
         return true;
-      } else if (e.op === DiffOp.SEQDELETE) {
-        let r = e as IDiffRemoveRange;
-        let first = r.key < newv.key ? r : newv as IDiffRemoveRange;
-        let last = r.key > newv.key ? r : newv as IDiffRemoveRange;
+      } else if (e.op === 'removerange') {
+        let first = e.key < newv.key ? e : newv as IDiffRemoveRange;
+        let last = e.key > newv.key ? e : newv as IDiffRemoveRange;
         if (first.key + first.length >= last.key) {
           // Overlapping deletes
           // Above check is open ended to allow for sanity check here:
@@ -74,10 +77,6 @@ function overlaps(existing: IDiffEntry[], newv: IDiffEntry): boolean {
           return true;
         }
       }
-    } else if (valueIn(e.op, addops) && valueIn(newv.op, addops) &&
-              e.key === newv.key) {
-      // Addrange and single add can both point to same key
-      return true;
     }
   }
   return false;
@@ -87,39 +86,26 @@ function overlaps(existing: IDiffEntry[], newv: IDiffEntry): boolean {
 /**
  * Combines two ops into a new one that does the same
  */
-function combineOps(a: IDiffEntry, b: IDiffEntry): IDiffEntry {
-  if (valueIn(b.op, addops)) {
-    let aTyped: IDiffAddRange = null;
-    if (a.op === DiffOp.ADD) {
-      aTyped = opAddRange(a.key as number, [(a as IDiffAdd).value]);
-    } else {
-      aTyped = opAddRange(a.key as number, (a as IDiffAddRange).valuelist);
-    }
-    aTyped.source = a.source;
-    if (b.source !== a.source) {
-      throw 'Cannot combine diff ops with different sources in one string line';
-    }
-    if (b.op === DiffOp.SEQINSERT) {
-      let bTyped = b as IDiffAddRange;
-      // valuelist can also be string, but string also has concat:
-      (aTyped.valuelist as any[]).concat(bTyped.valuelist as any[]);
-    } else {
-      let bTyped = b as IDiffAdd;
-      if (typeof aTyped.valuelist === 'string') {
-        aTyped.valuelist += bTyped.value;
-      } else {
-        (aTyped.valuelist as any[]).push(bTyped.value);
-      }
-    }
-    return aTyped;
-  } else if (b.op === DiffOp.SEQDELETE) {
-    if (a.op !== DiffOp.SEQDELETE) {
+function combineOps(a: IDiffArrayEntry, b: IDiffArrayEntry): IDiffArrayEntry {
+  let combined: IDiffArrayEntry;
+  if (b.op === 'addrange') {
+    combined = opAddRange(a.key, (a as IDiffAddRange).valuelist);
+    // valuelist can also be string, but string also has concat:
+    (combined.valuelist as any[]).concat(b.valuelist as any[]);
+    return combined;
+  } else if (b.op === 'removerange') {
+    if (a.op !== 'removerange') {
       throw 'Cannot combine operations: ' + a + ', ' + b;
     }
-    let aTyped = a as IDiffRemoveRange;
-    let bTyped = b as IDiffRemoveRange;
-    return opRemoveRange(aTyped.key, aTyped.length + bTyped.length);
+    combined = opRemoveRange(a.key, a.length + b.length);
+  } else {
+    throw 'Invalid string lines op to combine: ' + b;
   }
+  combined.source = a.source;
+  if (b.source !== a.source) {
+    throw 'Cannot combine diff ops with different sources in one string line';
+  }
+  return combined;
 }
 
 
@@ -128,42 +114,48 @@ function combineOps(a: IDiffEntry, b: IDiffEntry): IDiffEntry {
  * joined multiline string
  */
 export
-function flattenStringDiff(val: string[] | string, diff: IDiffEntry[]): IDiffEntry[] {
+function flattenStringDiff(val: string[] | string, diff: IDiffArrayEntry[]): IDiffArrayEntry[] {
 
   if (typeof val === 'string') {
     // Split lines (retaining newlines):
-    val = (val as string).match(/^.*([\n\r]|$)/gm);
+    let lines = val.match(/^.*([\n\r]|$)/gm);
+    if (lines) {
+      val = lines;
+    } else {
+      val = [val];
+    }
   }
-  let a = val as string[];
-  let lineToChar = [0].concat(accumulateLengths(a));
-  let flattened: IDiffEntry[] = [];
+  let lineToChar = [0].concat(accumulateLengths(val));
+  let flattened: IDiffArrayEntry[] = [];
   for (let e of diff) {
     // Frist validate op:
-    validateStringDiff(a, e, lineToChar);
-    let op = e.op;
+    validateStringDiff(val, e, lineToChar);
     let lineOffset = lineToChar[e.key];
-    if (op === DiffOp.PATCH) {
-      for (let p of (e as IDiffPatch).diff) {
-        let d = shallowCopy(p);
-        d.key += lineOffset;
-        if (overlaps(flattened, d)) {
-          flattened[-1] = combineOps(flattened[-1], d);
-        } else {
-          flattened.push(d);
+    if (e.op === 'patch') {
+      let pdiff = e.diff as IDiffArrayEntry[];
+      if (pdiff !== null) {
+        for (let p of pdiff) {
+          let d = shallowCopy(p);
+          d.key += lineOffset;
+          if (overlaps(flattened, d)) {
+            flattened[-1] = combineOps(flattened[-1], d);
+          } else {
+            flattened.push(d);
+          }
         }
       }
     } else {
       // Other ops simply have keys which refer to lines
-      let d: IDiffEntry = null;
-      if (op === DiffOp.SEQINSERT) {
-        let et = e as IDiffAddRange;
+      let d: IDiffEntry | null = null;
+      if (e.op === 'addrange') {
         d = opAddRange(lineOffset,
-                       (et.valuelist as any[]).join(''));
-      } else if (op === DiffOp.SEQDELETE) {
-        let et = e as IDiffRemoveRange;
-        let idx = et.key + et.length;
+                       (e.valuelist as any[]).join(''));
+      } else if (e.op === 'removerange') {
+        let idx = e.key + e.length;
         d = opRemoveRange(lineOffset,
                           lineToChar[idx] - lineOffset);
+      } else {
+        throw 'Invalid string lines op: ' + e;
       }
       d.source = e.source;
 

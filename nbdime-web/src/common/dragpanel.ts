@@ -91,9 +91,9 @@ function belongsToUs(node: HTMLElement, parentClass: string,
  * Returns null if not found.
  */
 export
-function findChild(parent: HTMLElement | HTMLElement[], node: HTMLElement): HTMLElement {
+function findChild(parent: HTMLElement | HTMLElement[], node: HTMLElement): HTMLElement | null  {
   // Work our way up the DOM to an element which has this node as parent
-  let child: HTMLElement = null;
+  let child: HTMLElement | null = null;
   let parentIsArray = Array.isArray(parent);
   let isDirectChild = (child: HTMLElement): boolean => {
     if (parentIsArray) {
@@ -194,7 +194,7 @@ abstract class DropPanel extends Panel {
    * `node`, or `node` if it is itself a direct child. It also checks that the
    * needed mime type is included
    */
-  protected findDropTarget(input: HTMLElement, mimeData: MimeData): HTMLElement {
+  protected findDropTarget(input: HTMLElement, mimeData: MimeData): HTMLElement | null  {
     if (!mimeData.hasData(MIME_INDEX)) {
       return null;
     }
@@ -387,7 +387,7 @@ abstract class DragDropPanelBase extends DropPanel {
    * The default implementation returns the direct child that is the ancestor of
    * (or equal to) the handle.
    */
-  protected findDragTarget(handle: HTMLElement): HTMLElement {
+  protected findDragTarget(handle: HTMLElement): HTMLElement | null {
     return findChild(this.node, handle);
   }
 
@@ -396,8 +396,12 @@ abstract class DragDropPanelBase extends DropPanel {
    *
    * The default implementation returns a clone of the drag target.
    */
-  protected getDragImage(handle: HTMLElement): HTMLElement {
-    return this.findDragTarget(handle).cloneNode(true) as HTMLElement;
+  protected getDragImage(handle: HTMLElement): HTMLElement | null {
+    let target = this.findDragTarget(handle);
+    if (target) {
+      return target.cloneNode(true) as HTMLElement;
+    }
+    return null;
   }
 
   /**
@@ -442,7 +446,7 @@ abstract class DragDropPanelBase extends DropPanel {
 
     // Set up the drag event.
     this.drag = new Drag({
-      dragImage: dragImage,
+      dragImage: dragImage || undefined,
       mimeData: new MimeData(),
       supportedActions: 'all',
       proposedAction: 'copy',
@@ -459,7 +463,7 @@ abstract class DragDropPanelBase extends DropPanel {
   /**
    * Drag data stored in _startDrag
    */
-  protected drag: Drag = null;
+  protected drag: Drag | null = null;
 
   protected dragHandleClass = DRAG_HANDLE;
 
@@ -468,8 +472,8 @@ abstract class DragDropPanelBase extends DropPanel {
    *
    * If it is a drag handle, it returns the handle, if not returns null.
    */
-  private _findDragHandle(node: HTMLElement): HTMLElement {
-    let handle: HTMLElement = null;
+  private _findDragHandle(node: HTMLElement): HTMLElement | null {
+    let handle: HTMLElement | null = null;
     if (this.childrenAreDragHandles) {
       // Simple scenario, just look for node among children
       if (belongsToUs(node, DRAG_WIDGET_CLASS, this.node)) {
@@ -542,6 +546,9 @@ abstract class DragDropPanelBase extends DropPanel {
 
     // Check for a drag initialization.
     let data = this._clickData;
+    if (!data) {
+      throw 'Missing drag data';
+    }
     let dx = Math.abs(event.clientX - data.pressX);
     let dy = Math.abs(event.clientY - data.pressY);
     if (dx < DRAG_THRESHOLD && dy < DRAG_THRESHOLD) {
@@ -556,7 +563,7 @@ abstract class DragDropPanelBase extends DropPanel {
    * Data stored on mouse down to determine if drag treshold has
    * been overcome, and to initialize drag once it has.
    */
-  private _clickData: { pressX: number, pressY: number, handle: HTMLElement } = null;
+  private _clickData: { pressX: number, pressY: number, handle: HTMLElement } | null = null;
 }
 
 /**
@@ -602,7 +609,7 @@ abstract class DragPanel extends DragDropPanelBase {
   /**
    * Simply returns null for DragPanel, as it does not support dropping
    */
-  protected findDropTarget(input: HTMLElement, mimeData: MimeData): HTMLElement {
+  protected findDropTarget(input: HTMLElement, mimeData: MimeData): HTMLElement | null {
     return null;
   }
 
@@ -678,7 +685,7 @@ class DragDropPanel extends DragDropPanelBase {
    *
    * Returns null if not found.
    */
-  protected getIndexOfChildNode(node: HTMLElement, parent?: PanelLayout): any {
+  protected getIndexOfChildNode(node: HTMLElement | null, parent?: PanelLayout): any {
     parent = parent || this.layout as PanelLayout;
     for (let i = 0; i < parent.widgets.length; i++) {
       if (parent.widgets.at(i).node === node) {

@@ -6,7 +6,7 @@ import expect = require('expect.js');
 import * as decisions from '../../../src/merge/decisions';
 
 import {
-  opAdd, opPatch, IDiffEntry, IDiffPatch
+  opAdd, opAddRange, opPatch, IDiffEntry, IDiffPatch
 } from '../../../src/diff/diffentries';
 
 import {
@@ -22,9 +22,9 @@ describe('nbdime', () => {
 
       let jsonStructure: decisions.IMergeDecision = {
           action: 'custom',
-          local_diff: [opAdd(2, 22)],
-          remote_diff: [opAdd(2, 33)],
-          custom_diff: [opAdd(2, 55)],
+          local_diff: [opAdd('two', 22)],
+          remote_diff: [opAdd('two', 33)],
+          custom_diff: [opAdd('two', 55)],
           conflict: true,
           common_path: ['a', 0, '32', 'foo', 'bar']
         };
@@ -104,7 +104,7 @@ describe('nbdime', () => {
 
       it('should always pop patch paths if only passed one diff', () => {
         let diffs: IDiffEntry[][] = [[opPatch('a', [opPatch(0, [opPatch('foo',
-          [opAdd(32, 'bar')])])])]];
+          [opAdd('two', 'bar')])])])]];
         let value = decisions.popPath(diffs);
         expect(value.key).to.be('a');
         expect(value.diffs.length).to.be(1);
@@ -125,8 +125,8 @@ describe('nbdime', () => {
 
       it('should pop shared patch paths', () => {
         let diffs: IDiffEntry[][] = [
-          [opPatch('a', [opPatch(0, [opAdd(32, 'bar')])])],
-          [opPatch('a', [opPatch(0, [opAdd(2, 'whizz')])])]
+          [opPatch('a', [opPatch(0, [opAdd('three', 'bar')])])],
+          [opPatch('a', [opPatch(0, [opAdd('two', 'whizz')])])]
         ];
         let value = decisions.popPath(diffs);
         expect(value.key).to.be('a');
@@ -145,7 +145,7 @@ describe('nbdime', () => {
 
       it('should pop patch path if one entry is null', () => {
         let diffs: IDiffEntry[][] = [
-          [opPatch('a', [opPatch(0, [opAdd(32, 'bar')])])],
+          [opPatch('a', [opPatch(0, [opAdd('three', 'bar')])])],
           null
         ];
         let value = decisions.popPath(diffs);
@@ -157,7 +157,7 @@ describe('nbdime', () => {
         // Check there is no preference for order:
         diffs = [
           null,
-          [opPatch('a', [opPatch(0, [opAdd(32, 'bar')])])]
+          [opPatch('a', [opPatch(0, [opAdd('three', 'bar')])])]
         ];
         value = decisions.popPath(diffs);
         expect(value.key).to.be('a');
@@ -168,7 +168,7 @@ describe('nbdime', () => {
 
       it('should NOT pop patch path if only one side has patch', () => {
         let diffs: IDiffEntry[][] = [
-          [opPatch('a', [opPatch(0, [opAdd(32, 'bar')])])],
+          [opPatch('a', [opPatch(0, [opAdd('three', 'bar')])])],
           [opAdd('b', 'bar')]
         ];
         let value = decisions.popPath(diffs);
@@ -177,15 +177,15 @@ describe('nbdime', () => {
 
       it('should NOT pop patch path if only one side has multiple entries', () => {
         let diffs: IDiffEntry[][] = [
-          [opPatch('a', [opPatch(0, [opAdd(32, 'bar')])])],
-          [opPatch('a', [opPatch(0, [opAdd(32, 'bar')])]), opAdd('b', 'bar')]
+          [opPatch('a', [opPatch(0, [opAdd('three', 'bar')])])],
+          [opPatch('a', [opPatch(0, [opAdd('three', 'bar')])]), opAdd('b', 'bar')]
         ];
         let value = decisions.popPath(diffs);
         expect(value).to.be(null);
 
         diffs = [
-          [opPatch('a', [opPatch(0, [opAdd(32, 'bar')])])],
-          [opAdd('b', 'bar'), opPatch('a', [opPatch(0, [opAdd(32, 'bar')])])]
+          [opPatch('a', [opPatch(0, [opAdd('three', 'bar')])])],
+          [opAdd('b', 'bar'), opPatch('a', [opPatch(0, [opAdd('three', 'bar')])])]
         ];
         value = decisions.popPath(diffs);
         expect(value).to.be(null);
@@ -193,15 +193,15 @@ describe('nbdime', () => {
 
       it('should NOT pop path if both sides has multiple entries', () => {
         let diffs: IDiffEntry[][] = [
-          [opPatch('a', [opPatch(0, [opAdd(32, 'bar')])]), opAdd('b', 'bar')],
-          [opPatch('a', [opPatch(0, [opAdd(32, 'bar')])]), opAdd('b', 'bar')]
+          [opPatch('a', [opPatch(0, [opAdd('three', 'bar')])]), opAdd('b', 'bar')],
+          [opPatch('a', [opPatch(0, [opAdd('three', 'bar')])]), opAdd('b', 'bar')]
         ];
         let value = decisions.popPath(diffs);
         expect(value).to.be(null);
 
         diffs = [
-          [opAdd('b', 'bar'), opPatch('a', [opPatch(0, [opAdd(32, 'bar')])])],
-          [opAdd('b', 'bar'), opPatch('a', [opPatch(0, [opAdd(32, 'bar')])])]
+          [opAdd('b', 'bar'), opPatch('a', [opPatch(0, [opAdd('three', 'bar')])])],
+          [opAdd('b', 'bar'), opPatch('a', [opPatch(0, [opAdd('three', 'bar')])])]
         ];
         value = decisions.popPath(diffs);
         expect(value).to.be(null);
@@ -215,8 +215,8 @@ describe('nbdime', () => {
 
       it('should only pop patch path if inner diffs have a length of 1, or if popInner is true', () => {
         let diffs: IDiffEntry[][] = [
-          [opPatch(0, [opAdd(32, 'bar'), opAdd(2, 'bar')])],
-          [opPatch(0, [opAdd(32, 'bar'), opAdd(14, 'bar')])]
+          [opPatch(0, [opAdd('three', 'bar'), opAdd('two', 'bar')])],
+          [opPatch(0, [opAdd('three', 'bar'), opAdd('one', 'bar')])]
         ];
         let value = decisions.popPath(diffs);
         expect(value).to.be(null);
@@ -228,8 +228,8 @@ describe('nbdime', () => {
         expect(value.diffs[1].length).to.be(2);
 
         diffs = [
-          [opPatch(0, [opAdd(32, 'bar')])],
-          [opPatch(0, [opAdd(32, 'bar'), opAdd(14, 'bar')])]
+          [opPatch(0, [opAdd('three', 'bar')])],
+          [opPatch(0, [opAdd('three', 'bar'), opAdd('one', 'bar')])]
         ];
         value = decisions.popPath(diffs);
         expect(value).to.be(null);
@@ -241,8 +241,8 @@ describe('nbdime', () => {
         expect(value.diffs[1].length).to.be(2);
 
         diffs = [
-          [opPatch(0, [opAdd(32, 'bar'), opAdd(2, 'bar')])],
-          [opPatch(0, [opAdd(32, 'bar')])]
+          [opPatch(0, [opAdd('three', 'bar'), opAdd('two', 'bar')])],
+          [opPatch(0, [opAdd('three', 'bar')])]
         ];
         value = decisions.popPath(diffs);
         expect(value).to.be(null);

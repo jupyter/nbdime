@@ -125,7 +125,7 @@ def combine_commands(*commands):
                 self.commands.append(C(self.distribution))
             for c in self.commands:
                 c.initialize_options()
-        
+
         def finalize_options(self):
             for c in self.commands:
                 c.finalize_options()
@@ -186,8 +186,8 @@ cmdclass = dict(
     build  = js_prerelease(build),
     sdist  = js_prerelease(sdist),
     jsdeps = combine_commands(
-        install_npm(pjoin(here, 'nbdime', 'webapp')),
         install_npm(pjoin(here, 'nbdime-web')),
+        install_npm(pjoin(here, 'nbdime', 'webapp')),
     ),
 )
 

@@ -2,6 +2,15 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
+export
+interface DeepCopyableObject {
+  [key: string]: DeepCopyableValue | undefined;
+  prototype?: DeepCopyableObject;
+}
+
+export
+type DeepCopyableValue = DeepCopyableObject | any[] | string | number | boolean;
+
 /**
  * Check whether a value is in an array.
  */
@@ -12,39 +21,52 @@ function valueIn(value: any, array: Array<any>) {
 
 
 /**
- * Deepcopy routine for JSON-able data types
+ * Check whether array is null or empty, and type guards agains null
  */
 export
-function deepCopy(obj) {
-  if (typeof obj === 'object') {
-    if (obj === null) {
-      return null;
-    } else if (obj instanceof Array) {
-      let l = obj.length;
-      let o = new Array(l);
-      for (let i = 0; i < l; i++) {
-        o[i] = deepCopy(obj[i]);
-      }
-      return o;
-    } else {
-      let r: any = {};
-      if (obj.prototype !== undefined) {
-        r.prototype = obj.prototype;
-      }
-      for (let k in obj) {
-        r[k] = deepCopy(obj[k]);
-      }
-      return r;
+function hasEntries<T>(array: T[] | null): array is T[] {
+  return array !== null && array.length !== 0;
+}
+
+/**
+ * Deepcopy routine for JSON-able data types
+ */
+export function deepCopy(obj: null): null;
+export function deepCopy<T extends DeepCopyableValue>(obj: T): T;
+export function deepCopy<T extends DeepCopyableValue>(obj: T | null): T | null {
+  if (typeof obj !== 'object') {
+    if (valueIn(typeof obj, ['string', 'number', 'boolean'])) {
+      return obj;
     }
+    throw 'Cannot deepcopy non-object';
   }
-  return obj;
+  if (obj === null) {
+    return null;
+  } else if (Array.isArray(obj)) {
+    let l = obj.length;
+    let o = new Array(l);
+    for (let i = 0; i < l; i++) {
+      o[i] = deepCopy(obj[i]);
+    }
+    return o as T;
+  } else {
+    let a = obj as DeepCopyableObject;
+    let r: DeepCopyableObject = {};
+    if (a.prototype !== undefined) {
+      r.prototype = a.prototype;
+    }
+    for (let k in obj) {
+      r[k] = deepCopy(a[k]!);
+    }
+    return r as T;
+  }
 }
 
 /**
  * Shallow copy routine for objects
  */
 export
-function shallowCopy<T>(original: T): T {
+function shallowCopy< T extends { [key: string]: any } >(original: T): T {
   // First create an empty object with
   // same prototype of our original source
   let clone = Object.create(Object.getPrototypeOf(original));
@@ -71,7 +93,7 @@ function shallowCopy<T>(original: T): T {
  * Do a shallow, element-wise equality comparison on two arrays.
  */
 export
-function arraysEqual(a: any[], b: any[]) {
+function arraysEqual(a: any[] | null, b: any[] | null) {
   if (a === b) {
     return true;
   }
@@ -94,7 +116,7 @@ function arraysEqual(a: any[], b: any[]) {
  * Find the shared common starting sequence in two arrays
  */
 export
-function findSharedPrefix(a: any[], b: any[]): any[] {
+function findSharedPrefix(a: any[] | null, b: any[] | null): any[] | null {
   if (a === null || b === null) {
     return null;
   }
@@ -118,7 +140,7 @@ function findSharedPrefix(a: any[], b: any[]): any[] {
  * is a subsequence of child.
  */
 export
-function isPrefixArray(parent: any[], child: any[]): boolean {
+function isPrefixArray(parent: any[] | null, child: any[] | null): boolean {
   if (parent === child) {
     return true;
   }
@@ -140,7 +162,7 @@ function isPrefixArray(parent: any[], child: any[]): boolean {
  * Sort array by attribute `key` (i.e. compare by array[0][key] < array[1][key])
  */
 export
-function sortByKey(array, key) {
+function sortByKey<T extends {[key: string]: any}>(array: T[], key: string): T[] {
     return array.sort(function(a, b) {
         let x = a[key]; let y = b[key];
         return ((x < y) ? -1 : ((x > y) ? 1 : 0));

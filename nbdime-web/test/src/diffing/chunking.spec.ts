@@ -202,10 +202,10 @@ describe('nbdime', () => {
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).to.have.length(1);
-          expect(chunks[0].editFrom).to.equal(chunks[0].origFrom);
-          expect(chunks[0].editTo).to.equal(chunks[0].origTo);
-          expect(chunks[0].editFrom).to.equal(0);
-          expect(chunks[0].editTo).to.equal(1);
+          expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
+          expect(chunks[0].baseTo).to.equal(chunks[0].remoteTo);
+          expect(chunks[0].baseFrom).to.equal(0);
+          expect(chunks[0].baseTo).to.equal(1);
         });
 
         it('should chunk a single entry in a multi-line diff', () => {
@@ -217,10 +217,10 @@ describe('nbdime', () => {
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).to.have.length(1);
-          expect(chunks[0].editFrom).to.equal(chunks[0].origFrom);
-          expect(chunks[0].editTo).to.equal(chunks[0].origTo);
-          expect(chunks[0].editFrom).to.equal(1);
-          expect(chunks[0].editTo).to.equal(2);
+          expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
+          expect(chunks[0].baseTo).to.equal(chunks[0].remoteTo);
+          expect(chunks[0].baseFrom).to.equal(1);
+          expect(chunks[0].baseTo).to.equal(2);
         });
 
         it('should chunk a start-of-line entry in a multi-line diff', () => {
@@ -232,10 +232,10 @@ describe('nbdime', () => {
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).to.have.length(1);
-          expect(chunks[0].editFrom).to.equal(chunks[0].origFrom);
-          expect(chunks[0].editTo).to.equal(chunks[0].origTo);
-          expect(chunks[0].editFrom).to.equal(1);
-          expect(chunks[0].editTo).to.equal(2);
+          expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
+          expect(chunks[0].baseTo).to.equal(chunks[0].remoteTo);
+          expect(chunks[0].baseFrom).to.equal(1);
+          expect(chunks[0].baseTo).to.equal(2);
         });
 
         it('should chunk an end-of-line entry in a multi-line diff', () => {
@@ -247,10 +247,10 @@ describe('nbdime', () => {
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).to.have.length(1);
-          expect(chunks[0].editFrom).to.equal(chunks[0].origFrom);
-          expect(chunks[0].editTo).to.equal(chunks[0].origTo);
-          expect(chunks[0].origFrom).to.equal(1);
-          expect(chunks[0].origTo).to.equal(2);
+          expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
+          expect(chunks[0].baseTo).to.equal(chunks[0].remoteTo);
+          expect(chunks[0].remoteFrom).to.equal(1);
+          expect(chunks[0].remoteTo).to.equal(2);
         });
 
         it('should chunk a newline at start of entry', () => {
@@ -262,10 +262,10 @@ describe('nbdime', () => {
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).to.have.length(1);
-          expect(chunks[0].editFrom).to.equal(chunks[0].origFrom);
-          expect(chunks[0].origFrom).to.equal(1);
-          expect(chunks[0].editTo).to.equal(1);
-          expect(chunks[0].origTo).to.equal(2);
+          expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
+          expect(chunks[0].remoteFrom).to.equal(1);
+          expect(chunks[0].baseTo).to.equal(1);
+          expect(chunks[0].remoteTo).to.equal(2);
         });
 
         it('should chunk a newline at end of entry', () => {
@@ -277,10 +277,10 @@ describe('nbdime', () => {
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).to.have.length(1);
-          expect(chunks[0].editFrom).to.equal(chunks[0].origFrom);
-          expect(chunks[0].origFrom).to.equal(1);
-          expect(chunks[0].editTo).to.equal(1);
-          expect(chunks[0].origTo).to.equal(2);
+          expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
+          expect(chunks[0].remoteFrom).to.equal(1);
+          expect(chunks[0].baseTo).to.equal(1);
+          expect(chunks[0].remoteTo).to.equal(2);
         });
 
         it('should chunk a line split', () => {
@@ -295,10 +295,10 @@ describe('nbdime', () => {
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).to.have.length(1);
-          expect(chunks[0].editFrom).to.equal(chunks[0].origFrom);
-          expect(chunks[0].origFrom).to.equal(0);
-          expect(chunks[0].editTo).to.equal(1);
-          expect(chunks[0].origTo).to.equal(2);
+          expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
+          expect(chunks[0].remoteFrom).to.equal(0);
+          expect(chunks[0].baseTo).to.equal(1);
+          expect(chunks[0].remoteTo).to.equal(2);
         });
 
         it('should chunk an extended line split', () => {
@@ -313,10 +313,10 @@ describe('nbdime', () => {
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).to.have.length(1);
-          expect(chunks[0].editFrom).to.equal(chunks[0].origFrom);
-          expect(chunks[0].origFrom).to.equal(0);
-          expect(chunks[0].editTo).to.equal(1);
-          expect(chunks[0].origTo).to.equal(4);
+          expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
+          expect(chunks[0].remoteFrom).to.equal(0);
+          expect(chunks[0].baseTo).to.equal(1);
+          expect(chunks[0].remoteTo).to.equal(4);
         });
 
         it('should chunk a newline at start AND end of entry', () => {
@@ -331,10 +331,10 @@ describe('nbdime', () => {
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).to.have.length(1);
-          expect(chunks[0].editFrom).to.equal(chunks[0].origFrom);
-          expect(chunks[0].origFrom).to.equal(0);
-          expect(chunks[0].editTo).to.equal(1);
-          expect(chunks[0].origTo).to.equal(3);
+          expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
+          expect(chunks[0].remoteFrom).to.equal(0);
+          expect(chunks[0].baseTo).to.equal(1);
+          expect(chunks[0].remoteTo).to.equal(3);
         });
 
         it('should chunk an inserted line at start', () => {
@@ -346,10 +346,10 @@ describe('nbdime', () => {
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).to.have.length(1);
-          expect(chunks[0].editFrom).to.equal(chunks[0].origFrom);
-          expect(chunks[0].editFrom).to.equal(0);
-          expect(chunks[0].editTo).to.equal(0);
-          expect(chunks[0].origTo).to.equal(1);
+          expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
+          expect(chunks[0].baseFrom).to.equal(0);
+          expect(chunks[0].baseTo).to.equal(0);
+          expect(chunks[0].remoteTo).to.equal(1);
         });
 
       });

@@ -39,10 +39,10 @@ type ChunkSource = {
  */
 export class Chunk {
   constructor(
-      public editFrom: number,
-      public editTo: number,
-      public origFrom: number,
-      public origTo: number,
+      public baseFrom: number,
+      public baseTo: number,
+      public remoteFrom: number,
+      public remoteTo: number,
       source?: ChunkSource) {
     this.sources = source ? [source] : [];
   }
@@ -59,14 +59,14 @@ export class Chunk {
    * Checks whether the given line number is within the range spanned by editFrom - editTo
    */
   inEdit(line: number) {
-    return line >= this.editFrom && line <= this.editTo;
+    return line >= this.baseFrom && line <= this.baseTo;
   }
 
   /**
    * Checks whether the given line number is within the range spanned by origFrom - origTo
    */
   inOrig(line: number) {
-    return line >= this.origFrom && line <= this.origTo;
+    return line >= this.remoteFrom && line <= this.remoteTo;
   }
 
   /**
@@ -114,9 +114,9 @@ class Chunker {
       // Have existing chunk, check for overlap
       if (isAddition) {
         if (this._overlapChunk(current, range, isAddition)) {
-          current.origTo = Math.max(current.origTo,
+          current.remoteTo = Math.max(current.remoteTo,
               range.to.line + endOffset + linediff);
-          current.editTo = Math.max(current.editTo,
+          current.baseTo = Math.max(current.baseTo,
               range.to.line + endOffset + this.editOffset);
           if (range.source && !valueIn(range.source, current.sources)) {
             current.sources.push(range.source);
@@ -127,9 +127,9 @@ class Chunker {
         }
       } else {
         if (this._overlapChunk(current, range, isAddition)) {
-          current.origTo = Math.max(current.origTo,
+          current.remoteTo = Math.max(current.remoteTo,
               range.to.line + endOffset - this.editOffset);
-          current.editTo = Math.max(current.editTo,
+          current.baseTo = Math.max(current.baseTo,
               range.to.line + endOffset + linediff);
           if (range.source && !valueIn(range.source, current.sources)) {
             current.sources.push(range.source);
@@ -195,10 +195,10 @@ class Chunker {
     if (current) {
       // Have existing chunk, check for overlap
       let startOrig = startEdit - this.editOffset;
-      if (current.editTo > startEdit) {
-        current.origTo = Math.max(current.origTo,
+      if (current.baseTo > startEdit) {
+        current.remoteTo = Math.max(current.remoteTo,
             startOrig + endOffset);
-        current.editTo = Math.max(current.editTo,
+        current.baseTo = Math.max(current.baseTo,
             startEdit + endOffset);
         if (range.source && !valueIn(range.source, current.sources)) {
           current.sources.push(range.source);
@@ -228,7 +228,7 @@ class Chunker {
   chunks: Chunk[];
   editOffset: number;
 
-  protected _currentGhost: Chunk = null;
+  protected _currentGhost: Chunk | null = null;
 }
 
 
@@ -265,16 +265,16 @@ class LineChunker extends Chunker {
 export
 function lineToNormalChunks(lineChunks: Chunk[]): Chunk[] {
   // We already have line chunks, so simply merge those chunks that overlap
-  let current: Chunk = null;
+  let current: Chunk | null = null;
   let ret: Chunk[] = [];
   for (let c of lineChunks) {
     if (current === null) {
       current = shallowCopy(c);
     } else {
-      if (current.inEdit(c.editFrom)) {
+      if (current.inEdit(c.baseFrom)) {
         // Overlaps, combine
-        current.origTo = Math.max(current.origTo, c.origTo);
-        current.editTo = Math.max(current.editTo, c.editTo);
+        current.remoteTo = Math.max(current.remoteTo, c.remoteTo);
+        current.baseTo = Math.max(current.baseTo, c.baseTo);
         current.sources = current.sources.concat(c.sources);
       } else {
         // No overlap, start new
@@ -294,12 +294,12 @@ function lineToNormalChunks(lineChunks: Chunk[]): Chunk[] {
  * Label a set of diffs with a source, recursively.
  */
 export
-function labelSource(diff: IDiffEntry[], source: ChunkSource): IDiffEntry[] {
+function labelSource(diff: IDiffEntry[] | null, source: ChunkSource): IDiffEntry[] | null {
   if (diff) {
     for (let d of diff) {
       d.source = source;
-      if ((d as IDiffPatch).diff !== undefined) {
-        labelSource((d as IDiffPatch).diff, source);
+      if (d.op === 'patch') {
+        labelSource(d.diff, source);
       }
     }
   }
