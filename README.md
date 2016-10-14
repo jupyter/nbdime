@@ -12,6 +12,10 @@ See also description and discussion in the [Jupyter Enhancement Proposal](https:
 
 Install the [codecov browser extension](https://github.com/codecov/browser-extension#codecov-extension) to view test coverage in the source browser on github.
 
+## Requirements
+
+To install a source copy, you will need to have [npm installed](https://nodejs.org/en/download/) and available on PATH while installing.
+
 ## Installation:
 
     git clone https://github.com/jupyter/nbdime
