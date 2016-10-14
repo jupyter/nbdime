@@ -263,11 +263,7 @@ describe('merge', () => {
       });
 
       it('should initialize a model with decisions', () => {
-        let decisions: MergeDecision[] = [];
-        for (let idec of NBdecisions) {
-          decisions.push(new MergeDecision(idec));
-        }
-        let model = new NotebookMergeModel(notebook, decisions);
+        let model = new NotebookMergeModel(notebook, NBdecisions);
         expect(model.base).to.be(notebook);
       });
 

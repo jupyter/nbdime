@@ -8,7 +8,28 @@ import {
 } from 'jupyterlab/lib/notebook/notebook/nbformat';
 
 import {
-    MetadataMergeModel
+  RenderMime
+} from 'jupyterlab/lib/rendermime';
+
+import {
+  HTMLRenderer, LatexRenderer, ImageRenderer, TextRenderer,
+  JavascriptRenderer, SVGRenderer, MarkdownRenderer
+} from 'jupyterlab/lib/renderers';
+
+import {
+  defaultSanitizer
+} from 'jupyterlab/lib/sanitizer';
+
+import {
+  Widget
+} from 'phosphor/lib/ui/widget';
+
+import {
+    IMergeDecision
+} from '../../../src/merge/decisions';
+
+import {
+    MetadataMergeModel, NotebookMergeModel
 } from '../../../src/merge/model';
 
 import {
@@ -16,9 +37,36 @@ import {
 } from '../../../src/merge/widget';
 
 
+const notebook = require('../../files/base.ipynb') as nbformat.INotebookContent;
+const NBdecisions = require('../../files/decisionsA.json') as IMergeDecision[];
+
 describe('merge', () => {
 
   describe('widget', () => {
+
+    // Setup rendermime:
+    const transformers = [
+      new JavascriptRenderer(),
+      new MarkdownRenderer(),
+      new HTMLRenderer(),
+      new ImageRenderer(),
+      new SVGRenderer(),
+      new LatexRenderer(),
+      new TextRenderer()
+    ];
+
+    let renderers: RenderMime.MimeMap<RenderMime.IRenderer> = {};
+    let order: string[] = [];
+    for (let t of transformers) {
+      for (let m of t.mimetypes) {
+        renderers[m] = t;
+        order.push(m);
+      }
+    }
+    let rendermime = new RenderMime({
+      renderers: renderers, order: order, sanitizer: defaultSanitizer});
+
+    // End rendermime setup
 
     describe('MetadataDiffWidget', () => {
 
@@ -37,6 +85,18 @@ describe('merge', () => {
               base, [], 'application/json');
           let widget = new MetadataMergeWidget(model);
           expect(widget).to.not.be(null);
+      });
+
+    });
+
+    describe('NotebookMergeWidget', () => {
+
+      it('should create a widget for a simple realistic model', () => {
+          let model = new NotebookMergeModel(
+              notebook, NBdecisions);
+          let widget = new NotebookMergeWidget(model, rendermime);
+          expect(widget).to.not.be(null);
+          Widget.attach(widget, document.body);
       });
 
     });
