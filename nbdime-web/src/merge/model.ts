@@ -148,8 +148,8 @@ class DecisionStringDiffModel extends StringDiffModel {
  */
 function createPatchedCellDecisionDiffModel(
     base: nbformat.ICell, decisions: MergeDecision[],
-    mimetype: string,
-    local: CellDiffModel | null, remote: CellDiffModel | null):
+    local: CellDiffModel | null, remote: CellDiffModel | null,
+    mimetype: string):
     CellDiffModel {
 
   for (let md of decisions) {
@@ -511,7 +511,7 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
       throw new Error('Cannot create a patched or unchanged merged diff model with null base!');
     }
     return createPatchedCellDecisionDiffModel(
-        this.base, this.decisions, this.mimetype, this.local, this.remote);
+        this.base, this.decisions, this.local, this.remote, this.mimetype);
   }
 
   /**
@@ -548,7 +548,7 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
         if (first.op !== 'addrange') {
           throw new Error('Merge decision does not conform to expectation: ' + md);
         }
-        let v = first.valuelist[0];
+        let v = first.valuelist[0] as nbformat.ICell;
         this._remote = createAddedCellDiffModel(v, this.mimetype);
         this._merged = createAddedCellDiffModel(v, this.mimetype);
       } else {
@@ -569,7 +569,7 @@ export class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffMod
         if (first.op !== 'addrange') {
           throw new Error('Merge decision does not conform to expectation: ' + md);
         }
-        let v = first.valuelist[0];
+        let v = first.valuelist[0] as nbformat.ICell;
         this._local = createAddedCellDiffModel(v, this.mimetype);
         this._merged = createAddedCellDiffModel(v, this.mimetype);
       } else {
