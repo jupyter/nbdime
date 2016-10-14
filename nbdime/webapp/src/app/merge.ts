@@ -178,7 +178,7 @@ function saveMerged() {
   }
   let nb = mergeModel.serialize();
   let conflicts: IMergeDecision[] = [];
-  for (let md of mergeModel.conflicts()) {
+  for (let md of mergeModel.conflicts) {
     conflicts.push(md.serialize());
   }
   submitMerge(nb, conflicts);
@@ -218,7 +218,7 @@ function onSubmissionFailed(response: string) {
 export
 function closeMerge(ev: Event) {
   let conflict = false;
-  for (let md of mergeModel.conflicts()) {
+  for (let md of mergeModel.conflicts) {
     conflict = md.conflict;
     if (conflict) {
       break;
