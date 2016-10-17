@@ -62,10 +62,15 @@ function overlaps(existing: IDiffArrayEntry[], newv: IDiffArrayEntry): boolean {
   for (let e of existing) {
     if (e.op === newv.op) {
       if (e.op === 'removerange') {
-        if (e.key + e.length >= newv.key) {
+        // Since patch ops of lines come before line add/remove
+        // (and patch ops can contain character removals),
+        // we need to check order:
+        let first = e.key <= newv.key ? e : newv as IDiffRemoveRange;
+        let last = e.key <= newv.key ? newv as IDiffRemoveRange : e;
+        if (first.key + first.length >= last.key) {
           // Overlapping deletes
           // Above check is open ended to allow for sanity check here:
-          if (e.key + e.length !== newv.key) {
+          if (first.key + first.length !== last.key) {
             throw new Error('Overlapping delete diff ops: ' +
               'Two operation remove same characters!');
           }
