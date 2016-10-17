@@ -40,6 +40,7 @@ def autoresolve_notebook_conflicts(base, decisions, args):
             "/cells/*/outputs",
             "/cells/*/metadata/collapsed",
             "/cells/*/metadata/autoscroll",
+            "/cells/*/metadata/scrolled",
             "/cells/*/outputs/*/execution_count"
         ])
     if args and args.merge_strategy == "mergetool":
