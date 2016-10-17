@@ -821,7 +821,7 @@ function splitCellInsertions(mergeDecisions: MergeDecision[]): MergeDecision[] {
                                local: boolean, remote: boolean): MergeDecision {
     let newMd = new MergeDecision(md.absolutePath.slice(), null, null,
                                   md.action, md.conflict);
-    if ((local && !hasEntries(md.localDiff)) || !hasEntries(md.remoteDiff)) {
+    if ((local && !hasEntries(md.localDiff)) || (!local && !hasEntries(md.remoteDiff))) {
       throw new Error('Invalid input: ' + md);
     }
     let key = (local ? md.localDiff : md.remoteDiff)![0].key as number;

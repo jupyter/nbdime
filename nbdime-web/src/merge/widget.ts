@@ -336,7 +336,7 @@ class CellMergeWidget extends Panel {
     this.createHeader();
 
     /*
-     Two different display layoutsnding on cell merge type:
+     Two different display layouts depending on cell merge type:
      1. Unchanged or one way insert/delete of cell, or identical insert/delete:
         Single r/w editor (merged), with appropriate coloring for insert/delete
      2. Everything else:
@@ -356,7 +356,8 @@ class CellMergeWidget extends Panel {
           model.local.unchanged && model.remote!.unchanged &&
           model.merged.unchanged) ||  // Unchanged
           model.local.added !== model.remote.added ||  // Onesided addition
-          model.local.deleted !== model.remote.deleted ||  // Onesided deletion
+          model.local.deleted && model.remote.unchanged ||  // Onesided deletion (other side unchanged)
+          model.local.unchanged && model.remote.deleted ||  // Onesided deletion (other side unchanged)
           model.local.added && model.agreedCell || // Identical additions
           model.local.deleted && model.remote.deleted   // Deletion on both
           ) {
