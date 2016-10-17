@@ -68,7 +68,7 @@ interface IDiffModel extends ICollapsibleModel {
   unchanged: boolean;
 
   /**
-   * Whether diff represents a simple addtion
+   * Whether diff represents a simple addition
    */
   added: boolean;
 
