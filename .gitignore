@@ -5,6 +5,8 @@ __pycache__
 .ipynb_checkpoints
 docs/build
 htmlcov
+dist
+MANIFEST
 .coverage
 .cache
 
