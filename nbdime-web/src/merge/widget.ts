@@ -318,6 +318,16 @@ class RenderableOutputsMergeView extends DragDropPanel {
     return findChild(this.mergePane.node, node);
   }
 
+  protected getDragImage(handle: HTMLElement) {
+    let target = this.findDragTarget(handle);
+    if (target) {
+      let image = target.cloneNode(true) as HTMLElement;
+      image.style.width = target.offsetWidth.toString() + 'px';
+      return image;
+    }
+    return null;
+  }
+
   base: OutputAreaModel | null = null;
 
   remote: OutputAreaModel | null = null;
