@@ -228,7 +228,7 @@ def make_app(**params):
         "template_path": template_path,
         }
 
-    if sys_info['commit_source'] == 'repository':
+    if get_sys_info()['commit_source'] == 'repository':
         # don't cache when working from repo
         settings.update({
             # "autoreload": True,
