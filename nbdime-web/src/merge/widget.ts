@@ -11,7 +11,7 @@ import {
 } from 'jupyterlab/lib/notebook/output-area';
 
 import {
-  IObservableList
+  IListChangedArgs
 } from 'jupyterlab/lib/common/observablelist';
 
 import {
@@ -82,6 +82,62 @@ const MERGE_CLASSES = [BASE_MERGE_CLASS, LOCAL_MERGE_CLASS,
     REMOTE_MERGE_CLASS, MERGED_MERGE_CLASS];
 
 
+/**
+ * An OutputAreaModel which allows for reordering of its
+ * outputs.
+ */
+class ReorderableOutputModel extends OutputAreaModel {
+
+  insert(index: number, item: OutputAreaModel.Output): void {
+    // Note: We do not need worry about consolidating outputs
+    // like the `add` method in parent class.
+    this.list.insert(index, item);
+  }
+
+  move(fromIndex: number, toIndex: number): void {
+    // Note: We do not need worry about consolidating outputs
+    // like the `add` method in parent class.
+    this.list.move(fromIndex, toIndex);
+  }
+}
+
+/**
+ * An OutputAreaWidget which supports the reordering
+ * capabilities of ReorderableOutputModel
+ */
+class ReorderableOutputWidget extends OutputAreaWidget {
+
+  model: ReorderableOutputModel;
+
+  protected onModelStateChanged(sender: OutputAreaModel, args: IListChangedArgs<nbformat.IOutput>) {
+    switch (args.type) {
+    case 'add':
+      // Children are NOT always added at the end.
+      this.addChild(args.newIndex);
+      break;
+    case 'move':
+      let layout = this.layout as PanelLayout;
+      layout.insertWidget(args.newIndex,
+        layout.widgets.at(args.oldIndex));
+      break;
+    default:
+      return super.onModelStateChanged(sender, args);
+    }
+  }
+
+  protected addChild(index?: number): void {
+    super.addChild();
+    let layout = this.layout as PanelLayout;
+    if (index !== undefined && index !== layout.widgets.length - 1) {
+      // Move the widget added at the end
+      layout.insertWidget(index,
+        layout.widgets.at(layout.widgets.length - 1));
+      // Update new widget to match the newly inserted
+      // model item
+      this.updateChild(index);
+    }
+  }
+}
 
 /**
  * Widget for showing side by side comparison and picking of merge outputs
@@ -125,7 +181,7 @@ class RenderableOutputsMergeView extends DragDropPanel {
           this.local.add(output);
       }
     }
-    this.merged = new OutputAreaModel();
+    this.merged = new ReorderableOutputModel();
     for (let output of merged) {
         this.merged.add(output);
     }
@@ -162,7 +218,7 @@ class RenderableOutputsMergeView extends DragDropPanel {
       this.addWidget(row);
       row = new FlexPanel({direction: 'left-to-right', evenSizes: true});
     }
-    this.mergePane = new OutputAreaWidget({rendermime: this.rendermime});
+    this.mergePane = new ReorderableOutputWidget({rendermime: this.rendermime});
     this.mergePane.addClass(classes[3]);
     this.mergePane.model = this.merged;
     row.addWidget(this.mergePane);
@@ -242,20 +298,14 @@ class RenderableOutputsMergeView extends DragDropPanel {
         return;
       }
     }
-    let toModel = this.panes[paneTo].model;
+    let toModel = this.mergePane.model;
     let fromModel = this.panes[paneFrom].model;
-    let toList = (toModel as any)._list as IObservableList<OutputAreaModel.Output>;
     if (paneTo !== paneFrom) {
-      toList.insert(adjustedTo, fromModel.get(outputFrom));
+      toModel.insert(adjustedTo, fromModel.get(outputFrom));
     } else {
-      toList.move(outputFrom, adjustedTo);
-      if (adjustedTo + 1 < toModel.length) {
-        (this.panes[paneTo] as any)._updateChild(adjustedTo + 1);
-      }
-      (this.panes[paneTo] as any)._updateChild(outputFrom);
+      toModel.move(outputFrom, adjustedTo);
     }
-    (this.panes[paneTo] as any)._updateChild(adjustedTo);
-    RenderableOutputsMergeView.makeOutputsDraggable(this.panes[paneTo]);
+    RenderableOutputsMergeView.makeOutputsDraggable(this.mergePane);
   }
 
   /**
@@ -268,15 +318,25 @@ class RenderableOutputsMergeView extends DragDropPanel {
     return findChild(this.mergePane.node, node);
   }
 
+  protected getDragImage(handle: HTMLElement) {
+    let target = this.findDragTarget(handle);
+    if (target) {
+      let image = target.cloneNode(true) as HTMLElement;
+      image.style.width = target.offsetWidth.toString() + 'px';
+      return image;
+    }
+    return null;
+  }
+
   base: OutputAreaModel | null = null;
 
   remote: OutputAreaModel | null = null;
 
   local: OutputAreaModel | null = null;
 
-  merged: OutputAreaModel;
+  merged: ReorderableOutputModel;
 
-  mergePane: OutputAreaWidget;
+  mergePane: ReorderableOutputWidget;
 
   panes: OutputAreaWidget[];
 

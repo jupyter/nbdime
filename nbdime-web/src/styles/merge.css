@@ -46,6 +46,11 @@
   width: 12px;
 }
 
+.jp-Output.p-mod-drag-image {
+  background-color: white;
+  border: solid gray thin;
+}
+
 .CodeMirror-merge-pane-deleted, .CodeMirror-merge-pane-added { width: 100%; }
 
 .jp-Notebook-merge .CodeMirror-merge-spacer { background-color: #eee; }
