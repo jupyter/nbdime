@@ -43,10 +43,6 @@ import {
 } from '../common/collapsiblepanel';
 
 import {
-  valueIn
-} from '../common/util';
-
-import {
   NotebookMergeModel, CellMergeModel, MetadataMergeModel
 } from './model';
 
