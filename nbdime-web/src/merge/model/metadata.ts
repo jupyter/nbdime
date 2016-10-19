@@ -11,8 +11,9 @@ import {
 } from '../../diff/diffentries';
 
 import {
-  IStringDiffModel, createPatchDiffModel, createDirectDiffModel
-} from '../../diff/model';
+  IStringDiffModel, createPatchStringDiffModel,
+  createDirectStringDiffModel
+} from '../../diff/model/string';
 
 import {
   MergeDecision
@@ -44,9 +45,9 @@ class MetadataMergeModel extends ObjectMergeModel<nbformat.INotebookMetadata, IS
 
   protected createDiffModel(diff: IDiffEntry[]): IStringDiffModel {
     if (diff && diff.length > 0) {
-      return createPatchDiffModel(this.base, diff);
+      return createPatchStringDiffModel(this.base, diff);
     } else {
-      return createDirectDiffModel(this.base, this.base);
+      return createDirectStringDiffModel(this.base, this.base);
     }
   }
 

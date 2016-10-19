@@ -11,11 +11,18 @@ import {
 } from '../../diff/diffentries';
 
 import {
-  CellDiffModel, createAddedCellDiffModel,
-  createDeletedCellDiffModel, createPatchedCellDiffModel,
-  createUnchangedCellDiffModel, setMimetypeFromCellType, OutputDiffModel,
-  makeOutputModels
-} from '../../diff/model';
+  CellDiffModel,
+  createAddedCellDiffModel, createDeletedCellDiffModel,
+  createPatchedCellDiffModel, createUnchangedCellDiffModel
+} from '../../diff/model/cell';
+
+import {
+  OutputDiffModel, makeOutputModels
+} from '../../diff/model/output';
+
+import {
+  setMimetypeFromCellType
+} from '../../diff/model/string';
 
 import {
   MergeDecision, resolveCommonPaths, buildDiffs,
