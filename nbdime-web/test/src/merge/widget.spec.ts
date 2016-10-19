@@ -82,7 +82,7 @@ describe('merge', () => {
               orig_nbformat: 4
           };
           let model = new MetadataMergeModel(
-              base, [], 'application/json');
+              base, []);
           let widget = new MetadataMergeWidget(model);
           expect(widget).to.not.be(null);
       });

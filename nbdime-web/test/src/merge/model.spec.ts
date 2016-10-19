@@ -15,7 +15,8 @@ import {
 } from '../../../src/merge/decisions';
 
 import {
-  opAddRange, opRemoveRange, opPatch, opReplace, IDiffPatch
+  opAddRange, opRemoveRange, opPatch, opReplace, IDiffPatch,
+  IDiffEntry
 } from '../../../src/diff/diffentries';
 
 import {
@@ -186,37 +187,26 @@ describe('merge', () => {
         it('should split sub-cell level decisions', () => {
           expect(model.decisions.length).to.be(2);
           for (let subdec of model.decisions) {
-            expect(subdec.absolutePath).to.eql(['cells', 0]);
             expect(subdec.conflict).to.be(true);
             expect(subdec.action).to.be('local');
             expect(subdec.remoteDiff).to.be(null);
           }
           let subdec = model.decisions[0];
-          let expected = opPatch('outputs', [opRemoveRange(0, 1)]);
-          expect(stripSource(subdec.localDiff)).to.eql([expected]);
+          expect(subdec.absolutePath).to.eql(['cells', 0, 'outputs']);
+          let expected: IDiffEntry[] = [opRemoveRange(0, 1)];
+          expect(stripSource(subdec.localDiff)).to.eql(expected);
 
           subdec = model.decisions[1];
-          let expectedSub = [
+          expect(subdec.absolutePath).to.eql(['cells', 0, 'source']);
+          expected = [
             opAddRange(1, ['l += 2\n']),
             opPatch(1, [opAddRange('print(l)'.length, '\n')])
           ];
           let value = stripSource(subdec.localDiff)!;
-          expect(value.length).to.be(1);
-          expect(value[0].op).to.be('patch');
-          value = (value[0] as IDiffPatch).diff!;
-          expect(value.length).to.be(2);
+          expect(value.length).to.be(expected.length);
           for (let i=0; i < value.length; ++i) {
-            expect(value[i]).to.eql(expectedSub[i]);
+            expect(value[i]).to.eql(expected[i]);
           }
-        });
-
-        it('can add decisions iteratively', () => {
-          let itmodel = new CellMergeModel(codeCellBase, [], mimetype);
-          for (let d of decs) {
-            itmodel.addDecision(d);
-          }
-          expect(itmodel.decisions).to.eql(model.decisions);
-          expect(itmodel.serialize()).to.eql(model.serialize());
         });
 
       });
@@ -239,15 +229,6 @@ describe('merge', () => {
           expect(model.agreedMetadata).to.be(false);
           expect(model.agreedOutputs).to.be(false);
           expect(model.agreedCell).to.be(false);
-        });
-
-        it('can add decisions iteratively', () => {
-          let itmodel = new CellMergeModel(codeCellBase, [], mimetype);
-          for (let d of decs) {
-            itmodel.addDecision(d);
-          }
-          expect(itmodel.decisions).to.eql(model.decisions);
-          expect(itmodel.serialize()).to.eql(model.serialize());
         });
 
       });
