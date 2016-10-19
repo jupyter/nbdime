@@ -11,7 +11,6 @@ from argparse import ArgumentParser
 from six import string_types
 from tornado import ioloop, web, escape, netutil, httpserver
 import nbformat
-from notebook._sysinfo import get_sys_info
 
 import nbdime
 from nbdime.merging.notebooks import decide_notebook_merge
@@ -228,7 +227,7 @@ def make_app(**params):
         "template_path": template_path,
         }
 
-    if get_sys_info()['commit_source'] == 'repository':
+    if nbdime.utils.is_in_repo(nbdime.__file__):
         # don't cache when working from repo
         settings.update({
             # "autoreload": True,
