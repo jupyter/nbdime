@@ -388,9 +388,11 @@ def _merge_strings(base, local_diff, remote_diff,
         _merge_strings.recursion = True
         base = base.splitlines(True)
 
-        _merge_lists(
-            base, local_diff, remote_diff, path, decisions)
-        _merge_strings.recursion = False
+        try:
+            _merge_lists(
+                base, local_diff, remote_diff, path, decisions)
+        finally:
+            _merge_strings.recursion = False
 
 _merge_strings.recursion = False
 
