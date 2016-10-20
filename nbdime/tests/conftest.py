@@ -6,7 +6,7 @@ except ImportError:
 from pytest import fixture
 
 
-@fixture(autouse=True)
+@fixture
 def nocolor(request):
     """Disable color printing for test"""
     import nbdime.prettyprint as pp

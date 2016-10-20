@@ -133,9 +133,9 @@ def test_present_code_cell():
     lines = pp.present_value('+ ', cell)
     assert lines[0] == ''
     assert lines[1] == '+ code cell:'
-    
 
-def test_present_dict_diff():
+
+def test_present_dict_diff(nocolor):
     a = {'a': 1}
     b = {'a': 2}
     di = diff(a, b, path='x/y')
@@ -147,7 +147,7 @@ def test_present_dict_diff():
         '+ 2',
     ]]
 
-def test_present_list_diff():
+def test_present_list_diff(nocolor):
     a = [1]
     b = [2]
     path = 'a/b'
