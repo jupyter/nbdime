@@ -270,8 +270,15 @@ def present_string_diff(a, di, path):
             cmd = ['diff']
             heading_lines = 0
         else:
-            dif = ''.join(unified_diff(a.split("\n"),
-                                       b.split("\n")))
+            uni = list(unified_diff(
+                a.splitlines(False),
+                b.splitlines(False),
+                lineterm=''))
+            if not a.endswith('\n'):
+                uni.insert(-1, '\ No newline at end of file')
+            if not b.endswith('\n'):
+                uni.append('\ No newline at end of file')
+            dif = '\n'.join(uni)
             heading_lines = 2
 
         if cmd is not None:
