@@ -383,7 +383,6 @@ def _merge_strings(base, local_diff, remote_diff,
         decisions.conflict(path[:-1],
                            [op_patch(k, local_diff)],
                            [op_patch(k, remote_diff)])
-        _merge_strings.recursion = False
     else:
         # Merge lines as lists
         _merge_strings.recursion = True
@@ -391,6 +390,7 @@ def _merge_strings(base, local_diff, remote_diff,
 
         _merge_lists(
             base, local_diff, remote_diff, path, decisions)
+        _merge_strings.recursion = False
 
 _merge_strings.recursion = False
 
