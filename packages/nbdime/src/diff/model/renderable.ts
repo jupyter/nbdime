@@ -23,7 +23,7 @@ import {
 } from '../../patch';
 
 import {
-  IDiffModel
+  IDiffModel, IModel
 } from './common';
 
 import {
@@ -42,12 +42,14 @@ import {
 export
 abstract class RenderableDiffModel<T extends JSONValue> implements IDiffModel {
   constructor(
+        parent: IModel,
         base: T | null,
         remote: T | null,
         diff?: IDiffEntry[] | null) {
     if (!remote && !base) {
       throw new Error('Either remote or base value need to be given');
     }
+    this.parent = parent;
     this.base = base;
     if (!remote && diff) {
       this.remote = patch(base!, diff) as T;
@@ -109,9 +111,9 @@ abstract class RenderableDiffModel<T extends JSONValue> implements IDiffModel {
       this.diff;
     let model: IStringDiffModel | null = null;
     if (this.unchanged || this.added || this.deleted || !diff) {
-      model = createDirectStringDiffModel(base, remote);
+      model = createDirectStringDiffModel(this.parent, base, remote);
     } else {
-      model = createPatchStringDiffModel(base, diff);
+      model = createPatchStringDiffModel(this.parent, base, diff);
     }
     model.mimetype = key || 'application/json';
     model.collapsible = this.collapsible;
@@ -119,6 +121,11 @@ abstract class RenderableDiffModel<T extends JSONValue> implements IDiffModel {
     model.startCollapsed = this.startCollapsed;
     return model;
   }
+
+  /**
+   * Parent model
+   */
+  parent: IModel;
 
   /**
    * Base value

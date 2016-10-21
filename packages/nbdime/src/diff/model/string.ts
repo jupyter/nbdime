@@ -27,7 +27,7 @@ import {
 } from '../../patch';
 
 import {
-  IDiffModel
+  IDiffModel, IModel
 } from './common';
 
 
@@ -100,13 +100,15 @@ class StringDiffModel implements IStringDiffModel {
    * Collapsible and collapsed both defaults to false.
    */
   constructor(
-        public base: string | null,
-        public remote: string | null,
-        additions: DiffRangeRaw[],
-        deletions: DiffRangeRaw[],
-        collapsible?: boolean,
-        header?: string,
-        collapsed?: boolean) {
+      parent: IModel,
+      public base: string | null,
+      public remote: string | null,
+      additions: DiffRangeRaw[],
+      deletions: DiffRangeRaw[],
+      collapsible?: boolean,
+      header?: string,
+      collapsed?: boolean) {
+    this.parent = parent;
     if (base === null) {
       console.assert(deletions.length === 0);
       this.deletions = [];
@@ -154,6 +156,8 @@ class StringDiffModel implements IStringDiffModel {
   get deleted(): boolean {
     return this.remote === null;
   }
+
+  readonly parent: IModel;
 
   collapsible: boolean;
   collapsibleHeader: string;
@@ -333,11 +337,14 @@ namespace StringDiffModel {
  * rules.
  */
 export
-function createPatchStringDiffModel(base: string | JSONObject | JSONArray, diff: IDiffEntry[]) : StringDiffModel {
+function createPatchStringDiffModel(
+    parent: IModel,
+    base: string | JSONObject | JSONArray,
+    diff: IDiffEntry[]) : StringDiffModel {
   console.assert(!!diff, 'Patch model needs diff.');
   let baseStr = stringifyAndBlankNull(base);
   let out = patchStringified(base, diff);
-  return new StringDiffModel(baseStr, out.remote, out.additions, out.deletions);
+  return new StringDiffModel(parent, baseStr, out.remote, out.additions, out.deletions);
 }
 
 
@@ -349,7 +356,10 @@ function createPatchStringDiffModel(base: string | JSONObject | JSONArray, diff:
  * unchanged content.
  */
 export
-function createDirectStringDiffModel(base: JSONValue | null, remote: JSONValue | null): StringDiffModel {
+function createDirectStringDiffModel(
+    parent: IModel,
+    base: JSONValue | null,
+    remote: JSONValue | null): StringDiffModel {
   let baseStr: string | null = stringifyAndBlankNull(base);
   let remoteStr: string | null = stringifyAndBlankNull(remote);
   let additions: DiffRangeRaw[] = [];
@@ -370,7 +380,7 @@ function createDirectStringDiffModel(base: JSONValue | null, remote: JSONValue |
     throw new Error('Invalid arguments to createDirectStringDiffModel(). ' +
       'Either base or remote should be null, or they should be equal!');
   }
-  return new StringDiffModel(baseStr, remoteStr, additions, deletions);
+  return new StringDiffModel(parent, baseStr, remoteStr, additions, deletions);
 }
 
 

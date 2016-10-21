@@ -12,7 +12,7 @@ import {
 
 import {
   IStringDiffModel, createPatchStringDiffModel,
-  createDirectStringDiffModel
+  createDirectStringDiffModel, IModel
 } from '../../diff/model';
 
 import {
@@ -29,8 +29,8 @@ import {
  */
 export
 class MetadataMergeModel extends ObjectMergeModel<nbformat.INotebookMetadata, IStringDiffModel> {
-  constructor(base: nbformat.INotebookMetadata, decisions: MergeDecision[]) {
-    super(base, decisions, 'application/json');
+  constructor(parent: IModel, base: nbformat.INotebookMetadata, decisions: MergeDecision[]) {
+    super(parent, base, decisions, 'application/json');
   }
 
   serialize(): nbformat.INotebookMetadata {
@@ -45,15 +45,15 @@ class MetadataMergeModel extends ObjectMergeModel<nbformat.INotebookMetadata, IS
 
   protected createDiffModel(diff: IDiffEntry[]): IStringDiffModel {
     if (diff && diff.length > 0) {
-      return createPatchStringDiffModel(this.base, diff);
+      return createPatchStringDiffModel(this, this.base, diff);
     } else {
-      return createDirectStringDiffModel(this.base, this.base);
+      return createDirectStringDiffModel(this, this.base, this.base);
     }
   }
 
   protected createMergedDiffModel(): IStringDiffModel {
     return new DecisionStringDiffModel(
-      this.base, this.decisions,
+      this, this.base, this.decisions,
       [this.local, this.remote]);
   }
 

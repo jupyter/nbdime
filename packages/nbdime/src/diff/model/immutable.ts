@@ -3,7 +3,7 @@
 'use strict';
 
 import {
-  IDiffModel
+  IDiffModel, IModel
 } from './common';
 
 import {
@@ -27,11 +27,13 @@ class ImmutableDiffModel implements IDiffModel {
    * `collapsible` and `collapsed` both defaults to false.
    */
   constructor(
-        base: ImmutableValue | undefined,
-        remote: ImmutableValue | undefined,
-        collapsible?: boolean,
-        header?: string,
-        collapsed?: boolean) {
+      parent: IModel,
+      base: ImmutableValue | undefined,
+      remote: ImmutableValue | undefined,
+      collapsible?: boolean,
+      header?: string,
+      collapsed?: boolean) {
+    this.parent = parent;
     this.base = base;
     this.remote = remote;
 
@@ -53,6 +55,8 @@ class ImmutableDiffModel implements IDiffModel {
   get deleted(): boolean {
     return this.remote === undefined;
   }
+
+  parent: IModel;
 
   base: ImmutableValue | undefined;
   remote: ImmutableValue | undefined;
@@ -76,23 +80,23 @@ class ImmutableDiffModel implements IDiffModel {
  * @returns {ImmutableDiffModel}
  */
 export
-function createImmutableModel(base: ImmutableValue | undefined, remote: ImmutableValue | undefined, diff?: IDiffImmutableObjectEntry | null): ImmutableDiffModel {
+function createImmutableModel(parent: IModel, base: ImmutableValue | undefined, remote: ImmutableValue | undefined, diff?: IDiffImmutableObjectEntry | null): ImmutableDiffModel {
   if (!diff) {
-    return new ImmutableDiffModel(base, remote);
+    return new ImmutableDiffModel(parent, base, remote);
   } else if (diff.op === 'add') {
     if (base !== undefined) {
       throw new Error('Invalid diff op on immutable value');
     }
-    return new ImmutableDiffModel(base, diff.value);
+    return new ImmutableDiffModel(parent, base, diff.value);
   } else if (diff.op === 'remove') {
     if (base === undefined) {
       throw new Error('Invalid diff op on immutable value');
     }
-    return new ImmutableDiffModel(base, undefined);
+    return new ImmutableDiffModel(parent, base, undefined);
   } else { // diff.op === 'replace'
     if (base === undefined) {
       throw new Error('Invalid diff op on immutable value');
     }
-    return new ImmutableDiffModel(base, diff.value);
+    return new ImmutableDiffModel(parent, base, diff.value);
   }
 }

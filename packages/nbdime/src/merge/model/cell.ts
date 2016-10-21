@@ -20,7 +20,7 @@ import {
 } from '../../diff/util';
 
 import {
-  CellDiffModel,
+  CellDiffModel, IModel,
   createAddedCellDiffModel, createDeletedCellDiffModel,
   createPatchedCellDiffModel, createUnchangedCellDiffModel,
   OutputDiffModel, makeOutputModels, ImmutableDiffModel,
@@ -60,6 +60,7 @@ import {
  * decisions that patch the cell.
  */
 function createPatchedCellDecisionDiffModel(
+    parent: IModel,
     base: nbformat.ICell, decisions: MergeDecision[],
     local: CellDiffModel | null, remote: CellDiffModel | null,
     mimetype: string):
@@ -76,12 +77,14 @@ function createPatchedCellDecisionDiffModel(
   }
 
   let source = new DecisionStringDiffModel(
+    parent,
     base.source, filterDecisions(decisions, ['source'], 2),
     [local ? local.source : null,
      remote ? remote.source : null]);
   setMimetypeFromCellType(source, base, mimetype);
 
   let metadata = new DecisionStringDiffModel(
+    parent,
     base.metadata, filterDecisions(decisions, ['metadata'], 2),
     [local ? local.metadata : null,
       remote ? remote.metadata : null]);
@@ -99,7 +102,7 @@ function createPatchedCellDecisionDiffModel(
       } else {
         merged = outputBase;
       }
-      outputs = makeOutputModels(outputBase, merged, mergedDiff);
+      outputs = makeOutputModels(parent, outputBase, merged, mergedDiff);
     }
     let execBase = base.execution_count;
     let cellDecs = filterDecisions(decisions, ['cells'], 0, 2);
@@ -111,13 +114,13 @@ function createPatchedCellDecisionDiffModel(
         let mergeExecDiff = buildDiffs(base, [dec], 'merged') as IDiffImmutableObjectEntry[] | null;
         let execDiff = hasEntries(mergeExecDiff) ? mergeExecDiff[0] : null;
         // Pass base as remote, which means fall back to unchanged if no diff:
-        executionCount = createImmutableModel(execBase, execBase, execDiff);
+        executionCount = createImmutableModel(parent, execBase, execBase, execDiff);
       }
     }
 
   }
 
-  return new CellDiffModel(source, metadata, outputs, executionCount, base.cell_type);
+  return new CellDiffModel(parent, source, metadata, outputs, executionCount, base.cell_type);
 }
 
 
@@ -126,9 +129,13 @@ function createPatchedCellDecisionDiffModel(
  */
 export
 class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
-  constructor(base: nbformat.ICell | null, decisions: MergeDecision[], mimetype: string) {
+  constructor(
+      parent: IModel,
+      base: nbformat.ICell | null,
+      decisions: MergeDecision[],
+      mimetype: string) {
     // TODO: Remove/extend whitelist once we support more
-    super(base, [], mimetype, ['source', 'metadata', 'outputs', 'execution_count']);
+    super(parent, base, [], mimetype, ['source', 'metadata', 'outputs', 'execution_count']);
     this.onesided = false;
     this._deleteCell = false;
     this.processDecisions(decisions);
@@ -437,12 +444,12 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
           throw new Error('Merge decision does not conform to expectation: ' + md);
         }
         let v = first.valuelist[0] as nbformat.ICell;
-        this._remote = createAddedCellDiffModel(v, this.mimetype);
-        this._merged = createAddedCellDiffModel(v, this.mimetype);
+        this._remote = createAddedCellDiffModel(this, v, this.mimetype);
+        this._merged = createAddedCellDiffModel(this, v, this.mimetype);
       } else {
         // 2.
-        this._remote = createDeletedCellDiffModel(this.base, this.mimetype);
-        this._merged = createDeletedCellDiffModel(this.base, this.mimetype);
+        this._remote = createDeletedCellDiffModel(this, this.base, this.mimetype);
+        this._merged = createDeletedCellDiffModel(this, this.base, this.mimetype);
         this.deleteCell = valueIn(md.action, ['remote', 'either']);
       }
     } else if (!hasEntries(md.remoteDiff)) {
@@ -458,12 +465,12 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
           throw new Error('Merge decision does not conform to expectation: ' + md);
         }
         let v = first.valuelist[0] as nbformat.ICell;
-        this._local = createAddedCellDiffModel(v, this.mimetype);
-        this._merged = createAddedCellDiffModel(v, this.mimetype);
+        this._local = createAddedCellDiffModel(this, v, this.mimetype);
+        this._merged = createAddedCellDiffModel(this, v, this.mimetype);
       } else {
         // 2.
-        this._local = createDeletedCellDiffModel(this.base, this.mimetype);
-        this._merged = createDeletedCellDiffModel(this.base, this.mimetype);
+        this._local = createDeletedCellDiffModel(this, this.base, this.mimetype);
+        this._merged = createDeletedCellDiffModel(this, this.base, this.mimetype);
         this.deleteCell = valueIn(md.action, ['local', 'either']);
       }
     } else {
@@ -476,14 +483,14 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
           // Identical insertions (this relies on preprocessing to ensure only
           // one value in valuelist)
           let v = (md.localDiff[0] as IDiffAddRange).valuelist[0];
-          this._local = createAddedCellDiffModel(v, this.mimetype);
-          this._remote = createAddedCellDiffModel(v, this.mimetype);
-          this._merged = createAddedCellDiffModel(v, this.mimetype);
+          this._local = createAddedCellDiffModel(this, v, this.mimetype);
+          this._remote = createAddedCellDiffModel(this, v, this.mimetype);
+          this._merged = createAddedCellDiffModel(this, v, this.mimetype);
         } else {
           // Identical delections
-          this._local = createDeletedCellDiffModel(this.base, this.mimetype);
-          this._remote = createDeletedCellDiffModel(this.base, this.mimetype);
-          this._merged = createDeletedCellDiffModel(this.base, this.mimetype);
+          this._local = createDeletedCellDiffModel(this, this.base, this.mimetype);
+          this._remote = createDeletedCellDiffModel(this, this.base, this.mimetype);
+          this._merged = createDeletedCellDiffModel(this, this.base, this.mimetype);
           this.deleteCell = valueIn(md.action, ['local', 'remote', 'either']);
         }
       } else {
@@ -496,13 +503,13 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
             'cannot have null base for deleted cell: ' + md);
         }
         if (ops[0] === 'removerange') {
-          this._local = createDeletedCellDiffModel(this.base, this.mimetype);
+          this._local = createDeletedCellDiffModel(this, this.base, this.mimetype);
           this.deleteCell = md.action === 'local';
           // The patch op will be on cell level. Split it on sub keys!
           newDecisions = newDecisions.concat(this.splitPatch(
             md, null, md.remoteDiff[0] as IDiffPatchObject));
         } else {
-          this._remote = createDeletedCellDiffModel(this.base, this.mimetype);
+          this._remote = createDeletedCellDiffModel(this, this.base, this.mimetype);
           this.deleteCell = md.action === 'remote';
           // The patch op will be on cell level. Split it on sub keys!
           newDecisions = newDecisions.concat(this.splitPatch(
@@ -603,9 +610,9 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
       throw new Error('Cannot create a patched or unchanged diff model with null base!');
     }
     if (diff && diff.length > 0) {
-      return createPatchedCellDiffModel(this.base, diff, this.mimetype);
+      return createPatchedCellDiffModel(this, this.base, diff, this.mimetype);
     } else {
-      return createUnchangedCellDiffModel(this.base, this.mimetype);
+      return createUnchangedCellDiffModel(this, this.base, this.mimetype);
     }
   }
 
@@ -614,6 +621,6 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
       throw new Error('Cannot create a patched or unchanged merged diff model with null base!');
     }
     return createPatchedCellDecisionDiffModel(
-        this.base, this.decisions, this.local, this.remote, this.mimetype);
+        this, this.base, this.decisions, this.local, this.remote, this.mimetype);
   }
 }

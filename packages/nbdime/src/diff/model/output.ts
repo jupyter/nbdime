@@ -19,6 +19,10 @@ import {
 } from './renderable';
 
 import {
+  IModel
+} from './common';
+
+import {
   IStringDiffModel
 } from './string';
 
@@ -108,7 +112,8 @@ class OutputDiffModel extends RenderableDiffModel<nbformat.IOutput> {
  *   deleted entries.
  */
 export
-function makeOutputModels(base: nbformat.IOutput[] | null,
+function makeOutputModels(parent: IModel,
+                          base: nbformat.IOutput[] | null,
                           remote: nbformat.IOutput[] | null,
                           diff?: IDiffArrayEntry[] | null) : OutputDiffModel[] {
   let models: OutputDiffModel[] = [];
@@ -118,7 +123,7 @@ function makeOutputModels(base: nbformat.IOutput[] | null,
     }
     // Cell deleted
     for (let o of base) {
-      models.push(new OutputDiffModel(o, null));
+      models.push(new OutputDiffModel(parent, o, null));
     }
   } else if (base === null) {
     if (remote === null) {
@@ -126,12 +131,12 @@ function makeOutputModels(base: nbformat.IOutput[] | null,
     }
     // Cell added
     for (let o of remote) {
-      models.push(new OutputDiffModel(null, o));
+      models.push(new OutputDiffModel(parent, null, o));
     }
   } else if (remote === base) {
     // All entries unchanged
     for (let o of base) {
-      models.push(new OutputDiffModel(o, o));
+      models.push(new OutputDiffModel(parent, o, o));
     }
   } else if (diff) {
     // Entries patched, remote will be null
@@ -141,25 +146,25 @@ function makeOutputModels(base: nbformat.IOutput[] | null,
       let index = d.key;
       for (let o of base.slice(consumed, index)) {
         // Add unchanged entries
-        models.push(new OutputDiffModel(o, o));
+        models.push(new OutputDiffModel(parent, o, o));
       }
       if (d.op === 'addrange') {
         // Entries added
         for (let o of d.valuelist) {
-          models.push(new OutputDiffModel(null, o));
+          models.push(new OutputDiffModel(parent, null, o));
         }
         skip = 0;
       } else if (d.op === 'removerange') {
         // Entries removed
         let len = d.length;
         for (let i = index; i < index + len; i++) {
-          models.push(new OutputDiffModel(base[i], null));
+          models.push(new OutputDiffModel(parent, base[i], null));
         }
         skip = len;
       } else if (d.op === 'patch') {
         // Entry changed
         models.push(new OutputDiffModel(
-          base[index], null, d.diff));
+          parent, base[index], null, d.diff));
         skip = 1;
       } else {
         throw new Error('Invalid diff operation: ' + d);
@@ -168,7 +173,7 @@ function makeOutputModels(base: nbformat.IOutput[] | null,
     }
     for (let o of base.slice(consumed)) {
       // Add unchanged entries
-      models.push(new OutputDiffModel(o, o));
+      models.push(new OutputDiffModel(parent, o, o));
     }
   } else {
     throw new Error('Invalid arguments to makeOutputModels()');

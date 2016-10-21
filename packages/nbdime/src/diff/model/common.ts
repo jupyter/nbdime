@@ -4,6 +4,18 @@
 
 
 /**
+ * Describes any model.
+ */
+export
+interface IModel {
+  /**
+   * Parent model
+   */
+  readonly parent: IModel | null;
+}
+
+
+/**
  * Describes a model whose view can be collapsible.
  *
  * Intended as hints for a view of the model, and not a requirement.
@@ -30,7 +42,7 @@ interface ICollapsibleModel {
  * Base interface for diff models.
  */
 export
-interface IDiffModel extends ICollapsibleModel {
+interface IDiffModel extends ICollapsibleModel, IModel {
   /**
    * Is diff no-op?
    */

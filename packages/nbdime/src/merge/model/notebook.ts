@@ -29,6 +29,10 @@ import {
 } from '../../patch';
 
 import {
+  IModel
+} from '../../diff/model/common';
+
+import {
   CellMergeModel
 } from './cell';
 
@@ -41,7 +45,7 @@ import {
  * Diff model for a Jupyter Notebook
  */
 export
-class NotebookMergeModel {
+class NotebookMergeModel implements IModel {
 
   static preprocessDecisions(rawMergeDecisions: IMergeDecision[]): MergeDecision[] {
     let mergeDecisions: MergeDecision[] = [];
@@ -92,7 +96,7 @@ class NotebookMergeModel {
     this.cells = this.buildCellList(decisions);
 
     let metadataDecs = filterDecisions(decisions, ['metadata']);
-    this.metadata = new MetadataMergeModel(base.metadata, metadataDecs);
+    this.metadata = new MetadataMergeModel(this, base.metadata, metadataDecs);
     this.unsavedChanges = false;
   }
 
@@ -169,6 +173,11 @@ class NotebookMergeModel {
   unsavedChanges: boolean;
 
   /**
+   * Notebook models never have a parent, so this is always null
+   */
+  parent: IModel | null = null;
+
+  /**
    * Correlate the different cells in the diff lists into a merge list
    */
   protected buildCellList(decisions: MergeDecision[]): CellMergeModel[] {
@@ -235,7 +244,7 @@ class NotebookMergeModel {
     let cells: CellMergeModel[] = [];
     for (let cellInfo of cellDecisions) {
       cells.push(new CellMergeModel(
-        cellInfo.base, cellInfo.decisions, this.mimetype));
+        this, cellInfo.base, cellInfo.decisions, this.mimetype));
     }
 
     return cells;
