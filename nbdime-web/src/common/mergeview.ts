@@ -31,7 +31,7 @@ import {
 
 import {
   DecisionStringDiffModel
-} from '../merge/model/common';
+} from '../merge/model';
 
 import {
   DiffRangePos

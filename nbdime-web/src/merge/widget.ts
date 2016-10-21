@@ -409,7 +409,7 @@ class CellMergeWidget extends Panel {
     }
 
     if (model.local === null || model.remote === null || (  // One sided change
-          model.local.unchanged && model.remote!.unchanged &&
+          model.local.unchanged && model.remote.unchanged &&
           model.merged.unchanged) ||  // Unchanged
           model.local.added !== model.remote.added ||  // Onesided addition
           model.local.deleted && model.remote.unchanged ||  // Onesided deletion (other side unchanged)

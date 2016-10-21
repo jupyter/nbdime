@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc --project src && node scripts/copy-files.js",
     "build:test": "webpack --config webpack.test.config.js",
-    "clean": "rimraf test/build && rimraf node_modules && rimraf static/build",
+    "clean": "rimraf test/build && rimraf lib && rimraf node_modules",
     "postinstall": "npm dedupe",
     "test": "npm run test:firefox",
     "posttest": "node scripts/fix-coverage.js",

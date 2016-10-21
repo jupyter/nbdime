@@ -13,16 +13,10 @@ import {
 import {
   CellDiffModel,
   createAddedCellDiffModel, createDeletedCellDiffModel,
-  createPatchedCellDiffModel, createUnchangedCellDiffModel
-} from '../../diff/model/cell';
-
-import {
-  OutputDiffModel, makeOutputModels
-} from '../../diff/model/output';
-
-import {
+  createPatchedCellDiffModel, createUnchangedCellDiffModel,
+  OutputDiffModel, makeOutputModels,
   setMimetypeFromCellType
-} from '../../diff/model/string';
+} from '../../diff/model';
 
 import {
   MergeDecision, resolveCommonPaths, buildDiffs,

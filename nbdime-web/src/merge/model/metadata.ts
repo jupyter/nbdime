@@ -13,7 +13,7 @@ import {
 import {
   IStringDiffModel, createPatchStringDiffModel,
   createDirectStringDiffModel
-} from '../../diff/model/string';
+} from '../../diff/model';
 
 import {
   MergeDecision

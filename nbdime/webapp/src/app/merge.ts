@@ -246,7 +246,7 @@ function attachToForm() {
 
 /** */
 export
-function initialize_merge() {
+function initializeMerge() {
   attachToForm();
   // If arguments supplied in config, run diff directly:
   let base = getConfigOption('base');

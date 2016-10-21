@@ -1,15 +1,7 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
-'use strict';
 
-export {
-  NotebookMergeModel
-} from './notebook';
-
-export {
-  CellMergeModel
-} from './cell';
-
-export {
-  MetadataMergeModel
-} from './metadata';
+export * from './cell';
+export * from './common';
+export * from './metadata';
+export * from './notebook';
