@@ -7,6 +7,7 @@ from __future__ import unicode_literals
 
 from six import string_types
 import six
+import os
 
 
 def strings_to_lists(obj):
@@ -72,3 +73,30 @@ class Strategies(dict):
         parts = split_path(k)
         key = star_path(parts)
         return super(Strategies, self).get(key, d)
+
+
+def is_in_repo(pkg_path):
+    """Get whether `pkg_path` is a repository, or is part of one
+
+    Parameters
+    ----------
+    pkg_path : str
+       directory containing package
+
+    Returns
+    -------
+    is_in_repo : bool
+       Whether directory is a part of a repository
+    """
+
+    # maybe we are in a repository, check for a .git folder
+    p = os.path
+    cur_path = None
+    par_path = pkg_path
+    while cur_path != par_path:
+        cur_path = par_path
+        if p.exists(p.join(cur_path, '.git')):
+            return True
+        par_path = p.dirname(par_path)
+
+    return False

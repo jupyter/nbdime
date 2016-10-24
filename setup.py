@@ -42,6 +42,11 @@ here = os.path.abspath(os.path.dirname(__file__))
 is_repo = os.path.exists(os.path.join(here, '.git'))
 pkg_root = pjoin(here, name)
 
+# Representative files that should exist after a successful build
+jstargets = [
+    os.path.join(here, 'nbdime', 'webapp', 'static', 'build', 'nbdime.js'),
+]
+
 
 def run(cmd, cwd=None):
     """Run a command
@@ -58,7 +63,7 @@ def js_prerelease(command, strict=False):
     class DecoratedCommand(command):
         def run(self):
             jsdeps = self.distribution.get_command_obj('jsdeps')
-            if not is_repo and all(os.path.exists(t) for t in jsdeps.targets):
+            if not is_repo and all(os.path.exists(t) for t in jstargets):
                 # sdist, nothing to do
                 command.run(self)
                 return
@@ -66,7 +71,7 @@ def js_prerelease(command, strict=False):
             try:
                 self.distribution.run_command('jsdeps')
             except Exception as e:
-                missing = [t for t in jsdeps.targets if not os.path.exists(t)]
+                missing = [t for t in jstargets if not os.path.exists(t)]
                 if strict or missing:
                     log.warn('rebuilding js and css failed')
                     if missing:
@@ -183,7 +188,7 @@ setup_args = dict(
 
 cmdclass = dict(
     build  = js_prerelease(build),
-    sdist  = js_prerelease(sdist),
+    sdist  = js_prerelease(sdist, strict=True),
     jsdeps = combine_commands(
         install_npm(pjoin(here, 'nbdime-web')),
         install_npm(pjoin(here, 'nbdime', 'webapp')),
@@ -194,7 +199,7 @@ if 'develop' in sys.argv or any(a.startswith('bdist') for a in sys.argv):
     import setuptools
     from setuptools.command.develop import develop
 
-    cmdclass['develop'] = js_prerelease(develop)
+    cmdclass['develop'] = js_prerelease(develop, strict=True)
 
 setup_args['cmdclass'] = cmdclass
 

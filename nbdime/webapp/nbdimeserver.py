@@ -11,6 +11,7 @@ from argparse import ArgumentParser
 from six import string_types
 from tornado import ioloop, web, escape, netutil, httpserver
 import nbformat
+
 import nbdime
 from nbdime.merging.notebooks import decide_notebook_merge
 from nbdime.nbmergeapp import _build_arg_parser as build_merge_parser
@@ -226,10 +227,13 @@ def make_app(**params):
         "template_path": template_path,
         }
 
-    DEBUGGING = 1
-    if DEBUGGING:
+    if nbdime.utils.is_in_repo(nbdime.__file__):
+        # don't cache when working from repo
         settings.update({
-            "debug": True,
+            # "autoreload": True,
+            "compiled_template_cache": False,
+            "static_hash_cache": False,
+            # "serve_traceback": True,
             })
 
     return web.Application(handlers, **settings)
