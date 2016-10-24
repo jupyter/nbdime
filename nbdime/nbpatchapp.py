@@ -11,6 +11,7 @@ import sys
 import argparse
 import json
 import nbformat
+import io
 from ._version import __version__
 from .patching import patch_notebook
 from .diff_format import to_diffentry_dicts
@@ -29,7 +30,7 @@ def main_patch(args):
             return 1
 
     before = nbformat.read(base_filename, as_version=4)
-    with open(path_filename) as patch_file:
+    with io.open(path_filename, encoding="utf8") as patch_file:
         diff = json.load(patch_file)
     diff = to_diffentry_dicts(diff)
 

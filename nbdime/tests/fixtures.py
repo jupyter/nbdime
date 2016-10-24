@@ -8,6 +8,7 @@ from __future__ import print_function
 
 from six.moves import xrange as range
 
+import io
 import pytest
 import os
 import glob
@@ -66,7 +67,8 @@ class NBTestDataBase(object):
         # Cache file reads
         nbs = self.cache.get(name)
         if nbs is None:
-            with open(os.path.join(self.filespath, name + ".ipynb")) as f:
+            fn = os.path.join(self.filespath, name + ".ipynb")
+            with io.open(fn, encoding="utf8") as f:
                 nbs = f.read()
             self.cache[name] = nbs
         # But return a new notebook copy every time

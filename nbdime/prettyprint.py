@@ -7,6 +7,7 @@ from __future__ import unicode_literals
 from __future__ import print_function
 
 from itertools import chain
+import io
 import os
 import pprint
 import re
@@ -259,9 +260,9 @@ def present_string_diff(a, di, path):
     td = tempfile.mkdtemp()
     cmd = None
     try:
-        with open(os.path.join(td, 'before'), 'w') as f:
+        with io.open(os.path.join(td, 'before'), 'w', encoding="utf8") as f:
             f.write(a)
-        with open(os.path.join(td, 'after'), 'w') as f:
+        with io.open(os.path.join(td, 'after'), 'w', encoding="utf8") as f:
             f.write(b)
         if which('git'):
             cmd = _git_diff_print_cmd.split()

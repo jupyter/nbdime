@@ -6,6 +6,7 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
+import io
 import os
 import sys
 import argparse
@@ -49,7 +50,7 @@ def main_merge(args):
         if conflicted:
             m["metadata"]["nbdime-conflicts"] = conflicted
         # Write partial or fully completed merge to given foo.ipynb filename
-        with open(mfn, "wb") as mf:
+        with io.open(mfn, "wb") as mf:
             # FIXME: We currently write this way as git needs \n line endings,
             # when used as merge driver. However, we should write using OS
             # line endings otherwise.

@@ -27,6 +27,7 @@ PY3 = (sys.version_info[0] >= 3)
 # get on with it
 #-----------------------------------------------------------------------------
 
+import io
 import os
 from glob import glob
 from subprocess import check_call
@@ -155,7 +156,7 @@ package_data = {
 }
 
 version_ns = {}
-with open(pjoin(here, name, '_version.py')) as f:
+with io.open(pjoin(here, name, '_version.py'), encoding="utf8") as f:
     exec(f.read(), {}, version_ns)
 
 

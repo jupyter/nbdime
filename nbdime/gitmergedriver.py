@@ -18,6 +18,7 @@ Use with:
 
 from __future__ import print_function
 
+import io
 import sys
 import os
 import argparse
@@ -51,12 +52,12 @@ def enable(global_=False):
         gitattributes = os.path.join(path, '.gitattributes')
 
     if os.path.exists(gitattributes):
-        with open(gitattributes) as f:
+        with io.open(gitattributes, encoding="utf8") as f:
             if 'merge=jupyternotebook' in f.read():
                 # already written, nothing to do
                 return
 
-    with open(gitattributes, 'a') as f:
+    with io.open(gitattributes, 'a', encoding="utf8") as f:
         f.write('\n*.ipynb\tmerge=jupyternotebook\n')
 
 

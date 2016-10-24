@@ -1,6 +1,7 @@
 
 import pytest
 import json
+import io
 import os
 from jsonschema import ValidationError
 from jsonschema import Draft4Validator as Validator
@@ -11,7 +12,7 @@ schema_path = os.path.join(
     os.path.dirname(__file__),
     '..',
     'diff_format.schema.json')
-with open(schema_path) as f:
+with io.open(schema_path, encoding="utf8") as f:
     schema_json = json.load(f)
 
 validator = Validator(schema_json)

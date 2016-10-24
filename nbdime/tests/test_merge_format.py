@@ -1,4 +1,5 @@
 
+import io
 import pytest
 import json
 import os
@@ -15,7 +16,7 @@ schema_dir = os.path.abspath(os.path.join(
 schema_path = os.path.join(
     schema_dir,
     'merge_format.schema.json')
-with open(schema_path) as f:
+with io.open(schema_path, encoding="utf8") as f:
     schema_json = json.load(f)
 
 validator = Validator(

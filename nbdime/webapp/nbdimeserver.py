@@ -4,6 +4,7 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import io
 import os
 import json
 import sys
@@ -176,7 +177,7 @@ class ApiMergeStoreHandler(NbdimeApiHandler):
         # Somehow store unsolved conflicts?
         # conflicts = body["conflicts"]
 
-        with open(path, "w") as f:
+        with io.open(path, "w", encoding="utf8") as f:
             nbformat.write(merged_nb, f)
         self.finish()
 
