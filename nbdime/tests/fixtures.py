@@ -141,7 +141,7 @@ def matching_nb_triplets(request):
 def assert_is_valid_notebook(nb):
     """These are the current assumptions on notebooks in these tests. Loosen on demand."""
     assert nb["nbformat"] == 4
-    assert nb["nbformat_minor"] == 0
+    #assert nb["nbformat_minor"] == 0
     assert isinstance(nb["metadata"], dict)
     assert isinstance(nb["cells"], list)
     assert all(isinstance(cell, dict) for cell in nb["cells"])
