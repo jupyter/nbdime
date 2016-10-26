@@ -41,7 +41,7 @@ patch a/cells/1/source:
 """
 
 
-def test_git_diff_driver(capsys, noindent):
+def test_git_diff_driver(capsys, noindent, nocolor):
     # Simulate a call from `git diff` to check basic driver functionality
     test_dir = os.path.abspath(os.path.dirname(__file__))
     mock_argv = ['/mock/path/git-nbdiffdriver', 'diff',
