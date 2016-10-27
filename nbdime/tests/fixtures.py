@@ -8,6 +8,7 @@ from __future__ import print_function
 
 from six.moves import xrange as range
 
+import io
 import pytest
 import os
 import glob
@@ -66,7 +67,8 @@ class NBTestDataBase(object):
         # Cache file reads
         nbs = self.cache.get(name)
         if nbs is None:
-            with open(os.path.join(self.filespath, name + ".ipynb")) as f:
+            fn = os.path.join(self.filespath, name + ".ipynb")
+            with io.open(fn, encoding="utf8") as f:
                 nbs = f.read()
             self.cache[name] = nbs
         # But return a new notebook copy every time
@@ -139,7 +141,7 @@ def matching_nb_triplets(request):
 def assert_is_valid_notebook(nb):
     """These are the current assumptions on notebooks in these tests. Loosen on demand."""
     assert nb["nbformat"] == 4
-    assert nb["nbformat_minor"] == 0
+    #assert nb["nbformat_minor"] == 0
     assert isinstance(nb["metadata"], dict)
     assert isinstance(nb["cells"], list)
     assert all(isinstance(cell, dict) for cell in nb["cells"])

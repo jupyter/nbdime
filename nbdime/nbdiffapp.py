@@ -6,6 +6,7 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
+import io
 import os
 import sys
 import argparse
@@ -40,7 +41,7 @@ def main_diff(args):
         pretty_print_notebook_diff(afn, bfn, a, d)
 
     if dfn:
-        with open(dfn, "w") as df:
+        with io.open(dfn, "w", encoding="utf8") as df:
             # Compact version:
             #json.dump(d, df)
             # Verbose version:
