@@ -74,6 +74,11 @@ const LOCAL_MERGE_CLASS = 'jp-Merge-local';
 const REMOTE_MERGE_CLASS = 'jp-Merge-remote';
 const MERGED_MERGE_CLASS = 'jp-Merge-merged';
 
+const ONEWAY_LOCAL_CLASS = 'jp-Merge-oneway-local';
+const ONEWAY_REMOTE_CLASS = 'jp-Merge-oneway-remote';
+const TWOWAY_ADDITION_CLASS = 'jp-Merge-twoway-addition';
+const TWOWAY_DELETION_CLASS = 'jp-Merge-twoway-deletion';
+
 const MERGE_CLASSES = [BASE_MERGE_CLASS, LOCAL_MERGE_CLASS,
     REMOTE_MERGE_CLASS, MERGED_MERGE_CLASS];
 
@@ -421,15 +426,15 @@ class CellMergeWidget extends Panel {
       let view = CellDiffWidget.createView(
         model.merged.source, model.merged, CURR_CLASSES, this._rendermime);
       if (ladd && !radd || ldel && !rdel) {
-        this.addClass('jp-Merge-oneway-local');
+        this.addClass(ONEWAY_LOCAL_CLASS);
       } else if (radd && !ladd || rdel && !ldel) {
-        this.addClass('jp-Merge-oneway-remote');
+        this.addClass(ONEWAY_REMOTE_CLASS);
       } else if (ldel && rdel) {
         this.headerTitle = 'Deleted on both sides';
-        this.addClass('jp-Merge-twoway-deletion');
+        this.addClass(TWOWAY_DELETION_CLASS);
       } else if (ladd && radd) {
         this.headerTitle = 'Added on both sides';
-        this.addClass('jp-Merge-twoway-addition');
+        this.addClass(TWOWAY_ADDITION_CLASS);
       }
       view.addClass(SOURCE_ROW_CLASS);
       this.addWidget(view);
@@ -529,6 +534,7 @@ class CellMergeWidget extends Panel {
     if (this.model.deleteCell) {
       this.addClass(MARKED_DELETE);
     }
+    // Map button -> model
     this.deleteToggle.onchange = (event) => {
       this.model.deleteCell = this.deleteToggle.checked;
       if (this.model.deleteCell) {
@@ -537,6 +543,15 @@ class CellMergeWidget extends Panel {
         this.removeClass(MARKED_DELETE);
       }
     };
+    // Map model -> button
+    this.model.deleteCellChanged.connect((_model, value) => {
+      this.deleteToggle.checked = value;
+      if (value) {
+        this.addClass(MARKED_DELETE);
+      } else {
+        this.removeClass(MARKED_DELETE);
+      }
+    });
     // Create label for checkbox:
     w = new Widget();
     let label = document.createElement('label');
