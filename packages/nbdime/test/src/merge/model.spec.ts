@@ -145,7 +145,7 @@ describe('merge', () => {
       };
 
       it('should be creatable by base and empty decision set', () => {
-        let value = new CellMergeModel(codeCellBase, [], mimetype);
+        let value = new CellMergeModel(null!, codeCellBase, [], mimetype);
         expect(value.base).to.be(codeCellBase);
         expect(value.decisions).to.be.empty();
         expect(value.mimetype).to.be(mimetype);
@@ -153,7 +153,7 @@ describe('merge', () => {
 
       describe('cell level decision', () => {
         let decs: MergeDecision[] = [new MergeDecision(decPatchLvsDelR)];
-        let model = new CellMergeModel(codeCellBase, decs, mimetype);
+        let model = new CellMergeModel(null!, codeCellBase, decs, mimetype);
 
         it('should be creatable by base and decision set', () => {
           expect(model.base).to.be(codeCellBase);
@@ -202,7 +202,7 @@ describe('merge', () => {
         for (let idec of ccDecs) {
           decs.push(new MergeDecision(idec));
         }
-        let model = new CellMergeModel(codeCellBase, decs, mimetype);
+        let model = new CellMergeModel(null!, codeCellBase, decs, mimetype);
 
         it('should be creatable by base and decision set', () => {
           expect(model.base).to.be(codeCellBase);

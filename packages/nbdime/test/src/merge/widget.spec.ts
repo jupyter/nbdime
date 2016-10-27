@@ -58,7 +58,7 @@ describe('merge', () => {
               orig_nbformat: 4
           } as nbformat.INotebookMetadata;
           let model = new MetadataMergeModel(
-              base, []);
+              null!, base, []);
           let widget = new MetadataMergeWidget(model);
           expect(widget).to.not.be(null);
       });
