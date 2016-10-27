@@ -433,7 +433,6 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
     this.onesided = true;  // We set this to distinguish case 3 from normal
     if (!hasEntries(md.localDiff)) {
       // 1. or 2.:
-      this._local = null;
       if (!md.remoteDiff || md.remoteDiff.length !== 1) {
         throw new Error('Merge decision does not conform to expectation: ' + md);
       }
@@ -444,17 +443,18 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
           throw new Error('Merge decision does not conform to expectation: ' + md);
         }
         let v = first.valuelist[0] as nbformat.ICell;
+        this._local = null;
         this._remote = createAddedCellDiffModel(this, v, this.mimetype);
         this._merged = createAddedCellDiffModel(this, v, this.mimetype);
       } else {
         // 2.
+        this._local = createUnchangedCellDiffModel(this, this.base, this.mimetype);
         this._remote = createDeletedCellDiffModel(this, this.base, this.mimetype);
-        this._merged = createDeletedCellDiffModel(this, this.base, this.mimetype);
+        this._merged = createUnchangedCellDiffModel(this, this.base, this.mimetype);
         this.deleteCell = valueIn(md.action, ['remote', 'either']);
       }
     } else if (!hasEntries(md.remoteDiff)) {
       // 1. or 2.:
-      this._remote = null;
       if (!md.localDiff || md.localDiff.length !== 1) {
         throw new Error('Merge decision does not conform to expectation: ' + md);
       }
@@ -466,11 +466,13 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
         }
         let v = first.valuelist[0] as nbformat.ICell;
         this._local = createAddedCellDiffModel(this, v, this.mimetype);
+        this._remote = null;
         this._merged = createAddedCellDiffModel(this, v, this.mimetype);
       } else {
         // 2.
         this._local = createDeletedCellDiffModel(this, this.base, this.mimetype);
-        this._merged = createDeletedCellDiffModel(this, this.base, this.mimetype);
+        this._remote = createUnchangedCellDiffModel(this, this.base, this.mimetype);
+        this._merged = createUnchangedCellDiffModel(this, this.base, this.mimetype);
         this.deleteCell = valueIn(md.action, ['local', 'either']);
       }
     } else {
