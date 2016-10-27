@@ -195,6 +195,9 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
         // We have a cell level decision
         let md = decisions[0];
         decisions = this.applyCellLevelDecision(md);
+        if (decisions.length === 0) {
+          this.decisions.push(md);
+        }
       }
     }
 
