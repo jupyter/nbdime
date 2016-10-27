@@ -83,7 +83,7 @@ class Editor extends CodeMirrorWidget {
    */
   protected onResize(msg: ResizeMessage): void {
     if (msg.width < 0 || msg.height < 0) {
-      this.editor.setSize();
+      this.editor.setSize(null, null);
     } else {
       super.onResize(msg);
     }
