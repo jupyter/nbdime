@@ -347,46 +347,43 @@ function mergeOverlappingRemoves(remop: IDiffRemoveRange, diff: AddRem[]): void 
 
 function findDeletionOverlap(diff: AddRem[], options: IUpdateModelOptions): number[] {
   let editLength = options.oldval.length;
-  let line = options.baseLine;
+  let {baseLine, editLine} = options;
   let start = 0;
   let end = diff.length;
   let startOffset = 0;
   let endOffset = 0;
+  let previousOffset = 0;
   for (let i=0; i < diff.length; ++i) {
     let e = diff[i];
-    if (e.key < line && (e.op !== 'addrange' ||
-        e.key + e.valuelist.length <= line)) {
+    if (e.key < baseLine && (e.op !== 'addrange' ||
+        e.key + startOffset + e.valuelist.length <= editLine)) {
       // Before start of edit
       ++start;
       startOffset += e.op === 'addrange' ? e.valuelist.length : -e.length;
-    } else if (e.key + endOffset >= line + editLength) {
+    } else if (e.key + endOffset >= baseLine + editLength) {
       // After end of edit
       end = i;
       break;
     } else {
       // Op within edit, adjust offset to find end
       if (e.op === 'addrange') {
+        previousOffset = 0;
         if (i + 1 < diff.length && diff[i + 1].key === e.key) {
           // Next op is on same key (know/assume removerange)
           // it should therefore also be within edit
-          if (i + 2 === diff.length) {
-            break;
-          }
           let d = diff[++i] as IDiffRemoveRange;
           endOffset -= d.length;
-        }
-        if (i + 1 === diff.length) {
-          break;
+          previousOffset -= d.length;
         }
         endOffset += e.valuelist.length;
+        previousOffset += e.valuelist.length;
       } else { // removerange
-        if (i + 1 === diff.length) {
-          break;
-        }
         endOffset -= e.length;
+        previousOffset = e.length;
       }
     }
   }
+  endOffset -= previousOffset;
   return [start, end, startOffset, endOffset];
 }
 
