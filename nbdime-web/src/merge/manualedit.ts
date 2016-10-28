@@ -181,10 +181,8 @@ function getPartials(diff: AddRem[], options: IUpdateModelOptions, startOffset: 
   let lastDeletedLine = oldval[oldval.length - 1];
 
   let partialStart = ch > 0;
-  let partialEnd = (
-    lastDeletedLine !== '' ||  // Partial deletion
-    lastAddedLine !== ''  // Partial insertion
-  );
+  let fullDeleteEnd = oldval.length > 1 && lastDeletedLine === '';
+  let fullLineInsertions = ch === 0 && newval.length > 0 && lastAddedLine === '';
 
   let before: string[] = [''];
   let after: string[] | null = null;
@@ -196,22 +194,16 @@ function getPartials(diff: AddRem[], options: IUpdateModelOptions, startOffset: 
     // Shift start forward:
     key = firstDiff.key;
     let vl = firstDiff.valuelist as string[];
-    // Include lines before edit:
+    // Include any lines before edit:
     before = vl.slice(0, vlLine);
-    // Check for partial start:
-    if (partialStart) {
-      // Add partial line
-      before.push(
-        vl[vlLine].slice(0, ch)
-      );
-    } else {
-      // Add new line
-      before.push('');
-    }
+    // Add partial line
+    before.push(
+      partialStart ? vl[vlLine].slice(0, ch) : ''
+    );
   } else if (partialStart) {
     // Replace previously unedited line:
     lines = options.full.match(/^.*(\r\n|\r|\n|$)/gm)!;
-    before = [lines[line].slice(0, ch)];
+    before = [lines[options.editLine].slice(0, ch)];
     // Indicate that one unedited line should be removed
     linediff = 1;
   }
@@ -221,25 +213,37 @@ function getPartials(diff: AddRem[], options: IUpdateModelOptions, startOffset: 
   if (lastDiff) {
     let diffEditStart = lastDiff.key + endOffset;
     let matchLine = (options.editLine - diffEditStart) + oldval.length - 1;
+    if (lastDeletedLine === '' && oldval.length > 1) {
+      matchLine -= 1;
+    }
     if (matchLine >= 0 && matchLine < lastDiff.valuelist.length) {
       let vl = lastDiff.valuelist as string[];
-      after = vl.slice(matchLine);
-      // Check for partial deletion:
-      if (lastDeletedLine !== '') {
-        // Remove deleted characters
-        after[0] = after[0].slice(lastDeletedLine.length);
+      // Figure out which bits to keep:
+      let cut = lastDeletedLine.length;
+      // If edit on one line, skip part before edit also
+      if (oldval.length === 1) {
+        cut += ch;
       }
+      // Add partial line
+      after = [vl[matchLine].slice(cut)];
+      // Include any lines after edit
+      after = after.concat(vl.slice(matchLine + 1));
     }
   }
-  if (!after && partialEnd) {
+  if (!after && !fullDeleteEnd && !fullLineInsertions) {
     // Add remains of previously unedited line
     if (lines === null) {
       lines = options.full.match(/^.*(\r\n|\r|\n|$)/gm)!;
     }
-    after = [lines[line + newval.length - 1].slice(-lastDeletedLine.length - 1)];
+    let fullLine = lines[options.editLine + newval.length - 1];
+    let cut = lastAddedLine.length;
+    if (newval.length === 1) {
+      cut += ch;
+    }
+    after = [fullLine.slice(cut)];
     // Indicate that an unedited line was replaced, but
     // check if this line was also taken into account above.
-    if (newval.length > 1) {
+    if (oldval.length > 1) {
       linediff += 1;
     } else {
       linediff = 1;
