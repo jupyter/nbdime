@@ -49,8 +49,13 @@ import {
  * Replace the content of an array with another, in-place
  */
 function replaceArrayContent<T>(array: T[], content: T[], start?: number, end?: number): void {
+  if (array === content && start === undefined && end === undefined) {
+    return;  // No-op
+  }
   start = start || 0;
-  end = (end || array.length) - start;
+  if (end === undefined) {
+    end = array.length - start;
+  }
   array.splice.apply(array, ([start, end] as any[]).concat(content));
 }
 
