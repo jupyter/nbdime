@@ -11,6 +11,10 @@ import {
 } from './decisions';
 
 import {
+   labelSource
+} from '../chunking';
+
+import {
   IDiffEntry, IDiffAddRange, IDiffRemoveRange, IDiffPatch, IDiffArrayEntry,
   IDiffPatchArray, DiffCollection, opAddRange, opRemoveRange, opPatch,
   deepCopyDiff
@@ -503,6 +507,8 @@ function updateDeletedCell(options: IUpdateModelOptions): void {
   }
   // Update diff with changes
   updateDiff(diff, options);
+  labelSource(diff, {decision: dec, action: 'custom'});
+
   // Update additions/deletions
   let out = patchStringified(model.base || '', diff);
   model.additions = raw2Pos(out.additions, out.remote);
