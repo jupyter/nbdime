@@ -588,22 +588,22 @@ function highlightChars(editor: CodeMirror.Editor, ranges: DiffRangePos[],
 /**
  * From a line in base, find the matching line in another editor by chunks.
  */
-function getMatchingEditLine(editLine: number, chunks: Chunk[]): number {
+function getMatchingEditLine(baseLine: number, chunks: Chunk[]): number {
   let offset = 0;
   // Start values correspond to either the start of the chunk,
   // or the start of a preceding unmodified part before the chunk.
   // It is the difference between these two that is interesting.
   for (let i = 0; i < chunks.length; i++) {
     let chunk = chunks[i];
-    if (chunk.baseTo > editLine && chunk.baseFrom <= editLine) {
+    if (chunk.baseTo > baseLine && chunk.baseFrom <= baseLine) {
       return 0;
     }
-    if (chunk.baseFrom > editLine) {
+    if (chunk.baseFrom > baseLine) {
       break;
     }
     offset = chunk.remoteTo - chunk.baseTo;
   }
-  return editLine + offset;
+  return baseLine + offset;
 }
 
 
