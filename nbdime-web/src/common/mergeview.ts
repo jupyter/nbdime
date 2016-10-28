@@ -543,10 +543,11 @@ function clearMergeMarks(editor: CodeMirror.Editor, arr: any[]) {
 }
 
 function clearMarks(editor: CodeMirror.Editor, arr: any[], classes: DiffClasses) {
-  for (let i = 0; i < arr.length; ++i) {
+  for (let i = arr.length - 1; i >= 0; --i) {
     let mark = arr[i];
     if ('clear' in mark) {
       mark.clear();
+      arr.splice(i, 1);
     } else if (mark.parent) {
       editor.removeLineClass(mark, 'background', classes.chunk);
       editor.removeLineClass(mark, 'background', classes.start);
@@ -558,9 +559,11 @@ function clearMarks(editor: CodeMirror.Editor, arr: any[], classes: DiffClasses)
       } else {
         editor.setGutterMarker(mark, GUTTER_CONFLICT_CLASS, null);
       }
+      if (!mark.bgClass || mark.bgClass.length === 0) {
+        arr.splice(i, 1);
+      }
     }
   }
-  arr.length = 0;
 }
 
 function highlightChars(editor: CodeMirror.Editor, ranges: DiffRangePos[],
