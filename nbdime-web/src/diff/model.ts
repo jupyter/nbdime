@@ -667,8 +667,17 @@ function createPatchedCellDiffModel(
     createDirectDiffModel(base.metadata, base.metadata);
 
   if (base.cell_type === 'code') {
-    outputs = makeOutputModels((base as nbformat.ICodeCell).outputs, null,
-      getDiffKey(diff, 'outputs') as IDiffArrayEntry[]);
+    let outputsBase = (base as nbformat.ICodeCell).outputs;
+    let outputsDiff = getDiffKey(diff, 'outputs') as IDiffArrayEntry[];
+    if (outputsDiff) {
+      // Outputs patched
+      outputs = makeOutputModels(
+        outputsBase, null, outputsDiff);
+    } else {
+      // Outputs unchanged
+      outputs = makeOutputModels(
+        outputsBase, outputsBase);
+    }
   }
   return new CellDiffModel(source, metadata, outputs, base.cell_type);
 }
