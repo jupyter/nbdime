@@ -33,13 +33,13 @@ def enable(global_=False, set_default=False):
     # Common setting:
     check_call(cmd + ['mergetool.prompt', 'false'])
 
-    if set_default: 
+    if set_default:
         # Set default tool to webapp
         check_call(cmd + ['merge.tool', 'nbdimeweb'])
 
 
 
-def disable(global_=False):
+def disable(global_=False, *args):
     """Disable nbdime git mergetool"""
     cmd = ['git', 'config']
     if global_:
@@ -92,7 +92,7 @@ def main(args=None):
     if opts.subcommand == 'merge':
         return nbmergeapp.main([opts.base, opts.local, opts.remote, opts.merged])
     elif opts.subcommand == 'config':
-        opts.config_func(opts.global_)
+        opts.config_func(opts.global_, opts.set_default)
         return 0
     else:
         parser.print_help()

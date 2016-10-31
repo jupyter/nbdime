@@ -36,7 +36,7 @@ def enable(global_=False, set_default=False):
     check_call(cmd + ['difftool.prompt', 'false'])
 
 
-def disable(global_=False):
+def disable(global_=False, *args):
     """Disable nbdime git difftool"""
     cmd = ['git', 'config']
     if global_:
@@ -115,7 +115,7 @@ def main(args=None):
     if opts.subcommand == 'diff':
         return show_diff(opts.local, opts.remote)
     elif opts.subcommand == 'config':
-        opts.config_func(opts.global_)
+        opts.config_func(opts.global_, opts.set_default)
         return 0
     else:
         parser.print_help()
