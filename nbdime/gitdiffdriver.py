@@ -54,7 +54,7 @@ def enable(global_=False):
                 return
 
     with io.open(gitattributes, 'a', encoding="utf8") as f:
-        f.write('\n*.ipynb\tdiff=jupyternotebook\n')
+        f.write(u'\n*.ipynb\tdiff=jupyternotebook\n')
 
 
 def disable(global_=False):
