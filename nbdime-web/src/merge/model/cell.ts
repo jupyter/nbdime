@@ -7,6 +7,10 @@ import {
 } from 'jupyterlab/lib/notebook/notebook/nbformat';
 
 import {
+  defineSignal, ISignal
+} from 'phosphor/lib/core/signaling';
+
+import {
   IDiffAddRange, IDiffPatch, IDiffEntry, IDiffArrayEntry
 } from '../../diff/diffentries';
 
@@ -94,7 +98,7 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
     // TODO: Remove/extend whitelist once we support more
     super(base, [], mimetype, ['source', 'metadata', 'outputs']);
     this.onesided = false;
-    this.deleteCell = false;
+    this._deleteCell = false;
     this.processDecisions(decisions);
   }
 
@@ -106,7 +110,18 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
   /**
    * Run time flag whether the user wants to delete the cell or not
    */
-  deleteCell: boolean;
+  get deleteCell(): boolean {
+    return this._deleteCell;
+  }
+  set deleteCell(value: boolean) {
+    if (this._deleteCell !== value) {
+      this._deleteCell = value;
+      this.deleteCellChanged.emit(value);
+    }
+  }
+  _deleteCell: boolean;
+
+  deleteCellChanged: ISignal<CellMergeModel, boolean>;
 
   /**
    * Whether source is the same in local and remote
@@ -180,6 +195,9 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
         // We have a cell level decision
         let md = decisions[0];
         decisions = this.applyCellLevelDecision(md);
+        if (decisions.length === 0) {
+          this.decisions.push(md);
+        }
       }
     }
 
@@ -351,3 +369,5 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
         this.base, this.decisions, this.local, this.remote, this.mimetype);
   }
 }
+
+defineSignal(CellMergeModel.prototype, 'deleteCellChanged');
