@@ -803,9 +803,14 @@ class MergeView extends Panel {
     let self = this;
     this.diffViews = [];
     this.aligners = [];
-    options.value = (options.remote.base !== null ?
-      options.remote.base : options.remote.remote);
+    let main = options.remote || options.merged;
+    if (!main) {
+      throw new Error('Either remote or merged model needs to be specified!');
+    }
+    options.value = (main.base !== null ?
+      main.base : main.remote);
     options.lineNumbers = options.lineNumbers !== false;
+    options.readOnly = true;
 
     /*
      * Different cases possible:
@@ -819,35 +824,30 @@ class MergeView extends Panel {
      *     - Partial changes: Use base + right editor
      */
 
-    let hasMerge = !!local && !!merged;
     let dvOptions = options as CodeMirror.MergeView.MergeViewEditorConfiguration;
 
-    if (hasMerge) {
+    if (merged) {
       options.gutters = [GUTTER_CONFLICT_CLASS, GUTTER_PICKER_CLASS];
     }
 
     this.base = new Editor(copyObj(options));
     this.base.addClass('CodeMirror-merge-pane');
     this.base.addClass('CodeMirror-merge-pane-base');
-    if (hasMerge) {
-      this.base.editor.setOption('readOnly', true);
-    }
 
-    if (!!local && !!merged /*hasMerge*/) {
-      console.assert(remote.base === local.base);
+    if (merged) {
       let showBase = options.showBase !== false;
       if (!showBase) {
         this.base.node.style.display = 'hidden';
       }
 
       let leftWidget: Widget;
-      if (local.remote === null) {
+      if (!local || local.remote === null) {
         // Local value was deleted
         left = this.left = null;
         leftWidget = new Widget({node: elt('div', 'Value missing', 'jp-mod-missing')});
       } else {
         left = this.left = new DiffView(local, 'left', this.alignViews.bind(this),
-          copyObj({readOnly: true}, copyObj(dvOptions)));
+          copyObj(dvOptions));
         this.diffViews.push(left);
         leftWidget = left.ownWidget;
       }
@@ -866,7 +866,7 @@ class MergeView extends Panel {
         rightWidget = new Widget({node: elt('div', 'Value missing', 'jp-mod-missing')});
       } else {
         right = this.right = new DiffView(remote, 'right', this.alignViews.bind(this),
-          copyObj({readOnly: false}, copyObj(dvOptions)));
+          copyObj(dvOptions));
         this.diffViews.push(right);
         rightWidget = right.ownWidget;
       }
@@ -878,7 +878,8 @@ class MergeView extends Panel {
         node: elt('div', null, 'CodeMirror-merge-clear', 'height: 0; clear: both;')
       }));
 
-      merge = this.merge = new DiffView(merged, 'merge', this.alignViews.bind(this), dvOptions);
+      merge = this.merge = new DiffView(merged, 'merge', this.alignViews.bind(this),
+        copyObj({readOnly: false}, copyObj(dvOptions)));
       this.diffViews.push(merge);
       let mergeWidget = merge.ownWidget;
       mergeWidget.addClass('CodeMirror-merge-pane');
