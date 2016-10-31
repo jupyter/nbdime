@@ -25,10 +25,10 @@ def enable(global_=False, set_default=False):
         cmd.append('--global')
 
     # Register CLI tool
-    check_call(cmd + ['mergetool.nbdime.cmd', 'git-nbmergetool merge "$LOCAL" "$REMOTE" "$BASE" "$MERGED"'])
+    check_call(cmd + ['mergetool.nbdime.cmd', 'git-nbmergetool merge "$BASE" "$LOCAL" "$REMOTE" "$MERGED"'])
 
     # Register webapp tool
-    check_call(cmd + ['mergetool.nbdimeweb.cmd', 'git-nbwebmergetool "$LOCAL" "$REMOTE" "$BASE" "$MERGED"'])
+    check_call(cmd + ['mergetool.nbdimeweb.cmd', 'git-nbwebmergetool "$BASE" "$LOCAL" "$REMOTE" "$MERGED"'])
 
     # Common setting:
     check_call(cmd + ['mergetool.prompt', 'false'])
