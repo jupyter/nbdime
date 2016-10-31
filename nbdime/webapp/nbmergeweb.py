@@ -52,7 +52,7 @@ def browse(port, base, local, remote):
 
     if browser:
         b = lambda: browser.open(
-            url_concat("http://127.0.0.1:%s/diff" % port,
+            url_concat("http://127.0.0.1:%s/merge" % port,
                        dict(base=base, local=local,
                             remote=remote)),
             new=2)
