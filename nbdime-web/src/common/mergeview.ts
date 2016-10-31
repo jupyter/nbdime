@@ -161,7 +161,8 @@ function createNbdimeMergeView(
  */
 export
 class DiffView {
-  constructor(public model: IStringDiffModel, public type: string,
+  constructor(public model: IStringDiffModel,
+              public type: 'left' | 'right' | 'merge',
               public alignChunks: (force?: boolean) => void,
               options: CodeMirror.MergeView.MergeViewEditorConfiguration) {
     this.classes = type === 'left' ?
@@ -584,9 +585,8 @@ function highlightChars(editor: CodeMirror.Editor, ranges: DiffRangePos[],
 /**
  * From a line in base, find the matching line in another editor by chunks.
  */
-function getMatchingOrigLine(editLine: number, chunks: Chunk[]): number {
-  let editStart = 0;
-  let origStart = 0;
+function getMatchingEditLine(editLine: number, chunks: Chunk[]): number {
+  let offset = 0;
   // Start values correspond to either the start of the chunk,
   // or the start of a preceding unmodified part before the chunk.
   // It is the difference between these two that is interesting.
@@ -598,17 +598,16 @@ function getMatchingOrigLine(editLine: number, chunks: Chunk[]): number {
     if (chunk.baseFrom > editLine) {
       break;
     }
-    editStart = chunk.baseTo;
-    origStart = chunk.remoteTo;
+    offset = chunk.remoteTo - chunk.baseTo;
   }
-  return editLine + (origStart - editStart);
+  return editLine + offset;
 }
 
 
 /**
  * From a line in base, find the matching line in another editor by line chunks
  */
-function getMatchingOrigLineLC(toMatch: Chunk, chunks: Chunk[]): number {
+function getMatchingEditLineLC(toMatch: Chunk, chunks: Chunk[]): number {
   let editLine = toMatch.baseFrom;
   for (let i = 0; i < chunks.length; ++i) {
     let chunk = chunks[i];
@@ -641,7 +640,7 @@ function findAlignedLines(dvs: DiffView[]): number[][] {
     let chunk = dv.lineChunks[i];
     let lines = [chunk.baseTo, chunk.remoteTo];
     for (let o of others) {
-      lines.push(getMatchingOrigLineLC(chunk, o.lineChunks));
+      lines.push(getMatchingEditLineLC(chunk, o.lineChunks));
     }
     if (linesToAlign.length > 0 &&
         linesToAlign[linesToAlign.length - 1][0] === lines[0]) {
@@ -690,12 +689,12 @@ function findAlignedLines(dvs: DiffView[]): number[][] {
       }
       if (j > -1) {
         let lines = [chunk.baseTo,
-                     getMatchingOrigLineLC(chunk, dv.lineChunks)];
+                     getMatchingEditLineLC(chunk, dv.lineChunks)];
         for (let k = 0; k < others.length; k++) {
           if (k === o) {
             lines.push(chunk.remoteTo);
           } else {
-            lines.push(getMatchingOrigLineLC(chunk, others[k].lineChunks));
+            lines.push(getMatchingEditLineLC(chunk, others[k].lineChunks));
           }
         }
         if (linesToAlign.length > j && linesToAlign[j][0] === chunk.baseTo) {
@@ -1102,15 +1101,15 @@ function collapseIdenticalStretches(mv: MergeView, margin?: boolean | number): v
         let editors: {line: number, cm: CodeMirror.Editor}[] =
           [{line: line, cm: edit}];
         if (mv.left) {
-          editors.push({line: getMatchingOrigLine(line, mv.left.chunks),
+          editors.push({line: getMatchingEditLine(line, mv.left.chunks),
             cm: mv.left.ownEditor});
         }
         if (mv.right) {
-          editors.push({line: getMatchingOrigLine(line, mv.right.chunks),
+          editors.push({line: getMatchingEditLine(line, mv.right.chunks),
             cm: mv.right.ownEditor});
         }
         if (mv.merge) {
-          editors.push({line: getMatchingOrigLine(line, mv.merge.chunks),
+          editors.push({line: getMatchingEditLine(line, mv.merge.chunks),
             cm: mv.merge.ownEditor});
         }
         let mark = collapseStretch(size, editors);

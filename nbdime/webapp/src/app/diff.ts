@@ -167,7 +167,7 @@ function attachToForm() {
 
 /** */
 export
-function initialize_diff() {
+function initializeDiff() {
   attachToForm();
   // If arguments supplied in config, run diff directly:
   let base = getConfigOption('base');

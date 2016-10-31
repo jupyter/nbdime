@@ -365,13 +365,12 @@ def _merge_strings(base, local_diff, remote_diff,
     """Perform a three-way merge of strings. See docstring of merge."""
     assert isinstance(base, string_types)
 
-    # This functions uses a (static) state variable to track recusrion.
-    # The first time it is called, will be with base as a (potentially)
-    # multi-line string. We then split this string on line endings, and merge
-    # it as a list of lines (giving line-based chunking). However, there if
+    # This functions uses a (static) state variable to track recursion.
+    # The first time it is called, base can (potentially) be a
+    # multi-line string. If so, we split this string on line endings, and merge
+    # it as a list of lines (giving line-based chunking). However, if
     # there are conflicting edits (patches) of a line, we will re-enter this
-    # function, at which point we simply mark it as a conflict on the parent
-    # level (conflicted lines)
+    # function. If so, we simply mark it as conflicted lines.
 
     if _merge_strings.recursion:
         # base is a single line with differing edits. We could merge as list of

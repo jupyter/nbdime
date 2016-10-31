@@ -8,12 +8,21 @@ import {
 } from 'jupyterlab/lib/notebook/notebook/nbformat';
 
 import {
-  StringDiffModel, createPatchDiffModel, createDirectDiffModel,
-  OutputDiffModel, CellDiffModel,
   createAddedCellDiffModel, createDeletedCellDiffModel,
-  createPatchedCellDiffModel, createUnchangedCellDiffModel,
+  createPatchedCellDiffModel, createUnchangedCellDiffModel
+} from '../../../src/diff/model/cell';
+
+import {
   NotebookDiffModel
-} from '../../../src/diff/model';
+} from '../../../src/diff/model/notebook';
+
+import {
+  OutputDiffModel
+} from '../../../src/diff/model/output';
+
+import {
+  createPatchStringDiffModel, createDirectStringDiffModel,
+} from '../../../src/diff/model/string';
 
 import {
   opAddRange, opPatch
@@ -30,10 +39,10 @@ describe('diff', () => {
 
     // Note: Chunking is covered in chunking.spec.ts
 
-    describe('createDirectDiffModel', () => {
+    describe('createDirectStringDiffModel', () => {
 
       it('should create an added model', () => {
-          let model = createDirectDiffModel(null, 'foobar!');
+          let model = createDirectStringDiffModel(null, 'foobar!');
           expect(model.added).to.be(true);
           expect(model.deleted).to.be(false);
           expect(model.unchanged).to.be(false);
@@ -42,7 +51,7 @@ describe('diff', () => {
       });
 
       it('should create a deleted model', () => {
-          let model = createDirectDiffModel('foobar!', null);
+          let model = createDirectStringDiffModel('foobar!', null);
           expect(model.added).to.be(false);
           expect(model.deleted).to.be(true);
           expect(model.unchanged).to.be(false);
@@ -51,7 +60,7 @@ describe('diff', () => {
       });
 
       it('should create an unchanged model', () => {
-          let model = createDirectDiffModel('foobar!', 'foobar!');
+          let model = createDirectStringDiffModel('foobar!', 'foobar!');
           expect(model.added).to.be(false);
           expect(model.deleted).to.be(false);
           expect(model.unchanged).to.be(true);
@@ -60,29 +69,29 @@ describe('diff', () => {
       });
 
       it('should fail for differing non-null string inputs', () => {
-          expect(createDirectDiffModel).withArgs(
+          expect(createDirectStringDiffModel).withArgs(
               'foobar!', 'barfoo!').to.throwException(
-                  /Invalid arguments to createDirectDiffModel\(\)/
+                  /Invalid arguments to createDirectStringDiffModel\(\)/
               );
       });
 
       it('should fail for all null inputs', () => {
-          expect(createDirectDiffModel).withArgs(
+          expect(createDirectStringDiffModel).withArgs(
               null, null).to.throwException(
-                  /Invalid arguments to createDirectDiffModel\(\)/
+                  /Invalid arguments to createDirectStringDiffModel\(\)/
               );
       });
 
     });
 
-    describe('createPatchDiffModel', () => {
+    describe('createPatchStringDiffModel', () => {
 
       // Note: Patching is covered inn patch/patching.spec.ts
 
       it('should create a patched model', () => {
           let base = [0, 1, 'foo'];
           let diff = [opAddRange(2, 'bar')];
-          let model = createPatchDiffModel(base, diff);
+          let model = createPatchStringDiffModel(base, diff);
           expect(model.added).to.be(false);
           expect(model.deleted).to.be(false);
           expect(model.unchanged).to.be(false);
@@ -93,7 +102,7 @@ describe('diff', () => {
       it('should create an unchanged model by empty diff', () => {
           let base = 'foobar!';
           let diff = [];
-          let model = createPatchDiffModel(base, diff);
+          let model = createPatchStringDiffModel(base, diff);
           expect(model.added).to.be(false);
           expect(model.deleted).to.be(false);
           expect(model.unchanged).to.be(true);
@@ -104,7 +113,7 @@ describe('diff', () => {
       it('should create an unchanged model by empty diff for non-string input', () => {
           let base = [0, 1, 'foo'];
           let diff = [];
-          let model = createPatchDiffModel(base, diff);
+          let model = createPatchStringDiffModel(base, diff);
           expect(model.added).to.be(false);
           expect(model.deleted).to.be(false);
           expect(model.unchanged).to.be(true);

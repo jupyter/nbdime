@@ -3,11 +3,11 @@
 'use strict';
 
 import {
-  initialize_diff
+  initializeDiff
 } from './app/diff';
 
 import {
-  initialize_merge, closeMerge
+  initializeMerge, closeMerge
 } from './app/merge';
 
 import {
@@ -18,10 +18,10 @@ import {
 function initialize() {
   let onclose = (ev) => { closeTool(); };
   if (getConfigOption('local') || document.getElementById('merge-local')) {
-    initialize_merge();
+    initializeMerge();
     onclose = closeMerge;
   } else {
-    initialize_diff();
+    initializeDiff();
   }
 
   // If launched as a tool, there should be a close button, to indicate that

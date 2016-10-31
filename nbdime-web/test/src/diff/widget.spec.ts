@@ -4,8 +4,8 @@
 import expect = require('expect.js');
 
 import {
-    createDirectDiffModel
-} from '../../../src/diff/model';
+    createDirectStringDiffModel
+} from '../../../src/diff/model/string';
 
 import {
     CellDiffWidget, NotebookDiffWidget, MetadataDiffWidget
@@ -19,7 +19,7 @@ describe('diff', () => {
     describe('MetadataDiffWidget', () => {
 
       it('should create a widget for an unchanged model', () => {
-          let model = createDirectDiffModel('{}', '{}');
+          let model = createDirectStringDiffModel('{}', '{}');
           let widget = new MetadataDiffWidget(model);
           expect(widget).to.not.be(null);
       });

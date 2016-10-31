@@ -4,8 +4,8 @@
 import expect = require('expect.js');
 
 import {
-  createDirectDiffModel
-} from '../../../src/diff/model';
+  createDirectStringDiffModel
+} from '../../../src/diff/model/string';
 
 import {
   MergeView, createNbdimeMergeView
@@ -18,7 +18,7 @@ describe('common', () => {
 
     it('should be initialized for unchanged diff', () => {
       let orig = 'Value';
-      let remote = createDirectDiffModel(orig, orig);
+      let remote = createDirectStringDiffModel(orig, orig);
       let p = new MergeView({
         orig,
         remote
