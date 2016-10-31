@@ -87,8 +87,7 @@ def main(args=None):
     add_diff_args(merge_parser)
     add_merge_args(merge_parser)
 
-    # Argument list
-    # we are given base, local remote
+    # Argument list, we are given base, local, remote
     add_filename_args(merge_parser, ["base", "local", "remote"])
 
     # TODO: support git-config-specified conflict markers inside sources

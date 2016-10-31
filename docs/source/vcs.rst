@@ -11,6 +11,8 @@ Version control integration
     possible following the same patterns as outlined
     in the manual registration sections.
 
+.. _git-integration:
+
 Git integration
 ---------------
 
@@ -23,7 +25,7 @@ diff/merge to the user without having to actually
 depend on git.
 
 Diff driver
-************
+***********
 Registering an external diff driver with git tells git
 to call that application to calculate and display diffs
 to the user. The driver will be called for commands such
@@ -59,7 +61,7 @@ with the following steps:
   ``.gitattributes`` file::
     
     *.ipynb	diff=jupyternotebook
-    
+
 
 Merge driver
 ************
@@ -99,7 +101,7 @@ with the following steps:
 
 
 Diff web tool
-***************
+*************
 
 The rich, web-based diff view can be installed as a git
 *diff tool*. This enables the diff viewer to display diffs
@@ -157,7 +159,7 @@ with the following steps:
     	guitool = nbdimeweb
 
 Merge web tool
-***************
+**************
 
 The rich, web-based merge view can be installed as a git
 *merge tool*. This enables nbdime to process merge conflicts
