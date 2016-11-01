@@ -187,6 +187,63 @@ class MergeDecision {
 }
 
 
+function _cmpPath(a: DecisionPath, b: DecisionPath): number {
+  if (a.length === b.length) {
+    for (let lvl=0; lvl < a.length; ++lvl) {
+      if (a[lvl] === b[lvl]) {
+        continue;
+      }
+      // Paths differ on this level!
+      if (a[lvl] < b[lvl]) {
+        return -1;
+      } else {
+        return 1;
+      }
+    }
+  } else {
+    return a.length - b.length;
+  }
+  return 0;
+}
+
+/**
+ * Adds a decision to an existing, sorted collection
+ *
+ * Ensures that the location of the newly added decision
+ * will comply with the format specification
+ */
+export
+function addSorted(decisions: MergeDecision[], toAdd: MergeDecision, firstKey?: number | string): void {
+  let idx = 0;
+  for (; idx < decisions.length; ++idx) {
+    let c = _cmpPath(decisions[idx].absolutePath, toAdd.absolutePath);
+    if (c > 0) {
+      decisions.splice(idx, 0, toAdd);
+      return;
+    } else if (firstKey !== undefined && c === 0) {
+      let key: string | number | null = null;
+      for (let diff of decisions[idx].diffs) {
+        if (!diff) {
+          continue;
+        }
+        for (let d of diff) {
+          if (!key || d.key < key) {
+            key = d.key;
+          }
+        }
+      }
+      if (firstKey === key) {
+        throw new Error('Shouldn\'t have multiple decisions with diff on same key');
+      } else if (key === null || firstKey < key) {
+        decisions.splice(idx, 0, toAdd);
+        return;
+      }
+    }
+  }
+  decisions.push(toAdd);
+}
+
+
 export
 function popPath(diffs: DiffCollection, popInner?: boolean):
       {diffs: DiffCollection, key: string | number} | null {
