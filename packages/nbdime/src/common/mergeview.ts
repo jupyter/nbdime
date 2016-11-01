@@ -492,6 +492,18 @@ class DiffView {
             (picker as any).sources = sources;
             picker.classList.add(GUTTER_PICKER_CLASS);
             editor.setGutterMarker(line, GUTTER_PICKER_CLASS, picker);
+          } else if (editor === self.baseEditor) {
+            for (let s of sources) {
+              if (s.decision.action === 'custom' &&
+                  !hasEntries(s.decision.localDiff) &&
+                  !hasEntries(s.decision.remoteDiff)) {
+                // We have a custom decision, add picker on base only!
+                let picker = elt('div', PICKER_SYMBOL, classes.gutter);
+                (picker as any).sources = sources;
+                picker.classList.add(GUTTER_PICKER_CLASS);
+                editor.setGutterMarker(line, GUTTER_PICKER_CLASS, picker);
+              }
+            }
           } else if (conflict && editor === self.ownEditor) {
             // Add conflict markers on editor, if conflicted
             let conflictMarker = elt('div', CONFLICT_MARKER, '');
