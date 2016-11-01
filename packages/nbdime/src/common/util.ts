@@ -303,3 +303,15 @@ function buildSelect(options: string[], select?: HTMLSelectElement): HTMLSelectE
   }
   return select;
 }
+
+
+/**
+ * Extend one array with another
+ */
+export
+function extendArray(a: any[], b: any[] | null): void {
+  if (!b || b.length === 0) {
+    return;
+  }
+  a.splice.apply(a, [a.length, 0].concat(b));
+}
