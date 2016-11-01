@@ -126,11 +126,13 @@ const mergeClassPrefix: DiffClasses = {chunk: 'CodeMirror-merge-m-chunk',
 export
 function createNbdimeMergeView(
       remote: IStringDiffModel, editorClasses: string[],
-      local?: IStringDiffModel, merged?: IStringDiffModel): MergeView {
+      local?: IStringDiffModel, merged?: IStringDiffModel,
+      readOnly?: boolean): MergeView {
   let opts: IMergeViewEditorConfiguration = {
     remote,
     local,
     merged,
+    readOnly,
     orig: null};
   opts.collapseIdentical = true;
   let mergeview = new MergeView(opts);
@@ -171,7 +173,8 @@ class DiffView {
     this.classes = type === 'left' ?
       leftClasses : type === 'right' ? rightClasses : null;
     let ownValue = this.model.remote || '';
-    this.ownWidget = new EditorWidget(copyObj({value: ownValue}, copyObj(options)));
+    this.ownWidget = new EditorWidget(copyObj(
+      {value: ownValue}, copyObj(options)));
     this.showDifferences = options.showDifferences !== false;
   }
 
@@ -824,6 +827,9 @@ class MergeView extends Panel {
     options.value = (main.base !== null ?
       main.base : main.remote);
     options.lineNumbers = options.lineNumbers !== false;
+    // Whether merge view should be readonly
+    let readOnly = options.readOnly;
+    // For all others:
     options.readOnly = true;
 
     /*
@@ -893,7 +899,7 @@ class MergeView extends Panel {
       }));
 
       merge = this.merge = new DiffView(merged, 'merge', this.alignViews.bind(this),
-        copyObj({readOnly: false}, copyObj(dvOptions)));
+        copyObj({readOnly}, copyObj(dvOptions)));
       this.diffViews.push(merge);
       let mergeWidget = merge.ownWidget;
       mergeWidget.addClass('CodeMirror-merge-pane');

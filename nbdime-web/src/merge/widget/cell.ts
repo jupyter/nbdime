@@ -85,11 +85,11 @@ export
 class CellMergeWidget extends Panel {
 
   static createMergeView(local: IDiffModel, remote: IDiffModel, merged: IDiffModel,
-                         editorClasses: string[]): Widget | null {
+                         editorClasses: string[], readOnly=false): Widget | null {
     let view: Widget | null = null;
     if (merged instanceof StringDiffModel) {
       view = createNbdimeMergeView(remote as IStringDiffModel, editorClasses,
-        local as IStringDiffModel, merged);
+        local as IStringDiffModel, merged, readOnly);
     }
     return view;
   }
@@ -238,7 +238,8 @@ class CellMergeWidget extends Panel {
             model.local.metadata,
             model.remote.metadata,
             model.merged.metadata,
-            CURR_CLASSES);
+            CURR_CLASSES,
+            true);  // Do not allow manual edit of metadata
         if (metadataView === null) {
           throw new Error('Was not able to create merge view for cell metadata!');
         }
