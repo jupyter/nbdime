@@ -484,6 +484,9 @@ function updateInsertedCell(options: IUpdateModelOptions): void {
   // We can now modify diff in place to update decision
   let cellVal = (diff[0] as IDiffAddRange).valuelist[0] as nbformat.ICell;
   cellVal[subkey![0]] = full;
+
+  labelSource(diff, {decision: dec, action: 'custom'});
+  model.additions[0].source = diff[0].source;
 }
 
 /**
