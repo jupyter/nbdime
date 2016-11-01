@@ -55,11 +55,12 @@ function validateStringDiff(base: string[], entry: IDiffArrayEntry, lineToChar: 
  * Check whether existing collection of diff ops shares a key with the new
  * diffop, and if they  also have the same op type.
  */
-function overlaps(existing: IDiffArrayEntry[], newv: IDiffArrayEntry): boolean {
+function overlaps(existing: IDiffArrayEntry[], newv: IDiffArrayEntry): number {
   if (existing.length < 1) {
-    return false;
+    return -1;
   }
-  for (let e of existing) {
+  for (let i=0; i < existing.length; ++i) {
+    let e = existing[i];
     if (e.op === newv.op) {
       if (e.op === 'removerange') {
         // Since patch ops of lines come before line add/remove
@@ -67,22 +68,38 @@ function overlaps(existing: IDiffArrayEntry[], newv: IDiffArrayEntry): boolean {
         // we need to check order:
         let first = e.key <= newv.key ? e : newv as IDiffRemoveRange;
         let last = e.key <= newv.key ? newv as IDiffRemoveRange : e;
-        if (first.key + first.length >= last.key) {
+        if (first.key + first.length >= last.key && (
+            e.source === newv.source ||
+            !e.source || !newv.source)) {
           // Overlapping deletes
           // Above check is open ended to allow for sanity check here:
           if (first.key + first.length !== last.key) {
             throw new Error('Overlapping delete diff ops: ' +
               'Two operation remove same characters!');
           }
-          return true;
+          return i;
         }
       } else if (e.key === newv.key) {
         // Found a match
-        return true;
+        return i;
+      } else if (e.op === 'addrange') {
+        // Check if there is a removerange after the
+        // addrange that will cause the two addranges
+        // to abut.
+        if (i < existing.length - 1) {
+          let other = existing[i + 1];
+          if (other.op === 'removerange' &&
+              other.key === e.key &&
+              other.key + other.length === newv.key &&
+              (other.source === newv.source ||
+               !other.source || !newv.source)) {
+            return i;
+          }
+        }
       }
     }
   }
-  return false;
+  return -1;
 }
 
 
@@ -135,9 +152,9 @@ function flattenStringDiff(val: string[] | string, diff: IDiffArrayEntry[]): IDi
         for (let p of pdiff) {
           let d = shallowCopy(p);
           d.key += lineOffset;
-          if (overlaps(flattened, d)) {
-            let end = flattened.length - 1;
-            flattened[end] = combineOps(flattened[end], d);
+          let idx = overlaps(flattened, d);
+          if (idx >= 0) {
+            flattened[idx] = combineOps(flattened[idx], d);
           } else {
             flattened.push(d);
           }
@@ -156,9 +173,9 @@ function flattenStringDiff(val: string[] | string, diff: IDiffArrayEntry[]): IDi
       }
       d.source = e.source;
 
-      if (overlaps(flattened, d)) {
-        let end = flattened.length - 1;
-        flattened[end] = combineOps(flattened[end], d);
+      let idx = overlaps(flattened, d);
+      if (idx >= 0) {
+        flattened[idx] = combineOps(flattened[idx], d);
       } else {
         flattened.push(d);
       }
