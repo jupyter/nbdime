@@ -253,7 +253,13 @@ class LineChunker extends Chunker {
     if (isAddition) {
       return chunk.inOrig(range.from.line + 1);
     } else {
-      return chunk.inEdit(range.from.line + 1);
+      // Ensure aligned addition/removal on same line
+      // still chunk together
+      if (chunk.baseFrom === chunk.baseTo && chunk.remoteFrom < chunk.remoteTo) {
+        return chunk.inEdit(range.from.line);
+      } else {
+        return chunk.inEdit(range.from.line + 1);
+      }
     }
   }
 }
