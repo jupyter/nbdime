@@ -146,19 +146,22 @@ function convertPatchOps(diff: IDiffArrayEntry[], options: IUpdateModelOptions):
   for (let i=0; i < diff.length; ++i) {
     let e = diff[i];
     if (e.op === 'patch') {
-      if (i > 0 && diff[i - 1].key === e.key) {
+      if (i > 0 && diff[i - 1].key === e.key &&
+          diff[i - 1].source === e.source) {
         let d = diff[i - 1] as IDiffAddRange;
         let vl = d.valuelist as string[];
         // Previous diff was also on this key, merge addranges
         vl.push(lines[e.key + lineoffset]);
         // Add removerange
-        ret.push(opRemoveRange(e.key, 1));
+        let drr = opRemoveRange(e.key, 1);
+        drr.source = e.source;
+        ret.push(drr);
       } else {
-        ret = ret.concat([
-          opAddRange(e.key, lines.slice(
-            e.key + lineoffset, e.key + lineoffset + 1)),
-          opRemoveRange(e.key, 1)
-          ]);
+        let dar = opAddRange(e.key, lines.slice(
+            e.key + lineoffset, e.key + lineoffset + 1));
+        let drr = opRemoveRange(e.key, 1);
+        dar.source = drr.source = e.source;
+        ret = ret.concat([dar, drr]);
       }
     } else {
       ret.push(e);
