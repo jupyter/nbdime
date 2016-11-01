@@ -203,10 +203,19 @@ function getPartials(diff: AddRem[], options: IUpdateModelOptions, startOffset: 
     let vl = firstDiff.valuelist as string[];
     // Include any lines before edit:
     before = vl.slice(0, vlLine);
-    // Add partial line
-    before.push(
-      partialStart ? vl[vlLine].slice(0, ch) : ''
-    );
+    if (!partialStart || vlLine < vl.length) {
+      // Add partial line
+      before.push(
+        partialStart ? vl[vlLine].slice(0, ch) : ''
+      );
+    } else if (partialStart) {
+      // Addrange before current line (abutting)
+      // and partial edit of current (unedited) line
+      lines = options.full.match(/^.*(\r\n|\r|\n|$)/gm)!;
+      before.push(lines[options.editLine].slice(0, ch));
+      // Indicate that one unedited line should be removed
+      linediff = 1;
+    }
   } else if (partialStart) {
     // Replace previously unedited line:
     lines = options.full.match(/^.*(\r\n|\r|\n|$)/gm)!;
@@ -220,9 +229,6 @@ function getPartials(diff: AddRem[], options: IUpdateModelOptions, startOffset: 
   if (lastDiff) {
     let diffEditStart = lastDiff.key + endOffset;
     let matchLine = (options.editLine - diffEditStart) + oldval.length - 1;
-    if (lastDeletedLine === '' && oldval.length > 1) {
-      matchLine -= 1;
-    }
     if (matchLine >= 0 && matchLine < lastDiff.valuelist.length) {
       let vl = lastDiff.valuelist as string[];
       // Figure out which bits to keep:
@@ -283,7 +289,14 @@ function getAddOp(diff: AddRem[], options: IUpdateModelOptions, startOffset: num
   if (newValuelist.length === 1 && newValuelist[0].length === 0) {
     return {addop: null, linediff};
   } else if (newValuelist[newValuelist.length - 1].length === 0) {
-    newValuelist.pop();
+    // Check if we were adding newline to last line of text
+    // with missing newline:
+    let lines = options.full.match(/^.*(\r\n|\r|\n|$)/gm)!;
+    if (options.editLine !== lines.length - 2 ||
+        lines[lines.length - 1].length !== 0) {
+      // Not, so remove tail
+      newValuelist.pop();
+    }
   }
   return {addop: opAddRange(key, newValuelist), linediff};
 }
