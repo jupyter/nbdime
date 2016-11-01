@@ -579,7 +579,8 @@ declare namespace CodeMirror {
         somethingSelected(): boolean;
 
         /** Set the cursor position.You can either pass a single { line , ch } object , or the line and the character as two separate parameters. */
-        setCursor(pos: CodeMirror.Position | number, ch?: number): void;
+        setCursor(pos: CodeMirror.Position): void;
+        setCursor(line: number, ch: number): void;
 
         /** Set the selection range.anchor and head should be { line , ch } objects.head defaults to anchor when not given. */
         setSelection(anchor: CodeMirror.Position, head: CodeMirror.Position): void;
