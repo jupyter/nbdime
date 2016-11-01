@@ -365,7 +365,7 @@ function mergeOverlappingRemoves(remop: IDiffRemoveRange, diff: AddRem[]): void 
 }
 
 
-function findDeletionOverlap(diff: AddRem[], options: IUpdateModelOptions): number[] {
+function findEditOverlap(diff: AddRem[], options: IUpdateModelOptions): number[] {
   let editLength = options.oldval.length;
   let {baseLine, editLine} = options;
   let start = 0;
@@ -414,7 +414,7 @@ function updateDiff(diffToUpdate: IDiffArrayEntry[], options: IUpdateModelOption
   let diff = convertPatchOps(diffToUpdate, options);
 
    // First, figure out which part of the diff is overlapping with edit:
-  let [start, end, startOffset, endOffset] = findDeletionOverlap(diff, options);
+  let [start, end, startOffset, endOffset] = findEditOverlap(diff, options);
   let overlappingDiff = diff.slice(start, end);
 
   // All overlapping diffs should be replaced by at maximum
