@@ -33,7 +33,7 @@ import {
 } from '../diff/range';
 
 import {
-  patchStringified
+  patchStringified, patch
 } from '../patch';
 
 import {
@@ -146,21 +146,32 @@ function convertPatchOps(diff: IDiffArrayEntry[], options: IUpdateModelOptions):
   for (let i=0; i < diff.length; ++i) {
     let e = diff[i];
     if (e.op === 'patch') {
+      let source = e.source;
+      if (!source && hasEntries(e.diff)) {
+        for (let d of e.diff) {
+          if (d.source) {
+            source = d.source;
+            break;
+          }
+        }
+      }
+      let patchedLine = patch(
+        lines[e.key + lineoffset],
+        [opPatch(0, e.diff)]);
       if (i > 0 && diff[i - 1].key === e.key &&
           diff[i - 1].source === e.source) {
         let d = diff[i - 1] as IDiffAddRange;
         let vl = d.valuelist as string[];
         // Previous diff was also on this key, merge addranges
-        vl.push(lines[e.key + lineoffset]);
+        vl.push(patchedLine);
         // Add removerange
         let drr = opRemoveRange(e.key, 1);
-        drr.source = e.source;
+        drr.source = source;
         ret.push(drr);
       } else {
-        let dar = opAddRange(e.key, lines.slice(
-            e.key + lineoffset, e.key + lineoffset + 1));
+        let dar = opAddRange(e.key, [patchedLine]);
         let drr = opRemoveRange(e.key, 1);
-        dar.source = drr.source = e.source;
+        dar.source = drr.source = source;
         ret = ret.concat([dar, drr]);
       }
     } else {
