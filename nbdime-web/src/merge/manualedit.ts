@@ -376,7 +376,7 @@ function mergeOverlappingRemoves(remop: IDiffRemoveRange, diff: AddRem[]): void 
 }
 
 
-function findEditOverlap(diff: AddRem[], options: IUpdateModelOptions): number[] {
+function findEditOverlap(diff: IDiffArrayEntry[], options: IUpdateModelOptions): number[] {
   let editLength = options.oldval.length;
   let {baseLine, editLine} = options;
   let start = 0;
@@ -390,7 +390,9 @@ function findEditOverlap(diff: AddRem[], options: IUpdateModelOptions): number[]
         e.key + startOffset + e.valuelist.length <= editLine)) {
       // Before start of edit
       ++start;
-      startOffset += e.op === 'addrange' ? e.valuelist.length : -e.length;
+      if (e.op !== 'patch') {
+        startOffset += e.op === 'addrange' ? e.valuelist.length : -e.length;
+      }
     } else if (e.key + endOffset >= baseLine + editLength) {
       // After end of edit
       end = i;
@@ -408,9 +410,18 @@ function findEditOverlap(diff: AddRem[], options: IUpdateModelOptions): number[]
         }
         endOffset += e.valuelist.length;
         previousOffset += e.valuelist.length;
-      } else { // removerange
+      } else if (e.op === 'removerange') {
         endOffset -= e.length;
         previousOffset = e.length;
+      } else {
+        previousOffset = 0;
+        if (i + 1 < diff.length && diff[i + 1].key === e.key) {
+          // Next op is on same key (know/assume addrange)
+          // it should therefore also be within edit
+          let d = diff[++i] as IDiffAddRange;
+          endOffset += d.valuelist.length;
+          previousOffset = d.valuelist.length;
+        }
       }
     }
   }
