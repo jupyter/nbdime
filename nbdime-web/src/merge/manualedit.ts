@@ -598,18 +598,29 @@ function combineDecisions(decisions: MergeDecision[], diffs: 'all' | 'custom'): 
   if (decisions.length < 2) {
     return;
   }
-  if (diffs === 'custom') {
-    let target = decisions[0];
-    if (!target.customDiff) {
-      target.customDiff = [];
+  let target = decisions[0];
+  if (!target.customDiff) {
+    target.customDiff = [];
+  }
+  for (let dec of decisions.slice(1)) {
+    // TODO: Is this naive? Will there ever be decisions
+    // on the same path where simply concatenating the
+    // diffs will not work?
+    extendArray(target.customDiff, dec.customDiff);
+  }
+  if (diffs === 'all') {
+    if (!target.localDiff) {
+      target.localDiff = [];
+    }
+    if (!target.remoteDiff) {
+      target.remoteDiff = [];
     }
     for (let dec of decisions.slice(1)) {
-      extendArray(target.customDiff, dec.customDiff);
+      extendArray(target.localDiff, dec.localDiff);
+      extendArray(target.remoteDiff, dec.remoteDiff);
     }
-    decisions.length = 1;
-  } else {
-    throw new Error('TODO: Not implemented yet!');
   }
+  decisions.length = 1;
 }
 
 function patchPatchedModel(options: IUpdateModelOptions, diffs: 'all' | 'custom') {
