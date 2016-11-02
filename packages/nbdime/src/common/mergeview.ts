@@ -26,6 +26,10 @@ import {
 } from '../merge/model';
 
 import {
+  MergeDecision
+} from '../merge/decisions';
+
+import {
   DiffRangePos
 } from '../diff/range';
 
@@ -44,6 +48,10 @@ import {
 import {
   NotifyUserError
 } from './exceptions';
+
+import {
+  updateModel
+} from '../merge/manualedit';
 
 
 const PICKER_SYMBOL = '\u27ad';
@@ -279,7 +287,7 @@ class DiffView {
       checkSync(self.ownEditor);
       self.updating = false;
     }
-    function setDealign(fast: boolean | CodeMirror.Editor) {
+    function setDealign(fast: boolean | CodeMirror.Editor, mode?: 'full') {
         let upd = false;
         for (let dv of self.baseEditor.state.diffViews) {
           upd = upd || dv.updating;
@@ -288,9 +296,9 @@ class DiffView {
           return;
         }
         self.dealigned = true;
-        set(fast === true);
+        set(fast === true, mode);
     }
-    function set(fast: boolean) {
+    function set(fast: boolean, mode?: 'full') {
       let upd = false;
       for (let dv of self.baseEditor.state.diffViews) {
         upd = upd || dv.updating || dv.updatingFast;
@@ -302,14 +310,31 @@ class DiffView {
       if (fast === true) {
         self.updatingFast = true;
       }
-      debounceChange = window.setTimeout(update, fast === true ? 20 : 250);
+      debounceChange = window.setTimeout(
+        update.bind(self, mode), fast === true ? 20 : 250);
     }
     function change(_cm: CodeMirror.Editor, change: CodeMirror.EditorChangeLinkedList) {
-      if (self.model instanceof DecisionStringDiffModel) {
-        self.model.invalidate();
+      if (change.origin !== 'setValue') {
+        // Edited by hand!
+        let baseLine = getMatchingBaseLine(change.from.line, self.lineChunks);
+        updateModel({
+          model: self.model,
+          full: _cm.getValue(),
+          baseLine,
+          editCh: change.from.ch,
+          editLine: change.from.line,
+          oldval: change.removed,
+          newval: change.text
+        });
+      }
+      if (!(self.model instanceof DecisionStringDiffModel)) {
+        // TODO: Throttle?
+        self.lineChunks = self.model.getLineChunks();
+        self.chunks = lineToNormalChunks(self.lineChunks);
       }
       // Update faster when a line was added/removed
-      setDealign(change.text.length - 1 !== change.to.line - change.from.line);
+      setDealign(change.text.length - 1 !== change.to.line - change.from.line,
+        change.origin === 'setValue' ? undefined : 'full');
     }
     function checkSync(cm: CodeMirror.Editor) {
       if (self.model.remote !== cm.getValue()) {
@@ -328,6 +353,11 @@ class DiffView {
     this.ownEditor.on('viewportChange', function() { set(false); });
     update();
     return update;
+  }
+
+  validate(): boolean {
+    return this.model instanceof DecisionStringDiffModel &&
+            this.model.invalid;
   }
 
   protected modelInvalid(): boolean {
@@ -678,6 +708,27 @@ function getMatchingEditLineLC(toMatch: Chunk, chunks: Chunk[]): number {
     }
   }
   return toMatch.baseTo;
+}
+
+/**
+ * From a line in edit, find the matching line in base by chunks.
+ */
+function getMatchingBaseLine(editLine: number, chunks: Chunk[]): number {
+  let offset = 0;
+  // Start values correspond to either the start of the chunk,
+  // or the start of a preceding unmodified part before the chunk.
+  // It is the difference between these two that is interesting.
+  for (let i = 0; i < chunks.length; i++) {
+    let chunk = chunks[i];
+    if (chunk.remoteTo > editLine && chunk.remoteFrom <= editLine) {
+      break;
+    }
+    if (chunk.remoteFrom > editLine) {
+      break;
+    }
+    offset = chunk.baseTo - chunk.remoteTo;
+  }
+  return editLine + offset;
 }
 
 
