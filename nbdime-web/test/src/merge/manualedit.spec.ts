@@ -30,7 +30,7 @@ import {
 } from '../../../src/merge/decisions';
 
 import {
-  DecisionStringDiffModel, NotebookMergeModel
+  NotebookMergeModel
 } from '../../../src/merge/model';
 
 import {
@@ -98,7 +98,7 @@ describe('merge', () => {
           'action': 'local'
         }];
         let nbmodel = new NotebookMergeModel(notebookStub, decisions);
-        let model = nbmodel.cells[0].merged.source as DecisionStringDiffModel;
+        let model = nbmodel.cells[0].merged.source;
         updateModel({
           model: model,
           full: 'abcdef\nghi\njkl\n',
@@ -130,7 +130,7 @@ describe('merge', () => {
           'action': 'local'
         }];
         let nbmodel = new NotebookMergeModel(notebookStub, decisions);
-        let model = nbmodel.cells[0].merged.source as DecisionStringDiffModel;
+        let model = nbmodel.cells[0].merged.source;
         updateModel({
           model: model,
           full: 'abcdef\nghi\njkl\n',
@@ -158,7 +158,7 @@ describe('merge', () => {
           'action': 'local'
         }];
         let nbmodel = new NotebookMergeModel(notebookStub, decisions);
-        let model = nbmodel.cells[0].merged.source as DecisionStringDiffModel;
+        let model = nbmodel.cells[0].merged.source;
         updateModel({
           model: model,
           full: 'abcdef\n',
@@ -186,7 +186,7 @@ describe('merge', () => {
           'action': 'local'
         }];
         let nbmodel = new NotebookMergeModel(notebookStub, decisions);
-        let model = nbmodel.cells[0].merged.source as DecisionStringDiffModel;
+        let model = nbmodel.cells[0].merged.source;
         updateModel({
           model: model,
           full: 'abcdef\ngh\njkl\n',
@@ -214,7 +214,7 @@ describe('merge', () => {
           'action': 'local'
         }];
         let nbmodel = new NotebookMergeModel(notebookStub, decisions);
-        let model = nbmodel.cells[0].merged.source as DecisionStringDiffModel;
+        let model = nbmodel.cells[0].merged.source;
         updateModel({
           model: model,
           full: 'abcdef\nmnp\n',
@@ -251,7 +251,7 @@ describe('merge', () => {
           'action': 'local'
         }];
         let nbmodel = new NotebookMergeModel(notebookStub, decisions);
-        let model = nbmodel.cells[0].merged.source as DecisionStringDiffModel;
+        let model = nbmodel.cells[0].merged.source;
         updateModel({
           model: model,
           full: 'abcdef\nghi\n',
@@ -286,7 +286,7 @@ describe('merge', () => {
           'action': 'local'
         }];
         let nbmodel = new NotebookMergeModel(nbcontent, decisions);
-        let model = nbmodel.cells[0].merged.source as DecisionStringDiffModel;
+        let model = nbmodel.cells[0].merged.source;
         updateModel({
           model: model,
           full: 'abcdef\njkl\n',
@@ -328,7 +328,7 @@ describe('merge', () => {
           action: 'local'
         }];
         let nbmodel = new NotebookMergeModel(nbcontent, decisions);
-        let model = nbmodel.cells[0].merged.source as DecisionStringDiffModel;
+        let model = nbmodel.cells[0].merged.source;
         // Value at this point:
         // 'abcdef\nghi\nmnoq\nrst\nuv\n'
         updateModel({
@@ -375,7 +375,7 @@ describe('merge', () => {
           action: 'local'
         }];
         let nbmodel = new NotebookMergeModel(nbcontent, decisions);
-        let model = nbmodel.cells[0].merged.source as DecisionStringDiffModel;
+        let model = nbmodel.cells[0].merged.source;
         updateModel({
           model: model,
           full: 'abcdef\nghq\nrst\nuv\n',
@@ -410,7 +410,7 @@ describe('merge', () => {
           'action': 'local'
         }];
         let nbmodel = new NotebookMergeModel(nbcontent, decisions);
-        let model = nbmodel.cells[0].merged.source as DecisionStringDiffModel;
+        let model = nbmodel.cells[0].merged.source;
         updateModel({
           model: model,
           full: 'abcdef\nghi\njkl\n',
@@ -445,7 +445,7 @@ describe('merge', () => {
           'action': 'local'
         }];
         let nbmodel = new NotebookMergeModel(nbcontent, decisions);
-        let model = nbmodel.cells[0].merged.source as DecisionStringDiffModel;
+        let model = nbmodel.cells[0].merged.source;
         updateModel({
           model: model,
           full: 'abcdef\nghi\njkl\n',
@@ -489,7 +489,7 @@ describe('merge', () => {
           'action': 'local'
         }];
         let nbmodel = new NotebookMergeModel(nbcontent, decisions);
-        let model = nbmodel.cells[0].merged.source as DecisionStringDiffModel;
+        let model = nbmodel.cells[0].merged.source;
         updateModel({
           model: model,
           full: 'abcdef\n\njkl\n',
@@ -526,7 +526,7 @@ describe('merge', () => {
           'action': 'local'
         }];
         let nbmodel = new NotebookMergeModel(nbcontent, decisions);
-        let model = nbmodel.cells[0].merged.source as DecisionStringDiffModel;
+        let model = nbmodel.cells[0].merged.source;
         updateModel({
           model: model,
           full: 'abc\ndef\njkl\n',
@@ -562,7 +562,7 @@ describe('merge', () => {
           'action': 'local'
         }];
         let nbmodel = new NotebookMergeModel(nbcontent, decisions);
-        let model = nbmodel.cells[0].merged.source as DecisionStringDiffModel;
+        let model = nbmodel.cells[0].merged.source;
         // Insert new line
         updateModel({
           model: model,
