@@ -7,7 +7,7 @@ import {
 } from '@jupyterlab/services';
 
 import {
-  MergeDecision, buildDiffs, addSorted
+  MergeDecision, buildDiffs, addSorted, pushPatchDecision
 } from './decisions';
 
 import {
@@ -37,7 +37,7 @@ import {
 } from '../patch';
 
 import {
-  hasEntries, arraysEqual, extendArray, valueIn
+  hasEntries, arraysEqual, extendArray, valueIn, isPrefixArray
 } from '../common/util';
 
 import {
@@ -623,6 +623,17 @@ function combineDecisions(decisions: MergeDecision[], diffs: 'all' | 'custom'): 
   decisions.length = 1;
 }
 
+function createPatchedModelDecision(options: IUpdateModelOptions, diff: AddRem[]): MergeDecision {
+  let model = options.model as DecisionStringDiffModel;
+  let path = getPathForNewDecision(model)[0];
+  let dec = new MergeDecision(path, [], [], 'custom', false, diff);
+  dec.level = 3;
+  addSorted(model.decisions, dec, options.baseLine);
+  let cell = model.parent as CellMergeModel;
+  addSorted(cell.decisions, dec, options.baseLine);
+  return dec;
+}
+
 function patchPatchedModel(options: IUpdateModelOptions, diffs: 'all' | 'custom') {
   // Patch model
     // Update remote
@@ -633,51 +644,75 @@ function patchPatchedModel(options: IUpdateModelOptions, diffs: 'all' | 'custom'
   let decisions = model.decisions;
   let allDiffs = buildDiffs(model.base, decisions, 'merged') as IDiffArrayEntry[] | null;
 
-  if (diffs === 'custom') {
-    // All diff sources share the same action
-    let diff = allDiffs ? convertPatchOps(allDiffs, options) : [];
+  let affected: AddRem[] | null = null;
+  if (hasEntries(allDiffs)) {
     let [start, end] =
-      findEditOverlap(diff, options);
-    let affected = diff.slice(start, end);
-    decisions = [];
-    if (affected.length === 0) {
-      let path = getPathForNewDecision(model)[0];
-      let dec = new MergeDecision(path, [], [], 'custom', false, affected);
-      dec.level = 3;
-      addSorted(model.decisions, dec, options.baseLine);
-      decisions.push(dec);
-    } else {
-      for (let d of affected) {
-        if (d.source && !valueIn(d.source.decision, decisions)) {
-          decisions.push(d.source.decision);
+      findEditOverlap(allDiffs, options);
+    let diff = allDiffs.slice(start, end);
+    // Deepcopy any affected diffs that are not custom
+    // We do this to ensure we don't modify local/remote diffs
+    if (diffs === 'all' && hasEntries(diff)) {
+      for (let i=0; i < diff.length; ++i) {
+        let d = diff[i];
+        if (!d.source || d.source.action !== 'custom') {
+          // Copy over any cells whose source is not custom
+          diff[i] = deepCopyDiff([d])[0];
         }
-      }
-      if (decisions.length === 0) {
-        let path = getPathForNewDecision(model)[0];
-        let dec = new MergeDecision(path, [], [], 'custom', false, affected);
-        dec.level = 3;
-        addSorted(model.decisions, dec, options.baseLine);
-        decisions.push(dec);
-      } else if (decisions.length > 1) {
-        // We merge all-custom decisions that overlap
-        // TODO: Remove assertion once proven to work as expected:
-        let path = decisions[0].absolutePath;
-        for (let dec of decisions.slice(1)) {
-          if (!arraysEqual(path, dec.absolutePath)) {
-            throw new Error('Paths should be equal: "' + path + '", "' + dec.absolutePath + '"');
-          } else if (hasEntries(dec.localDiff) || hasEntries(dec.remoteDiff)) {
-            throw new Error('Expected only custom diffs!');
-          }
-        }
-        combineDecisions(decisions, diffs);
       }
     }
-    let dec = decisions[0];
-    updateDiff(dec.customDiff as IDiffArrayEntry[], options);
-    labelSource(dec.customDiff, {decision: dec, action: 'custom'});
-  } else {
-    throw new Error('TODO: Implement!');
+    affected = convertPatchOps(diff, options);
+    if (diffs === 'all') {
+      replaceArrayContent(allDiffs, affected, start, end);
+    }
   }
+  decisions = [];
+  if (!hasEntries(affected)) {
+      let dec = createPatchedModelDecision(options, []);
+      decisions.push(dec);
+  } else {
+    for (let d of affected) {
+      if (d.source && !valueIn(d.source.decision, decisions)) {
+        decisions.push(d.source.decision);
+      }
+    }
+    if (decisions.length === 0) {
+      let dec = createPatchedModelDecision(options, affected);
+      decisions.push(dec);
+    } else if (decisions.length > 1) {
+      // We merge all decisions that overlap
+      // TODO: Remove assertion once proven to work as expected:
+      let path = decisions[0].absolutePath;
+      for (let dec of decisions.slice(1)) {
+        if (!arraysEqual(path, dec.absolutePath)) {
+          throw new Error('Paths should be equal: "' + path + '", "' + dec.absolutePath + '"');
+        } else if (diffs === 'custom' && hasEntries(dec.localDiff) || hasEntries(dec.remoteDiff)) {
+          throw new Error('Expected only custom diffs!');
+        }
+      }
+      combineDecisions(decisions, diffs);
+    } else {
+      let path = getPathForNewDecision(model)[0];
+      if (!arraysEqual(decisions[0].absolutePath, path)) {
+        if (!isPrefixArray(path, decisions[0].absolutePath)) {
+          throw new Error('Decision paths not compatible.');
+        }
+        decisions[0].setValuesFrom(
+          pushPatchDecision(
+            decisions[0],
+            decisions[0].absolutePath.slice(path.length)));
+      }
+    }
+  }
+  let dec = decisions[0];
+  if (diffs === 'all') {
+    dec.customDiff = allDiffs;
+    dec.action = 'custom';
+  }
+  if (dec.customDiff === null) {
+    throw new Error('Unexpected missing custom diff!');
+  }
+  updateDiff(dec.customDiff as IDiffArrayEntry[], options);
+  labelSource(dec.customDiff, {decision: dec, action: 'custom'});
 
   // Find overlapping decisions
     // Add custom diff if needed
