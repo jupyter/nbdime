@@ -128,6 +128,16 @@ class MergeDecision {
     this.customDiff = customDiff;
   }
 
+  setValuesFrom(other: MergeDecision): void {
+    this._path = other.absolutePath.slice();
+    this.localDiff = other.localDiff;
+    this.remoteDiff = other.remoteDiff;
+    this.action = other.action;
+    this.conflict = other.conflict;
+    this.customDiff = other.customDiff;
+    this.level = other.level;
+  }
+
   get localPath(): DecisionPath {
     return this._path.slice(this.level);
   }
@@ -350,7 +360,7 @@ function makeClearedValue(value: any): any {
 }
 
 
-function _getSubObject(obj: any, path: DecisionPath) {
+function _resolvePathInObject(obj: any, path: DecisionPath) {
   for (let key of path) {
     obj = obj[key];   // Should throw if key missing
   }
@@ -598,7 +608,7 @@ function buildDiffs(base: any, decisions: MergeDecision[], which: 'local' | 'rem
     let path = spl[0];
     let line = spl[1];
     if (merged) {
-      let sub = _getSubObject(base, path);
+      let sub = _resolvePathInObject(base, path);
       subdiffs = resolveAction(sub, md);
     } else {
       subdiffs = local ? md.localDiff : md.remoteDiff;
