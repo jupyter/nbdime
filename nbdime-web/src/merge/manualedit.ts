@@ -37,7 +37,8 @@ import {
 } from '../patch';
 
 import {
-  hasEntries, arraysEqual, extendArray, valueIn, isPrefixArray
+  hasEntries, arraysEqual, extendArray, valueIn,
+  isPrefixArray, removeElement
 } from '../common/util';
 
 import {
@@ -645,8 +646,9 @@ function patchPatchedModel(options: IUpdateModelOptions, diffs: 'all' | 'custom'
   let allDiffs = buildDiffs(model.base, decisions, 'merged') as IDiffArrayEntry[] | null;
 
   let affected: AddRem[] | null = null;
+  let [start, end] = [0, 0];
   if (hasEntries(allDiffs)) {
-    let [start, end] =
+    [start, end] =
       findEditOverlap(allDiffs, options);
     let diff = allDiffs.slice(start, end);
     // Deepcopy any affected diffs that are not custom
@@ -661,9 +663,6 @@ function patchPatchedModel(options: IUpdateModelOptions, diffs: 'all' | 'custom'
       }
     }
     affected = convertPatchOps(diff, options);
-    if (diffs === 'all') {
-      replaceArrayContent(allDiffs, affected, start, end);
-    }
   }
   decisions = [];
   if (!hasEntries(affected)) {
@@ -680,14 +679,18 @@ function patchPatchedModel(options: IUpdateModelOptions, diffs: 'all' | 'custom'
       decisions.push(dec);
     } else if (decisions.length > 1) {
       // We merge all decisions that overlap
-      // TODO: Remove assertion once proven to work as expected:
       let path = decisions[0].absolutePath;
+      let cell = model.parent as CellMergeModel;
       for (let dec of decisions.slice(1)) {
+        // TODO: Remove assertion once proven to work as expected:
         if (!arraysEqual(path, dec.absolutePath)) {
           throw new Error('Paths should be equal: "' + path + '", "' + dec.absolutePath + '"');
-        } else if (diffs === 'custom' && hasEntries(dec.localDiff) || hasEntries(dec.remoteDiff)) {
+        } else if (diffs === 'custom' && (hasEntries(dec.localDiff) || hasEntries(dec.remoteDiff))) {
           throw new Error('Expected only custom diffs!');
         }
+        // Remove decision from cell + model, as we merge
+        removeElement(model.decisions, dec);
+        removeElement(cell.decisions, dec);
       }
       combineDecisions(decisions, diffs);
     } else {
@@ -705,7 +708,11 @@ function patchPatchedModel(options: IUpdateModelOptions, diffs: 'all' | 'custom'
   }
   let dec = decisions[0];
   if (diffs === 'all') {
-    dec.customDiff = allDiffs;
+    if (!dec.customDiff) {
+      dec.customDiff = affected || [];
+    } else {
+      replaceArrayContent(dec.customDiff, affected || [], start, end);
+    }
     dec.action = 'custom';
   }
   if (dec.customDiff === null) {

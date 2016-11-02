@@ -315,3 +315,12 @@ function extendArray(a: any[], b: any[] | null): void {
   }
   a.splice.apply(a, [a.length, 0].concat(b));
 }
+
+/**
+ * Remove first matching element from an array
+ */
+export
+function removeElement(array: any[], element: any): void {
+  let i = array.indexOf(element);
+  array.splice(i, 1);
+}
