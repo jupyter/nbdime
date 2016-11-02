@@ -45,47 +45,63 @@ describe('merge', () => {
 
   describe('updateModel', () => {
 
-    /*
-    it('should update a simple line insertion on an unchanged model', () => {
-      let nbcontent = shallowCopy(notebookStub);
-      let cell = shallowCopy(codeCellStub);
-      cell.source = 'abcdef\njkl\n';
-      nbcontent.cells = [cell];
-      let nbmodel = new NotebookMergeModel(nbcontent, []);
-      let model = nbmodel.cells[0].merged.source;
-      updateModel({
-        model: model,
-        full: 'abcdef\nghi\njkl\n',
-        baseLine: 1,
-        editLine: 1,
-        editCh: 0,
-        oldval: [''],
-        newval: ['ghi']
+    describe('unchanged cell', () => {
+
+      it('should update a simple line insertion', () => {
+        let nbcontent = shallowCopy(notebookStub);
+        let cell = shallowCopy(codeCellStub);
+        cell.source = 'abcdef\njkl\n';
+        nbcontent.cells = [cell];
+        let nbmodel = new NotebookMergeModel(nbcontent, []);
+        let model = nbmodel.cells[0].merged.source;
+        updateModel({
+          model: model,
+          full: 'abcdef\nghi\njkl\n',
+          baseLine: 1,
+          editLine: 1,
+          editCh: 0,
+          oldval: [''],
+          newval: ['ghi', '']
+        });
+        expect(model.remote).to.be('abcdef\nghi\njkl\n');
+        expect(nbmodel.cells[0].deleteCell).to.be(false);
+        expect(nbmodel.cells[0].decisions.length).to.be(1);
+        expect(nbmodel.cells[0].decisions[0].absolutePath).to.eql(['cells', 0, 'source']);
+        let diff = stripSource(nbmodel.cells[0].decisions[0].customDiff)!;
+        expect(diff).to.eql([
+          opAddRange(1, ['ghi\n'])
+        ]);
       });
+
+      it('should update a simple line deletion', () => {
+        let nbcontent = shallowCopy(notebookStub);
+        let cell = shallowCopy(codeCellStub);
+        cell.source = 'abcdef\njkl\n';
+        nbcontent.cells = [cell];
+        let nbmodel = new NotebookMergeModel(nbcontent, []);
+        let model = nbmodel.cells[0].merged.source;
+        updateModel({
+          model: model,
+          full: 'abcdef\n',
+          baseLine: 1,
+          editLine: 1,
+          editCh: 0,
+          oldval: ['jkl', ''],
+          newval: ['']
+        });
+        expect(model.remote).to.be('abcdef\n');
+        expect(model.additions).to.be.empty();
+        expect(model.deletions.length).to.be(1);
+        expect(nbmodel.cells[0].decisions.length).to.be(1);
+        expect(nbmodel.cells[0].decisions[0].absolutePath).to.eql(['cells', 0, 'source']);
+        let diff = stripSource(nbmodel.cells[0].decisions[0].customDiff)!;
+        expect(diff).to.eql([
+          opRemoveRange(1, 1)
+        ]);
+      });
+
     });
 
-    it('should update a simple line deletion on an unchanged model', () => {
-      let nbcontent = shallowCopy(notebookStub);
-      let cell = shallowCopy(codeCellStub);
-      cell.source = 'abcdef\njkl\n';
-      nbcontent.cells = [cell];
-      let nbmodel = new NotebookMergeModel(nbcontent, []);
-      let model = nbmodel.cells[0].merged.source as DecisionStringDiffModel;
-      updateModel({
-        model: model,
-        full: 'abcdef\n',
-        baseLine: 1,
-        editLine: 1,
-        editCh: 0,
-        oldval: ['jkl', ''],
-        newval: ['']
-      });
-      expect(model.remote).to.be('abcdef\n');
-      expect(model.additions).to.be.empty();
-      expect(model.deletions.length).to.be(1);
-      expect(model.decisions.length).to.be(1);
-      expect(model.decisions[0].absolutePath).to.eql(['cells', 0, 'source']);
-    });*/
 
     describe('inserted cell', () => {
 
@@ -275,6 +291,41 @@ describe('merge', () => {
 
     describe('deleted cell', () => {
 
+      it('should update a simple line addition', () => {
+        let nbcontent = shallowCopy(notebookStub);
+        let cell = shallowCopy(codeCellStub);
+        cell.source = 'abcdef\njkl\n';
+        nbcontent.cells = [cell];
+        let decisions: IMergeDecision[] = [{
+          'common_path': ['cells'],
+          'local_diff': [opRemoveRange(0, 1)],
+          'action': 'local'
+        }];
+        let nbmodel = new NotebookMergeModel(nbcontent, decisions);
+        let model = nbmodel.cells[0].merged.source;
+        updateModel({
+          model: model,
+          full: 'abcdef\nghi\njkl\n',
+          baseLine: 1,
+          editLine: 1,
+          editCh: 0,
+          oldval: [''],
+          newval: ['ghi', '']
+        });
+        let expectedCell = shallowCopy(codeCellStub);
+        expectedCell.source = 'abcdef\nghi\njkl\n';
+        expect(model.remote).to.be(expectedCell.source);
+        expect(nbmodel.cells[0].deleteCell).to.be(false);
+        expect(nbmodel.cells[0].decisions.length).to.be(1);
+        expect(nbmodel.cells[0].decisions[0].absolutePath).to.eql(['cells']);
+        let diff = stripSource(nbmodel.cells[0].decisions[0].customDiff)!;
+        diff = (diff[0] as IDiffPatchArray).diff!;
+        diff = (diff[0] as IDiffPatchArray).diff!;
+        expect(diff).to.eql([
+          opAddRange(1, ['ghi\n'])
+        ]);
+      });
+
       it('should update a simple line deletion', () => {
         let nbcontent = shallowCopy(notebookStub);
         let cell = shallowCopy(codeCellStub);
@@ -397,41 +448,6 @@ describe('merge', () => {
         expect(nbmodel.cells[0].deleteCell).to.be(false);
         expect(nbmodel.cells[0].decisions.length).to.be(1);
         expect(nbmodel.cells[0].decisions[0].absolutePath).to.eql(['cells']);
-      });
-
-      it('should update a simple line addition', () => {
-        let nbcontent = shallowCopy(notebookStub);
-        let cell = shallowCopy(codeCellStub);
-        cell.source = 'abcdef\njkl\n';
-        nbcontent.cells = [cell];
-        let decisions: IMergeDecision[] = [{
-          'common_path': ['cells'],
-          'local_diff': [opRemoveRange(0, 1)],
-          'action': 'local'
-        }];
-        let nbmodel = new NotebookMergeModel(nbcontent, decisions);
-        let model = nbmodel.cells[0].merged.source;
-        updateModel({
-          model: model,
-          full: 'abcdef\nghi\njkl\n',
-          baseLine: 1,
-          editLine: 1,
-          editCh: 0,
-          oldval: [''],
-          newval: ['ghi', '']
-        });
-        let expectedCell = shallowCopy(codeCellStub);
-        expectedCell.source = 'abcdef\nghi\njkl\n';
-        expect(model.remote).to.be(expectedCell.source);
-        expect(nbmodel.cells[0].deleteCell).to.be(false);
-        expect(nbmodel.cells[0].decisions.length).to.be(1);
-        expect(nbmodel.cells[0].decisions[0].absolutePath).to.eql(['cells']);
-        let diff = stripSource(nbmodel.cells[0].decisions[0].customDiff)!;
-        diff = (diff[0] as IDiffPatchArray).diff!;
-        diff = (diff[0] as IDiffPatchArray).diff!;
-        expect(diff).to.eql([
-          opAddRange(1, ['ghi\n'])
-        ]);
       });
 
       it('should handle two subsequent insertions', () => {
