@@ -760,4 +760,7 @@ function updateModel(options: IUpdateModelOptions) {
   } else {
     updatedPatchedCell(options);
   }
+  if (model instanceof DecisionStringDiffModel) {
+    model.invalidate();
+  }
 }
