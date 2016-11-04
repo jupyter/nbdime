@@ -9,6 +9,8 @@ import os
 import json
 import sys
 from argparse import ArgumentParser
+
+import requests
 from six import string_types
 from tornado import ioloop, web, escape, netutil, httpserver
 import nbformat
@@ -63,7 +65,8 @@ class NbdimeApiHandler(web.RequestHandler):
         # Check that file exists
         path = os.path.join(self.params["cwd"], arg)
         if not os.path.exists(path):
-            raise web.HTTPError(400, "File doesn't exist: %s" % truncate_filename(arg))
+            # Assume file is URI
+            path = requests.get(arg)
 
         # Let nbformat do the reading and validation
         try:
