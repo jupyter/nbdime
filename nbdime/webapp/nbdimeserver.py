@@ -66,11 +66,14 @@ class NbdimeApiHandler(web.RequestHandler):
         path = os.path.join(self.params["cwd"], arg)
         if not os.path.exists(path):
             # Assume file is URI
-            path = requests.get(arg)
+            r = requests.get(arg)
 
         # Let nbformat do the reading and validation
         try:
-            nb = nbformat.read(path, as_version=4)
+            if os.path.exists(path):
+                nb = nbformat.read(path, as_version=4)
+            else:
+                nb = nbformat.reads(r.text, as_version=4)
         except:
             raise web.HTTPError(400, "Invalid notebook: %s" % truncate_filename(arg))
 
