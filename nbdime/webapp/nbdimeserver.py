@@ -198,17 +198,6 @@ class ApiCloseHandler(NbdimeApiHandler):
         ioloop.IOLoop.current().stop()
 
 
-class NbdimeApp(web.Application):
-    @property
-    def connection_url(self):
-        ip = self.ip if self.ip else '127.0.0.1'
-        return self._url(ip)
-
-    def _url(self, ip):
-        proto = 'https' if self.certfile else 'http'
-        return "%s://%s:%i%s" % (proto, ip, self.port, self.base_url)
-
-
 def make_app(**params):
     handlers = [
         (r"/", MainHandler, params),
