@@ -48,6 +48,7 @@ def truncate_filename(name):
 class NbdimeApiHandler(web.RequestHandler):
     def initialize(self, **params):
         self.params = params
+        self.base_url = params.get("base_url", "")
 
     def get_notebook_argument(self, argname):
         # Assuming a request on the form "{'argname':arg}"
@@ -84,7 +85,8 @@ class MainDiffHandler(NbdimeApiHandler):
         args = {}
         args["base"] = self.get_argument("base", "")
         args["remote"] = self.get_argument("remote", "")
-        self.render("diff.html", **args)
+
+        self.render("diff.html", config_data=args, base_url=self.base_url)
 
 
 class MainDifftoolHandler(NbdimeApiHandler):
@@ -96,7 +98,7 @@ class MainDifftoolHandler(NbdimeApiHandler):
         else:
             args["base"] = self.get_argument("base", "")
             args["remote"] = self.get_argument("remote", "")
-        self.render("difftool.html", **args)
+        self.render("difftool.html", config_data=args, base_url=self.base_url)
 
 
 class MainMergeHandler(NbdimeApiHandler):
@@ -105,7 +107,7 @@ class MainMergeHandler(NbdimeApiHandler):
         args["base"] = self.get_argument("base", "")
         args["local"] = self.get_argument("local", "")
         args["remote"] = self.get_argument("remote", "")
-        self.render("merge.html", **args)
+        self.render("merge.html", config_data=args, base_url=self.base_url)
 
 
 class MainMergetoolHandler(NbdimeApiHandler):
@@ -119,7 +121,7 @@ class MainMergetoolHandler(NbdimeApiHandler):
             args["base"] = self.get_argument("base", "")
             args["local"] = self.get_argument("local", "")
             args["remote"] = self.get_argument("remote", "")
-        self.render("mergetool.html", **args)
+        self.render("mergetool.html", config_data=args, base_url=self.base_url)
 
 
 class ApiDiffHandler(NbdimeApiHandler):
