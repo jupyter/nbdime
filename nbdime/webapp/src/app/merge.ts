@@ -174,6 +174,7 @@ function onMergeRequestFailed(response: string) {
  * Extract the merged notebook from the model, as well as any remaining
  * conflicts, and send them to the server for storage / further processing.
  */
+export
 function saveMerged() {
   if (!mergeModel) {
     return;

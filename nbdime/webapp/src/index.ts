@@ -11,13 +11,23 @@ import {
 } from './app/merge';
 
 import {
+  initializeCompare, closeCompare
+} from './app/compare';
+
+import {
   closeTool, getConfigOption
 } from './app/common';
+
+
+
 
 /** */
 function initialize() {
   let onclose = (ev) => { closeTool(); };
-  if (getConfigOption('local') || document.getElementById('merge-local')) {
+  if (document.getElementById('compare-local')) {
+    initializeCompare();
+    onclose = closeCompare;
+  } else if (getConfigOption('local') || document.getElementById('merge-local')) {
     initializeMerge();
     onclose = closeMerge;
   } else {
