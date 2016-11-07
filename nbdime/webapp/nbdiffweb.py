@@ -61,6 +61,7 @@ def main(args=None):
     remote = arguments.remote
     return run_server(
         port=port, cwd=cwd,
+        closable=True,
         on_port=lambda port: browse(port, base, remote))
 
 

@@ -255,8 +255,11 @@ function initializeMerge() {
   if (base && local && remote) {
     getMerge(base, local, remote);
   }
+
+  let savable = getConfigOption('savable');
   let saveBtn = document.getElementById('nbdime-save') as HTMLButtonElement;
-  if (saveBtn) {
+  if (savable) {
     saveBtn.onclick = saveMerged;
+    saveBtn.style.display = 'initial';
   }
 }

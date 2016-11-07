@@ -51,7 +51,6 @@ def browse(port):
             browser.open("http://127.0.0.1:%s/difftool" % port, new=2)
         threading.Thread(target=launch_browser).start()
 
-
 def main(args=None):
     if args is None:
         args = sys.argv[1:]
@@ -60,9 +59,11 @@ def main(args=None):
     cwd = arguments.workdirectory
     base = arguments.base
     remote = arguments.remote
-    return run_server(port=port, cwd=cwd,
-                      difftool_args=dict(base=base, remote=remote),
-                      on_port=browse)
+    return run_server(
+        port=port, cwd=cwd,
+        closable=True,
+        difftool_args=dict(base=base, remote=remote),
+        on_port=browse)
 
 
 if __name__ == "__main__":

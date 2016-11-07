@@ -50,6 +50,13 @@ class NbdimeApiHandler(web.RequestHandler):
         self.params = params
         self.base_url = params.get("base_url", "")
 
+    def base_args(self):
+        fn = self.params.get("outputfilename", None)
+        return {
+            "closable": self.params["closable"],
+            "savable": fn is not None
+        }
+
     def get_notebook_argument(self, argname):
         # Assuming a request on the form "{'argname':arg}"
         body = json.loads(escape.to_unicode(self.request.body))
@@ -82,7 +89,7 @@ class MainHandler(NbdimeApiHandler):
 
 class MainDiffHandler(NbdimeApiHandler):
     def get(self):
-        args = {}
+        args = self.base_args()
         args["base"] = self.get_argument("base", "")
         args["remote"] = self.get_argument("remote", "")
 
@@ -91,7 +98,7 @@ class MainDiffHandler(NbdimeApiHandler):
 
 class MainDifftoolHandler(NbdimeApiHandler):
     def get(self):
-        args = {}
+        args = self.base_args()
         if "difftool_args" in self.params:
             args["base"] = self.params["difftool_args"]["base"]
             args["remote"] = self.params["difftool_args"]["remote"]
@@ -103,7 +110,7 @@ class MainDifftoolHandler(NbdimeApiHandler):
 
 class MainMergeHandler(NbdimeApiHandler):
     def get(self):
-        args = {}
+        args = self.base_args()
         args["base"] = self.get_argument("base", "")
         args["local"] = self.get_argument("local", "")
         args["remote"] = self.get_argument("remote", "")
@@ -112,7 +119,7 @@ class MainMergeHandler(NbdimeApiHandler):
 
 class MainMergetoolHandler(NbdimeApiHandler):
     def get(self):
-        args = {}
+        args = self.base_args()
         if "mergetool_args" in self.params:
             args["base"] = self.params["mergetool_args"]["base"]
             args["local"] = self.params["mergetool_args"]["local"]
@@ -187,15 +194,15 @@ class ApiMergeStoreHandler(NbdimeApiHandler):
 class ApiCloseHandler(NbdimeApiHandler):
     def post(self):
         # Only allow closing, if started as tool
-        if ("difftool_args" not in self.params and
-                "mergetool_args" not in self.params):
+        if self.params.get('closable', False) is not True:
             raise web.HTTPError(
-                400, "Server is not a tool server, cannot be closed remotely.")
+                400, "This server cannot be closed remotely.")
 
         global exit_code
-        exit_code = self.request.headers.get("exit_code", 0)
+        # Fail if no exit code is supplied:
+        exit_code = self.request.headers.get("exit_code", 1)
 
-        print("Closing tool")
+        print("Closing server on remote request")
         self.finish()
         ioloop.IOLoop.current().stop()
 
@@ -242,9 +249,10 @@ def make_app(**params):
     return web.Application(handlers, **settings)
 
 
-def main_server(on_port=None, **params):
+def main_server(on_port=None, closable=False, **params):
     print("Using params:")
     print(params)
+    params.update({"closable": closable})
     port = params.pop("port")
     app = make_app(**params)
     if port != 0 or on_port is None:
