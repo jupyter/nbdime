@@ -2,12 +2,14 @@
 Command-line interface
 ======================
 
-Nbdime provides the following CLI commands. See their help text::
+Nbdime provides the following CLI commands::
 
-    nbdiff --help
-    nbdiff-web --help
-    nbpatch --help
-    nbmerge --help
-    nbmerge-web --help
+    nbdiff
+    nbmerge
+    nbpatch
+    nbdiff-web
+    nbmerge-web
 
-for usage details.
+Pass --help to each command to see help text for usage details.
+
+Additional commands are available for :ref:`git-integration`.
