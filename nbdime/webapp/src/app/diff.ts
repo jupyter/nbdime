@@ -118,6 +118,7 @@ function onDiff(e: Event) {
 /**
  * Calls `requestDiff` with our response handlers
  */
+export
 function getDiff(base: string, remote: string) {
   requestDiff(base, remote, onDiffRequestCompleted, onDiffRequestFailed);
 }

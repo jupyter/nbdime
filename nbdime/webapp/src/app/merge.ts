@@ -110,6 +110,7 @@ function showMerge(data: {
 /**
  * Calls `requestMerge` with our response handlers
  */
+export
 function getMerge(base: string, local: string, remote: string) {
   requestMerge(base, local, remote, onMergeRequestCompleted, onMergeRequestFailed);
 }
