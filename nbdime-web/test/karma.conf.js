@@ -21,7 +21,9 @@ module.exports = function (config) {
     },
 
     remapCoverageReporter: {
-      'text-summary': null, // to show summary in console
+      // Text summary is currently before remapping to TS,
+      // so disabled.
+      //'text-summary': null, // to show summary in console
       json: './coverage/remapped.json'
     },
   });
