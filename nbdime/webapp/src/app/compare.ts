@@ -33,8 +33,8 @@ function closeCompare(ev: Event) {
 }
 
 /**
- * Diff form submission callback. Sends a request for a diff to the server based
- * on the content of the form.
+ * Compare form submission callback. Sends a request for a
+ * diff/merge to the server based on the content of the form.
  */
 function onCompare(e: Event) {
   e.preventDefault();
@@ -138,7 +138,7 @@ function attachToForm() {
 export
 function initializeCompare() {
   attachToForm();
-  // If arguments supplied in config, run diff directly:
+  // If arguments supplied in config, run compare directly:
   let base = getConfigOption('base');
   let local = getConfigOption('local');
   let remote = getConfigOption('remote');

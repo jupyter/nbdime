@@ -66,7 +66,8 @@ import {
 let mergeModel: NotebookMergeModel = null;
 
 /**
- * Show the diff as represented by the base notebook and a list of diff entries
+ * Show the merge as represented by the base notebook and a
+ * list of merge decisions
  */
 function showMerge(data: {
     base: nbformat.INotebookContent,
@@ -168,14 +169,14 @@ function onPopState(e: PopStateEvent) {
 }
 
 /**
- * Callback for a successfull diff request
+ * Callback for a successfull merge request
  */
 function onMergeRequestCompleted(data: any) {
   mergeModel = showMerge(data);
 }
 
 /**
- * Callback for a failed diff request
+ * Callback for a failed merge request
  */
 function onMergeRequestFailed(response: string) {
   console.log('Merge request failed.');
@@ -266,7 +267,7 @@ function attachToForm() {
 export
 function initializeMerge() {
   attachToForm();
-  // If arguments supplied in config, run diff directly:
+  // If arguments supplied in config, run merge directly:
   let base = getConfigOption('base');
   let local = getConfigOption('local');  // Only available for merge
   let remote = getConfigOption('remote');
