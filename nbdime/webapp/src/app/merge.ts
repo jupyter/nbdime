@@ -126,15 +126,30 @@ function onMerge(e: Event) {
   let b = (document.getElementById('merge-base') as HTMLInputElement).value;
   let c = (document.getElementById('merge-local') as HTMLInputElement).value;
   let r = (document.getElementById('merge-remote') as HTMLInputElement).value;
-  getMerge(b, c, r);
-  let uri = window.location.pathname;
-  uri += '?base=' + encodeURIComponent(b) +
-    '&local=' + encodeURIComponent(c) +
-    '&remote=' + encodeURIComponent(r);
-  history.pushState({base: b, local: c, remote: r},
-    'Merge: "' + c + '" - "' + b + '" - "' + r + '"', uri);
+  compare(b, c, r, true);
   return false;
 };
+
+function compare(b: string, c: string, r: string, pushHistory: boolean | 'replace') {
+  // All values present, do merge
+  getMerge(b, c, r);
+  if (pushHistory) {
+    let uri = window.location.pathname;
+    uri += '?base=' + encodeURIComponent(b) +
+      '&local=' + encodeURIComponent(c) +
+      '&remote=' + encodeURIComponent(r);
+    editHistory(pushHistory, {base: b, local: c, remote: r},
+      'Merge: "' + c + '" - "' + b + '" - "' + r + '"', uri);
+  }
+}
+
+function editHistory(pushHistory: boolean | 'replace', statedata: any, title?: string, url?: string): void {
+  if (pushHistory === true) {
+    history.pushState(statedata, title, url);
+  } else if (pushHistory === 'replace') {
+    history.replaceState(statedata, title, url);
+  }
+}
 
 /**
  * Called when a 'back' is requested
@@ -148,7 +163,7 @@ function onPopState(e: PopStateEvent) {
     eb.value = e.state.base;
     el.value = e.state.local;
     er.value = e.state.remote;
-    getMerge(e.state.base, e.state.local, e.state.remote);
+    compare(e.state.base, e.state.local, e.state.remote, false);
   }
 }
 
@@ -256,7 +271,7 @@ function initializeMerge() {
   let local = getConfigOption('local');  // Only available for merge
   let remote = getConfigOption('remote');
   if (base && local && remote) {
-    getMerge(base, local, remote);
+    compare(base, local, remote, 'replace');
   }
 
   let savable = getConfigOption('savable');

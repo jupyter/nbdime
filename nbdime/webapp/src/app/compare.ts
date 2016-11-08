@@ -45,7 +45,7 @@ function onCompare(e: Event) {
   return false;
 };
 
-function compare(b: string, c: string, r: string, pushHistory: boolean) {
+function compare(b: string, c: string, r: string, pushHistory: boolean | 'replace') {
   let count = 0;
   for (let v of [b, c, r]) {
     if (v) {
@@ -56,10 +56,11 @@ function compare(b: string, c: string, r: string, pushHistory: boolean) {
     // All values present, do merge
     getMerge(b, c, r);
     if (pushHistory) {
-      let uri = '/?base=' + encodeURIComponent(b) +
+      let uri = window.location.pathname;
+      uri += '?base=' + encodeURIComponent(b) +
         '&local=' + encodeURIComponent(c) +
         '&remote=' + encodeURIComponent(r);
-      history.pushState({base: b, local: c, remote: r},
+      editHistory(pushHistory, {base: b, local: c, remote: r},
         'Merge: "' + c + '" - "' + b + '" - "' + r + '"', uri);
     }
     hasMerge = true;
@@ -85,10 +86,18 @@ function compare(b: string, c: string, r: string, pushHistory: boolean) {
       let uri = '/?base=' + encodeURIComponent(b) +
         '&local=' + encodeURIComponent(c) +
         '&remote=' + encodeURIComponent(r);
-      history.pushState({base: b, remote: r},
+      editHistory(pushHistory, {base, remote},
         'Diff: "' + b + '" vs "' + r + '"', uri);
     }
     hasMerge = false;
+  }
+}
+
+function editHistory(pushHistory: boolean | 'replace', statedata: any, title?: string, url?: string): void {
+  if (pushHistory === true) {
+    history.pushState(statedata, title, url);
+  } else if (pushHistory === 'replace') {
+    history.replaceState(statedata, title, url);
   }
 }
 
@@ -97,14 +106,18 @@ function compare(b: string, c: string, r: string, pushHistory: boolean) {
  */
 function onPopState(e: PopStateEvent) {
   if (e.state) {
-    let eb = (document.getElementById('merge-base') as HTMLInputElement);
-    let el = (document.getElementById('merge-local') as HTMLInputElement);
-    let er = (document.getElementById('merge-remote') as HTMLInputElement);
+    let eb = (document.getElementById('compare-base') as HTMLInputElement);
+    let el = (document.getElementById('compare-local') as HTMLInputElement);
+    let er = (document.getElementById('compare-remote') as HTMLInputElement);
 
-    eb.value = e.state.base;
-    el.value = e.state.local;
-    er.value = e.state.remote;
-    getMerge(e.state.base, e.state.local, e.state.remote);
+    let base: string = e.state.base || '';
+    let local: string = e.state.local || '';
+    let remote: string = e.state.remote || '';
+
+    eb.value = base;
+    el.value = local;
+    er.value = remote;
+    compare(base, local, remote, false);
   }
 }
 
