@@ -30,7 +30,7 @@ namespace NotifyUserError {
    * use an exception.
    */
   export
-  type Severity = 'critical' | 'error' | 'warning';
+  type Severity = 'error' | 'warning';
 
 }
 

@@ -84,7 +84,6 @@ function showError(error: NotifyUserError, url: string, line: number, column: nu
   case 'warning':
     alertify.log(message);
     break;
-  case 'critical':
   case 'error':
     alertify.error(message);
     break;
