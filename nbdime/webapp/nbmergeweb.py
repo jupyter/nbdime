@@ -70,7 +70,9 @@ def main(args=None):
     remote = arguments.remote
     output = arguments.output
     return run_server(
-        port=port, cwd=cwd, outputfilename=output,
+        port=port, cwd=cwd,
+        closable=True,
+        outputfilename=output,
         on_port=lambda port: browse(port, base, local, remote))
 
 

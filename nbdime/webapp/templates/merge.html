@@ -1,4 +1,5 @@
 <!doctype html>
+{% autoescape None %}
 <html>
   <head>
     <meta charset="utf-8"/>
@@ -21,20 +22,24 @@
         <fieldset>
           <legend>Please input filenames of notebooks to diff:</legend>
           Local:
-          <input id="merge-local" type="text" name="local" value="{{ local }}">
+          <input id="merge-local" type="text" name="local" value="{{ escape(config_data['local']) }}">
           Base:
-          <input id="merge-base" type="text" name="base" value="{{ base }}">
+          <input id="merge-base" type="text" name="base" value="{{ escape(config_data['base']) }}">
           Remote:
-          <input id="merge-remote" type="text" name="remote" value="{{ remote }}">
+          <input id="merge-remote" type="text" name="remote" value="{{ escape(config_data['remote']) }}">
           <input id="nbdime-run-merge" type="submit" name="merge" value="Merge files"></button>
         </fieldset>
       </form> <!-- nbdime-forms -->
+      <div id="nbdime-header-buttonrow">
+        <button id="nbdime-save" class="nbdime-header-button" style="display: none">Save</button>
+        <button id="nbdime-close" class="nbdime-header-button" style="display: none">Close tool</button>
+      </div>
     </div> <!-- ndime-header -->
 
     <div id="nbdime-root">
     </div>
-    <script id='jupyter-config-data' type="application/json">{ "baseUrl": "{{ static_url }}" }</script>
-    <script id='nbdime-config-data' type="application/json">{ "base": "{{ base }}", "local": "{{local}}", "remote": "{{remote}}"}</script>
+    <script id='jupyter-config-data' type="application/json">{ "baseUrl": {{ json_encode(base_url) }} }</script>
+    <script id='nbdime-config-data' type="application/json">{{ json_encode(config_data) }}</script>
     <script src="{{ static_url('build/nbdime.js') }}"></script>
     <noscript>Nbdime relies on javascript for diff/merge views!</noscript>
   </body>

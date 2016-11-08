@@ -34,7 +34,7 @@ function requestDiff(
     onComplete: (result: any) => void,
     onFail: (result: any) => void) {
   requestJson('/api/diff',
-              {base: base, remote: remote},
+              {base, remote},
               onComplete,
               onFail);
 }
@@ -49,7 +49,7 @@ function requestMerge(
     onComplete: (result: any) => void,
     onFail: (result: any) => void) {
   requestJson('/api/merge',
-              {base: base, local: local, remote: remote},
+              {base, local, remote},
               onComplete,
               onFail);
 }

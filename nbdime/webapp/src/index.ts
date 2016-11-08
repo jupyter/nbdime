@@ -24,13 +24,12 @@ function initialize() {
     initializeDiff();
   }
 
-  // If launched as a tool, there should be a close button, to indicate that
-  // the tool has finshed. If present, wire it to events, and connect to
-  // window unload event as well:
+  let closable = getConfigOption('closable');
   let closeBtn = document.getElementById('nbdime-close') as HTMLButtonElement;
-  if (closeBtn) {
+  if (closable) {
     closeBtn.onclick = onclose;
     window.onbeforeunload = onclose;
+    closeBtn.style.display = 'initial';
   }
 }
 

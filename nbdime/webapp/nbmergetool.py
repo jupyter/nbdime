@@ -69,6 +69,7 @@ def main(args=None):
     remote = arguments.remote
     merged = arguments.merged
     return run_server(port=port, cwd=cwd,
+                      closable=True,
                       mergetool_args=dict(base=base, local=local, remote=remote),
                       outputfilename=merged,
                       on_port=browse)
