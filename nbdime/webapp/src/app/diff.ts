@@ -107,7 +107,8 @@ function onDiff(e: Event) {
   let b = (document.getElementById('diff-base') as HTMLInputElement).value;
   let r = (document.getElementById('diff-remote') as HTMLInputElement).value;
   getDiff(b, r);
-  let uri = '/diff?base=' + encodeURIComponent(b) +
+  let uri = window.location.pathname;
+  uri += '?base=' + encodeURIComponent(b) +
     '&remote=' + encodeURIComponent(r);
   history.pushState({base: b, remote: r},
     'Diff: "' + b + '" vs "' + r + '"', uri);

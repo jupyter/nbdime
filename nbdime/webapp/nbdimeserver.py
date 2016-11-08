@@ -9,6 +9,8 @@ import os
 import json
 import sys
 from argparse import ArgumentParser
+
+import requests
 from six import string_types
 from tornado import ioloop, web, escape, netutil, httpserver
 import nbformat
@@ -71,11 +73,15 @@ class NbdimeApiHandler(web.RequestHandler):
         # Check that file exists
         path = os.path.join(self.params["cwd"], arg)
         if not os.path.exists(path):
-            raise web.HTTPError(400, "File doesn't exist: %s" % truncate_filename(arg))
+            # Assume file is URI
+            r = requests.get(arg)
 
         # Let nbformat do the reading and validation
         try:
-            nb = nbformat.read(path, as_version=4)
+            if os.path.exists(path):
+                nb = nbformat.read(path, as_version=4)
+            else:
+                nb = nbformat.reads(r.text, as_version=4)
         except:
             raise web.HTTPError(400, "Invalid notebook: %s" % truncate_filename(arg))
 
@@ -205,17 +211,6 @@ class ApiCloseHandler(NbdimeApiHandler):
         print("Closing server on remote request")
         self.finish()
         ioloop.IOLoop.current().stop()
-
-
-class NbdimeApp(web.Application):
-    @property
-    def connection_url(self):
-        ip = self.ip if self.ip else '127.0.0.1'
-        return self._url(ip)
-
-    def _url(self, ip):
-        proto = 'https' if self.certfile else 'http'
-        return "%s://%s:%i%s" % (proto, ip, self.port, self.base_url)
 
 
 def make_app(**params):
