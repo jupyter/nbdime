@@ -7,6 +7,10 @@ import {
 } from 'jupyterlab/lib/notebook/notebook/nbformat';
 
 import {
+  NotifyUserError
+} from '../../common/exceptions';
+
+import {
   IDiffEntry, IDiffArrayEntry
 } from '../diffentries';
 
@@ -104,7 +108,7 @@ class OutputDiffModel implements IDiffModel {
           key.indexOf('data.') === 0) {
       return key.slice('data.'.length);
     }
-    throw new Error('Unknown MIME type for key: ' + key);
+    throw new NotifyUserError('Unknown MIME type for key: ' + key);
   }
 
   /**
