@@ -312,6 +312,10 @@ class DiffView {
   }
 
   protected onGutterClick(instance: CodeMirror.Editor, line: number, gutter: string, clickEvent: MouseEvent): void {
+    if (clickEvent.button !== 0) {
+      // Only care about left clicks
+      return;
+    }
     let li = instance.lineInfo(line);
     if (!li.gutterMarkers || !li.gutterMarkers.hasOwnProperty(gutter)) {
       return;
