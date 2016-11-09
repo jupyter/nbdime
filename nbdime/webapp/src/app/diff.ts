@@ -106,18 +106,35 @@ function onDiff(e: Event) {
   e.preventDefault();
   let b = (document.getElementById('diff-base') as HTMLInputElement).value;
   let r = (document.getElementById('diff-remote') as HTMLInputElement).value;
-  getDiff(b, r);
-  let uri = window.location.pathname;
-  uri += '?base=' + encodeURIComponent(b) +
-    '&remote=' + encodeURIComponent(r);
-  history.pushState({base: b, remote: r},
-    'Diff: "' + b + '" vs "' + r + '"', uri);
+  compare(b, r, true);
   return false;
 };
+
+
+function compare(base: string, remote: string, pushHistory: boolean | 'replace') {
+  getDiff(base, remote);
+  if (pushHistory) {
+    let uri = window.location.pathname;
+    uri = '?base=' + encodeURIComponent(base) +
+      '&remote=' + encodeURIComponent(remote);
+    editHistory(pushHistory, {base, remote},
+      'Diff: "' + base + '" vs "' + remote + '"', uri);
+  }
+}
+
+function editHistory(pushHistory: boolean | 'replace', statedata: any, title?: string, url?: string): void {
+  if (pushHistory === true) {
+    history.pushState(statedata, title, url);
+  } else if (pushHistory === 'replace') {
+    history.replaceState(statedata, title, url);
+  }
+}
+
 
 /**
  * Calls `requestDiff` with our response handlers
  */
+export
 function getDiff(base: string, remote: string) {
   requestDiff(base, remote, onDiffRequestCompleted, onDiffRequestFailed);
 }
@@ -148,7 +165,7 @@ function onPopState(e: PopStateEvent) {
     let er = (document.getElementById('diff-remote') as HTMLInputElement);
     eb.value = e.state.base;
     er.value = e.state.remote;
-    getDiff(e.state.base, e.state.remote);
+    compare(e.state.base, e.state.remote, false);
   }
 }
 
@@ -174,6 +191,6 @@ function initializeDiff() {
   let base = getConfigOption('base');
   let remote = getConfigOption('remote');
   if (base && remote) {
-    getDiff(base, remote);
+    compare(base, remote, 'replace');
   }
 }

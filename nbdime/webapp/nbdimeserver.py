@@ -90,7 +90,11 @@ class NbdimeApiHandler(web.RequestHandler):
 
 class MainHandler(NbdimeApiHandler):
     def get(self):
-        self.render("index.html")
+        args = self.base_args()
+        args["base"] = self.get_argument("base", "")
+        args["local"] = self.get_argument("local", "")
+        args["remote"] = self.get_argument("remote", "")
+        self.render("index.html", config_data=args, base_url=self.base_url)
 
 
 class MainDiffHandler(NbdimeApiHandler):

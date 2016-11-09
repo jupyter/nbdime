@@ -66,7 +66,8 @@ import {
 let mergeModel: NotebookMergeModel = null;
 
 /**
- * Show the diff as represented by the base notebook and a list of diff entries
+ * Show the merge as represented by the base notebook and a
+ * list of merge decisions
  */
 function showMerge(data: {
     base: nbformat.INotebookContent,
@@ -110,6 +111,7 @@ function showMerge(data: {
 /**
  * Calls `requestMerge` with our response handlers
  */
+export
 function getMerge(base: string, local: string, remote: string) {
   requestMerge(base, local, remote, onMergeRequestCompleted, onMergeRequestFailed);
 }
@@ -125,15 +127,30 @@ function onMerge(e: Event) {
   let b = (document.getElementById('merge-base') as HTMLInputElement).value;
   let c = (document.getElementById('merge-local') as HTMLInputElement).value;
   let r = (document.getElementById('merge-remote') as HTMLInputElement).value;
-  getMerge(b, c, r);
-  let uri = window.location.pathname;
-  uri += '?base=' + encodeURIComponent(b) +
-    '&local=' + encodeURIComponent(c) +
-    '&remote=' + encodeURIComponent(r);
-  history.pushState({base: b, local: c, remote: r},
-    'Merge: "' + c + '" - "' + b + '" - "' + r + '"', uri);
+  compare(b, c, r, true);
   return false;
 };
+
+function compare(b: string, c: string, r: string, pushHistory: boolean | 'replace') {
+  // All values present, do merge
+  getMerge(b, c, r);
+  if (pushHistory) {
+    let uri = window.location.pathname;
+    uri += '?base=' + encodeURIComponent(b) +
+      '&local=' + encodeURIComponent(c) +
+      '&remote=' + encodeURIComponent(r);
+    editHistory(pushHistory, {base: b, local: c, remote: r},
+      'Merge: "' + c + '" - "' + b + '" - "' + r + '"', uri);
+  }
+}
+
+function editHistory(pushHistory: boolean | 'replace', statedata: any, title?: string, url?: string): void {
+  if (pushHistory === true) {
+    history.pushState(statedata, title, url);
+  } else if (pushHistory === 'replace') {
+    history.replaceState(statedata, title, url);
+  }
+}
 
 /**
  * Called when a 'back' is requested
@@ -147,19 +164,19 @@ function onPopState(e: PopStateEvent) {
     eb.value = e.state.base;
     el.value = e.state.local;
     er.value = e.state.remote;
-    getMerge(e.state.base, e.state.local, e.state.remote);
+    compare(e.state.base, e.state.local, e.state.remote, false);
   }
 }
 
 /**
- * Callback for a successfull diff request
+ * Callback for a successfull merge request
  */
 function onMergeRequestCompleted(data: any) {
   mergeModel = showMerge(data);
 }
 
 /**
- * Callback for a failed diff request
+ * Callback for a failed merge request
  */
 function onMergeRequestFailed(response: string) {
   console.log('Merge request failed.');
@@ -173,6 +190,7 @@ function onMergeRequestFailed(response: string) {
  * Extract the merged notebook from the model, as well as any remaining
  * conflicts, and send them to the server for storage / further processing.
  */
+export
 function saveMerged() {
   if (!mergeModel) {
     return;
@@ -249,12 +267,12 @@ function attachToForm() {
 export
 function initializeMerge() {
   attachToForm();
-  // If arguments supplied in config, run diff directly:
+  // If arguments supplied in config, run merge directly:
   let base = getConfigOption('base');
   let local = getConfigOption('local');  // Only available for merge
   let remote = getConfigOption('remote');
   if (base && local && remote) {
-    getMerge(base, local, remote);
+    compare(base, local, remote, 'replace');
   }
 
   let savable = getConfigOption('savable');
