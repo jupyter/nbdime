@@ -2,6 +2,9 @@
   "compilerOptions": {
     "target": "ES5",
     "module": "commonjs",
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "skipLibCheck": true
   }
 }
