@@ -72,6 +72,10 @@
 .jp-Notebook-merge .CodeMirror-line .CodeMirror-merge-l-inserted { background-color: #cbcbf8 }
 
 
+.CodeMirror-merge-l-chunk.CodeMirror-merge-r-chunk { background: #ffdddd; }
+.CodeMirror-merge-l-chunk-start.CodeMirror-merge-r-chunk-start { border-top: 1px solid #f88888; }
+.CodeMirror-merge-l-chunk-end.CodeMirror-merge-r-chunk-end { border-bottom: 1px solid #f88888; }
+
 .CodeMirror-merge-m-chunk-start-either { border-top: 1px solid #aee; }
 .CodeMirror-merge-m-chunk-end-either { border-bottom: 1px solid #aee }
 
