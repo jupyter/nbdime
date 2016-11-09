@@ -7,6 +7,10 @@ import {
 } from 'jupyterlab/lib/notebook/notebook/nbformat';
 
 import {
+  NotifyUserError
+} from '../../common/exceptions';
+
+import {
   IDiffEntry, IDiffArrayEntry
 } from '../diffentries';
 
@@ -36,7 +40,7 @@ export class CellDiffModel {
     this.outputs = outputs;
     this.cellType = cellType;
     if (outputs === null && cellType === 'code') {
-      throw new Error('Invalid code cell, missing outputs!');
+      throw new NotifyUserError('Invalid code cell, missing outputs!');
     }
     this.metadata.collapsible = true;
     this.metadata.collapsibleHeader = 'Metadata changed';

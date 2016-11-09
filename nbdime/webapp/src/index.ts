@@ -15,7 +15,7 @@ import {
 } from './app/compare';
 
 import {
-  closeTool, getConfigOption
+  closeTool, getConfigOption, handleError
 } from './app/common';
 
 
@@ -44,3 +44,4 @@ function initialize() {
 }
 
 window.onload = initialize;
+window.onerror = handleError;

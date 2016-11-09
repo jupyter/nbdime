@@ -27,6 +27,10 @@ import {
 } from '../../patch';
 
 import {
+  NotifyUserError
+} from '../../common/exceptions';
+
+import {
   valueIn, DeepCopyableObject
 } from '../../common/util';
 
@@ -272,7 +276,7 @@ abstract class ObjectMergeModel<ObjectType extends DeepCopyableObject, DiffModel
     let out: MergeDecision[] = [];
     for (let d of diff) {
       if (this._whitelist && !valueIn(d.key, this._whitelist)) {
-        throw new Error('Currently not able to handle decisions on variable \"' +
+        throw new NotifyUserError('Currently not able to handle decisions on variable \"' +
               d.key + '\"');
       }
       let action: Action = (md.action === 'base' ?
