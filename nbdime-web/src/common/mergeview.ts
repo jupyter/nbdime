@@ -51,19 +51,19 @@ const PICKER_SYMBOL = '\u27ad';
 const CONFLICT_MARKER = '\u26A0'; // '\u2757'
 
 
-export enum DIFF_OP {
+export
+enum DIFF_OP {
   DIFF_DELETE = -1,
   DIFF_INSERT = 1,
   DIFF_EQUAL = 0
 }
 
-export enum EventDirection {
+export
+enum EventDirection {
   INCOMING,
   OUTGOING
 }
 
-type GDiffEntry = [DIFF_OP, string];
-type GDiff = GDiffEntry[];
 export
 type DiffClasses = {
   [key: string]: string;
@@ -161,10 +161,13 @@ function createNbdimeMergeView(
  */
 export
 class DiffView {
-  constructor(public model: IStringDiffModel,
-              public type: 'left' | 'right' | 'merge',
-              public alignChunks: (force?: boolean) => void,
+  constructor(model: IStringDiffModel,
+              type: 'left' | 'right' | 'merge',
+              updateCallback: (force?: boolean) => void,
               options: CodeMirror.MergeView.MergeViewEditorConfiguration) {
+    this.model = model;
+    this.type = type;
+    this.updateCallback = updateCallback;
     this.classes = type === 'left' ?
       leftClasses : type === 'right' ? rightClasses : null;
     let ownValue = this.model.remote || '';
@@ -198,7 +201,36 @@ class DiffView {
     }
   }
 
-  registerUpdate() {
+  syncModel() {
+    if (this.modelInvalid()) {
+      this.ownEditor.setValue(this.model.remote!);
+      this.lineChunks = this.model.getLineChunks();
+      this.chunks = lineToNormalChunks(this.lineChunks);
+    }
+  }
+
+  buildGap(): HTMLElement {
+    let lock = this.lockButton = elt('div', undefined, 'CodeMirror-merge-scrolllock');
+    lock.title = 'Toggle locked scrolling';
+    let lockWrap = elt('div', [lock], 'CodeMirror-merge-scrolllock-wrap');
+    let self: DiffView = this;
+    CodeMirror.on(lock, 'click', function() {
+      self.setScrollLock(!self.lockScroll);
+    });
+    return this.gap = elt('div', [lockWrap], 'CodeMirror-merge-gap');
+  }
+
+  setScrollLock(val: boolean, action?: boolean) {
+    this.lockScroll = val;
+    if (val && action !== false) {
+      this.syncScroll(EventDirection.OUTGOING);
+    }
+    if (this.lockButton) {
+      this.lockButton.innerHTML = val ? '\u21db\u21da' : '\u21db&nbsp;&nbsp;\u21da';
+    }
+  }
+
+  protected registerUpdate() {
     let editMarkers = [];
     let origMarkers = [];
     let debounceChange: number;
@@ -227,7 +259,7 @@ class DiffView {
           origMarkers, DIFF_OP.DIFF_DELETE);
       }
 
-      self.alignChunks(true);
+      self.updateCallback(true);
       self.updating = false;
     }
     function setDealign(fast: boolean | CodeMirror.Editor) {
@@ -274,31 +306,12 @@ class DiffView {
     return update;
   }
 
-  modelInvalid(): boolean {
+  protected modelInvalid(): boolean {
     return this.model instanceof DecisionStringDiffModel &&
             this.model.invalid;
   }
 
-  syncModel() {
-    if (this.modelInvalid()) {
-      this.ownEditor.setValue(this.model.remote!);
-      this.lineChunks = this.model.getLineChunks();
-      this.chunks = lineToNormalChunks(this.lineChunks);
-    }
-  }
-
-  buildGap(): HTMLElement {
-    let lock = this.lockButton = elt('div', undefined, 'CodeMirror-merge-scrolllock');
-    lock.title = 'Toggle locked scrolling';
-    let lockWrap = elt('div', [lock], 'CodeMirror-merge-scrolllock-wrap');
-    let self: DiffView = this;
-    CodeMirror.on(lock, 'click', function() {
-      self.setScrollLock(!self.lockScroll);
-    });
-    return this.gap = elt('div', [lockWrap], 'CodeMirror-merge-gap');
-  }
-
-  onGutterClick(instance: CodeMirror.Editor, line: number, gutter: string, clickEvent: Event): void {
+  protected onGutterClick(instance: CodeMirror.Editor, line: number, gutter: string, clickEvent: MouseEvent): void {
     let li = instance.lineInfo(line);
     if (!li.gutterMarkers || !li.gutterMarkers.hasOwnProperty(gutter)) {
       return;
@@ -330,7 +343,7 @@ class DiffView {
     }
   }
 
-  registerScroll(): void {
+  protected registerScroll(): void {
     let self = this;
     this.baseEditor.on('scroll', function() {
       self.syncScroll(EventDirection.OUTGOING);
@@ -344,7 +357,7 @@ class DiffView {
    * Sync scrolling between base and own editors. `type` is used to indicate
    * which editor is the source, and which editor is the destination of the sync.
    */
-  syncScroll(type: EventDirection): void {
+  protected syncScroll(type: EventDirection): void {
     if (this.modelInvalid()) {
       return;
     }
@@ -393,19 +406,9 @@ class DiffView {
     return;
   }
 
-  setScrollLock(val: boolean, action?: boolean) {
-    this.lockScroll = val;
-    if (val && action !== false) {
-      this.syncScroll(EventDirection.OUTGOING);
-    }
-    if (this.lockButton) {
-      this.lockButton.innerHTML = val ? '\u21db\u21da' : '\u21db&nbsp;&nbsp;\u21da';
-    }
-  }
 
-
-  updateMarks(editor: CodeMirror.Editor, diff: DiffRangePos[],
-              markers: any[], type: DIFF_OP) {
+  protected updateMarks(editor: CodeMirror.Editor, diff: DiffRangePos[],
+                        markers: any[], type: DIFF_OP) {
     let classes: DiffClasses;
     if (this.classes === null) {
       // Only store prefixes here, will be completed later
@@ -508,25 +511,28 @@ class DiffView {
     });
   }
 
-  ownWidget: CodeMirrorWidget;
-
   get ownEditor(): CodeMirror.Editor {
     return this.ownWidget.editor;
   }
 
-  classes: DiffClasses | null;
+  ownWidget: CodeMirrorWidget;
+  model: IStringDiffModel;
+  type: string;
   showDifferences: boolean;
   dealigned: boolean;
   forceUpdate: Function;
   baseEditor: CodeMirror.Editor;
   chunks: Chunk[];
   lineChunks: Chunk[];
-  copyButtons: HTMLElement;
-  lockButton: HTMLElement;
   gap: HTMLElement;
   lockScroll: boolean;
   updating: boolean;
   updatingFast: boolean;
+
+  protected updateCallback: (force?: boolean) => void;
+  protected copyButtons: HTMLElement;
+  protected lockButton: HTMLElement;
+  protected classes: DiffClasses | null;
 }
 
 
@@ -932,7 +938,7 @@ class MergeView extends Panel {
     }
     this.initialized = true;
     if (this.left || this.right || this.merge) {
-      (this.left || this.right || this.merge)!.alignChunks(true);
+      this.alignViews(true);
     }
   }
 

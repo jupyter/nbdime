@@ -22,7 +22,7 @@ import {
 } from '../patch';
 
 import {
-  deepCopy, valueIn, isPrefixArray, findSharedPrefix
+  deepCopy, valueIn, isPrefixArray, findSharedPrefix, splitLines
 } from '../common/util';
 
 export
@@ -247,6 +247,7 @@ function popPath(diffs: DiffCollection, popInner?: boolean):
   return null;
 }
 
+export
 function pushPath(diffs: IDiffEntry[], prefix: DecisionPath): IDiffEntry[] {
   for (let key of prefix.reverse()) {
     diffs = [opPatch(key, diffs)];
@@ -355,7 +356,7 @@ function resolveAction(base: any, decision: MergeDecision): IDiffEntry[] {
       d.source = {decision, action: 'custom'};
       return [d];
     } else if (typeof(base) === 'string') {
-      let len = base.match(/^.*(\r\n|\r|\n|$)/gm)!.length;
+      let len = splitLines(base).length;
       let d = opRemoveRange(0, len);
       d.source = {decision, action: 'custom'};
       return [d];

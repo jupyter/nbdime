@@ -66,10 +66,6 @@
     background-color: #f8cbcb;
 }
 
-.jp-Merge-gutter-buttons {
-  width: 16px;
-}
-
 .CodeMirror-merge-r-chunk { background: #ffffe0; }
 .CodeMirror-merge-r-chunk-start { border-top: 1px solid #ee8; }
 .CodeMirror-merge-r-chunk-end { border-bottom: 1px solid #ee8; }
