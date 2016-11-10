@@ -11,7 +11,8 @@ import {
 } from '../../common/util';
 
 import {
-  IDiffAddRange, IDiffPatch, IDiffRemoveRange, IDiffArrayEntry
+  IDiffAddRange, IDiffPatch, IDiffRemoveRange, IDiffArrayEntry,
+  IDiffEntry
 } from '../../diff/diffentries';
 
 import {
@@ -236,6 +237,11 @@ class NotebookMergeModel {
 }
 
 
+function isChunk(diff: IDiffEntry[] | null): diff is IDiffArrayEntry[] {
+  return !!diff && diff.length === 2 &&
+    diff[0].key === diff[1].key;
+}
+
 /**
  * The merge format allows for chunking of sequence diffs such that one entry
  * in the diff lists have 2 entries, where the first is always an insertion
@@ -259,7 +265,7 @@ function splitCellChunks(mergeDecisions: MergeDecision[]): MergeDecision[] {
           nmd.remoteDiff = [d];
           output.push(nmd);
         }
-      } else if (md.localDiff && md.localDiff.length === 2) {
+      } else if (isChunk(md.localDiff)) {
         // Split off local
         output.push(new MergeDecision(
           md.absolutePath.slice(),
@@ -271,7 +277,7 @@ function splitCellChunks(mergeDecisions: MergeDecision[]): MergeDecision[] {
         let nmd = new MergeDecision(md);
         nmd.localDiff = md.localDiff.slice(1);
         output.push(nmd);
-      } else if (md.remoteDiff && md.remoteDiff.length === 2) {
+      } else if (isChunk(md.remoteDiff)) {
         // Split off remote
         output.push(new MergeDecision(
           md.absolutePath.slice(),
