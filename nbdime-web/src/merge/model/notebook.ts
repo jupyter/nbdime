@@ -50,6 +50,7 @@ class NotebookMergeModel {
     mergeDecisions = splitCellChunks(mergeDecisions);
     mergeDecisions = splitCellRemovals(mergeDecisions);
     mergeDecisions = splitCellInsertions(mergeDecisions);
+    mergeDecisions = splitCellListPatch(mergeDecisions);
     resolveCommonPaths(mergeDecisions);
     for (let md of mergeDecisions) {
       if (md.action === 'either') {
@@ -65,10 +66,11 @@ class NotebookMergeModel {
   }
 
   /**
-   * Create a new NotebookDiffModel from a base notebook and a list of diffs.
+   * Create a new NotebookMergeModel from a base notebook and a list of
+   * merge decisions.
    *
-   * The base as well as the diff entries are normally supplied by the nbdime
-   * server.
+   * The base as well as the merge decisions are normally supplied by the
+   * nbdime server.
    */
   constructor(base: nbformat.INotebookContent,
               rawMergeDecisions: IMergeDecision[]) {
@@ -297,6 +299,48 @@ function splitCellChunks(mergeDecisions: MergeDecision[]): MergeDecision[] {
     }
   }
   resolveCommonPaths(output);
+  return output;
+}
+
+
+/**
+ * If any decisions have diffs on different cells, split them
+ * up for one decision per cell.
+ */
+function splitCellListPatch(mergeDecisions: MergeDecision[]): MergeDecision[] {
+  let output: MergeDecision[] = [];
+
+  for (let md of mergeDecisions) {
+    if (!arraysEqual(md.absolutePath, ['cells'])) {
+      output.push(md);
+      continue;
+    }
+    // Null out empty diffs
+    let dl = hasEntries(md.localDiff) ? md.localDiff : null;
+    let dr = hasEntries(md.remoteDiff) ? md.remoteDiff : null;
+
+    if (dl && dl.length < 2 && dr && dr.length < 2) {
+      // Single cell affected
+      output.push(md);
+      continue;
+    }
+
+    // Before this is called, we should have split up chunks
+    // as well as range addition/removal, so all diffs
+    // should have different keys
+    let maxlen = Math.max(dl ? dl.length : 0, dr ? dr.length : 0);
+    for (let i = 0; i < maxlen; ++i) {
+      let subdl = dl && i < dl.length ? [dl[i]] : null;
+      let subdr = dr && i < dr.length ? [dr[i]] : null;
+      output.push(new MergeDecision(
+        md.absolutePath.slice(),
+        subdl,
+        subdr,
+        md.action,
+        md.conflict
+        ));
+    }
+  }
   return output;
 }
 
