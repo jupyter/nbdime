@@ -493,6 +493,7 @@ class DiffView {
           conflictMarker.classList.add(GUTTER_CONFLICT_CLASS);
           editor.setGutterMarker(line, GUTTER_CONFLICT_CLASS, conflictMarker);
         }
+        editor.addLineClass(line, 'background', classes.end + '-empty');
         markers.push(line);
       }
     }
