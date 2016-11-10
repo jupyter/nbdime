@@ -66,16 +66,6 @@
     background-color: #f8cbcb;
 }
 
-.CodeMirror-merge-r-chunk { background: #ffffe0; }
-.CodeMirror-merge-r-chunk-start { border-top: 1px solid #ee8; }
-.CodeMirror-merge-r-chunk-end { border-bottom: 1px solid #ee8; }
-.CodeMirror-merge-r-connect { fill: #ffffe0; stroke: #ee8; stroke-width: 1px; }
-
-.CodeMirror-merge-l-chunk { background: #eef; }
-.CodeMirror-merge-l-chunk-start { border-top: 1px solid #88e; }
-.CodeMirror-merge-l-chunk-end { border-bottom: 1px solid #88e; }
-.CodeMirror-merge-l-connect { fill: #eef; stroke: #88e; stroke-width: 1px; }
-
 .CodeMirror-merge-collapsed-widget:before {
   content: "(...)";
 }
