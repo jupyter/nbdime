@@ -120,6 +120,15 @@
   color: #b00
 }
 
+.CodeMirror-gutter-wrapper {
+  top: 0;
+  bottom: 0;
+}
+
+.CodeMirror-linenumber {
+  bottom: 0;
+}
+
 .jp-Merge-oneway-local,.jp-Merge-oneway-remote {
   width: 75%;
 }
