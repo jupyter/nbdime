@@ -11,7 +11,8 @@ import {
 } from '../../common/util';
 
 import {
-  IDiffAddRange, IDiffPatch, IDiffRemoveRange, IDiffArrayEntry
+  IDiffAddRange, IDiffPatch, IDiffRemoveRange, IDiffArrayEntry,
+  IDiffEntry
 } from '../../diff/diffentries';
 
 import {
@@ -49,6 +50,7 @@ class NotebookMergeModel {
     mergeDecisions = splitCellChunks(mergeDecisions);
     mergeDecisions = splitCellRemovals(mergeDecisions);
     mergeDecisions = splitCellInsertions(mergeDecisions);
+    mergeDecisions = splitCellListPatch(mergeDecisions);
     resolveCommonPaths(mergeDecisions);
     for (let md of mergeDecisions) {
       if (md.action === 'either') {
@@ -64,10 +66,11 @@ class NotebookMergeModel {
   }
 
   /**
-   * Create a new NotebookDiffModel from a base notebook and a list of diffs.
+   * Create a new NotebookMergeModel from a base notebook and a list of
+   * merge decisions.
    *
-   * The base as well as the diff entries are normally supplied by the nbdime
-   * server.
+   * The base as well as the merge decisions are normally supplied by the
+   * nbdime server.
    */
   constructor(base: nbformat.INotebookContent,
               rawMergeDecisions: IMergeDecision[]) {
@@ -236,6 +239,11 @@ class NotebookMergeModel {
 }
 
 
+function isChunk(diff: IDiffEntry[] | null): diff is IDiffArrayEntry[] {
+  return !!diff && diff.length === 2 &&
+    diff[0].key === diff[1].key;
+}
+
 /**
  * The merge format allows for chunking of sequence diffs such that one entry
  * in the diff lists have 2 entries, where the first is always an insertion
@@ -259,7 +267,7 @@ function splitCellChunks(mergeDecisions: MergeDecision[]): MergeDecision[] {
           nmd.remoteDiff = [d];
           output.push(nmd);
         }
-      } else if (md.localDiff && md.localDiff.length === 2) {
+      } else if (isChunk(md.localDiff)) {
         // Split off local
         output.push(new MergeDecision(
           md.absolutePath.slice(),
@@ -271,7 +279,7 @@ function splitCellChunks(mergeDecisions: MergeDecision[]): MergeDecision[] {
         let nmd = new MergeDecision(md);
         nmd.localDiff = md.localDiff.slice(1);
         output.push(nmd);
-      } else if (md.remoteDiff && md.remoteDiff.length === 2) {
+      } else if (isChunk(md.remoteDiff)) {
         // Split off remote
         output.push(new MergeDecision(
           md.absolutePath.slice(),
@@ -291,6 +299,48 @@ function splitCellChunks(mergeDecisions: MergeDecision[]): MergeDecision[] {
     }
   }
   resolveCommonPaths(output);
+  return output;
+}
+
+
+/**
+ * If any decisions have diffs on different cells, split them
+ * up for one decision per cell.
+ */
+function splitCellListPatch(mergeDecisions: MergeDecision[]): MergeDecision[] {
+  let output: MergeDecision[] = [];
+
+  for (let md of mergeDecisions) {
+    if (!arraysEqual(md.absolutePath, ['cells'])) {
+      output.push(md);
+      continue;
+    }
+    // Null out empty diffs
+    let dl = hasEntries(md.localDiff) ? md.localDiff : null;
+    let dr = hasEntries(md.remoteDiff) ? md.remoteDiff : null;
+
+    if (dl && dl.length < 2 && dr && dr.length < 2) {
+      // Single cell affected
+      output.push(md);
+      continue;
+    }
+
+    // Before this is called, we should have split up chunks
+    // as well as range addition/removal, so all diffs
+    // should have different keys
+    let maxlen = Math.max(dl ? dl.length : 0, dr ? dr.length : 0);
+    for (let i = 0; i < maxlen; ++i) {
+      let subdl = dl && i < dl.length ? [dl[i]] : null;
+      let subdr = dr && i < dr.length ? [dr[i]] : null;
+      output.push(new MergeDecision(
+        md.absolutePath.slice(),
+        subdl,
+        subdr,
+        md.action,
+        md.conflict
+        ));
+    }
+  }
   return output;
 }
 

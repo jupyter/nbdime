@@ -10,12 +10,13 @@ import {
 import {
   stripSource
 } from '../testutil';
+
 import {
   IMergeDecision, MergeDecision
 } from '../../../src/merge/decisions';
 
 import {
-  opAddRange, opRemoveRange, opPatch, opReplace, IDiffPatch,
+  opAddRange, opRemoveRange, opPatch, opReplace,
   IDiffEntry
 } from '../../../src/diff/diffentries';
 
@@ -25,7 +26,7 @@ import {
 
 
 const notebook = require('../../files/base.ipynb') as nbformat.INotebookContent;
-const NBdecisions = require('../../files/decisionsA.json') as IMergeDecision[];
+const decisionsNB = require('../../files/decisionsA.json') as IMergeDecision[];
 
 
 describe('merge', () => {
@@ -143,21 +144,6 @@ describe('merge', () => {
         common_path: ['cells']
       };
 
-      let decLIns: IMergeDecision = {
-        local_diff: [opPatch(0, [
-          //opReplace('execution_count', 2),
-          opPatch('outputs', [opRemoveRange(0, 1)]),
-          opPatch('source', [
-            opAddRange(1, ['l += 2\n']),
-            opPatch(1, [opAddRange('print(l)'.length, '\n')])
-          ])
-        ])],
-        remote_diff: [opRemoveRange(0, 1)],
-        action: 'base',
-        conflict: true,
-        common_path: ['cells']
-      };
-
       it('should be creatable by base and empty decision set', () => {
         let value = new CellMergeModel(codeCellBase, [], mimetype);
         expect(value.base).to.be(codeCellBase);
@@ -244,8 +230,75 @@ describe('merge', () => {
       });
 
       it('should initialize a model with decisions', () => {
-        let model = new NotebookMergeModel(notebook, NBdecisions);
+        let model = new NotebookMergeModel(notebook, decisionsNB);
         expect(model.base).to.be(notebook);
+      });
+
+      describe('decision splitting', () => {
+        let diff: IDiffEntry[] = [
+          opPatch(0, [opPatch('metadata', [opReplace('collapsed', true)])]),
+          opPatch(2, [opPatch('source', [opAddRange(1, ['    z += 2\n'])])]),
+        ];
+
+        it('should split a local patch of cells', () => {
+          let cdecs: MergeDecision[] = [new MergeDecision(
+            ['cells'], diff, null, 'local'
+          )];
+          let model = new NotebookMergeModel(notebook, cdecs);
+
+          expect(model.decisions.length).to.be(2);
+
+          let d = model.decisions[0];
+          expect(d.action).to.be('local');
+          expect(d.absolutePath).to.eql(['cells', 0, 'metadata']);
+          expect(stripSource(d.localDiff)).to.eql([opReplace('collapsed', true)]);
+
+          d = model.decisions[1];
+          expect(d.action).to.be('local');
+          expect(d.absolutePath).to.eql(['cells', 2, 'source']);
+          expect(stripSource(d.localDiff)).to.eql([opAddRange(1, ['    z += 2\n'])]);
+        });
+
+        it('should split a remote patch of cells', () => {
+          let cdecs: MergeDecision[] = [new MergeDecision(
+            ['cells'], null, diff, 'remote'
+          )];
+          let model = new NotebookMergeModel(notebook, cdecs);
+
+          expect(model.decisions.length).to.be(2);
+
+          let d = model.decisions[0];
+          expect(d.action).to.be('remote');
+          expect(d.absolutePath).to.eql(['cells', 0, 'metadata']);
+          expect(stripSource(d.remoteDiff)).to.eql([opReplace('collapsed', true)]);
+
+          d = model.decisions[1];
+          expect(d.action).to.be('remote');
+          expect(d.absolutePath).to.eql(['cells', 2, 'source']);
+          expect(stripSource(d.remoteDiff)).to.eql([opAddRange(1, ['    z += 2\n'])]);
+        });
+
+        it('should split an agreed patch of cells', () => {
+          let cdecs: MergeDecision[] = [new MergeDecision(
+            ['cells'], diff, diff, 'either'
+          )];
+          let model = new NotebookMergeModel(notebook, cdecs);
+
+          expect(model.decisions.length).to.be(2);
+
+          let d = model.decisions[0];
+          expect(d.action).to.be('either');
+          expect(d.absolutePath).to.eql(['cells', 0, 'metadata']);
+          expect(stripSource(d.localDiff)).to.eql([opReplace('collapsed', true)]);
+          expect(stripSource(d.remoteDiff)).to.eql([opReplace('collapsed', true)]);
+
+          d = model.decisions[1];
+          expect(d.action).to.be('either');
+          expect(d.absolutePath).to.eql(['cells', 2, 'source']);
+          expect(stripSource(d.localDiff)).to.eql([opAddRange(1, ['    z += 2\n'])]);
+          expect(stripSource(d.remoteDiff)).to.eql([opAddRange(1, ['    z += 2\n'])]);
+        });
+
       });
 
     });
