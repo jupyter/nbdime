@@ -197,36 +197,74 @@ class MergeDecision {
 }
 
 
-function _cmpPath(a: DecisionPath, b: DecisionPath): number {
+/**
+ * Compare to DecisionPath's for sorting.
+ *
+ * The rules are that deeper paths sort before other paths
+ * with the same prefix, as they correspond to patch ops,
+ * which will not affect the indexing of following decisions
+ * on lists.
+ *
+ * @param {DecisionPath} a The first decision path
+ * @param {DecisionPath} b The second decision path
+ * @returns {number} Returns a negative number if a should
+ *  sort first, positive number if b should sort first, or
+ *  zero if the are identical.
+ */
+export
+function decisionPathSortKey(a: DecisionPath, b: DecisionPath): number {
   if (a.length === b.length) {
+    // Equally deep, sort on keys
     for (let lvl=0; lvl < a.length; ++lvl) {
       if (a[lvl] === b[lvl]) {
+        // Keys are equal, try a deeper level
         continue;
       }
-      // Paths differ on this level!
-      if (a[lvl] < b[lvl]) {
-        return -1;
-      } else {
-        return 1;
-      }
+      // Keys differ on this level!
+      return a[lvl] < b[lvl] ? -1 : 1;
     }
+    // Paths are identical
+    return 0;
   } else {
-    return a.length - b.length;
+    // Sort deeper paths first
+    return b.length - a.length;
   }
-  return 0;
 }
 
 /**
- * Adds a decision to an existing, sorted collection
+ * Compare the paths of two decisions for sorting.
+ *
+ * This is a thin wrapper around decisionPathSortKey
+ *
+ * @export
+ * @param {MergeDecision} a The first decision
+ * @param {MergeDecision} b The second decision
+ * @returns {number}  Returns a negative number if a should
+ *  sort first, positive number if b should sort first, or
+ *  zero if the are identical.
+ */
+export
+function decisionSortKey(a: MergeDecision, b: MergeDecision): number {
+  return decisionPathSortKey(a.absolutePath, b.absolutePath);
+}
+
+/**
+ * Adds a decision to an existing, sorted collection of merge decisions
  *
  * Ensures that the location of the newly added decision
  * will comply with the format specification
+ *
+ * @export
+ * @param {MergeDecision[]} decisions
+ * @param {MergeDecision} toAdd
+ * @param {(number | string)} [firstKey]
+ * @returns {void}
  */
 export
 function addSorted(decisions: MergeDecision[], toAdd: MergeDecision, firstKey?: number | string): void {
   let idx = 0;
   for (; idx < decisions.length; ++idx) {
-    let c = _cmpPath(decisions[idx].absolutePath, toAdd.absolutePath);
+    let c = decisionPathSortKey(decisions[idx].absolutePath, toAdd.absolutePath);
     if (c > 0) {
       decisions.splice(idx, 0, toAdd);
       return;

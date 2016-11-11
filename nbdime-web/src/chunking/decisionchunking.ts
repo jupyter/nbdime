@@ -193,7 +193,7 @@ function splitDecisionByChunks(base: any[], decision: MergeDecision, chunks: Mer
       cd = splitDiffsOnBoundaries(cd as IDiffArrayEntry[], boundaries);
     }
     out.push(new MergeDecision(
-      decision.absolutePath,
+      decision.absolutePath.slice(),
       c.diffs[0],
       c.diffs[1],
       decision.action,

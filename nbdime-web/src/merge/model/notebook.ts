@@ -16,7 +16,8 @@ import {
 } from '../../diff/diffentries';
 
 import {
-  IMergeDecision, MergeDecision, resolveCommonPaths, filterDecisions
+  IMergeDecision, MergeDecision, resolveCommonPaths, filterDecisions,
+  decisionSortKey
 } from '../../merge/decisions';
 
 import {
@@ -341,7 +342,7 @@ function splitCellListPatch(mergeDecisions: MergeDecision[]): MergeDecision[] {
         ));
     }
   }
-  return output;
+  return output.sort(decisionSortKey);
 }
 
 

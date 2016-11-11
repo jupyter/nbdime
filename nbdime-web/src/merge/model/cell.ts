@@ -23,7 +23,7 @@ import {
 } from '../../diff/model';
 
 import {
-  MergeDecision, resolveCommonPaths, buildDiffs,
+  MergeDecision, resolveCommonPaths, buildDiffs, decisionSortKey,
   filterDecisions, pushPatchDecision, popPath, applyDecisions
 } from '../../merge/decisions';
 
@@ -376,9 +376,8 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
         }
         dec.level = 3;
         let sub = splitMergeDecisionsOnChunks(base, [dec]);
-        for (let md of sub) {
-          out.push(pushPatchDecision(md, ['source']));
-        }
+        resolveCommonPaths(sub);
+        out = out.concat(sub.sort(decisionSortKey));
       } else {
         out.push(dec);
       }
