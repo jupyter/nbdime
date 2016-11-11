@@ -32,8 +32,12 @@ import {
 } from '../../patch';
 
 import {
-  arraysEqual, valueIn, hasEntries
+  arraysEqual, valueIn, hasEntries, splitLines
 } from '../../common/util';
+
+import {
+  splitMergeDecisionsOnChunks
+} from '../../chunking';
 
 import {
   ObjectMergeModel, DecisionStringDiffModel
@@ -348,6 +352,38 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
       }
     }
     return newDecisions;
+  }
+
+  protected splitPatch(md: MergeDecision, patch: IDiffPatch, local: boolean): MergeDecision[] {
+    let split = super.splitPatch(md, patch, local);
+    let out: MergeDecision[] = [];
+    // Next, split source field on chunks
+    for (let i=0; i < split.length; ++i) {
+      let dec = split[i];
+      let key = (dec.localDiff || dec.remoteDiff!)[0].key;
+      if (key === 'source') {
+        let pop = popPath(dec.diffs, true);
+        if (!pop || pop.key !== 'source') {
+          throw new Error('Decisions path manipulation error');
+        }
+        dec.absolutePath.push(pop.key);
+        dec.diffs = pop.diffs;
+      }
+      if (dec.absolutePath[2] === 'source') {
+        let base = this.base!.source;
+        if (!Array.isArray(base)) {
+          base = splitLines(base);
+        }
+        dec.level = 3;
+        let sub = splitMergeDecisionsOnChunks(base, [dec]);
+        for (let md of sub) {
+          out.push(pushPatchDecision(md, ['source']));
+        }
+      } else {
+        out.push(dec);
+      }
+    }
+    return out;
   }
 
   protected createDiffModel(diff: IDiffEntry[]): CellDiffModel {
