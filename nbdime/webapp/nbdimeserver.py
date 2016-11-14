@@ -7,6 +7,7 @@ from __future__ import unicode_literals
 import io
 import os
 import json
+import logging
 import sys
 from argparse import ArgumentParser
 
@@ -27,6 +28,9 @@ from nbdime.args import add_generic_args, add_web_args
 #contents_manager
 #ContentsHandler
 #APIHandler
+
+
+_logger = logging.getLogger(__name__)
 
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -212,7 +216,7 @@ class ApiCloseHandler(NbdimeApiHandler):
         # Fail if no exit code is supplied:
         exit_code = self.request.headers.get("exit_code", 1)
 
-        print("Closing server on remote request")
+        _logger.info("Closing server on remote request")
         self.finish()
         ioloop.IOLoop.current().stop()
 
@@ -249,8 +253,8 @@ def make_app(**params):
 
 
 def main_server(on_port=None, closable=False, **params):
-    print("Using params:")
-    print(params)
+    _logger.info("Using params:")
+    _logger.info(params)
     params.update({"closable": closable})
     port = params.pop("port")
     app = make_app(**params)
@@ -261,7 +265,7 @@ def main_server(on_port=None, closable=False, **params):
         server = httpserver.HTTPServer(app)
         server.add_sockets(sockets)
         for s in sockets:
-            print('Listening on %s, port %d' % s.getsockname()[:2])
+            _logger.info('Listening on %s, port %d' % s.getsockname()[:2])
             port = s.getsockname()[1]
     if on_port is not None:
         on_port(port)
