@@ -43,6 +43,11 @@ def add_web_args(parser, default_port=8888):
         default=default_port,
         type=int,
         help=port_help)
+    parser.add_argument(
+        '-b', '--browser',
+        default="default",
+        type=str,
+        help="specify the browser to use, to override the system default.")
     cwd = os.path.abspath(os.path.curdir)
     parser.add_argument(
         '-w', '--workdirectory',
