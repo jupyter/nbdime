@@ -19,7 +19,9 @@ def init_logging():
     Sets the log level for all nbdime loggers to `level`,
     unless `level` is given as `None`.
     """
-    logging.basicConfig()
+    format = '%(levelname)s:%(module)s: %(message)s'
+    logging.basicConfig(format=format)
+    logging.captureWarnings(True)
 
 
 def set_nbdime_log_level(level, set_main=True):
