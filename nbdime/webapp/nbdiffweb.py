@@ -6,7 +6,6 @@ from __future__ import unicode_literals
 
 import sys
 from argparse import ArgumentParser
-import os.path
 import webbrowser
 import logging
 import threading

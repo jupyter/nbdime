@@ -6,7 +6,6 @@ from __future__ import unicode_literals
 
 import sys
 from argparse import ArgumentParser
-import os.path
 import webbrowser
 import logging
 import threading
@@ -51,6 +50,7 @@ def browse(port):
         def launch_browser():
             browser.open("http://127.0.0.1:%s/difftool" % port, new=2)
         threading.Thread(target=launch_browser).start()
+
 
 def main(args=None):
     if args is None:

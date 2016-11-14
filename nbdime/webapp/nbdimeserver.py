@@ -5,9 +5,9 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import io
-import os
 import json
 import logging
+import os
 import sys
 from argparse import ArgumentParser
 
@@ -194,6 +194,7 @@ class ApiMergeStoreHandler(NbdimeApiHandler):
 
         body = json.loads(escape.to_unicode(self.request.body))
         merged = body["merged"]
+        # TODO: Remove when merged notebook generation is verified to work as intended:
         from pprint import pprint
         pprint(merged)
         merged_nb = nbformat.from_dict(merged)

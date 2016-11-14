@@ -13,7 +13,6 @@ import argparse
 from pprint import pprint
 
 import nbformat
-from ._version import __version__
 from .merging import merge_notebooks
 
 _description = ('Merge two Jupyter notebooks "local" and "remote" with a '

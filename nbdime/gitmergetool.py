@@ -11,12 +11,12 @@ Use with:
 
     git mergetool [<commit> [<commit>]]
 """
-import os
 import sys
 from subprocess import check_call, check_output, CalledProcessError
 
 from . import nbmergeapp
 from .args import add_filename_args
+
 
 def enable(global_=False, set_default=False):
     """Enable nbdime git mergetool"""
@@ -36,7 +36,6 @@ def enable(global_=False, set_default=False):
     if set_default:
         # Set default tool to webapp
         check_call(cmd + ['merge.tool', 'nbdimeweb'])
-
 
 
 def disable(global_=False, *args):

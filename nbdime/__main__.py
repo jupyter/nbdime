@@ -26,8 +26,9 @@ def main_dispatch(args=None):
     elif cmd == "nbmerge-web":
         from nbdime.webapp.nbmergeweb import main
     else:
-        print("Invalid command '%s', expecting one of:\n"
-              "  nbdiff, nbmerge, nbpatch, nbdiff-web, nbmerge-web." % (cmd,))
+        print(
+            "Invalid command '%s', expecting one of:\n"
+            "  nbdiff, nbmerge, nbpatch, nbdiff-web, nbmerge-web." % (cmd,))
         return 1
 
     return main(args)
