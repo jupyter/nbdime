@@ -188,13 +188,25 @@ namespace StringDiffModel {
       let range: DiffRangePos | null = null;
       let additions = this.model.additions;
       let deletions = this.model.deletions;
+      let hintTakeDeletion = this.hintTakeDeletion;
+      this.hintTakeDeletion = false;
       if (this.ia < this.model.additions.length) {
         if (this.id < deletions.length) {
           let ra = additions[this.ia];
           let rd = deletions[this.id];
-          if (ra.from.line < rd.from.line - this.editOffset ||
+          if (ra.from.line === rd.from.line - this.editOffset &&
+              ra.from.ch === rd.from.ch) {
+            // An addition and deletion start at seemingly same location
+            // Take addition, and flag to ensure deletion gets taken next
+            if (hintTakeDeletion) {
+              isAddition = false;
+            } else {
+              this.hintTakeDeletion = true;
+              isAddition = true;
+            }
+          } else if (ra.from.line < rd.from.line - this.editOffset ||
                 (ra.from.line === rd.from.line - this.editOffset &&
-                  ra.from.ch <= rd.from.ch)) {
+                  ra.from.ch < rd.from.ch)) {
             // TODO: Character editOffset should also be used
             isAddition = true;
           } else {
@@ -232,6 +244,7 @@ namespace StringDiffModel {
     protected model: IStringDiffModel;
     protected ia = 0;
     protected id = 0;
+    protected hintTakeDeletion = false;
   }
 
   export

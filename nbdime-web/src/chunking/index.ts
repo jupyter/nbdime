@@ -115,9 +115,9 @@ class Chunker {
       if (isAddition) {
         if (this._overlapChunk(current, range, isAddition)) {
           current.remoteTo = Math.max(current.remoteTo,
-              range.to.line + endOffset + linediff);
+              range.from.line + endOffset + linediff);
           current.baseTo = Math.max(current.baseTo,
-              range.to.line + endOffset + this.editOffset);
+              range.from.line + endOffset + this.editOffset);
           if (range.source && !valueIn(range.source, current.sources)) {
             current.sources.push(range.source);
           }
@@ -128,9 +128,9 @@ class Chunker {
       } else {
         if (this._overlapChunk(current, range, isAddition)) {
           current.remoteTo = Math.max(current.remoteTo,
-              range.to.line + endOffset - this.editOffset);
+              range.from.line + endOffset - this.editOffset);
           current.baseTo = Math.max(current.baseTo,
-              range.to.line + endOffset + linediff);
+              range.from.line + endOffset + linediff);
           if (range.source && !valueIn(range.source, current.sources)) {
             current.sources.push(range.source);
           }
@@ -143,22 +143,22 @@ class Chunker {
     if (!current) {
       // No current chunk, start a new one
       if (isAddition) {
-        let startOrig = range.from.line;
-        let startEdit = startOrig + this.editOffset;
+        let startRemote = range.from.line;
+        let startBase = startRemote + this.editOffset;
         current = new Chunk(
-          startEdit + startOffset,
-          startEdit + endOffset,
-          startOrig + startOffset,
-          startOrig + endOffset + linediff
+          startBase + startOffset,
+          startBase + endOffset,
+          startRemote + startOffset,
+          startRemote + endOffset + linediff
         );
       } else {
-        let startEdit = range.from.line;
-        let startOrig = startEdit - this.editOffset;
+        let startBase = range.from.line;
+        let startRemote = startBase - this.editOffset;
         current = new Chunk(
-          startEdit + startOffset,
-          startEdit + endOffset + linediff,
-          startOrig + startOffset,
-          startOrig + endOffset
+          startBase + startOffset,
+          startBase + endOffset + linediff,
+          startRemote + startOffset,
+          startRemote + endOffset
         );
       }
       if (range.source) {
@@ -247,13 +247,16 @@ class LineChunker extends Chunker {
       linediff += 1;
     }
     let firstLineNew = range.from.ch === 0 && linediff > 0;
-    let endOffset =
-      range.chunkStartLine && range.endsOnNewline && firstLineNew ?
-      0 : 1;
     if (isAddition) {
       return chunk.inOrig(range.from.line + 1);
     } else {
-      return chunk.inEdit(range.from.line + 1);
+      // Ensure aligned addition/removal on same line
+      // still chunk together
+      if (chunk.baseFrom === chunk.baseTo && chunk.remoteFrom < chunk.remoteTo) {
+        return chunk.inEdit(range.from.line);
+      } else {
+        return chunk.inEdit(range.from.line + 1);
+      }
     }
   }
 }

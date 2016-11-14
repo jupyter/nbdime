@@ -128,6 +128,16 @@ class MergeDecision {
     this.customDiff = customDiff;
   }
 
+  setValuesFrom(other: MergeDecision): void {
+    this._path = other.absolutePath.slice();
+    this.localDiff = other.localDiff;
+    this.remoteDiff = other.remoteDiff;
+    this.action = other.action;
+    this.conflict = other.conflict;
+    this.customDiff = other.customDiff;
+    this.level = other.level;
+  }
+
   get localPath(): DecisionPath {
     return this._path.slice(this.level);
   }
@@ -184,6 +194,63 @@ class MergeDecision {
   }
 
   level: number;
+}
+
+
+function _cmpPath(a: DecisionPath, b: DecisionPath): number {
+  if (a.length === b.length) {
+    for (let lvl=0; lvl < a.length; ++lvl) {
+      if (a[lvl] === b[lvl]) {
+        continue;
+      }
+      // Paths differ on this level!
+      if (a[lvl] < b[lvl]) {
+        return -1;
+      } else {
+        return 1;
+      }
+    }
+  } else {
+    return a.length - b.length;
+  }
+  return 0;
+}
+
+/**
+ * Adds a decision to an existing, sorted collection
+ *
+ * Ensures that the location of the newly added decision
+ * will comply with the format specification
+ */
+export
+function addSorted(decisions: MergeDecision[], toAdd: MergeDecision, firstKey?: number | string): void {
+  let idx = 0;
+  for (; idx < decisions.length; ++idx) {
+    let c = _cmpPath(decisions[idx].absolutePath, toAdd.absolutePath);
+    if (c > 0) {
+      decisions.splice(idx, 0, toAdd);
+      return;
+    } else if (firstKey !== undefined && c === 0) {
+      let key: string | number | null = null;
+      for (let diff of decisions[idx].diffs) {
+        if (!diff) {
+          continue;
+        }
+        for (let d of diff) {
+          if (!key || d.key < key) {
+            key = d.key;
+          }
+        }
+      }
+      if (firstKey === key) {
+        throw new Error('Shouldn\'t have multiple decisions with diff on same key');
+      } else if (key === null || firstKey < key) {
+        decisions.splice(idx, 0, toAdd);
+        return;
+      }
+    }
+  }
+  decisions.push(toAdd);
 }
 
 
@@ -293,7 +360,7 @@ function makeClearedValue(value: any): any {
 }
 
 
-function _getSubObject(obj: any, path: DecisionPath) {
+function _resolvePathInObject(obj: any, path: DecisionPath) {
   for (let key of path) {
     obj = obj[key];   // Should throw if key missing
   }
@@ -541,7 +608,7 @@ function buildDiffs(base: any, decisions: MergeDecision[], which: 'local' | 'rem
     let path = spl[0];
     let line = spl[1];
     if (merged) {
-      let sub = _getSubObject(base, path);
+      let sub = _resolvePathInObject(base, path);
       subdiffs = resolveAction(sub, md);
     } else {
       subdiffs = local ? md.localDiff : md.remoteDiff;
