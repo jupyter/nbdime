@@ -22,10 +22,13 @@ def init_logging():
     logging.basicConfig()
 
 
-def set_nbdime_log_level(level):
+def set_nbdime_log_level(level, set_main=True):
     """Set a log level for nbdime loggers
     """
     if level is not None:
         _baseLogger = logging.getLogger('nbdime')
         _baseLogger.setLevel(level)
+        if set_main:
+            _baseLogger = logging.getLogger('__main__')
+            _baseLogger.setLevel(level)
 
