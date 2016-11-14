@@ -18,6 +18,7 @@ from subprocess import check_call, check_output, CalledProcessError
 
 from . import nbdiffapp
 
+
 def enable(global_=False, set_default=False):
     """Enable nbdime git difftool"""
     cmd = ['git', 'config']
@@ -123,4 +124,6 @@ def main(args=None):
 
 
 if __name__ == "__main__":
+    import nbdime.log
+    nbdime.log.init_logging()
     main()

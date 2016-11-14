@@ -12,7 +12,6 @@ import argparse
 import json
 import nbformat
 import io
-from ._version import __version__
 from .patching import patch_notebook
 from .diff_format import to_diffentry_dicts
 
@@ -70,4 +69,6 @@ def main(args=None):
 
 
 if __name__ == "__main__":
+    import nbdime.log
+    nbdime.log.init_logging()
     main()

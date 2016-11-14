@@ -33,11 +33,15 @@ def add_generic_args(parser):
 def add_web_args(parser, default_port=8888):
     """Adds a set of arguments common to all commands that show a web gui.
     """
-    port_help = ("specify the port you want the server "
-                "to run on. Default is %d%s." % (
-                    default_port,
-                    " (random)" if default_port == 0 else ""
-    ))
+    port_help = (
+        "specify the port you want the server to run on. Default is %d%s." % (
+            default_port, " (random)" if default_port == 0 else ""
+        ))
+    parser.add_argument(
+        '-l', '--loglevel',
+        default='INFO',
+        help="Set the log level to use. One of: [CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET]"
+    )
     parser.add_argument(
         '-p', '--port',
         default=default_port,
@@ -48,8 +52,8 @@ def add_web_args(parser, default_port=8888):
         '-w', '--workdirectory',
         default=cwd,
         help="specify the working directory you want "
-                "the server to run from. Default is the "
-                "actual cwd at program start.")
+             "the server to run from. Default is the "
+             "actual cwd at program start.")
 
 
 def add_diff_args(parser):

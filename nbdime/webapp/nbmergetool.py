@@ -6,7 +6,6 @@ from __future__ import unicode_literals
 
 import sys
 from argparse import ArgumentParser
-import os.path
 import webbrowser
 import logging
 import threading
@@ -14,6 +13,7 @@ import threading
 from ..args import add_generic_args, add_filename_args
 from ..args import add_diff_args, add_merge_args, add_web_args
 from .nbdimeserver import main_server as run_server
+import nbdime.log
 
 
 _logger = logging.getLogger(__name__)
@@ -62,6 +62,7 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
     arguments = build_arg_parser().parse_args()
+    nbdime.log.set_nbdime_log_level(arguments.loglevel)
     port = arguments.port
     cwd = arguments.workdirectory
     base = arguments.base
@@ -76,4 +77,5 @@ def main(args=None):
 
 
 if __name__ == "__main__":
+    nbdime.log.init_logging()
     main()
