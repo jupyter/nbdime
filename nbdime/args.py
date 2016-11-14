@@ -39,6 +39,11 @@ def add_web_args(parser, default_port=8888):
                     " (random)" if default_port == 0 else ""
     ))
     parser.add_argument(
+        '-l', '--loglevel',
+        default=None,
+        help="Set the log level to use. One of: [CRITICAL, ERROR, WARNING, INFO, DEBUG]"
+    )
+    parser.add_argument(
         '-p', '--port',
         default=default_port,
         type=int,

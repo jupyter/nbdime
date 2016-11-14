@@ -63,6 +63,7 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
     arguments = build_arg_parser().parse_args()
+    nbdime.log.set_nbdime_log_level(arguments.loglevel)
     port = arguments.port
     cwd = arguments.workdirectory
     base = arguments.base
