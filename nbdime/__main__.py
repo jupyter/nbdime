@@ -35,4 +35,6 @@ def main_dispatch(args=None):
 
 if __name__ == "__main__":
     # This is triggered by "python -m nbdime <args>"
+    import nbdime.log
+    nbdime.log.init_logging()
     sys.exit(main_dispatch())

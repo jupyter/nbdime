@@ -14,6 +14,7 @@ import threading
 from ..args import add_generic_args, add_diff_args
 from ..args import add_web_args, add_filename_args
 from .nbdimeserver import main_server as run_server
+import nbdime.log
 
 
 _logger = logging.getLogger(__name__)
@@ -67,4 +68,5 @@ def main(args=None):
 
 
 if __name__ == "__main__":
+    nbdime.log.init_logging()
     main()

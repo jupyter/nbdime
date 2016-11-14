@@ -289,4 +289,5 @@ def main(args=None):
 
 
 if __name__ == "__main__":
+    nbdime.log.init_logging()
     main()
