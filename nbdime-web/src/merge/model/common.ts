@@ -109,6 +109,7 @@ class DecisionStringDiffModel extends StringDiffModel {
     for (let v = iter.next(); v !== undefined; v = iter.next()) {
       if (iter.currentModel() === this) {
         // Chunk diffs in own model normally
+        // (they should already be present in own model)
         chunker.addDiff(v.range, v.isAddition);
       } else {
         // Skip ops in other models that are not no-ops

@@ -3,7 +3,7 @@
 'use strict';
 
 import {
-  sortByKey, shallowCopy, accumulateLengths
+  sortByKey, shallowCopy, accumulateLengths, splitLines
 } from '../common/util';
 
 import {
@@ -136,9 +136,7 @@ export
 function flattenStringDiff(val: string[] | string, diff: IDiffArrayEntry[]): IDiffArrayEntry[] {
 
   if (typeof val === 'string') {
-    // Split lines (retaining newlines):
-    let lines = val.match(/^.*(\r\n|\r|\n|$)/gm);
-    val = lines!;  // Since we match end of line, we never get null
+    val = splitLines(val);
   }
   let lineToChar = [0].concat(accumulateLengths(val));
   let flattened: IDiffArrayEntry[] = [];

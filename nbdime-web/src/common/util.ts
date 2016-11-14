@@ -28,6 +28,22 @@ function hasEntries<T>(array: T[] | null): array is T[] {
   return array !== null && array.length !== 0;
 }
 
+
+/**
+ * Splits a multinline string into an array of lines
+ *
+ * @export
+ * @param {string} multiline
+ * @returns {string[]}
+ */
+export
+function splitLines(multiline: string): string[] {
+  // Split lines (retaining newlines)
+  // We use !postfix, as we also match empty string,
+  // so we are guaranteed to get at elast one match
+  return multiline.match(/^.*(\r\n|\r|\n|$)/gm)!;
+}
+
 /**
  * Deepcopy routine for JSON-able data types
  */

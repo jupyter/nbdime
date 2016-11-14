@@ -63,6 +63,12 @@
 .jp-Notebook-merge .CodeMirror-merge-r-connect { fill: #dfd; stroke: #beb; stroke-width: 1px; }
 .jp-Notebook-merge .CodeMirror-line .CodeMirror-merge-r-inserted { background-color: #beb; }
 
+.jp-Notebook-merge .CodeMirror-merge-r-chunk-end-empty + .CodeMirror-linewidget .CodeMirror-merge-spacer,
+.jp-Notebook-merge .CodeMirror-merge-m-chunk-end-remote-empty + .CodeMirror-linewidget .CodeMirror-merge-spacer {
+  border-bottom: 1px solid #beb;
+  background-color: #d8f9d8;
+}
+
 .jp-Notebook-merge .CodeMirror-merge-l-chunk { background-color: #ececff; }
 .jp-Notebook-merge .CodeMirror-merge-l-chunk-start,
 .jp-Notebook-merge .CodeMirror-merge-m-chunk-start-local { border-top: 1px solid #cbcbf8; }
@@ -71,15 +77,56 @@
 .jp-Notebook-merge .CodeMirror-merge-l-connect { fill: #ececff; stroke: #cbcbf8; stroke-width: 1px; }
 .jp-Notebook-merge .CodeMirror-line .CodeMirror-merge-l-inserted { background-color: #cbcbf8 }
 
+.jp-Notebook-merge .CodeMirror-merge-l-chunk-end-empty + .CodeMirror-linewidget .CodeMirror-merge-spacer,
+.jp-Notebook-merge .CodeMirror-merge-m-chunk-end-local-empty + .CodeMirror-linewidget .CodeMirror-merge-spacer {
+  border-bottom: 1px solid #cbcbf8;
+  background-color: #e6e6ff;
+}
+
+
+.CodeMirror-merge-l-chunk.CodeMirror-merge-r-chunk { background: #ffdddd; }
+.CodeMirror-merge-l-chunk-start.CodeMirror-merge-r-chunk-start { border-top: 1px solid #f88888; }
+.CodeMirror-merge-l-chunk-end.CodeMirror-merge-r-chunk-end { border-bottom: 1px solid #f88888; }
+
+.jp-Notebook-merge .CodeMirror-merge-l-chunk-end-empty.CodeMirror-merge-r-chunk-end-empty + .CodeMirror-linewidget .CodeMirror-merge-spacer,
+.jp-Notebook-merge .CodeMirror-merge-m-chunk-end-remote-empty.CodeMirror-merge-m-chunk-end-local-empty + .CodeMirror-linewidget .CodeMirror-merge-spacer {
+  border-bottom: 1px solid #f88888;
+  background-color: #ffdddd;
+}
+
+.jp-Notebook-merge .CodeMirror-merge-r-chunk-end-empty,
+.jp-Notebook-merge .CodeMirror-merge-l-chunk-end-empty,
+.jp-Notebook-merge .CodeMirror-merge-m-chunk-end-empty,
+.jp-Notebook-merge .CodeMirror-merge-m-chunk-end-either-empty,
+.jp-Notebook-merge .CodeMirror-merge-m-chunk-end-remote-empty,
+.jp-Notebook-merge .CodeMirror-merge-m-chunk-end-local-empty,
+.jp-Notebook-merge .CodeMirror pre.CodeMirror-line {
+  z-index: 3;
+}
+
 
 .CodeMirror-merge-m-chunk-start-either { border-top: 1px solid #aee; }
 .CodeMirror-merge-m-chunk-end-either { border-bottom: 1px solid #aee }
+
+.jp-Notebook-merge .CodeMirror-merge-m-chunk-end-either-empty + .CodeMirror-linewidget .CodeMirror-merge-spacer {
+  border-bottom: 1px solid #aee;
+  background-color: #cff4f4;
+}
 
 .CodeMirror-merge-pane-base .CodeMirror-line .CodeMirror-merge-m-deleted,
 .CodeMirror-merge-pane-base .CodeMirror-line .CodeMirror-merge-l-deleted,
 .CodeMirror-merge-pane-base .CodeMirror-line .CodeMirror-merge-r-deleted {
   background-color: initial;
   color: #b00
+}
+
+.CodeMirror-gutter-wrapper {
+  top: 0;
+  bottom: 0;
+}
+
+.CodeMirror-linenumber {
+  bottom: 0;
 }
 
 .jp-Merge-oneway-local,.jp-Merge-oneway-remote {
