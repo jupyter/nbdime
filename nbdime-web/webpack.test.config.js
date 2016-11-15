@@ -16,7 +16,11 @@ module.exports = {
     loaders: [
       { test: /\.css$/, loader: 'style-loader!css-loader' },
       { test: /\.(json|ipynb)$/, loader: 'json-loader' },
-      { test: /\.ts$/, loader: 'awesome-typescript-loader' },
+      { test: /\.ts$/, loader: 'awesome-typescript-loader',
+        query: {
+          configFileName: __dirname + '/test/src/tsconfig.json'
+        }
+      },
       { test: /\.html$/, loader: 'file-loader' },
       // jquery-ui loads some images
       { test: /\.(jpg|png|gif)$/, loader: 'file-loader' },
