@@ -223,7 +223,7 @@ function validateSequenceOp(base: Array<any> | string, entry: IDiffEntry): void 
  * Validate that a diff operation is valid to apply on a given base object
  */
 export
-function validateObjectOp(base: Object, entry: IDiffEntry, keys: string[]): void {
+function validateObjectOp(base: any, entry: IDiffEntry, keys: string[]): void {
   let op = entry.op;
   if (typeof entry.key !== 'string') {
       throw new TypeError('Invalid patch object op: Key is not a string: ' + entry.key);

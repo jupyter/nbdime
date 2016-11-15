@@ -1229,7 +1229,7 @@ function elt(tag: string, content?: string | HTMLElement[] | null, className?: s
 function copyObj<T extends {[key: string]: any}>(obj: T): T;
 function copyObj<T extends {[key: string]: any}, U extends {[key: string]: any}>
 (obj: T, target?: U): T & U;
-function copyObj(obj: {[key: string]: any}, target?: {[key: string]: any}): Object {
+function copyObj(obj: {[key: string]: any}, target?: {[key: string]: any}): any {
   if (!target) {
     target = {};
   }
