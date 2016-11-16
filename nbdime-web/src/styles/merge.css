@@ -179,7 +179,9 @@
   background-color: var(--jp-merge-both-color2);
 }
 
-
+.jp-Cell-merge.jp-mod-clearoutputs .jp-Cellrow-outputs {
+  display: none;
+}
 
 .jp-Notebook-merge .jp-Cellrow-outputs .jp-OutputArea {
   border: #666 solid 1pt;
