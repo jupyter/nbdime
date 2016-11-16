@@ -16,7 +16,7 @@ export
 type MergeChunk = {baseStart: number, baseEnd: number, diffs: DiffCollection}
 
 
-function any(diffs: DiffCollection): boolean {
+function anyDiffs(diffs: DiffCollection): boolean {
   for (let d of diffs) {
     if (hasEntries(d)) {
       return true;
@@ -40,7 +40,7 @@ function getSectionBoundaries(diffs: IDiffArrayEntry[]) {
       k = j + 1;
       boundaries.add(k);
     }
-}
+  }
   return boundaries;
 }
 
@@ -126,7 +126,7 @@ function makeChunks(boundaries: Set<number>, diffs: DiffCollection): MergeChunk[
       subDiffs.push(dis);
     }
     // Add non-empty chunks
-    if (any(subDiffs)) {
+    if (anyDiffs(subDiffs)) {
       let c = {baseStart: j, baseEnd: k, diffs: subDiffs};
       chunks.push(c);
     }
