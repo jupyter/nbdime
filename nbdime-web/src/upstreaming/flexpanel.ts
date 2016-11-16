@@ -18,7 +18,7 @@ import {
 } from 'phosphor/lib/core/messaging';
 
 import {
-  IS_IE
+  IS_EDGE, IS_IE
 } from 'phosphor/lib/dom/platform';
 
 import {
@@ -565,6 +565,14 @@ class FlexLayout extends PanelLayout {
   }
 
   /**
+   * Perform layout initialization which requires the parent widget.
+   */
+  protected init(): void {
+    Private.toggleDirection(this.parent, this.direction);
+    super.init();
+  }
+
+  /**
    * Attach a widget to the parent's DOM node.
    *
    * @param index - The current index of the widget in the layout.
@@ -583,7 +591,7 @@ class FlexLayout extends PanelLayout {
       this.order.insert(index, widget);
     }
 
-    // Post a layout request for the parent widget.
+    // Post a fit request for the parent widget.
     this.parent.fit();
   }
 
@@ -637,19 +645,8 @@ class FlexLayout extends PanelLayout {
     // Call super implmentation
     super.detachWidget(index, widget);
 
-    // Post a layout request for the parent widget.
+    // Post a fit request for the parent widget.
     this.parent.fit();
-  }
-
-  /**
-   * A message handler invoked on a `'layout-changed'` message.
-   *
-   * #### Notes
-   * This is called when the layout is installed on its parent.
-   */
-  protected onLayoutChanged(msg: Message): void {
-    Private.toggleDirection(this.parent, this.direction);
-    super.onLayoutChanged(msg);
   }
 
   /**
@@ -678,7 +675,7 @@ class FlexLayout extends PanelLayout {
    * A message handler invoked on a `'child-shown'` message.
    */
   protected onChildShown(msg: ChildMessage): void {
-    if (IS_IE) { // prevent flicker on IE
+    if (IS_IE || IS_EDGE) { // prevent flicker on IE/Edge
       sendMessage(this.parent, WidgetMessage.FitRequest);
     } else {
       this.parent.fit();
@@ -689,7 +686,7 @@ class FlexLayout extends PanelLayout {
    * A message handler invoked on a `'child-hidden'` message.
    */
   protected onChildHidden(msg: ChildMessage): void {
-    if (IS_IE) { // prevent flicker on IE
+    if (IS_IE || IS_EDGE) { // prevent flicker on IE/Edge
       sendMessage(this.parent, WidgetMessage.FitRequest);
     } else {
       this.parent.fit();

@@ -17,18 +17,18 @@
     "test:ie": "npm run build:test && karma start --browsers=IE test/karma.conf.js"
   },
   "devDependencies": {
+    "@jupyterlab/extension-builder": "^0.8.1",
     "@types/expect.js": "^0.3.29",
     "@types/json-stable-stringify": "^1.0.29",
     "@types/mocha": "^2.2.33",
-    "@types/node": "6.0.45",
-    "@types/sanitizer": "0.0.28",
+    "@types/node": "^6.0.45",
+    "@types/sanitizer": "^0.0.28",
     "css-loader": "^0.25.0",
     "expect.js": "^0.3.1",
     "file-loader": "^0.9.0",
-    "fs-extra": "^0.30.0",
+    "fs-extra": "^1.0.0",
     "istanbul": "^0.4.5",
     "json-loader": "^0.5.4",
-    "jupyterlab-extension-builder": "^0.6.2",
     "karma": "^1.3.0",
     "karma-chrome-launcher": "^2.0.0",
     "karma-coverage": "^1.1.1",
@@ -47,10 +47,10 @@
     "webpack": "^1.13.1"
   },
   "dependencies": {
+    "@jupyterlab/services": "^0.34.2",
     "codemirror": "^5.17.0",
     "json-stable-stringify": "^1.0.1",
-    "jupyter-js-services": "^0.21.0",
-    "jupyterlab": "~0.4.1",
-    "phosphor": "^0.6.1"
+    "jupyterlab": "~0.11.3",
+    "phosphor": "~0.7.0"
   }
 }

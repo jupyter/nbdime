@@ -3,6 +3,10 @@
 'use strict';
 
 import {
+  nbformat
+} from '@jupyterlab/services';
+
+import {
   IRenderMime
 } from 'jupyterlab/lib/rendermime';
 
@@ -11,12 +15,8 @@ import {
 } from 'jupyterlab/lib/notebook/output-area';
 
 import {
-  IListChangedArgs
-} from 'jupyterlab/lib/common/observablelist';
-
-import {
-  nbformat
-} from 'jupyterlab/lib/notebook/notebook/nbformat';
+  ObservableVector
+} from 'jupyterlab/lib/common/observablevector';
 
 import {
   DropAction, IDragEvent
@@ -77,7 +77,7 @@ class ReorderableOutputWidget extends OutputAreaWidget {
 
   model: ReorderableOutputModel;
 
-  protected onModelStateChanged(sender: OutputAreaModel, args: IListChangedArgs<nbformat.IOutput>) {
+  protected onModelStateChanged(sender: OutputAreaModel, args: ObservableVector.IChangedArgs<nbformat.IOutput>) {
     let layout = this.layout as PanelLayout;
     switch (args.type) {
     case 'add':

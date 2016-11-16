@@ -4,7 +4,7 @@
 
 import {
   nbformat
-} from 'jupyterlab/lib/notebook/notebook/nbformat';
+} from '@jupyterlab/services';
 
 import {
   defineSignal, ISignal
@@ -89,8 +89,8 @@ function createPatchedCellDecisionDiffModel(
   let outputs: OutputDiffModel[] | null = null;
   let executionCount: ImmutableDiffModel | null = null;
   if (base.cell_type === 'code') {
-    if ((base as nbformat.ICodeCell).outputs) {
-      let outputBase = (base as nbformat.ICodeCell).outputs;
+    if (base.outputs) {
+      let outputBase = base.outputs;
       let outputDec = filterDecisions(decisions, ['outputs'], 2);
       let mergedDiff = buildDiffs(outputBase, outputDec, 'merged') as IDiffArrayEntry[];
       let merged: nbformat.IOutput[];
@@ -101,7 +101,7 @@ function createPatchedCellDecisionDiffModel(
       }
       outputs = makeOutputModels(outputBase, merged, mergedDiff);
     }
-    let execBase = (base as nbformat.ICodeCell).execution_count;
+    let execBase = base.execution_count;
     let cellDecs = filterDecisions(decisions, ['cells'], 0, 2);
     for (let dec of cellDecs) {
       if (getDiffEntryByKey(dec.localDiff, 'execution_count') !== null ||

@@ -12,7 +12,7 @@
   },
   "devDependencies": {
     "@types/json-stable-stringify": "^1.0.29",
-    "@types/node": "6.0.46",
+    "@types/node": "6.0.50",
     "@types/sanitizer": "0.0.28",
     "css-loader": "^0.25.0",
     "file-loader": "^0.9.0",
@@ -20,16 +20,17 @@
     "rimraf": "^2.5.4",
     "source-map-loader": "^0.1.5",
     "style-loader": "^0.13.1",
-    "ts-loader": "^1.2.1",
+    "ts-loader": "^1.2.2",
     "typescript": "~2.0.9",
     "url-loader": "^0.5.7",
     "watch": "^1.0.1",
     "webpack": "^1.13.1"
   },
   "dependencies": {
+    "@jupyterlab/services": "^0.34.2",
     "alertify.js": "^1.0.12",
-    "jupyterlab": "~0.4.1",
+    "jupyterlab": "~0.11.3",
     "nbdime": "file:../../nbdime-web",
-    "phosphor": "^0.6.1"
+    "phosphor": "~0.7.0"
   }
 }

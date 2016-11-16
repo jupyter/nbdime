@@ -4,7 +4,7 @@
 
 import {
   nbformat
-} from 'jupyterlab/lib/notebook/notebook/nbformat';
+} from '@jupyterlab/services';
 
 import {
   JSONObject, JSONArray, JSONValue
@@ -383,12 +383,11 @@ function createDirectStringDiffModel(base: JSONValue | null, remote: JSONValue |
 export
 function setMimetypeFromCellType(model: IStringDiffModel, cell: nbformat.ICell,
                                  nbMimetype: string) {
-  let cellType = cell.cell_type;
-  if (cellType === 'code') {
+  if (cell.cell_type === 'code') {
     model.mimetype = nbMimetype;
-  } else if (cellType === 'markdown') {
+  } else if (cell.cell_type === 'markdown') {
     model.mimetype = 'text/markdown';
-  } else if (cellType === 'raw') {
-    model.mimetype = (cell as nbformat.IRawCell).metadata.format || 'text/plain';
+  } else if (cell.cell_type === 'raw') {
+    model.mimetype = cell.metadata.format || 'text/plain';
   }
 }
