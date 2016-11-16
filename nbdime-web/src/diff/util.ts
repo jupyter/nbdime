@@ -7,6 +7,10 @@ import {
 } from '../common/util';
 
 import {
+  ChunkSource
+} from '../chunking';
+
+import {
   IDiffEntry, IDiffArrayEntry, IDiffPatch, IDiffAddRange, IDiffRemoveRange,
   opAddRange, opRemoveRange, validateSequenceOp
 } from './diffentries';
@@ -51,6 +55,21 @@ function validateStringDiff(base: string[], entry: IDiffArrayEntry, lineToChar: 
   }
 }
 
+
+function areSourcesCompatible(a: ChunkSource | undefined, b: ChunkSource | undefined): boolean {
+  if (!a || !b || a === b) {
+    return true;
+  }
+  if (a.decision === b.decision) {
+    // 'either' sources can be combined with local or remote
+    if (a.action === 'either' && b.action !== 'custom' ||
+        b.action === 'either' && a.action !== 'custom') {
+      return true;
+    }
+  }
+  return false;
+}
+
 /**
  * Check whether existing collection of diff ops shares a key with the new
  * diffop, and if they  also have the same op type.
@@ -61,6 +80,9 @@ function overlaps(existing: IDiffArrayEntry[], newv: IDiffArrayEntry): number {
   }
   for (let i=0; i < existing.length; ++i) {
     let e = existing[i];
+    if (!areSourcesCompatible(e.source, newv.source)) {
+      continue;
+    }
     if (e.op === newv.op) {
       if (e.op === 'removerange') {
         // Since patch ops of lines come before line add/remove
@@ -68,9 +90,7 @@ function overlaps(existing: IDiffArrayEntry[], newv: IDiffArrayEntry): number {
         // we need to check order:
         let first = e.key <= newv.key ? e : newv as IDiffRemoveRange;
         let last = e.key <= newv.key ? newv as IDiffRemoveRange : e;
-        if (first.key + first.length >= last.key && (
-            e.source === newv.source ||
-            !e.source || !newv.source)) {
+        if (first.key + first.length >= last.key) {
           // Overlapping deletes
           // Above check is open ended to allow for sanity check here:
           if (first.key + first.length !== last.key) {
@@ -90,9 +110,7 @@ function overlaps(existing: IDiffArrayEntry[], newv: IDiffArrayEntry): number {
           let other = existing[i + 1];
           if (other.op === 'removerange' &&
               other.key === e.key &&
-              other.key + other.length === newv.key &&
-              (other.source === newv.source ||
-               !other.source || !newv.source)) {
+              other.key + other.length === newv.key) {
             return i;
           }
         }
@@ -121,8 +139,8 @@ function combineOps(a: IDiffArrayEntry, b: IDiffArrayEntry): IDiffAddRange | IDi
     throw new Error('Invalid string lines op to combine: ' + b);
   }
   combined.source = a.source;
-  if (b.source !== a.source) {
-    throw new Error('Cannot combine diff ops with different sources in one string line');
+  if (!areSourcesCompatible(a.source, b.source)) {
+    throw new Error('Cannot combine diff ops with incompatible sources in one string line');
   }
   return combined;
 }

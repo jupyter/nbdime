@@ -5,13 +5,14 @@ module.exports = {
     filename: "nbdime.js",
     publicPath: "./static/"
   },
+  bail: true,
   debug: true,
   devtool: 'source-map',
   module: {
     loaders: [
       { test: /\.css$/, loader: 'style-loader!css-loader' },
       { test: /\.(json|ipynb)$/, loader: 'json-loader' },
-      { test: /\.ts$/, loader: 'awesome-typescript-loader' },
+      { test: /\.ts$/, loader: 'ts-loader' },
       { test: /\.html$/, loader: 'file-loader' },
       // jquery-ui loads some images
       { test: /\.(jpg|png|gif)$/, loader: 'file-loader' },

@@ -3,7 +3,7 @@
     "target": "ES5",
     "module": "commonjs",
     "moduleResolution": "node",
-    "lib": ["dom", "es5", "es2015.promise"],
+    "lib": ["dom", "es5", "es2015.promise", "es2015.collection"],
     "outDir": "../build",
     "noImplicitAny": true,
     "noEmitOnError": true,
