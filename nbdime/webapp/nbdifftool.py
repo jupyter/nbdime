@@ -40,8 +40,6 @@ def build_arg_parser():
 
 
 def browse(port, browsername):
-    if browsername == "default":
-        browsername = None
     try:
         browser = webbrowser.get(browsername)
     except webbrowser.Error as e:
