@@ -11,14 +11,16 @@
     "watch:web": "watch \"npm run update\" ../../nbdime-web/lib --wait=10"
   },
   "devDependencies": {
+    "@types/json-stable-stringify": "^1.0.29",
     "@types/node": "6.0.46",
-    "awesome-typescript-loader": "^2.2.4",
+    "@types/sanitizer": "0.0.28",
     "css-loader": "^0.25.0",
     "file-loader": "^0.9.0",
     "json-loader": "^0.5.4",
     "rimraf": "^2.5.4",
     "source-map-loader": "^0.1.5",
     "style-loader": "^0.13.1",
+    "ts-loader": "^1.2.1",
     "typescript": "^2.0.3",
     "url-loader": "^0.5.7",
     "watch": "^1.0.1",
