@@ -36,9 +36,9 @@ def build_arg_parser():
     return parser
 
 
-def browse(port, base, remote):
+def browse(port, base, remote, browsername):
     try:
-        browser = webbrowser.get(None)
+        browser = webbrowser.get(browsername)
     except webbrowser.Error as e:
         _logger.warning('No web browser found: %s.', e)
         browser = None
@@ -60,10 +60,11 @@ def main(args=None):
     cwd = arguments.workdirectory
     base = arguments.base
     remote = arguments.remote
+    browsername = arguments.browser
     return run_server(
         port=port, cwd=cwd,
         closable=True,
-        on_port=lambda port: browse(port, base, remote))
+        on_port=lambda port: browse(port, base, remote, browsername))
 
 
 if __name__ == "__main__":
