@@ -140,7 +140,9 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
   onesided: boolean;
 
   /**
-   * Run time flag whether the user wants to delete the cell or not
+   * Run time flag whether the user wants to delete the cell
+   *
+   * @type {boolean}
    */
   get deleteCell(): boolean {
     return this._deleteCell;
@@ -151,9 +153,28 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
       this.deleteCellChanged.emit(value);
     }
   }
-  _deleteCell: boolean;
+  private _deleteCell: boolean;
 
   deleteCellChanged: ISignal<CellMergeModel, boolean>;
+
+
+  /**
+   * Run time flag whether the user wants to clear the outputs of the cell
+   *
+   * @type {boolean}
+   */
+  get clearOutputs(): boolean {
+    return this._clearOutputs;
+  }
+  set clearOutputs(value: boolean) {
+    if (this._clearOutputs !== value) {
+      this._clearOutputs = value;
+      this.clearOutputsChanged.emit(value);
+    }
+  }
+  private _clearOutputs = false;
+
+  clearOutputsChanged: ISignal<CellMergeModel, boolean>;
 
   /**
    * Whether source is the same in local and remote
@@ -234,7 +255,20 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
       nmd.level = 2;
       decisions.push(nmd);
     }
-    return applyDecisions(this.base, decisions);
+    let output = applyDecisions(this.base, decisions);
+    let src = output.source;
+    if (Array.isArray(src)) {
+      src = src.join('');
+    }
+    if (src !== this._merged!.source.remote) {
+      console.warn('Serialized outputs doesn\'t match model value! ' +
+                   'Keeping the model value.');
+      output.source = splitLines(this._merged!.source.remote!);
+    }
+    if (this.clearOutputs && output.cell_type === 'code') {
+      (output as nbformat.ICodeCell).outputs = [];
+    }
+    return output;
   }
 
   protected processDecisions(decisions: MergeDecision[]): void {
@@ -496,3 +530,4 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
 }
 
 defineSignal(CellMergeModel.prototype, 'deleteCellChanged');
+defineSignal(CellMergeModel.prototype, 'clearOutputsChanged');
