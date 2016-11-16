@@ -42,7 +42,7 @@
     "rimraf": "^2.5.4",
     "style-loader": "^0.13.1",
     "ts-loader": "^1.2.1",
-    "typescript": "~2.0.3",
+    "typescript": "~2.0.9",
     "url-loader": "^0.5.7",
     "webpack": "^1.13.1"
   },
