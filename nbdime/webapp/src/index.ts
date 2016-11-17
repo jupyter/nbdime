@@ -34,6 +34,7 @@ import 'jupyterlab/lib/editorwidget/index.css';
 import 'nbdime/lib/common/collapsible.css';
 import 'nbdime/lib/upstreaming/flexpanel.css';
 import 'nbdime/lib/common/dragpanel.css';
+import 'nbdime/lib/styles/variables.css';
 import 'nbdime/lib/styles/common.css';
 import 'nbdime/lib/styles/diff.css';
 import 'nbdime/lib/styles/merge.css';

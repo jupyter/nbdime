@@ -1,0 +1,26 @@
+
+:root {
+  --codemirror-border: 1px solid #ddd;
+  --codemirror-gutter-background: #f8f8f8;
+
+
+  --jp-diff-added-color1: #a6f3a6;
+  --jp-diff-added-color2: #dbffdb;
+
+  --jp-diff-deleted-color1: #f8cbcb;
+  --jp-diff-deleted-color2: #ffecec;
+
+  --jp-merge-local-color1: #cbcbf8;
+  --jp-merge-local-color2: #ececff;
+  --jp-merge-local-color3: #e6e6ff;
+
+  --jp-merge-remote-color1: #beb;
+  --jp-merge-remote-color2: #dfd;
+  --jp-merge-remote-color3: #d8f9d8;
+
+  --jp-merge-both-color1: #f88888;
+  --jp-merge-both-color2: #ffdddd;
+
+  --jp-merge-either-color1: #aee;
+  --jp-merge-either-color2: #cff4f4;
+}

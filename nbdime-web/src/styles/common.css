@@ -40,10 +40,10 @@
   -moz-box-sizing: border-box;
   box-sizing: border-box;
   overflow: hidden;
-  border-left: 1px solid #ddd;
-  border-right: 1px solid #ddd;
+  border-left: var(--codemirror-border);
+  border-right: var(--codemirror-border);
   position: absolute;
-  background: #f8f8f8;
+  background: var(--codemirror-gutter-background);
 }
 
 .CodeMirror-merge-scrolllock-wrap {
@@ -59,11 +59,11 @@
 }
 
 .CodeMirror-merge-r-inserted, .CodeMirror-merge-l-inserted {
-    background-color: #a6f3a6;
+    background-color: var(--jp-diff-added-color1);
 }
 
 .CodeMirror-merge-r-deleted, .CodeMirror-merge-l-deleted {
-    background-color: #f8cbcb;
+    background-color: var(--jp-diff-deleted-color1);
 }
 
 .CodeMirror-merge-collapsed-widget:before {

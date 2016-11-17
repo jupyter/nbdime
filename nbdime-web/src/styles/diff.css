@@ -42,14 +42,14 @@
 .jp-Notebook-diff .jp-Diff-added .jp-Cellrow-outputs {
   margin-left: 25%;
   width: 75%;
-  border-left: 1px solid #ddd;
+  border-left: var(--codemirror-border);
 }
 
 .jp-Notebook-diff .jp-Diff-deleted .jp-Cellrow-source,
 .jp-Notebook-diff .jp-Diff-deleted .jp-Cellrow-outputs {
   margin-right: 25%;
   width: 75%;
-  border-right: 1px solid #ddd;
+  border-right: var(--codemirror-border);
 }
 
 .jp-Notebook-diff .jp-Diff-added .jp-Cellrow-metadata,
@@ -104,27 +104,27 @@
 }
 
 
-.jp-Notebook-diff .CodeMirror-merge-r-chunk { background-color: #ffecec; }
-.jp-Notebook-diff .CodeMirror-merge-r-chunk-start { border-top: 1px solid #f8cbcb; }
-.jp-Notebook-diff .CodeMirror-merge-r-chunk-end { border-bottom: 1px solid #f8cbcb; }
-.jp-Notebook-diff .CodeMirror-merge-r-connect { fill: #ffffe0; stroke: #f8cbcb; stroke-width: 1px; }
-.jp-Notebook-diff .CodeMirror-merge-spacer { background-color: #ffecec; }
+.jp-Notebook-diff .CodeMirror-merge-r-chunk { background-color: var(--jp-diff-deleted-color2); }
+.jp-Notebook-diff .CodeMirror-merge-r-chunk-start { border-top: 1px solid var(--jp-diff-deleted-color1); }
+.jp-Notebook-diff .CodeMirror-merge-r-chunk-end { border-bottom: 1px solid var(--jp-diff-deleted-color1); }
+.jp-Notebook-diff .CodeMirror-merge-r-connect { fill: var(--jp-diff-deleted-color2); stroke: var(--jp-diff-deleted-color1); stroke-width: 1px; }
+.jp-Notebook-diff .CodeMirror-merge-spacer { background-color: var(--jp-diff-deleted-color2); }
 
-.jp-Notebook-diff .CodeMirror-merge-pane-remote .CodeMirror-merge-r-chunk { background-color: #dbffdb; }
-.jp-Notebook-diff .CodeMirror-merge-pane-remote .CodeMirror-merge-r-chunk-start { border-top: 1px solid #a6f3a6; }
-.jp-Notebook-diff .CodeMirror-merge-pane-remote .CodeMirror-merge-r-chunk-end { border-bottom: 1px solid #a6f3a6; }
-.jp-Notebook-diff .CodeMirror-merge-pane-remote .CodeMirror-merge-r-connect { fill: #ffffe0; stroke: #a6f3a6; stroke-width: 1px; }
-.jp-Notebook-diff .CodeMirror-merge-pane-remote .CodeMirror-merge-spacer { background-color: #dbffdb; }
+.jp-Notebook-diff .CodeMirror-merge-pane-remote .CodeMirror-merge-r-chunk { background-color: var(--jp-diff-added-color2); }
+.jp-Notebook-diff .CodeMirror-merge-pane-remote .CodeMirror-merge-r-chunk-start { border-top: 1px solid var(--jp-diff-added-color1); }
+.jp-Notebook-diff .CodeMirror-merge-pane-remote .CodeMirror-merge-r-chunk-end { border-bottom: 1px solid var(--jp-diff-added-color1); }
+.jp-Notebook-diff .CodeMirror-merge-pane-remote .CodeMirror-merge-r-connect { fill: var(--jp-diff-added-color2); stroke: var(--jp-diff-added-color1); stroke-width: 1px; }
+.jp-Notebook-diff .CodeMirror-merge-pane-remote .CodeMirror-merge-spacer { background-color: var(--jp-diff-added-color2); }
 
 
 .jp-Notebook-diff .jp-Diff-deleted .CodeMirror,
 .jp-Notebook-diff .jp-Diff-deleted .jp-Diff-renderedOuput {
-  background-color: #ffecec;
+  background-color: var(--jp-diff-deleted-color2);
 }
 
 .jp-Notebook-diff .jp-Diff-added .CodeMirror,
 .jp-Notebook-diff .jp-Diff-added .jp-Diff-renderedOuput {
-  background-color: #dbffdb;
+  background-color: var(--jp-diff-added-color2);
 }
 
 .jp-Notebook-diff .jp-Diff-added .CodeMirror-merge-pane-added {

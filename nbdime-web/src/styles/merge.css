@@ -23,7 +23,7 @@
 
 .jp-Notebook-merge .CodeMirror-merge-pane-final {
   width: 100%;
-  border-top: solid #ddd 1px;
+  border-top: var(--codemirror-border);
 }
 
 .jp-Notebook-merge .jp-Output-result img {
@@ -32,7 +32,7 @@
 
 .jp-Notebook-merge .jp-Merge-cellHeader {
   display: flex;
-  background-color: #f7f7f7; /* Matches CodeMirror gutter */
+  background-color: var(--codemirror-gutter-background);
 }
 
 .jp-Notebook-merge .jp-Merge-cellHeader > .p-Widget {
@@ -60,43 +60,43 @@
 
 .jp-Notebook-merge .CodeMirror-merge-spacer { background-color: #eee; }
 
-.jp-Notebook-merge .CodeMirror-merge-r-chunk { background-color: #dfd; }
+.jp-Notebook-merge .CodeMirror-merge-r-chunk { background-color: var(--jp-merge-remote-color2); }
 .jp-Notebook-merge .CodeMirror-merge-r-chunk-start,
-.jp-Notebook-merge .CodeMirror-merge-m-chunk-start-remote { border-top: 1px solid #beb; }
+.jp-Notebook-merge .CodeMirror-merge-m-chunk-start-remote { border-top: 1px solid var(--jp-merge-remote-color1); }
 .jp-Notebook-merge .CodeMirror-merge-r-chunk-end,
-.jp-Notebook-merge .CodeMirror-merge-m-chunk-end-remote { border-bottom: 1px solid #beb; }
-.jp-Notebook-merge .CodeMirror-merge-r-connect { fill: #dfd; stroke: #beb; stroke-width: 1px; }
-.jp-Notebook-merge .CodeMirror-line .CodeMirror-merge-r-inserted { background-color: #beb; }
+.jp-Notebook-merge .CodeMirror-merge-m-chunk-end-remote { border-bottom: 1px solid var(--jp-merge-remote-color1); }
+.jp-Notebook-merge .CodeMirror-merge-r-connect { fill: var(--jp-merge-remote-color2); stroke: var(--jp-merge-remote-color1); stroke-width: 1px; }
+.jp-Notebook-merge .CodeMirror-line .CodeMirror-merge-r-inserted { background-color: var(--jp-merge-remote-color1); }
 
 .jp-Notebook-merge .CodeMirror-merge-r-chunk-end-empty + .CodeMirror-linewidget .CodeMirror-merge-spacer,
 .jp-Notebook-merge .CodeMirror-merge-m-chunk-end-remote-empty + .CodeMirror-linewidget .CodeMirror-merge-spacer {
-  border-bottom: 1px solid #beb;
-  background-color: #d8f9d8;
+  border-bottom: 1px solid var(--jp-merge-remote-color1);
+  background-color: var(--jp-merge-remote-color3);
 }
 
-.jp-Notebook-merge .CodeMirror-merge-l-chunk { background-color: #ececff; }
+.jp-Notebook-merge .CodeMirror-merge-l-chunk { background-color: var(--jp-merge-local-color2); }
 .jp-Notebook-merge .CodeMirror-merge-l-chunk-start,
-.jp-Notebook-merge .CodeMirror-merge-m-chunk-start-local { border-top: 1px solid #cbcbf8; }
+.jp-Notebook-merge .CodeMirror-merge-m-chunk-start-local { border-top: 1px solid var(--jp-merge-local-color1); }
 .jp-Notebook-merge .CodeMirror-merge-l-chunk-end,
-.jp-Notebook-merge .CodeMirror-merge-m-chunk-end-local { border-bottom: 1px solid #cbcbf8; }
-.jp-Notebook-merge .CodeMirror-merge-l-connect { fill: #ececff; stroke: #cbcbf8; stroke-width: 1px; }
-.jp-Notebook-merge .CodeMirror-line .CodeMirror-merge-l-inserted { background-color: #cbcbf8 }
+.jp-Notebook-merge .CodeMirror-merge-m-chunk-end-local { border-bottom: 1px solid var(--jp-merge-local-color1); }
+.jp-Notebook-merge .CodeMirror-merge-l-connect { fill: var(--jp-merge-local-color2); stroke: var(--jp-merge-local-color1); stroke-width: 1px; }
+.jp-Notebook-merge .CodeMirror-line .CodeMirror-merge-l-inserted { background-color: var(--jp-merge-local-color1) }
 
 .jp-Notebook-merge .CodeMirror-merge-l-chunk-end-empty + .CodeMirror-linewidget .CodeMirror-merge-spacer,
 .jp-Notebook-merge .CodeMirror-merge-m-chunk-end-local-empty + .CodeMirror-linewidget .CodeMirror-merge-spacer {
-  border-bottom: 1px solid #cbcbf8;
-  background-color: #e6e6ff;
+  border-bottom: 1px solid var(--jp-merge-local-color1);
+  background-color: var(--jp-merge-local-color3);
 }
 
 
-.jp-Notebook-merge .CodeMirror-merge-l-chunk.CodeMirror-merge-r-chunk { background: #ffdddd; }
-.jp-Notebook-merge .CodeMirror-merge-l-chunk-start.CodeMirror-merge-r-chunk-start { border-top: 1px solid #f88888; }
-.jp-Notebook-merge .CodeMirror-merge-l-chunk-end.CodeMirror-merge-r-chunk-end { border-bottom: 1px solid #f88888; }
+.jp-Notebook-merge .CodeMirror-merge-l-chunk.CodeMirror-merge-r-chunk { background: var(--jp-merge-both-color2); }
+.jp-Notebook-merge .CodeMirror-merge-l-chunk-start.CodeMirror-merge-r-chunk-start { border-top: 1px solid var(--jp-merge-both-color1); }
+.jp-Notebook-merge .CodeMirror-merge-l-chunk-end.CodeMirror-merge-r-chunk-end { border-bottom: 1px solid var(--jp-merge-both-color1); }
 
 .jp-Notebook-merge .CodeMirror-merge-l-chunk-end-empty.CodeMirror-merge-r-chunk-end-empty + .CodeMirror-linewidget .CodeMirror-merge-spacer,
 .jp-Notebook-merge .CodeMirror-merge-m-chunk-end-remote-empty.CodeMirror-merge-m-chunk-end-local-empty + .CodeMirror-linewidget .CodeMirror-merge-spacer {
-  border-bottom: 1px solid #f88888;
-  background-color: #ffdddd;
+  border-bottom: 1px solid var(--jp-merge-both-color1);
+  background-color: var(--jp-merge-both-color2);
 }
 
 .jp-Notebook-merge .CodeMirror-merge-r-chunk-end-empty,
@@ -110,12 +110,12 @@
 }
 
 
-.jp-Notebook-merge .CodeMirror-merge-m-chunk-start-either { border-top: 1px solid #aee; }
-.jp-Notebook-merge .CodeMirror-merge-m-chunk-end-either { border-bottom: 1px solid #aee }
+.jp-Notebook-merge .CodeMirror-merge-m-chunk-start-either { border-top: 1px solid var(--jp-merge-either-color1); }
+.jp-Notebook-merge .CodeMirror-merge-m-chunk-end-either { border-bottom: 1px solid var(--jp-merge-either-color1); }
 
 .jp-Notebook-merge .CodeMirror-merge-m-chunk-end-either-empty + .CodeMirror-linewidget .CodeMirror-merge-spacer {
-  border-bottom: 1px solid #aee;
-  background-color: #cff4f4;
+  border-bottom: 1px solid var(--jp-merge-either-color1);
+  background-color: var(--jp-merge-either-color2);
 }
 
 .jp-Notebook-merge .CodeMirror-merge-pane-base .CodeMirror-line .CodeMirror-merge-m-deleted,
@@ -144,21 +144,12 @@
 }
 
 .jp-Notebook-merge .jp-Merge-oneway-local .CodeMirror {
-  background-color: #ececff;
+  background-color: var(--jp-merge-local-color2);
 }
 
 .jp-Notebook-merge .jp-Merge-oneway-remote .CodeMirror {
-  background-color: #dfd;
+  background-color: var(--jp-merge-remote-color2);
 }
-
-.jp-Notebook-merge .jp-Diff-deleted .CodeMirror {
-  background-color: #ffecec;
-}
-
-.jp-Notebook-merge .jp-Diff-added .CodeMirror {
-  background-color: #dbffdb;
-}
-
 
 .jp-Notebook-merge .jp-Merge-gutter-picker {
   width: 16px;
@@ -172,11 +163,11 @@
 }
 
 .jp-Notebook-merge .jp-Merge-conflict {
-  background-color: #ffdddd;
+  background-color: var(--jp-merge-both-color2);
 }
 
 .jp-Notebook-merge .CodeMirror-merge-pane.jp-mod-missing {
-  background-color: #ffdddd;
+  background-color: var(--jp-merge-both-color2);
 }
 
 .jp-Notebook-merge .jp-Cell-merge.jp-mod-todelete > .p-Widget:not(.jp-Merge-cellHeader) {
@@ -185,7 +176,7 @@
 }
 
 .jp-Notebook-merge .jp-Cell-merge.jp-mod-todelete .jp-Merge-cellHeader {
-  background-color: #ffdddd;
+  background-color: var(--jp-merge-both-color2);
 }
 
 
