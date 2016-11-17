@@ -6,12 +6,6 @@
   margin: auto;
 }
 
-#nbdime-header {
-  margin: auto;
-  width: 90%;
-  margin-bottom: 20px;
-}
-
 #nbdime-header-base {
   display: inline-block;
   width: 50%;
@@ -23,13 +17,3 @@
   width: 49%;
   background-color: #a6f3a6;
 }
-
-.nbdime-header-button {
-  display: inline-block;
-  margin-right: 10px;
-}
-
-#nbdime-header-banner {
-  margin-top: 10px;
-}
-

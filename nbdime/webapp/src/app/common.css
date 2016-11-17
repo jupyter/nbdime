@@ -11,3 +11,18 @@ body {
   margin-left: 10%;
   width: 80%;
 }
+
+#nbdime-header {
+  margin: auto;
+  width: 90%;
+  margin-bottom: 20px;
+}
+
+#nbdime-header-banner {
+  margin-top: 10px;
+}
+
+.nbdime-header-button{
+  display: inline-block;
+  margin-right: 10px;
+}
