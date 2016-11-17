@@ -1,86 +1,86 @@
 
 
 
-.jp-Diff-unchanged .jp-Output *:first-child {
+.jp-Notebook-diff .jp-Diff-unchanged .jp-Output *:first-child {
   margin-left: auto;
 }
 
-.jp-Diff-unchanged .jp-Output *:last-child {
+.jp-Notebook-diff .jp-Diff-unchanged .jp-Output *:last-child {
   margin-right: auto;
 }
 
-.jp-Diff-unchanged .jp-Diff-unchanged {
+.jp-Notebook-diff .jp-Diff-unchanged .jp-Diff-unchanged {
   margin-left: 0;
   width: 100%;
 }
 
-.jp-Metadata-diff {
+.jp-Notebook-diff .jp-Metadata-diff {
   margin-bottom: 20px;
   border: solid black thin;
 }
 
-.jp-Cell-diff {
+.jp-Notebook-diff .jp-Cell-diff {
   margin-bottom: 20px;
   border-top: solid #ccc 1px;
 }
 
-.jp-Cell-diff.jp-Diff-added > .jp-Diff-cell-label {
+.jp-Notebook-diff .jp-Diff-added > .jp-Diff-label {
   left: 0;
   position: absolute;
 }
 
-.jp-Cell-diff.jp-Diff-deleted > .jp-Diff-cell-label {
+.jp-Notebook-diff .jp-Diff-deleted > .jp-Diff-label {
   right: 0;
   position: absolute;
 }
 
-.jp-Diff-added .jp-Cellrow-source,
-.jp-Diff-added .jp-Cellrow-outputs {
+.jp-Notebook-diff .jp-Diff-added .jp-Cellrow-source,
+.jp-Notebook-diff .jp-Diff-added .jp-Cellrow-outputs {
   margin-left: 25%;
   width: 75%;
   border-left: 1px solid #ddd;
 }
 
-.jp-Diff-deleted .jp-Cellrow-source,
-.jp-Diff-deleted .jp-Cellrow-outputs {
+.jp-Notebook-diff .jp-Diff-deleted .jp-Cellrow-source,
+.jp-Notebook-diff .jp-Diff-deleted .jp-Cellrow-outputs {
   margin-right: 25%;
   width: 75%;
   border-right: 1px solid #ddd;
 }
 
-.jp-Diff-added .jp-Cellrow-metadata,
-.jp-Diff-deleted .jp-Cellrow-metadata,
-.jp-Diff-unchanged .jp-Cellrow-outputs {
+.jp-Notebook-diff .jp-Diff-added .jp-Cellrow-metadata,
+.jp-Notebook-diff .jp-Diff-deleted .jp-Cellrow-metadata,
+.jp-Notebook-diff .jp-Diff-unchanged .jp-Cellrow-outputs {
   display: none;
 }
 
-.jp-Diff-added .jp-Cellrow-outputs,
-.jp-Diff-deleted .jp-Cellrow-outputs {
+.jp-Notebook-diff .jp-Diff-added .jp-Cellrow-outputs,
+.jp-Notebook-diff .jp-Diff-deleted .jp-Cellrow-outputs {
   border-top: #39f solid 1pt;
 }
 
-.jp-Diff-added .jp-Diff-unchanged {
+.jp-Notebook-diff .jp-Diff-added .jp-Diff-unchanged {
   margin-left: 25%;
   width: 75%;
 }
 
-.jp-Diff-deleted .jp-Diff-unchanged {
+.jp-Notebook-diff .jp-Diff-deleted .jp-Diff-unchanged {
   margin-left: 0;
   width: 75%;
 }
 
-.jp-Diff-unchanged .jp-Output-result > * {
+.jp-Notebook-diff .jp-Diff-unchanged .jp-Output-result > * {
   display: block;
   margin-left: auto;
   margin-right: auto;
 }
 
-.jp-Cellrow-outputs .jp-Diff-twoway .jp-Diff-base {
+.jp-Notebook-diff .jp-Cellrow-outputs .jp-Diff-twoway .jp-Diff-base {
   float: left;
   width: 47%;
 }
 
-.jp-Cellrow-outputs .jp-Diff-twoway .jp-Diff-remote {
+.jp-Notebook-diff .jp-Cellrow-outputs .jp-Diff-twoway .jp-Diff-remote {
   float: right;
   width: 47%;
 }
@@ -94,7 +94,11 @@
   left: 6%;
 }
 
-.CodeMirror-merge-pane-deleted, .CodeMirror-merge-pane-added { width: 75%; }
+.jp-Notebook-diff .jp-Cellrow-source .CodeMirror-merge-pane-deleted,
+.jp-Notebook-diff .jp-Cellrow-source .CodeMirror-merge-pane-added {
+  width: 75%;
+}
+
 
 .jp-Notebook-diff .CodeMirror-merge-r-chunk { background-color: #ffecec; }
 .jp-Notebook-diff .CodeMirror-merge-r-chunk-start { border-top: 1px solid #f8cbcb; }
@@ -109,16 +113,16 @@
 .jp-Notebook-diff .CodeMirror-merge-pane-remote .CodeMirror-merge-spacer { background-color: #dbffdb; }
 
 
-.jp-Diff-deleted .CodeMirror,
-.jp-Diff-deleted .jp-Diff-renderedOuput {
+.jp-Notebook-diff .jp-Diff-deleted .CodeMirror,
+.jp-Notebook-diff .jp-Diff-deleted .jp-Diff-renderedOuput {
   background-color: #ffecec;
 }
 
-.jp-Diff-added .CodeMirror,
-.jp-Diff-added .jp-Diff-renderedOuput {
+.jp-Notebook-diff .jp-Diff-added .CodeMirror,
+.jp-Notebook-diff .jp-Diff-added .jp-Diff-renderedOuput {
   background-color: #dbffdb;
 }
 
-.jp-Diff-added .CodeMirror-merge-pane-added {
+.jp-Notebook-diff .jp-Diff-added .CodeMirror-merge-pane-added {
   width: 100%;
 }

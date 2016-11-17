@@ -35,12 +35,12 @@ import 'nbdime/lib/common/collapsible.css';
 import 'nbdime/lib/upstreaming/flexpanel.css';
 import 'nbdime/lib/common/dragpanel.css';
 import 'nbdime/lib/styles/common.css';
-import './common.css';
-
 import 'nbdime/lib/styles/diff.css';
-import './diff.css';
 import 'nbdime/lib/styles/merge.css';
-import './merge.css';
+
+import './app/common.css';
+import './app/diff.css';
+import './app/merge.css';
 
 
 /** */
