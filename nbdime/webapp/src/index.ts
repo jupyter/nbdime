@@ -19,6 +19,28 @@ import {
 } from './app/common';
 
 
+import 'codemirror/lib/codemirror.css';
+import 'jupyterlab/lib/codemirror/index.css';
+
+import 'phosphor/styles/base.css';
+import 'jupyterlab/lib/basestyle/materialcolors.css';
+import 'jupyterlab/lib/default-theme/variables.css';
+import 'jupyterlab/lib/markdownwidget/index.css';
+import 'jupyterlab/lib/notebook/index.css';
+import 'jupyterlab/lib/renderers/index.css';
+import 'jupyterlab/lib/editorwidget/index.css';
+import 'jupyterlab/lib/editorwidget/index.css';
+
+import 'nbdime/lib/common/collapsible.css';
+import 'nbdime/lib/upstreaming/flexpanel.css';
+import 'nbdime/lib/common/dragpanel.css';
+import 'nbdime/lib/styles/common.css';
+import './common.css';
+
+import 'nbdime/lib/styles/diff.css';
+import './diff.css';
+import 'nbdime/lib/styles/merge.css';
+import './merge.css';
 
 
 /** */

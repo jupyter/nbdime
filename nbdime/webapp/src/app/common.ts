@@ -2,11 +2,6 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import 'codemirror/lib/codemirror.css';
-import 'jupyterlab/lib/codemirror/index.css';
-import 'nbdime/lib/styles/common.css';
-import './common.css';
-
 import * as alertify from 'alertify.js';
 
 import {
