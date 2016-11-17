@@ -7,66 +7,44 @@ import {
 } from 'jupyterlab/lib/rendermime';
 
 import {
-  OutputWidget
-} from 'jupyterlab/lib/notebook/output-area';
-
-import {
-  nbformat
-} from 'jupyterlab/lib/notebook/notebook/nbformat';
-
-import {
   Widget
 } from 'phosphor/lib/ui/widget';
 
 import {
-  Panel, PanelLayout
+  Panel
 } from 'phosphor/lib/ui/panel';
 
 import {
   createNbdimeMergeView
-} from '../common/mergeview';
+} from '../../common/mergeview';
 
 import {
   CollapsiblePanel
-} from '../common/collapsiblepanel';
+} from '../../common/collapsiblepanel';
 
 import {
   valueIn
-} from '../common/util';
+} from '../../common/util';
 
 import {
-  CellDiffModel, NotebookDiffModel, IDiffModel,
-  IStringDiffModel, StringDiffModel, OutputDiffModel
-} from './model';
+  DIFF_CLASSES, ADDED_DIFF_CLASS, DELETED_DIFF_CLASS,
+  TWOWAY_DIFF_CLASS, UNCHANGED_DIFF_CLASS
+} from './common';
+
+import {
+  RenderableOutputView
+} from './output';
+
+import {
+  CellDiffModel, IDiffModel, StringDiffModel, OutputDiffModel
+} from '../model';
 
 
-const NBDIFF_CLASS = 'jp-Notebook-diff';
-
-const ROOT_METADATA_CLASS = 'jp-Metadata-diff';
 const CELLDIFF_CLASS = 'jp-Cell-diff';
 
 const SOURCE_ROW_CLASS = 'jp-Cellrow-source';
 const METADATA_ROW_CLASS = 'jp-Cellrow-metadata';
 const OUTPUTS_ROW_CLASS = 'jp-Cellrow-outputs';
-
-const TWOWAY_DIFF_CLASS = 'jp-Diff-twoway';
-const ADDED_DIFF_CLASS = 'jp-Diff-added';
-const DELETED_DIFF_CLASS = 'jp-Diff-deleted';
-const UNCHANGED_DIFF_CLASS = 'jp-Diff-unchanged';
-
-const DIFF_CLASSES = ['jp-Diff-base', 'jp-Diff-remote'];
-
-
-/**
- * A list of outputs considered safe.
- */
-const safeOutputs = ['text/plain', 'text/latex', 'image/png', 'image/jpeg',
-                    'application/vnd.jupyter.console-text'];
-
-/**
- * A list of outputs that are sanitizable.
- */
-const sanitizable = ['text/svg', 'text/html'];
 
 /**
  * A list of MIME types that can be shown as string diff.
@@ -74,94 +52,6 @@ const sanitizable = ['text/svg', 'text/html'];
 const stringDiffMimeTypes = ['text/html', 'text/plain'];
 
 
-
-/**
- * Widget for outputs with renderable MIME data.
- */
-class RenderableOutputView extends Widget {
-  constructor(model: OutputDiffModel, editorClass: string[],
-              rendermime: IRenderMime) {
-    super();
-    this._rendermime = rendermime;
-    let bdata = model.base;
-    let rdata = model.remote;
-    this.layout = new PanelLayout();
-
-    let ci = 0;
-    if (bdata) {
-      let widget = this.createOutput(bdata, false);
-      this.layout.addWidget(widget);
-      widget.addClass(editorClass[ci++]);
-    }
-    if (rdata && rdata !== bdata) {
-      let widget = this.createOutput(rdata, false);
-      this.layout.addWidget(widget);
-      widget.addClass(editorClass[ci++]);
-    }
-  }
-
-  /**
-   * Checks if all MIME types of a MIME bundle are safe or can be sanitized.
-   */
-  static safeOrSanitizable(bundle: nbformat.MimeBundle) {
-    let keys = Object.keys(bundle);
-    for (let key of keys) {
-      if (valueIn(key, safeOutputs)) {
-        continue;
-      } else if (valueIn(key, sanitizable)) {
-        let out = bundle[key];
-        if (typeof out === 'string') {
-          continue;
-        } else {
-          return false;
-        }
-      } else {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  /**
-   * Checks if a cell output can be rendered as untrusted (either safe or
-   * sanitizable)
-   */
-  static canRenderUntrusted(model: OutputDiffModel): boolean {
-    let toTest: nbformat.IOutput[] = [];
-    if (model.base) {
-      toTest.push(model.base);
-    }
-    if (model.remote && model.remote !== model.base) {
-      toTest.push(model.remote);
-    }
-    for (let o of toTest) {
-      if (o.output_type === 'execute_result' || o.output_type === 'display_data') {
-        let bundle = o.data;
-        if (!this.safeOrSanitizable(bundle)) {
-          return false;
-        }
-      } else if (valueIn(o.output_type, ['stream', 'error'])) {
-        // Unknown output type
-        return false;
-      }
-    }
-    return true;
-  }
-
-  layout: PanelLayout;
-
-  /**
-   * Create a widget which renders the given cell output
-   */
-  protected createOutput(output: nbformat.IOutput, trusted: boolean): Widget {
-    let widget = new OutputWidget({rendermime: this._rendermime});
-    widget.render({output, trusted});
-    return widget;
-  }
-
-  _sanitized: boolean;
-  _rendermime: IRenderMime;
-}
 
 /**
  * CellDiffWidget for cell changes
@@ -311,71 +201,4 @@ class CellDiffWidget extends Panel {
 
   protected _model: CellDiffModel;
   protected _rendermime: IRenderMime;
-}
-
-
-/**
- * MetadataWidget for changes to Notebook-level metadata
- */
-export
-class MetadataDiffWidget extends Panel {
-  constructor(model: IStringDiffModel) {
-    super();
-    this._model = model;
-    console.assert(!model.added && !model.deleted);
-    this.addClass(ROOT_METADATA_CLASS);
-    this.init();
-  }
-
-  init() {
-    let model = this._model;
-    if (!model.unchanged) {
-      this.addClass(TWOWAY_DIFF_CLASS);
-      let view: Widget = createNbdimeMergeView(
-        model, DIFF_CLASSES);
-      if (model.collapsible) {
-        view = new CollapsiblePanel(
-          view, model.collapsibleHeader, model.startCollapsed);
-      }
-      this.addWidget(view);
-    }
-  }
-
-  private _model: IStringDiffModel;
-}
-
-
-/**
- * NotebookDiffWidget
- */
-export
-class NotebookDiffWidget extends Widget {
-  constructor(model: NotebookDiffModel, rendermime: IRenderMime) {
-    super();
-    this._model = model;
-    this._rendermime = rendermime;
-    let layout = this.layout = new PanelLayout();
-
-    this.addClass(NBDIFF_CLASS);
-
-    if (model.metadata) {
-      layout.addWidget(new MetadataDiffWidget(model.metadata));
-    }
-    for (let c of model.cells) {
-      layout.addWidget(new CellDiffWidget(c, rendermime, model.mimetype));
-    }
-  }
-
-  /**
-   * Get the model for the widget.
-   *
-   * #### Notes
-   * This is a read-only property.
-   */
-  get model(): NotebookDiffModel {
-    return this._model;
-  }
-
-  private _model: NotebookDiffModel;
-  private _rendermime: IRenderMime;
 }
