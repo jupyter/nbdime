@@ -1,18 +1,19 @@
 
 
-
 .jp-Notebook-diff {
   width: 90%;
   margin: auto;
+  position: relative;
+  z-index: 0;
 }
 
-#nbdime-header-base {
+.nbdime-Diff-tool #nbdime-header-base {
   display: inline-block;
   width: 50%;
   background-color: #f8cbcb
 }
 
-#nbdime-header-remote {
+.nbdime-Diff-tool #nbdime-header-remote {
   display: inline-block;
   width: 49%;
   background-color: #a6f3a6;
