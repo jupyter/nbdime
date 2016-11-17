@@ -27,11 +27,15 @@
 .jp-Notebook-diff .jp-Diff-added > .jp-Diff-label {
   left: 0;
   position: absolute;
+  width: 25%;
+  text-align: center;
 }
 
 .jp-Notebook-diff .jp-Diff-deleted > .jp-Diff-label {
   right: 0;
   position: absolute;
+  width: 25%;
+  text-align: center;
 }
 
 .jp-Notebook-diff .jp-Diff-added .jp-Cellrow-source,
