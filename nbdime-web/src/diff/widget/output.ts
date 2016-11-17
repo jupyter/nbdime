@@ -31,6 +31,8 @@ import {
 } from '../model';
 
 
+const RENDERED_OUTPUT_CLASS = 'jp-Diff-renderedOuput';
+
 /**
  * A list of outputs considered safe.
  */
@@ -54,6 +56,7 @@ class RenderableOutputView extends Widget {
     let bdata = model.base;
     let rdata = model.remote;
     this.layout = new PanelLayout();
+    this.addClass(RENDERED_OUTPUT_CLASS);
 
     let ci = 0;
     if (bdata) {

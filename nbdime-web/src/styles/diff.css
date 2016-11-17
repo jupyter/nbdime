@@ -24,37 +24,40 @@
   border-top: solid #ccc 1px;
 }
 
-.jp-Diff-added > div:first-child {
-  float: left;
-  width: 25%;
+.jp-Cell-diff.jp-Diff-added > .jp-Diff-cell-label {
+  left: 0;
+  position: absolute;
 }
 
-.jp-Diff-deleted > div:first-child {
-  float: right;
-  width: 25%;
+.jp-Cell-diff.jp-Diff-deleted > .jp-Diff-cell-label {
+  right: 0;
+  position: absolute;
 }
 
-.jp-Diff-added .jp-Cellrow-metadata {
-  display: none;
+.jp-Diff-added .jp-Cellrow-source,
+.jp-Diff-added .jp-Cellrow-outputs {
+  margin-left: 25%;
+  width: 75%;
+  border-left: 1px solid #ddd;
 }
 
-.jp-Diff-deleted .jp-Cellrow-metadata {
-  display: none;
+.jp-Diff-deleted .jp-Cellrow-source,
+.jp-Diff-deleted .jp-Cellrow-outputs {
+  margin-right: 25%;
+  width: 75%;
+  border-right: 1px solid #ddd;
 }
 
+.jp-Diff-added .jp-Cellrow-metadata,
+.jp-Diff-deleted .jp-Cellrow-metadata,
 .jp-Diff-unchanged .jp-Cellrow-outputs {
   display: none;
 }
 
-/*
-.jp-Diff-added .jp-Cellrow-outputs {
-  display: none;
-}
-
+.jp-Diff-added .jp-Cellrow-outputs,
 .jp-Diff-deleted .jp-Cellrow-outputs {
-  display: none;
+  border-top: #39f solid 1pt;
 }
-*/
 
 .jp-Diff-added .jp-Diff-unchanged {
   margin-left: 25%;
@@ -106,11 +109,13 @@
 .jp-Notebook-diff .CodeMirror-merge-pane-remote .CodeMirror-merge-spacer { background-color: #dbffdb; }
 
 
-.jp-Diff-deleted .CodeMirror {
+.jp-Diff-deleted .CodeMirror,
+.jp-Diff-deleted .jp-Diff-renderedOuput {
   background-color: #ffecec;
 }
 
-.jp-Diff-added .CodeMirror {
+.jp-Diff-added .CodeMirror,
+.jp-Diff-added .jp-Diff-renderedOuput {
   background-color: #dbffdb;
 }
 
