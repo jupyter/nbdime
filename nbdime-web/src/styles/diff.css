@@ -103,6 +103,21 @@
   width: 75%;
 }
 
+.jp-Notebook-diff .jp-Diff-twoway .jp-Cellrow-outputs .jp-Diff-unchanged .jp-CodeMirrorWidget {
+  width: initial;
+  max-width: 100%;
+}
+.jp-Notebook-diff .jp-Diff-twoway .jp-Cellrow-outputs .jp-Diff-unchanged {
+  text-align: center;
+}
+
+.jp-Notebook-diff .jp-Cellrow-outputs .jp-Diff-added > :not(.jp-Diff-label) {
+  margin-left: 25%;
+}
+
+.jp-Notebook-diff .jp-Cellrow-outputs .jp-Diff-deleted > :not(.jp-Diff-label) {
+  margin-right: 25%;
+}
 
 .jp-Notebook-diff .CodeMirror-merge-r-chunk { background-color: var(--jp-diff-deleted-color2); }
 .jp-Notebook-diff .CodeMirror-merge-r-chunk-start { border-top: 1px solid var(--jp-diff-deleted-color1); }

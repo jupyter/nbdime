@@ -1,3 +1,4 @@
+
 .CodeMirror-merge {
   position: relative;
   white-space: pre;
@@ -26,6 +27,7 @@
   display: inline-block;
   white-space: normal;
   vertical-align: top;
+  width: 100%;
 }
 .CodeMirror-merge-pane-rightmost {
   position: absolute;
