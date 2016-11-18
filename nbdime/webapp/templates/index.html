@@ -22,12 +22,12 @@
         <fieldset>
           <legend>Please input filenames of notebooks to compare:</legend>
           Local:
-          <input id="compare-local" type="text" name="local" value="{{ escape(config_data['local']) }}">
+          <input id="compare-local" type="text" name="local" value="{{ escape(config_data['local']) }}" />
           Base:
-          <input id="compare-base" type="text" name="base" value="{{ escape(config_data['base']) }}">
+          <input id="compare-base" type="text" name="base" value="{{ escape(config_data['base']) }}" />
           Remote:
-          <input id="compare-remote" type="text" name="remote" value="{{ escape(config_data['remote']) }}">
-          <input id="nbdime-run-compare" type="submit" name="auto" value="Compare files"></button>
+          <input id="compare-remote" type="text" name="remote" value="{{ escape(config_data['remote']) }}" />
+          <input id="nbdime-run-compare" type="submit" name="auto" value="Compare files" />
         </fieldset>
       </form> <!-- nbdime-forms -->
     </div> <!-- ndime-header -->
