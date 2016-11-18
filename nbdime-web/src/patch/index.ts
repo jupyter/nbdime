@@ -352,7 +352,7 @@ function patchStringifiedList(base: JSONArray, diff: IDiffArrayEntry[] | null, l
       // Delete a number of values by skipping
       let val = '';
       let len = e.length;
-      for (let i = 0; i < len; i++) {
+      for (let i = index; i < index + len; i++) {
         val += stringify(base[i], level + 1) + postfix;
       }
       let difflen = val.length;
