@@ -6,6 +6,7 @@ __pycache__
 docs/build
 htmlcov
 dist
+build
 MANIFEST
 .coverage
 .cache

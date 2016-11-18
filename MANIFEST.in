@@ -2,6 +2,9 @@ include COPYING.md
 include CONTRIBUTING.md
 include README.md
 
+include pytest.ini
+include requirements.txt
+
 # Documentation
 graft docs
 exclude docs/\#*
@@ -13,6 +16,16 @@ graft examples
 prune docs/build
 prune docs/gh-pages
 prune docs/dist
+
+# Webapp files
+graft nbdime/webapp
+prune nbdime/webapp/node_modules
+prune nbdime/webapp/build
+graft nbdime-web
+prune nbdime-web/coverage
+prune nbdime-web/lib
+prune nbdime-web/node_modules
+prune nbdime-web/test/build
 
 # Patterns to exclude from any directory
 global-exclude *~
