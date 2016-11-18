@@ -11,7 +11,7 @@ def nocolor(request):
     """Disable color printing for test"""
     import nbdime.prettyprint as pp
     patch = mock.patch.multiple(pp,
-        ADD='+ ', REMOVE='- ', RESET='',
+        ADD='+', REMOVE='-', RESET='',
         _git_diff_print_cmd=pp._git_diff_print_cmd.replace(' --color-words', ''),
     )
     patch.start()

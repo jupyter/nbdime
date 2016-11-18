@@ -42,9 +42,10 @@ with_indent = False
 _git_diff_print_cmd = 'git diff --no-index --color-words'
 
 # colors
-REMOVE = colorama.Fore.RED + '- '
-ADD = colorama.Fore.GREEN + '+ '
+REMOVE = colorama.Fore.RED + '-'
+ADD = colorama.Fore.GREEN + '+'
 RESET = colorama.Style.RESET_ALL
+
 
 def present_dict_no_markup(prefix, d, exclude_keys=None):
     """Pretty-print a dict without wrapper keys
@@ -257,39 +258,46 @@ def present_string_diff(a, di, path):
         return header + ['<base64 data changed>']
 
     b = patch(a, di)
-    td = tempfile.mkdtemp()
     cmd = None
-    try:
-        with io.open(os.path.join(td, 'before'), 'w', encoding="utf8") as f:
-            f.write(a)
-        with io.open(os.path.join(td, 'after'), 'w', encoding="utf8") as f:
-            f.write(b)
-        if which('git'):
-            cmd = _git_diff_print_cmd.split()
-            heading_lines = 4
-        elif which('diff'):
-            cmd = ['diff']
-            heading_lines = 0
-        else:
-            uni = list(unified_diff(
-                a.splitlines(False),
-                b.splitlines(False),
-                lineterm=''))
-            if not a.endswith('\n'):
-                uni.insert(-1, '\ No newline at end of file')
-            if not b.endswith('\n'):
-                uni.append('\ No newline at end of file')
-            dif = '\n'.join(uni)
-            heading_lines = 2
+    if which('git'):
+        cmd = _git_diff_print_cmd.split()
+        heading_lines = 4
+    elif which('diff'):
+        cmd = ['diff']
+        heading_lines = 0
+    else:
+        gen = unified_diff(
+            a.splitlines(False),
+            b.splitlines(False),
+            lineterm='')
+        uni = []
+        for line in gen:
+            if line.startswith('+'):
+                uni.append("%s%s%s" % (ADD, line[1:], RESET))
+            elif line.startswith('-'):
+                uni.append("%s%s%s" % (REMOVE, line[1:], RESET))
+            else:
+                uni.append(line)
+        if not a.endswith('\n'):
+            uni.insert(-1, r'\ No newline at end of file')
+        if not b.endswith('\n'):
+            uni.append(r'\ No newline at end of file')
+        diff = '\n'.join(uni)
+        heading_lines = 2
 
-        if cmd is not None:
+    if cmd is not None:
+        try:
+            td = tempfile.mkdtemp()
+            with io.open(os.path.join(td, 'before'), 'w', encoding="utf8") as f:
+                f.write(a)
+            with io.open(os.path.join(td, 'after'), 'w', encoding="utf8") as f:
+                f.write(b)
             p = Popen(cmd + ['before', 'after'], cwd=td, stdout=PIPE)
             out, _ = p.communicate()
-            dif = out.decode('utf8')
-
-    finally:
-        shutil.rmtree(td)
-    return header + dif.splitlines()[heading_lines:]
+            diff = out.decode('utf8')
+        finally:
+            shutil.rmtree(td)
+    return header + diff.splitlines()[heading_lines:]
 
 
 def present_diff(a, di, path, indent=True):
