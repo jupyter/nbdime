@@ -111,11 +111,11 @@
   text-align: center;
 }
 
-.jp-Notebook-diff .jp-Cellrow-outputs .jp-Diff-added > :not(.jp-Diff-label) {
+.jp-Notebook-diff .jp-Diff-twoway .jp-Cellrow-outputs .jp-Diff-added > :not(.jp-Diff-label) {
   margin-left: 25%;
 }
 
-.jp-Notebook-diff .jp-Cellrow-outputs .jp-Diff-deleted > :not(.jp-Diff-label) {
+.jp-Notebook-diff .jp-Diff-twoway .jp-Cellrow-outputs .jp-Diff-deleted > :not(.jp-Diff-label) {
   margin-right: 25%;
 }
 
@@ -142,6 +142,7 @@
   background-color: var(--jp-diff-added-color2);
 }
 
-.jp-Notebook-diff .jp-Diff-added .CodeMirror-merge-pane-added {
+.jp-Notebook-diff .jp-Diff-added .CodeMirror-merge-pane-added,
+.jp-Notebook-diff .jp-Diff-deleted .CodeMirror-merge-pane-deleted {
   width: 100%;
 }
