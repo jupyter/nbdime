@@ -141,7 +141,7 @@ def diff_single_outputs(a, b, path="/cells/*/output/*",
     else:
         return diff(a, b)
 
-_split_mimes = ('text/', 'image/svg+xml', 'application/javascript')
+_split_mimes = ('text/', 'image/svg+xml', 'application/javascript', 'application/json')
 
 
 def diff_mime_bundle(a, b, path=None):
