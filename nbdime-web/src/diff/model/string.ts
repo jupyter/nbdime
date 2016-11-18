@@ -23,7 +23,7 @@ import {
 } from '../../chunking';
 
 import {
-  patchStringified, stringify
+  patchStringified, stringifyAndBlankNull
 } from '../../patch';
 
 import {
@@ -325,7 +325,6 @@ namespace StringDiffModel {
 }
 
 
-
 /**
  * Creates a StringDiffModel based on a patch operation.
  *
@@ -336,7 +335,7 @@ namespace StringDiffModel {
 export
 function createPatchStringDiffModel(base: string | JSONObject | JSONArray, diff: IDiffEntry[]) : StringDiffModel {
   console.assert(!!diff, 'Patch model needs diff.');
-  let baseStr = (typeof base === 'string') ? base : stringify(base);
+  let baseStr = stringifyAndBlankNull(base);
   let out = patchStringified(base, diff);
   return new StringDiffModel(baseStr, out.remote, out.additions, out.deletions);
 }
@@ -351,10 +350,8 @@ function createPatchStringDiffModel(base: string | JSONObject | JSONArray, diff:
  */
 export
 function createDirectStringDiffModel(base: JSONValue | null, remote: JSONValue | null): StringDiffModel {
-  let baseStr: string | null = (typeof base === 'string') ?
-    base : stringify(base);
-  let remoteStr: string | null = (typeof remote === 'string') ?
-    remote : stringify(remote);
+  let baseStr: string | null = stringifyAndBlankNull(base);
+  let remoteStr: string | null = stringifyAndBlankNull(remote);
   let additions: DiffRangeRaw[] = [];
   let deletions: DiffRangeRaw[] = [];
 

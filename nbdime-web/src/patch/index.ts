@@ -451,17 +451,35 @@ function patchString(base: string, diff: IDiffArrayEntry[] | null, level: number
 }
 
 /**
- * Ordered stringify. Wraps stableStringify(), but handles indentation, and
- * turns null input into empty string.
+ * Ordered stringify. Wraps stableStringify(), but handles indentation.
+ *
+ * indentFirst controls whether the first line is indented as well, and
+ * defaults to true.
  */
 export
 function stringify(values: JSONValue | null,
-                   level?: number, indentFirst?: boolean) : string {
-  let ret = (values === null) ? '' : stableStringify(values, {space: JSON_INDENT});
+                   level?: number,
+                   indentFirst: boolean = true) : string {
+  let ret = stableStringify(values, {space: JSON_INDENT});
   if (level) {
     ret = _indent(ret, level, indentFirst);
   }
   return ret;
+}
+
+
+/**
+ * Ensure value is string, if not stringify.
+ */
+export
+function stringifyAndBlankNull(value: JSONValue | null): string {
+  if (typeof value === 'string') {
+    return value;
+  } else if (value === null) {
+    return '';
+  } else {
+    return stringify(value);
+  }
 }
 
 
@@ -485,10 +503,9 @@ function _entriesAfter(remainingKeys: string[], ops: { [key: string]: IDiffEntry
 /**
  * Indent a (multiline) string with `JSON_INDENT` given number of times.
  *
- * indentFirst controls whether the first line is indented as well, and
- * defaults to true.
+ * indentFirst controls whether the first line is indented as well.
  */
-function _indent(str: string, levels: number, indentFirst?: boolean) : string {
+function _indent(str: string, levels: number, indentFirst: boolean) : string {
   indentFirst = indentFirst !== false;
   let lines = str.split('\n');
   let ret: string[] = new Array(lines.length);

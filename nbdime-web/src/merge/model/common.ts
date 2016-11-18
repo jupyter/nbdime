@@ -23,7 +23,7 @@ import {
 } from '../../chunking';
 
 import {
-  stringify, patchStringified
+  patchStringified, stringifyAndBlankNull
 } from '../../patch';
 
 import {
@@ -45,7 +45,7 @@ class DecisionStringDiffModel extends StringDiffModel {
               sourceModels: (IStringDiffModel | null)[],
               collapsible?: boolean, header?: string, collapsed?: boolean) {
     // Set up initial parameters for super call
-    let baseStr = (typeof base === 'string') ? base : stringify(base);
+    let baseStr = stringifyAndBlankNull(base);
     super(baseStr, '', [], [],
       collapsible, header, collapsed);
     this.rawBase = base;
