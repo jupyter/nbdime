@@ -42,9 +42,10 @@ with_indent = False
 _git_diff_print_cmd = 'git diff --no-index --color-words'
 
 # colors
-REMOVE = colorama.Fore.RED + '- '
-ADD = colorama.Fore.GREEN + '+ '
+REMOVE = colorama.Fore.RED + '-'
+ADD = colorama.Fore.GREEN + '+'
 RESET = colorama.Style.RESET_ALL
+
 
 def present_dict_no_markup(prefix, d, exclude_keys=None):
     """Pretty-print a dict without wrapper keys
@@ -276,7 +277,7 @@ def present_string_diff(a, di, path):
             elif line.startswith('-'):
                 uni.append("%s%s%s" % (REMOVE, line[1:], RESET))
             else:
-                uni.append(" %s" % (line,))
+                uni.append(line)
         if not a.endswith('\n'):
             uni.insert(-1, r'\ No newline at end of file')
         if not b.endswith('\n'):
