@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 import pytest
 import mock
 import os
-from  os.path import join as pjoin
+from os.path import join as pjoin
 
 from nbdime.gitdiffdriver import main as gdd_main
 
@@ -44,17 +44,15 @@ patch a/cells/1/source:
 def test_git_diff_driver(capsys, noindent, nocolor):
     # Simulate a call from `git diff` to check basic driver functionality
     test_dir = os.path.abspath(os.path.dirname(__file__))
-    mock_argv = ['/mock/path/git-nbdiffdriver', 'diff',
+    mock_argv = [
+        '/mock/path/git-nbdiffdriver', 'diff',
         pjoin(test_dir, 'files/foo--1.ipynb'),
         pjoin(test_dir, 'files/foo--1.ipynb'), 'invalid_mock_checksum', '100644',
         pjoin(test_dir, 'files/foo--2.ipynb'), 'invalid_mock_checksum', '100644']
     with mock.patch('sys.argv', mock_argv):
         r = gdd_main()
         assert r == 0
-        #with pytest.raises(SystemExit) as cm:
-        #    gdd_main()
-        #assert cm.value.code == 0
         cap_out = capsys.readouterr()[0]
-        assert cap_out  == expected_output.format(
+        assert cap_out == expected_output.format(
             pjoin(test_dir, 'files/foo--1.ipynb'),
             pjoin(test_dir, 'files/foo--2.ipynb'))
