@@ -22,12 +22,12 @@
         <fieldset>
           <legend>Please input filenames/URLs of notebooks to merge:</legend>
           Local:
-          <input id="merge-local" type="text" name="local" value="{{ escape(config_data['local']) }}">
+          <input id="merge-local" type="text" name="local" value="{{ escape(config_data['local']) }}" />
           Base:
-          <input id="merge-base" type="text" name="base" value="{{ escape(config_data['base']) }}">
+          <input id="merge-base" type="text" name="base" value="{{ escape(config_data['base']) }}" />
           Remote:
-          <input id="merge-remote" type="text" name="remote" value="{{ escape(config_data['remote']) }}">
-          <input id="nbdime-run-merge" type="submit" name="merge" value="Merge files"></button>
+          <input id="merge-remote" type="text" name="remote" value="{{ escape(config_data['remote']) }}" />
+          <input id="nbdime-run-merge" type="submit" name="merge" value="Merge files" />
         </fieldset>
       </form> <!-- nbdime-forms -->
       <div id="nbdime-header-buttonrow">
