@@ -7,37 +7,21 @@
   z-index: 0;
 }
 
-#nbdime-header {
-  margin: auto;
-  width: 90%;
-  margin-bottom: 20px;
-}
-
-.nbdime-header-button{
-  display: inline-block;
-  margin-right: 10px;
-}
-
-#nbdime-header-banner {
-  margin-top: 10px;
-}
-
-
-#nbdime-header-base,
-#nbdime-header-remote,
-#nbdime-header-local {
+.nbdime-Merge-tool #nbdime-header-base,
+.nbdime-Merge-tool #nbdime-header-remote,
+.nbdime-Merge-tool #nbdime-header-local {
   display: inline-block;
   width: 33%;
 }
 
-#nbdime-header-local {
+.nbdime-Merge-tool #nbdime-header-local {
   background-color: #cbcbf8;
 }
 
-#nbdime-header-base {
+.nbdime-Merge-tool #nbdime-header-base {
   background-color: #eee;
 }
 
-#nbdime-header-remote {
+.nbdime-Merge-tool #nbdime-header-remote {
   background-color: #beb;
 }

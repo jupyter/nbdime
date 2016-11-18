@@ -46,6 +46,8 @@ const SOURCE_ROW_CLASS = 'jp-Cellrow-source';
 const METADATA_ROW_CLASS = 'jp-Cellrow-metadata';
 const OUTPUTS_ROW_CLASS = 'jp-Cellrow-outputs';
 
+const ADD_DEL_LABEL_CLASS = 'jp-Diff-label';
+
 /**
  * A list of MIME types that can be shown as string diff.
  */
@@ -80,15 +82,17 @@ class CellDiffWidget extends Panel {
     if (model.added) {
       let widget = new Widget();
       widget.node.textContent = 'Cell added';
+      widget.addClass(ADD_DEL_LABEL_CLASS);
       this.addWidget(widget);
       this.addClass(ADDED_DIFF_CLASS);
-      CURR_DIFF_CLASSES = DIFF_CLASSES.slice(0, 1);
+      CURR_DIFF_CLASSES = DIFF_CLASSES.slice(1, 2);
     } else if (model.deleted) {
       let widget = new Widget();
       widget.node.textContent = 'Cell deleted';
+      widget.addClass(ADD_DEL_LABEL_CLASS);
       this.addWidget(widget);
       this.addClass(DELETED_DIFF_CLASS);
-      CURR_DIFF_CLASSES = DIFF_CLASSES.slice(1, 2);
+      CURR_DIFF_CLASSES = DIFF_CLASSES.slice(0, 1);
     } else if (model.unchanged) {
       this.addClass(UNCHANGED_DIFF_CLASS);
     } else {
@@ -116,11 +120,16 @@ class CellDiffWidget extends Panel {
         container.addWidget(outputsWidget);
         changed = changed || !o.unchanged || o.added || o.deleted;
       }
-      let collapsed = !changed || model.added || model.deleted;
-      let header = changed ? 'Outputs changed' : 'Outputs unchanged';
-      let collapser = new CollapsiblePanel(container, header, collapsed);
-      collapser.addClass(OUTPUTS_ROW_CLASS);
-      this.addWidget(collapser);
+      if (model.added || model.deleted) {
+        container.addClass(OUTPUTS_ROW_CLASS);
+        this.addWidget(container);
+      } else {
+        let collapsed = !changed;
+        let header = changed ? 'Outputs changed' : 'Outputs unchanged';
+        let collapser = new CollapsiblePanel(container, header, collapsed);
+        collapser.addClass(OUTPUTS_ROW_CLASS);
+        this.addWidget(collapser);
+      }
     }
   }
 
@@ -165,22 +174,30 @@ class CellDiffWidget extends Panel {
           view, model.collapsibleHeader, model.startCollapsed);
     }
     let container = new Panel();
-    if (model.added && !parent.added) {
-      // Implies this is added output
-      let addSpacer = new Widget();
-      addSpacer.node.textContent = 'Output added';
-      container.addWidget(addSpacer);
-      container.addClass(ADDED_DIFF_CLASS);
-    } else if (model.deleted && !parent.deleted) {
-      // Implies this is deleted output
-      let delSpacer = new Widget();
-      delSpacer.node.textContent = 'Output deleted';
-      container.addWidget(delSpacer);
-      container.addClass(DELETED_DIFF_CLASS);
-    } else if (model.unchanged) {
-      container.addClass(UNCHANGED_DIFF_CLASS);
-    } else {
-      container.addClass(TWOWAY_DIFF_CLASS);
+    if (model instanceof OutputDiffModel) {
+      if (model.added) {
+        if (!parent.added) {
+          // Implies this is added output
+          let addSpacer = new Widget();
+          addSpacer.node.textContent = 'Output added';
+          addSpacer.addClass(ADD_DEL_LABEL_CLASS);
+          container.addWidget(addSpacer);
+        }
+        container.addClass(ADDED_DIFF_CLASS);
+      } else if (model.deleted) {
+        if (!parent.deleted) {
+          // Implies this is deleted output
+          let delSpacer = new Widget();
+          delSpacer.node.textContent = 'Output deleted';
+          delSpacer.addClass(ADD_DEL_LABEL_CLASS);
+          container.addWidget(delSpacer);
+        }
+        container.addClass(DELETED_DIFF_CLASS);
+      } else if (model.unchanged) {
+        container.addClass(UNCHANGED_DIFF_CLASS);
+      } else {
+        container.addClass(TWOWAY_DIFF_CLASS);
+      }
     }
     container.addWidget(view);
     return container;

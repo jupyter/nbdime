@@ -2,18 +2,6 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import 'phosphor/styles/base.css';
-import 'jupyterlab/lib/basestyle/materialcolors.css';
-import 'jupyterlab/lib/default-theme/variables.css';
-import 'jupyterlab/lib/markdownwidget/index.css';
-import 'jupyterlab/lib/notebook/index.css';
-import 'jupyterlab/lib/renderers/index.css';
-import 'jupyterlab/lib/editorwidget/index.css';
-import 'jupyterlab/lib/editorwidget/index.css';
-import 'nbdime/lib/common/collapsible.css';
-import 'nbdime/lib/styles/diff.css';
-import './diff.css';
-
 
 import {
   nbformat
