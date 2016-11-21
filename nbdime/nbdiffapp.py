@@ -13,9 +13,10 @@ import argparse
 import nbformat
 import json
 
-from .diffing.notebooks import diff_notebooks
-from .prettyprint import pretty_print_notebook_diff
-from .args import add_generic_args, add_diff_args, add_filename_args
+import nbdime
+from nbdime.diffing.notebooks import diff_notebooks
+from nbdime.prettyprint import pretty_print_notebook_diff
+from nbdime.args import add_generic_args, add_diff_args, add_filename_args
 
 
 _description = "Compute the difference between two Jupyter notebooks."
@@ -75,10 +76,10 @@ def main(args=None):
         import colorama
         colorama.init()
     arguments = _build_arg_parser().parse_args(args)
+    nbdime.log.set_nbdime_log_level(arguments.log_level)
     return main_diff(arguments)
 
 
 if __name__ == "__main__":
-    import nbdime.log
     nbdime.log.init_logging()
     main()
