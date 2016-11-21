@@ -17,6 +17,7 @@ from subprocess import Popen, PIPE
 import tempfile
 from difflib import unified_diff
 from six import string_types
+import hashlib
 import colorama
 
 try:
@@ -35,9 +36,6 @@ from .diff_format import NBDiffFormatError, DiffOp
 from .patching import patch
 
 
-# Toggle indentation here
-with_indent = False
-
 # Change to enable/disable color print etc.
 _git_diff_print_cmd = 'git diff --no-index --color-words'
 
@@ -55,7 +53,15 @@ _base64 = re.compile(r'^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]
 def _trim_base64(s):
     """Trim base64 strings"""
     if len(s) > 64 and _base64.match(s.replace('\n', '')):
-        s = s[:16] + '...<snip base64>...' + s[-16:].strip()
+        # TODO: This approach will show that hashes differ
+        # when there are small changes in the middle of the
+        # string, use it always?
+        hash_base64_content = True
+        if hash_base64_content:
+            h = hashlib.md5(s).hexdigest()
+            s = '<base64 with md5=%s' % h
+        else:
+            s = s[:16] + '...<snip base64>...' + s[-16:].strip()
     return s
 
 
