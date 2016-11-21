@@ -144,7 +144,8 @@ def diff_single_outputs(a, b, path="/cells/*/output/*",
 _split_mimes = ('text/', 'image/svg+xml', 'application/javascript', 'application/json')
 
 
-def diff_mime_bundle(a, b, path=None):
+def diff_mime_bundle(a, b, path=None,
+                     predicates=None, differs=None):
     di = MappingDiffBuilder()
 
     akeys = set(a.keys())
@@ -194,6 +195,8 @@ notebook_differs = defaultdict(lambda: diff, {
     "/cells/*": diff,
     "/cells/*/outputs": diff_sequence_multilevel,
     "/cells/*/outputs/*": diff_single_outputs,
+    "/cells/*/attachments": diff_sequence_multilevel,
+    "/cells/*/attachments/*": diff_mime_bundle,
     })
 
 
