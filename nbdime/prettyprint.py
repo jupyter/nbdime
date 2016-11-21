@@ -115,6 +115,18 @@ def present_output(prefix, output):
     return pp
 
 
+def present_attachment(prefix, key, mime_bundle):
+    """Present an attachment (whole attachment add/delete)
+
+    Called by present_value
+    """
+    pp = []
+    pp.append(prefix + key + ':')
+    value_prefix = prefix + '  '
+    pp.extend(present_dict_no_markup(value_prefix, mime_bundle))
+    return pp
+
+
 def present_cell(prefix, cell):
     """Present a cell as a scalar (whole cell delete/add)
 
@@ -140,6 +152,11 @@ def present_cell(prefix, cell):
         pp.append(key_prefix + 'outputs:')
         for output in cell['outputs']:
             pp.extend(present_output(value_prefix, output))
+
+    if cell.get('attachments'):
+        pp.append(key_prefix + 'attachments:')
+        for key, mime_bundle in cell['attachments']:
+            pp.extend(present_attachment(value_prefix, key, mime_bundle))
 
     # present_value on anything we haven't special-cased yet
     pp.extend(present_dict_no_markup(key_prefix, cell,
@@ -172,6 +189,8 @@ def present_value(prefix, arg, path=None):
             return present_output(prefix, arg)
         elif starred == '/cells/*/outputs':
             return chain(*[ present_output(prefix + '  ', out) for out in arg ])
+        elif starred == '/cells/*/attachments':
+            return chain(*[ present_attachment(prefix + '  ', key, bundle) for (key, bundle) in arg.items() ])
 
     lines = pprint.pformat(arg).splitlines()
     return [prefix + line for line in lines]
