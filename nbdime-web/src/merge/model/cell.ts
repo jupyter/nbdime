@@ -11,8 +11,13 @@ import {
 } from 'phosphor/lib/core/signaling';
 
 import {
-  IDiffAddRange, IDiffPatch, IDiffEntry, IDiffArrayEntry
+  IDiffAddRange, IDiffPatch, IDiffEntry, IDiffArrayEntry,
+  IDiffPatchObject
 } from '../../diff/diffentries';
+
+import {
+  getDiffEntryByKey
+} from '../../diff/util';
 
 import {
   CellDiffModel,
@@ -24,7 +29,8 @@ import {
 
 import {
   MergeDecision, resolveCommonPaths, buildDiffs, decisionSortKey,
-  filterDecisions, pushPatchDecision, popPath, applyDecisions
+  filterDecisions, pushPatchDecision, popPath, applyDecisions,
+  Action
 } from '../../merge/decisions';
 
 import {
@@ -42,6 +48,11 @@ import {
 import {
   ObjectMergeModel, DecisionStringDiffModel
 } from './common';
+
+
+import {
+  NotifyUserError
+} from '../../common/exceptions';
 
 
 /**
@@ -212,23 +223,19 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
         throw new Error('Not a valid path for a cell decision');
       } else if (md.absolutePath.length === 2 && (
             hasEntries(md.localDiff) || hasEntries(md.remoteDiff))) {
-        // Have decision on /cells/X/. Such decisions should always
-        // be onsided.
-        if (hasEntries(md.localDiff) && hasEntries(md.remoteDiff)) {
-          // Not onesided.
-          throw new Error('Invalid merge decision: ' + md);
-        }
+        // Have decision on /cells/X/.
         // Split the decision on subkey:
 
         // Nest diff as a patch on cell, which can be split by `splitPatch`:
         let splitDec = pushPatchDecision(md, md.absolutePath.slice(1, 2));
-        let diff = (hasEntries(splitDec.localDiff) ?
-          splitDec.localDiff : splitDec.remoteDiff!);
-        let subDecisions = this.splitPatch(
-          splitDec, diff[0] as IDiffPatch,
-          hasEntries(splitDec.localDiff));
+        let localDiff = hasEntries(splitDec.localDiff) ?
+          splitDec.localDiff[0] as IDiffPatchObject : null;
+        let remoteDiff = hasEntries(splitDec.remoteDiff) ?
+          splitDec.remoteDiff[0] as IDiffPatchObject : null;
+
+        let subDecisions = this.splitPatch(splitDec, localDiff, remoteDiff);
         resolveCommonPaths(subDecisions);
-        // Add all split decisions
+        // Add all split decisions:
         for (let subdec of subDecisions) {
           subdec.level = 2;
           this.decisions.push(subdec);
@@ -238,8 +245,6 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
         this.decisions.push(md);
       }
     }
-
-
   }
 
   /**
@@ -340,13 +345,13 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
           this.deleteCell = md.action === 'local';
           // The patch op will be on cell level. Split it on sub keys!
           newDecisions = newDecisions.concat(this.splitPatch(
-            md, md.remoteDiff[0] as IDiffPatch, false));
+            md, null, md.remoteDiff[0] as IDiffPatchObject));
         } else {
           this._remote = createDeletedCellDiffModel(this.base, this.mimetype);
           this.deleteCell = md.action === 'remote';
           // The patch op will be on cell level. Split it on sub keys!
           newDecisions = newDecisions.concat(this.splitPatch(
-            md, md.localDiff[0] as IDiffPatch, true));
+            md, md.localDiff[0] as IDiffPatchObject, null));
         }
         resolveCommonPaths(newDecisions);
       }
@@ -354,21 +359,64 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
     return newDecisions;
   }
 
-  protected splitPatch(md: MergeDecision, patch: IDiffPatch, local: boolean): MergeDecision[] {
-    let split = super.splitPatch(md, patch, local);
-    let out: MergeDecision[] = [];
-    // Next, split source field on chunks
-    for (let i=0; i < split.length; ++i) {
-      let dec = split[i];
-      let key = (dec.localDiff || dec.remoteDiff!)[0].key;
-      if (key === 'source') {
-        let pop = popPath(dec.diffs, true);
-        if (!pop || pop.key !== 'source') {
-          throw new Error('Decisions path manipulation error');
-        }
-        dec.absolutePath.push(pop.key);
-        dec.diffs = pop.diffs;
+
+   /**
+    * Split a decision with a patch on one side into one decision
+    * for each sub entry in the patch.
+    */
+  protected splitPatch(md: MergeDecision, localPatch: IDiffPatchObject | null, remotePatch: IDiffPatchObject | null): MergeDecision[] {
+    let local = !!localPatch && hasEntries(localPatch.diff);
+    let remote = !!remotePatch && hasEntries(remotePatch.diff);
+    if (!local && !remote) {
+      return [];
+    }
+    let localDiff = local ? localPatch!.diff : null;
+    let remoteDiff = remote ? localPatch!.diff : null;
+    let split: MergeDecision[] = [];
+    let keys = new Set<string | number>();
+    if (local) {
+      for (let d of localDiff!) {
+        keys.add(d.key);
       }
+    }
+    if (remote) {
+      for (let d of remoteDiff!) {
+        keys.add(d.key);
+      }
+    }
+    keys.forEach(key => {
+      if (this._whitelist && !valueIn(key, this._whitelist)) {
+        throw new NotifyUserError('Currently not able to handle decisions on variable \"' +
+              key + '\"');
+      }
+      let el = getDiffEntryByKey(localDiff, key);
+      let er = getDiffEntryByKey(remoteDiff, key);
+      let onsesided = !(el && er);
+      let action: Action = md.action;
+      // If one-sided, change 'base' actions to present side
+      if (action === 'base' && onsesided) {
+        action = el ? 'local' : 'remote';
+      }
+      // Create new action:
+      split.push(new MergeDecision(
+        md.absolutePath.concat([key]),
+        el ? [el] : null,
+        er ? [er] : null,
+        action,
+        md.conflict));
+    });
+    return this.splitOnSourceChunks(split);
+  }
+
+  /**
+   * Split decisions on 'source' by chunks.
+   *
+   * This prevents one decision from contributing to more than one chunk.
+   */
+  protected splitOnSourceChunks(decisions: MergeDecision[]): MergeDecision[] {
+    let out: MergeDecision[] = [];
+    for (let i=0; i < decisions.length; ++i) {
+      let dec = decisions[i];
       if (dec.absolutePath[2] === 'source') {
         let base = this.base!.source;
         if (!Array.isArray(base)) {

@@ -3,7 +3,7 @@
 'use strict';
 
 import {
-  IDiffPatch, IDiffEntry
+  IDiffEntry
 } from '../../diff/diffentries';
 
 import {
@@ -15,7 +15,7 @@ import {
 } from '../../diff/model';
 
 import {
-  MergeDecision, buildDiffs, applyDecisions, Action
+  MergeDecision, buildDiffs, applyDecisions
 } from '../../merge/decisions';
 
 import {
@@ -27,11 +27,7 @@ import {
 } from '../../patch';
 
 import {
-  NotifyUserError
-} from '../../common/exceptions';
-
-import {
-  valueIn, DeepCopyableObject
+  DeepCopyableObject
 } from '../../common/util';
 
 
@@ -262,35 +258,6 @@ abstract class ObjectMergeModel<ObjectType extends DeepCopyableObject, DiffModel
       }
       this._finalized = true;
     }
-  }
-
-
-  /**
-   * Split a decision with a patch on one side into one decision
-   * for each sub entry in the patch.
-   */
-  protected splitPatch(md: MergeDecision, patch: IDiffPatch, local: boolean): MergeDecision[] {
-    let diff = patch.diff;
-    if (!diff) {
-      return [];
-    }
-    let out: MergeDecision[] = [];
-    for (let d of diff) {
-      if (this._whitelist && !valueIn(d.key, this._whitelist)) {
-        throw new NotifyUserError('Currently not able to handle decisions on variable \"' +
-              d.key + '\"');
-      }
-      let action: Action = (md.action === 'base' ?
-        local ? 'local' : 'remote' :
-        md.action);
-      out.push(new MergeDecision(
-        md.absolutePath.concat([patch.key]),
-        local ? [d] : null,
-        local ? null : [d],
-        action,
-        md.conflict));
-    }
-    return out;
   }
 
   /**
