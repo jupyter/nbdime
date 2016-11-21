@@ -37,16 +37,21 @@ def main_diff(args):
 
     d = diff_notebooks(a, b)
 
-    verbose = True
-    if verbose:
-        pretty_print_notebook_diff(afn, bfn, a, d)
-
     if dfn:
         with io.open(dfn, "w", encoding="utf8") as df:
             # Compact version:
             #json.dump(d, df)
             # Verbose version:
             json.dump(d, df, indent=2, separators=(",", ": "))
+    else:
+        # This printer is to keep the unit tests passing,
+        # some tests capture output with capsys which doesn't
+        # pick up on sys.stdout.write()
+        class Printer:
+            def write(self, text):
+                print(text, end="")
+        pretty_print_notebook_diff(afn, bfn, a, d, Printer())
+
     return 0
 
 

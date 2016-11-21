@@ -350,7 +350,6 @@ def pretty_print_notebook_diff(afn, bfn, a, di, out=sys.stdout):
     out.write("\n")
 
 
-
 def pretty_print_merge_decision(decision, indent=0, out=sys.stdout):
     pretty_print_dict(decision, indent, out)
 
