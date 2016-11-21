@@ -149,6 +149,7 @@ for d, _, _ in os.walk(pjoin(here, name)):
 package_data = {
     'nbdime': [
         'tests/files/*.*',
+        '*.schema.json',
         'webapp/static/**/*.*',
         'webapp/templates/*.*',
         'webapp/testnotebooks/*.*',
