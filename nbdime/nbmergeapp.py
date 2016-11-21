@@ -13,7 +13,10 @@ import argparse
 from pprint import pprint
 
 import nbformat
-from .merging import merge_notebooks
+
+import nbdime
+from nbdime.merging import merge_notebooks
+from nbdime.prettyprint import pretty_print_notebook_merge
 
 _description = ('Merge two Jupyter notebooks "local" and "remote" with a '
                 'common ancestor "base".')
@@ -40,29 +43,28 @@ def main_merge(args):
     returncode = 1 if conflicted else 0
 
     if conflicted:
-        print("Conflicts occured during merge operation.")
+        print("Conflicts occured during merge operation, displaying merge result.")
     else:
         print("Merge completed successfully with no unresolvable conflicts.")
+        if not mfn:
+            print("No output filename provided, displaying merge result instead.")
 
-    if mfn:
-        # Add remaining conflicts to metadata
-        if conflicted:
-            m["metadata"]["nbdime-conflicts"] = conflicted
+    if mfn and not conflicted:
+        # Format notebook to string and encode it
+        # FIXME: We currently write this way as git needs \n line endings,
+        # when used as merge driver. However, we should write using OS
+        # line endings otherwise.
+        nb = nbformat.from_dict(m)
+        s = nbformat.writes(nb) + u'\n'
+        senc = s.encode()
+
         # Write partial or fully completed merge to given foo.ipynb filename
         with io.open(mfn, "wb") as mf:
-            # FIXME: We currently write this way as git needs \n line endings,
-            # when used as merge driver. However, we should write using OS
-            # line endings otherwise.
-            nb = nbformat.from_dict(m)
-            s = nbformat.writes(nb) + u'\n'
-            mf.write(s.encode())
+            mf.write(senc)
+        print("Merge result written to %s" % mfn)
     else:
-        # FIXME: Display conflicts in a useful way
-        if conflicted:
-            print("Conflicts:")
-            pprint(conflicted)
-        print("Merge result:")
-        pprint(m)
+        pretty_print_notebook_merge(bfn, lfn, rfn, b, l, r, m, decisions)
+
     return returncode
 
 
@@ -92,10 +94,10 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
     arguments = _build_arg_parser().parse_args(args)
+    nbdime.log.set_nbdime_log_level(arguments.log_level)
     return main_merge(arguments)
 
 
 if __name__ == "__main__":
-    import nbdime.log
     nbdime.log.init_logging()
     main()

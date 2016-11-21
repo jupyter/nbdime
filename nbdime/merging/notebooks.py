@@ -10,6 +10,7 @@ from .decisions import apply_decisions
 from .autoresolve import autoresolve
 from ..diffing.notebooks import diff_notebooks
 from ..utils import Strategies
+from ..prettyprint import pretty_print_notebook_diff, pretty_print_merge_decisions, pretty_print_notebook
 
 
 # Strategies for handling conflicts  TODO: Implement these and refine further!
@@ -71,12 +72,30 @@ def decide_notebook_merge(base, local, remote, args=None):
     local_diffs = diff_notebooks(base, local)
     remote_diffs = diff_notebooks(base, remote)
 
+    if args and args.log_level == "DEBUG":
+        print("="*70)
+        print("In merge, base-local diff:")
+        pretty_print_notebook_diff("<base>", "<local>", base, local_diffs)
+        print("="*70)
+        print("In merge, base-remote diff:")
+        pretty_print_notebook_diff("<base>", "<remote>", base, remote_diffs)
+
     # Execute a generic merge operation
     decisions = decide_merge_with_diff(
         base, local, remote, local_diffs, remote_diffs)
 
+    if args and args.log_level == "DEBUG":
+        print("="*70)
+        print("In merge, initial decisions:")
+        pretty_print_merge_decisions(base, decisions)
+
     # Try to resolve conflicts based on behavioural options
     decisions = autoresolve_notebook_conflicts(base, decisions, args)
+
+    if args and args.log_level == "DEBUG":
+        print("="*70)
+        print("In merge, autoresolved decisions:")
+        pretty_print_merge_decisions(base, decisions)
 
     return decisions
 
@@ -86,5 +105,18 @@ def merge_notebooks(base, local, remote, args=None):
 
     Return new (partially) merged notebook and unapplied diffs from the local and remote side.
     """
+    if args and args.log_level == "DEBUG":
+        for (name, nb) in [("base", base), ("local", local), ("remote", remote)]:
+            print("%s In merge, input %s notebook:" % ("="*20, name))
+            pretty_print_notebook(nb)
+
     decisions = decide_notebook_merge(base, local, remote, args)
-    return apply_decisions(base, decisions), decisions
+
+    merged = apply_decisions(base, decisions)
+
+    if args and args.log_level == "DEBUG":
+        print("%s In merge, merged notebook:" % ("="*20,))
+        pretty_print_notebook(merged)
+        print("%s End merge" % ("="*20,))
+
+    return merged, decisions
