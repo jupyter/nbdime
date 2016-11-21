@@ -16,6 +16,8 @@ import shutil
 from subprocess import Popen, PIPE
 import tempfile
 from difflib import unified_diff
+from six import string_types
+import colorama
 
 try:
     from textwrap import indent
@@ -24,17 +26,14 @@ except ImportError:
         """The relevant part of textwrap.indent for Python 2"""
         return prefix + text.replace('\n', '\n' + prefix)
 
-from six import string_types
-
-import colorama
-
-from .diff_format import NBDiffFormatError, DiffOp
-from .patching import patch
-
 try:
     from shutil import which
 except ImportError:
     from backports.shutil_which import which
+
+from .diff_format import NBDiffFormatError, DiffOp
+from .patching import patch
+
 
 # Toggle indentation here
 with_indent = False
@@ -47,36 +46,8 @@ REMOVE = colorama.Fore.RED + '-'
 ADD = colorama.Fore.GREEN + '+'
 RESET = colorama.Style.RESET_ALL
 
-
-def present_dict_no_markup(prefix, d, exclude_keys=()):
-    """Pretty-print a dict without wrapper keys
-
-    Instead of {'key': 'value'}, do
-
-        key: value
-        key:
-          long
-          value
-
-    """
-    pp = []
-    value_prefix = prefix + '  '
-    for key in sorted(d):
-        if key in exclude_keys:
-            continue
-        value = d[key]
-        if isinstance(value, (dict, list)):
-            pp.append(prefix + key + ':')
-            pp.extend(present_value(value_prefix, value))
-        elif isinstance(value, string_types):
-            if '\n' in value:
-                pp.append(prefix + key + ':')
-                pp.extend(present_value(value_prefix, value))
-            else:
-                pp.append(prefix + '%s: %s' % (key, value))
-        else:
-            pp.append(prefix + '%s: %s' % (key,  value))
-    return pp
+# indentation offset
+IND = "  "
 
 
 _base64 = re.compile(r'^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$', re.MULTILINE|re.UNICODE)
@@ -87,248 +58,171 @@ def _trim_base64(s):
         s = s[:16] + '...<snip base64>...' + s[-16:].strip()
     return s
 
-def present_multiline_string(prefix, s):
-    """Present a multi-line string"""
-    s = _trim_base64(s)
-    return indent(s, prefix).splitlines()
+
+def _external_diff_render(cmd, a, b):
+    try:
+        td = tempfile.mkdtemp()
+        with io.open(os.path.join(td, 'before'), 'w', encoding="utf8") as f:
+            f.write(a)
+        with io.open(os.path.join(td, 'after'), 'w', encoding="utf8") as f:
+            f.write(b)
+        p = Popen(cmd + ['before', 'after'], cwd=td, stdout=PIPE)
+        out, _ = p.communicate()
+        diff = out.decode('utf8')
+    finally:
+        shutil.rmtree(td)
+    return diff
 
 
-def present_output(prefix, output):
-    """Present an output (whole output add/delete)
-
-    Called by present_value
-    """
-    pp = []
-    pp.append(prefix + 'output_type: %s' % output['output_type'])
-    value_prefix = prefix + '  '
-    if output.get('metadata'):
-        pp.append(prefix + 'metadata:')
-        pp.extend(present_value(value_prefix, output['metadata']))
-    if output['output_type'] in {'display_data', 'execute_result'} and 'data' in output:
-        pp.append(prefix + 'data:')
-        pp.extend(present_dict_no_markup(value_prefix, output['data']))
-
-    pp.extend(present_dict_no_markup(prefix, output,
-        exclude_keys={'output_type', 'metadata', 'data'},
-    ))
-
-    return pp
-
-
-def present_cell(prefix, cell):
-    """Present a cell as a scalar (whole cell delete/add)
-
-    Called by present_value
-    """
-    pp = []
-    pp.append('')
-    pp.append(prefix + "%s cell:" % cell['cell_type'])
-    key_prefix = prefix + '  '
-    value_prefix = prefix + '    '
-
-    if cell.get('execution_count') is not None:
-        pp.append(key_prefix + 'execution_count: %s' % cell['execution_count'])
-
-    if cell['metadata']:
-        pp.append(key_prefix + 'metadata:')
-        pp.extend(present_value(value_prefix, cell['metadata']))
-
-    pp.append(key_prefix + 'source:')
-    pp.extend(present_multiline_string(value_prefix, cell['source']))
-
-    if cell.get('outputs'):
-        pp.append(key_prefix + 'outputs:')
-        for output in cell['outputs']:
-            pp.extend(present_output(value_prefix, output))
-
-    # present_value on anything we haven't special-cased yet
-    pp.extend(present_dict_no_markup(key_prefix, cell,
-        exclude_keys={'cell_type', 'source', 'execution_count', 'outputs', 'metadata'},
-    ))
-    return pp
+def _builtin_diff_render(a, b):
+    gen = unified_diff(
+        a.splitlines(False),
+        b.splitlines(False),
+        lineterm='')
+    uni = []
+    for line in gen:
+        if line.startswith('+'):
+            uni.append("%s%s%s" % (ADD, line[1:], RESET))
+        elif line.startswith('-'):
+            uni.append("%s%s%s" % (REMOVE, line[1:], RESET))
+        else:
+            uni.append(line)
+    if not a.endswith('\n'):
+        uni.insert(-1, r'\ No newline at end of file')
+    if not b.endswith('\n'):
+        uni.append(r'\ No newline at end of file')
+    diff = '\n'.join(uni)
+    return diff
 
 
-def present_value(prefix, arg):
+def pretty_print_changed_value(arg, prefix="", out=sys.stdout):
     """Present a whole value that is either added or deleted.
 
     Calls out to other formatters for cells, outputs, and multiline strings.
 
     Uses pprint.pformat, otherwise.
     """
-    # TODO: improve pretty-print of arbitrary values?
+    # TODO: Improve pretty-print of arbitrary values?
+    # TODO: Use paths to map to other cases than cells and outputs?
+
     if isinstance(arg, dict):
         if 'cell_type' in arg:
-            return present_cell(prefix, arg)
+            pretty_print_cell(None, arg, prefix, out)
         elif 'output_type' in arg:
-            return present_output(prefix, arg)
+            pretty_print_output(None, arg, prefix, out)
+        else:
+            pretty_print_dict(arg, (), prefix, out)
     elif isinstance(arg, list) and arg:
-        first = arg[0]
-        if isinstance(first, dict):
-            if 'cell_type' in first:
-                return chain(*[ present_cell(prefix + '  ', cell) for cell in arg ])
-            elif 'output_type' in first:
-                return chain(*[ present_output(prefix + '  ', out) for out in arg ])
+        for element in arg:
+            pretty_print_changed_value(element, prefix+IND, out)
     elif isinstance(arg, string_types):
-        return present_multiline_string(prefix, arg)
+        pretty_print_multiline(arg, prefix, out)
+    else:
+        lines = pprint.pformat(arg).splitlines()
+        for line in lines:
+            out.write(prefix + line + "\n")
 
-    lines = pprint.pformat(arg).splitlines()
-    return [prefix + line for line in lines]
 
+def pretty_print_diff_entry(a, e, path, prefix="", out=sys.stdout):
+    # NB! Ignoring prefix below, setting to ADD, REMOVE etc. instead.
 
-def present_dict_diff(a, di, path):
-    "Pretty-print a nbdime diff."
-    pp = []
+    key = e.key
+    nextpath = "/".join((path, str(key)))
+    op = e.op
 
-    di = {e.key: e for e in di}
-    for key in sorted(di):
-        e = di[key]
+    # Recurse to handle patch ops
+    if op == DiffOp.PATCH:
+        # NB! Not indenting further here, allowing path to contain debth information
+        pretty_print_diff(a[key], e.diff, nextpath, prefix, out)
+        return
 
-        op = e.op
-        assert key == e.key
+    if op == DiffOp.ADDRANGE:
+        out.write("insert before {}:\n".format(nextpath))
+        pretty_print_changed_value(e.valuelist, ADD, out)
 
-        nextpath = "/".join((path, key))
-
-        if op == DiffOp.REMOVE:
-            pp.append("delete from {}:".format(nextpath))
-            pp += present_value(REMOVE, a[key])
-
-        elif op == DiffOp.ADD:
-            pp.append("insert at {}:".format(nextpath))
-            pp += present_value(ADD, e.value)
-
-        elif op == DiffOp.REPLACE:
-            pp.append("replace at {}:".format(nextpath))
-            pp += present_value(REMOVE, a[key])
-            pp += present_value(ADD, e.value)
-
-        elif op == DiffOp.PATCH:
-            if with_indent:
-                pp.append("patch {}:".format(nextpath))
-            pp += present_diff(a[key], e.diff, nextpath)
-
+    elif op == DiffOp.REMOVERANGE:
+        if e.length > 1:
+            r = "{}-{}".format(key, key + e.length - 1)
         else:
-            raise NBDiffFormatError("Unknown dict diff op {}".format(op))
-        if pp:
-            pp[-1] += RESET
+            r = str(key)
+        out.write("delete {}/{}:\n".format(path, r))
+        pretty_print_changed_value(a[key: key + e.length], REMOVE, out)
 
-    return pp
+    elif op == DiffOp.REMOVE:
+        out.write("delete from {}:\n".format(nextpath))
+        pretty_print_changed_value(a[key], REMOVE, out)
+
+    elif op == DiffOp.ADD:
+        out.write("insert at {}:\n".format(nextpath))
+        pretty_print_changed_value(e.value, ADD, out)
+
+    elif op == DiffOp.REPLACE:
+        out.write("replace at {}:\n".format(nextpath))
+        pretty_print_changed_value(a[key], REMOVE, out)
+        pretty_print_changed_value(e.value, ADD, out)
+
+    else:
+        raise NBDiffFormatError("Unknown list diff op {}".format(op))
+
+    out.write(RESET)
+    out.write("\n")
 
 
-def present_list_diff(a, d, path):
+def pretty_print_dict_diff(a, di, path, prefix="", out=sys.stdout):
     "Pretty-print a nbdime diff."
-    pp = []
-    for e in d:
-        op = e.op
-        index = e.key
-
-        nextpath = "/".join((path, str(index)))
-
-        if op == DiffOp.ADDRANGE:
-            pp.append("insert before {}:".format(nextpath))
-            pp += present_value(ADD, e.valuelist)
-
-        elif op == DiffOp.REMOVERANGE:
-            if e.length > 1:
-                r = "{}-{}".format(index, index + e.length - 1)
-            else:
-                r = str(index)
-            pp.append("delete {}/{}:".format(path, r))
-            pp += present_value(REMOVE, a[index: index + e.length])
-
-        elif op == DiffOp.PATCH:
-            if with_indent:
-                pp.append("patch {}:".format(nextpath))
-            pp += present_diff(a[index], e.diff, nextpath)
-
-        else:
-            raise NBDiffFormatError("Unknown list diff op {}".format(op))
-        if pp:
-            pp[-1] += RESET
-
-    return pp
+    for key, e in sorted((e.key, e) for e in di):
+        pretty_print_diff_entry(a, e, path, prefix, out)
 
 
-def present_string_diff(a, di, path):
+def pretty_print_list_diff(a, di, path, prefix="", out=sys.stdout):
     "Pretty-print a nbdime diff."
+    for e in di:
+        pretty_print_diff_entry(a, e, path, prefix, out)
 
-    header = []
-    if not with_indent:
-        # if we are indenting each level, this is redunant
-        header.append("patch {}:".format(path))
 
+def pretty_print_string_diff(a, di, path, prefix="", out=sys.stdout):
+    "Pretty-print a nbdime diff."
     if _base64.match(a):
-        return header + ['<base64 data changed>']
+        out.write(prefix + '<base64 data changed>\n')
+        return
 
     b = patch(a, di)
-    cmd = None
+
     if which('git'):
-        cmd = _git_diff_print_cmd.split()
+        diff = _external_diff_render(_git_diff_print_cmd.split(), a, b)
         heading_lines = 4
     elif which('diff'):
-        cmd = ['diff']
+        diff = _external_diff_render(['diff'], a, b)
         heading_lines = 0
     else:
-        gen = unified_diff(
-            a.splitlines(False),
-            b.splitlines(False),
-            lineterm='')
-        uni = []
-        for line in gen:
-            if line.startswith('+'):
-                uni.append("%s%s%s" % (ADD, line[1:], RESET))
-            elif line.startswith('-'):
-                uni.append("%s%s%s" % (REMOVE, line[1:], RESET))
-            else:
-                uni.append(line)
-        if not a.endswith('\n'):
-            uni.insert(-1, r'\ No newline at end of file')
-        if not b.endswith('\n'):
-            uni.append(r'\ No newline at end of file')
-        diff = '\n'.join(uni)
+        diff = _builtin_diff_render(a, b)
         heading_lines = 2
 
-    if cmd is not None:
-        try:
-            td = tempfile.mkdtemp()
-            with io.open(os.path.join(td, 'before'), 'w', encoding="utf8") as f:
-                f.write(a)
-            with io.open(os.path.join(td, 'after'), 'w', encoding="utf8") as f:
-                f.write(b)
-            p = Popen(cmd + ['before', 'after'], cwd=td, stdout=PIPE)
-            out, _ = p.communicate()
-            diff = out.decode('utf8')
-        finally:
-            shutil.rmtree(td)
-    return header + diff.splitlines()[heading_lines:]
+    # NB! Ignoring prefix here!
+    diff_lines = diff.splitlines()[heading_lines:]
+    out.write("\n".join(diff_lines))
 
 
-def present_diff(a, di, path, indent=True):
+def pretty_print_diff(a, di, path, prefix="", out=sys.stdout):
     "Pretty-print a nbdime diff."
     if isinstance(a, dict):
-        pp = present_dict_diff(a, di, path)
+        pretty_print_dict_diff(a, di, path, prefix, out)
     elif isinstance(a, list):
-        pp = present_list_diff(a, di, path)
+        pretty_print_list_diff(a, di, path, prefix, out)
     elif isinstance(a, string_types):
-        pp = present_string_diff(a, di, path)
+        pretty_print_string_diff(a, di, path, prefix, out)
     else:
         raise NBDiffFormatError("Invalid type {} for diff presentation.".format(type(a)))
 
-    # Optionally indent
-    if with_indent:
-        indsep = " "*2
-        return [indsep + line for line in pp] if indent else pp
-    else:
-        return pp
 
-
-header = """\
+notebook_diff_header = """\
 nbdiff {afn} {bfn}
 --- a: {afn}
 +++ b: {bfn}
 """
 
 
-def pretty_print_notebook_diff(afn, bfn, a, di, out=sys.stdout):
+def pretty_print_notebook_diff(afn, bfn, a, di, prefix="", out=sys.stdout):
     """Pretty-print a notebook diff
 
     Parameters
@@ -343,18 +237,17 @@ def pretty_print_notebook_diff(afn, bfn, a, di, out=sys.stdout):
     di: diff
         The diff object describing the transformation from a to b
     """
-    p = present_diff(a, di, path="a", indent=False)
-    if p:
-        p = [header.format(afn=afn, bfn=bfn)] + p
-    out.write("\n".join(p))
-    out.write("\n")
+    if di:
+        path = ""
+        out.write(notebook_diff_header.format(afn=afn, bfn=bfn))
+        pretty_print_diff(a, di, path, prefix, out)
 
 
-def pretty_print_merge_decision(decision, indent=0, out=sys.stdout):
-    pretty_print_dict(decision, indent, out)
+def pretty_print_merge_decision(decision, prefix="", out=sys.stdout):
+    pretty_print_dict(decision, prefix, out)
 
 
-def pretty_print_merge_decisions(base, decisions, indent=0, out=sys.stdout):
+def pretty_print_merge_decisions(base, decisions, prefix="", out=sys.stdout):
     """Pretty-print notebook merge decisions
 
     Parameters
@@ -365,11 +258,11 @@ def pretty_print_merge_decisions(base, decisions, indent=0, out=sys.stdout):
     decisions: list
         The list of merge decisions
     """
-    ind = "  "*indent
     conflicted = [d for d in decisions if d.conflict]
-    out.write("%s%d conflicted decisions of %d total:\n" % (ind, len(conflicted), len(decisions)))
+    out.write("%s%d conflicted decisions of %d total:\n"
+              % (prefix, len(conflicted), len(decisions)))
     for d in decisions:
-        pretty_print_merge_decision(d, indent+1, out)
+        pretty_print_merge_decision(d, prefix+IND, out)
         out.write("\n")
     out.write("\n")
 
@@ -397,128 +290,195 @@ def pretty_print_notebook_merge(bfn, lfn, rfn, bnb, lnb, rnb, mnb, decisions, ou
     decisions: list
         The list of merge decisions including conflicts
     """
-    indent = 0
-    pretty_print_merge_decisions(bnb, decisions, indent, out)
+    pretty_print_merge_decisions(bnb, decisions, "", out)
 
 
-def pretty_print_dict(d, indent=0, out=sys.stdout):
-    ind = "  "*indent
-    keyind = "  "*(indent+0)
-    valind = "  "*(indent+1)
+def pretty_print_item(k, v, prefix="", out=sys.stdout):
+    if isinstance(v, string_types):
+        vstr = v
+        if "\n" in vstr:
+            # Multiline strings
+            out.write("%s%s:\n" % (prefix, k))
+            for line in vstr.splitlines(False):
+                out.write("%s'%s\n'\n" % (prefix+IND, line))
+        else:
+            # Singleline strings
+            out.write("%s%s: %s\n" % (prefix, k, vstr))
+    else:
+        # Something else, cut large metadata values short
+        vstr = repr(v)
+        if len(vstr) > 60:
+            vstr = "<%s instance: %s...>" % (v.__class__.__name__, vstr[:20])
+        out.write("%s%s: %s\n" % (prefix, k, vstr))
 
-    for k, v in sorted(d.items()):
+
+def pretty_print_list(li, prefix="", out=sys.stdout):
+    for k, v in enumerate(li):
         if isinstance(v, dict):
             # Nested dicts
-            out.write("%s%s:\n" % (keyind, k))
-            pretty_print_dict(v, indent+1, out)
-        elif isinstance(v, list) and all(isinstance(val, dict) for val in v):
-            # List of dicts, special case that's common
-            # in notebooks and nbdime data structures
-            out.write("%s%s[0:%d]:\n" % (keyind, k, len(v)))
-            for j, val in enumerate(v):
-                out.write("%s%s[%d]:\n" % (valind, k, j))
-                pretty_print_dict(val, indent+2, out)
-        elif isinstance(v, string_types):
-            vstr = v
-            if "\n" in vstr:
-                # Multiline strings
-                out.write("%s%s:\n" % (keyind, k))
-                for line in vstr.splitlines(False):
-                    out.write("%s'%s\n'\n" % (valind, line))
-            else:
-                # Singleline strings
-                out.write("%s%s: %s\n" % (keyind, k, vstr))
+            out.write("%s%s:\n" % (prefix, k))
+            pretty_print_dict(v, (), prefix+IND, out)
+        elif isinstance(v, list):
+            # Nested lists
+            out.write("%s%s:\n" % (prefix, k))
+            pretty_print_list(v, prefix+IND, out)
         else:
-            # Something else, cut large metadata values short
-            vstr = repr(v)
-            if len(vstr) > 60:
-                vstr = "<%s instance: %s...>" % (v.__class__.__name__, vstr[:20])
-            out.write("%s%s: %s\n" % (keyind, k, vstr))
+            pretty_print_item(k, v, prefix+IND, out)
 
 
-def pretty_print_metadata(md, indent=0, out=sys.stdout):
-    ind = "  "*indent
-    out.write("%smetadata:\n" % (ind,))
-    pretty_print_dict(md, indent+1, out)
+def pretty_print_dict(d, exclude_keys=(), prefix="", out=sys.stdout):
+    """Pretty-print a dict without wrapper keys
+
+    Instead of {'key': 'value'}, do
+
+        key: value
+        key:
+          long
+          value
+
+    """
+    for k in sorted(d):
+        if k in exclude_keys:
+            continue
+        v = d[k]
+        if isinstance(v, dict):
+            # Nested dicts
+            out.write("%s%s:\n" % (prefix, k))
+            pretty_print_dict(v, (), prefix+IND, out)
+        elif isinstance(v, list):
+            # Nested lists
+            out.write("%s%s:\n" % (prefix, k))
+            pretty_print_list(v, prefix+IND, out)
+        else:
+            pretty_print_item(k, v, prefix+IND, out)
 
 
-def pretty_print_source(source, indent=0, out=sys.stdout):
-    ind = "  "*indent
-    lineindent = "  "*(indent+1)
+def pretty_print_metadata(md, known_keys, prefix="", out=sys.stdout):
+    md1 = {}
+    md2 = {}
+    for k in md:
+        if k in known_keys:
+            md1[k] = md[k]
+        else:
+            md2[k] = md[k]
+    if md1:
+        out.write("%smetadata (known keys):\n" % (prefix,))
+        pretty_print_dict(md1, (), prefix+IND, out)
+    if md2:
+        out.write("%smetadata (unknown keys):\n" % (prefix,))
+        pretty_print_dict(md2, (), prefix+IND, out)
 
-    assert isinstance(source, string_types)
-    out.write("%ssource:\n" % (ind,))
 
-    lines = source.splitlines(True)
+def pretty_print_multiline(text, prefix="", out=sys.stdout):
+    assert isinstance(text, string_types)
+
+    # Trim base64 strings (images etc)
+    text = _trim_base64(text)
+
+    # Preprend prefix to lines, letting lines keep their own newlines
+    lines = text.splitlines(True)
     for line in lines:
-        # Lines have their own newlines
-        out.write("%s  %s" % (lineindent, line))
+        out.write(prefix + line)
 
     # If the final line doesn't have a newline,
     # make sure we still start a new line
-    if not source.endswith("\n"):
+    if not text.endswith("\n"):
         out.write("\n")
 
 
-def pretty_print_output(i, output, indent=0, out=sys.stdout):
-    ind = "  "*indent
-    outputindent = "  "*(indent+1)
-    out.write("%soutput %d of type %s:\n" % (ind, i, output.output_type))
-
+def pretty_print_output(i, output, prefix="", out=sys.stdout):
+    oprefix = prefix+IND
     t = output.output_type
-    if t == "stream":
-        out.write("%s%s\n" % (outputindent, "<output printing for type %s not implemented>" % t))
-    elif t == "display_data":
-        out.write("%s%s\n" % (outputindent, "<output printing for type %s not implemented>" % t))
-    elif t == "execute_result":
-        out.write("%s%s\n" % (outputindent, "<output printing for type %s not implemented>" % t))
-    elif t == "error":
-        out.write("%s%s\n" % (outputindent, "<output printing for type %s not implemented>" % t))
-    else:
-        out.write("%s%s\n" % (outputindent, "<output printing for type %s not implemented>" % t))
+    numstr = "" if i is None else " %d" % i
+    out.write("%s%s output%s:\n" % (prefix, t, numstr))
+
+    metadata = output.get("metadata")
+    if metadata:
+        known_output_metadata_keys = {"isolated"}
+        pretty_print_metadata(metadata, known_output_metadata_keys, oprefix, out)
+
+    exclude_keys = {"output_type", "metadata", "execution_count", "name", "text", "data"}
+
+    execution_count = output.get("execution_count")
+    if execution_count:
+        out.write("%sexecution_count: %s\n" % (oprefix, execution_count))
+
+    name = output.get("name")
+    if name:
+        out.write("%sname: %s\n" % (oprefix, name))
+
+    text = output.get("text")
+    if text:
+        out.write("%stext:\n" % (oprefix,))
+        pretty_print_multiline(text, oprefix+IND, out)
+
+    data = output.get("data")
+    if data:
+        out.write("%sdata:\n" % (oprefix,))
+        pretty_print_dict(data, (), oprefix+IND, out)
+
+    if t == "error":
+        exclude_keys.update(("ename", "evalue", "traceback"))
+        out.write("%sename: %s\n" % (oprefix, output.ename))
+        out.write("%sevalue: %s\n" % (oprefix, output.evalue))
+        out.write("%straceback:\n" % (oprefix,))
+        pretty_print_list(output.traceback, oprefix+IND, out)
+
+    pretty_print_dict(output, exclude_keys, oprefix, out)
 
 
-def pretty_print_outputs(outputs, indent=0, out=sys.stdout):
-    ind = "  "*indent
-    out.write("%soutputs:\n" % (ind,))
+def pretty_print_outputs(outputs, prefix="", out=sys.stdout):
+    out.write("%soutputs:\n" % (prefix,))
     for i, output in enumerate(outputs):
-        pretty_print_output(i, output, indent+1, out)
+        pretty_print_output(i, output, prefix+IND, out)
 
 
-def pretty_print_attachment(attachment, indent=0, out=sys.stdout):
-    ind = "  "*indent
-    atindent = "  "*(indent+1)
-
-    out.write("%sattachment:\n" % (ind,))
-    out.write("%s%s\n" % (atindent, "<attachment printing is not implemented>"))
+def pretty_print_attachment(attachment, prefix="", out=sys.stdout):
+    out.write("%sattachment:\n" % (prefix,))
+    pretty_print_dict(attachment, (), prefix+IND, out)
 
 
-def pretty_print_cell(i, cell, indent=0, out=sys.stdout):
-    ind = "  "*indent
+def pretty_print_source(source, prefix="", out=sys.stdout):
+    out.write("%ssource:\n" % (prefix,))
+    pretty_print_multiline(source, prefix+IND, out)
 
-    # Write cell number and type:
-    out.write("%scell %d of type %s:\n" % (ind, i, cell.cell_type))
 
-    # Write cell metadata
-    pretty_print_metadata(cell.metadata, indent+1, out)
+def pretty_print_cell(i, cell, prefix="", out=sys.stdout):
+    # Write cell type and optionally number:
+    numstr = "" if i is None else " %d" % i
+    out.write("%s%s cell%s:\n" % (prefix, cell.cell_type, numstr))
+
+    key_prefix = prefix+IND
 
     # Write execution count if there (only source cells)
     if "execution_count" in cell:
-        out.write("%sexecution_count: %s\n" % (ind, repr(cell.execution_count)))
+        out.write("%sexecution_count: %s\n" % (key_prefix, repr(cell.execution_count)))
+
+    # Write cell metadata
+    known_cell_metadata_keys = {"collapsed", "autoscroll", "deletable", "format", "name", "tags"}
+    pretty_print_metadata(cell.metadata, key_prefix, out)
 
     # Write source
-    pretty_print_source(cell.source, indent+1, out)
+    source = cell.get("source")
+    if source:
+        pretty_print_source(source, key_prefix, out)
 
     # Write outputs if there (only source cells)
-    if "outputs" in cell:
-        pretty_print_outputs(cell.outputs, indent+2, out)
+    outputs = cell.get("outputs")
+    if outputs:
+        pretty_print_outputs(outputs, key_prefix, out)
 
-    # Write attachment count if there (only markdown and raw cells)
-    if "attachment" in cell:
-        pretty_print_attachment(cell.attachment, indent+1, out)
+    # Write attachment if there (only markdown and raw cells)
+    attachment = cell.get("attachment")
+    if attachment:
+        pretty_print_attachment(attachment, key_prefix, out)
+
+    # present_value on anything we haven't special-cased yet
+    exclude_keys = {'cell_type', 'source', 'execution_count', 'outputs', 'metadata', 'attachment'}
+    pretty_print_dict(cell, exclude_keys, key_prefix, out)
 
 
-def pretty_print_notebook(nb, indent=0, out=sys.stdout):
+def pretty_print_notebook(nb, out=sys.stdout):
     """Pretty-print a notebook for debugging, skipping large details in metadata and output
 
     Parameters
@@ -529,19 +489,19 @@ def pretty_print_notebook(nb, indent=0, out=sys.stdout):
     out: file-like object
         File-like object with .write function used for output.
     """
-    ind = "  "*indent
 
     # Write notebook header
-    out.write("%snotebook format: %d.%d\n" % (ind, nb.nbformat, nb.nbformat_minor))
+    out.write("notebook format: %d.%d\n" % (nb.nbformat, nb.nbformat_minor))
 
     # Report unknown keys
-    unknown_keys = set(nb.keys()) - { "nbformat", "nbformat_minor", "metadata", "cells" }
+    unknown_keys = set(nb.keys()) - {"nbformat", "nbformat_minor", "metadata", "cells"}
     if unknown_keys:
-        out.write("%sunknown keys: %r" % (ind, unknown_keys))
+        out.write("unknown keys: %r" % (unknown_keys,))
 
     # Write notebook metadata
-    pretty_print_metadata(nb.metadata, indent, out)
+    known_metadata_keys = {"kernelspec"}
+    pretty_print_metadata(nb.metadata, known_metadata_keys, "", out)
 
     # Write notebook cells
     for i, cell in enumerate(nb.cells):
-        pretty_print_cell(i, cell, indent, out)
+        pretty_print_cell(i, cell, "", out)
