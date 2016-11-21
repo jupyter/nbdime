@@ -27,7 +27,7 @@ export const JSON_INDENT = '  ';
  * Returns the first found entry, or null if not entry was found.
  */
 export
-function getDiffKey(diff: IDiffEntry[] | null, key: string | number) : IDiffEntry[] | null {
+function getSubDiffByKey(diff: IDiffEntry[] | null, key: string | number) : IDiffEntry[] | null {
   if (!diff) {
     return null;
   }

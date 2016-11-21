@@ -14,7 +14,7 @@ import {
 } from '../diff/diffentries';
 
 import {
-  getDiffKey
+  getSubDiffByKey
 } from '../diff/util';
 
 import {
@@ -659,7 +659,7 @@ function buildDiffs(base: any, decisions: MergeDecision[], which: 'local' | 'rem
     if (tree.hasOwnProperty(strPath)) {
       // Existing tree entry, simply add diffs to it
       if (line) {
-        let matchDiff = getDiffKey(tree[strPath].diff, line[0]);
+        let matchDiff = getSubDiffByKey(tree[strPath].diff, line[0]);
         if (matchDiff) {
           matchDiff.push.apply(matchDiff, subdiffs);
         } else {

@@ -21,36 +21,36 @@ describe('diff', () => {
 
   describe('util', () => {
 
-    describe('getDiffKey', () => {
+    describe('getSubDiffByKey', () => {
 
       it('should return null for an empty diff', () => {
-        let diff = util.getDiffKey([], 'not_present');
+        let diff = util.getSubDiffByKey([], 'not_present');
         expect(diff).to.be(null);
       });
 
       it('should return null for a null diff', () => {
-        let diff = util.getDiffKey(null, 'not_present');
+        let diff = util.getSubDiffByKey(null, 'not_present');
         expect(diff).to.be(null);
       });
 
       it('should return null for a missing key', () => {
         let subdiff = [opAdd('foo', 11)];
         let diff = [opPatch('a', subdiff)];
-        let value = util.getDiffKey(diff, 'b');
+        let value = util.getSubDiffByKey(diff, 'b');
         expect(value).to.be(null);
       });
 
       it('should return a sub-diff for valid key', () => {
         let subdiff = [opAdd('foo', 11)];
         let diff = [opPatch('a', subdiff)];
-        let value = util.getDiffKey(diff, 'a');
+        let value = util.getSubDiffByKey(diff, 'a');
         expect(value).to.be(subdiff);
       });
 
       it('should return null for a key to a non-patch op', () => {
         let subdiff = [opAdd('foo', 11)];
         let diff = [opPatch('a', subdiff), opAdd('b', subdiff)];
-        let value = util.getDiffKey(diff, 'b');
+        let value = util.getSubDiffByKey(diff, 'b');
         expect(value).to.be(null);
       });
 

@@ -11,7 +11,7 @@ import {
 } from '../diffentries';
 
 import {
-  getDiffKey
+  getSubDiffByKey
 } from '../util';
 
 import {
@@ -38,7 +38,7 @@ export class NotebookDiffModel {
    */
   constructor(base: nbformat.INotebookContent, diff: IDiffEntry[]) {
     // Process global notebook metadata field
-    let metaDiff = getDiffKey(diff, 'metadata');
+    let metaDiff = getSubDiffByKey(diff, 'metadata');
     if (base.metadata && metaDiff) {
       this.metadata = createPatchStringDiffModel(base.metadata, metaDiff);
     } else {
@@ -63,7 +63,7 @@ export class NotebookDiffModel {
     this.cells = [];
     let take = 0;
     let skip = 0;
-    for (let e of getDiffKey(diff, 'cells') as IDiffArrayEntry[] || []) {
+    for (let e of getSubDiffByKey(diff, 'cells') as IDiffArrayEntry[] || []) {
       let index = e.key;
 
       // diff is sorted on index, so take any preceding cells as unchanged:
