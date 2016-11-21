@@ -15,7 +15,7 @@ import {
 } from '../diffentries';
 
 import {
-  getDiffKey
+  getSubDiffByKey
 } from '../util';
 
 import {
@@ -108,7 +108,7 @@ function createPatchedCellDiffModel(
   let metadata: StringDiffModel | null = null;
   let outputs: OutputDiffModel[] | null = null;
 
-  let subDiff = getDiffKey(diff, 'source');
+  let subDiff = getSubDiffByKey(diff, 'source');
   if (subDiff) {
     source = createPatchStringDiffModel(base.source, subDiff);
   } else {
@@ -116,14 +116,14 @@ function createPatchedCellDiffModel(
   }
   setMimetypeFromCellType(source, base, nbMimetype);
 
-  subDiff = getDiffKey(diff, 'metadata');
+  subDiff = getSubDiffByKey(diff, 'metadata');
   metadata = subDiff ?
     createPatchStringDiffModel(base.metadata, subDiff) :
     createDirectStringDiffModel(base.metadata, base.metadata);
 
   if (base.cell_type === 'code') {
     let outputsBase = (base as nbformat.ICodeCell).outputs;
-    let outputsDiff = getDiffKey(diff, 'outputs') as IDiffArrayEntry[];
+    let outputsDiff = getSubDiffByKey(diff, 'outputs') as IDiffArrayEntry[];
     if (outputsDiff) {
       // Outputs patched
       outputs = makeOutputModels(
