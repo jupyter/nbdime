@@ -212,27 +212,15 @@ def _merge_concurrent_inserts(base, ldiff, rdiff, path, decisions):
     """
     # Assume first ops are always inserts
     assert ldiff[0].op == DiffOp.ADDRANGE and rdiff[0].op == DiffOp.ADDRANGE
-    # First, reconstruct the value lists as they are on local and remote
-    lv = ldiff[0].valuelist
-    rv = rdiff[0].valuelist
 
-    # Check for one-sided removal (A/AR in notation from _merge_lists)
-    if len(ldiff) != len(rdiff):
-        # Add the removed entries to the value from the other side
-        # (e.g. entries removed in local gets added to rv and opposite)
-        if len(ldiff) > len(rdiff):
-            rv = rv + base[ldiff[1].key:ldiff[1].key + ldiff[1].length]
-        elif len(rdiff) > len(ldiff):
-            lv = lv + base[rdiff[1].key:rdiff[1].key + rdiff[1].length]
-    subdec = _split_addrange(ldiff[0].key, lv, rv, path)
+    subdec = _split_addrange(ldiff[0].key, ldiff[0].valuelist, rdiff[0].valuelist, path)
+
     if subdec:
         # We were able to split insertion [+ onesided removal]
         decisions.decisions.extend(subdec)
-        if len(ldiff) > 1 and len(rdiff) > 1:
-            # If AR/AR, removals should agree
-            decisions.agreement(path, ldiff[1:], rdiff[1:])
-        elif len(ldiff) > 1 or len(rdiff) > 1:
-            # Add the one-sided removal at end
+
+        # Add potential one-sided removal at end
+        if len(ldiff) > 1 or len(rdiff) > 1:
             decisions.onesided(path, ldiff[1:], rdiff[1:])
     else:
         # Were not able to infer any additional information,
