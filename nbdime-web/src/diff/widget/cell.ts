@@ -51,7 +51,7 @@ const ADD_DEL_LABEL_CLASS = 'jp-Diff-label';
 /**
  * A list of MIME types that can be shown as string diff.
  */
-const stringDiffMimeTypes = ['text/html', 'text/plain'];
+const stringDiffMimeTypes = ['text/html', 'text/plain', 'application/json'];
 
 
 
@@ -156,14 +156,17 @@ class CellDiffWidget extends Panel {
         let key = model.hasMimeType(mt);
         if (key) {
           if (!renderable || valueIn(mt, stringDiffMimeTypes)) {
+            // 1.
             view = createNbdimeMergeView(model.stringify(key), editorClasses);
           } else if (renderable) {
+            // 2.
             view = new RenderableOutputView(model, editorClasses, rendermime);
           }
           break;
         }
       }
       if (!view) {
+        // 3.
         view = createNbdimeMergeView(model.stringify(), editorClasses);
       }
     } else {
