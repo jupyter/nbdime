@@ -50,6 +50,7 @@ def join_path(*args):
 
 
 def star_path(path):
+    """Replace integers and numeric strings in a path with * """
     path = list(path)
     for i, p in enumerate(path):
         if isinstance(p, int):
