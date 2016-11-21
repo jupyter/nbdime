@@ -72,9 +72,9 @@ def present_dict_no_markup(prefix, d, exclude_keys=None):
                 pp.append(prefix + key + ':')
                 pp.extend(present_value(value_prefix, value))
             else:
-                pp.append(prefix + '%s: %s' % (key, value))
+                pp.extend(present_value(prefix + key + ': ', value))
         else:
-            pp.append(prefix + '%s: %s' % (key,  value))
+            pp.extend(present_value(prefix + key + ': ', value))
     return pp
 
 
