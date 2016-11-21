@@ -402,7 +402,6 @@ def pretty_print_notebook_merge(bfn, lfn, rfn, bnb, lnb, rnb, mnb, decisions, ou
     pretty_print_merge_decisions(bnb, decisions, indent, out)
 
 
-
 def pretty_print_dict(d, indent=0, out=sys.stdout):
     ind = "  "*indent
     keyind = "  "*(indent+0)
@@ -410,14 +409,29 @@ def pretty_print_dict(d, indent=0, out=sys.stdout):
 
     for k, v in sorted(d.items()):
         if isinstance(v, dict):
+            # Nested dicts
             out.write("%s%s:\n" % (keyind, k))
             pretty_print_dict(v, indent+1, out)
-        else:
-            # Cut large metadata values short
-            if isinstance(v, string_types):
-                vstr = v
+        elif isinstance(v, list) and all(isinstance(val, dict) for val in v):
+            # List of dicts, special case that's common
+            # in notebooks and nbdime data structures
+            out.write("%s%s[0:%d]:\n" % (keyind, k, len(v)))
+            for j, val in enumerate(v):
+                out.write("%s%s[%d]:\n" % (valind, k, j))
+                pretty_print_dict(val, indent+2, out)
+        elif isinstance(v, string_types):
+            vstr = v
+            if "\n" in vstr:
+                # Multiline strings
+                out.write("%s%s:\n" % (keyind, k))
+                for line in vstr.splitlines(False):
+                    out.write("%s'%s\n'\n" % (valind, line))
             else:
-                vstr = repr(v)
+                # Singleline strings
+                out.write("%s%s: %s\n" % (keyind, k, vstr))
+        else:
+            # Something else, cut large metadata values short
+            vstr = repr(v)
             if len(vstr) > 60:
                 vstr = "<%s instance: %s...>" % (v.__class__.__name__, vstr[:20])
             out.write("%s%s: %s\n" % (keyind, k, vstr))
