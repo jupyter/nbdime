@@ -7,7 +7,11 @@ import {
 } from 'phosphor/lib/algorithm/json';
 
 import {
-  valueIn, repeatString, unique
+  each
+} from 'phosphor/lib/algorithm/iteration';
+
+import {
+  valueIn, repeatString
 } from '../common/util';
 
 import {
@@ -22,6 +26,10 @@ import {
 import {
   DiffRangeRaw
 } from '../diff/range';
+
+import {
+  PatchObjectHelper
+} from './common';
 
 
 import stableStringify = require('json-stable-stringify');
@@ -190,24 +198,13 @@ function patchStringifiedObject(base: JSONObject, diff: IDiffObjectEntry[] | nul
   }
 
   // Object is dict. As diff keys should be unique, create map for easy processing
-  let ops: { [key: string]: IDiffEntry} = {};
-  let opKeys : string[] = [];
-  for (let d of diff) {
-    opKeys.push(d.key);
-    ops[d.key] = d;
-  }
-  let baseKeys = Object.keys(base);
-  let remainingKeys = _getAllKeys(base, opKeys);
-
-  for (; ; ) {
-    let key = remainingKeys.shift();
-    if (key === undefined) {
-      break;
-    }
+  let helper = new PatchObjectHelper(base, diff);
+  let baseKeys = helper.baseKeys.slice();
+  each(helper.keys(), key => {
     let keyString = _makeKeyString(key, level + 1);
-    if (valueIn(key, opKeys)) {
+    if (helper.isDiffKey(key)) {
       // Entry has a change
-      let e = ops[key];
+      let e = helper.getDiffEntry(key);
       // Check for valid entry first:
       validateObjectOp(base, e, baseKeys);
 
@@ -226,7 +223,7 @@ function patchStringifiedObject(base: JSONObject, diff: IDiffObjectEntry[] | nul
             length += keyString.length;
           }
           // Check if postfix should be included or not
-          if (!_entriesAfter(remainingKeys, ops, true) || isReplace) {
+          if (isReplace || !helper.entriesAfterCurrentAddRem()) {
             length -= postfix.length;
             if (e.op === 'add') {
               length += 1;  // Newline will still be added
@@ -246,7 +243,7 @@ function patchStringifiedObject(base: JSONObject, diff: IDiffObjectEntry[] | nul
             length += keyString.length;
           }
           // Check if postfix should be included or not
-          if (!_entriesAfter(remainingKeys, ops, false) || isReplace) {
+          if (isReplace || !helper.entriesAfterCurrentAddRem()) {
             length -= postfix.length;
             if (e.op === 'remove') {
               length += 1; // Newline will still be removed
@@ -279,7 +276,7 @@ function patchStringifiedObject(base: JSONObject, diff: IDiffObjectEntry[] | nul
       remote += val;
       baseIndex += val.length;
     }
-  }
+  });
 
   // Stringify correctly
   if (remote.slice(remote.length - postfix.length) === postfix) {
@@ -404,45 +401,6 @@ function _indent(str: string, levels: number, indentFirst: boolean) : string {
   }
   return ret.join('\n');
 }
-
-/**
- * Function that checks whether any dict entries will remain after
- * applying the given ops.
- */
-function _entriesAfter(remainingKeys: string[], ops: { [key: string]: IDiffEntry},
-                       isAddition?: boolean): boolean {
-  let cop = isAddition !== false ? 'remove' : 'add';
-  for (let key of remainingKeys) {
-    if (!(key in ops) || ops[key].op !== cop) {
-      return true;
-    }
-  }
-  return false;
-}
-
-/**
- * The keys present in a Object class. Equivalent to Object.keys, but with a
- * fallback if not defined.
- */
-let _objectKeys = Object.keys || function (obj: any): string[] {
-  let has = Object.prototype.hasOwnProperty || function () { return true; };
-  let keys: string[] = [];
-  for (let key in obj) {
-    if (has.call(obj, key)) {
-      keys.push(key);
-    }
-  }
-  return keys;
-};
-
-/**
- * Get all unique keys that are either in `obj`, `diffKeys` or both.
- * Returned as a sorted list.
- */
-function _getAllKeys(obj: Object, diffKeys: string[]) {
-  return _objectKeys(obj).concat(diffKeys).filter(unique).sort();
-}
-
 
 /** Make a string for a stringified dict key, with indentation */
 function _makeKeyString(key: string, level: number) {

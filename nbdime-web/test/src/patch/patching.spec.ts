@@ -429,6 +429,106 @@ describe('patch', () => {
       expect(value.deletions).to.eql([{from: f, to: tDel, source: undefined}]);
     });
 
+    it('should patch an object with combined addition and patch at end', () => {
+      let base = {a: 1, d: 'test', b: true};
+      // For this diff, a naive stringifier might get confused
+      // whether there should be a comma at the end of 'c' entry.
+      let diff = [makeAdd('c', 42), makePatch('d', [makePatch(0, [makeAddRange(0, 'a ')])])];
+      let value = patchStringified(base, diff);
+      expect(value.remote).to.be(
+        '{\n' +
+        JSON_INDENT + '\"a\": 1,\n' +
+        JSON_INDENT + '\"b\": true,\n' +
+        JSON_INDENT + '\"c\": 42,\n' +
+        JSON_INDENT + '\"d\": \"a test\"\n' +
+        '}'
+      );
+      let f = '{\n\"a\": 1,\n'.length + JSON_INDENT.length;
+      f += '\"b\": true,\n'.length + JSON_INDENT.length;
+      let tAdd = f + '\"c\": 42,\n'.length + JSON_INDENT.length;
+      expect(value.additions[0]).to.eql({from: f, to: tAdd, source: undefined});
+    });
+
+    it('should patch an object with combined removal and addition at end', () => {
+      let base = {a: 1, c: 'test', b: true};
+      // For this diff, a naive stringifier might get confused
+      // whether there should be a comma at the end of 'c' entry.
+      let diff = [makeRemove('b'), makePatch('c', [makePatch(0, [makeAddRange(0, 'a ')])])];
+      let value = patchStringified(base, diff);
+      expect(value.remote).to.be(
+        '{\n' +
+        JSON_INDENT + '\"a\": 1,\n' +
+        JSON_INDENT + '\"c\": \"a test\"\n' +
+        '}'
+      );
+      let f = '{\n\"a\": 1,\n'.length + JSON_INDENT.length;
+      let tDel = f + '\"b\": true,\n'.length + JSON_INDENT.length;
+      expect(value.deletions[0]).to.eql({from: f, to: tDel, source: undefined});
+    });
+
+    it('should patch an object with combined removal and patch at end', () => {
+      let base = {a: 1, c: 'test', b: true};
+      // For this diff, a naive stringifier might get confused
+      // whether there should be a comma at the end of 'c' entry.
+      let diff = [makeAdd('d', 42), makeRemove('c')];
+      let value = patchStringified(base, diff);
+      expect(value.remote).to.be(
+        '{\n' +
+        JSON_INDENT + '\"a\": 1,\n' +
+        JSON_INDENT + '\"b\": true,\n' +
+        JSON_INDENT + '\"d\": 42\n' +
+        '}'
+      );
+      let f = '{\n\"a\": 1,\n'.length + JSON_INDENT.length;
+      f += '\"b\": true,\n'.length + JSON_INDENT.length;
+      let tAdd = f + '\"d\": 42\n'.length + JSON_INDENT.length;
+      let tDel = f + '\"c\": \"test\"\n'.length + JSON_INDENT.length;
+      expect(value.additions).to.eql([{from: f, to: tAdd, source: undefined}]);
+      expect(value.deletions).to.eql([{from: f, to: tDel, source: undefined}]);
+    });
+
+    it('should patch an object with double addition at end', () => {
+      let base = {a: 1, b: true};
+      // For this diff, a naive stringifier might get confused
+      // whether there should be a comma at the end of 'c' entry.
+      let diff = [makeAdd('c', 42), makeAdd('d', 'test')];
+      let value = patchStringified(base, diff);
+      expect(value.remote).to.be(
+        '{\n' +
+        JSON_INDENT + '\"a\": 1,\n' +
+        JSON_INDENT + '\"b\": true,\n' +
+        JSON_INDENT + '\"c\": 42,\n' +
+        JSON_INDENT + '\"d\": \"test\"\n' +
+        '}'
+      );
+      let f = '{\n\"a\": 1,\n'.length + JSON_INDENT.length;
+      f += '\"b\": true,\n'.length + JSON_INDENT.length;
+      let tAdd1 = f + '\"c\": 42,\n'.length + JSON_INDENT.length;
+      let tAdd2 = tAdd1 + '\"d\": \"test\"\n'.length + JSON_INDENT.length;
+      expect(value.additions[0]).to.eql({from: f, to: tAdd1, source: undefined});
+      expect(value.additions[1]).to.eql({from: tAdd1, to: tAdd2, source: undefined});
+    });
+
+    it('should patch an object with double removal at end', () => {
+      let base = {a: 1, b: true, c: 42, d: 'test'};
+      // For this diff, a naive stringifier might get confused
+      // whether there should be a comma at the end of 'c' entry.
+      let diff = [makeRemove('c'), makeRemove('d')];
+      let value = patchStringified(base, diff);
+      expect(value.remote).to.be(
+        '{\n' +
+        JSON_INDENT + '\"a\": 1,\n' +
+        JSON_INDENT + '\"b\": true\n' +
+        '}'
+      );
+      let f = '{\n\"a\": 1,\n'.length + JSON_INDENT.length;
+      f += '\"b\": true,\n'.length + JSON_INDENT.length;
+      let tDel1 = f + '\"c\": 42,\n'.length + JSON_INDENT.length;
+      let tDel2 = tDel1 + '\"d\": \"test\"\n'.length + JSON_INDENT.length;
+      expect(value.deletions[0]).to.eql({from: f, to: tDel1, source: undefined});
+      expect(value.deletions[1]).to.eql({from: tDel1, to: tDel2, source: undefined});
+    });
+
     it('should patch an object with null diff', () => {
       let base = {a: 1, d: 'test', c: true};
       let diff = null;
