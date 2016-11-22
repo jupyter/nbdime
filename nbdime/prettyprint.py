@@ -10,6 +10,8 @@ from itertools import chain
 import sys
 import io
 import os
+import time
+import datetime
 import pprint
 import re
 import shutil
@@ -34,14 +36,15 @@ except ImportError:
 
 from .diff_format import NBDiffFormatError, DiffOp
 from .patching import patch
+from .utils import star_path, split_path, join_path
 
 
 # Change to enable/disable color print etc.
 _git_diff_print_cmd = 'git diff --no-index --color-words'
 
 # colors
-REMOVE = colorama.Fore.RED + '-'
-ADD = colorama.Fore.GREEN + '+'
+REMOVE = colorama.Fore.RED + '-  '
+ADD = colorama.Fore.GREEN + '+  '
 RESET = colorama.Style.RESET_ALL
 
 # indentation offset
@@ -53,15 +56,8 @@ _base64 = re.compile(r'^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]
 def _trim_base64(s):
     """Trim base64 strings"""
     if len(s) > 64 and _base64.match(s.replace('\n', '')):
-        # TODO: This approach will show that hashes differ
-        # when there are small changes in the middle of the
-        # string, use it always?
-        hash_base64_content = True
-        if hash_base64_content:
-            h = hashlib.md5(s).hexdigest()
-            s = '<base64 with md5=%s' % h
-        else:
-            s = s[:16] + '...<snip base64>...' + s[-16:].strip()
+        h = hashlib.md5(s).hexdigest()
+        s = '%s...<snip base64 with md5=%s>...%s' % (s[:16], h, s[-16:].strip())
     return s
 
 
@@ -101,37 +97,56 @@ def _builtin_diff_render(a, b):
     return diff
 
 
-def pretty_print_changed_value(arg, prefix="", out=sys.stdout):
+def pretty_print_changed_value(arg, path, prefix="", out=sys.stdout):
     """Present a whole value that is either added or deleted.
 
     Calls out to other formatters for cells, outputs, and multiline strings.
 
     Uses pprint.pformat, otherwise.
     """
-    # TODO: Improve pretty-print of arbitrary values?
-    # TODO: Use paths to map to other cases than cells and outputs?
-
-    if isinstance(arg, dict):
-        if 'cell_type' in arg:
-            pretty_print_cell(None, arg, prefix, out)
-        elif 'output_type' in arg:
-            pretty_print_output(None, arg, prefix, out)
-        else:
-            pretty_print_dict(arg, (), prefix, out)
-    elif isinstance(arg, list) and arg:
-        for element in arg:
-            pretty_print_changed_value(element, prefix+IND, out)
-    elif isinstance(arg, string_types):
-        pretty_print_multiline(arg, prefix, out)
+    # Format starred version of path
+    if path is None:
+        starred = None
     else:
-        lines = pprint.pformat(arg).splitlines()
-        for line in lines:
-            out.write(prefix + line + "\n")
+        if path.startswith('/'):
+            path_prefix, path_trail = ('', path)
+        else:
+            path_prefix, path_trail = path.split('/', 1)
+        starred = star_path(split_path(path_trail))
+
+    # Check if we can handle path with specific formatter
+    if starred is not None:
+        if starred == "/cells/*":
+            for cell in arg:
+                pretty_print_cell(None, cell, prefix, out)
+        elif starred == "/cells":
+            pretty_print_cell(None, arg, prefix, out)
+        elif starred == "/cells/*/outputs/*":
+            for output in arg:
+                pretty_print_output(None, output, prefix, out)
+        elif starred == "/cells/*/outputs":
+            pretty_print_output(None, arg, prefix, out)
+        elif starred == "/cells/*/attachments":
+            pretty_print_attachments(arg, prefix, out)
+        else:
+            starred = None
+
+    # No path or path not handled
+    if starred is None:
+        if isinstance(arg, string_types):
+            pretty_print_multiline(arg, prefix, out)
+        elif isinstance(arg, dict):
+            pretty_print_dict(arg, (), prefix, out)
+        elif isinstance(arg, list) and arg:
+            pretty_print_list(arg, prefix, out)
+            #for i, element in enumerate(arg):
+            #    nextpath = "/".join((path, str(i)))
+            #    pretty_print_changed_value(element, nextpath, prefix+IND, out)
+        else:
+            pretty_print_multiline(pprint.pformat(arg), prefix, out)
 
 
-def pretty_print_diff_entry(a, e, path, prefix="", out=sys.stdout):
-    # NB! Ignoring prefix below, setting to ADD, REMOVE etc. instead.
-
+def pretty_print_diff_entry(a, e, path, out=sys.stdout):
     key = e.key
     nextpath = "/".join((path, str(key)))
     op = e.op
@@ -139,54 +154,54 @@ def pretty_print_diff_entry(a, e, path, prefix="", out=sys.stdout):
     # Recurse to handle patch ops
     if op == DiffOp.PATCH:
         # NB! Not indenting further here, allowing path to contain debth information
-        pretty_print_diff(a[key], e.diff, nextpath, prefix, out)
+        pretty_print_diff(a[key], e.diff, nextpath, out)
         return
 
     if op == DiffOp.ADDRANGE:
         out.write("insert before {}:\n".format(nextpath))
-        pretty_print_changed_value(e.valuelist, ADD, out)
+        pretty_print_changed_value(e.valuelist, nextpath, ADD, out)
 
     elif op == DiffOp.REMOVERANGE:
         if e.length > 1:
-            r = "{}-{}".format(key, key + e.length - 1)
+            keyrange = "{}-{}".format(nextpath, key + e.length - 1)
         else:
-            r = str(key)
-        out.write("delete {}/{}:\n".format(path, r))
-        pretty_print_changed_value(a[key: key + e.length], REMOVE, out)
+            keyrange = nextpath
+        out.write("delete {}:\n".format(nextpath))
+        pretty_print_changed_value(a[key: key + e.length], nextpath, REMOVE, out)
 
     elif op == DiffOp.REMOVE:
-        out.write("delete from {}:\n".format(nextpath))
-        pretty_print_changed_value(a[key], REMOVE, out)
+        out.write("delete {}:\n".format(nextpath))
+        pretty_print_changed_value(a[key], nextpath, REMOVE, out)
 
     elif op == DiffOp.ADD:
-        out.write("insert at {}:\n".format(nextpath))
-        pretty_print_changed_value(e.value, ADD, out)
+        out.write("insert {}:\n".format(nextpath))
+        pretty_print_changed_value(e.value, nextpath, ADD, out)
 
     elif op == DiffOp.REPLACE:
-        out.write("replace at {}:\n".format(nextpath))
-        pretty_print_changed_value(a[key], REMOVE, out)
-        pretty_print_changed_value(e.value, ADD, out)
+        out.write("replace {}:\n".format(nextpath))
+        pretty_print_changed_value(a[key], nextpath, REMOVE, out)
+        pretty_print_changed_value(e.value, nextpath, ADD, out)
 
     else:
         raise NBDiffFormatError("Unknown list diff op {}".format(op))
 
     out.write(RESET)
-    out.write("\n")
+    #out.write("\n")
 
 
-def pretty_print_dict_diff(a, di, path, prefix="", out=sys.stdout):
+def pretty_print_dict_diff(a, di, path, out=sys.stdout):
     "Pretty-print a nbdime diff."
     for key, e in sorted((e.key, e) for e in di):
-        pretty_print_diff_entry(a, e, path, prefix, out)
+        pretty_print_diff_entry(a, e, path, out)
 
 
-def pretty_print_list_diff(a, di, path, prefix="", out=sys.stdout):
+def pretty_print_list_diff(a, di, path, out=sys.stdout):
     "Pretty-print a nbdime diff."
     for e in di:
-        pretty_print_diff_entry(a, e, path, prefix, out)
+        pretty_print_diff_entry(a, e, path, out)
 
 
-def pretty_print_string_diff(a, di, path, prefix="", out=sys.stdout):
+def pretty_print_string_diff(a, di, path, out=sys.stdout):
     "Pretty-print a nbdime diff."
     if _base64.match(a):
         out.write(prefix + '<base64 data changed>\n')
@@ -209,26 +224,34 @@ def pretty_print_string_diff(a, di, path, prefix="", out=sys.stdout):
     out.write("\n".join(diff_lines))
 
 
-def pretty_print_diff(a, di, path, prefix="", out=sys.stdout):
+def pretty_print_diff(a, di, path, out=sys.stdout):
     "Pretty-print a nbdime diff."
     if isinstance(a, dict):
-        pretty_print_dict_diff(a, di, path, prefix, out)
+        pretty_print_dict_diff(a, di, path, out)
     elif isinstance(a, list):
-        pretty_print_list_diff(a, di, path, prefix, out)
+        pretty_print_list_diff(a, di, path, out)
     elif isinstance(a, string_types):
-        pretty_print_string_diff(a, di, path, prefix, out)
+        pretty_print_string_diff(a, di, path, out)
     else:
         raise NBDiffFormatError("Invalid type {} for diff presentation.".format(type(a)))
 
 
 notebook_diff_header = """\
 nbdiff {afn} {bfn}
---- a: {afn}
-+++ b: {bfn}
+--- a: {afn}{atime}
++++ b: {bfn}{btime}
 """
 
 
-def pretty_print_notebook_diff(afn, bfn, a, di, prefix="", out=sys.stdout):
+def file_timestamp(filename):
+    st = os.stat(filename)
+    lt = time.localtime(st.st_mtime)
+    t = datetime.time(lt.tm_hour, lt.tm_min, lt.tm_sec)
+    d = datetime.date(lt.tm_year, lt.tm_mon, lt.tm_mday)
+    return "%s %s" % (d.isoformat(), t.isoformat())
+
+
+def pretty_print_notebook_diff(afn, bfn, a, di, out=sys.stdout):
     """Pretty-print a notebook diff
 
     Parameters
@@ -245,8 +268,14 @@ def pretty_print_notebook_diff(afn, bfn, a, di, prefix="", out=sys.stdout):
     """
     if di:
         path = ""
-        out.write(notebook_diff_header.format(afn=afn, bfn=bfn))
-        pretty_print_diff(a, di, path, prefix, out)
+        try:
+            atime = "  " + file_timestamp(afn)
+            btime = "  " + file_timestamp(bfn)
+        except:
+            atime = ""
+            btime = ""
+        out.write(notebook_diff_header.format(afn=afn, bfn=bfn, atime=atime, btime=btime))
+        pretty_print_diff(a, di, path, out)
 
 
 def pretty_print_merge_decision(decision, prefix="", out=sys.stdout):
@@ -356,7 +385,7 @@ def pretty_print_dict(d, exclude_keys=(), prefix="", out=sys.stdout):
             out.write("%s%s:\n" % (prefix, k))
             pretty_print_list(v, prefix+IND, out)
         else:
-            pretty_print_item(k, v, prefix+IND, out)
+            pretty_print_item(k, v, prefix, out)
 
 
 def pretty_print_metadata(md, known_keys, prefix="", out=sys.stdout):
@@ -439,9 +468,11 @@ def pretty_print_outputs(outputs, prefix="", out=sys.stdout):
         pretty_print_output(i, output, prefix+IND, out)
 
 
-def pretty_print_attachment(attachment, prefix="", out=sys.stdout):
-    out.write("%sattachment:\n" % (prefix,))
-    pretty_print_dict(attachment, (), prefix+IND, out)
+def pretty_print_attachments(attachments, prefix="", out=sys.stdout):
+    out.write("%s%s:\n" % (prefix, "attachments"))
+    for name in sorted(attachments):
+        out.write("%s%s:\n" % (prefix+IND, name))
+        pretty_print_dict(attachments[name], (), prefix+IND*2, out)
 
 
 def pretty_print_source(source, prefix="", out=sys.stdout):
@@ -475,9 +506,9 @@ def pretty_print_cell(i, cell, prefix="", out=sys.stdout):
         pretty_print_outputs(outputs, key_prefix, out)
 
     # Write attachment if there (only markdown and raw cells)
-    attachment = cell.get("attachment")
-    if attachment:
-        pretty_print_attachment(attachment, key_prefix, out)
+    attachments = cell.get("attachments")
+    if attachments:
+        pretty_print_attachments(attachments, key_prefix, out)
 
     # present_value on anything we haven't special-cased yet
     exclude_keys = {'cell_type', 'source', 'execution_count', 'outputs', 'metadata', 'attachment'}
