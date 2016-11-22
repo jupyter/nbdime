@@ -89,7 +89,7 @@ def test_present_value_list():
 
 def test_present_stream_output():
     output = v4.new_output('stream', name='stdout', text='some\ntext')
-    lines = pp.present_value('+', output)
+    lines = pp.present_value('+', output, '/cells/0/outputs/3')
     assert lines == [
         '+output_type: stream',
         "+name: stdout",
@@ -103,7 +103,7 @@ def test_present_display_data():
         'text/plain': 'text',
         'image/png': b64text(1024),
     })
-    lines = pp.present_value('+', output)
+    lines = pp.present_value('+', output, '/cells/0/outputs/3')
     text = '\n'.join(lines)
     assert 'output_type: display_data' in text
     assert len(text) < 500
@@ -114,7 +114,7 @@ def test_present_display_data():
 
 def test_present_markdown_cell():
     cell = v4.new_markdown_cell(source='# Heading\n\n*some markdown*')
-    lines = pp.present_value('+', cell)
+    lines = pp.present_value('+', cell, '/cells/0')
     text = '\n'.join(lines)
     assert lines[0] == ''
     assert lines[1] == '+markdown cell:'
@@ -131,7 +131,7 @@ def test_present_code_cell():
             v4.new_output('display_data', {'text/plain': 'hello display'}),
         ]
     )
-    lines = pp.present_value('+', cell)
+    lines = pp.present_value('+', cell, '/cells/0')
     assert lines[0] == ''
     assert lines[1] == '+code cell:'
 

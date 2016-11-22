@@ -44,17 +44,20 @@ def autoresolve_notebook_conflicts(base, decisions, args):
             "/cells/*/outputs/*/execution_count"
         ])
     if args and args.merge_strategy == "mergetool":
+        # Mergetool strategy will prevent autoresolve from
+        # attempting to solve conflicts on these entries:
         strategies.update({
             "/cells/*/source": "mergetool",
             "/cells/*/outputs": "mergetool",
+            "/cells/*/attachments": "mergetool",
         })
     else:
         strategies.update({
             "/metadata": "record-conflict",
             "/cells/*/metadata": "record-conflict",
-            "/cells/*/source": "mergetool",
             "/cells/*/source": "inline-source",
             "/cells/*/outputs": "inline-outputs", # "clear", "join"
+            # TODO: Add an inline strategy for attachments as well
             # FIXME: Find a good way to handle strategies for both parent (outputs) and child (execution_count).
             #        It might be that some strategies can be combined while others don't make sense, e.g. setting use-* on parent.
             #"/cells/*/outputs/*/execution_count": "clear",

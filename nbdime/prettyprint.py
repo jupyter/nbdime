@@ -29,6 +29,7 @@ import colorama
 
 from .diff_format import NBDiffFormatError, DiffOp
 from .patching import patch
+from .utils import star_path, split_path, join_path
 
 try:
     from shutil import which
@@ -72,9 +73,9 @@ def present_dict_no_markup(prefix, d, exclude_keys=None):
                 pp.append(prefix + key + ':')
                 pp.extend(present_value(value_prefix, value))
             else:
-                pp.append(prefix + '%s: %s' % (key, value))
+                pp.extend(present_value(prefix + key + ': ', value))
         else:
-            pp.append(prefix + '%s: %s' % (key,  value))
+            pp.extend(present_value(prefix + key + ': ', value))
     return pp
 
 
@@ -114,6 +115,18 @@ def present_output(prefix, output):
     return pp
 
 
+def present_attachment(prefix, key, mime_bundle):
+    """Present an attachment (whole attachment add/delete)
+
+    Called by present_value
+    """
+    pp = []
+    pp.append(prefix + key + ':')
+    value_prefix = prefix + '  '
+    pp.extend(present_dict_no_markup(value_prefix, mime_bundle))
+    return pp
+
+
 def present_cell(prefix, cell):
     """Present a cell as a scalar (whole cell delete/add)
 
@@ -140,13 +153,19 @@ def present_cell(prefix, cell):
         for output in cell['outputs']:
             pp.extend(present_output(value_prefix, output))
 
+    if cell.get('attachments'):
+        pp.append(key_prefix + 'attachments:')
+        for key, mime_bundle in cell['attachments']:
+            pp.extend(present_attachment(value_prefix, key, mime_bundle))
+
     # present_value on anything we haven't special-cased yet
     pp.extend(present_dict_no_markup(key_prefix, cell,
         exclude_keys={'cell_type', 'source', 'execution_count', 'outputs', 'metadata'},
     ))
     return pp
 
-def present_value(prefix, arg):
+
+def present_value(prefix, arg, path=None):
     """Present a whole value that is either added or deleted.
 
     Calls out to other formatters for cells, outputs, and multiline strings.
@@ -154,20 +173,24 @@ def present_value(prefix, arg):
     Uses pprint.pformat, otherwise.
     """
     # TODO: improve pretty-print of arbitrary values?
-    if isinstance(arg, dict):
-        if 'cell_type' in arg:
-            return present_cell(prefix, arg)
-        elif 'output_type' in arg:
-            return present_output(prefix, arg)
-    elif isinstance(arg, list) and arg:
-        first = arg[0]
-        if isinstance(first, dict):
-            if 'cell_type' in first:
-                return chain(*[ present_cell(prefix + '  ', cell) for cell in arg ])
-            elif 'output_type' in first:
-                return chain(*[ present_output(prefix + '  ', out) for out in arg ])
-    elif isinstance(arg, string_types):
+    if isinstance(arg, string_types):
         return present_multiline_string(prefix, arg)
+    elif path is not None:
+        if path.startswith('/'):
+            path_prefix, path_trail = ('', path)
+        else:
+            path_prefix, path_trail = path.split('/', 1)
+        starred = star_path(split_path(path_trail))
+        if starred == '/cells/*':
+            return present_cell(prefix, arg)
+        elif starred == '/cells':
+            return chain(*[ present_cell(prefix + '  ', cell) for cell in arg ])
+        elif starred == '/cells/*/outputs/*':
+            return present_output(prefix, arg)
+        elif starred == '/cells/*/outputs':
+            return chain(*[ present_output(prefix + '  ', out) for out in arg ])
+        elif starred == '/cells/*/attachments':
+            return chain(*[ present_attachment(prefix + '  ', key, bundle) for (key, bundle) in arg.items() ])
 
     lines = pprint.pformat(arg).splitlines()
     return [prefix + line for line in lines]
@@ -188,16 +211,16 @@ def present_dict_diff(a, di, path):
 
         if op == DiffOp.REMOVE:
             pp.append("delete from {}:".format(nextpath))
-            pp += present_value(REMOVE, a[key])
+            pp += present_value(REMOVE, a[key], nextpath)
 
         elif op == DiffOp.ADD:
             pp.append("insert at {}:".format(nextpath))
-            pp += present_value(ADD, e.value)
+            pp += present_value(ADD, e.value, nextpath)
 
         elif op == DiffOp.REPLACE:
             pp.append("replace at {}:".format(nextpath))
-            pp += present_value(REMOVE, a[key])
-            pp += present_value(ADD, e.value)
+            pp += present_value(REMOVE, a[key], nextpath)
+            pp += present_value(ADD, e.value, nextpath)
 
         elif op == DiffOp.PATCH:
             if with_indent:
@@ -223,7 +246,7 @@ def present_list_diff(a, d, path):
 
         if op == DiffOp.ADDRANGE:
             pp.append("insert before {}:".format(nextpath))
-            pp += present_value(ADD, e.valuelist)
+            pp += present_value(ADD, e.valuelist, nextpath)
 
         elif op == DiffOp.REMOVERANGE:
             if e.length > 1:
@@ -231,7 +254,7 @@ def present_list_diff(a, d, path):
             else:
                 r = str(index)
             pp.append("delete {}/{}:".format(path, r))
-            pp += present_value(REMOVE, a[index: index + e.length])
+            pp += present_value(REMOVE, a[index: index + e.length], nextpath)
 
         elif op == DiffOp.PATCH:
             if with_indent:
