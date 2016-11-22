@@ -203,11 +203,14 @@ def pretty_print_list_diff(a, di, path, out=sys.stdout):
 
 def pretty_print_string_diff(a, di, path, out=sys.stdout):
     "Pretty-print a nbdime diff."
-    if _base64.match(a):
-        out.write(prefix + '<base64 data changed>\n')
-        return
-
     b = patch(a, di)
+
+    if _base64.match(a):
+        ah = hashlib.md5(a).hexdigest()
+        bh = hashlib.md5(b).hexdigest()
+        out.write('%s<base64 data with md5=%s>\n' % (REMOVE, ah))
+        out.write('%s<base64 data with md5=%s>\n' % (ADD, bh))
+        return
 
     if which('git'):
         diff = _external_diff_render(_git_diff_print_cmd.split(), a, b)
