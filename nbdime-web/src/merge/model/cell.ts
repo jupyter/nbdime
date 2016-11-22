@@ -213,8 +213,8 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
       } else if (md.absolutePath.length === 2 && (
             hasEntries(md.localDiff) || hasEntries(md.remoteDiff))) {
         // Have decision on /cells/X/. Such decisions should always
-        // be onsided.
-        if (hasEntries(md.localDiff) && hasEntries(md.remoteDiff)) {
+        // be onsided except in the 'clear' case.
+        if (md.action !== "clear" && hasEntries(md.localDiff) && hasEntries(md.remoteDiff)) {
           // Not onesided.
           throw new Error('Invalid merge decision: ' + md);
         }
