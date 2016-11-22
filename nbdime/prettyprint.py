@@ -296,11 +296,24 @@ def pretty_print_notebook_diff(afn, bfn, a, di, out=sys.stdout):
         pretty_print_diff(a, di, path, out)
 
 
-def pretty_print_merge_decision(decision, prefix="", out=sys.stdout):
-    pretty_print_dict(decision, prefix, out)
+def pretty_print_merge_decision(base, decision, out=sys.stdout):
+    prefix = IND
+    diff_keys = ["diff", "local_diff", "remote_diff", "custom_diff"]
+    path = join_path(decision.common_path)
+    out.write("%s====== decision at %s:%s\n" % (INFO, path, RESET))
+    exclude_keys = set(diff_keys) | {"common_path"}
+    pretty_print_dict(decision, exclude_keys, prefix, out)
+    for dkey in diff_keys:
+        diff = decision.get(dkey)
+        if diff:
+            out.write("%s=== %s:%s\n" % (INFO, dkey, RESET))
+            value = base
+            for k in decision.common_path:
+                value = value[k]
+            pretty_print_diff(value, diff, path, out)
 
 
-def pretty_print_merge_decisions(base, decisions, prefix="", out=sys.stdout):
+def pretty_print_merge_decisions(base, decisions, out=sys.stdout):
     """Pretty-print notebook merge decisions
 
     Parameters
@@ -312,10 +325,10 @@ def pretty_print_merge_decisions(base, decisions, prefix="", out=sys.stdout):
         The list of merge decisions
     """
     conflicted = [d for d in decisions if d.conflict]
-    out.write("%s%d conflicted decisions of %d total:\n"
-              % (prefix, len(conflicted), len(decisions)))
+    out.write("%d conflicted decisions of %d total:\n"
+              % (len(conflicted), len(decisions)))
     for d in decisions:
-        pretty_print_merge_decision(d, prefix+IND, out)
+        pretty_print_merge_decision(base, d, out)
         out.write("\n")
     out.write("\n")
 
@@ -343,7 +356,7 @@ def pretty_print_notebook_merge(bfn, lfn, rfn, bnb, lnb, rnb, mnb, decisions, ou
     decisions: list
         The list of merge decisions including conflicts
     """
-    pretty_print_merge_decisions(bnb, decisions, "", out)
+    pretty_print_merge_decisions(bnb, decisions, out)
 
 
 def pretty_print_item(k, v, prefix="", out=sys.stdout):
