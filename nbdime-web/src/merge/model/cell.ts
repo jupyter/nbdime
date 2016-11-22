@@ -38,7 +38,7 @@ import {
 } from '../../patch';
 
 import {
-  arraysEqual, valueIn, hasEntries, splitLines
+  arraysEqual, valueIn, hasEntries, splitLines, unique
 } from '../../common/util';
 
 import {
@@ -372,17 +372,18 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
     let localDiff = local ? localPatch!.diff : null;
     let remoteDiff = remote ? remotePatch!.diff : null;
     let split: MergeDecision[] = [];
-    let keys = new Set<string | number>();
+    let keys: (string | number)[] = [];
     if (local) {
       for (let d of localDiff!) {
-        keys.add(d.key);
+        keys.push(d.key);
       }
     }
     if (remote) {
       for (let d of remoteDiff!) {
-        keys.add(d.key);
+        keys.push(d.key);
       }
     }
+    keys = keys.filter(unique);
     if (local && remote) {
       // Sanity check
       if (localPatch!.key !== remotePatch!.key) {
@@ -390,7 +391,7 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
       }
     }
     let patchKey = local ? localPatch!.key : remotePatch!.key;
-    keys.forEach(key => {
+    for (let key of keys) {
       if (this._whitelist && !valueIn(key, this._whitelist)) {
         throw new NotifyUserError('Currently not able to handle decisions on variable \"' +
               key + '\"');
@@ -410,7 +411,7 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
         er ? [er] : null,
         action,
         md.conflict));
-    });
+    };
     return this.splitOnSourceChunks(split);
   }
 

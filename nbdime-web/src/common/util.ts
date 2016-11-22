@@ -221,3 +221,11 @@ function accumulateLengths(arr: string[]) {
   }, 0);
   return ret;
 }
+
+/**
+ * Filter for Array.filter to only have unique values
+ */
+export
+function unique<T>(value: T, index: number, self: T[]): boolean {
+  return self.indexOf(value) === index;
+}

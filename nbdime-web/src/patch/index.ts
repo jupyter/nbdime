@@ -7,7 +7,7 @@ import {
 } from 'phosphor/lib/algorithm/json';
 
 import {
-  valueIn, deepCopy, repeatString
+  valueIn, deepCopy, repeatString, unique
 } from '../common/util';
 
 import {
@@ -533,17 +533,12 @@ let _objectKeys = Object.keys || function (obj: any): string[] {
   return keys;
 };
 
-/** Filter function for _getAllKeys */
-function _onlyUnique(value: any, index: number, self: any[]) {
-  return self.indexOf(value) === index;
-}
-
 /**
  * Get all unique keys that are either in `obj`, `diffKeys` or both.
  * Returned as a sorted list.
  */
 function _getAllKeys(obj: Object, diffKeys: string[]) {
-  return _objectKeys(obj).concat(diffKeys).filter(_onlyUnique).sort();
+  return _objectKeys(obj).concat(diffKeys).filter(unique).sort();
 }
 
 /** Make a string for a stringified dict key, with indentation */
