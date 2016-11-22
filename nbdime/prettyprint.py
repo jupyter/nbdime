@@ -45,20 +45,35 @@ _git_diff_print_cmd = 'git diff --no-index --color-words'
 # colors
 REMOVE = colorama.Fore.RED + '-  '
 ADD = colorama.Fore.GREEN + '+  '
+INFO = colorama.Fore.BLUE + '\n'
 RESET = colorama.Style.RESET_ALL
 
 # indentation offset
 IND = "  "
 
 
-_base64 = re.compile(r'^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$', re.MULTILINE|re.UNICODE)
+def _diff_render_with_git(a, b):
+    diff = _external_diff_render(_git_diff_print_cmd.split(), a, b)
+    return diff.splitlines()[4:]
 
-def _trim_base64(s):
-    """Trim base64 strings"""
-    if len(s) > 64 and _base64.match(s.replace('\n', '')):
-        h = hashlib.md5(s).hexdigest()
-        s = '%s...<snip base64 with md5=%s>...%s' % (s[:16], h, s[-16:].strip())
-    return s
+def _diff_render_with_diff(a, b):
+    diff = _external_diff_render(['diff'], a, b)
+    return diff.splitlines()
+
+def _diff_render_with_difflib(a, b):
+    diff = _builtin_diff_render(a, b)
+    return diff.splitlines()[2:]
+
+
+# TODO: Make this configurable
+use_git = True
+use_diff = True
+if use_git and which('git'):
+    _diff_render = _diff_render_with_git
+elif use_diff and which('diff'):
+    _diff_render = _diff_render_with_diff
+else:
+    _diff_render = _diff_render_with_difflib
 
 
 def _external_diff_render(cmd, a, b):
@@ -95,6 +110,16 @@ def _builtin_diff_render(a, b):
         uni.append(r'\ No newline at end of file')
     diff = '\n'.join(uni)
     return diff
+
+
+_base64 = re.compile(r'^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$', re.MULTILINE|re.UNICODE)
+
+def _trim_base64(s):
+    """Trim base64 strings"""
+    if len(s) > 64 and _base64.match(s.replace('\n', '')):
+        h = hashlib.md5(s).hexdigest()
+        s = '%s...<snip base64 with md5=%s>...%s' % (s[:16], h, s[-16:].strip())
+    return s
 
 
 def pretty_print_changed_value(arg, path, prefix="", out=sys.stdout):
@@ -153,12 +178,11 @@ def pretty_print_diff_entry(a, e, path, out=sys.stdout):
 
     # Recurse to handle patch ops
     if op == DiffOp.PATCH:
-        # NB! Not indenting further here, allowing path to contain debth information
         pretty_print_diff(a[key], e.diff, nextpath, out)
         return
 
     if op == DiffOp.ADDRANGE:
-        out.write("insert before {}:\n".format(nextpath))
+        out.write("{}inserted before {}:{}\n".format(INFO, nextpath, RESET))
         pretty_print_changed_value(e.valuelist, nextpath, ADD, out)
 
     elif op == DiffOp.REMOVERANGE:
@@ -166,19 +190,19 @@ def pretty_print_diff_entry(a, e, path, out=sys.stdout):
             keyrange = "{}-{}".format(nextpath, key + e.length - 1)
         else:
             keyrange = nextpath
-        out.write("delete {}:\n".format(nextpath))
+        out.write("{}deleted {}:{}\n".format(INFO, nextpath, RESET))
         pretty_print_changed_value(a[key: key + e.length], nextpath, REMOVE, out)
 
     elif op == DiffOp.REMOVE:
-        out.write("delete {}:\n".format(nextpath))
+        out.write("{}deleted {}:{}\n".format(INFO, nextpath, RESET))
         pretty_print_changed_value(a[key], nextpath, REMOVE, out)
 
     elif op == DiffOp.ADD:
-        out.write("insert {}:\n".format(nextpath))
+        out.write("{}inserted {}:{}\n".format(INFO, nextpath, RESET))
         pretty_print_changed_value(e.value, nextpath, ADD, out)
 
     elif op == DiffOp.REPLACE:
-        out.write("replace {}:\n".format(nextpath))
+        out.write("{}replaced {}:{}\n".format(INFO, nextpath, RESET))
         pretty_print_changed_value(a[key], nextpath, REMOVE, out)
         pretty_print_changed_value(e.value, nextpath, ADD, out)
 
@@ -203,28 +227,19 @@ def pretty_print_list_diff(a, di, path, out=sys.stdout):
 
 def pretty_print_string_diff(a, di, path, out=sys.stdout):
     "Pretty-print a nbdime diff."
-    b = patch(a, di)
+    out.write("{}modified {}:{}\n".format(INFO, path, RESET))
 
+    b = patch(a, di)
     if _base64.match(a):
         ah = hashlib.md5(a).hexdigest()
         bh = hashlib.md5(b).hexdigest()
-        out.write('%s<base64 data with md5=%s>\n' % (REMOVE, ah))
-        out.write('%s<base64 data with md5=%s>\n' % (ADD, bh))
+        out.write('%s<base64 data with md5=%s>%s\n' % (REMOVE, ah, RESET))
+        out.write('%s<base64 data with md5=%s>%s\n' % (ADD, bh, RESET))
         return
 
-    if which('git'):
-        diff = _external_diff_render(_git_diff_print_cmd.split(), a, b)
-        heading_lines = 4
-    elif which('diff'):
-        diff = _external_diff_render(['diff'], a, b)
-        heading_lines = 0
-    else:
-        diff = _builtin_diff_render(a, b)
-        heading_lines = 2
-
-    # NB! Ignoring prefix here!
-    diff_lines = diff.splitlines()[heading_lines:]
+    diff_lines = _diff_render(a, b)
     out.write("\n".join(diff_lines))
+    out.write("\n")
 
 
 def pretty_print_diff(a, di, path, out=sys.stdout):
