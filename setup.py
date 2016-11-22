@@ -37,6 +37,7 @@ from distutils.core import setup
 from distutils.cmd import Command
 from distutils.command.build import build
 from distutils.command.sdist import sdist
+from distutils.spawn import find_executable
 
 pjoin = os.path.join
 here = os.path.abspath(os.path.dirname(__file__))
@@ -47,6 +48,14 @@ pkg_root = pjoin(here, name)
 jstargets = [
     os.path.join(here, 'nbdime', 'webapp', 'static', 'build', 'nbdime.js'),
 ]
+
+
+if "--skip-npm" in sys.argv:
+    print("Skipping install of webtools as requested.")
+    skip_npm = True
+    sys.argv.remove("--skip-npm")
+else:
+    skip_npm = False
 
 
 def run(cmd, cwd=None):
@@ -102,11 +111,7 @@ def install_npm(path):
             pass
 
         def has_npm(self):
-            try:
-                run('npm --version')
-                return True
-            except:
-                return False
+            return find_executable("npm")
 
         def run(self):
             log.info('Checking npm-installation:')
@@ -188,22 +193,25 @@ setup_args = dict(
     ],
 )
 
-cmdclass = dict(
-    build  = js_prerelease(build),
-    sdist  = js_prerelease(sdist, strict=True),
-    jsdeps = combine_commands(
-        install_npm(pjoin(here, 'nbdime-web')),
-        install_npm(pjoin(here, 'nbdime', 'webapp')),
-    ),
-)
 
-if 'develop' in sys.argv or any(a.startswith('bdist') for a in sys.argv):
-    import setuptools
-    from setuptools.command.develop import develop
+if not skip_npm:
+    cmdclass = dict(
+        build  = js_prerelease(build),
+        sdist  = js_prerelease(sdist, strict=True),
+        jsdeps = combine_commands(
+            install_npm(pjoin(here, 'nbdime-web')),
+            install_npm(pjoin(here, 'nbdime', 'webapp')),
+        ),
+    )
 
-    cmdclass['develop'] = js_prerelease(develop, strict=True)
+    if 'develop' in sys.argv or any(a.startswith('bdist') for a in sys.argv):
+        import setuptools
+        from setuptools.command.develop import develop
 
-setup_args['cmdclass'] = cmdclass
+        cmdclass['develop'] = js_prerelease(develop, strict=True)
+
+    setup_args['cmdclass'] = cmdclass
+
 
 setuptools_args = {}
 install_requires = setuptools_args['install_requires'] = [
