@@ -43,9 +43,9 @@ from .utils import star_path, split_path, join_path
 _git_diff_print_cmd = 'git diff --no-index --color-words'
 
 # colors
-REMOVE = colorama.Fore.RED + '-  '
-ADD = colorama.Fore.GREEN + '+  '
-INFO = colorama.Fore.BLUE + '\n'
+REMOVE = colorama.Fore.RED + '-'
+ADD = colorama.Fore.GREEN + '+'
+INFO = colorama.Fore.BLUE + ''
 RESET = colorama.Style.RESET_ALL
 
 # indentation offset
@@ -66,14 +66,17 @@ def _diff_render_with_difflib(a, b):
 
 
 # TODO: Make this configurable
-use_git = True
-use_diff = True
-if use_git and which('git'):
-    _diff_render = _diff_render_with_git
-elif use_diff and which('diff'):
-    _diff_render = _diff_render_with_diff
-else:
-    _diff_render = _diff_render_with_difflib
+use_git = False
+use_diff = False
+
+
+def _diff_render(*args):
+    if use_git and which('git'):
+        return _diff_render_with_git(*args)
+    elif use_diff and which('diff'):
+        return _diff_render_with_diff(*args)
+    else:
+        return _diff_render_with_difflib(*args)
 
 
 def _external_diff_render(cmd, a, b):
@@ -122,7 +125,7 @@ def _trim_base64(s):
     return s
 
 
-def pretty_print_changed_value(arg, path, prefix="", out=sys.stdout):
+def pretty_print_value(arg, path, prefix="", out=sys.stdout):
     """Present a whole value that is either added or deleted.
 
     Calls out to other formatters for cells, outputs, and multiline strings.
@@ -158,17 +161,12 @@ def pretty_print_changed_value(arg, path, prefix="", out=sys.stdout):
 
     # No path or path not handled
     if starred is None:
-        if isinstance(arg, string_types):
-            pretty_print_multiline(arg, prefix, out)
-        elif isinstance(arg, dict):
+        if isinstance(arg, dict):
             pretty_print_dict(arg, (), prefix, out)
         elif isinstance(arg, list) and arg:
             pretty_print_list(arg, prefix, out)
-            #for i, element in enumerate(arg):
-            #    nextpath = "/".join((path, str(i)))
-            #    pretty_print_changed_value(element, nextpath, prefix+IND, out)
         else:
-            pretty_print_multiline(pprint.pformat(arg), prefix, out)
+            pretty_print_multiline(format_value(arg), prefix, out)
 
 
 def pretty_print_diff_entry(a, e, path, out=sys.stdout):
@@ -183,7 +181,7 @@ def pretty_print_diff_entry(a, e, path, out=sys.stdout):
 
     if op == DiffOp.ADDRANGE:
         out.write("{}inserted before {}:{}\n".format(INFO, nextpath, RESET))
-        pretty_print_changed_value(e.valuelist, nextpath, ADD, out)
+        pretty_print_value(e.valuelist, nextpath, ADD, out)
 
     elif op == DiffOp.REMOVERANGE:
         if e.length > 1:
@@ -191,20 +189,20 @@ def pretty_print_diff_entry(a, e, path, out=sys.stdout):
         else:
             keyrange = nextpath
         out.write("{}deleted {}:{}\n".format(INFO, nextpath, RESET))
-        pretty_print_changed_value(a[key: key + e.length], nextpath, REMOVE, out)
+        pretty_print_value(a[key: key + e.length], nextpath, REMOVE, out)
 
     elif op == DiffOp.REMOVE:
         out.write("{}deleted {}:{}\n".format(INFO, nextpath, RESET))
-        pretty_print_changed_value(a[key], nextpath, REMOVE, out)
+        pretty_print_value(a[key], nextpath, REMOVE, out)
 
     elif op == DiffOp.ADD:
         out.write("{}inserted {}:{}\n".format(INFO, nextpath, RESET))
-        pretty_print_changed_value(e.value, nextpath, ADD, out)
+        pretty_print_value(e.value, nextpath, ADD, out)
 
     elif op == DiffOp.REPLACE:
         out.write("{}replaced {}:{}\n".format(INFO, nextpath, RESET))
-        pretty_print_changed_value(a[key], nextpath, REMOVE, out)
-        pretty_print_changed_value(e.value, nextpath, ADD, out)
+        pretty_print_value(a[key], nextpath, REMOVE, out)
+        pretty_print_value(e.value, nextpath, ADD, out)
 
     else:
         raise NBDiffFormatError("Unknown list diff op {}".format(op))
@@ -359,37 +357,41 @@ def pretty_print_notebook_merge(bfn, lfn, rfn, bnb, lnb, rnb, mnb, decisions, ou
     pretty_print_merge_decisions(bnb, decisions, out)
 
 
+def format_value(v):
+    if not isinstance(v, string_types):
+        # Not a string, defer to pprint
+        vstr = pprint.pformat(v)
+        # TODO: Cut strings short?
+        #if len(vstr) > 60:
+        #    vstr = "<%s instance: %s...>" % (v.__class__.__name__, vstr[:20])
+    else:
+        # Snip if base64 data
+        vstr = _trim_base64(v)
+    return vstr
+
+
 def pretty_print_item(k, v, prefix="", out=sys.stdout):
-    if isinstance(v, string_types):
-        vstr = v
+    if isinstance(v, dict):
+        out.write("%s%s:\n" % (prefix, k))
+        pretty_print_dict(v, (), prefix+IND, out)
+    elif isinstance(v, list):
+        out.write("%s%s:\n" % (prefix, k))
+        pretty_print_list(v, prefix+IND, out)
+    else:
+        vstr = format_value(v)
         if "\n" in vstr:
             # Multiline strings
             out.write("%s%s:\n" % (prefix, k))
             for line in vstr.splitlines(False):
-                out.write("%s'%s\n'\n" % (prefix+IND, line))
+                out.write("%s%s\n" % (prefix+IND, line))
         else:
             # Singleline strings
             out.write("%s%s: %s\n" % (prefix, k, vstr))
-    else:
-        # Something else, cut large metadata values short
-        vstr = repr(v)
-        if len(vstr) > 60:
-            vstr = "<%s instance: %s...>" % (v.__class__.__name__, vstr[:20])
-        out.write("%s%s: %s\n" % (prefix, k, vstr))
 
 
 def pretty_print_list(li, prefix="", out=sys.stdout):
     for k, v in enumerate(li):
-        if isinstance(v, dict):
-            # Nested dicts
-            out.write("%s%s:\n" % (prefix, k))
-            pretty_print_dict(v, (), prefix+IND, out)
-        elif isinstance(v, list):
-            # Nested lists
-            out.write("%s%s:\n" % (prefix, k))
-            pretty_print_list(v, prefix+IND, out)
-        else:
-            pretty_print_item(k, v, prefix+IND, out)
+        pretty_print_item(k, v, prefix, out)
 
 
 def pretty_print_dict(d, exclude_keys=(), prefix="", out=sys.stdout):
@@ -403,20 +405,9 @@ def pretty_print_dict(d, exclude_keys=(), prefix="", out=sys.stdout):
           value
 
     """
-    for k in sorted(d):
-        if k in exclude_keys:
-            continue
+    for k in sorted(set(d) - set(exclude_keys)):
         v = d[k]
-        if isinstance(v, dict):
-            # Nested dicts
-            out.write("%s%s:\n" % (prefix, k))
-            pretty_print_dict(v, (), prefix+IND, out)
-        elif isinstance(v, list):
-            # Nested lists
-            out.write("%s%s:\n" % (prefix, k))
-            pretty_print_list(v, prefix+IND, out)
-        else:
-            pretty_print_item(k, v, prefix, out)
+        pretty_print_item(k, v, prefix, out)
 
 
 def pretty_print_metadata(md, known_keys, prefix="", out=sys.stdout):
@@ -438,9 +429,6 @@ def pretty_print_metadata(md, known_keys, prefix="", out=sys.stdout):
 def pretty_print_multiline(text, prefix="", out=sys.stdout):
     assert isinstance(text, string_types)
 
-    # Trim base64 strings (images etc)
-    text = _trim_base64(text)
-
     # Preprend prefix to lines, letting lines keep their own newlines
     lines = text.splitlines(True)
     for line in lines:
@@ -456,39 +444,22 @@ def pretty_print_output(i, output, prefix="", out=sys.stdout):
     oprefix = prefix+IND
     t = output.output_type
     numstr = "" if i is None else " %d" % i
-    out.write("%s%s output%s:\n" % (prefix, t, numstr))
+    out.write("%soutput%s:\n" % (prefix, numstr))
+
+    item_keys = ("output_type", "execution_count",
+                 "name", "text", "data",
+                 "ename", "evalue", "traceback")
+    for k in item_keys:
+        v = output.get(k)
+        if v:
+            pretty_print_item(k, v, oprefix, out)
+
+    exclude_keys = {"output_type", "metadata", "traceback"} | set(item_keys)
 
     metadata = output.get("metadata")
     if metadata:
         known_output_metadata_keys = {"isolated"}
         pretty_print_metadata(metadata, known_output_metadata_keys, oprefix, out)
-
-    exclude_keys = {"output_type", "metadata", "execution_count", "name", "text", "data"}
-
-    execution_count = output.get("execution_count")
-    if execution_count:
-        out.write("%sexecution_count: %s\n" % (oprefix, execution_count))
-
-    name = output.get("name")
-    if name:
-        out.write("%sname: %s\n" % (oprefix, name))
-
-    text = output.get("text")
-    if text:
-        out.write("%stext:\n" % (oprefix,))
-        pretty_print_multiline(text, oprefix+IND, out)
-
-    data = output.get("data")
-    if data:
-        out.write("%sdata:\n" % (oprefix,))
-        pretty_print_dict(data, (), oprefix+IND, out)
-
-    if t == "error":
-        exclude_keys.update(("ename", "evalue", "traceback"))
-        out.write("%sename: %s\n" % (oprefix, output.ename))
-        out.write("%sevalue: %s\n" % (oprefix, output.evalue))
-        out.write("%straceback:\n" % (oprefix,))
-        pretty_print_list(output.traceback, oprefix+IND, out)
 
     pretty_print_dict(output, exclude_keys, oprefix, out)
 
@@ -500,10 +471,9 @@ def pretty_print_outputs(outputs, prefix="", out=sys.stdout):
 
 
 def pretty_print_attachments(attachments, prefix="", out=sys.stdout):
-    out.write("%s%s:\n" % (prefix, "attachments"))
+    out.write("%sattachments:\n" % (prefix,))
     for name in sorted(attachments):
-        out.write("%s%s:\n" % (prefix+IND, name))
-        pretty_print_dict(attachments[name], (), prefix+IND*2, out)
+        pretty_print_item(name, attachments[name], prefix+IND, out)
 
 
 def pretty_print_source(source, prefix="", out=sys.stdout):
