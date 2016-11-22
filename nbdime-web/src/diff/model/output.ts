@@ -11,23 +11,15 @@ import {
 } from '../../common/exceptions';
 
 import {
-  IDiffEntry, IDiffArrayEntry
+  IDiffArrayEntry
 } from '../diffentries';
 
 import {
-  getSubDiffByKey
-} from '../util';
+  RenderableDiffModel
+} from './renderable';
 
 import {
-  patch
-} from '../../patch';
-
-import {
-  IDiffModel
-} from './common';
-
-import {
-  IStringDiffModel, createDirectStringDiffModel, createPatchStringDiffModel
+  IStringDiffModel
 } from './string';
 
 
@@ -40,35 +32,7 @@ import {
  * make the model from.
  */
 export
-class OutputDiffModel implements IDiffModel {
-  constructor(
-        base: nbformat.IOutput | null,
-        remote: nbformat.IOutput | null,
-        diff?: IDiffEntry[] | null) {
-    if (!remote && !base) {
-      throw new Error('Either remote or base value need to be given');
-    }
-    this.base = base;
-    if (!remote && diff) {
-      this.remote = patch(base!, diff);
-    } else {
-      this.remote = remote;
-    }
-    this.diff = diff || null;
-    this.collapsible = false;
-  }
-
-  get unchanged() : boolean {
-    return this.diff === null && this.base !== null && this.remote !== null;
-  }
-
-  get added(): boolean {
-    return this.base === null;
-  }
-
-  get deleted(): boolean {
-    return this.remote === null;
-  }
+class OutputDiffModel extends RenderableDiffModel<nbformat.IOutput> {
 
   /**
    * Checks whether the given mimetype is present in the output's mimebundle.
@@ -99,7 +63,7 @@ class OutputDiffModel implements IDiffModel {
    *
    * See also: hasMimeType
    */
-  innerMimeType(key: string) : string {
+  protected innerMimeType(key: string) : string {
     let t = (this.base || this.remote!).output_type;
     if (t === 'stream' && key === 'text') {
       // TODO: 'application/vnd.jupyter.console-text'?
@@ -117,66 +81,27 @@ class OutputDiffModel implements IDiffModel {
    * make the model from.
    */
   stringify(key?: string) : IStringDiffModel {
-    let getMemberByPath = function(obj: any, key: string, f?: (obj: any, key: string) => any): any {
-      if (!obj) {
-        return obj;
-      }
-      let i = key.indexOf('.');
-      if (i >= 0) {
-        console.assert(i < key.length);
-        if (f) {
-          return getMemberByPath(
-            f(obj, key.slice(0, i)), key.slice(i + 1), f);
-        }
-        return getMemberByPath(
-          obj[key.slice(0, i)], key.slice(i + 1), f);
-      } else if (f) {
-        return f(obj, key);
-      }
-      return obj[key];
-    };
-    let base = key ? getMemberByPath(this.base, key) as any : this.base;
-    let remote = key ? getMemberByPath(this.remote, key) as any : this.remote;
-    let diff = (this.diff && key) ?
-      getMemberByPath(this.diff, key, getSubDiffByKey) as IDiffEntry[] | null :
-      this.diff;
-    let model: IStringDiffModel | null = null;
-    if (this.unchanged || this.added || this.deleted || !diff) {
-      model = createDirectStringDiffModel(base, remote);
-    } else {
-      model = createPatchStringDiffModel(base, diff);
+    let model = super.stringify(key);
+    if (key) {
+       model.mimetype = this.innerMimeType(key);
     }
-    model.mimetype = key ? this.innerMimeType(key) : 'application/json';
-    model.collapsible = this.collapsible;
-    model.collapsibleHeader = this.collapsibleHeader;
-    model.startCollapsed = this.startCollapsed;
     return model;
   }
-
-  /**
-   * Base value
-   */
-  base: nbformat.IOutput | null;
-
-  /**
-   * Remote value
-   */
-  remote: nbformat.IOutput | null;
-
-  /**
-   * Diff entries between base and remote
-   */
-  diff: IDiffEntry[] | null;
-
-  // ICollapsibleModel:
-  collapsible: boolean;
-  collapsibleHeader: string;
-  startCollapsed: boolean;
 }
 
 
-
-
+/**
+ * Function used to create a list of models for a list diff
+ *
+ * - If base and remote are both non-null and equal, it returns
+ *   a list of models representing unchanged entries.
+ * - If base and a diff is given, it ignores remote and returns
+ *   a list of models representing the diff.
+ * - If base is null, it returns a list of models representing
+ *   added entries.
+ * - If remote is null, it returns a list of models representing
+ *   deleted entries.
+ */
 export
 function makeOutputModels(base: nbformat.IOutput[] | null,
                           remote: nbformat.IOutput[] | null,
@@ -199,35 +124,35 @@ function makeOutputModels(base: nbformat.IOutput[] | null,
       models.push(new OutputDiffModel(null, o));
     }
   } else if (remote === base) {
-    // Outputs unchanged
+    // All entries unchanged
     for (let o of base) {
       models.push(new OutputDiffModel(o, o));
     }
   } else if (diff) {
-    // Outputs' patched, remote will be null
+    // Entries patched, remote will be null
     let consumed = 0;
     let skip = 0;
     for (let d of diff) {
       let index = d.key;
       for (let o of base.slice(consumed, index)) {
-        // Add unchanged outputs
+        // Add unchanged entries
         models.push(new OutputDiffModel(o, o));
       }
       if (d.op === 'addrange') {
-        // Outputs added
+        // Entries added
         for (let o of d.valuelist) {
           models.push(new OutputDiffModel(null, o));
         }
         skip = 0;
       } else if (d.op === 'removerange') {
-        // Outputs removed
+        // Entries removed
         let len = d.length;
         for (let i = index; i < index + len; i++) {
           models.push(new OutputDiffModel(base[i], null));
         }
         skip = len;
       } else if (d.op === 'patch') {
-        // Output changed
+        // Entry changed
         models.push(new OutputDiffModel(
           base[index], null, d.diff));
         skip = 1;
@@ -237,11 +162,11 @@ function makeOutputModels(base: nbformat.IOutput[] | null,
       consumed = Math.max(consumed, index + skip);
     }
     for (let o of base.slice(consumed)) {
-      // Add unchanged outputs
+      // Add unchanged entries
       models.push(new OutputDiffModel(o, o));
     }
   } else {
-    throw new Error('Invalid arguments to OutputsDiffModel');
+    throw new Error('Invalid arguments to makeOutputModels()');
   }
   return models;
 }
