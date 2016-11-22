@@ -120,7 +120,6 @@ def diff_single_outputs(a, b, path="/cells/*/output/*",
     assert path == "/cells/*/outputs/*"
     assert a.output_type == b.output_type
 
-    # TODO: Handle output diffing with plugins? I.e. image diff, svg diff, json diff, etc.
     if a.output_type in ("execute_result", "display_data"):
         di = MappingDiffBuilder()
 
@@ -141,11 +140,50 @@ def diff_single_outputs(a, b, path="/cells/*/output/*",
     else:
         return diff(a, b)
 
+
+def diff_attachments(a, b, path="/cells/*/attachments",
+                     predicates=None, differs=None):
+    """Diff a pair of attachment collections"""
+    assert path == "/cells/*/attachments"
+
+    # Two events can happen:
+    #  1: An attachment is added/removed/patched
+    #  2: An attachment is renamed (key change)
+    # Currently, #2 is handled as two ops (an add and a remove)
+
+    assert isinstance(a, dict) and isinstance(b, dict)
+    akeys = set(a.keys())
+    bkeys = set(b.keys())
+
+    di = MappingDiffBuilder()
+    # Sorting keys in loops to get a deterministic diff result
+    for key in sorted(akeys - bkeys):
+        di.remove(key)
+
+    # Handle values for keys in both a and b
+    for key in sorted(akeys & bkeys):
+        avalue = a[key]
+        bvalue = b[key]
+
+        if key.lower().startswith(_split_mimes):
+            dd = diff_mime_bundle(avalue, bvalue)
+            if dd:
+                di.patch(key, dd)
+        elif avalue != bvalue:
+            di.replace(key, bvalue)
+
+    for key in sorted(bkeys - akeys):
+        di.add(key, b[key])
+    return di.validated()
+
+
+
 _split_mimes = ('text/', 'image/svg+xml', 'application/javascript', 'application/json')
 
 
 def diff_mime_bundle(a, b, path=None,
                      predicates=None, differs=None):
+    assert isinstance(a, dict) and isinstance(b, dict)
     di = MappingDiffBuilder()
 
     akeys = set(a.keys())
@@ -159,6 +197,8 @@ def diff_mime_bundle(a, b, path=None,
         avalue = a[key]
         bvalue = b[key]
 
+        # TODO: Handle output diffing with plugins?
+        # I.e. image diff, svg diff, json diff, etc.
         if key.lower().startswith(_split_mimes):
             dd = diff(avalue, bvalue)
             if dd:
@@ -195,8 +235,7 @@ notebook_differs = defaultdict(lambda: diff, {
     "/cells/*": diff,
     "/cells/*/outputs": diff_sequence_multilevel,
     "/cells/*/outputs/*": diff_single_outputs,
-    "/cells/*/attachments": diff_sequence_multilevel,
-    "/cells/*/attachments/*": diff_mime_bundle,
+    "/cells/*/attachments": diff_attachments,
     })
 
 

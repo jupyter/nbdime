@@ -57,6 +57,7 @@ def autoresolve_notebook_conflicts(base, decisions, args):
             "/cells/*/metadata": "record-conflict",
             "/cells/*/source": "inline-source",
             "/cells/*/outputs": "inline-outputs", # "clear", "join"
+            # TODO: Add an inline strategy for attachments as well
             # FIXME: Find a good way to handle strategies for both parent (outputs) and child (execution_count).
             #        It might be that some strategies can be combined while others don't make sense, e.g. setting use-* on parent.
             #"/cells/*/outputs/*/execution_count": "clear",
