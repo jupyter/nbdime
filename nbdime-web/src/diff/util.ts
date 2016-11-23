@@ -27,13 +27,31 @@ export const JSON_INDENT = '  ';
  * Returns the first found entry, or null if not entry was found.
  */
 export
-function getDiffKey(diff: IDiffEntry[] | null, key: string | number) : IDiffEntry[] | null {
+function getSubDiffByKey(diff: IDiffEntry[] | null, key: string | number) : IDiffEntry[] | null {
   if (!diff) {
     return null;
   }
   for (let i=0; i < diff.length; ++i) {
     if (diff[i].key === key) {
       return (diff[i] as IDiffPatch).diff || null;
+    }
+  }
+  return null;
+}
+
+/**
+ * Search the list of diffs for an entry with the given key.
+ *
+ * Returns the first found entry, or null if not entry was found.
+ */
+export
+function getDiffEntryByKey(diff: IDiffEntry[] | null, key: string | number) : IDiffEntry | null {
+  if (!diff) {
+    return null;
+  }
+  for (let i=0; i < diff.length; ++i) {
+    if (diff[i].key === key) {
+      return diff[i];
     }
   }
   return null;
