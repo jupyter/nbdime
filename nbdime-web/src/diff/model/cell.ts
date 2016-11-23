@@ -11,21 +11,24 @@ import {
 } from '../../common/exceptions';
 
 import {
-  IDiffEntry, IDiffArrayEntry
+  IDiffEntry, IDiffArrayEntry, IDiffReplace, IDiffObjectEntry
 } from '../diffentries';
 
 import {
-  getSubDiffByKey
+  getSubDiffByKey, getDiffEntryByKey
 } from '../util';
 
 import {
   IStringDiffModel, StringDiffModel, createDirectStringDiffModel,
   createPatchStringDiffModel, setMimetypeFromCellType
 } from './string';
-
 import {
   OutputDiffModel, makeOutputModels
 } from './output';
+
+import {
+  ImmutableDiffModel, createImmutableModel
+} from './immutable';
 
 
 
@@ -33,11 +36,15 @@ import {
  * Diff model for individual Notebook Cells
  */
 export class CellDiffModel {
-  constructor(source: IStringDiffModel, metadata: IStringDiffModel,
-              outputs: OutputDiffModel[] | null, cellType: string) {
+  constructor(source: IStringDiffModel,
+              metadata: IStringDiffModel,
+              outputs: OutputDiffModel[] | null,
+              executionCount: ImmutableDiffModel | null,
+              cellType: string) {
     this.source = source;
     this.metadata = metadata;
     this.outputs = outputs;
+    this.executionCount = executionCount;
     this.cellType = cellType;
     if (outputs === null && cellType === 'code') {
       throw new NotifyUserError('Invalid code cell, missing outputs!');
@@ -66,6 +73,14 @@ export class CellDiffModel {
   outputs: OutputDiffModel[] | null;
 
   /**
+   * Diff model for the execution_count field. Can be null.
+   *
+   * A null value signifies that the cell is not a
+   * code cell type.
+   */
+  executionCount: ImmutableDiffModel | null;
+
+  /**
    * The type of the notebook cell
    */
   cellType: string;
@@ -82,6 +97,10 @@ export class CellDiffModel {
       for (let o of this.outputs) {
         unchanged = unchanged && o.unchanged;
       }
+    }
+    if (this.executionCount) {
+      // TODO: Ignore if option 'ignore minor' set?
+      unchanged = unchanged && this.executionCount.unchanged;
     }
     return unchanged;
   }
@@ -107,6 +126,7 @@ function createPatchedCellDiffModel(
   let source: StringDiffModel | null = null;
   let metadata: StringDiffModel | null = null;
   let outputs: OutputDiffModel[] | null = null;
+  let executionCount: ImmutableDiffModel | null = null;
 
   let subDiff = getSubDiffByKey(diff, 'source');
   if (subDiff) {
@@ -133,8 +153,12 @@ function createPatchedCellDiffModel(
       outputs = makeOutputModels(
         outputsBase, outputsBase);
     }
+    let execBase = (base as nbformat.ICodeCell).execution_count;
+    let execDiff = getDiffEntryByKey(diff, 'execution_count') as IDiffReplace | null;
+    // Pass base as remote, which means fall back to unchanged if no diff:
+    executionCount = createImmutableModel(execBase, execBase, execDiff);
   }
-  return new CellDiffModel(source, metadata, outputs, base.cell_type);
+  return new CellDiffModel(source, metadata, outputs, executionCount, base.cell_type);
 }
 
 export
@@ -144,11 +168,17 @@ function createUnchangedCellDiffModel(
   setMimetypeFromCellType(source, base, nbMimetype);
   let metadata = createDirectStringDiffModel(base.metadata, base.metadata);
   let outputs: OutputDiffModel[] | null = null;
+  let executionCount: ImmutableDiffModel | null = null;
+
   if (base.cell_type === 'code') {
     outputs = makeOutputModels((base as nbformat.ICodeCell).outputs,
       (base as nbformat.ICodeCell).outputs);
+    let execBase = (base as nbformat.ICodeCell).execution_count;
+    executionCount = createImmutableModel(execBase, execBase);
+  } else {  // markdown or raw cell
+
   }
-  return new CellDiffModel(source, metadata, outputs, base.cell_type);
+  return new CellDiffModel(source, metadata, outputs, executionCount, base.cell_type);
 }
 
 export
@@ -158,11 +188,13 @@ function createAddedCellDiffModel(
   setMimetypeFromCellType(source, remote, nbMimetype);
   let metadata = createDirectStringDiffModel(null, remote.metadata);
   let outputs: OutputDiffModel[] | null = null;
+  let executionCount: ImmutableDiffModel | null = null;
   if (remote.cell_type === 'code') {
     outputs = makeOutputModels(
       null, (remote as nbformat.ICodeCell).outputs);
+    executionCount = createImmutableModel(null, (remote as nbformat.ICodeCell).execution_count);
   }
-  return new CellDiffModel(source, metadata, outputs, remote.cell_type);
+  return new CellDiffModel(source, metadata, outputs, executionCount, remote.cell_type);
 }
 
 export
@@ -172,8 +204,11 @@ function createDeletedCellDiffModel(
   setMimetypeFromCellType(source, base, nbMimetype);
   let metadata = createDirectStringDiffModel(base.metadata, null);
   let outputs: OutputDiffModel[] | null = null;
+  let executionCount: ImmutableDiffModel | null = null;
   if (base.cell_type === 'code') {
     outputs = makeOutputModels((base as nbformat.ICodeCell).outputs, null);
+    let execBase = (base as nbformat.ICodeCell).execution_count;
+    executionCount = createImmutableModel(execBase, null);
   }
-  return new CellDiffModel(source, metadata, outputs, base.cell_type);
+  return new CellDiffModel(source, metadata, outputs, executionCount, base.cell_type);
 }

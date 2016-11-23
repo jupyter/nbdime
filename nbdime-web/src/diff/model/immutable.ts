@@ -65,7 +65,7 @@ class ImmutableDiffModel implements IDiffModel {
 
 
 /**
- * Create an ImmutableDiffModel from a base value and a single diff entry.
+ * Create an ImmutableDiffModel from a base value, a remote value, and a single diff entry.
  *
  * Note: The requirement of a single diff entry means it will not support
  * an add/replace pair on the same key, as this should instead be represented
@@ -77,9 +77,9 @@ class ImmutableDiffModel implements IDiffModel {
  * @returns {ImmutableDiffModel}
  */
 export
-function createImmutableModel(base: ImmutableValue | undefined, diff: IDiffImmutableObjectEntry | null): ImmutableDiffModel {
-  if (diff === null) {
-    return new ImmutableDiffModel(base, base);
+function createImmutableModel(base: ImmutableValue | undefined, remote: ImmutableValue | undefined, diff?: IDiffImmutableObjectEntry | null): ImmutableDiffModel {
+  if (!diff) {
+    return new ImmutableDiffModel(base, remote);
   } else if (diff.op === 'add') {
     if (base !== undefined) {
       throw new Error('Invalid diff op on immutable value');

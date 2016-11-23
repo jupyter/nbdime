@@ -11,8 +11,8 @@ import {
 } from 'phosphor/lib/core/signaling';
 
 import {
-  IDiffAddRange, IDiffPatch, IDiffEntry, IDiffArrayEntry,
-  IDiffPatchObject
+  IDiffAddRange, IDiffEntry, IDiffArrayEntry,
+  IDiffPatchObject, IDiffImmutableObjectEntry
 } from '../../diff/diffentries';
 
 import {
@@ -23,8 +23,8 @@ import {
   CellDiffModel,
   createAddedCellDiffModel, createDeletedCellDiffModel,
   createPatchedCellDiffModel, createUnchangedCellDiffModel,
-  OutputDiffModel, makeOutputModels,
-  setMimetypeFromCellType
+  OutputDiffModel, makeOutputModels, ImmutableDiffModel,
+  setMimetypeFromCellType, createImmutableModel
 } from '../../diff/model';
 
 import {
@@ -87,19 +87,29 @@ function createPatchedCellDecisionDiffModel(
       remote ? remote.metadata : null]);
 
   let outputs: OutputDiffModel[] | null = null;
-  if (base.cell_type === 'code' && (base as nbformat.ICodeCell).outputs) {
-    let outputBase = (base as nbformat.ICodeCell).outputs;
-    let outputDec = filterDecisions(decisions, ['outputs'], 2);
-    let mergedDiff = buildDiffs(outputBase, outputDec, 'merged') as IDiffArrayEntry[];
-    let merged: nbformat.IOutput[];
-    if (mergedDiff && mergedDiff.length > 0) {
-      merged = patch(outputBase, mergedDiff);
-    } else {
-      merged = outputBase;
+  let executionCount: ImmutableDiffModel | null = null;
+  if (base.cell_type === 'code') {
+    if ((base as nbformat.ICodeCell).outputs) {
+      let outputBase = (base as nbformat.ICodeCell).outputs;
+      let outputDec = filterDecisions(decisions, ['outputs'], 2);
+      let mergedDiff = buildDiffs(outputBase, outputDec, 'merged') as IDiffArrayEntry[];
+      let merged: nbformat.IOutput[];
+      if (mergedDiff && mergedDiff.length > 0) {
+        merged = patch(outputBase, mergedDiff);
+      } else {
+        merged = outputBase;
+      }
+      outputs = makeOutputModels(outputBase, merged, mergedDiff);
     }
-    outputs = makeOutputModels(outputBase, merged, mergedDiff);
+    let execBase = (base as nbformat.ICodeCell).execution_count;
+    let execDec = filterDecisions(decisions, ['execution_count'], 2);
+    let mergeExecDiff = buildDiffs(execBase, execDec, 'merged') as IDiffImmutableObjectEntry[] | null;
+    let execDiff = hasEntries(mergeExecDiff) ? mergeExecDiff[0] : null;
+    // Pass base as remote, which means fall back to unchanged if no diff:
+    executionCount = createImmutableModel(execBase, execBase, execDiff);
   }
-  return new CellDiffModel(source, metadata, outputs, base.cell_type);
+
+  return new CellDiffModel(source, metadata, outputs, executionCount, base.cell_type);
 }
 
 
@@ -110,7 +120,7 @@ export
 class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
   constructor(base: nbformat.ICell | null, decisions: MergeDecision[], mimetype: string) {
     // TODO: Remove/extend whitelist once we support more
-    super(base, [], mimetype, ['source', 'metadata', 'outputs']);
+    super(base, [], mimetype, ['source', 'metadata', 'outputs', 'execution_count']);
     this.onesided = false;
     this._deleteCell = false;
     this.processDecisions(decisions);
