@@ -12,9 +12,18 @@ from argparse import Namespace
 from .fixtures import filespath
 
 import nbdime
+from nbdime.nbshowapp import main_show
 from nbdime.nbdiffapp import main_diff
 from nbdime.nbpatchapp import main_patch
 from nbdime.nbmergeapp import main_merge
+
+
+def test_nbshow_app():
+    p = filespath()
+    afn = os.path.join(p, "multilevel-test-base.ipynb")
+
+    args = nbdime.nbshowapp._build_arg_parser().parse_args([afn])
+    assert 0 == main_show(args)
 
 
 def test_nbdiff_app():

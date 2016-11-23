@@ -246,7 +246,9 @@ def pretty_print_string_diff(a, di, path, out=sys.stdout):
     "Pretty-print a nbdime diff."
     out.write("{}modified {}:{}\n".format(INFO, path, RESET))
 
-    b = patch(a, di)
+    #import pdb; pdb.set_trace()
+    b = patch(a, di)  # FIXME: This fails in cli test, reproduce with py.test -k cli
+
     ta = _trim_base64(a)
     tb = _trim_base64(b)
 
@@ -336,7 +338,12 @@ def pretty_print_merge_decision(base, decision, out=sys.stdout):
             out.write("%s=== %s:%s\n" % (INFO, dkey, RESET))
             value = base
             for k in decision.common_path:
-                value = value[k]
+                #diff.op
+                if isinstance(value, string_types):
+                    value = value.splitlines(True)[k]
+                    break
+                else:
+                    value = value[k]
             pretty_print_diff(value, diff, path, out)
 
 
@@ -527,7 +534,7 @@ def pretty_print_cell(i, cell, prefix="", out=sys.stdout):
 
     # Write cell metadata
     known_cell_metadata_keys = {"collapsed", "autoscroll", "deletable", "format", "name", "tags"}
-    pretty_print_metadata(cell.metadata, key_prefix, out)
+    pretty_print_metadata(cell.metadata, known_cell_metadata_keys, key_prefix, out)
 
     # Write source
     source = cell.get("source")
