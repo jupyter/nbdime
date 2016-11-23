@@ -10,5 +10,9 @@
     "sourceMap": true,
     "strictNullChecks": true,
     "skipLibCheck": true
-  }
+  },
+  "include": [
+    "**/*.ts",
+    "../../src/typings.d.ts"
+  ]
 }

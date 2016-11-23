@@ -25,7 +25,7 @@ import {
 } from '../../../src/merge/model';
 
 
-const notebook = require('../../files/base.ipynb') as nbformat.INotebookContent;
+const notebook = require('../../files/base.ipynb.json') as nbformat.INotebookContent;
 const decisionsNB = require('../../files/decisionsA.json') as IMergeDecision[];
 
 

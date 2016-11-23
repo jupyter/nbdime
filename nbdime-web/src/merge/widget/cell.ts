@@ -152,8 +152,7 @@ class CellMergeWidget extends Panel {
       for (let i=0; i < model.length; ++i) {
         outputs.push(model.get(i) as nbformat.IOutput);
       }
-      let c = candidate as nbformat.ICodeCell;
-      c.outputs = outputs;
+      candidate.outputs = outputs;
     }
     return candidate;
   }

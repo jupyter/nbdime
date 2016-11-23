@@ -354,7 +354,7 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
       output.source = splitLines(this._merged!.source.remote!);
     }
     if (this.clearOutputs && output.cell_type === 'code') {
-      (output as nbformat.ICodeCell).outputs = [];
+      output.outputs = [];
     }
     return output;
   }
