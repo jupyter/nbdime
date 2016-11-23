@@ -89,6 +89,7 @@ def add_filename_args(parser, names):
     Helps getting consistent doc strings.
     """
     helps = {
+        "notebook": "The notebook filename.",
         "base":   "The base notebook filename.",
         "local":  "The local modified notebook filename.",
         "remote": "The remote modified notebook filename.",

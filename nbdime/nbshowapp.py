@@ -22,14 +22,13 @@ _description = "Show a Jupyter notebook in terminal."
 
 
 def main_show(args):
-    afn = args.base
 
-    for fn in (afn,):
-        if not os.path.exists(fn):
-            print("Missing file {}".format(fn))
-            return 1
+    fn = args.notebook
+    if not os.path.exists(fn):
+        print("Missing file {}".format(fn))
+        return 1
 
-    a = nbformat.read(afn, as_version=4)
+    nb = nbformat.read(fn, as_version=4)
 
     # This printer is to keep the unit tests passing,
     # some tests capture output with capsys which doesn't
@@ -37,7 +36,11 @@ def main_show(args):
     class Printer:
         def write(self, text):
             print(text, end="")
-    pretty_print_notebook(a, Printer())
+    if not any((args.sources, args.outputs, args.attachments, args.metadata, args.details)):
+        ppargs = None
+    else:
+        ppargs = args
+    pretty_print_notebook(nb, ppargs, Printer())
 
     return 0
 
@@ -49,9 +52,34 @@ def _build_arg_parser():
         add_help=True,
         )
     add_generic_args(parser)
-    add_filename_args(parser, ["base"])
+    add_filename_args(parser, ["notebook"])
 
-    # TODO: Options to show only important things: --compact, --source-only
+    # Things we can choose to show or not
+    parser.add_argument(
+        '-s', '--sources',
+        action="store_true",
+        default=False,
+        help="show sources.")
+    parser.add_argument(
+        '-o', '--outputs',
+        action="store_true",
+        default=False,
+        help="show outputs.")
+    parser.add_argument(
+        '-a', '--attachments',
+        action="store_true",
+        default=False,
+        help="show attachments.")
+    parser.add_argument(
+        '-m', '--metadata',
+        action="store_true",
+        default=False,
+        help="show metadata.")
+    parser.add_argument(
+        '-d', '--details',
+        action="store_true",
+        default=False,
+        help="show details not covered by other options.")
 
     return parser
 

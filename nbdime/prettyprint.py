@@ -521,42 +521,56 @@ def pretty_print_source(source, prefix="", out=sys.stdout):
     pretty_print_multiline(source, prefix+IND, out)
 
 
-def pretty_print_cell(i, cell, prefix="", out=sys.stdout):
-    # Write cell type and optionally number:
-    numstr = "" if i is None else " %d" % i
-    out.write("%s%s cell%s:\n" % (prefix, cell.cell_type, numstr))
-
+def pretty_print_cell(i, cell, prefix="", out=sys.stdout, args=None):
     key_prefix = prefix+IND
 
-    # Write execution count if there (only source cells)
-    if "execution_count" in cell:
+    def c():
+        if not c.called:
+            # Write cell type and optionally number:
+            numstr = "" if i is None else " %d" % i
+            out.write("%s%s cell%s:\n" % (prefix, cell.cell_type, numstr))
+            c.called = True
+    c.called = False
+
+    execution_count = cell.get("execution_count")
+    if execution_count and (args is None or args.details):
+        # Write execution count if there (only source cells)
+        c()
         out.write("%sexecution_count: %s\n" % (key_prefix, repr(cell.execution_count)))
 
-    # Write cell metadata
-    known_cell_metadata_keys = {"collapsed", "autoscroll", "deletable", "format", "name", "tags"}
-    pretty_print_metadata(cell.metadata, known_cell_metadata_keys, key_prefix, out)
+    metadata = cell.get("metadata")
+    if metadata and (args is None or args.metadata):
+        # Write cell metadata
+        c()
+        known_cell_metadata_keys = {"collapsed", "autoscroll", "deletable", "format", "name", "tags"}
+        pretty_print_metadata(cell.metadata, known_cell_metadata_keys, key_prefix, out)
 
-    # Write source
     source = cell.get("source")
-    if source:
+    if source and (args is None or args.sources):
+        # Write source
+        c()
         pretty_print_source(source, key_prefix, out)
 
-    # Write outputs if there (only source cells)
-    outputs = cell.get("outputs")
-    if outputs:
-        pretty_print_outputs(outputs, key_prefix, out)
-
-    # Write attachment if there (only markdown and raw cells)
     attachments = cell.get("attachments")
-    if attachments:
+    if attachments and (args is None or args.attachments):
+        # Write attachment if there (only markdown and raw cells)
+        c()
         pretty_print_attachments(attachments, key_prefix, out)
 
-    # present_value on anything we haven't special-cased yet
+    outputs = cell.get("outputs")
+    if outputs and (args is None or args.outputs):
+        # Write outputs if there (only source cells)
+        c()
+        pretty_print_outputs(outputs, key_prefix, out)
+
     exclude_keys = {'cell_type', 'source', 'execution_count', 'outputs', 'metadata', 'attachment'}
-    pretty_print_dict(cell, exclude_keys, key_prefix, out)
+    if (set(cell) - exclude_keys) and (args is None or args.details):
+        # present anything we haven't special-cased yet (future-proofing)
+        c()
+        pretty_print_dict(cell, exclude_keys, key_prefix, out)
 
 
-def pretty_print_notebook(nb, out=sys.stdout):
+def pretty_print_notebook(nb, args=None, out=sys.stdout):
     """Pretty-print a notebook for debugging, skipping large details in metadata and output
 
     Parameters
@@ -564,22 +578,27 @@ def pretty_print_notebook(nb, out=sys.stdout):
 
     nb: dict
         The notebook object
+    args: argparse Namespace or similar object
+        Arguments to turn on/off showing parts of notebook, including:
+        args.sources, args.outputs, args.attachments, args.metadata, args.details
     out: file-like object
         File-like object with .write function used for output.
     """
 
-    # Write notebook header
-    out.write("notebook format: %d.%d\n" % (nb.nbformat, nb.nbformat_minor))
+    if args is None or args.details:
+        # Write notebook header
+        out.write("notebook format: %d.%d\n" % (nb.nbformat, nb.nbformat_minor))
 
     # Report unknown keys
     unknown_keys = set(nb.keys()) - {"nbformat", "nbformat_minor", "metadata", "cells"}
     if unknown_keys:
         out.write("unknown keys: %r" % (unknown_keys,))
 
-    # Write notebook metadata
-    known_metadata_keys = {"kernelspec"}
-    pretty_print_metadata(nb.metadata, known_metadata_keys, "", out)
+    if args is None or args.metadata:
+        # Write notebook metadata
+        known_metadata_keys = {"kernelspec"}
+        pretty_print_metadata(nb.metadata, known_metadata_keys, "", out)
 
     # Write notebook cells
     for i, cell in enumerate(nb.cells):
-        pretty_print_cell(i, cell, "", out)
+        pretty_print_cell(i, cell, prefix="", out=out, args=args)
