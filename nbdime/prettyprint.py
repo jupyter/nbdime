@@ -1,6 +1,6 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
-# Copyright (c) IPython Development Team.
+# Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
 from __future__ import unicode_literals
@@ -20,14 +20,13 @@ import tempfile
 from difflib import unified_diff
 from six import string_types
 import hashlib
-import colorama
 
-try:
-    from textwrap import indent
-except ImportError:
-    def indent(text, prefix):
-        """The relevant part of textwrap.indent for Python 2"""
-        return prefix + text.replace('\n', '\n' + prefix)
+#try:
+#    from textwrap import indent
+#except ImportError:
+#    def indent(text, prefix):
+#        """The relevant part of textwrap.indent for Python 2"""
+#        return prefix + text.replace('\n', '\n' + prefix)
 
 try:
     from shutil import which
@@ -38,46 +37,36 @@ from .diff_format import NBDiffFormatError, DiffOp
 from .patching import patch
 from .utils import star_path, split_path, join_path
 
+# TODO: Make this configurable
+use_git = True
+use_diff = True
+use_colors = True
 
-# Change to enable/disable color print etc.
-_git_diff_print_cmd = 'git diff --no-index --color-words'
-
-# colors
-REMOVE = colorama.Fore.RED + '-'
-ADD = colorama.Fore.GREEN + '+'
-INFO = colorama.Fore.BLUE + ''
-RESET = colorama.Style.RESET_ALL
-
-# indentation offset
+# Indentation offset in pretty-print
 IND = "  "
 
+# Max line width used some placed in pretty-print
+# TODO: Use this for line wrapping some places?
+MAXWIDTH = 78
 
-def _diff_render_with_git(a, b):
-    diff = _external_diff_render(_git_diff_print_cmd.split(), a, b)
-    return diff.splitlines()[4:]
+if use_colors:
+    import colorama
+    RED = colorama.Fore.RED
+    GREEN = colorama.Fore.GREEN
+    BLUE = colorama.Fore.BLUE
+    RESET = colorama.Style.RESET_ALL
+    _git_diff_print_cmd = 'git diff --no-index --color-words'
+else:
+    RED = ''
+    GREEN = ''
+    BLUE = ''
+    RESET = ''
+    _git_diff_print_cmd = 'git diff --no-index'
 
-def _diff_render_with_diff(a, b):
-    diff = _external_diff_render(['diff'], a, b)
-    return diff.splitlines()
-
-def _diff_render_with_difflib(a, b):
-    diff = _builtin_diff_render(a, b)
-    return diff.splitlines()[2:]
-
-
-# TODO: Make this configurable
-use_git = False
-use_diff = False
-
-
-def _diff_render(*args):
-    if use_git and which('git'):
-        return _diff_render_with_git(*args)
-    elif use_diff and which('diff'):
-        return _diff_render_with_diff(*args)
-    else:
-        return _diff_render_with_difflib(*args)
-
+REMOVE   = '{color}-  '.format(color=RED)
+ADD      = '{color}+  '.format(color=GREEN)
+INFO     = '{color}## '.format(color=BLUE)
+DIFF_ENTRY_END = '\n'
 
 def _external_diff_render(cmd, a, b):
     try:
@@ -114,6 +103,29 @@ def _builtin_diff_render(a, b):
     diff = '\n'.join(uni)
     return diff
 
+def _diff_render_with_git(a, b):
+    diff = _external_diff_render(_git_diff_print_cmd.split(), a, b)
+    return diff.splitlines()[4:]
+
+
+def _diff_render_with_diff(a, b):
+    diff = _external_diff_render(['diff'], a, b)
+    return diff.splitlines()
+
+
+def _diff_render_with_difflib(a, b):
+    diff = _builtin_diff_render(a, b)
+    return diff.splitlines()[2:]
+
+
+def _diff_render(a, b):
+    if use_git and which('git'):
+        return _diff_render_with_git(a, b)
+    elif use_diff and which('diff'):
+        return _diff_render_with_diff(a, b)
+    else:
+        return _diff_render_with_difflib(a, b)
+
 
 _base64 = re.compile(r'^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$', re.MULTILINE|re.UNICODE)
 
@@ -121,9 +133,9 @@ def _trim_base64(s):
     """Trim base64 strings"""
     if len(s) > 64 and _base64.match(s.replace('\n', '')):
         h = hashlib.md5(s).hexdigest()
-        s = '%s...<snip base64 with md5=%s>...%s' % (s[:16], h, s[-16:].strip())
+        #s = '%s...<snip base64 with md5=%s>...%s' % (s[:16], h, s[-16:].strip())
+        s =  '%s...<snip base64, md5=%s...>' % (s[:8], h[:16])
     return s
-
 
 def pretty_print_value(arg, path, prefix="", out=sys.stdout):
     """Present a whole value that is either added or deleted.
@@ -164,7 +176,7 @@ def pretty_print_value(arg, path, prefix="", out=sys.stdout):
         if isinstance(arg, dict):
             pretty_print_dict(arg, (), prefix, out)
         elif isinstance(arg, list) and arg:
-            pretty_print_list(arg, prefix, out)
+            pretty_print_list(arg, prefix, out)  # TODO: Pass path_trail here to allow formatting as listname[k]:? 
         else:
             pretty_print_multiline(format_value(arg), prefix, out)
 
@@ -176,6 +188,11 @@ def pretty_print_diff_entry(a, e, path, out=sys.stdout):
 
     # Recurse to handle patch ops
     if op == DiffOp.PATCH:
+        # Useful for debugging:
+        #if not (len(e.diff) == 1 and e.diff[0].op == DiffOp.PATCH):
+        #    out.write("{}// patch -+{} //{}\n".format(INFO, nextpath, RESET))
+        #else:
+        #    out.write("{}// patch... -+{} //{}\n".format(INFO, nextpath, RESET))
         pretty_print_diff(a[key], e.diff, nextpath, out)
         return
 
@@ -188,7 +205,7 @@ def pretty_print_diff_entry(a, e, path, out=sys.stdout):
             keyrange = "{}-{}".format(nextpath, key + e.length - 1)
         else:
             keyrange = nextpath
-        out.write("{}deleted {}:{}\n".format(INFO, nextpath, RESET))
+        out.write("{}deleted {}:{}\n".format(INFO, keyrange, RESET))
         pretty_print_value(a[key: key + e.length], nextpath, REMOVE, out)
 
     elif op == DiffOp.REMOVE:
@@ -196,19 +213,21 @@ def pretty_print_diff_entry(a, e, path, out=sys.stdout):
         pretty_print_value(a[key], nextpath, REMOVE, out)
 
     elif op == DiffOp.ADD:
-        out.write("{}inserted {}:{}\n".format(INFO, nextpath, RESET))
+        out.write("{}added {}:{}\n".format(INFO, nextpath, RESET))
         pretty_print_value(e.value, nextpath, ADD, out)
 
     elif op == DiffOp.REPLACE:
         out.write("{}replaced {}:{}\n".format(INFO, nextpath, RESET))
+        #aval = a[key]
+        #bval = e.value
+        # TODO: quote?
         pretty_print_value(a[key], nextpath, REMOVE, out)
         pretty_print_value(e.value, nextpath, ADD, out)
 
     else:
         raise NBDiffFormatError("Unknown list diff op {}".format(op))
 
-    out.write(RESET)
-    #out.write("\n")
+    out.write(DIFF_ENTRY_END + RESET)
 
 
 def pretty_print_dict_diff(a, di, path, out=sys.stdout):
@@ -228,16 +247,29 @@ def pretty_print_string_diff(a, di, path, out=sys.stdout):
     out.write("{}modified {}:{}\n".format(INFO, path, RESET))
 
     b = patch(a, di)
-    if _base64.match(a):
-        ah = hashlib.md5(a).hexdigest()
-        bh = hashlib.md5(b).hexdigest()
-        out.write('%s<base64 data with md5=%s>%s\n' % (REMOVE, ah, RESET))
-        out.write('%s<base64 data with md5=%s>%s\n' % (ADD, bh, RESET))
-        return
+    ta = _trim_base64(a)
+    tb = _trim_base64(b)
 
-    diff_lines = _diff_render(a, b)
-    out.write("\n".join(diff_lines))
-    out.write("\n")
+    if ta != a or tb != b:
+        if ta != a:
+            out.write('%s%s\n' % (REMOVE, ta))
+        else:
+            pretty_print_value(a, path, REMOVE, out)
+        if tb != b:
+            out.write('%s%s\n' % (ADD, tb))
+        else:
+            pretty_print_value(b, path, ADD, out)
+    elif "\n" in a or "\n" in b:
+        # Delegate multiline diff formatting
+        diff_lines = _diff_render(a, b)
+        out.write("\n".join(diff_lines))
+        out.write("\n")
+    else:
+        # Just show simple -+ single line (usually metadata values etc)
+        out.write("%s%s\n" % (REMOVE, a))
+        out.write("%s%s\n" % (ADD, b))
+
+    out.write(DIFF_ENTRY_END + RESET)
 
 
 def pretty_print_diff(a, di, path, out=sys.stdout):
@@ -254,17 +286,14 @@ def pretty_print_diff(a, di, path, out=sys.stdout):
 
 notebook_diff_header = """\
 nbdiff {afn} {bfn}
---- a: {afn}{atime}
-+++ b: {bfn}{btime}
+--- {afn}{atime}
++++ {bfn}{btime}
 """
 
-
 def file_timestamp(filename):
-    st = os.stat(filename)
-    lt = time.localtime(st.st_mtime)
-    t = datetime.time(lt.tm_hour, lt.tm_min, lt.tm_sec)
-    d = datetime.date(lt.tm_year, lt.tm_mon, lt.tm_mday)
-    return "%s %s" % (d.isoformat(), t.isoformat())
+    t = os.path.getmtime(filename)
+    dt = datetime.datetime.fromtimestamp(t)
+    return dt.isoformat(b" ")
 
 
 def pretty_print_notebook_diff(afn, bfn, a, di, out=sys.stdout):
@@ -284,12 +313,12 @@ def pretty_print_notebook_diff(afn, bfn, a, di, out=sys.stdout):
     """
     if di:
         path = ""
-        try:
-            atime = "  " + file_timestamp(afn)
-            btime = "  " + file_timestamp(bfn)
-        except:
-            atime = ""
-            btime = ""
+        #try:
+        atime = "  " + file_timestamp(afn)
+        btime = "  " + file_timestamp(bfn)
+        #except:
+        #    atime = ""
+        #    btime = ""
         out.write(notebook_diff_header.format(afn=afn, bfn=bfn, atime=atime, btime=btime))
         pretty_print_diff(a, di, path, out)
 
@@ -390,8 +419,12 @@ def pretty_print_item(k, v, prefix="", out=sys.stdout):
 
 
 def pretty_print_list(li, prefix="", out=sys.stdout):
-    for k, v in enumerate(li):
-        pretty_print_item(k, v, prefix, out)
+    listr = pprint.pformat(li)
+    if len(listr) < MAXWIDTH - len(prefix) and "\\n" not in listr:
+        out.write("%s%s\n" % (prefix, listr))
+    else:
+        for k, v in enumerate(li):
+            pretty_print_item("new[%d]" % k, v, prefix, out)
 
 
 def pretty_print_dict(d, exclude_keys=(), prefix="", out=sys.stdout):

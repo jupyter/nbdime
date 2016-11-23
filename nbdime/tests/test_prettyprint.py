@@ -1,4 +1,11 @@
-from __future__ import unicode_literals
+# -*- coding: utf-8 -*-
+
+# Copyright (c) Jupyter Development Team.
+# Distributed under the terms of the Modified BSD License.
+
+# Messes up tests by writing u'str':
+#from __future__ import unicode_literals
+
 from __future__ import print_function
 
 try:
@@ -70,10 +77,12 @@ def test_pretty_print_multiline_string_b64():
 def test_pretty_print_multiline_string_short():
     ins = 'short string'
     prefix = '+'
+
     io = StringIO()
     pp.pretty_print_multiline(pp.format_value(ins), prefix, io)
     text = io.getvalue()
     lines = text.splitlines(False)
+
     assert lines == [prefix + ins]
 
 
@@ -134,13 +143,13 @@ def test_pretty_print_dict_longstrings():
 def test_pretty_print_list():
     lis = ['a', 'b']
     text = _pretty_print(lis, "+")
-    assert text == "+0: a\n+1: b\n"
+    assert text == "+['a', 'b']\n"
 
 
 def test_pretty_print_list_longstrings():
     lis = ['a\nb', 'c\nd']
     text = _pretty_print(lis, "+")
-    assert text == "+0:\n+  a\n+  b\n+1:\n+  c\n+  d\n"
+    assert text == "+new[0]:\n+  a\n+  b\n+new[1]:\n+  c\n+  d\n"
 
 
 def test_pretty_print_stream_output():
@@ -240,16 +249,17 @@ def test_pretty_print_dict_diff(nocolor):
     lines = text.splitlines()
 
     assert lines == [
-        'replaced x/y/a:',
-        '-1',
-        '+2',
+        '## replaced x/y/a:',
+        '-  1',
+        '+  2',
+        '',
     ]
 
 
 def test_pretty_print_list_diff(nocolor):
     a = [1]
     b = [2]
-    path = 'a/b'
+    path = '/a/b'
     di = diff(a, b, path=path)
 
     io = StringIO()
@@ -257,19 +267,57 @@ def test_pretty_print_list_diff(nocolor):
     text = io.getvalue()
     lines = text.splitlines()
 
-    # TODO: Discuss if this formatting is what we want, maybe simplify for short lists?
     assert lines == [
-        'inserted before a/b/0:',
-        '+0: 2',
-        'deleted a/b/0:',
-        '-0: 1',
+        '## inserted before /a/b/0:',
+        '+  [2]',
+        '',
+        '## deleted /a/b/0:',
+        '-  [1]',
+        '',
+    ]
+
+
+def test_pretty_print_list_multilinestrings(nocolor):
+    a = ["ac\ndf", "qe\nry", 2]
+    b = [2, "abc\ndef", "qwe\nrty"]
+    path = '/a/b'
+    di = diff(a, b, path=path)
+
+    io = StringIO()
+    pp.pretty_print_diff(a, di, path, io)
+    text = io.getvalue()
+    lines = text.splitlines()
+
+    assert lines == [
+        '## deleted /a/b/0-1:',
+        #'-  ["ac\ndf", "qe\nry"]',
+        #'-  b[0]:',
+        '-  new[0]:',
+        '-    ac',
+        '-    df',
+        #'-  b[1]:',
+        '-  new[1]:',
+        '-    qe',
+        '-    ry',
+        '',
+        '## inserted before /a/b/3:',
+        #'+  ["abc\ndef", "qwe\nrty"]',
+        #'+  b[3+0]:',
+        '+  new[0]:',
+        '+    abc',
+        '+    def',
+        #'+  b[3+1]:',
+        '+  new[1]:',
+        '+    qwe',
+        '+    rty',
+        '',
     ]
 
 
 def test_pretty_print_string_diff(nocolor):
     a = '\n'.join(['line 1', 'line 2', 'line 3', ''])
     b = '\n'.join(['line 1', 'line 3', 'line 4', ''])
-    path = 'a/b'
+    path = '/a/b'
     di = diff(a, b, path=path)
 
     with mock.patch('nbdime.prettyprint.which', lambda cmd: None):
@@ -286,7 +334,7 @@ def test_pretty_print_string_diff(nocolor):
 def test_pretty_print_string_diff_b64(nocolor):
     a = b64text(1024)
     b = b64text( 800)
-    path = 'a/b'
+    path = '/a/b'
     di = diff(a, b, path=path)
 
     io = StringIO()
@@ -298,7 +346,8 @@ def test_pretty_print_string_diff_b64(nocolor):
     hb = hashlib.md5(b).hexdigest()
 
     assert lines == [
-        'modified a/b:',
-        '-<base64 data with md5=%s>' % ha,
-        '+<base64 data with md5=%s>' % hb,
-        ]
+        '## modified /a/b:',
+        '-  %s...<snip base64, md5=%s...>' % (a[:8], ha[:16]),
+        '+  %s...<snip base64, md5=%s...>' % (b[:8], hb[:16]),
+        '',
+    ]
