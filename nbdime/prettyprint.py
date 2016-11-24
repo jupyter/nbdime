@@ -136,15 +136,18 @@ def file_timestamp(filename):
     "Return modification time for filename as a string."
     t = os.path.getmtime(filename)
     dt = datetime.datetime.fromtimestamp(t)
-    return dt.isoformat(b" ")
+    return dt.isoformat(str(" "))
 
+
+def hash_string(s):
+    return hashlib.md5(s.encode("utf8")).hexdigest()
 
 _base64 = re.compile(r'^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$', re.MULTILINE|re.UNICODE)
 
 def _trim_base64(s):
     """Trim and hash base64 strings"""
     if len(s) > 64 and _base64.match(s.replace('\n', '')):
-        h = hashlib.md5(s).hexdigest()
+        h = hash_string(s)
         s =  '%s...<snip base64, md5=%s...>' % (s[:8], h[:16])
     return s
 

@@ -343,8 +343,8 @@ def test_pretty_print_string_diff_b64(nocolor):
     text = io.getvalue()
     lines = text.splitlines()
 
-    ha = hashlib.md5(a).hexdigest()
-    hb = hashlib.md5(b).hexdigest()
+    ha = pp.hash_string(a)
+    hb = pp.hash_string(b)
 
     assert lines == [
         '## modified /a/b:',
