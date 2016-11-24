@@ -751,10 +751,13 @@ function pushPatchDecision(decision: MergeDecision, prefix: DecisionPath): Merge
  */
 export
 function filterDecisions(decisions: MergeDecision[], path: DecisionPath,
-                         skipLevels?: number): MergeDecision[] {
+                         skipLevels?: number, maxLength?: number): MergeDecision[] {
   let ret: MergeDecision[] = [];
   skipLevels = skipLevels || 0;
   for (let md of decisions) {
+    if (maxLength !== undefined && md.absolutePath.length > maxLength) {
+      continue;
+    }
     if (isPrefixArray(path, md.absolutePath.slice(skipLevels))) {
       md.level = skipLevels + path.length;
       ret.push(md);

@@ -102,11 +102,19 @@ function createPatchedCellDecisionDiffModel(
       outputs = makeOutputModels(outputBase, merged, mergedDiff);
     }
     let execBase = (base as nbformat.ICodeCell).execution_count;
-    let execDec = filterDecisions(decisions, ['execution_count'], 2);
-    let mergeExecDiff = buildDiffs(execBase, execDec, 'merged') as IDiffImmutableObjectEntry[] | null;
-    let execDiff = hasEntries(mergeExecDiff) ? mergeExecDiff[0] : null;
-    // Pass base as remote, which means fall back to unchanged if no diff:
-    executionCount = createImmutableModel(execBase, execBase, execDiff);
+    let cellDecs = filterDecisions(decisions, ['cells'], 0, 2);
+    for (let dec of cellDecs) {
+      if (getDiffEntryByKey(dec.localDiff, 'execution_count') !== null ||
+          getDiffEntryByKey(dec.remoteDiff, 'execution_count') !== null ||
+          getDiffEntryByKey(dec.customDiff, 'execution_count') !== null) {
+        dec.level = 2;
+        let mergeExecDiff = buildDiffs(base, [dec], 'merged') as IDiffImmutableObjectEntry[] | null;
+        let execDiff = hasEntries(mergeExecDiff) ? mergeExecDiff[0] : null;
+        // Pass base as remote, which means fall back to unchanged if no diff:
+        executionCount = createImmutableModel(execBase, execBase, execDiff);
+      }
+    }
+
   }
 
   return new CellDiffModel(source, metadata, outputs, executionCount, base.cell_type);
@@ -194,6 +202,23 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
   get agreedCell(): boolean {
     // TODO: Also check other fields?
     return this.agreedSource && this.agreedMetadata && this.agreedOutputs;
+  }
+
+  /**
+   * Get the decision on `execution_count` field (should only be one).
+   *
+   * Returns null if no decision on `execution_count` was found.
+   */
+  getExecutionCountDecision(): MergeDecision | null {
+    let cellDecs = filterDecisions(this.decisions, ['cells'], 0, 2);
+    for (let dec of cellDecs) {
+      if (getDiffEntryByKey(dec.localDiff, 'execution_count') !== null ||
+          getDiffEntryByKey(dec.remoteDiff, 'execution_count') !== null ||
+          getDiffEntryByKey(dec.customDiff, 'execution_count') !== null) {
+        return dec;
+      }
+    }
+    return null;
   }
 
   /**
