@@ -33,8 +33,8 @@ try:
 except ImportError:
     from backports.shutil_which import which
 
-from .diff_format import NBDiffFormatError, DiffOp
-from .patching import patch
+from .diff_format import NBDiffFormatError, DiffOp, op_patch
+from .patching import patch, patch_string
 from .utils import star_path, split_path, join_path
 
 # TODO: Make this configurable
@@ -70,6 +70,10 @@ DIFF_ENTRY_END = '\n'
 
 def _external_diff_render(cmd, a, b):
     try:
+        if isinstance(a, bytes):
+            a = a.decode("utf8")
+        if isinstance(b, bytes):
+            b = b.decode("utf8")
         td = tempfile.mkdtemp()
         with io.open(os.path.join(td, 'before'), 'w', encoding="utf8") as f:
             f.write(a)
@@ -103,6 +107,7 @@ def _builtin_diff_render(a, b):
     diff = '\n'.join(uni)
     return diff
 
+
 def _diff_render_with_git(a, b):
     diff = _external_diff_render(_git_diff_print_cmd.split(), a, b)
     return diff.splitlines()[4:]
@@ -127,22 +132,41 @@ def _diff_render(a, b):
         return _diff_render_with_difflib(a, b)
 
 
+def file_timestamp(filename):
+    "Return modification time for filename as a string."
+    t = os.path.getmtime(filename)
+    dt = datetime.datetime.fromtimestamp(t)
+    return dt.isoformat(b" ")
+
+
 _base64 = re.compile(r'^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$', re.MULTILINE|re.UNICODE)
 
 def _trim_base64(s):
-    """Trim base64 strings"""
+    """Trim and hash base64 strings"""
     if len(s) > 64 and _base64.match(s.replace('\n', '')):
         h = hashlib.md5(s).hexdigest()
-        #s = '%s...<snip base64 with md5=%s>...%s' % (s[:16], h, s[-16:].strip())
         s =  '%s...<snip base64, md5=%s...>' % (s[:8], h[:16])
     return s
 
-def pretty_print_value(arg, path, prefix="", out=sys.stdout):
-    """Present a whole value that is either added or deleted.
 
-    Calls out to other formatters for cells, outputs, and multiline strings.
+def format_value(v):
+    "Format simple value for printing. Snips base64 strings and uses pprint for the rest."
+    if not isinstance(v, string_types):
+        # Not a string, defer to pprint
+        vstr = pprint.pformat(v)
+    else:
+        # Snip if base64 data
+        vstr = _trim_base64(v)
+    return vstr
 
-    Uses pprint.pformat, otherwise.
+
+def pretty_print_value(value, path, prefix="", out=sys.stdout):
+    """Print a possibly complex value with all lines prefixed.
+
+    Calls out to other specialized formatters based on path
+    for cells, outputs, attachments, and more generic formatters
+    based on type for dicts, lists, and multiline strings.
+    Uses format_value for simple values.
     """
     # Format starred version of path
     if path is None:
@@ -157,272 +181,73 @@ def pretty_print_value(arg, path, prefix="", out=sys.stdout):
     # Check if we can handle path with specific formatter
     if starred is not None:
         if starred == "/cells/*":
-            for cell in arg:
+            for cell in value:
                 pretty_print_cell(None, cell, prefix, out)
         elif starred == "/cells":
-            pretty_print_cell(None, arg, prefix, out)
+            pretty_print_cell(None, value, prefix, out)
         elif starred == "/cells/*/outputs/*":
-            for output in arg:
+            for output in value:
                 pretty_print_output(None, output, prefix, out)
         elif starred == "/cells/*/outputs":
-            pretty_print_output(None, arg, prefix, out)
+            pretty_print_output(None, value, prefix, out)
         elif starred == "/cells/*/attachments":
-            pretty_print_attachments(arg, prefix, out)
+            pretty_print_attachments(value, prefix, out)
         else:
             starred = None
 
     # No path or path not handled
     if starred is None:
-        if isinstance(arg, dict):
-            pretty_print_dict(arg, (), prefix, out)
-        elif isinstance(arg, list) and arg:
-            pretty_print_list(arg, prefix, out)  # TODO: Pass path_trail here to allow formatting as listname[k]:? 
+        if isinstance(value, dict):
+            pretty_print_dict(value, (), prefix, out)
+        elif isinstance(value, list) and value:
+            pretty_print_list(value, prefix, out)  # TODO: Pass path_trail here to allow formatting as listname[k]:? 
         else:
-            pretty_print_multiline(format_value(arg), prefix, out)
+            pretty_print_multiline(format_value(value), prefix, out)
 
 
-def pretty_print_diff_entry(a, e, path, out=sys.stdout):
-    key = e.key
-    nextpath = "/".join((path, str(key)))
-    op = e.op
-
-    # Recurse to handle patch ops
-    if op == DiffOp.PATCH:
-        # Useful for debugging:
-        #if not (len(e.diff) == 1 and e.diff[0].op == DiffOp.PATCH):
-        #    out.write("{}// patch -+{} //{}\n".format(INFO, nextpath, RESET))
-        #else:
-        #    out.write("{}// patch... -+{} //{}\n".format(INFO, nextpath, RESET))
-        pretty_print_diff(a[key], e.diff, nextpath, out)
-        return
-
-    if op == DiffOp.ADDRANGE:
-        out.write("{}inserted before {}:{}\n".format(INFO, nextpath, RESET))
-        pretty_print_value(e.valuelist, nextpath, ADD, out)
-
-    elif op == DiffOp.REMOVERANGE:
-        if e.length > 1:
-            keyrange = "{}-{}".format(nextpath, key + e.length - 1)
-        else:
-            keyrange = nextpath
-        out.write("{}deleted {}:{}\n".format(INFO, keyrange, RESET))
-        pretty_print_value(a[key: key + e.length], nextpath, REMOVE, out)
-
-    elif op == DiffOp.REMOVE:
-        out.write("{}deleted {}:{}\n".format(INFO, nextpath, RESET))
-        pretty_print_value(a[key], nextpath, REMOVE, out)
-
-    elif op == DiffOp.ADD:
-        out.write("{}added {}:{}\n".format(INFO, nextpath, RESET))
-        pretty_print_value(e.value, nextpath, ADD, out)
-
-    elif op == DiffOp.REPLACE:
-        out.write("{}replaced {}:{}\n".format(INFO, nextpath, RESET))
-        #aval = a[key]
-        #bval = e.value
-        # TODO: quote?
-        pretty_print_value(a[key], nextpath, REMOVE, out)
-        pretty_print_value(e.value, nextpath, ADD, out)
-
-    else:
-        raise NBDiffFormatError("Unknown list diff op {}".format(op))
-
-    out.write(DIFF_ENTRY_END + RESET)
+def pretty_print_key(k, prefix, out):
+    out.write("%s%s:\n" % (prefix, k))
 
 
-def pretty_print_dict_diff(a, di, path, out=sys.stdout):
-    "Pretty-print a nbdime diff."
-    for key, e in sorted((e.key, e) for e in di):
-        pretty_print_diff_entry(a, e, path, out)
+def pretty_print_key_value(k, v, prefix="", out=sys.stdout):
+    out.write("%s%s: %s\n" % (prefix, k, v))
 
 
-def pretty_print_list_diff(a, di, path, out=sys.stdout):
-    "Pretty-print a nbdime diff."
-    for e in di:
-        pretty_print_diff_entry(a, e, path, out)
-
-
-def pretty_print_string_diff(a, di, path, out=sys.stdout):
-    "Pretty-print a nbdime diff."
-    out.write("{}modified {}:{}\n".format(INFO, path, RESET))
-
-    #import pdb; pdb.set_trace()
-    b = patch(a, di)  # FIXME: This fails in cli test, reproduce with py.test -k cli
-
-    ta = _trim_base64(a)
-    tb = _trim_base64(b)
-
-    if ta != a or tb != b:
-        if ta != a:
-            out.write('%s%s\n' % (REMOVE, ta))
-        else:
-            pretty_print_value(a, path, REMOVE, out)
-        if tb != b:
-            out.write('%s%s\n' % (ADD, tb))
-        else:
-            pretty_print_value(b, path, ADD, out)
-    elif "\n" in a or "\n" in b:
-        # Delegate multiline diff formatting
-        diff_lines = _diff_render(a, b)
-        out.write("\n".join(diff_lines))
-        out.write("\n")
-    else:
-        # Just show simple -+ single line (usually metadata values etc)
-        out.write("%s%s\n" % (REMOVE, a))
-        out.write("%s%s\n" % (ADD, b))
-
-    out.write(DIFF_ENTRY_END + RESET)
-
-
-def pretty_print_diff(a, di, path, out=sys.stdout):
-    "Pretty-print a nbdime diff."
-    if isinstance(a, dict):
-        pretty_print_dict_diff(a, di, path, out)
-    elif isinstance(a, list):
-        pretty_print_list_diff(a, di, path, out)
-    elif isinstance(a, string_types):
-        pretty_print_string_diff(a, di, path, out)
-    else:
-        raise NBDiffFormatError("Invalid type {} for diff presentation.".format(type(a)))
-
-
-notebook_diff_header = """\
-nbdiff {afn} {bfn}
---- {afn}{atime}
-+++ {bfn}{btime}
-"""
-
-def file_timestamp(filename):
-    t = os.path.getmtime(filename)
-    dt = datetime.datetime.fromtimestamp(t)
-    return dt.isoformat(b" ")
-
-
-def pretty_print_notebook_diff(afn, bfn, a, di, out=sys.stdout):
-    """Pretty-print a notebook diff
-
-    Parameters
-    ----------
-
-    afn: str
-        Filename of a, the base notebook
-    bfn: str
-        Filename of b, the updated notebook
-    a: dict
-        The base notebook object
-    di: diff
-        The diff object describing the transformation from a to b
-    """
-    if di:
-        path = ""
-        #try:
-        atime = "  " + file_timestamp(afn)
-        btime = "  " + file_timestamp(bfn)
-        #except:
-        #    atime = ""
-        #    btime = ""
-        out.write(notebook_diff_header.format(afn=afn, bfn=bfn, atime=atime, btime=btime))
-        pretty_print_diff(a, di, path, out)
-
-
-def pretty_print_merge_decision(base, decision, out=sys.stdout):
-    prefix = IND
-    diff_keys = ["diff", "local_diff", "remote_diff", "custom_diff"]
-    path = join_path(decision.common_path)
-    out.write("%s====== decision at %s:%s\n" % (INFO, path, RESET))
-    exclude_keys = set(diff_keys) | {"common_path"}
-    pretty_print_dict(decision, exclude_keys, prefix, out)
-    for dkey in diff_keys:
-        diff = decision.get(dkey)
-        if diff:
-            out.write("%s=== %s:%s\n" % (INFO, dkey, RESET))
-            value = base
-            for k in decision.common_path:
-                #diff.op
-                if isinstance(value, string_types):
-                    value = value.splitlines(True)[k]
-                    break
-                else:
-                    value = value[k]
-            pretty_print_diff(value, diff, path, out)
-
-
-def pretty_print_merge_decisions(base, decisions, out=sys.stdout):
-    """Pretty-print notebook merge decisions
-
-    Parameters
-    ----------
-
-    base: dict
-        The base notebook object
-    decisions: list
-        The list of merge decisions
-    """
-    conflicted = [d for d in decisions if d.conflict]
-    out.write("%d conflicted decisions of %d total:\n"
-              % (len(conflicted), len(decisions)))
-    for d in decisions:
-        pretty_print_merge_decision(base, d, out)
-        out.write("\n")
-    out.write("\n")
-
-
-def pretty_print_notebook_merge(bfn, lfn, rfn, bnb, lnb, rnb, mnb, decisions, out=sys.stdout):
-    """Pretty-print a notebook diff
-
-    Parameters
-    ----------
-
-    bfn: str
-        Filename of the base notebook
-    lfn: str
-        Filename of the local notebook
-    rfn: str
-        Filename of the remote notebook
-    bnb: dict
-        The base notebook object
-    lnb: dict
-        The local notebook object
-    rnb: dict
-        The remote notebook object
-    mnb: dict
-        The partially merged notebook object
-    decisions: list
-        The list of merge decisions including conflicts
-    """
-    pretty_print_merge_decisions(bnb, decisions, out)
-
-
-def format_value(v):
-    if not isinstance(v, string_types):
-        # Not a string, defer to pprint
-        vstr = pprint.pformat(v)
-        # TODO: Cut strings short?
-        #if len(vstr) > 60:
-        #    vstr = "<%s instance: %s...>" % (v.__class__.__name__, vstr[:20])
-    else:
-        # Snip if base64 data
-        vstr = _trim_base64(v)
-    return vstr
+def pretty_print_diff_action(msg, path, out):
+    out.write("%s%s %s:%s\n" % (INFO, msg, path, RESET))
 
 
 def pretty_print_item(k, v, prefix="", out=sys.stdout):
     if isinstance(v, dict):
-        out.write("%s%s:\n" % (prefix, k))
+        pretty_print_key(k, prefix, out)
         pretty_print_dict(v, (), prefix+IND, out)
     elif isinstance(v, list):
-        out.write("%s%s:\n" % (prefix, k))
+        pretty_print_key(k, prefix, out)
         pretty_print_list(v, prefix+IND, out)
     else:
         vstr = format_value(v)
         if "\n" in vstr:
             # Multiline strings
-            out.write("%s%s:\n" % (prefix, k))
+            pretty_print_key(k, prefix, out)
             for line in vstr.splitlines(False):
                 out.write("%s%s\n" % (prefix+IND, line))
         else:
             # Singleline strings
-            out.write("%s%s: %s\n" % (prefix, k, vstr))
+            pretty_print_key_value(k, vstr, prefix, out)
+
+
+def pretty_print_multiline(text, prefix="", out=sys.stdout):
+    assert isinstance(text, string_types)
+
+    # Preprend prefix to lines, letting lines keep their own newlines
+    lines = text.splitlines(True)
+    for line in lines:
+        out.write(prefix + line)
+
+    # If the final line doesn't have a newline,
+    # make sure we still start a new line
+    if not text.endswith("\n"):
+        out.write("\n")
 
 
 def pretty_print_list(li, prefix="", out=sys.stdout):
@@ -459,32 +284,19 @@ def pretty_print_metadata(md, known_keys, prefix="", out=sys.stdout):
         else:
             md2[k] = md[k]
     if md1:
-        out.write("%smetadata (known keys):\n" % (prefix,))
+        pretty_print_key("metadata (known keys)", prefix, out)
         pretty_print_dict(md1, (), prefix+IND, out)
     if md2:
-        out.write("%smetadata (unknown keys):\n" % (prefix,))
+        pretty_print_key("metadata (unknown keys)", prefix, out)
         pretty_print_dict(md2, (), prefix+IND, out)
-
-
-def pretty_print_multiline(text, prefix="", out=sys.stdout):
-    assert isinstance(text, string_types)
-
-    # Preprend prefix to lines, letting lines keep their own newlines
-    lines = text.splitlines(True)
-    for line in lines:
-        out.write(prefix + line)
-
-    # If the final line doesn't have a newline,
-    # make sure we still start a new line
-    if not text.endswith("\n"):
-        out.write("\n")
 
 
 def pretty_print_output(i, output, prefix="", out=sys.stdout):
     oprefix = prefix+IND
     t = output.output_type
     numstr = "" if i is None else " %d" % i
-    out.write("%soutput%s:\n" % (prefix, numstr))
+    k = "output%s" % (numstr,)
+    pretty_print_key(k, prefix, out)
 
     item_keys = ("output_type", "execution_count",
                  "name", "text", "data",
@@ -505,19 +317,19 @@ def pretty_print_output(i, output, prefix="", out=sys.stdout):
 
 
 def pretty_print_outputs(outputs, prefix="", out=sys.stdout):
-    out.write("%soutputs:\n" % (prefix,))
+    pretty_print_key("outputs", prefix, out)
     for i, output in enumerate(outputs):
         pretty_print_output(i, output, prefix+IND, out)
 
 
 def pretty_print_attachments(attachments, prefix="", out=sys.stdout):
-    out.write("%sattachments:\n" % (prefix,))
+    pretty_print_key("attachments", prefix, out)
     for name in sorted(attachments):
         pretty_print_item(name, attachments[name], prefix+IND, out)
 
 
 def pretty_print_source(source, prefix="", out=sys.stdout):
-    out.write("%ssource:\n" % (prefix,))
+    pretty_print_key("source", prefix, out)
     pretty_print_multiline(source, prefix+IND, out)
 
 
@@ -525,10 +337,12 @@ def pretty_print_cell(i, cell, prefix="", out=sys.stdout, args=None):
     key_prefix = prefix+IND
 
     def c():
+        "Write cell header first time this is called."
         if not c.called:
             # Write cell type and optionally number:
             numstr = "" if i is None else " %d" % i
-            out.write("%s%s cell%s:\n" % (prefix, cell.cell_type, numstr))
+            k = "%s cell%s" % (cell.cell_type, numstr)
+            pretty_print_key(k, prefix, out)
             c.called = True
     c.called = False
 
@@ -536,7 +350,7 @@ def pretty_print_cell(i, cell, prefix="", out=sys.stdout, args=None):
     if execution_count and (args is None or args.details):
         # Write execution count if there (only source cells)
         c()
-        out.write("%sexecution_count: %s\n" % (key_prefix, repr(cell.execution_count)))
+        pretty_print_item("execution_count", execution_count, key_prefix, out)
 
     metadata = cell.get("metadata")
     if metadata and (args is None or args.metadata):
@@ -584,15 +398,17 @@ def pretty_print_notebook(nb, args=None, out=sys.stdout):
     out: file-like object
         File-like object with .write function used for output.
     """
+    prefix = ""
 
     if args is None or args.details:
         # Write notebook header
-        out.write("notebook format: %d.%d\n" % (nb.nbformat, nb.nbformat_minor))
+        v = "%d.%d" % (nb.nbformat, nb.nbformat_minor)
+        pretty_print_key_value("notebook format", v, prefix, out)
 
     # Report unknown keys
     unknown_keys = set(nb.keys()) - {"nbformat", "nbformat_minor", "metadata", "cells"}
     if unknown_keys:
-        out.write("unknown keys: %r" % (unknown_keys,))
+        pretty_print_key_value("unknown keys", repr(unknown_keys), prefix, out)
 
     if args is None or args.metadata:
         # Write notebook metadata
@@ -602,3 +418,238 @@ def pretty_print_notebook(nb, args=None, out=sys.stdout):
     # Write notebook cells
     for i, cell in enumerate(nb.cells):
         pretty_print_cell(i, cell, prefix="", out=out, args=args)
+
+
+def pretty_print_diff_entry(a, e, path, out=sys.stdout):
+    key = e.key
+    nextpath = "/".join((path, str(key)))
+    op = e.op
+
+    # Recurse to handle patch ops
+    if op == DiffOp.PATCH:
+        # Useful for debugging:
+        #if not (len(e.diff) == 1 and e.diff[0].op == DiffOp.PATCH):
+        #    out.write("{}// patch -+{} //{}\n".format(INFO, nextpath, RESET))
+        #else:
+        #    out.write("{}// patch... -+{} //{}\n".format(INFO, nextpath, RESET))
+        pretty_print_diff(a[key], e.diff, nextpath, out)
+        return
+
+    if op == DiffOp.ADDRANGE:
+        pretty_print_diff_action("inserted before", nextpath, out)
+        pretty_print_value(e.valuelist, nextpath, ADD, out)
+
+    elif op == DiffOp.REMOVERANGE:
+        if e.length > 1:
+            keyrange = "{}-{}".format(nextpath, key + e.length - 1)
+        else:
+            keyrange = nextpath
+        pretty_print_diff_action("deleted", keyrange, out)
+        pretty_print_value(a[key: key + e.length], nextpath, REMOVE, out)
+
+    elif op == DiffOp.REMOVE:
+        pretty_print_diff_action("deleted", nextpath, out)
+        pretty_print_value(a[key], nextpath, REMOVE, out)
+
+    elif op == DiffOp.ADD:
+        pretty_print_diff_action("added", nextpath, out)
+        pretty_print_value(e.value, nextpath, ADD, out)
+
+    elif op == DiffOp.REPLACE:
+        pretty_print_diff_action("replaced", nextpath, out)
+        aval = a[key]
+        bval = e.value
+        # TODO: Quote string if the other is a number?
+        #if isinstance(aval, string_types) != isinstance(bval, string_types):
+        pretty_print_value(aval, nextpath, REMOVE, out)
+        pretty_print_value(bval, nextpath, ADD, out)
+
+    else:
+        raise NBDiffFormatError("Unknown list diff op {}".format(op))
+
+    out.write(DIFF_ENTRY_END + RESET)
+
+
+def pretty_print_dict_diff(a, di, path, out=sys.stdout):
+    "Pretty-print a nbdime diff."
+    for key, e in sorted((e.key, e) for e in di):
+        pretty_print_diff_entry(a, e, path, out)
+
+
+def pretty_print_list_diff(a, di, path, out=sys.stdout):
+    "Pretty-print a nbdime diff."
+    for e in di:
+        pretty_print_diff_entry(a, e, path, out)
+
+
+def pretty_print_string_diff(a, di, path, out=sys.stdout):
+    "Pretty-print a nbdime diff."
+    pretty_print_diff_action("modified", path, out)
+
+    b = patch(a, di)
+
+    ta = _trim_base64(a)
+    tb = _trim_base64(b)
+
+    if ta != a or tb != b:
+        if ta != a:
+            out.write('%s%s\n' % (REMOVE, ta))
+        else:
+            pretty_print_value(a, path, REMOVE, out)
+        if tb != b:
+            out.write('%s%s\n' % (ADD, tb))
+        else:
+            pretty_print_value(b, path, ADD, out)
+    elif "\n" in a or "\n" in b:
+        # Delegate multiline diff formatting
+        diff_lines = _diff_render(a, b)
+        out.write("\n".join(diff_lines))
+        out.write("\n")
+    else:
+        # Just show simple -+ single line (usually metadata values etc)
+        out.write("%s%s\n" % (REMOVE, a))
+        out.write("%s%s\n" % (ADD, b))
+
+    out.write(DIFF_ENTRY_END + RESET)
+
+
+def pretty_print_diff(a, di, path, out=sys.stdout):
+    "Pretty-print a nbdime diff."
+    if isinstance(a, dict):
+        pretty_print_dict_diff(a, di, path, out)
+    elif isinstance(a, list):
+        pretty_print_list_diff(a, di, path, out)
+    elif isinstance(a, string_types):
+        pretty_print_string_diff(a, di, path, out)
+    else:
+        raise NBDiffFormatError("Invalid type {} for diff presentation.".format(type(a)))
+
+
+notebook_diff_header = """\
+nbdiff {afn} {bfn}
+--- {afn}{atime}
++++ {bfn}{btime}
+"""
+
+def pretty_print_notebook_diff(afn, bfn, a, di, out=sys.stdout):
+    """Pretty-print a notebook diff
+
+    Parameters
+    ----------
+
+    afn: str
+        Filename of a, the base notebook
+    bfn: str
+        Filename of b, the updated notebook
+    a: dict
+        The base notebook object
+    di: diff
+        The diff object describing the transformation from a to b
+    """
+    if di:
+        path = ""
+        atime = "  " + file_timestamp(afn)
+        btime = "  " + file_timestamp(bfn)
+        out.write(notebook_diff_header.format(afn=afn, bfn=bfn, atime=atime, btime=btime))
+        pretty_print_diff(a, di, path, out)
+
+
+def pretty_print_merge_decision(base, decision, out=sys.stdout):
+    prefix = IND
+
+    path = join_path(decision.common_path)
+    confnote = "conflicted " if decision.conflict else ""
+    out.write("%s%sdecision at %s:%s\n" % (INFO, confnote, path, RESET))
+
+    diff_keys = ("diff", "local_diff", "remote_diff", "custom_diff")
+    exclude_keys = set(diff_keys) | {"common_path", "action", "conflict"}
+    pretty_print_dict(decision, exclude_keys, prefix, out)
+
+    for dkey in diff_keys:
+        diff = decision.get(dkey)
+
+        if (dkey == "remote_diff" and decision.action == "either"
+            and diff == decision.get("local_diff")):
+            # Skip remote diff
+            continue
+        elif (dkey == "local_diff" and decision.action == "either"
+            and diff == decision.get("remote_diff")):
+            note = " (same as remote_diff)"
+        elif dkey.startswith(decision.action):
+            note = " (selected)"
+        else:
+            note = ""
+
+        if diff:
+            out.write("%s%s%s:%s\n" % (INFO, dkey, note, RESET))
+            value = base
+            for i, k in enumerate(decision.common_path):
+                if isinstance(value, string_types):
+                    # Example case:
+                    #   common_path = /cells/0/source/3
+                    #   value = nb.cells[0].source
+                    #   k = line number 3
+                    #   k is last item in common_path
+                    assert i == len(decision.common_path) - 1
+
+                    # Diffs on strings are usually line-based, _except_
+                    # when common_path points to a line within a string.
+                    # Wrap character based diff in a patch op with line
+                    # number to normalize. 
+                    diff = [op_patch(k, diff)]
+                    break
+                else:
+                    # Either a list or dict, get subvalue
+                    value = value[k]
+            pretty_print_diff(value, diff, path, out)
+
+
+#def pretty_print_string_diff(string, lineno, diff, out):
+#    line = string.splitlines(True)[lineno]
+#    pretty_print_diff_entry(e)
+
+
+def pretty_print_merge_decisions(base, decisions, out=sys.stdout):
+    """Pretty-print notebook merge decisions
+
+    Parameters
+    ----------
+
+    base: dict
+        The base notebook object
+    decisions: list
+        The list of merge decisions
+    """
+    conflicted = [d for d in decisions if d.conflict]
+    out.write("%d conflicted decisions of %d total:\n"
+              % (len(conflicted), len(decisions)))
+    for d in decisions:
+        pretty_print_merge_decision(base, d, out)
+        out.write("\n")
+    out.write("\n")
+
+
+def pretty_print_notebook_merge(bfn, lfn, rfn, bnb, lnb, rnb, mnb, decisions, out=sys.stdout):
+    """Pretty-print a notebook diff
+
+    Parameters
+    ----------
+
+    bfn: str
+        Filename of the base notebook
+    lfn: str
+        Filename of the local notebook
+    rfn: str
+        Filename of the remote notebook
+    bnb: dict
+        The base notebook object
+    lnb: dict
+        The local notebook object
+    rnb: dict
+        The remote notebook object
+    mnb: dict
+        The partially merged notebook object
+    decisions: list
+        The list of merge decisions including conflicts
+    """
+    pretty_print_merge_decisions(bnb, decisions, out)
