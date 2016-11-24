@@ -43,6 +43,10 @@ import {
 } from '../../diff/widget';
 
 import {
+  FlexPanel
+} from '../../upstreaming/flexpanel';
+
+import {
   RenderableOutputsMergeView
 } from './output';
 
@@ -59,6 +63,7 @@ const CELL_HEADER_TITLE_CLASS = 'jp-Merge-cellHeader-title';
 
 const MARKED_DELETE = 'jp-mod-todelete';
 
+const EXECUTIONCOUNT_ROW_CLASS = 'jp-Cellrow-executionCount';
 const SOURCE_ROW_CLASS = 'jp-Cellrow-source';
 const METADATA_ROW_CLASS = 'jp-Cellrow-metadata';
 const OUTPUTS_ROW_CLASS = 'jp-Cellrow-outputs';
@@ -161,6 +166,15 @@ class CellMergeWidget extends Panel {
     } else {
       // Setup full 4-way mergeview of source, metadata and outputs
       // as needed (if changed). Source/metadata/output are each a "row"
+      let execDec = model.getExecutionCountDecision();
+      if (execDec && execDec.action === 'clear') {
+        let row = new FlexPanel({direction: 'left-to-right'});
+        row.addClass(EXECUTIONCOUNT_ROW_CLASS);
+        let textWidget = new Widget();
+        textWidget.node.innerText = 'Execution count will be cleared.';
+        row.addWidget(textWidget);
+        this.addWidget(row);
+      }
       let sourceView: Widget | null = null;
       if (model.local.source.unchanged && model.remote.source.unchanged &&
           model.merged.source.unchanged) {

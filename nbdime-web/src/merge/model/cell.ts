@@ -11,20 +11,26 @@ import {
 } from 'phosphor/lib/core/signaling';
 
 import {
-  IDiffAddRange, IDiffPatch, IDiffEntry, IDiffArrayEntry
+  IDiffAddRange, IDiffEntry, IDiffArrayEntry,
+  IDiffPatchObject, IDiffImmutableObjectEntry
 } from '../../diff/diffentries';
+
+import {
+  getDiffEntryByKey
+} from '../../diff/util';
 
 import {
   CellDiffModel,
   createAddedCellDiffModel, createDeletedCellDiffModel,
   createPatchedCellDiffModel, createUnchangedCellDiffModel,
-  OutputDiffModel, makeOutputModels,
-  setMimetypeFromCellType
+  OutputDiffModel, makeOutputModels, ImmutableDiffModel,
+  setMimetypeFromCellType, createImmutableModel
 } from '../../diff/model';
 
 import {
   MergeDecision, resolveCommonPaths, buildDiffs, decisionSortKey,
-  filterDecisions, pushPatchDecision, popPath, applyDecisions
+  filterDecisions, pushPatchDecision, popPath, applyDecisions,
+  Action
 } from '../../merge/decisions';
 
 import {
@@ -32,7 +38,7 @@ import {
 } from '../../patch';
 
 import {
-  arraysEqual, valueIn, hasEntries, splitLines
+  arraysEqual, valueIn, hasEntries, splitLines, unique
 } from '../../common/util';
 
 import {
@@ -42,6 +48,11 @@ import {
 import {
   ObjectMergeModel, DecisionStringDiffModel
 } from './common';
+
+
+import {
+  NotifyUserError
+} from '../../common/exceptions';
 
 
 /**
@@ -57,11 +68,10 @@ function createPatchedCellDecisionDiffModel(
   for (let md of decisions) {
     if (md.localPath.length === 0) {
       let val = popPath(md.diffs, true);
-      if (val === null) {
-        throw new Error('Invalid diffs for patching cell!');
+      if (val !== null) {
+        md.diffs = val.diffs;
+        md.pushPath(val.key);
       }
-      md.diffs = val.diffs;
-      md.pushPath(val.key);
     }
   }
 
@@ -77,19 +87,37 @@ function createPatchedCellDecisionDiffModel(
       remote ? remote.metadata : null]);
 
   let outputs: OutputDiffModel[] | null = null;
-  if (base.cell_type === 'code' && (base as nbformat.ICodeCell).outputs) {
-    let outputBase = (base as nbformat.ICodeCell).outputs;
-    let outputDec = filterDecisions(decisions, ['outputs'], 2);
-    let mergedDiff = buildDiffs(outputBase, outputDec, 'merged') as IDiffArrayEntry[];
-    let merged: nbformat.IOutput[];
-    if (mergedDiff && mergedDiff.length > 0) {
-      merged = patch(outputBase, mergedDiff);
-    } else {
-      merged = outputBase;
+  let executionCount: ImmutableDiffModel | null = null;
+  if (base.cell_type === 'code') {
+    if ((base as nbformat.ICodeCell).outputs) {
+      let outputBase = (base as nbformat.ICodeCell).outputs;
+      let outputDec = filterDecisions(decisions, ['outputs'], 2);
+      let mergedDiff = buildDiffs(outputBase, outputDec, 'merged') as IDiffArrayEntry[];
+      let merged: nbformat.IOutput[];
+      if (mergedDiff && mergedDiff.length > 0) {
+        merged = patch(outputBase, mergedDiff);
+      } else {
+        merged = outputBase;
+      }
+      outputs = makeOutputModels(outputBase, merged, mergedDiff);
     }
-    outputs = makeOutputModels(outputBase, merged, mergedDiff);
+    let execBase = (base as nbformat.ICodeCell).execution_count;
+    let cellDecs = filterDecisions(decisions, ['cells'], 0, 2);
+    for (let dec of cellDecs) {
+      if (getDiffEntryByKey(dec.localDiff, 'execution_count') !== null ||
+          getDiffEntryByKey(dec.remoteDiff, 'execution_count') !== null ||
+          getDiffEntryByKey(dec.customDiff, 'execution_count') !== null) {
+        dec.level = 2;
+        let mergeExecDiff = buildDiffs(base, [dec], 'merged') as IDiffImmutableObjectEntry[] | null;
+        let execDiff = hasEntries(mergeExecDiff) ? mergeExecDiff[0] : null;
+        // Pass base as remote, which means fall back to unchanged if no diff:
+        executionCount = createImmutableModel(execBase, execBase, execDiff);
+      }
+    }
+
   }
-  return new CellDiffModel(source, metadata, outputs, base.cell_type);
+
+  return new CellDiffModel(source, metadata, outputs, executionCount, base.cell_type);
 }
 
 
@@ -100,7 +128,7 @@ export
 class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
   constructor(base: nbformat.ICell | null, decisions: MergeDecision[], mimetype: string) {
     // TODO: Remove/extend whitelist once we support more
-    super(base, [], mimetype, ['source', 'metadata', 'outputs']);
+    super(base, [], mimetype, ['source', 'metadata', 'outputs', 'execution_count']);
     this.onesided = false;
     this._deleteCell = false;
     this.processDecisions(decisions);
@@ -177,6 +205,23 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
   }
 
   /**
+   * Get the decision on `execution_count` field (should only be one).
+   *
+   * Returns null if no decision on `execution_count` was found.
+   */
+  getExecutionCountDecision(): MergeDecision | null {
+    let cellDecs = filterDecisions(this.decisions, ['cells'], 0, 2);
+    for (let dec of cellDecs) {
+      if (getDiffEntryByKey(dec.localDiff, 'execution_count') !== null ||
+          getDiffEntryByKey(dec.remoteDiff, 'execution_count') !== null ||
+          getDiffEntryByKey(dec.customDiff, 'execution_count') !== null) {
+        return dec;
+      }
+    }
+    return null;
+  }
+
+  /**
    * Apply merge decisions to create the merged cell
    */
   serialize(): nbformat.ICell | null {
@@ -212,23 +257,19 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
         throw new Error('Not a valid path for a cell decision');
       } else if (md.absolutePath.length === 2 && (
             hasEntries(md.localDiff) || hasEntries(md.remoteDiff))) {
-        // Have decision on /cells/X/. Such decisions should always
-        // be onsided.
-        if (hasEntries(md.localDiff) && hasEntries(md.remoteDiff)) {
-          // Not onesided.
-          throw new Error('Invalid merge decision: ' + md);
-        }
+        // Have decision on /cells/X/.
         // Split the decision on subkey:
 
         // Nest diff as a patch on cell, which can be split by `splitPatch`:
         let splitDec = pushPatchDecision(md, md.absolutePath.slice(1, 2));
-        let diff = (hasEntries(splitDec.localDiff) ?
-          splitDec.localDiff : splitDec.remoteDiff!);
-        let subDecisions = this.splitPatch(
-          splitDec, diff[0] as IDiffPatch,
-          hasEntries(splitDec.localDiff));
+        let localDiff = hasEntries(splitDec.localDiff) ?
+          splitDec.localDiff[0] as IDiffPatchObject : null;
+        let remoteDiff = hasEntries(splitDec.remoteDiff) ?
+          splitDec.remoteDiff[0] as IDiffPatchObject : null;
+
+        let subDecisions = this.splitPatch(splitDec, localDiff, remoteDiff);
         resolveCommonPaths(subDecisions);
-        // Add all split decisions
+        // Add all split decisions:
         for (let subdec of subDecisions) {
           subdec.level = 2;
           this.decisions.push(subdec);
@@ -238,8 +279,6 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
         this.decisions.push(md);
       }
     }
-
-
   }
 
   /**
@@ -340,13 +379,13 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
           this.deleteCell = md.action === 'local';
           // The patch op will be on cell level. Split it on sub keys!
           newDecisions = newDecisions.concat(this.splitPatch(
-            md, md.remoteDiff[0] as IDiffPatch, false));
+            md, null, md.remoteDiff[0] as IDiffPatchObject));
         } else {
           this._remote = createDeletedCellDiffModel(this.base, this.mimetype);
           this.deleteCell = md.action === 'remote';
           // The patch op will be on cell level. Split it on sub keys!
           newDecisions = newDecisions.concat(this.splitPatch(
-            md, md.localDiff[0] as IDiffPatch, true));
+            md, md.localDiff[0] as IDiffPatchObject, null));
         }
         resolveCommonPaths(newDecisions);
       }
@@ -354,21 +393,72 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
     return newDecisions;
   }
 
-  protected splitPatch(md: MergeDecision, patch: IDiffPatch, local: boolean): MergeDecision[] {
-    let split = super.splitPatch(md, patch, local);
-    let out: MergeDecision[] = [];
-    // Next, split source field on chunks
-    for (let i=0; i < split.length; ++i) {
-      let dec = split[i];
-      let key = (dec.localDiff || dec.remoteDiff!)[0].key;
-      if (key === 'source') {
-        let pop = popPath(dec.diffs, true);
-        if (!pop || pop.key !== 'source') {
-          throw new Error('Decisions path manipulation error');
-        }
-        dec.absolutePath.push(pop.key);
-        dec.diffs = pop.diffs;
+
+   /**
+    * Split a decision with a patch on one side into one decision
+    * for each sub entry in the patch.
+    */
+  protected splitPatch(md: MergeDecision, localPatch: IDiffPatchObject | null, remotePatch: IDiffPatchObject | null): MergeDecision[] {
+    let local = !!localPatch && hasEntries(localPatch.diff);
+    let remote = !!remotePatch && hasEntries(remotePatch.diff);
+    if (!local && !remote) {
+      return [];
+    }
+    let localDiff = local ? localPatch!.diff : null;
+    let remoteDiff = remote ? remotePatch!.diff : null;
+    let split: MergeDecision[] = [];
+    let keys: (string | number)[] = [];
+    if (local) {
+      for (let d of localDiff!) {
+        keys.push(d.key);
       }
+    }
+    if (remote) {
+      for (let d of remoteDiff!) {
+        keys.push(d.key);
+      }
+    }
+    keys = keys.filter(unique);
+    if (local && remote) {
+      // Sanity check
+      if (localPatch!.key !== remotePatch!.key) {
+        throw new Error('Different keys of patch ops given to `splitPatch`.');
+      }
+    }
+    let patchKey = local ? localPatch!.key : remotePatch!.key;
+    for (let key of keys) {
+      if (this._whitelist && !valueIn(key, this._whitelist)) {
+        throw new NotifyUserError('Currently not able to handle decisions on variable \"' +
+              key + '\"');
+      }
+      let el = getDiffEntryByKey(localDiff, key);
+      let er = getDiffEntryByKey(remoteDiff, key);
+      let onsesided = !(el && er);
+      let action: Action = md.action;
+      // If one-sided, change 'base' actions to present side
+      if (action === 'base' && onsesided) {
+        action = el ? 'local' : 'remote';
+      }
+      // Create new action:
+      split.push(new MergeDecision(
+        md.absolutePath.concat([patchKey]),
+        el ? [el] : null,
+        er ? [er] : null,
+        action,
+        md.conflict));
+    };
+    return this.splitOnSourceChunks(split);
+  }
+
+  /**
+   * Split decisions on 'source' by chunks.
+   *
+   * This prevents one decision from contributing to more than one chunk.
+   */
+  protected splitOnSourceChunks(decisions: MergeDecision[]): MergeDecision[] {
+    let out: MergeDecision[] = [];
+    for (let i=0; i < decisions.length; ++i) {
+      let dec = decisions[i];
       if (dec.absolutePath[2] === 'source') {
         let base = this.base!.source;
         if (!Array.isArray(base)) {

@@ -15,7 +15,7 @@ import {
 } from '../diffentries';
 
 import {
-  getDiffKey
+  getSubDiffByKey
 } from '../util';
 
 import {
@@ -138,7 +138,7 @@ class OutputDiffModel implements IDiffModel {
     let base = key ? getMemberByPath(this.base, key) as any : this.base;
     let remote = key ? getMemberByPath(this.remote, key) as any : this.remote;
     let diff = (this.diff && key) ?
-      getMemberByPath(this.diff, key, getDiffKey) as IDiffEntry[] | null :
+      getMemberByPath(this.diff, key, getSubDiffByKey) as IDiffEntry[] | null :
       this.diff;
     let model: IStringDiffModel | null = null;
     if (this.unchanged || this.added || this.deleted || !diff) {

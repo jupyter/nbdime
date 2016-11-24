@@ -141,6 +141,12 @@ type IDiffArrayEntry = IDiffAddRange | IDiffRemoveRange | IDiffPatchArray;
 export
 type IDiffObjectEntry = IDiffPatchObject | IDiffAdd | IDiffRemove | IDiffReplace;
 
+export
+type IDiffImmutableArrayEntry = IDiffAddRange | IDiffRemoveRange;
+
+export
+type IDiffImmutableObjectEntry = IDiffAdd | IDiffRemove | IDiffReplace;
+
 
 export
 type DiffCollection = (IDiffEntry[] | null)[];

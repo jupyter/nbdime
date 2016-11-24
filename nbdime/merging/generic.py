@@ -148,7 +148,7 @@ def _split_addrange(key, local, remote, path):
         if (i + 1 < len(intermediate_diff) and
                 intermediate_diff[i+1].op == DiffOp.REMOVERANGE and
                 intermediate_diff[i+1].key == d.key):
-            # This indicates a non-similar subequence, acoording
+            # This indicates a non-similar sub-sequence, according
             # to the predicates.
             # (1) Conflicted addition
             local_len = intermediate_diff[i+1].length

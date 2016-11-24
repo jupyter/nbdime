@@ -19,6 +19,10 @@ import {
 } from '../../common/mergeview';
 
 import {
+  FlexPanel
+} from '../../upstreaming/flexpanel';
+
+import {
   CollapsiblePanel
 } from '../../common/collapsiblepanel';
 
@@ -36,8 +40,15 @@ import {
 } from './output';
 
 import {
-  CellDiffModel, IDiffModel, StringDiffModel, OutputDiffModel
+  CellDiffModel, IDiffModel, StringDiffModel, OutputDiffModel,
+  ImmutableDiffModel
 } from '../model';
+
+
+/**
+ * The class name added to the prompt area of cell.
+ */
+const PROMPT_CLASS = 'jp-Cell-prompt';
 
 
 const CELLDIFF_CLASS = 'jp-Cell-diff';
@@ -103,6 +114,10 @@ class CellDiffWidget extends Panel {
     let sourceView = CellDiffWidget.createView(
       model.source, model, CURR_DIFF_CLASSES, this._rendermime);
     sourceView.addClass(SOURCE_ROW_CLASS);
+    if (model.executionCount) {
+      sourceView.insertWidget(0, CellDiffWidget.createPrompts(
+        model.executionCount, model));
+    }
     this.addWidget(sourceView);
 
     if (!model.metadata.unchanged) {
@@ -133,12 +148,35 @@ class CellDiffWidget extends Panel {
     }
   }
 
+  static createPrompts(model: ImmutableDiffModel, parent: CellDiffModel): Panel {
+    let prompts: string[] = [];
+    if (!parent.added) {
+      let base = model.base as number | null;
+      let baseStr = `In [${base || ' '}]:`;
+      prompts.push(baseStr);
+    }
+    if (!parent.unchanged && !parent.deleted) {
+      let remote = model.remote as number | null;
+      let remoteStr = `In [${remote || ' '}]:`;
+      prompts.push(remoteStr);
+    }
+    let container = new FlexPanel({direction: 'left-to-right'});
+    for (let text of prompts) {
+      let w = new Widget();
+      w.node.innerText = text;
+      w.addClass(PROMPT_CLASS);
+      container.addWidget(w);
+      FlexPanel.setGrow(w, 1);
+    }
+    return container;
+  }
+
   /**
    * Create a new sub-view.
    */
   static
   createView(model: IDiffModel, parent: CellDiffModel,
-             editorClasses: string[], rendermime: IRenderMime): Widget {
+             editorClasses: string[], rendermime: IRenderMime): Panel {
     let view: Widget | null = null;
     if (model instanceof StringDiffModel) {
       if (model.unchanged && parent.cellType === 'markdown') {
