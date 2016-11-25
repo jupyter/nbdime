@@ -32,12 +32,15 @@ import os
 from glob import glob
 from subprocess import check_call
 
+
 from distutils import log
-from distutils.core import setup
 from distutils.cmd import Command
-from distutils.command.build import build
+from distutils.command.build_ext import build_ext
 from distutils.command.sdist import sdist
 from distutils.spawn import find_executable
+
+from setuptools import setup
+from setuptools.command.bdist_egg import bdist_egg
 
 pjoin = os.path.join
 here = os.path.abspath(os.path.dirname(__file__))
@@ -196,21 +199,25 @@ setup_args = dict(
     ],
 )
 
+class bdist_egg_disabled(bdist_egg):
+    """Disabled version of bdist_egg
+
+    Prevents setup.py install performing setuptools' default easy_install,
+    which it should never ever do.
+    """
+    def run(self):
+        sys.exit("Aborting implicit building of eggs. Use `pip install .` to install from source.")
+
 
 cmdclass = dict(
-    build  = js_prerelease(build),
+    build_ext  = js_prerelease(build_ext),
     sdist  = js_prerelease(sdist, strict=True),
     jsdeps = combine_commands(
         install_npm(pjoin(here, 'nbdime-web')),
         install_npm(pjoin(here, 'nbdime', 'webapp')),
     ),
+    bdist_egg = bdist_egg if 'bdist_egg' in sys.argv else bdist_egg_disabled,
 )
-
-if 'develop' in sys.argv or any(a.startswith('bdist') for a in sys.argv):
-    import setuptools
-    from setuptools.command.develop import develop
-
-    cmdclass['develop'] = js_prerelease(develop, strict=True)
 
 setup_args['cmdclass'] = cmdclass
 
