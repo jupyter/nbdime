@@ -1,7 +1,7 @@
 module.exports = {
   entry: './src/index.ts',
   output: {
-    path: __dirname + "/static/build",
+    path: __dirname + "/static",
     filename: "nbdime.js",
     publicPath: "./static/"
   },

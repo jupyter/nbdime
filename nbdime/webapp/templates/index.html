@@ -36,7 +36,7 @@
     </div>
     <script id='jupyter-config-data' type="application/json">{ "baseUrl": {{ json_encode(base_url) }} }</script>
     <script id='nbdime-config-data' type="application/json">{{ json_encode(config_data) }}</script>
-    <script src="{{ static_url('build/nbdime.js') }}"></script>
+    <script src="{{ static_url('nbdime.js') }}"></script>
     <noscript>Nbdime relies on javascript for diff/merge views!</noscript>
   </body>
 </html>

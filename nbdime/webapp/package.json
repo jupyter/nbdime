@@ -1,11 +1,11 @@
 {
   "name": "nbdime-webapp",
-  "main": "static/build/nbdime.js",
+  "main": "static/nbdime.js",
   "version": "0.2.0",
   "scripts": {
     "build": "webpack",
     "build:test": "webpack --config test/webpack.config.js",
-    "clean": "rimraf build && rimraf node_modules && rimraf static/build",
+    "clean": "rimraf build && rimraf node_modules && rimraf static",
     "postinstall": "npm dedupe",
     "update": "rimraf node_modules/nbdime && npm install && npm run build",
     "watch:web": "watch \"npm run update\" ../../nbdime-web/lib --wait=10"
