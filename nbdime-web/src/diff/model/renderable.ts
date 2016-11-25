@@ -55,7 +55,7 @@ abstract class RenderableDiffModel<T extends JSONValue> implements IDiffModel {
   }
 
   get unchanged() : boolean {
-    return this.diff === null && this.base !== null && this.remote !== null;
+    return JSON.stringify(this.base) === JSON.stringify(this.remote);
   }
 
   get added(): boolean {
