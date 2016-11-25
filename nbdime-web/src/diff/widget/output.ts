@@ -19,78 +19,29 @@ import {
 } from 'phosphor/lib/ui/widget';
 
 import {
-  PanelLayout
-} from 'phosphor/lib/ui/panel';
+  RenderableDiffView
+} from './renderable';
 
 import {
   valueIn
 } from '../../common/util';
 
 import {
-   OutputDiffModel
+  OutputDiffModel
 } from '../model';
 
 
 const RENDERED_OUTPUT_CLASS = 'jp-Diff-renderedOuput';
 
 /**
- * A list of outputs considered safe.
- */
-const safeOutputs = ['text/plain', 'text/latex', 'image/png', 'image/jpeg',
-                    'application/vnd.jupyter.console-text'];
-
-/**
- * A list of outputs that are sanitizable.
- */
-const sanitizable = ['text/svg', 'text/html'];
-
-/**
  * Widget for outputs with renderable MIME data.
  */
 export
-class RenderableOutputView extends Widget {
-  constructor(model: OutputDiffModel, editorClass: string[],
+class RenderableOutputView extends RenderableDiffView<nbformat.IOutput> {
+  constructor(model: OutputDiffModel,
+              editorClass: string[],
               rendermime: IRenderMime) {
-    super();
-    this._rendermime = rendermime;
-    let bdata = model.base;
-    let rdata = model.remote;
-    this.layout = new PanelLayout();
-    this.addClass(RENDERED_OUTPUT_CLASS);
-
-    let ci = 0;
-    if (bdata) {
-      let widget = this.createOutput(bdata, false);
-      this.layout.addWidget(widget);
-      widget.addClass(editorClass[ci++]);
-    }
-    if (rdata && rdata !== bdata) {
-      let widget = this.createOutput(rdata, false);
-      this.layout.addWidget(widget);
-      widget.addClass(editorClass[ci++]);
-    }
-  }
-
-  /**
-   * Checks if all MIME types of a MIME bundle are safe or can be sanitized.
-   */
-  static safeOrSanitizable(bundle: nbformat.IMimeBundle) {
-    let keys = Object.keys(bundle);
-    for (let key of keys) {
-      if (valueIn(key, safeOutputs)) {
-        continue;
-      } else if (valueIn(key, sanitizable)) {
-        let out = bundle[key];
-        if (typeof out === 'string') {
-          continue;
-        } else {
-          return false;
-        }
-      } else {
-        return false;
-      }
-    }
-    return true;
+    super(model, editorClass, rendermime);
   }
 
   /**
@@ -108,7 +59,7 @@ class RenderableOutputView extends Widget {
     for (let o of toTest) {
       if (o.output_type === 'execute_result' || o.output_type === 'display_data') {
         let bundle = o.data;
-        if (!this.safeOrSanitizable(bundle)) {
+        if (!RenderableDiffView.safeOrSanitizable(bundle)) {
           return false;
         }
       } else if (valueIn(o.output_type, ['stream', 'error'])) {
@@ -119,14 +70,13 @@ class RenderableOutputView extends Widget {
     return true;
   }
 
-  layout: PanelLayout;
-
   /**
    * Create a widget which renders the given cell output
    */
-  protected createOutput(output: nbformat.IOutput, trusted: boolean): Widget {
+  protected createSubView(output: nbformat.IOutput, trusted: boolean): Widget {
     let widget = new OutputWidget({rendermime: this._rendermime});
     widget.render({output, trusted});
+    widget.addClass(RENDERED_OUTPUT_CLASS);
     return widget;
   }
 
