@@ -347,6 +347,10 @@ declare namespace CodeMirror {
         "subtract" Reduce the indentation of the line. */
         indentLine(line: number, dir?: string): void;
 
+        /**
+         * Tells you whether the editor's content can be edited by the user.
+         */
+        isReadOnly(): boolean;
 
         /** Give the editor focus. */
         focus(): void;
