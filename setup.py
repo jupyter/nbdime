@@ -210,7 +210,7 @@ class bdist_egg_disabled(bdist_egg):
 
 
 cmdclass = dict(
-    build_ext  = js_prerelease(build_ext),
+    build_ext = js_prerelease(build_ext),
     sdist  = js_prerelease(sdist, strict=True),
     jsdeps = combine_commands(
         install_npm(pjoin(here, 'nbdime-web')),
@@ -218,6 +218,12 @@ cmdclass = dict(
     ),
     bdist_egg = bdist_egg if 'bdist_egg' in sys.argv else bdist_egg_disabled,
 )
+try:
+    from wheel.bdist_wheel import bdist_wheel
+    cmdclass['bdist_wheel'] = js_prerelease(bdist_wheel, strict=True)
+except ImportError:
+    pass
+
 
 setup_args['cmdclass'] = cmdclass
 
