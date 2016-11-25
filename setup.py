@@ -114,6 +114,9 @@ def install_npm(path):
             return find_executable("npm")
 
         def run(self):
+            if (skip_npm):
+                log.info('Skipping npm-installation')
+                return
             log.info('Checking npm-installation:')
             has_npm = self.has_npm()
             if not has_npm:
@@ -194,23 +197,22 @@ setup_args = dict(
 )
 
 
-if not skip_npm:
-    cmdclass = dict(
-        build  = js_prerelease(build),
-        sdist  = js_prerelease(sdist, strict=True),
-        jsdeps = combine_commands(
-            install_npm(pjoin(here, 'nbdime-web')),
-            install_npm(pjoin(here, 'nbdime', 'webapp')),
-        ),
-    )
+cmdclass = dict(
+    build  = js_prerelease(build),
+    sdist  = js_prerelease(sdist, strict=True),
+    jsdeps = combine_commands(
+        install_npm(pjoin(here, 'nbdime-web')),
+        install_npm(pjoin(here, 'nbdime', 'webapp')),
+    ),
+)
 
-    if 'develop' in sys.argv or any(a.startswith('bdist') for a in sys.argv):
-        import setuptools
-        from setuptools.command.develop import develop
+if 'develop' in sys.argv or any(a.startswith('bdist') for a in sys.argv):
+    import setuptools
+    from setuptools.command.develop import develop
 
-        cmdclass['develop'] = js_prerelease(develop, strict=True)
+    cmdclass['develop'] = js_prerelease(develop, strict=True)
 
-    setup_args['cmdclass'] = cmdclass
+setup_args['cmdclass'] = cmdclass
 
 
 setuptools_args = {}
