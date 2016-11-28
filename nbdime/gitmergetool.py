@@ -14,7 +14,7 @@ Use with:
 import sys
 from subprocess import check_call, check_output, CalledProcessError
 
-from . import nbmergeapp
+from .webapp import nbmergetool
 from .args import add_filename_args
 
 
@@ -27,15 +27,12 @@ def enable(global_=False, set_default=False):
     # Register CLI tool
     check_call(cmd + ['mergetool.nbdime.cmd', 'git-nbmergetool merge "$BASE" "$LOCAL" "$REMOTE" "$MERGED"'])
 
-    # Register webapp tool
-    check_call(cmd + ['mergetool.nbdimeweb.cmd', 'git-nbwebmergetool "$BASE" "$LOCAL" "$REMOTE" "$MERGED"'])
-
     # Common setting:
     check_call(cmd + ['mergetool.prompt', 'false'])
 
     if set_default:
         # Set default tool to webapp
-        check_call(cmd + ['merge.tool', 'nbdimeweb'])
+        check_call(cmd + ['merge.tool', 'nbdime'])
 
 
 def disable(global_=False, *args):
@@ -76,7 +73,7 @@ def main(args=None):
         help="configure your global git config instead of the current repo"
     )
     config.add_argument('--set-default', action='store_true', dest='set_default',
-        help="set nbdimeweb as default mergetool"
+        help="set nbdime as default mergetool"
     )
     enable_disable = config.add_mutually_exclusive_group(required=True)
     enable_disable.add_argument('--enable', action='store_const',
@@ -89,7 +86,7 @@ def main(args=None):
     )
     opts = parser.parse_args(args)
     if opts.subcommand == 'merge':
-        return nbmergeapp.main([opts.base, opts.local, opts.remote, opts.merged])
+        return nbmergetool.main([opts.base, opts.local, opts.remote, opts.merged])
     elif opts.subcommand == 'config':
         opts.config_func(opts.global_, opts.set_default)
         return 0

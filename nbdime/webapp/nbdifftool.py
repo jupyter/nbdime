@@ -27,7 +27,7 @@ def build_arg_parser():
     Creates an argument parser for the diff tool, that also lets the
     user specify a port and displays a help message.
     """
-    description = 'difftool for Nbdime.'
+    description = 'difftool for nbdime.'
     parser = ArgumentParser(
         description=description,
         add_help=True

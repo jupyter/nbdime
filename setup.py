@@ -271,8 +271,6 @@ if 'setuptools' in sys.modules:
             'git-nbmergetool = nbdime.gitmergetool:main',
             'git-nbdiffdriver = nbdime.gitdiffdriver:main',
             'git-nbmergedriver = nbdime.gitmergedriver:main',
-            'git-nbwebdifftool = nbdime.webapp.nbdifftool:main',
-            'git-nbwebmergetool = nbdime.webapp.nbmergetool:main',
         ]
     }
     setup_args.pop('scripts', None)
