@@ -8,12 +8,14 @@ from __future__ import unicode_literals
 import pytest
 import operator
 from collections import defaultdict
+import argparse
 
 from nbdime import merge_notebooks, diff, decide_merge, apply_decisions
 
 from nbdime.merging.generic import decide_merge_with_diff
 from nbdime.merging.autoresolve import autoresolve
 from nbdime.utils import Strategies
+from nbdime.nbmergeapp import _build_arg_parser
 
 from .fixtures import db
 
@@ -29,6 +31,9 @@ base = {"foo": 1}
 local = {"foo": 2}
 remote = {"foo": 3}
 conflicted_decisions = decide_merge(base, local, remote)
+
+# Setup default args for merge app
+builder = _build_arg_parser()
 
 
 def test_autoresolve_dict_fail():
@@ -259,9 +264,6 @@ def test_autoresolve_list_conflicting_insertions_mixed():
 
 
 def test_autoresolve_dict_transients():
-    # For this test, we need to use a custom predicate to ensure alignment
-
-    common = {'id': 'This ensures alignment'}
     # Setup transient difference in base and local, deletion in remote
     b = {'a': {'transient': 22}}
     l = {'a': {'transient': 242}}
@@ -351,9 +353,8 @@ def test_autoresolve_inline_source_conflict(db):
     nbl = db["inline-conflict--2"]
     nbr = db["inline-conflict--3"]
 
-    args = None
-    #args = argparse.Namespace()
-    #args.fixme
+    args = builder.parse_args(["", "", ""])
+    args.merge_strategy = 'inline'
     merged, decisions = merge_notebooks(nbb, nbl, nbr, args)
 
     # Has conflicts
