@@ -230,7 +230,7 @@ def strategy2action_dict(local_base, le, re, strategy, path, dec):
         # Expecting never to get this kind of conflict, raise error
         raise RuntimeError("Not expecting a conflict at path {}.".format(path))
     # ... cases using changes from both sides to produce a new value
-    elif strategy == "join":
+    elif strategy == "union":
         dec.action = "local_then_remote"
         dec.conflict = False
     else:
@@ -267,7 +267,7 @@ def strategy2action_list(strategy, dec):
     elif strategy == "use-remote":
         dec.action = "remote"
         dec.conflict = False
-    elif strategy == "join":
+    elif strategy == "union":
         dec.action = "local_then_remote"
         dec.conflict = False
     elif strategy == "clear":

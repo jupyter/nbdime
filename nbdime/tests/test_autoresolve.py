@@ -170,7 +170,7 @@ def test_autoresolve_list_conflicting_insertions_simple():
     assert apply_decisions(b, resolved) == b
     assert not any(d.conflict for d in resolved)
 
-    strategies = Strategies({"/*": "join"})
+    strategies = Strategies({"/*": "union"})
     resolved = autoresolve(b, decisions, strategies)
     assert apply_decisions(b, resolved) == [1, 2, 3]
     assert not any(d.conflict for d in resolved)
@@ -214,7 +214,7 @@ def test_autoresolve_list_conflicting_insertions_mixed():
     assert apply_decisions(b, resolved) == expected_partial
     assert not any(d.conflict for d in resolved)
 
-    strategies = Strategies({"/*": "join"})
+    strategies = Strategies({"/*": "union"})
     resolved = autoresolve(b, decisions, strategies)
     assert apply_decisions(b, resolved) == [1, 2, 3, 9, 11]
     assert not any(d.conflict for d in resolved)
@@ -252,7 +252,7 @@ def test_autoresolve_list_conflicting_insertions_mixed():
     assert apply_decisions(b, resolved) == expected_partial
     assert not any(d.conflict for d in resolved)
 
-    strategies = Strategies({"/*": "join"})
+    strategies = Strategies({"/*": "union"})
     resolved = autoresolve(b, decisions, strategies)
     assert apply_decisions(b, resolved) == [1, 2, 3, 7, 9]
     assert not any(d.conflict for d in resolved)

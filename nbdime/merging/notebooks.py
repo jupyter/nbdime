@@ -30,7 +30,7 @@ generic_conflict_strategies = (
     "record-conflict",  # Valid for metadata only: produce new metadata with conflicts recorded for external inspection
     "inline-source",    # Valid for source only: produce new source with inline diff markers
     "inline-outputs",   # Valid for outputs only: produce new outputs with inline diff markers
-    "join",             # Join values in case of conflict, don't insert new markers.
+    "union",             # Join values in case of conflict, don't insert new markers.
     )
 
 # Strategies that can be applied to an entire notebook
@@ -74,7 +74,7 @@ def autoresolve_notebook_conflicts(base, decisions, args):
             "/cells/*/outputs": "mergetool",
             "/cells/*/attachments": "mergetool",
         })
-    elif merge_strategy.startswith('use-'):
+    elif merge_strategy.startswith('use-') or merge_strategy == 'union':
         strategies.fall_back = args.merge_strategy
     else:
         strategies.update({
