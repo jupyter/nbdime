@@ -17,8 +17,8 @@ def add_generic_args(parser):
         version="%(prog)s " + __version__)
     parser.add_argument(
         '-l', '--log-level',
-        default='WARN',
-        choices=('DEBUG', 'INFO', 'WARN', 'ERROR', 'CRITICAL'),
+        default='INFO',
+        choices=('NOTSET', 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'),
         help="Set the log level by name."
     )
 
