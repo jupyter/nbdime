@@ -18,7 +18,10 @@ from nbdime.prettyprint import pretty_print_notebook
 from nbdime.args import add_generic_args, add_filename_args
 
 
-_description = "Show a Jupyter notebook in terminal."
+_description = """Show a Jupyter notebook in terminal.
+By default shows all notebook fields.
+Limit to specific fields by passing options.
+"""
 
 
 def main_show(args):
