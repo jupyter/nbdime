@@ -37,7 +37,7 @@ def main_merge(args):
     l = nbformat.read(lfn, as_version=4)
     r = nbformat.read(rfn, as_version=4)
 
-    m, decisions = merge_notebooks(b, l, r, args)
+    merged, decisions = merge_notebooks(b, l, r, args)
     conflicted = [d for d in decisions if d.conflict]
 
     returncode = 1 if conflicted else 0
@@ -54,7 +54,7 @@ def main_merge(args):
         # FIXME: We currently write this way as git needs \n line endings,
         # when used as merge driver. However, we should write using OS
         # line endings otherwise.
-        s = nbformat.writes(nb) + u'\n'
+        s = nbformat.writes(merged) + u'\n'
         senc = s.encode()
 
         # Write partial or fully completed merge to given foo.ipynb filename
@@ -62,7 +62,7 @@ def main_merge(args):
             mf.write(senc)
         print("Merge result written to %s" % mfn)
     else:
-        pretty_print_notebook_merge(bfn, lfn, rfn, b, l, r, m, decisions)
+        pretty_print_notebook_merge(bfn, lfn, rfn, b, l, r, merged, decisions)
 
     return returncode
 
