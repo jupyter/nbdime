@@ -31,8 +31,8 @@ from .patching import patch, patch_string
 from .utils import star_path, split_path, join_path
 
 # TODO: Make this configurable
-use_git = False
-use_diff = False
+use_git = True
+use_diff = True
 use_colors = True
 
 # Indentation offset in pretty-print

@@ -45,7 +45,7 @@ expected_output = """nbdiff {0} {1}
 """
 
 
-def test_git_diff_driver(capsys, noindent, nocolor):
+def test_git_diff_driver(capsys, nocolor):
     # Simulate a call from `git diff` to check basic driver functionality
     test_dir = os.path.abspath(os.path.dirname(__file__))
 
