@@ -15,19 +15,12 @@ def add_generic_args(parser):
         '--version',
         action="version",
         version="%(prog)s " + __version__)
-
-    if 0:  # TODO: Use verbose and quiet across nbdime and enable these:
-        qv_group = parser.add_mutually_exclusive_group()
-        qv_group.add_argument(
-            '-v', '--verbose',
-            default=False,
-            action="store_true",
-            help="increase verbosity of console output.")
-        qv_group.add_argument(
-            '-q', '--quiet',
-            default=False,
-            action="store_true",
-            help="silence console output.")
+    parser.add_argument(
+        '-l', '--log-level',
+        default='WARN',
+        choices=('DEBUG', 'INFO', 'WARN', 'ERROR', 'CRITICAL'),
+        help="Set the log level by name."
+    )
 
 
 def add_web_args(parser, default_port=8888):
@@ -37,11 +30,6 @@ def add_web_args(parser, default_port=8888):
         "specify the port you want the server to run on. Default is %d%s." % (
             default_port, " (random)" if default_port == 0 else ""
         ))
-    parser.add_argument(
-        '-l', '--loglevel',
-        default='INFO',
-        help="Set the log level to use. One of: [CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET]"
-    )
     parser.add_argument(
         '-p', '--port',
         default=default_port,
@@ -101,6 +89,7 @@ def add_filename_args(parser, names):
     Helps getting consistent doc strings.
     """
     helps = {
+        "notebook": "The notebook filename.",
         "base":   "The base notebook filename.",
         "local":  "The local modified notebook filename.",
         "remote": "The remote modified notebook filename.",

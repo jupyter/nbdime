@@ -1,15 +1,22 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
 from __future__ import unicode_literals
 
+import logging
+from six import StringIO
+
 from .generic import decide_merge_with_diff
 from .decisions import apply_decisions
 from .autoresolve import autoresolve
 from ..diffing.notebooks import diff_notebooks
 from ..utils import Strategies
+from ..prettyprint import pretty_print_notebook_diff, pretty_print_merge_decisions, pretty_print_notebook
+
+
+_logger = logging.getLogger(__name__)
 
 
 # Strategies for handling conflicts  TODO: Implement these and refine further!
@@ -71,12 +78,35 @@ def decide_notebook_merge(base, local, remote, args=None):
     local_diffs = diff_notebooks(base, local)
     remote_diffs = diff_notebooks(base, remote)
 
+    if args and args.log_level == "DEBUG":
+        _logger.debug("In merge, base-local diff:")
+        buf = StringIO()
+        pretty_print_notebook_diff("<base>", "<local>", base, local_diffs, buf)
+        _logger.debug(buf.getvalue())
+
+        _logger.debug("In merge, base-remote diff:")
+        buf = StringIO()
+        pretty_print_notebook_diff("<base>", "<remote>", base, remote_diffs, buf)
+        _logger.debug(buf.getvalue())
+
     # Execute a generic merge operation
     decisions = decide_merge_with_diff(
         base, local, remote, local_diffs, remote_diffs)
 
+    if args and args.log_level == "DEBUG":
+        _logger.debug("In merge, initial decisions:")
+        buf = StringIO()
+        pretty_print_merge_decisions(base, decisions, buf)
+        _logger.debug(buf.getvalue())
+
     # Try to resolve conflicts based on behavioural options
     decisions = autoresolve_notebook_conflicts(base, decisions, args)
+
+    if args and args.log_level == "DEBUG":
+        _logger.debug("In merge, autoresolved decisions:")
+        buf = StringIO()
+        pretty_print_merge_decisions(base, decisions, buf)
+        _logger.debug(buf.getvalue())
 
     return decisions
 
@@ -86,5 +116,22 @@ def merge_notebooks(base, local, remote, args=None):
 
     Return new (partially) merged notebook and unapplied diffs from the local and remote side.
     """
+    if args and args.log_level == "DEBUG":
+        for (name, nb) in [("base", base), ("local", local), ("remote", remote)]:
+            _logger.debug("%s In merge, input %s notebook:" % ("="*20, name))
+            buf = StringIO()
+            pretty_print_notebook(nb, None, buf)
+            _logger.debug(buf.getvalue())
+
     decisions = decide_notebook_merge(base, local, remote, args)
-    return apply_decisions(base, decisions), decisions
+
+    merged = apply_decisions(base, decisions)
+
+    if args and args.log_level == "DEBUG":
+        _logger.debug("%s In merge, merged notebook:" % ("="*20,))
+        buf = StringIO()
+        pretty_print_notebook(merged)
+        _logger.debug(buf.getvalue())
+        _logger.debug("%s End merge" % ("="*20,))
+
+    return merged, decisions

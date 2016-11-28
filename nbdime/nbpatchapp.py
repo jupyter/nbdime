@@ -12,8 +12,11 @@ import argparse
 import json
 import nbformat
 import io
-from .patching import patch_notebook
-from .diff_format import to_diffentry_dicts
+
+import nbdime
+from nbdime.patching import patch_notebook
+from nbdime.diff_format import to_diffentry_dicts
+
 
 _description = "Apply patch from nbdiff to a Jupyter notebook."
 
@@ -65,10 +68,10 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
     arguments = _build_arg_parser().parse_args(args)
+    nbdime.log.set_nbdime_log_level(arguments.log_level)
     return main_patch(arguments)
 
 
 if __name__ == "__main__":
-    import nbdime.log
     nbdime.log.init_logging()
     main()

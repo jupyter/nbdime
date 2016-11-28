@@ -15,7 +15,9 @@ def main_dispatch(args=None):
     cmd = args[0]
     args = args[1:]
 
-    if cmd == "nbdiff":
+    if cmd == "nbshow":
+        from nbdime.nbshowapp import main
+    elif cmd == "nbdiff":
         from nbdime.nbdiffapp import main
     elif cmd == "nbmerge":
         from nbdime.nbmergeapp import main

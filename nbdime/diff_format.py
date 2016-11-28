@@ -343,29 +343,26 @@ def _combine_ops(existing, new):
         return op_removerange(existing.key, existing.length + new.length)
 
 
-def flatten_list_of_string_diff(a, diff):
-    """Translates a diff of strings split by str.splitlines() to a diff of
+def flatten_list_of_string_diff(a, linebased_diff):
+    """Translates a diff of strings split by str.splitlines(True) to a diff of
     the joined multiline string.
     """
     if isinstance(a, string_types):
         a = a.splitlines(True)
 
     line_to_char = [0] + list(_accum(len(ia) for ia in a))
-    flattened = []
-    for e in diff:
+    charbased_diff = []
+    for e in linebased_diff:
         op = e.op
         line_offset = line_to_char[e.key]
         if op == DiffOp.PATCH:
-            # For patches, each entry will have keys relative to line start
-            # So we simply need to offset each key with line offset
+            # For patches, each entry applies to chars within a line,
+            # and will have keys (=char indices) relative to line start,
+            # so we simply need to offset each key with line offset
             for p in e.diff:
                 d = copy.deepcopy(p)
                 d.key += line_offset
-                # If it overlaps with an existing op, combine them to one
-                if _overlaps(flattened, d):
-                    flattened[-1] = _combine_ops(flattened[-1], d)
-                else:
-                    flattened.append(d)
+                charbased_diff.append(d)
         else:
             # Other ops simply have keys which refer to lines
             if op == DiffOp.ADDRANGE:
@@ -378,14 +375,19 @@ def flatten_list_of_string_diff(a, diff):
                 # will already be a string
                 d = copy.deepcopy(e)
                 d.key = line_offset
+            charbased_diff.append(d)
 
-            # If it overlaps with an existing op, combine them to one
-            if _overlaps(flattened, d):
-                flattened[-1] = _combine_ops(flattened[-1], d)
-            else:
-                flattened.append(d)
-    flattened.sort(key=lambda x: x.key)
-    return flattened
+    # Combine overlapping diffs
+    combined = []
+    for d in charbased_diff:
+        # If it overlaps with an existing op, combine them to one
+        if _overlaps(combined, d):
+            combined[-1] = _combine_ops(combined[-1], d)
+        else:
+            combined.append(d)
+
+    combined.sort(key=lambda x: x.key)
+    return combined
 
 
 def to_clean_dicts(di):

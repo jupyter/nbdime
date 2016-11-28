@@ -15,6 +15,7 @@ from nbdime.merging.generic import decide_merge_with_diff
 from nbdime.merging.autoresolve import autoresolve
 from nbdime.utils import Strategies
 
+from .fixtures import db
 
 # FIXME: Extend tests to more merge situations!
 
@@ -22,24 +23,6 @@ from nbdime.utils import Strategies
 # Tests here assume default autoresolve behaviour at time of writing,
 # this is likely to change and it's ok to update the tests to reflect
 # new behaviour as needed!
-
-
-def xtest_autoresolve_inline_outputs():
-    #value =
-    #le =
-    #re =
-    #expected =
-    #assert make_inline_outputs_value(value, le, re) == expected
-    pass
-
-
-def xtest_autoresolve_join():
-    #value =
-    #le =
-    #re =
-    #expected =
-    #assert make_join_value(value, le, re) == expected
-    pass
 
 
 base = {"foo": 1}
@@ -361,3 +344,44 @@ def test_autoresolve_notebook_ec():
         "source": source, "execution_count": None, "outputs": None,
         "cell_type": "code"}]}
     assert not any(d.conflict for d in decisions)
+
+
+def test_autoresolve_inline_source_conflict(db):
+    nbb = db["inline-conflict--1"]
+    nbl = db["inline-conflict--2"]
+    nbr = db["inline-conflict--3"]
+
+    args = None
+    #args = argparse.Namespace()
+    #args.fixme
+    merged, decisions = merge_notebooks(nbb, nbl, nbr, args)
+
+    # Has conflicts
+    assert any(d.conflict for d in decisions)
+
+    source = merged.cells[0].source
+
+    expected = """<<<<<<< local
+x = 1
+y = 3
+z = 4
+print(x * y / z)
+||||||| base
+x = 1
+y = 3
+print(x * y)
+=======
+x = 1
+y = 3
+print(x + q)
+>>>>>>> remote"""
+    assert source == expected
+
+
+def test_autoresolve_inline_output_conflict():
+    #value =
+    #le =
+    #re =
+    #expected =
+    #assert make_inline_outputs_value(value, le, re) == expected
+    pass
