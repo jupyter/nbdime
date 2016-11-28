@@ -28,9 +28,7 @@ expected_output = """nbdiff {0} {1}
 +def foo(x, y):
      return x + y
 -foe(3, 2)
-\ No newline at end of file
 +foo(1, 2)
-\ No newline at end of file
 
 ## modified /cells/1/source:
 @@ -1,3 +1,3 @@
@@ -38,9 +36,7 @@ expected_output = """nbdiff {0} {1}
 +def foe(x, y):
      return x * y
 -foo(1, 2)
-\ No newline at end of file
 +foe(1, 2)
-\ No newline at end of file
 
 """
 

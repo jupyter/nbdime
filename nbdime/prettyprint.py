@@ -78,6 +78,9 @@ def _external_diff_render(cmd, a, b):
         p = Popen(cmd + ['before', 'after'], cwd=td, stdout=PIPE)
         out, _ = p.communicate()
         diff = out.decode('utf8')
+        r = re.compile(r"^\\ No newline at end of file\n?", flags=re.M)
+        diff, n = r.subn("", diff)
+        assert n <= 2
     finally:
         shutil.rmtree(td)
     return diff
