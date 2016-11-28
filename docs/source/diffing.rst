@@ -2,6 +2,8 @@
 diff format
 ===========
 
+TODO: screenshot of merge-web
+
 Basics
 ------
 

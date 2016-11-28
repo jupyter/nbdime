@@ -8,15 +8,14 @@ See latest automated build, test and coverage status at:
 
 Dependencies
 ------------
-Dependencies for running python tests:
 
-  - pytest
-  - pytest-cov
-  - mock
-  - jsonschema
+Install the test dependencies:
+
+    pip install "nbdime[test]"
 
 Running tests locally
 ---------------------
+
 To run python tests, locally, enter::
 
     py.test
@@ -37,7 +36,8 @@ from the nbdime-web folder.
 
 Submitting test cases
 ---------------------
+
 If you have notebooks with interesting merge challenges,
-please consider contributing them to nbdime as test cases!
+please consider `contributing them <https://github.com/jupyter/nbdime/issues/new>`_ to nbdime as test cases!
 
 .. _pytest documentation: http://pytest.org/latest/

@@ -1,7 +1,9 @@
-Merge
-=====
+Merge details
+=============
 
-Nbdime implements a three-way merge of Jupyter notebooks and a
+TODO: screenshot of merge-web
+
+nbdime implements a three-way merge of Jupyter notebooks and a
 subset of generic JSON objects.
 
 
