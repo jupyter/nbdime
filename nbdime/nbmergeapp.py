@@ -89,7 +89,7 @@ def main(args=None):
         args = sys.argv[1:]
     nbdime.log.init_logging()
     arguments = _build_arg_parser().parse_args(args)
-    nbdime.log.set_nbdime_log_level(arguments.log_level)
+    nbdime.log.init_logging(level=arguments.log_level)
     return main_merge(arguments)
 
 

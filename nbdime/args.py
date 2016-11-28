@@ -13,7 +13,7 @@ from .log import init_logging, set_nbdime_log_level
 class LogLevelAction(argparse.Action):
     def __call__(self, parser, args, values, option_string=None):
         level = getattr(logging, values)
-        init_logging(level)
+        init_logging(level=level)
         set_nbdime_log_level(level)
 
 def add_generic_args(parser):
@@ -27,7 +27,7 @@ def add_generic_args(parser):
         '--log-level',
         default='INFO',
         choices=('DEBUG', 'INFO', 'WARN', 'ERROR', 'CRITICAL'),
-        help="Set the log level by name."
+        help="Set the log level by name.",
         action=LogLevelAction,
     )
 

@@ -120,6 +120,4 @@ def main(args=None):
 
 
 if __name__ == "__main__":
-    import nbdime.log
-    nbdime.log.init_logging()
     main()

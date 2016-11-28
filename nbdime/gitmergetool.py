@@ -14,6 +14,7 @@ Use with:
 import sys
 from subprocess import check_call, check_output, CalledProcessError
 
+import nbdime.log
 from .webapp import nbmergetool
 from .args import add_filename_args
 
@@ -85,6 +86,7 @@ def main(args=None):
         help="disable nbdime mergetool via git config"
     )
     opts = parser.parse_args(args)
+    nbdime.log.init_logging(level=opts.log_level)
     if opts.subcommand == 'merge':
         return nbmergetool.main([opts.base, opts.local, opts.remote, opts.merged])
     elif opts.subcommand == 'config':
@@ -96,6 +98,4 @@ def main(args=None):
 
 
 if __name__ == "__main__":
-    import nbdime.log
-    nbdime.log.init_logging()
-    main()
+    sys.exit(main())

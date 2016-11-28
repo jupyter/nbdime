@@ -68,10 +68,9 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
     arguments = _build_arg_parser().parse_args(args)
-    nbdime.log.set_nbdime_log_level(arguments.log_level)
+    nbdime.log.init_logging(level=arguments.log_level)
     return main_patch(arguments)
 
 
 if __name__ == "__main__":
-    nbdime.log.init_logging()
     main()

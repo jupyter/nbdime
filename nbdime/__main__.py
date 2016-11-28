@@ -12,6 +12,9 @@ import sys
 def main_dispatch(args=None):
     if args is None:
         args = sys.argv[1:]
+    if len(args) < 1:
+        sys.exit("Please specify an nbdime command to call, such as 'nbdiff' or 'nbmerge'")
+
     cmd = args[0]
     args = args[1:]
 
@@ -28,16 +31,14 @@ def main_dispatch(args=None):
     elif cmd == "nbmerge-web":
         from nbdime.webapp.nbmergeweb import main
     else:
-        print(
-            "Invalid command '%s', expecting one of:\n"
-            "  nbdiff, nbmerge, nbpatch, nbdiff-web, nbmerge-web." % (cmd,))
-        return 1
+        sys.exit(
+            "Unrecognized command '%s', expecting one of:\n"
+            "  nbdiff, nbmerge, nbpatch, nbdiff-web, nbmerge-web." % (cmd,)
+        )
 
     return main(args)
 
 
 if __name__ == "__main__":
     # This is triggered by "python -m nbdime <args>"
-    import nbdime.log
-    nbdime.log.init_logging()
     sys.exit(main_dispatch())

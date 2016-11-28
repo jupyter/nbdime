@@ -16,6 +16,7 @@ import os
 import sys
 from subprocess import check_call, check_output, CalledProcessError
 
+import nbdime.log
 from .webapp import nbdifftool
 
 
@@ -98,6 +99,7 @@ def main(args=None):
         help="disable nbdime difftool via git config"
     )
     opts = parser.parse_args(args)
+    nbdime.log.init_logging(level=opts.log_level)
     if opts.subcommand == 'diff':
         return show_diff(opts.local, opts.remote)
     elif opts.subcommand == 'config':
@@ -109,6 +111,4 @@ def main(args=None):
 
 
 if __name__ == "__main__":
-    import nbdime.log
-    nbdime.log.init_logging()
-    main()
+    sys.exit(main())
