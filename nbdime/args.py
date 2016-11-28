@@ -101,7 +101,7 @@ def add_merge_args(parser):
         dest='ignore_transients',
         action="store_false",
         default=True,
-        help="Allow deletion of transient data such as outputs and "
+        help="Disallow deletion of transient data such as outputs and "
              "execution counts in order to resolve conflicts.")
 
 
