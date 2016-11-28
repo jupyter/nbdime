@@ -21,13 +21,6 @@ from difflib import unified_diff
 from six import string_types
 import hashlib
 
-#try:
-#    from textwrap import indent
-#except ImportError:
-#    def indent(text, prefix):
-#        """The relevant part of textwrap.indent for Python 2"""
-#        return prefix + text.replace('\n', '\n' + prefix)
-
 try:
     from shutil import which
 except ImportError:
@@ -38,8 +31,8 @@ from .patching import patch, patch_string
 from .utils import star_path, split_path, join_path
 
 # TODO: Make this configurable
-use_git = True
-use_diff = True
+use_git = False
+use_diff = False
 use_colors = True
 
 # Indentation offset in pretty-print
@@ -54,15 +47,18 @@ if use_colors:
     RED = colorama.Fore.RED
     GREEN = colorama.Fore.GREEN
     BLUE = colorama.Fore.BLUE
+    YELLOW = colorama.Fore.YELLOW
     RESET = colorama.Style.RESET_ALL
     _git_diff_print_cmd = 'git diff --no-index --color-words'
 else:
     RED = ''
     GREEN = ''
     BLUE = ''
+    YELLOW = ''
     RESET = ''
     _git_diff_print_cmd = 'git diff --no-index'
 
+KEEP     = '{color}   '.format(color='')
 REMOVE   = '{color}-  '.format(color=RED)
 ADD      = '{color}+  '.format(color=GREEN)
 INFO     = '{color}## '.format(color=BLUE)
@@ -98,8 +94,13 @@ def _builtin_diff_render(a, b):
             uni.append("%s%s%s" % (ADD, line[1:], RESET))
         elif line.startswith('-'):
             uni.append("%s%s%s" % (REMOVE, line[1:], RESET))
-        else:
+        elif line.startswith(' '):
+            uni.append("%s%s%s" % (KEEP, line[1:], RESET))
+        elif line.startswith('@'):
             uni.append(line)
+        else:
+            # Don't think this will happen?
+            uni.append("%s%s%s" % (KEEP, line[1:], RESET))
     if not a.endswith('\n'):
         uni.insert(-1, r'\ No newline at end of file')
     if not b.endswith('\n'):
