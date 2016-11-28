@@ -37,5 +37,5 @@ Contents
    usecases
    diffing
    merging
-   api.md
+   restapi.md
 
