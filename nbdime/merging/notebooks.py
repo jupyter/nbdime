@@ -130,7 +130,7 @@ def merge_notebooks(base, local, remote, args=None):
     if args and args.log_level == "DEBUG":
         _logger.debug("%s In merge, merged notebook:" % ("="*20,))
         buf = StringIO()
-        pretty_print_notebook(merged)
+        pretty_print_notebook(merged, None, buf)
         _logger.debug(buf.getvalue())
         _logger.debug("%s End merge" % ("="*20,))
 
