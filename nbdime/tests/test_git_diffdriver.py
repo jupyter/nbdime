@@ -4,6 +4,10 @@
 # Distributed under the terms of the Modified BSD License.
 
 from __future__ import unicode_literals
+try:
+    from shutil import which
+except ImportError:
+    from backports.shutil_which import which
 
 import pytest
 import mock
@@ -28,9 +32,7 @@ expected_output = """nbdiff {0} {1}
 +def foo(x, y):
      return x + y
 -foe(3, 2)
-\ No newline at end of file
 +foo(1, 2)
-\ No newline at end of file
 
 ## modified /cells/1/source:
 @@ -1,3 +1,3 @@
@@ -38,13 +40,11 @@ expected_output = """nbdiff {0} {1}
 +def foe(x, y):
      return x * y
 -foo(1, 2)
-\ No newline at end of file
 +foe(1, 2)
-\ No newline at end of file
 
 """
 
-
+@pytest.mark.skipif(not which('git'), reason="Missing git.")
 def test_git_diff_driver(capsys, nocolor):
     # Simulate a call from `git diff` to check basic driver functionality
     test_dir = os.path.abspath(os.path.dirname(__file__))
