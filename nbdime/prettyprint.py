@@ -185,15 +185,15 @@ def pretty_print_value(value, path, prefix="", out=sys.stdout):
     # Check if we can handle path with specific formatter
     if starred is not None:
         if starred == "/cells/*":
+            pretty_print_cell(None, value, prefix, out)
+        elif starred == "/cells":
             for cell in value:
                 pretty_print_cell(None, cell, prefix, out)
-        elif starred == "/cells":
-            pretty_print_cell(None, value, prefix, out)
         elif starred == "/cells/*/outputs/*":
+            pretty_print_output(None, value, prefix, out)
+        elif starred == "/cells/*/outputs":
             for output in value:
                 pretty_print_output(None, output, prefix, out)
-        elif starred == "/cells/*/outputs":
-            pretty_print_output(None, value, prefix, out)
         elif starred == "/cells/*/attachments":
             pretty_print_attachments(value, prefix, out)
         else:
@@ -460,11 +460,13 @@ def pretty_print_diff_entry(a, e, path, out=sys.stdout):
         pretty_print_value(e.value, nextpath, ADD, out)
 
     elif op == DiffOp.REPLACE:
-        pretty_print_diff_action("replaced", nextpath, out)
         aval = a[key]
         bval = e.value
-        # TODO: Quote string if the other is a number?
-        #if isinstance(aval, string_types) != isinstance(bval, string_types):
+        if type(aval) != type(bval):
+            typechange = " (type changed from %s to %s)" % (aval.__class__.__name__, bval.__class__.__name__)
+        else:
+            typechange = ""
+        pretty_print_diff_action("replaced" + typechange, nextpath, out)
         pretty_print_value(aval, nextpath, REMOVE, out)
         pretty_print_value(bval, nextpath, ADD, out)
 

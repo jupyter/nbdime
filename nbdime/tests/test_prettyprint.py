@@ -64,7 +64,7 @@ def test_pretty_print_multiline_string_b64():
     ins = b64text(1024)
     prefix = '+'
     io = StringIO()
-    pp.pretty_print_multiline(pp.format_value(ins), prefix, io)
+    pp.pretty_print_value(ins, "no/addr", prefix, io)
     text = io.getvalue()
     lines = text.splitlines(True)
     assert len(lines) == 1
@@ -79,7 +79,7 @@ def test_pretty_print_multiline_string_short():
     prefix = '+'
 
     io = StringIO()
-    pp.pretty_print_multiline(pp.format_value(ins), prefix, io)
+    pp.pretty_print_value(ins, "no/addr", prefix, io)
     text = io.getvalue()
     lines = text.splitlines(False)
 
@@ -90,7 +90,7 @@ def test_pretty_print_multiline_string_long():
     ins = '\n'.join('line %i' % i for i in range(64))
     prefix = '+'
     io = StringIO()
-    pp.pretty_print_multiline(pp.format_value(ins), prefix, io)
+    pp.pretty_print_value(ins, "no/addr", prefix, io)
     text = io.getvalue()
     lines = text.splitlines(False)
     assert len(lines) == 64
@@ -156,7 +156,7 @@ def test_pretty_print_stream_output():
     output = v4.new_output('stream', name='stdout', text='some\ntext')
 
     io = StringIO()
-    pp.pretty_print_output(None, output, "+", io)
+    pp.pretty_print_value(output, "/cells/2/outputs/3", "+", io)
     text = io.getvalue()
     lines = text.splitlines()
 
@@ -177,7 +177,7 @@ def test_pretty_print_display_data():
     })
 
     io = StringIO()
-    pp.pretty_print_output(None, output, "+", io)
+    pp.pretty_print_value(output, "/cells/1/outputs/2", "+", io)
     text = io.getvalue()
     lines = text.splitlines()
 
@@ -193,7 +193,7 @@ def test_pretty_print_markdown_cell():
     cell = v4.new_markdown_cell(source='# Heading\n\n*some markdown*')
 
     io = StringIO()
-    pp.pretty_print_cell(None, cell, "+", io)
+    pp.pretty_print_value(cell, "/cells/0", "+", io)
     text = io.getvalue()
     lines = text.splitlines()
 
@@ -215,7 +215,7 @@ def test_pretty_print_code_cell():
     )
 
     io = StringIO()
-    pp.pretty_print_cell(None, cell, "+", io)
+    pp.pretty_print_value(cell, "/cells/0", "+", io)
     text = io.getvalue()
     lines = text.splitlines()
 
