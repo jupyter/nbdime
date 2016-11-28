@@ -264,7 +264,6 @@ if 'setuptools' in sys.modules:
             'nbshow = nbdime.nbshowapp:main',
             'nbdiff = nbdime.nbdiffapp:main',
             'nbdiff-web = nbdime.webapp.nbdiffweb:main',
-            'nbpatch = nbdime.nbpatchapp:main',
             'nbmerge = nbdime.nbmergeapp:main',
             'nbmerge-web = nbdime.webapp.nbmergeweb:main',
             'git-nbdifftool = nbdime.gitdifftool:main',
