@@ -348,6 +348,72 @@ def test_autoresolve_notebook_ec():
     assert not any(d.conflict for d in decisions)
 
 
+def test_autoresolve_notebook_no_ignore():
+    args = builder.parse_args(["", "", ""])
+    args.ignore_transients = False
+
+    source = "def foo(x, y):\n    return x**y"
+    base = {"cells": [{
+        "source": source, "execution_count": 1, "cell_type": "code",
+        "outputs": None}]}
+    local = {"cells": [{
+        "source": source, "execution_count": 2, "cell_type": "code",
+        "outputs": None}]}
+    remote = {"cells": [{
+        "source": source, "execution_count": 3, "cell_type": "code",
+        "outputs": None}]}
+    merged, decisions = merge_notebooks(base, local, remote, args)
+    assert merged == {"cells": [{
+        "source": source, "execution_count": 1, "outputs": None,
+        "cell_type": "code"}]}
+    assert decisions[0].conflict is True
+    assert len(decisions) == 1
+
+
+def test_autoresolve_notebook_no_ignore_fallback():
+    args = builder.parse_args(["", "", ""])
+    args.ignore_transients = False
+    args.merge_strategy = 'use-remote'
+
+    source = "def foo(x, y):\n    return x**y"
+    base = {"cells": [{
+        "source": source, "execution_count": 1, "cell_type": "code",
+        "outputs": None}]}
+    local = {"cells": [{
+        "source": source, "execution_count": 2, "cell_type": "code",
+        "outputs": None}]}
+    remote = {"cells": [{
+        "source": source, "execution_count": 3, "cell_type": "code",
+        "outputs": None}]}
+    merged, decisions = merge_notebooks(base, local, remote, args)
+    assert merged == {"cells": [{
+        "source": source, "execution_count": 3, "outputs": None,
+        "cell_type": "code"}]}
+    assert not any(d.conflict for d in decisions)
+
+
+def test_autoresolve_notebook_ignore_fallback():
+    args = builder.parse_args(["", "", ""])
+    args.ignore_transients = True
+    args.merge_strategy = 'use-remote'
+
+    source = "def foo(x, y):\n    return x**y"
+    base = {"cells": [{
+        "source": source, "execution_count": 1, "cell_type": "code",
+        "outputs": None}]}
+    local = {"cells": [{
+        "source": source, "execution_count": 2, "cell_type": "code",
+        "outputs": None}]}
+    remote = {"cells": [{
+        "source": source, "execution_count": 3, "cell_type": "code",
+        "outputs": None}]}
+    merged, decisions = merge_notebooks(base, local, remote, args)
+    assert merged == {"cells": [{
+        "source": source, "execution_count": None, "outputs": None,
+        "cell_type": "code"}]}
+    assert not any(d.conflict for d in decisions)
+
+
 def test_autoresolve_inline_source_conflict(db):
     nbb = db["inline-conflict--1"]
     nbl = db["inline-conflict--2"]
