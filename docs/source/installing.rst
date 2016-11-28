@@ -37,7 +37,7 @@ and nbdime's web-based viewers depend on the following Node.js packages:
 Installing latest development version
 =====================================
 
-Installing a development version of nbdime requires `Nodejs <https://nodejs.org>`_.
+Installing a development version of nbdime requires `Node.js <https://nodejs.org>`_.
 
 Installing nbdime using :command:`pip` will install the Python package
 dependencies and
@@ -57,7 +57,7 @@ using ``nodeenv``::
     pip install nodeenv
     nodeenv -p
 
-With this environment active, you can install nbdime and its
+With this environment active, you can now install nbdime and its
 dependencies using :command:`pip`.
 
 For example with Python 3.5, the steps with output are::
