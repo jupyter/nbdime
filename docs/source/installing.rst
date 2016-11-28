@@ -85,7 +85,7 @@ virtualenv as shown here)::
     Installing collected packages: virtualenv
     Successfully installed virtualenv-15.1.0
     $ python2 -m virtualenv myenv
-    New python executable in /Users/carol/myenv/bin/python
+    New python executable in /Users/username/myenv/bin/python
     Installing setuptools, pip, wheel...done.
     $ source myenv/bin/activate
     (myenv) $ pip install nodeenv
