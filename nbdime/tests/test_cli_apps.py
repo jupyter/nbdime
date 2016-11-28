@@ -5,16 +5,13 @@
 
 from __future__ import unicode_literals
 
-import pytest
 import os
-from argparse import Namespace
 
 from .fixtures import filespath
 
 import nbdime
 from nbdime.nbshowapp import main_show
 from nbdime.nbdiffapp import main_diff
-from nbdime.nbpatchapp import main_patch
 from nbdime.nbmergeapp import main_merge
 
 
@@ -36,18 +33,6 @@ def test_nbdiff_app():
 
     args = nbdime.nbdiffapp._build_arg_parser().parse_args([afn, bfn])
     assert 0 == main_diff(args)
-
-
-def test_nbpatch_app():
-    p = filespath()
-    bfn = os.path.join(p, "multilevel-test-base.ipynb")
-    dfn = os.path.join(p, "multilevel-test-base-local-diff.json")
-
-    # When filename is omitted, will print to console instead
-    #afn = ""  # os.path.join(p, "multilevel-test-base-local.ipynb")
-
-    args = nbdime.nbpatchapp._build_arg_parser().parse_args([bfn, dfn])
-    assert 0 == main_patch(args)
 
 
 def test_nbmerge_app():

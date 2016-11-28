@@ -16,7 +16,8 @@ import os
 import sys
 from subprocess import check_call, check_output, CalledProcessError
 
-from . import nbdiffapp
+import nbdime.log
+from .webapp import nbdifftool
 
 
 def enable(global_=False, set_default=False):
@@ -27,11 +28,7 @@ def enable(global_=False, set_default=False):
 
     check_call(cmd + ['difftool.nbdime.cmd', 'git-nbdifftool diff "$LOCAL" "$REMOTE"'])
     if set_default:
-        check_call(cmd + ['diff.tool', 'nbdime'])
-
-    check_call(cmd + ['difftool.nbdimeweb.cmd', 'git-nbwebdifftool "$LOCAL" "$REMOTE"'])
-    if set_default:
-        check_call(cmd + ['diff.guitool', 'nbdimeweb'])
+        check_call(cmd + ['diff.guitool', 'nbdime'])
 
     # Common setting:
     check_call(cmd + ['difftool.prompt', 'false'])
@@ -42,17 +39,6 @@ def disable(global_=False, *args):
     cmd = ['git', 'config']
     if global_:
         cmd.append('--global')
-    try:
-        tool = check_output(cmd + ['diff.tool']).decode('utf8', 'replace').strip()
-    except CalledProcessError:
-        pass
-    else:
-        if tool in ('nbdime', 'nbdimeweb'):
-            try:
-                check_call(cmd + ['--unset', 'diff.tool'])
-            except CalledProcessError:
-                # already unset
-                pass
     try:
         tool = check_output(cmd + ['diff.guitool']).decode('utf8', 'replace').strip()
     except CalledProcessError:
@@ -74,7 +60,7 @@ def show_diff(before, after):
     """
     # TODO: handle /dev/null (Windows equivalent?) for new or deleted files
     if before.endswith('.ipynb') or after.endswith('ipynb'):
-        return nbdiffapp.main([before, after])
+        return nbdifftool.main([before, after])
     else:
         # Never returns
         os.execvp('git', ['git', 'diff', before, after])
@@ -101,7 +87,7 @@ def main(args=None):
         help="configure your global git config instead of the current repo"
     )
     config.add_argument('--set-default', action='store_true', dest='set_default',
-        help="set nbdime as default difftool and nbdimeweb as default guidifftool"
+        help="set nbdime as default gui difftool"
     )
     enable_disable = config.add_mutually_exclusive_group(required=True)
     enable_disable.add_argument('--enable', action='store_const',
@@ -113,6 +99,7 @@ def main(args=None):
         help="disable nbdime difftool via git config"
     )
     opts = parser.parse_args(args)
+    nbdime.log.init_logging(level=opts.log_level)
     if opts.subcommand == 'diff':
         return show_diff(opts.local, opts.remote)
     elif opts.subcommand == 'config':
@@ -124,6 +111,4 @@ def main(args=None):
 
 
 if __name__ == "__main__":
-    import nbdime.log
-    nbdime.log.init_logging()
-    main()
+    sys.exit(main())

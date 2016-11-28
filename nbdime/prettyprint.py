@@ -645,7 +645,7 @@ def pretty_print_merge_decisions(base, decisions, out=sys.stdout):
 
 
 def pretty_print_notebook_merge(bfn, lfn, rfn, bnb, lnb, rnb, mnb, decisions, out=sys.stdout):
-    """Pretty-print a notebook diff
+    """Pretty-print a notebook merge
 
     Parameters
     ----------

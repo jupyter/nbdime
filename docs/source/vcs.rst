@@ -32,6 +32,7 @@ and execute nbdime through git.
 
 Diff driver
 ***********
+
 Registering an external diff driver with git tells git
 to call that application to calculate and display diffs
 to the user. The driver will be called for commands such
@@ -39,7 +40,7 @@ as `git diff`, but will not be used for all git commands
 (e.g. `git add --patch` will not use the driver).
 Consult the git documentation for further details.
 
-Nbdime supplies an entry point for registering its driver
+nbdime supplies an entry point for registering its driver
 with git::
 
     git-nbdiffdriver config --enable [--global]
@@ -52,6 +53,7 @@ or global level.
 
 Manual registration
 ^^^^^^^^^^^^^^^^^^^
+
 Alternatively, the diff driver can be registered manually
 with the following steps:
 
@@ -71,15 +73,16 @@ with the following steps:
 
 Merge driver
 ************
+
 Registering an external merge driver with git tells git
 to call that application to calculate merges of certain
 files. This allows nbdime to become responsible for
 merging all notebooks.
 
-Nbdime supplies an entry point for registering its merge 
+nbdime supplies an entry point for registering its merge 
 driver with git::
 
-    git-nbmergedriver config --enbable [--global]
+    git-nbmergedriver config --enable [--global]
 
 This command will register the nbdime merge driver with 
 git on the project or global level. Additionaly, the 
@@ -89,6 +92,7 @@ or global level.
 
 Manual registration
 ^^^^^^^^^^^^^^^^^^^
+
 Alternatively, the diff driver can be registered manually
 with the following steps:
 
@@ -119,7 +123,7 @@ nbdime as a git diff tool, run the command::
 Once registered, the diff tool can be started by running
 the git command::
 
-    git difftool --tool=nbdimeweb [<commit> [<commit>]] [--] [<path>…​]
+    git difftool --tool=nbdime [<commit> [<commit>]] [--] [<path>…​]
 
 If you want to avoid specifying the tool each time, nbdime
 can be set as the default tool by adding the ``--set-default``
@@ -147,21 +151,21 @@ Alternatively, the diff tool can be registered manually
 with the following steps:
 
 - To register both the CLI and web diff tools with git under
-  the names "nbdime" and "nbdimeweb", add the following entries
+  the names "nbdime" and "nbdime", add the following entries
   to the appropriate ``.gitconfig`` file::
 
     [difftool "nbdime"]
     cmd = git-nbdifftool diff "$LOCAL" "$REMOTE"
     
-    [difftool "nbdimeweb"]
-    cmd = git-nbwebdifftool "$LOCAL" "$REMOTE"
+    [difftool "nbdime"]
+    cmd = git-nbdifftool "$LOCAL" "$REMOTE"
 
 - To set the diff tools as the default tools, add or modify
   the following entries in the appropriate``.gitconfig`` file::
     
     [diff]
     tool = nbdime
-    guitool = nbdimeweb
+    guitool = nbdime
 
 Merge web tool
 **************
@@ -176,7 +180,7 @@ merge tool, run the command::
 Once registered, the merge tool can be started by running
 the git command::
 
-    git mergetool --tool=nbdimeweb [<file>…​]
+    git mergetool --tool=nbdime [<file>…​]
 
 If you want to avoid specifying the tool each time, nbdime
 can be set as the default tool by adding the ``--set-default``
@@ -204,14 +208,14 @@ Alternatively, the merge tool can be registered manually
 with the following steps:
 
 - To register both the merge tool with git under
-  the name "nbdimeweb", add the following entry
+  the name "nbdime", add the following entry
   to the appropriate ``.gitconfig`` file::
 
-    [mergetool "nbdimeweb"]
-    cmd = git-nbwebmergetool "$BASE" "$LOCAL" "$REMOTE" "$MERGED"
+    [mergetool "nbdime"]
+    cmd = git-nbmergetool "$BASE" "$LOCAL" "$REMOTE" "$MERGED"
 
 - To set nbdime as the default merge tool, add or modify
   the following entry in the appropriate ``.gitconfig`` file::
 
     [merge]
-    tool = nbdimeweb
+    tool = nbdime

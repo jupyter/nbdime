@@ -1,12 +1,20 @@
 # coding: utf-8
 
-# Copyright (c) IPython Development Team.
+# Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+import argparse
+import logging
 import os
 
 from ._version import __version__
+from .log import init_logging, set_nbdime_log_level
 
+class LogLevelAction(argparse.Action):
+    def __call__(self, parser, args, values, option_string=None):
+        level = getattr(logging, values)
+        init_logging(level=level)
+        set_nbdime_log_level(level)
 
 def add_generic_args(parser):
     """Adds a set of arguments common to all nbdime commands.
@@ -16,10 +24,11 @@ def add_generic_args(parser):
         action="version",
         version="%(prog)s " + __version__)
     parser.add_argument(
-        '-l', '--log-level',
-        default='WARN',
+        '--log-level',
+        default='INFO',
         choices=('DEBUG', 'INFO', 'WARN', 'ERROR', 'CRITICAL'),
-        help="Set the log level by name."
+        help="Set the log level by name.",
+        action=LogLevelAction,
     )
 
 
