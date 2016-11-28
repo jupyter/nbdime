@@ -33,18 +33,18 @@ conflicted_decisions = decide_merge(base, local, remote)
 
 def test_autoresolve_dict_fail():
     """Check that "fail" strategy results in proper exception raised."""
-    strategies = {"/foo": "fail"}
+    strategies = Strategies({"/foo": "fail"})
     with pytest.raises(RuntimeError):
         autoresolve(base, conflicted_decisions, strategies)
 
     base2 = {"foo": {"bar": 1}}
     local2 = {"foo": {"bar": 2}}
     remote2 = {"foo": {"bar": 3}}
-    strategies = {"/foo/bar": "fail"}
+    strategies = Strategies({"/foo/bar": "fail"})
     decisions = decide_merge(base2, local2, remote2)
     with pytest.raises(RuntimeError):
         autoresolve(base2, decisions, strategies)
-    strategies = {"/foo": "fail"}
+    strategies = Strategies({"/foo": "fail"})
     with pytest.raises(RuntimeError):
         autoresolve(base2, decisions, strategies)
 
@@ -59,29 +59,29 @@ def test_autoresolve_dict_clear():
     assert apply_decisions(base2, decisions) == {"foo": [1, 2]}
     assert decisions[0].local_diff != []
     assert decisions[0].remote_diff != []
-    strategies = {"/foo": "clear-parent"}
+    strategies = Strategies({"/foo": "clear-parent"})
     resolved = autoresolve(base2, decisions, strategies)
     assert apply_decisions(base2, resolved) == {"foo": []}
     assert not any([d.conflict for d in resolved])
 
-    strategies = {"/foo": "clear"}
+    strategies = Strategies({"/foo": "clear"})
     resolved = autoresolve(base2, decisions, strategies)
     assert apply_decisions(base2, resolved) == {"foo": [1, None]}
     assert not any([d.conflict for d in resolved])
 
 
 def test_autoresolve_dict_use_one_side():
-    strategies = {"/foo": "use-base"}
+    strategies = Strategies({"/foo": "use-base"})
     decisions = autoresolve(base, conflicted_decisions, strategies)
     assert not any([d.conflict for d in decisions])
     assert apply_decisions(base, decisions) == {"foo": 1}
 
-    strategies = {"/foo": "use-local"}
+    strategies = Strategies({"/foo": "use-local"})
     decisions = autoresolve(base, conflicted_decisions, strategies)
     assert not any([d.conflict for d in decisions])
     assert apply_decisions(base, decisions) == {"foo": 2}
 
-    strategies = {"/foo": "use-remote"}
+    strategies = Strategies({"/foo": "use-remote"})
     decisions = autoresolve(base, conflicted_decisions, strategies)
     assert not any([d.conflict for d in decisions])
     assert apply_decisions(base, decisions) == {"foo": 3}
@@ -91,17 +91,17 @@ def test_autoresolve_dict_use_one_side():
     remote2 = {"foo": {"bar": 3}}
     conflicted_decisions2 = decide_merge(base2, local2, remote2)
 
-    strategies = {"/foo/bar": "use-base"}
+    strategies = Strategies({"/foo/bar": "use-base"})
     decisions = autoresolve(base2, conflicted_decisions2, strategies)
     assert not any([d.conflict for d in decisions])
     assert apply_decisions(base2, decisions) == {"foo": {"bar": 1}}
 
-    strategies = {"/foo/bar": "use-local"}
+    strategies = Strategies({"/foo/bar": "use-local"})
     decisions = autoresolve(base2, conflicted_decisions2, strategies)
     assert not any([d.conflict for d in decisions])
     assert apply_decisions(base2, decisions) == {"foo": {"bar": 2}}
 
-    strategies = {"/foo/bar": "use-remote"}
+    strategies = Strategies({"/foo/bar": "use-remote"})
     decisions = autoresolve(base2, conflicted_decisions2, strategies)
     assert not any([d.conflict for d in decisions])
     assert apply_decisions(base2, decisions) == {"foo": {"bar": 3}}
@@ -150,27 +150,27 @@ def test_autoresolve_list_conflicting_insertions_simple():
     r = [1, 3]
     decisions = decide_merge(b, l, r)
 
-    strategies = {"/*": "use-local"}
+    strategies = Strategies({"/*": "use-local"})
     resolved = autoresolve(b, decisions, strategies)
     assert apply_decisions(b, resolved) == l
     assert not any(d.conflict for d in resolved)
 
-    strategies = {"/*": "use-remote"}
+    strategies = Strategies({"/*": "use-remote"})
     resolved = autoresolve(b, decisions, strategies)
     assert apply_decisions(b, resolved) == r
     assert not any(d.conflict for d in resolved)
 
-    strategies = {"/*": "use-base"}
+    strategies = Strategies({"/*": "use-base"})
     resolved = autoresolve(b, decisions, strategies)
     assert apply_decisions(b, resolved) == b
     assert not any(d.conflict for d in resolved)
 
-    strategies = {"/*": "join"}
+    strategies = Strategies({"/*": "join"})
     resolved = autoresolve(b, decisions, strategies)
     assert apply_decisions(b, resolved) == [1, 2, 3]
     assert not any(d.conflict for d in resolved)
 
-    strategies = {"/*": "clear-parent"}
+    strategies = Strategies({"/*": "clear-parent"})
     resolved = autoresolve(b, decisions, strategies)
     assert apply_decisions(b, resolved) == []
     assert not any(d.conflict for d in resolved)
@@ -185,7 +185,7 @@ def test_autoresolve_list_conflicting_insertions_mixed():
     decisions = decide_merge(b, l, r)
 
     # Check strategyless resolution
-    strategies = {}
+    strategies = Strategies({})
     resolved = autoresolve(b, decisions, strategies)
     expected_partial = [1, 9, 11]
     assert apply_decisions(b, resolved) == expected_partial
@@ -193,28 +193,28 @@ def test_autoresolve_list_conflicting_insertions_mixed():
     assert resolved[0].conflict
     assert not resolved[1].conflict
 
-    strategies = {"/*": "use-local"}
+    strategies = Strategies({"/*": "use-local"})
     resolved = autoresolve(b, decisions, strategies)
     assert apply_decisions(b, resolved) == l
     assert not any(d.conflict for d in resolved)
 
-    strategies = {"/*": "use-remote"}
+    strategies = Strategies({"/*": "use-remote"})
     resolved = autoresolve(b, decisions, strategies)
     assert apply_decisions(b, resolved) == r
     assert not any(d.conflict for d in resolved)
 
-    strategies = {"/*": "use-base"}
+    strategies = Strategies({"/*": "use-base"})
     resolved = autoresolve(b, decisions, strategies)
     # Strategy is only applied to conflicted decisions:
     assert apply_decisions(b, resolved) == expected_partial
     assert not any(d.conflict for d in resolved)
 
-    strategies = {"/*": "join"}
+    strategies = Strategies({"/*": "join"})
     resolved = autoresolve(b, decisions, strategies)
     assert apply_decisions(b, resolved) == [1, 2, 3, 9, 11]
     assert not any(d.conflict for d in resolved)
 
-    strategies = {"/*": "clear-parent"}
+    strategies = Strategies({"/*": "clear-parent"})
     resolved = autoresolve(b, decisions, strategies)
     assert apply_decisions(b, resolved) == []
     assert not any(d.conflict for d in resolved)
@@ -226,33 +226,33 @@ def test_autoresolve_list_conflicting_insertions_mixed():
     decisions = decide_merge(b, l, r)
 
     # Check strategyless resolution
-    strategies = {}
+    strategies = Strategies({})
     resolved = autoresolve(b, decisions, strategies)
     expected_partial = [1, 7, 9]
     assert apply_decisions(b, resolved) == expected_partial
     assert resolved == decisions  # Not able to resolve anything
 
-    strategies = {"/*": "use-local"}
+    strategies = Strategies({"/*": "use-local"})
     resolved = autoresolve(b, decisions, strategies)
     assert apply_decisions(b, resolved) == l
     assert not any(d.conflict for d in resolved)
 
-    strategies = {"/*": "use-remote"}
+    strategies = Strategies({"/*": "use-remote"})
     resolved = autoresolve(b, decisions, strategies)
     assert apply_decisions(b, resolved) == r
     assert not any(d.conflict for d in resolved)
 
-    strategies = {"/*": "use-base"}
+    strategies = Strategies({"/*": "use-base"})
     resolved = autoresolve(b, decisions, strategies)
     assert apply_decisions(b, resolved) == expected_partial
     assert not any(d.conflict for d in resolved)
 
-    strategies = {"/*": "join"}
+    strategies = Strategies({"/*": "join"})
     resolved = autoresolve(b, decisions, strategies)
     assert apply_decisions(b, resolved) == [1, 2, 3, 7, 9]
     assert not any(d.conflict for d in resolved)
 
-    strategies = {"/*": "clear-parent"}
+    strategies = Strategies({"/*": "clear-parent"})
     resolved = autoresolve(b, decisions, strategies)
     assert apply_decisions(b, resolved) == []
     assert not any(d.conflict for d in resolved)

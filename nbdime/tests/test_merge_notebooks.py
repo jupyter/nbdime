@@ -20,13 +20,15 @@ from nbdime import merge_notebooks
 # FIXME: Extend tests to more merge situations!
 
 
+# Setup default args for merge app
 builder = _build_arg_parser()
-args = builder.parse_args(["--merge-strategy", "mergetool", "", "", ""])
+args = builder.parse_args(["", "", ""])
+
 
 def test_merge_matching_notebooks(matching_nb_triplets):
     "Test merge on pairs of notebooks with the same basename in the test suite."
     base, local, remote = matching_nb_triplets
-    result = merge_notebooks(base, local, remote)
+    merge_notebooks(base, local, remote)
     # We can't really automate a generic merge test, at least passing through code here...
 
 
@@ -174,13 +176,14 @@ def src2nb(src):
     return src
 
 
-def _check(base, local, remote, expected_partial, expected_conflicts):
+def _check(base, local, remote, expected_partial, expected_conflicts, merge_args=None):
     base = src2nb(base)
     local = src2nb(local)
     remote = src2nb(remote)
     expected_partial = src2nb(expected_partial)
+    merge_args = merge_args or args
 
-    partial, decisions = merge_notebooks(base, local, remote, args)
+    partial, decisions = merge_notebooks(base, local, remote, merge_args)
 
     sources = [cell["source"] for cell in partial["cells"]]
     expected_sources = [cell["source"] for cell in expected_partial["cells"]]
@@ -309,6 +312,9 @@ def test_merge_insert_cells_around_conflicting_cell():
     base = [source]
     remote = [source + ["remote\n"],
               ["new remote cell\n"]]
+    # Use mergetool strategy:
+    merge_args = copy.deepcopy(args)
+    merge_args.merge_strategy = "mergetool"
     if 0:
         # This is how it would look if neither source or cell inserts resulted
         # in conflicts:
@@ -348,7 +354,7 @@ def test_merge_insert_cells_around_conflicting_cell():
             "remote_diff": [op_patch(0, [op_patch('source', [
                 op_addrange(len("".join(source)), "remote\n")])])]
         }]
-    _check(base, local, remote, expected_partial, expected_conflicts)
+    _check(base, local, remote, expected_partial, expected_conflicts, merge_args)
 
 
 @pytest.mark.xfail

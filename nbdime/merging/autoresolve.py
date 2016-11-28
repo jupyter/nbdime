@@ -257,10 +257,6 @@ def strategy2action_list(strategy, dec):
     # Make a shallow copy of dec
     dec = copy.copy(dec)
 
-    if strategy == "mergetool":
-        # Leave this type of conflict for other tool to resolve
-        return [dec]
-
     # The rest here remove the conflicts and provide a new value
     if strategy == "use-base":
         dec.action = "base"
@@ -342,13 +338,18 @@ def autoresolve_decision_on_list(dec, base, sub, strategies):
             # and insert before patch:
             if linserts or rinserts:
                 conflict = (bool(linserts) == bool(rinserts))
-                decs.insert(i, MergeDecision(
+                d = MergeDecision(
                     common_path=dec.common_path,
                     action="local_then_remote",  # Will this suffice?
                     conflict=conflict,
                     local_diff=linserts,  # Should these be split up further?
                     remote_diff=rinserts,
-                ))
+                )
+                if conflict and strategies.fall_back:
+                    decs.extend(strategy2action_list(
+                        d, strategies.fall_back))
+                else:
+                    decs.insert(i, d)
         elif lpatches or rpatches:
             # One sided patch, with deletions on other (vs addition is not a
             # conflict)
@@ -369,7 +370,12 @@ def autoresolve_decision_on_list(dec, base, sub, strategies):
                     subdec = copy.copy(dec)
                     subdec.local_diff = list(d0)
                     subdec.remote_diff = list(d1)
-                    decs.append(subdec)
+                    if strategies.fall_back:
+                        # Use fall-back
+                        decs.extend(strategy2action_list(
+                            subdec, strategies.fall_back))
+                    else:
+                        decs.append(subdec)
                     break
             else:
                 # All patches are all transient, pick deletion:
@@ -387,7 +393,12 @@ def autoresolve_decision_on_list(dec, base, sub, strategies):
             subdec = copy.copy(dec)
             subdec.local_diff = list(d0)
             subdec.remote_diff = list(d1)
-            decs.append(subdec)
+            if strategies.fall_back:
+                # Use fall-back
+                decs.extend(strategy2action_list(
+                    subdec, strategies.fall_back))
+            else:
+                decs.append(subdec)
 
     return decs
 
@@ -414,12 +425,13 @@ def autoresolve_decision_on_dict(dec, base, sub, strategies):
     if strategy is not None:
         decs = strategy2action_dict(sub, le, re, strategy, subpath, dec)
     elif le.op == DiffOp.PATCH and re.op == DiffOp.PATCH:
+        assert False
         # FIXME: this is not quite right:
         # Recurse if we have no strategy for this key but diffs available for the subdocument
         newdec = pop_patch_decision(dec)
         assert newdec is not None
         decs = autoresolve_decision(base, newdec, strategies)
-    elif (DiffOp.PATCH in (le.op, re.op)) and (DiffOp.REMOVE in (le.op, re.op)):
+    elif (DiffOp.PATCH in (le.op, re.op)) and (DiffOp.REMOVE in (le.op, re.op)) and strategies.transients:
         # Check for deletion vs. purely ignoreable changes (transients)
         # If not, leave conflicted
         patchop = le if le.op == DiffOp.PATCH else re
@@ -429,7 +441,9 @@ def autoresolve_decision_on_dict(dec, base, sub, strategies):
             dec.action = "local" if le.op == DiffOp.REMOVE else "remote"
             dec.conflict = False
         decs = [dec]
-
+    elif strategies.fall_back:
+        # Use fall back strategy:
+        decs = strategy2action_dict(sub, le, re, strategies.fall_back, subpath, dec)
     else:
         # Alternatives if we don't have PATCH/PATCH or PATCH/REMOVE, are:
         #  - ADD/ADD: only happens if inserted values are different,
