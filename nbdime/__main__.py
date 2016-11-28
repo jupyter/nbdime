@@ -7,14 +7,21 @@ from __future__ import unicode_literals
 from __future__ import print_function
 
 import sys
-COMMANDS = ["show", "diff", "merge", "patch", "diff-web", "merge-web"]
+from subprocess import call
+
+try:
+    from shutil import which
+except ImportError:
+    from backports.shutil_which import which
+
+COMMANDS = ["show", "diff", "merge", "patch", "diff-web", "merge-web", "mergetool"]
 
 
 def main_dispatch(args=None):
     if args is None:
         args = sys.argv[1:]
     if len(args) < 1:
-        sys.exit("Please specify an nbdime command to call, such as 'nbdiff' or 'nbmerge'")
+        sys.exit("Command missing, expecting one of: \n%s" % ", ".join(COMMANDS))
 
     cmd = args[0]
     args = args[1:]
@@ -31,6 +38,11 @@ def main_dispatch(args=None):
         from nbdime.webapp.nbdiffweb import main
     elif cmd == "merge-web":
         from nbdime.webapp.nbmergeweb import main
+    elif cmd == 'mergetool':
+        if not which('git'):
+            sys.exit("Cannot use \"nbdime mergetool\" alias as git is not preset on path")
+        to_call = 'git mergetool --tool=nbdimeweb *.ipynb'.split()
+        return call(to_call)
     else:
         sys.exit(
             "Unrecognized command '%s', expecting one of:\n%s." %
