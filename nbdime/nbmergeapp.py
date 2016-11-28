@@ -54,7 +54,6 @@ def main_merge(args):
         # FIXME: We currently write this way as git needs \n line endings,
         # when used as merge driver. However, we should write using OS
         # line endings otherwise.
-        nb = nbformat.from_dict(m)
         s = nbformat.writes(nb) + u'\n'
         senc = s.encode()
 

@@ -101,10 +101,6 @@ def _builtin_diff_render(a, b):
         else:
             # Don't think this will happen?
             uni.append("%s%s%s" % (KEEP, line[1:], RESET))
-    #if not a.endswith('\n'):
-    #    uni.insert(-1, r'\ No newline at end of file')
-    #if not b.endswith('\n'):
-    #    uni.append(r'\ No newline at end of file')
     diff = '\n'.join(uni)
     return diff
 
