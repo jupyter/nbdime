@@ -2,9 +2,15 @@
 
 [![Build Status](https://travis-ci.org/jupyter/nbdime.svg?branch=master)](https://travis-ci.org/jupyter/nbdime) [![codecov.io](https://codecov.io/github/jupyter/nbdime/coverage.svg?branch=master)](https://codecov.io/github/jupyter/nbdime?branch=master)
 
-`nbdime` contains tools for diffing and merging of Jupyter Notebooks.
+TODO: screenshot(s)
 
-NB! This project is highly experimental and rapidly changing.
+`nbdime` provides tools for diffing and merging of [Jupyter Notebooks](https://jupyter-notebook.readthedocs.io).
+
+- `nbdiff` compare notebooks in a terminal-friendly way
+- `nbmerge` three-way merge of notebooks with automatic conflict resolution
+- `nbdiff-web` shows you a rich rendered diff of notebooks
+- `nbmerge-web` gives you a web-based three-way merge tool for notebooks
+- `nbshow` present a single notebook in a terminal-friendly way
 
 See the latest documentation at https://nbdime.readthedocs.io.
 
@@ -14,14 +20,12 @@ Install the [codecov browser extension](https://github.com/codecov/browser-exten
 
 ## Requirements
 
-To install a source copy, you will need to have [npm installed](https://nodejs.org/en/download/) and available on PATH while installing.
+To install a development version of nbdime, you will need [npm installed](https://nodejs.org/en/download/) and available on your PATH while installing.
 
 ## Installation:
 
-    git clone https://github.com/jupyter/nbdime
-    cd nbdime
-    pip install .
+Install nbdime with pip:
 
-## Running webapp
+    pip install --upgrade nbdime
 
-    python nbdimeserver.py
+See [the installation docs](https://nbdime.readthedocs.io/en/latest/installing.html) for more installation details and development installation instructions.
