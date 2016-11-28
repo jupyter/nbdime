@@ -164,7 +164,22 @@ def format_value(v):
     return vstr
 
 
-def pretty_print_value(value, path, prefix="", out=sys.stdout):
+def pretty_print_value(value, prefix="", out=sys.stdout):
+    """Print a possibly complex value with all lines prefixed.
+
+    Calls out to generic formatters based on value
+    type for dicts, lists, and multiline strings.
+    Uses format_value for simple values.
+    """
+    if isinstance(value, dict):
+        pretty_print_dict(value, (), prefix, out)
+    elif isinstance(value, list) and value:
+        pretty_print_list(value, prefix, out)
+    else:
+        pretty_print_multiline(format_value(value), prefix, out)
+
+
+def pretty_print_value_at(value, path, prefix="", out=sys.stdout):
     """Print a possibly complex value with all lines prefixed.
 
     Calls out to other specialized formatters based on path
@@ -199,14 +214,8 @@ def pretty_print_value(value, path, prefix="", out=sys.stdout):
         else:
             starred = None
 
-    # No path or path not handled
     if starred is None:
-        if isinstance(value, dict):
-            pretty_print_dict(value, (), prefix, out)
-        elif isinstance(value, list) and value:
-            pretty_print_list(value, prefix, out)  # TODO: Pass path_trail here to allow formatting as listname[k]:? 
-        else:
-            pretty_print_multiline(format_value(value), prefix, out)
+        pretty_print_value(value, prefix, out)
 
 
 def pretty_print_key(k, prefix, out):
@@ -260,7 +269,7 @@ def pretty_print_list(li, prefix="", out=sys.stdout):
         out.write("%s%s\n" % (prefix, listr))
     else:
         for k, v in enumerate(li):
-            pretty_print_item("new[%d]" % k, v, prefix, out)
+            pretty_print_item("item[%d]" % k, v, prefix, out)
 
 
 def pretty_print_dict(d, exclude_keys=(), prefix="", out=sys.stdout):
@@ -441,7 +450,7 @@ def pretty_print_diff_entry(a, e, path, out=sys.stdout):
 
     if op == DiffOp.ADDRANGE:
         pretty_print_diff_action("inserted before", nextpath, out)
-        pretty_print_value(e.valuelist, nextpath, ADD, out)
+        pretty_print_value_at(e.valuelist, path, ADD, out)
 
     elif op == DiffOp.REMOVERANGE:
         if e.length > 1:
@@ -449,26 +458,27 @@ def pretty_print_diff_entry(a, e, path, out=sys.stdout):
         else:
             keyrange = nextpath
         pretty_print_diff_action("deleted", keyrange, out)
-        pretty_print_value(a[key: key + e.length], nextpath, REMOVE, out)
+        pretty_print_value_at(a[key: key + e.length], path, REMOVE, out)
 
     elif op == DiffOp.REMOVE:
         pretty_print_diff_action("deleted", nextpath, out)
-        pretty_print_value(a[key], nextpath, REMOVE, out)
+        pretty_print_value_at(a[key], nextpath, REMOVE, out)
 
     elif op == DiffOp.ADD:
         pretty_print_diff_action("added", nextpath, out)
-        pretty_print_value(e.value, nextpath, ADD, out)
+        pretty_print_value_at(e.value, nextpath, ADD, out)
 
     elif op == DiffOp.REPLACE:
         aval = a[key]
         bval = e.value
         if type(aval) != type(bval):
-            typechange = " (type changed from %s to %s)" % (aval.__class__.__name__, bval.__class__.__name__)
+            typechange = " (type changed from %s to %s)" % (
+                aval.__class__.__name__, bval.__class__.__name__)
         else:
             typechange = ""
         pretty_print_diff_action("replaced" + typechange, nextpath, out)
-        pretty_print_value(aval, nextpath, REMOVE, out)
-        pretty_print_value(bval, nextpath, ADD, out)
+        pretty_print_value_at(aval, nextpath, REMOVE, out)
+        pretty_print_value_at(bval, nextpath, ADD, out)
 
     else:
         raise NBDiffFormatError("Unknown list diff op {}".format(op))
@@ -501,11 +511,11 @@ def pretty_print_string_diff(a, di, path, out=sys.stdout):
         if ta != a:
             out.write('%s%s\n' % (REMOVE, ta))
         else:
-            pretty_print_value(a, path, REMOVE, out)
+            pretty_print_value_at(a, path, REMOVE, out)
         if tb != b:
             out.write('%s%s\n' % (ADD, tb))
         else:
-            pretty_print_value(b, path, ADD, out)
+            pretty_print_value_at(b, path, ADD, out)
     elif "\n" in a or "\n" in b:
         # Delegate multiline diff formatting
         diff_lines = _diff_render(a, b)

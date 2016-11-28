@@ -64,7 +64,7 @@ def test_pretty_print_multiline_string_b64():
     ins = b64text(1024)
     prefix = '+'
     io = StringIO()
-    pp.pretty_print_value(ins, "no/addr", prefix, io)
+    pp.pretty_print_value(ins, prefix, io)
     text = io.getvalue()
     lines = text.splitlines(True)
     assert len(lines) == 1
@@ -79,7 +79,7 @@ def test_pretty_print_multiline_string_short():
     prefix = '+'
 
     io = StringIO()
-    pp.pretty_print_value(ins, "no/addr", prefix, io)
+    pp.pretty_print_value_at(ins, "no/addr", prefix, io)
     text = io.getvalue()
     lines = text.splitlines(False)
 
@@ -90,7 +90,7 @@ def test_pretty_print_multiline_string_long():
     ins = '\n'.join('line %i' % i for i in range(64))
     prefix = '+'
     io = StringIO()
-    pp.pretty_print_value(ins, "no/addr", prefix, io)
+    pp.pretty_print_value(ins, prefix, io)
     text = io.getvalue()
     lines = text.splitlines(False)
     assert len(lines) == 64
@@ -101,7 +101,7 @@ def test_pretty_print_value_int():
     v = 5
     assert pp.format_value(v) == '5'
     io = StringIO()
-    pp.pretty_print_value(v, "/dummypath", "+", io)
+    pp.pretty_print_value(v, "+", io)
     text = io.getvalue()
     print("'%s'" % text)
     assert "+5" in text
@@ -119,7 +119,7 @@ def test_format_value_str():
 
 def _pretty_print(value, prefix="+", path="/dummypath"):
     io = StringIO()
-    pp.pretty_print_value(value, path, prefix, io)
+    pp.pretty_print_value_at(value, path, prefix, io)
     text = io.getvalue()
     return text
 
@@ -149,14 +149,14 @@ def test_pretty_print_list():
 def test_pretty_print_list_longstrings():
     lis = ['a\nb', 'c\nd']
     text = _pretty_print(lis, "+")
-    assert text == "+new[0]:\n+  a\n+  b\n+new[1]:\n+  c\n+  d\n"
+    assert text == "+item[0]:\n+  a\n+  b\n+item[1]:\n+  c\n+  d\n"
 
 
 def test_pretty_print_stream_output():
     output = v4.new_output('stream', name='stdout', text='some\ntext')
 
     io = StringIO()
-    pp.pretty_print_value(output, "/cells/2/outputs/3", "+", io)
+    pp.pretty_print_value_at(output, "/cells/2/outputs/3", "+", io)
     text = io.getvalue()
     lines = text.splitlines()
 
@@ -177,7 +177,7 @@ def test_pretty_print_display_data():
     })
 
     io = StringIO()
-    pp.pretty_print_value(output, "/cells/1/outputs/2", "+", io)
+    pp.pretty_print_value_at(output, "/cells/1/outputs/2", "+", io)
     text = io.getvalue()
     lines = text.splitlines()
 
@@ -193,7 +193,7 @@ def test_pretty_print_markdown_cell():
     cell = v4.new_markdown_cell(source='# Heading\n\n*some markdown*')
 
     io = StringIO()
-    pp.pretty_print_value(cell, "/cells/0", "+", io)
+    pp.pretty_print_value_at(cell, "/cells/0", "+", io)
     text = io.getvalue()
     lines = text.splitlines()
 
@@ -215,7 +215,7 @@ def test_pretty_print_code_cell():
     )
 
     io = StringIO()
-    pp.pretty_print_value(cell, "/cells/0", "+", io)
+    pp.pretty_print_value_at(cell, "/cells/0", "+", io)
     text = io.getvalue()
     lines = text.splitlines()
 
@@ -293,22 +293,22 @@ def test_pretty_print_list_multilinestrings(nocolor):
         '## deleted /a/b/0-1:',
         #'-  ["ac\ndf", "qe\nry"]',
         #'-  b[0]:',
-        '-  new[0]:',
+        '-  item[0]:',
         '-    ac',
         '-    df',
         #'-  b[1]:',
-        '-  new[1]:',
+        '-  item[1]:',
         '-    qe',
         '-    ry',
         '',
         '## inserted before /a/b/3:',
         #'+  ["abc\ndef", "qwe\nrty"]',
         #'+  b[3+0]:',
-        '+  new[0]:',
+        '+  item[0]:',
         '+    abc',
         '+    def',
         #'+  b[3+1]:',
-        '+  new[1]:',
+        '+  item[1]:',
         '+    qwe',
         '+    rty',
         '',
