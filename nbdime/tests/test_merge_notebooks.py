@@ -680,4 +680,64 @@ def test_merge_output_strategy_union_source_conflict():
     merge_args.output_strategy = "union"
     _check_outputs(base, local, remote, expected_partial, expected_conflicts, merge_args)
 
+
 # TODO: Make test for output_strategy == 'inline'
+
+
+def test_merge_mix_strategies():
+    # Conflicting cell inserts at same location as removing old cell
+    local_outputs = [["local\nsome other\nlines\nto align\n", "output2", "output3"]]
+    base_outputs = [["base\nsome other\nlines\nto align\n", "output2", "output3"]]
+    remote_outputs = [["remote\nsome other\nlines\nto align\n", "output2", "output3"]]
+    expected_partial_outputs = [["local\nremote\nsome other\nlines\nto align\n", "output2", "output3"]]
+
+    local_source = [["local\n", "some other\n", "lines\n", "to align\n"]]
+    base_source = [["base\n", "some other\n", "lines\n", "to align\n"]]
+    remote_source = [["remote\n", "some other\n", "lines\n", "to align\n"]]
+    expected_partial_source = [["remote\n", "some other\n", "lines\n", "to align\n"]]
+
+    local_metadata = [{'myval': 'local'}]
+    base_metadata = [{'myval': 'base'}]
+    remote_metadata = [{'myval': 'remote'}]
+    expected_partial_metadata = [{'myval': 'local'}]
+
+    base = outputs_to_notebook(base_outputs)
+    local = outputs_to_notebook(local_outputs)
+    remote = outputs_to_notebook(remote_outputs)
+    expected_partial = outputs_to_notebook(expected_partial_outputs)
+
+    for i in range(len(base.cells)):
+        base.cells[i].source = "".join(base_source[i])
+        local.cells[i].source = "".join(local_source[i])
+        remote.cells[i].source = "".join(remote_source[i])
+        expected_partial.cells[i].source = "".join(expected_partial_source[i])
+
+        base.cells[i].metadata = base_metadata[i]
+        local.cells[i].metadata = local_metadata[i]
+        remote.cells[i].metadata = remote_metadata[i]
+        expected_partial.cells[i].metadata = expected_partial_metadata[i]
+
+    expected_conflicts = []
+    merge_args = copy.deepcopy(args)
+    merge_args.merge_strategy = "use-local"
+    merge_args.input_strategy = "use-remote"
+    merge_args.output_strategy = "union"
+
+    partial, decisions = merge_notebooks(base, local, remote, merge_args)
+
+    sources = [cell.pop("source") for cell in partial["cells"]]
+    expected_sources = [cell.pop("source") for cell in expected_partial["cells"]]
+    assert sources == expected_sources
+
+    outputs = [cell.pop("outputs") for cell in partial["cells"]]
+    expected_outputs = [cell.pop("outputs") for cell in expected_partial["cells"]]
+    assert outputs == expected_outputs
+
+    assert partial == expected_partial
+    conflicts = [d for d in decisions if d.conflict]
+    expected_conflicts = copy.copy(expected_conflicts)
+    assert len(conflicts) == len(expected_conflicts)
+    for e, d in zip(expected_conflicts, conflicts):
+        # Only check keys specified in expectation value
+        for k in e.keys():
+            assert d[k] == e[k]
