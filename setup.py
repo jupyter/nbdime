@@ -261,6 +261,7 @@ if 'setuptools' in sys.modules:
     # force entrypoints with setuptools (needed for Windows, unconditional because of wheels)
     setup_args['entry_points'] = {
         'console_scripts': [
+            'nbdime = nbdime.__main__:main_dispatch',
             'nbshow = nbdime.nbshowapp:main',
             'nbdiff = nbdime.nbdiffapp:main',
             'nbdiff-web = nbdime.webapp.nbdiffweb:main',
