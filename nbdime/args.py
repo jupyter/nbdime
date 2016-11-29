@@ -97,7 +97,7 @@ def add_merge_args(parser):
         help="Specify the merge strategy to use for outputs "
              "(overrides 'merge-strategy' for outputs).")
     parser.add_argument(
-        '-i', '--no-ignore-transients',
+        '--no-ignore-transients',
         dest='ignore_transients',
         action="store_false",
         default=True,
