@@ -176,37 +176,10 @@ def src2nb(src):
     return src
 
 
-def _check_sources(base, local, remote, expected_partial, expected_conflicts, merge_args=None):
-    base = src2nb(base)
-    local = src2nb(local)
-    remote = src2nb(remote)
-    expected_partial = src2nb(expected_partial)
-    merge_args = merge_args or args
-
-    partial, decisions = merge_notebooks(base, local, remote, merge_args)
-
+def _check(partial, expected_partial, decisions, expected_conflicts):
     sources = [cell.pop("source") for cell in partial["cells"]]
     expected_sources = [cell.pop("source") for cell in expected_partial["cells"]]
     assert sources == expected_sources
-
-    assert partial == expected_partial
-    conflicts = [d for d in decisions if d.conflict]
-    expected_conflicts = copy.copy(expected_conflicts)
-    assert len(conflicts) == len(expected_conflicts)
-    for e, d in zip(expected_conflicts, conflicts):
-        # Only check keys specified in expectation value
-        for k in e.keys():
-            assert d[k] == e[k]
-
-
-def _check_outputs(base, local, remote, expected_partial, expected_conflicts, merge_args=None):
-    base = outputs_to_notebook(base)
-    local = outputs_to_notebook(local)
-    remote = outputs_to_notebook(remote)
-    expected_partial = outputs_to_notebook(expected_partial)
-    merge_args = merge_args or args
-
-    partial, decisions = merge_notebooks(base, local, remote, merge_args)
 
     outputs = [cell.pop("outputs") for cell in partial["cells"]]
     expected_outputs = [cell.pop("outputs") for cell in expected_partial["cells"]]
@@ -220,6 +193,30 @@ def _check_outputs(base, local, remote, expected_partial, expected_conflicts, me
         # Only check keys specified in expectation value
         for k in e.keys():
             assert d[k] == e[k]
+
+
+def _check_sources(base, local, remote, expected_partial, expected_conflicts, merge_args=None):
+    base = src2nb(base)
+    local = src2nb(local)
+    remote = src2nb(remote)
+    expected_partial = src2nb(expected_partial)
+    merge_args = merge_args or args
+
+    partial, decisions = merge_notebooks(base, local, remote, merge_args)
+
+    _check(partial, expected_partial, decisions, expected_conflicts)
+
+
+def _check_outputs(base, local, remote, expected_partial, expected_conflicts, merge_args=None):
+    base = outputs_to_notebook(base)
+    local = outputs_to_notebook(local)
+    remote = outputs_to_notebook(remote)
+    expected_partial = outputs_to_notebook(expected_partial)
+    merge_args = merge_args or args
+
+    partial, decisions = merge_notebooks(base, local, remote, merge_args)
+
+    _check(partial, expected_partial, decisions, expected_conflicts)
 
 
 def test_merge_simple_cell_source_no_change():
@@ -684,22 +681,22 @@ def test_merge_output_strategy_union_source_conflict():
 # TODO: Make test for output_strategy == 'inline'
 
 
-def test_merge_mix_strategies():
-    # Conflicting cell inserts at same location as removing old cell
-    local_outputs = [["local\nsome other\nlines\nto align\n", "output2", "output3"]]
-    base_outputs = [["base\nsome other\nlines\nto align\n", "output2", "output3"]]
-    remote_outputs = [["remote\nsome other\nlines\nto align\n", "output2", "output3"]]
-    expected_partial_outputs = [["local\nremote\nsome other\nlines\nto align\n", "output2", "output3"]]
-
+def _make_notebook_with_multi_conflicts(
+        expected_partial_source,
+        expected_partial_metadata,
+        expected_partial_outputs,
+        ):
     local_source = [["local\n", "some other\n", "lines\n", "to align\n"]]
     base_source = [["base\n", "some other\n", "lines\n", "to align\n"]]
     remote_source = [["remote\n", "some other\n", "lines\n", "to align\n"]]
-    expected_partial_source = [["remote\n", "some other\n", "lines\n", "to align\n"]]
 
     local_metadata = [{'myval': 'local'}]
     base_metadata = [{'myval': 'base'}]
     remote_metadata = [{'myval': 'remote'}]
-    expected_partial_metadata = [{'myval': 'local'}]
+
+    local_outputs = [["local\nsome other\nlines\nto align\n", "output2", "output3"]]
+    base_outputs = [["base\nsome other\nlines\nto align\n", "output2", "output3"]]
+    remote_outputs = [["remote\nsome other\nlines\nto align\n", "output2", "output3"]]
 
     base = outputs_to_notebook(base_outputs)
     local = outputs_to_notebook(local_outputs)
@@ -717,6 +714,18 @@ def test_merge_mix_strategies():
         remote.cells[i].metadata = remote_metadata[i]
         expected_partial.cells[i].metadata = expected_partial_metadata[i]
 
+    return base, local, remote, expected_partial
+
+
+def test_merge_mix_strategies():
+    # Conflicting cell inserts at same location as removing old cell
+    expected_partial_source = [["remote\n", "some other\n", "lines\n", "to align\n"]]
+    expected_partial_metadata = [{'myval': 'local'}]
+    expected_partial_outputs = [["local\nremote\nsome other\nlines\nto align\n", "output2", "output3"]]
+    base, local, remote, expected_partial = _make_notebook_with_multi_conflicts(
+        expected_partial_source, expected_partial_metadata, expected_partial_outputs
+    )
+
     expected_conflicts = []
     merge_args = copy.deepcopy(args)
     merge_args.merge_strategy = "use-local"
@@ -725,19 +734,5 @@ def test_merge_mix_strategies():
 
     partial, decisions = merge_notebooks(base, local, remote, merge_args)
 
-    sources = [cell.pop("source") for cell in partial["cells"]]
-    expected_sources = [cell.pop("source") for cell in expected_partial["cells"]]
-    assert sources == expected_sources
+    _check(partial, expected_partial, decisions, expected_conflicts)
 
-    outputs = [cell.pop("outputs") for cell in partial["cells"]]
-    expected_outputs = [cell.pop("outputs") for cell in expected_partial["cells"]]
-    assert outputs == expected_outputs
-
-    assert partial == expected_partial
-    conflicts = [d for d in decisions if d.conflict]
-    expected_conflicts = copy.copy(expected_conflicts)
-    assert len(conflicts) == len(expected_conflicts)
-    for e, d in zip(expected_conflicts, conflicts):
-        # Only check keys specified in expectation value
-        for k in e.keys():
-            assert d[k] == e[k]
