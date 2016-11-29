@@ -10,59 +10,18 @@ import sys
 import copy
 import logging
 
+import nbformat
+from nbformat import NotebookNode
+
 from ..diff_format import DiffOp, op_replace
 from ..patching import patch
 from .chunks import make_merge_chunks
 from ..utils import join_path, star_path
 from .decisions import (pop_patch_decision, push_patch_decision, MergeDecision,
                         pop_all_patch_decisions, _sort_key)
+from ..prettyprint import merge_render
 
 _logger = logging.getLogger(__name__)
-
-# FIXME: Move to utils
-def as_text_lines(text):
-    if isinstance(text, string_types):
-        text = text.splitlines(True)
-    if isinstance(text, tuple):
-        text = list(text)
-    assert isinstance(text, list)
-    assert all(isinstance(t, string_types) for t in text)
-    return text
-
-
-# FIXME: Move to utils
-def format_text_merge_display(
-        base, local, remote,
-        base_title="base", local_title="local", remote_title="remote"):
-    local = as_text_lines(local)
-    base = as_text_lines(base)
-    remote = as_text_lines(remote)
-
-    n = 7  # git uses 7 by default
-
-    lines = []
-    sep0 = "%s %s\n" % ("<"*n, local_title)
-    lines.append(sep0)
-    lines.extend(local)
-    if not lines[-1].endswith('\n'):
-        lines[-1] = lines[-1] + '\n'
-
-    sep1 = "%s %s\n" % ("|"*n, base_title)
-    lines.append(sep1)
-    lines.extend(base)
-    if not lines[-1].endswith('\n'):
-        lines[-1] = lines[-1] + '\n'
-
-    sep2 = "%s\n" % ("="*n,)
-    lines.append(sep2)
-    lines.extend(remote)
-    if not lines[-1].endswith('\n'):
-        lines[-1] = lines[-1] + '\n'
-
-    sep3 = "%s %s" % (">"*n, remote_title)
-    lines.append(sep3)
-
-    return "".join(lines)
 
 
 def add_conflicts_record(value, le, re):
@@ -76,7 +35,7 @@ def add_conflicts_record(value, le, re):
         c["local"] = le
     if re is not None:
         c["remote"] = re
-    newvalue = dict(value)
+    newvalue = NotebookNode(value)
     newvalue["nbdime-conflicts"] = c
     return newvalue
 
@@ -116,7 +75,7 @@ def make_join_value(value, le, re):
 
 
 def make_inline_outputs_value(value, le, re,
-                              local_title="local", remote_title="remote"):
+                              base_title="base", local_title="local", remote_title="remote"):
     # FIXME: Use this for inline outputs diff?
     # Joining e.g. an outputs list means concatenating all items
     lvalue = patch_item(value, le)
@@ -127,19 +86,34 @@ def make_inline_outputs_value(value, le, re,
     if rvalue is Deleted:
         rvalue = []
 
+    base = value
+    local = lvalue
+    remote = rvalue
+
+    def output_marker(text):
+        return nbformat.v4.new_output("stream", name="stderr", text=text)
+
     # Note: This is very notebook specific while the rest of this file is more generic
-    newvalue = (
-        [{"output_type": "stream", "name": "stderr", "text": ["<"*7 + local_title]}]
-        + lvalue
-        + [{"output_type": "stream", "name": "stderr", "text": ["="*7]}]
-        + rvalue
-        + [{"output_type": "stream", "name": "stderr", "text": ["<"*7 + remote_title]}]
-        )
+    outputs = []
 
-    return newvalue
+    n = 7
+    sep0 = "%s %s\n" % ("<"*n, local_title)
+    sep1 = "%s %s\n" % ("|"*n, base_title)
+    sep2 = "%s\n" % ("="*n,)
+    sep3 = "%s %s" % (">"*n, remote_title)
+
+    outputs.append(output_marker(sep0))
+    outputs.extend(local)
+    outputs.append(output_marker(sep1))
+    outputs.extend(base)
+    outputs.append(output_marker(sep2))
+    outputs.extend(remote)
+    outputs.append(output_marker(sep3))
+
+    return outputs
 
 
-def make_inline_source_value(base, le, re):  # FIXME: Test this!
+def make_inline_source_value(base, le, re):
     if le.op == DiffOp.REPLACE:
         local = le.value
     elif le.op == DiffOp.PATCH:
@@ -158,9 +132,11 @@ def make_inline_source_value(base, le, re):  # FIXME: Test this!
     else:
         raise ValueError("Invalid item patch op {}".format(re.op))
 
-    # FIXME: use format_text_merge_display for each conflicting chunk?
-    e = format_text_merge_display(base, local, remote)
-    return e
+    # FIXME: This discards diff information, and the built-in
+    #   renderer doesn't mark each conflicting chunk.
+
+    strategy = None  # FIXME: "use-local" | "use-remote" | "union"
+    return merge_render(base, local, remote, strategy)
 
 
 def is_diff_all_transients(diff, path, transients):
@@ -221,14 +197,6 @@ def strategy2action_dict(resolved_base, le, re, strategy, path, dec):
         # Both changes are equal, just apply
         dec.action = "either"
         dec.conflict = False
-    # ... fallthrough
-    elif strategy == "mergetool":
-        # Leave this type of conflict for external tool to resolve
-        pass
-    # ... fail
-    elif strategy == "fail":
-        # Expecting never to get this kind of conflict, raise error
-        raise RuntimeError("Not expecting a conflict at path {}.".format(path))
     # ... cases using changes from both sides to produce a new value
     elif strategy == "union":
         if isinstance(resolved_base[key], (list, string_types)):
@@ -238,19 +206,31 @@ def strategy2action_dict(resolved_base, le, re, strategy, path, dec):
             # Union doesn't make sense on non-sequence types
             # Leave this conflict unresolved
             pass
-    else:
-        # TODO: Split these into multiple decisions?
+    elif strategy == "inline-source":
         value = resolved_base[key]
-        if strategy == "inline-source":
-            newvalue = make_inline_source_value(value, le, re)
-        elif strategy == "inline-outputs":
-            newvalue = make_inline_outputs_value(value, le, re)
-        elif strategy == "record-conflict":
-            newvalue = add_conflicts_record(value, le, re)
-        else:
-            raise RuntimeError("Invalid strategy {}.".format(strategy))
+        newvalue = make_inline_source_value(value, le, re)
         dec.custom_diff = [op_replace(key, newvalue)]
         dec.action = "custom"
+    elif strategy == "inline-outputs":
+        value = resolved_base[key]
+        newvalue = make_inline_outputs_value(value, le, re)
+        dec.custom_diff = [op_replace(key, newvalue)]
+        dec.action = "custom"
+    elif strategy == "record-conflict":
+        value = resolved_base[key]
+        newvalue = add_conflicts_record(value, le, re)
+        dec.custom_diff = [op_replace(key, newvalue)]
+        dec.action = "custom"
+    # ... fallthrough
+    elif strategy == "mergetool":
+        # Leave this type of conflict for external tool to resolve
+        pass
+    # ... fail
+    elif strategy == "fail":
+        # Expecting never to get this kind of conflict, raise error
+        raise RuntimeError("Not expecting a conflict at path {}.".format(path))
+    else:
+        raise RuntimeError("Invalid strategy {}.".format(strategy))
 
     return [dec]
 
@@ -503,11 +483,35 @@ def autoresolve_decision(base, dec, strategies):
     return [pop_all_patch_decisions(d) for d in decs]
 
 
+def get_parent_strategies(path, strategies):
+    # Get all keys that are prefixes of the current path
+    parent_skeys = [p for p in strategies if path.startswith(p)]
+    # Sort strategy keys, shortest key first
+    parent_skeys = sorted(strategies, key=lambda x: (len(x), x))
+    # Extract strategies in parent-child order
+    parent_strategies = [strategies[k] for k in parent_skeys]
+    return parent_strategies
+
+
 def autoresolve(base, decisions, strategies):
     """Autoresolve a list of decisions with given strategy configuration.
 
     Returns a list of new decisions, with or without further conflicts.
     """
+
+    # Sort strategy keys, shortest first
+    #skeys = sorted(strategies, key=lambda x: (len(x), x))
+
+    path2dec = {}
+    for dec in decisions:
+        path = join_path(dec.common_path)
+        path = star_path(path)
+        st = strategies.get(path)
+        pstrat = get_parent_strategies(path, strategies)
+        #path2dec[path].append(dec)
+
+    #import ipdb; ipdb.set_trace()
+
     newdecisions = []
     for dec in decisions:
         if dec.conflict:

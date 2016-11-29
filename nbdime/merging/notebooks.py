@@ -5,6 +5,7 @@
 
 from __future__ import unicode_literals
 
+import sys
 import logging
 from six import StringIO
 
@@ -45,19 +46,21 @@ cli_conflict_strategies = (
 
 def autoresolve_notebook_conflicts(base, decisions, args):
     strategies = Strategies({
+        # These fields should never conflict, that would be an internal error:
         "/nbformat": "fail",
-        # "/nbformat_minor": "fail",
         "/cells/*/cell_type": "fail",
+        # Not sure what to do about this:
+        # "/nbformat_minor": "?",
         })
 
     if not args or args.ignore_transients:
         strategies.transients = [
             "/cells/*/execution_count",
             "/cells/*/outputs",
+            "/cells/*/outputs/*/execution_count"
             "/cells/*/metadata/collapsed",
             "/cells/*/metadata/autoscroll",
             "/cells/*/metadata/scrolled",
-            "/cells/*/outputs/*/execution_count"
         ]
         strategies.update({
             "/cells/*/execution_count": "clear",
@@ -77,12 +80,18 @@ def autoresolve_notebook_conflicts(base, decisions, args):
     elif merge_strategy.startswith('use-') or merge_strategy == 'union':
         strategies.fall_back = args.merge_strategy
     else:
+        # Default strategies for cli tool, intended to produce
+        # an editable notebook that can be manually edited
         strategies.update({
             "/metadata": "record-conflict",
             "/cells/*/metadata": "record-conflict",
+            "/cells/*/outputs/*/metadata": "record-conflict",
             "/cells/*/source": "inline-source",
             "/cells/*/outputs": "inline-outputs",
+
             # TODO: Add an inline strategy for attachments as well
+            #"/cells/*/attachments": "inline-attachments",
+
             # FIXME: Find a good way to handle strategies for both parent (outputs) and child (execution_count).
             #        It might be that some strategies can be combined while others don't make sense, e.g. setting use-* on parent.
         })
