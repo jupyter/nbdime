@@ -488,7 +488,8 @@ def autoresolve_decision(base, dec, strategies):
     elif isinstance(sub, list):
         decs = autoresolve_decision_on_list(dec, base, sub, strategies)
     elif isinstance(sub, string_types):
-        raise NotImplementedError()
+        sub = sub.splitlines(True)
+        decs = autoresolve_decision_on_list(dec, base, sub, strategies)
     else:
         raise RuntimeError("Expecting dict, list or string type, got " +
                            str(type(sub)))
