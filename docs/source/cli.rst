@@ -94,26 +94,36 @@ and can take different actions based on the type of data with the conflict.
 The ``-m, --merge-strategy`` option lets you select a global strategy to use.
 The following options are currently implemented:
 
-TODO: make sure these are accurate, work:
-
 inline
     This is the default.
-    Conflicts in input and output are recorded with conflict markers on input and output,
-    Inline output merged with conflict-markers.
+    Conflicts in input and output are recorded with conflict markers, while
+    conflicts on metadata are stored in the appropriate metadata (actual
+    values are kept as their base values).
+
+TODO: Make a note about how it is stored (format, tag names, etc.)
+
     This gives you a valid notebook that you can open in your usual notebook editor
     and resolve conflicts, just like you might for a regular Python script.
 use-base
-    When a conflict is seen, pick the version in the base notebook.
+    When a conflict is encountered, use the value from the base notebook.
 use-local
-    When a conflict is seen, pick the version in the local notebook.
+    When a conflict is encountered, use the value from the local notebook.
 use-remote
-    When a conflict is seen, pick the version in the remote notebook.
-mergetool
-    Used by the merge tool, not for human consumption.
-fail
-    Don't try to resolve conflicts, just exit
-clear
-    TODO: Will we have this?
+    When a conflict is encountered, use the value from the remote notebook.
+union
+    When a conflict is encountered, include both the local and the remote
+    value, in that order (local then remote). Conflicts on non-sequence
+    types (anything not list or string) are left unresolved.
+
+.. note::
+
+    The union strategy might resolve to nonsensical values, while still marking
+    conflicts as resolved, so use this carefully.
+
+The ``--input-strategy`` and ``--output-strategy`` options lets you specify a
+strategy to use for conflicts on inputs and outputs, respecively. They accept
+the same values as the ``--merge-strategy`` option. If these are set, they will
+take precedence over ``--merge-strategy`` for inputs and/or outputs.
 
 To use nbmerge, pass it the three notebooks:
 
