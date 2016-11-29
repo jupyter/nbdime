@@ -134,9 +134,12 @@ def _diff_render(a, b):
 
 def file_timestamp(filename):
     "Return modification time for filename as a string."
-    t = os.path.getmtime(filename)
-    dt = datetime.datetime.fromtimestamp(t)
-    return dt.isoformat(str(" "))
+    if os.path.exists(filename):
+        t = os.path.getmtime(filename)
+        dt = datetime.datetime.fromtimestamp(t)
+        return dt.isoformat(str(" "))
+    else:
+        return "(no timestamp)"
 
 
 def hash_string(s):
@@ -574,7 +577,7 @@ def pretty_print_merge_decision(base, decision, out=sys.stdout):
 
     path = join_path(decision.common_path)
     confnote = "conflicted " if decision.conflict else ""
-    out.write("%s%sdecision at %s:%s\n" % (INFO, confnote, path, RESET))
+    out.write("%s%sdecision at %s:%s\n" % (INFO.replace("##", "===="), confnote, path, RESET))
 
     diff_keys = ("diff", "local_diff", "remote_diff", "custom_diff")
     exclude_keys = set(diff_keys) | {"common_path", "action", "conflict"}
@@ -596,7 +599,7 @@ def pretty_print_merge_decision(base, decision, out=sys.stdout):
             note = ""
 
         if diff:
-            out.write("%s%s%s:%s\n" % (INFO, dkey, note, RESET))
+            out.write("%s%s%s:%s\n" % (INFO.replace("##", "---"), dkey, note, RESET))
             value = base
             for i, k in enumerate(decision.common_path):
                 if isinstance(value, string_types):
