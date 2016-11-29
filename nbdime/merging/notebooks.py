@@ -30,7 +30,7 @@ generic_conflict_strategies = (
     "record-conflict",  # Valid for metadata only: produce new metadata with conflicts recorded for external inspection
     "inline-source",    # Valid for source only: produce new source with inline diff markers
     "inline-outputs",   # Valid for outputs only: produce new outputs with inline diff markers
-    "union",             # Join values in case of conflict, don't insert new markers.
+    "union",            # Join values in case of conflict, don't insert new markers.
     )
 
 # Strategies that can be applied to an entire notebook
@@ -87,10 +87,14 @@ def autoresolve_notebook_conflicts(base, decisions, args):
             #        It might be that some strategies can be combined while others don't make sense, e.g. setting use-* on parent.
         })
     if input_strategy:
+        if input_strategy == 'inline':
+            input_strategy = 'inline-source'
         strategies.update({
             "/cells/*/source": input_strategy
         })
     if output_strategy:
+        if input_strategy == 'inline':
+            input_strategy = 'inline-outputs'
         strategies.update({
             "/cells/*/outputs": output_strategy
         })
