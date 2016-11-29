@@ -185,8 +185,8 @@ def _check(base, local, remote, expected_partial, expected_conflicts, merge_args
 
     partial, decisions = merge_notebooks(base, local, remote, merge_args)
 
-    sources = [cell["source"] for cell in partial["cells"]]
-    expected_sources = [cell["source"] for cell in expected_partial["cells"]]
+    sources = [cell.pop("source") for cell in partial["cells"]]
+    expected_sources = [cell.pop("source") for cell in expected_partial["cells"]]
     assert sources == expected_sources
 
     assert partial == expected_partial
