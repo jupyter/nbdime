@@ -199,7 +199,7 @@ def _check(base, local, remote, expected_partial, expected_conflicts, merge_args
             assert d[k] == e[k]
 
 
-def test_merge_simple_cell_sources():
+def test_merge_simple_cell_source_no_change():
     # A very basic test: Just checking changes to a single cell source,
 
     # No change
@@ -210,6 +210,8 @@ def test_merge_simple_cell_sources():
     expected_conflicts = []
     _check(base, local, remote, expected_partial, expected_conflicts)
 
+
+def test_merge_simple_cell_source_remote_change():
     # One sided change
     local = [["same"]]
     base = [["same"]]
@@ -218,6 +220,8 @@ def test_merge_simple_cell_sources():
     expected_conflicts = []
     _check(base, local, remote, expected_partial, expected_conflicts)
 
+
+def test_merge_simple_cell_source_local_change():
     # One sided change
     local = [["different"]]
     base = [["same"]]
@@ -226,6 +230,8 @@ def test_merge_simple_cell_sources():
     expected_conflicts = []
     _check(base, local, remote, expected_partial, expected_conflicts)
 
+
+def test_merge_simple_cell_source_agreed_change():
     # Same change on both sides
     local = [["different"]]
     base = [["same"]]
@@ -234,6 +240,8 @@ def test_merge_simple_cell_sources():
     expected_conflicts = []
     _check(base, local, remote, expected_partial, expected_conflicts)
 
+
+def test_merge_simple_cell_source_conflicting_edit_aligned():
     # Conflicting cell inserts at same location as removing old cell
     local = [["local"]]
     base = [["base"]]
@@ -252,6 +260,8 @@ def test_merge_simple_cell_sources():
         }]
     _check(base, local, remote, expected_partial, expected_conflicts)
 
+
+def test_merge_simple_cell_source_conflicting_insert():
     # Cell inserts at same location but no other modifications:
     # should this be accepted?
     local = [["base"], ["local"]]
