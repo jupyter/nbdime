@@ -11,7 +11,7 @@ from six import string_types
 import nbformat
 
 from nbdime.diff_format import op_patch, op_addrange, op_removerange
-from .fixtures import sources_to_notebook, matching_nb_triplets
+from .fixtures import sources_to_notebook, matching_nb_triplets, outputs_to_notebook
 from nbdime.merging.autoresolve import (
     make_inline_source_value, autoresolve)
 from nbdime.nbmergeapp import _build_arg_parser
@@ -188,6 +188,29 @@ def _check_sources(base, local, remote, expected_partial, expected_conflicts, me
     sources = [cell.pop("source") for cell in partial["cells"]]
     expected_sources = [cell.pop("source") for cell in expected_partial["cells"]]
     assert sources == expected_sources
+
+    assert partial == expected_partial
+    conflicts = [d for d in decisions if d.conflict]
+    expected_conflicts = copy.copy(expected_conflicts)
+    assert len(conflicts) == len(expected_conflicts)
+    for e, d in zip(expected_conflicts, conflicts):
+        # Only check keys specified in expectation value
+        for k in e.keys():
+            assert d[k] == e[k]
+
+
+def _check_outputs(base, local, remote, expected_partial, expected_conflicts, merge_args=None):
+    base = outputs_to_notebook(base)
+    local = outputs_to_notebook(local)
+    remote = outputs_to_notebook(remote)
+    expected_partial = outputs_to_notebook(expected_partial)
+    merge_args = merge_args or args
+
+    partial, decisions = merge_notebooks(base, local, remote, merge_args)
+
+    outputs = [cell.pop("outputs") for cell in partial["cells"]]
+    expected_outputs = [cell.pop("outputs") for cell in expected_partial["cells"]]
+    assert outputs == expected_outputs
 
     assert partial == expected_partial
     conflicts = [d for d in decisions if d.conflict]

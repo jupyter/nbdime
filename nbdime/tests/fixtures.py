@@ -182,3 +182,23 @@ def notebook_to_sources(nb, as_str=True):
             source = source.splitlines(True)
         sources.append(source)
     return sources
+
+
+def outputs_to_notebook(outputs):
+    assert isinstance(outputs, list)
+    assert len(outputs) == 0 or isinstance(outputs[0], list)
+    nb = nbformat.v4.new_notebook()
+    for cell_outputs in outputs:
+        cell = nbformat.v4.new_code_cell()
+        nb.cells.append(cell)
+        for output in cell_outputs:
+            if isinstance(output, string_types):
+                output = nbformat.v4.new_output(
+                    output_type="display_data",
+                    data={
+                        "text/plain": output,
+                    }
+                )
+            assert isinstance(output, dict)
+            cell.outputs.append(output)
+    return nb
