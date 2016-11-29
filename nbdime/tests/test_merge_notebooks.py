@@ -112,7 +112,7 @@ def test_merge_cell_sources_neighbouring_inserts():
             ])
         expected_conflicts = []
 
-    _check(base, local, remote, expected_partial, expected_conflicts)
+    _check_sources(base, local, remote, expected_partial, expected_conflicts)
 
 
 def test_merge_cell_sources_separate_inserts():
@@ -176,7 +176,7 @@ def src2nb(src):
     return src
 
 
-def _check(base, local, remote, expected_partial, expected_conflicts, merge_args=None):
+def _check_sources(base, local, remote, expected_partial, expected_conflicts, merge_args=None):
     base = src2nb(base)
     local = src2nb(local)
     remote = src2nb(remote)
@@ -208,7 +208,7 @@ def test_merge_simple_cell_source_no_change():
     remote = [["same"]]
     expected_partial = [["same"]]
     expected_conflicts = []
-    _check(base, local, remote, expected_partial, expected_conflicts)
+    _check_sources(base, local, remote, expected_partial, expected_conflicts)
 
 
 def test_merge_simple_cell_source_remote_change():
@@ -218,7 +218,7 @@ def test_merge_simple_cell_source_remote_change():
     remote = [["different"]]
     expected_partial = [["different"]]
     expected_conflicts = []
-    _check(base, local, remote, expected_partial, expected_conflicts)
+    _check_sources(base, local, remote, expected_partial, expected_conflicts)
 
 
 def test_merge_simple_cell_source_local_change():
@@ -228,7 +228,7 @@ def test_merge_simple_cell_source_local_change():
     remote = [["same"]]
     expected_partial = [["different"]]
     expected_conflicts = []
-    _check(base, local, remote, expected_partial, expected_conflicts)
+    _check_sources(base, local, remote, expected_partial, expected_conflicts)
 
 
 def test_merge_simple_cell_source_agreed_change():
@@ -238,7 +238,7 @@ def test_merge_simple_cell_source_agreed_change():
     remote = [["different"]]
     expected_partial = [["different"]]
     expected_conflicts = []
-    _check(base, local, remote, expected_partial, expected_conflicts)
+    _check_sources(base, local, remote, expected_partial, expected_conflicts)
 
 
 def test_merge_simple_cell_source_conflicting_edit_aligned():
@@ -260,7 +260,7 @@ def test_merge_simple_cell_source_conflicting_edit_aligned():
         }]
     merge_args = copy.deepcopy(args)
     merge_args.merge_strategy = "mergetool"
-    _check(base, local, remote, expected_partial, expected_conflicts, merge_args)
+    _check_sources(base, local, remote, expected_partial, expected_conflicts, merge_args)
 
 
 def test_merge_simple_cell_source_conflicting_insert():
@@ -283,7 +283,7 @@ def test_merge_simple_cell_source_conflicting_insert():
     else:  # Treat as non-conflict (insert both)
         expected_partial = [["base"], ["local"], ["remote"]]
         expected_conflicts = []
-    _check(base, local, remote, expected_partial, expected_conflicts)
+    _check_sources(base, local, remote, expected_partial, expected_conflicts)
 
 
 @pytest.mark.xfail
@@ -309,7 +309,7 @@ def test_merge_multiline_cell_source_conflict():
         "local_diff": [le],
         "remote_diff": [re]
     }]
-    _check(base, local, remote, expected_partial, expected_conflicts)
+    _check_sources(base, local, remote, expected_partial, expected_conflicts)
 
 
 def test_merge_insert_cells_around_conflicting_cell():
@@ -366,7 +366,7 @@ def test_merge_insert_cells_around_conflicting_cell():
             "remote_diff": [op_patch(0, [op_patch('source', [
                 op_addrange(len("".join(source)), "remote\n")])])]
         }]
-    _check(base, local, remote, expected_partial, expected_conflicts, merge_args)
+    _check_sources(base, local, remote, expected_partial, expected_conflicts, merge_args)
 
 
 @pytest.mark.xfail
@@ -401,7 +401,7 @@ def test_merge_interleave_cell_add_remove():
                         ["local 3"],
                         ["base 3"]]
     expected_conflicts = []
-    _check(base, local, remote, expected_partial, expected_conflicts)
+    _check_sources(base, local, remote, expected_partial, expected_conflicts)
 
 
 @pytest.mark.xfail
@@ -429,7 +429,7 @@ def test_merge_conflicts_get_diff_indices_shifted():
             op_addrange(1, ["right"]),
         ]
     }]
-    _check(base, local, remote, expected_partial, expected_conflicts)
+    _check_sources(base, local, remote, expected_partial, expected_conflicts)
 
     # Trying to induce conflicts with shifting of diff indices
     source = [
@@ -460,7 +460,7 @@ def test_merge_conflicts_get_diff_indices_shifted():
             op_addrange(1, ["right"]),
         ]
     }]
-    _check(base, local, remote, expected_partial, expected_conflicts)
+    _check_sources(base, local, remote, expected_partial, expected_conflicts)
 
 
 @pytest.mark.xfail
@@ -510,7 +510,7 @@ def bar(y):
             "remote_diff": [op_patch("cells", [op_addrange(0, [
                 nbformat.v4.new_code_cell(remote)]), op_removerange(0, 1)])]
         }]
-    _check(base, local, remote, expected_partial, expected_conflicts)
+    _check_sources(base, local, remote, expected_partial, expected_conflicts)
 
     # Keep it failing
     assert False
@@ -525,7 +525,7 @@ def test_merge_input_strategy_local_source_conflict():
     expected_conflicts = []
     merge_args = copy.deepcopy(args)
     merge_args.input_strategy = "use-local"
-    _check(base, local, remote, expected_partial, expected_conflicts, merge_args)
+    _check_sources(base, local, remote, expected_partial, expected_conflicts, merge_args)
 
 
 def test_merge_input_strategy_remote_source_conflict():
@@ -537,7 +537,7 @@ def test_merge_input_strategy_remote_source_conflict():
     expected_conflicts = []
     merge_args = copy.deepcopy(args)
     merge_args.input_strategy = "use-remote"
-    _check(base, local, remote, expected_partial, expected_conflicts, merge_args)
+    _check_sources(base, local, remote, expected_partial, expected_conflicts, merge_args)
 
 
 def test_merge_input_strategy_base_source_conflict():
@@ -549,7 +549,7 @@ def test_merge_input_strategy_base_source_conflict():
     expected_conflicts = []
     merge_args = copy.deepcopy(args)
     merge_args.input_strategy = "use-base"
-    _check(base, local, remote, expected_partial, expected_conflicts, merge_args)
+    _check_sources(base, local, remote, expected_partial, expected_conflicts, merge_args)
 
 
 def test_merge_input_strategy_union_source_conflict():
@@ -561,7 +561,7 @@ def test_merge_input_strategy_union_source_conflict():
     expected_conflicts = []
     merge_args = copy.deepcopy(args)
     merge_args.input_strategy = "union"
-    _check(base, local, remote, expected_partial, expected_conflicts, merge_args)
+    _check_sources(base, local, remote, expected_partial, expected_conflicts, merge_args)
 
 
 def test_merge_input_strategy_inline_source_conflict():
@@ -607,7 +607,7 @@ def test_merge_input_strategy_inline_source_conflict():
     merge_args = copy.deepcopy(args)
     merge_args.merge_strategy = "use-base"
     merge_args.input_strategy = "inline"
-    _check(base, local, remote, expected_partial, expected_conflicts, merge_args)
+    _check_sources(base, local, remote, expected_partial, expected_conflicts, merge_args)
 
 
 

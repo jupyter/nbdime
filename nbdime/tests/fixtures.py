@@ -7,6 +7,7 @@ from __future__ import unicode_literals
 from __future__ import print_function
 
 from six.moves import xrange as range
+from six import string_types
 
 import io
 import pytest
@@ -177,7 +178,7 @@ def notebook_to_sources(nb, as_str=True):
         source = cell["source"]
         if as_str and isinstance(source, list):
             source = "\n".join([line.strip("\n") for line in source])
-        elif not as_str and isinstance(source, str):
+        elif not as_str and isinstance(source, string_types):
             source = source.splitlines(True)
         sources.append(source)
     return sources
