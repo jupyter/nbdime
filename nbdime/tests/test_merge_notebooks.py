@@ -15,7 +15,9 @@ from .fixtures import sources_to_notebook, matching_nb_triplets, outputs_to_note
 from nbdime.merging.autoresolve import (
     make_inline_source_value, autoresolve)
 from nbdime.nbmergeapp import _build_arg_parser
-from nbdime import merge_notebooks
+from nbdime import merge_notebooks, apply_decisions
+from nbdime.diffing.notebooks import diff_notebooks
+from nbdime.merging.notebooks import decide_merge_with_diff, Strategies
 
 # FIXME: Extend tests to more merge situations!
 
@@ -736,3 +738,53 @@ def test_merge_mix_strategies():
 
     _check(partial, expected_partial, decisions, expected_conflicts)
 
+
+def test_autoresolve_empty_strategies():
+    """Check that a autoresolve works with empty strategies"""
+    expected_partial_source = [["base\n", "some other\n", "lines\n", "to align\n"]]
+    expected_partial_metadata = [{'myval': 'base'}]
+    expected_partial_outputs = [["base\nsome other\nlines\nto align\n", "output2", "output3"]]
+    base, local, remote, expected_partial = _make_notebook_with_multi_conflicts(
+        expected_partial_source, expected_partial_metadata, expected_partial_outputs
+    )
+
+    expected_conflicts = [
+        {
+            'action': 'base',
+            'common_path': ('cells', 0, 'source'),
+            'conflict': True,
+            'local_diff': [{'key': 0, 'op': 'addrange', 'valuelist': ['local\n']},
+                           {'key': 0, 'length': 1, 'op': 'removerange'}],
+            'remote_diff': [{'key': 0, 'op': 'addrange', 'valuelist': ['remote\n']},
+                            {'key': 0, 'length': 1, 'op': 'removerange'}]
+        },
+        {
+            'action': 'base',
+            'common_path': ('cells', 0, 'outputs', 0, 'data', 'text/plain'),
+            'conflict': True,
+            'local_diff': [{'key': 0, 'op': 'addrange', 'valuelist': ['local\n']},
+                           {'key': 0, 'length': 1, 'op': 'removerange'}],
+            'remote_diff': [{'key': 0, 'op': 'addrange', 'valuelist': ['remote\n']},
+                            {'key': 0, 'length': 1, 'op': 'removerange'}]
+        },
+        {
+            'action': 'base',
+            'common_path': ('cells', 0, 'metadata', 'myval'),
+            'conflict': True,
+            'local_diff': [{'key': 0, 'op': 'addrange', 'valuelist': ['local']},
+                           {'key': 0, 'length': 1, 'op': 'removerange'}],
+            'remote_diff': [{'key': 0, 'op': 'addrange', 'valuelist': ['remote']},
+                            {'key': 0, 'length': 1, 'op': 'removerange'}]
+        }
+    ]
+
+    # Since we cannot pass directly a strategies object, include copy of relevant code:
+    local_diffs = diff_notebooks(base, local)
+    remote_diffs = diff_notebooks(base, remote)
+    decisions = decide_merge_with_diff(
+        base, local, remote, local_diffs, remote_diffs)
+    strategies = Strategies()
+    decisions = autoresolve(base, decisions, strategies)
+    partial = apply_decisions(base, decisions)
+
+    _check(partial, expected_partial, decisions, expected_conflicts)
