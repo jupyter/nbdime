@@ -164,7 +164,10 @@ def sources_to_notebook(sources):
     assert isinstance(sources, list)
     assert len(sources) == 0 or isinstance(sources[0], list)
     nb = nbformat.v4.new_notebook()
-    nb.cells.extend(nbformat.v4.new_code_cell(source) for source in sources)
+    for source in sources:
+        if isinstance(source, list):
+            source = "".join(source)
+        nb.cells.append(nbformat.v4.new_code_cell(source))
     return nb
 
 

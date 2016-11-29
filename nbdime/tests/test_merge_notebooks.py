@@ -168,7 +168,7 @@ def src2nb(src):
     or a list (cells) of lists (lines) of singleline strings.
     """
     if isinstance(src, string_types):
-        src = [src.splitlines(True)]
+        src = [[src]]
     if isinstance(src, list):
         src = sources_to_notebook(src)
     assert isinstance(src, dict)
@@ -251,11 +251,11 @@ def test_merge_simple_cell_source_conflicting_edit_aligned():
         "common_path": ("cells", 0, "source"),
         "local_diff": [
             op_addrange(
-                0, [nbformat.v4.new_code_cell(source) for source in local]),
+                0, local[0][0:1]),
             op_removerange(0, 1)],
         "remote_diff": [
             op_addrange(
-                0, [nbformat.v4.new_code_cell(source) for source in remote]),
+                0, remote[0][0:1]),
             op_removerange(0, 1)]
         }]
     merge_args = copy.deepcopy(args)
@@ -274,10 +274,10 @@ def test_merge_simple_cell_source_conflicting_insert():
         expected_conflicts = [{
             "common_path": ("cells",),
             "local_diff": [op_addrange(
-                1, [nbformat.v4.new_code_cell(local[1])]),
+                1, [nbformat.v4.new_code_cell(local[1][0])]),
             ],
             "remote_diff": [op_addrange(
-                1, [nbformat.v4.new_code_cell(remote[1])]),
+                1, [nbformat.v4.new_code_cell(remote[1][0])]),
             ]
         }]
     else:  # Treat as non-conflict (insert both)
