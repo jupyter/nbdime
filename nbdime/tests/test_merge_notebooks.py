@@ -719,6 +719,55 @@ def _make_notebook_with_multi_conflicts(
     return base, local, remote, expected_partial
 
 
+def test_metadata_union_strategy_metadata():
+    # Conflicting cell inserts at same location as removing old cell
+    expected_partial_source = [["remote\n", "some other\n", "lines\n", "to align\n"]]
+    expected_partial_metadata = [{'myval': 'localremote'}]
+    expected_partial_outputs = [["local\nsome other\nlines\nto align\n", "output2", "output3"]]
+    base, local, remote, expected_partial = _make_notebook_with_multi_conflicts(
+        expected_partial_source, expected_partial_metadata, expected_partial_outputs
+    )
+
+    expected_conflicts = []
+    merge_args = copy.deepcopy(args)
+    merge_args.merge_strategy = "union"
+    merge_args.input_strategy = "use-remote"
+    merge_args.output_strategy = "use-local"
+
+    partial, decisions = merge_notebooks(base, local, remote, merge_args)
+
+    _check(partial, expected_partial, decisions, expected_conflicts)
+
+
+def test_metadata_union_strategy_not_applied_immutable_on_dict():
+    # Conflicting cell inserts at same location as removing old cell
+    expected_partial_source = [["remote\n", "some other\n", "lines\n", "to align\n"]]
+    expected_partial_metadata = [{'myval': 5}]
+    expected_partial_outputs = [["local\nsome other\nlines\nto align\n", "output2", "output3"]]
+    base, local, remote, expected_partial = _make_notebook_with_multi_conflicts(
+        expected_partial_source, expected_partial_metadata, expected_partial_outputs
+    )
+    base.cells[0].metadata['myval'] = 5
+    local.cells[0].metadata['myval'] = 22
+    remote.cells[0].metadata['myval'] = 13
+
+    expected_conflicts = [{
+        'action': 'base',
+        'common_path': ('cells', 0, 'metadata'),
+        'conflict': True,
+        'local_diff': [{'key': 'myval', 'op': 'replace', 'value': 22}],
+        'remote_diff': [{'key': 'myval', 'op': 'replace', 'value': 13}]
+    }]
+    merge_args = copy.deepcopy(args)
+    merge_args.merge_strategy = "union"
+    merge_args.input_strategy = "use-remote"
+    merge_args.output_strategy = "use-local"
+
+    partial, decisions = merge_notebooks(base, local, remote, merge_args)
+
+    _check(partial, expected_partial, decisions, expected_conflicts)
+
+
 def test_merge_mix_strategies():
     # Conflicting cell inserts at same location as removing old cell
     expected_partial_source = [["remote\n", "some other\n", "lines\n", "to align\n"]]
