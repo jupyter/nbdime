@@ -514,3 +514,101 @@ def bar(y):
 
     # Keep it failing
     assert False
+
+
+def test_merge_input_strategy_local_source_conflict():
+    # Conflicting cell inserts at same location as removing old cell
+    local = [["local\n", "some other\n", "lines\n", "to align\n"]]
+    base = [["base\n", "some other\n", "lines\n", "to align\n"]]
+    remote = [["remote\n", "some other\n", "lines\n", "to align\n"]]
+    expected_partial = [["local\n", "some other\n", "lines\n", "to align\n"]]
+    expected_conflicts = []
+    merge_args = copy.deepcopy(args)
+    merge_args.input_strategy = "use-local"
+    _check(base, local, remote, expected_partial, expected_conflicts, merge_args)
+
+
+def test_merge_input_strategy_remote_source_conflict():
+    # Conflicting cell inserts at same location as removing old cell
+    local = [["local\n", "some other\n", "lines\n", "to align\n"]]
+    base = [["base\n", "some other\n", "lines\n", "to align\n"]]
+    remote = [["remote\n", "some other\n", "lines\n", "to align\n"]]
+    expected_partial = [["remote\n", "some other\n", "lines\n", "to align\n"]]
+    expected_conflicts = []
+    merge_args = copy.deepcopy(args)
+    merge_args.input_strategy = "use-remote"
+    _check(base, local, remote, expected_partial, expected_conflicts, merge_args)
+
+
+def test_merge_input_strategy_base_source_conflict():
+    # Conflicting cell inserts at same location as removing old cell
+    local = [["local\n", "some other\n", "lines\n", "to align\n"]]
+    base = [["base\n", "some other\n", "lines\n", "to align\n"]]
+    remote = [["remote\n", "some other\n", "lines\n", "to align\n"]]
+    expected_partial = [["base\n", "some other\n", "lines\n", "to align\n"]]
+    expected_conflicts = []
+    merge_args = copy.deepcopy(args)
+    merge_args.input_strategy = "use-base"
+    _check(base, local, remote, expected_partial, expected_conflicts, merge_args)
+
+
+def test_merge_input_strategy_union_source_conflict():
+    # Conflicting cell inserts at same location as removing old cell
+    local = [["local\n", "some other\n", "lines\n", "to align\n"]]
+    base = [["base\n", "some other\n", "lines\n", "to align\n"]]
+    remote = [["remote\n", "some other\n", "lines\n", "to align\n"]]
+    expected_partial = [["local\n", "remote\n", "some other\n", "lines\n", "to align\n"]]
+    expected_conflicts = []
+    merge_args = copy.deepcopy(args)
+    merge_args.input_strategy = "union"
+    _check(base, local, remote, expected_partial, expected_conflicts, merge_args)
+
+
+def test_merge_input_strategy_inline_source_conflict():
+    # Conflicting cell inserts at same location as removing old cell
+    local = [["local\n", "some other\n", "lines\n", "to align\n"]]
+    base = [["base\n", "some other\n", "lines\n", "to align\n"]]
+    remote = [["remote\n", "some other\n", "lines\n", "to align\n"]]
+    # Ideal case:
+    # expected_partial = [[
+    #    "<<<<<<< local\n"
+    #    "local\n"
+    #    "||||||| base\n"
+    #    "base\n"
+    #    "=======\n"
+    #    "remote\n
+    #    ">>>>>>> remote\n"
+    #    "some other\nlines\nto align\n"]]
+    # Current case:
+    expected_partial = [[
+        "<<<<<<< local\n",
+        "local\nsome other\nlines\nto align\n",
+        "||||||| base\n",
+        "base\nsome other\nlines\nto align\n",
+        "=======\n",
+        "remote\nsome other\nlines\nto align\n",
+        ">>>>>>> remote"]]
+    expected_conflicts = [{
+        "common_path": ("cells", 0),
+        "local_diff": [
+            op_patch('source', [
+                op_addrange(
+                    0, local[0][0:1]),
+                op_removerange(0, 1)],
+            )],
+        "remote_diff": [
+            op_patch('source', [
+                op_addrange(
+                    0, remote[0][0:1]),
+                op_removerange(0, 1)],
+
+            )],
+        }]
+    merge_args = copy.deepcopy(args)
+    merge_args.merge_strategy = "use-base"
+    merge_args.input_strategy = "inline"
+    _check(base, local, remote, expected_partial, expected_conflicts, merge_args)
+
+
+
+
