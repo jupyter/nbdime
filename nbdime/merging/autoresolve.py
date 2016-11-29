@@ -179,7 +179,7 @@ def is_diff_all_transients(diff, path, transients):
     return True
 
 
-def strategy2action_dict(local_base, le, re, strategy, path, dec):
+def strategy2action_dict(resolved_base, le, re, strategy, path, dec):
     assert le is None or re is None or le.key == re.key
     key = le.key if re is None else re.key
 
@@ -231,12 +231,16 @@ def strategy2action_dict(local_base, le, re, strategy, path, dec):
         raise RuntimeError("Not expecting a conflict at path {}.".format(path))
     # ... cases using changes from both sides to produce a new value
     elif strategy == "union":
-        dec.action = "local_then_remote"
-        dec.conflict = False
+        if isinstance(resolved_base[key], (list, string_types)):
+            dec.action = 'local_then_remote'
+            dec.conflict = False
+        else:
+            # Union doesn't make sense on non-sequence types
+            # Leave this conflict unresolved
+            pass
     else:
         # TODO: Split these into multiple decisions?
-        key = le.key if le.key else re.key
-        value = local_base[key]
+        value = resolved_base[key]
         if strategy == "inline-source":
             newvalue = make_inline_source_value(value, le, re)
         elif strategy == "inline-outputs":
@@ -362,7 +366,7 @@ def autoresolve_decision_on_list(dec, base, sub, strategies):
             # Only action that can be taken is to check whether the patch ops
             # are all transients, and if so, take the other side
             for p in (lpatches or rpatches):
-                # Convert to string to search transients
+                # Search subpath for transients:
                 subpath = dec.common_path + (p.key,)
                 if not is_diff_all_transients(p.diff, subpath,
                                               strategies.transients):
@@ -388,11 +392,13 @@ def autoresolve_decision_on_list(dec, base, sub, strategies):
             # FIXME: What has happened here? This is hard to follow, enumerate cases!
             # - at least one side is modified
             # - only 0 or 1 has a patch
+            # - one possiblity: range replacement on both sides
 
             # Just keep chunked decision
             subdec = copy.copy(dec)
             subdec.local_diff = list(d0)
             subdec.remote_diff = list(d1)
+            # TODO: Is it always safe to use union here?
             if strategies.fall_back:
                 # Use fall-back
                 decs.extend(strategy2action_list(
