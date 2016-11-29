@@ -347,7 +347,7 @@ def autoresolve_decision_on_list(dec, base, sub, strategies):
                 )
                 if conflict and strategies.fall_back:
                     decs.extend(strategy2action_list(
-                        d, strategies.fall_back))
+                        strategies.fall_back, d))
                 else:
                     decs.insert(i, d)
         elif lpatches or rpatches:
@@ -373,7 +373,7 @@ def autoresolve_decision_on_list(dec, base, sub, strategies):
                     if strategies.fall_back:
                         # Use fall-back
                         decs.extend(strategy2action_list(
-                            subdec, strategies.fall_back))
+                            strategies.fall_back, subdec))
                     else:
                         decs.append(subdec)
                     break
@@ -396,7 +396,7 @@ def autoresolve_decision_on_list(dec, base, sub, strategies):
             if strategies.fall_back:
                 # Use fall-back
                 decs.extend(strategy2action_list(
-                    subdec, strategies.fall_back))
+                    strategies.fall_back, subdec))
             else:
                 decs.append(subdec)
 
