@@ -14,7 +14,7 @@ try:
 except ImportError:
     from backports.shutil_which import which
 
-COMMANDS = ["show", "diff", "merge", "patch", "diff-web", "merge-web", "mergetool"]
+COMMANDS = ["show", "diff", "merge", "diff-web", "merge-web", "mergetool"]
 
 
 def main_dispatch(args=None):
@@ -32,8 +32,6 @@ def main_dispatch(args=None):
         from nbdime.nbdiffapp import main
     elif cmd == "merge":
         from nbdime.nbmergeapp import main
-    elif cmd == "patch":
-        from nbdime.nbpatchapp import main
     elif cmd == "diff-web":
         from nbdime.webapp.nbdiffweb import main
     elif cmd == "merge-web":
