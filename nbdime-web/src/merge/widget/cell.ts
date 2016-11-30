@@ -11,10 +11,6 @@ import {
 } from 'jupyterlab/lib/notebook/notebook/nbformat';
 
 import {
-  DragPanel
-} from '../../common/dragpanel';
-
-import {
   Widget
 } from 'phosphor/lib/ui/widget';
 
@@ -23,16 +19,16 @@ import {
 } from 'phosphor/lib/ui/panel';
 
 import {
-  createNbdimeMergeView
-} from '../../common/mergeview';
-
-import {
   CollapsiblePanel
 } from '../../common/collapsiblepanel';
 
 import {
-  CellMergeModel
-} from '../model';
+  DragPanel
+} from '../../common/dragpanel';
+
+import {
+  createNbdimeMergeView
+} from '../../common/mergeview';
 
 import {
   IStringDiffModel, StringDiffModel, IDiffModel, OutputDiffModel
@@ -45,6 +41,10 @@ import {
 import {
   FlexPanel
 } from '../../upstreaming/flexpanel';
+
+import {
+  CellMergeModel
+} from '../model';
 
 import {
   RenderableOutputsMergeView
