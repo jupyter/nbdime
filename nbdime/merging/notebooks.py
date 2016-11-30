@@ -37,11 +37,11 @@ generic_conflict_strategies = (
 
 # Strategies that can be applied to an entire notebook
 cli_conflict_strategies = (
+    "inline",           # Inline source and outputs, and record metadata conflicts
     "use-base",         # Keep base value in case of conflict
     "use-local",        # Use local value in case of conflict
     "use-remote",       # Use remote value in case of conflict
     "union",            # Take local value, then remote, in case of conflict
-    "inline",           # Inline source and outputs, and record metadata conflicts
 )
 
 
