@@ -11,7 +11,8 @@ from ._version import __version__
 from .log import init_logging, set_nbdime_log_level
 
 class LogLevelAction(argparse.Action):
-    def __call__(self, parser, args, values, option_string=None):
+    def __call__(self, parser, namespace, values, option_string=None):
+        setattr(namespace, self.dest, values)
         level = getattr(logging, values)
         init_logging(level=level)
         set_nbdime_log_level(level)
