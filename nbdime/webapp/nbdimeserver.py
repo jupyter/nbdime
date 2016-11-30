@@ -216,7 +216,7 @@ class ApiCloseHandler(NbdimeApiHandler):
                 400, "This server cannot be closed remotely.")
 
         # Fail if no exit code is supplied:
-        self.settings['exit_code'] = int(self.request.headers.get("exit_code", 1))
+        self.application.exit_code = int(self.request.headers.get("exit_code", 1))
 
         _logger.info("Closing server on remote request")
         self.finish()
@@ -240,7 +240,6 @@ def make_app(**params):
     settings = {
         "static_path": static_path,
         "template_path": template_path,
-        "exit_code": 0,
         }
 
     if nbdime.utils.is_in_repo(nbdime.__file__):
@@ -252,7 +251,9 @@ def make_app(**params):
             # "serve_traceback": True,
             })
 
-    return web.Application(handlers, **settings)
+    app = web.Application(handlers, **settings)
+    app.exit_code = 0
+    return app
 
 
 def main_server(on_port=None, closable=False, **params):
@@ -272,7 +273,7 @@ def main_server(on_port=None, closable=False, **params):
     if on_port is not None:
         on_port(port)
     ioloop.IOLoop.current().start()
-    return app.settings['exit_code']
+    return app.exit_code
 
 
 def _build_arg_parser():
