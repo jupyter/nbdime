@@ -7,13 +7,14 @@ from __future__ import unicode_literals
 
 from six import string_types, text_type
 from six.moves import xrange as range
+
 import copy
 import nbformat
 
 from ..diff_format import (
     DiffOp, op_removerange, op_remove, op_patch, op_replace)
 from ..patching import patch
-
+from ..utils import r_is_int
 
 class MergeDecision(dict):
     """For internal usage in nbdime library.
@@ -313,7 +314,7 @@ SOFTWARE.
     for s in k.common_path:
         if not isinstance(s, (int, text_type)):
             s = s.decode("utf8")
-        if isinstance(s, text_type) and s.isdecimal():
+        if isinstance(s, text_type) and r_is_int.match(s):
             s = int(s)
         if isinstance(s, int):
             ret.append(('', -s))

@@ -73,14 +73,14 @@ DIFF_ENTRY_END = '\n'
 
 
 def external_merge_render(cmd, b, l, r):
+    if isinstance(l, bytes):
+        l = l.decode("utf8")
+    if isinstance(b, bytes):
+        b = b.decode("utf8")
+    if isinstance(r, bytes):
+        r = r.decode("utf8")
+    td = tempfile.mkdtemp()
     try:
-        if isinstance(l, bytes):
-            l = l.decode("utf8")
-        if isinstance(b, bytes):
-            b = b.decode("utf8")
-        if isinstance(r, bytes):
-            r = r.decode("utf8")
-        td = tempfile.mkdtemp()
         with io.open(os.path.join(td, 'local'), 'w', encoding="utf8") as f:
             f.write(l)
         with io.open(os.path.join(td, 'base'), 'w', encoding="utf8") as f:
@@ -91,21 +91,18 @@ def external_merge_render(cmd, b, l, r):
         p = Popen(cmd, cwd=td, stdout=PIPE)
         output, _ = p.communicate()
         output = output.decode('utf8')
-        r = re.compile(r"^\\ No newline at end of file\n?", flags=re.M)
-        output, n = r.subn("", output)
-        assert n <= 2
     finally:
         shutil.rmtree(td)
     return output
 
 
 def external_diff_render(cmd, a, b):
+    if isinstance(a, bytes):
+        a = a.decode("utf8")
+    if isinstance(b, bytes):
+        b = b.decode("utf8")
+    td = tempfile.mkdtemp()
     try:
-        if isinstance(a, bytes):
-            a = a.decode("utf8")
-        if isinstance(b, bytes):
-            b = b.decode("utf8")
-        td = tempfile.mkdtemp()
         with io.open(os.path.join(td, 'before'), 'w', encoding="utf8") as f:
             f.write(a)
         with io.open(os.path.join(td, 'after'), 'w', encoding="utf8") as f:
