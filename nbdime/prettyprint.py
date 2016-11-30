@@ -776,8 +776,6 @@ def pretty_print_merge_decisions(base, decisions, out=sys.stdout):
               % (len(conflicted), len(decisions)))
     for d in decisions:
         pretty_print_merge_decision(base, d, out)
-        out.write("\n")
-    out.write("\n")
 
 
 def pretty_print_notebook_merge(bfn, lfn, rfn, bnb, lnb, rnb, mnb, decisions, out=sys.stdout):
