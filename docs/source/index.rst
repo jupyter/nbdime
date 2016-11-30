@@ -1,12 +1,14 @@
 nbdime -- diffing and merging of Jupyter Notebooks
 ==================================================
 
-.. image:: images/nbdiff-web.png
-
 Version: |version|
 
 **nbdime** provides tools for diffing and merging `Jupyter notebooks <jupyter-notebook>`_.
 
+.. figure:: images/nbdiff-web.png
+   :alt: example of nbdime nbdiff-web
+
+   Figure: nbdime example
 
 Abstract
 --------
@@ -16,7 +18,10 @@ This format is relatively easy to parse. However, primitive line-based diff and 
 do not handle well the logical structure of notebook documents. These tools
 yield diffs like this:
 
-.. image:: images/diff-bad.png
+.. figure:: images/diff-bad.png
+   :alt: diff example using traditional line-based diff tool
+
+   Figure: diff using traditional line-based diff tool
 
 **nbdime**, on the other hand, provides "content-aware" diffing and merging of
 Jupyter notebooks. It understands the structure of notebook documents.
@@ -30,8 +35,10 @@ such as:
 
 nbdime yields diffs like this:
 
-.. image:: images/nbdiff-web.png
+.. figure:: images/nbdiff-web.png
+   :alt: example of nbdime's content-aware diff
 
+   Figure: nbdime's content-aware diff
 
 Quickstart
 ----------
@@ -65,7 +72,10 @@ To configure git to use nbdime to as a command-line driver to diff and merge not
 Now when you do :command:`git diff` or :command:`git merge` with notebooks,
 you should see a nice diff view, like this:
 
-.. image:: images/nbdiff-terminal.png
+.. figure:: images/nbdiff-terminal.png
+   :alt: nbdime's command-line diff
+
+   Figure: nbdime's 'content-aware' command-line diff
 
 To configure git to use the web-based GUI viewers of notebook diffs and merges::
 
@@ -82,8 +92,10 @@ and::
 
     git mergetool --tool nbdime
 
-.. image:: images/nbmerge-web.png
+.. figure:: images/nbmerge-web.png
+   :alt: nbdime's merge with web-based GUI viewer
 
+   Figure: nbdime's merge with web-based GUI viewer
 
 .. note::
 
