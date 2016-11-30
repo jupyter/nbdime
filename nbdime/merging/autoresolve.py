@@ -6,7 +6,6 @@
 from __future__ import print_function, unicode_literals
 
 from six import string_types
-import sys
 import copy
 import logging
 
@@ -281,10 +280,10 @@ def strategy2action_list(strategy, dec):
         dec.conflict = False
     elif strategy == "fail":
         raise RuntimeError("Not expecting a conflict at path {}.".format(
-          join_path(dec.common_path) + '/*'))
+            join_path(dec.common_path) + '/*'))
     else:
         raise RuntimeError("Not expecting strategy {} for list items at path {}.".format(
-          strategy, join_path(dec.common_path)))
+            strategy, join_path(dec.common_path)))
 
     return [dec]
 
@@ -525,8 +524,6 @@ def autoresolve(base, decisions, strategies):
     #     st = strategies.get(path)
     #     pstrat = get_parent_strategies(path, strategies)
     #     #path2dec[path].append(dec)
-
-    #import ipdb; ipdb.set_trace()
 
     newdecisions = []
     for dec in decisions:
