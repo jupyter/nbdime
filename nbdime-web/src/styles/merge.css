@@ -203,7 +203,20 @@
   background-color: var(--jp-merge-remote-color2);
 }
 
+.jp-Notebook-merge .jp-Cellrow-outputs .jp-OutputArea {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex-wrap: nowrap;
+  min-height: 2em;
+}
+
 .jp-Notebook-merge .jp-Merge-oneway-local .jp-Cellrow-outputs,
 .jp-Notebook-merge .jp-Merge-oneway-remote .jp-Cellrow-outputs {
   border-top: #39f solid 1pt;
 }
+
+.jp-Notebook-merge .jp-Output:first-child {
+  margin-top: 0;
+}
+
