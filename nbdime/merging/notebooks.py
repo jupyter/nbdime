@@ -24,6 +24,7 @@ _logger = logging.getLogger(__name__)
 generic_conflict_strategies = (
     "fail",             # Unexpected: crash and burn in case of conflict
     "mergetool",        # Do not modify decision (but prevent processing at deeper path)
+    "take-max",         # Take the maximum value in case of conflict
     "use-base",         # Keep base value in case of conflict
     "use-local",        # Use local value in case of conflict
     "use-remote",       # Use remote value in case of conflict
