@@ -148,8 +148,8 @@ class ApiDiffHandler(NbdimeApiHandler):
         try:
             thediff = nbdime.diff_notebooks(base_nb, remote_nb)
         except Exception:
-            nbdime.log.exception("Error diffing documents")
-            raise web.HTTPError(400, "Error while diffing documents.")
+            nbdime.log.exception("Error diffing documents:")
+            raise web.HTTPError(500, "Error while attempting to diff documents: %s" % e)
 
         data = {
             "base": base_nb,
@@ -173,8 +173,8 @@ class ApiMergeHandler(NbdimeApiHandler):
             decisions = decide_notebook_merge(base_nb, local_nb, remote_nb,
                                               args=merge_args)
         except Exception as e:
-            nbdime.log.exception("Error merging documents")
-            raise web.HTTPError(400, "Error while attempting to merge documents: %s" % e)
+            nbdime.log.exception("Error merging documents:")
+            raise web.HTTPError(500, "Error while attempting to merge documents: %s" % e)
 
         data = {
             "base": base_nb,
