@@ -23,7 +23,7 @@
 
 TODO: screenshot(s)
 
-## Installation:
+## Installation
 
 Install nbdime with pip:
 
@@ -45,15 +45,13 @@ If you would like to contribute to the project, please read our [contributor doc
 
 To install a development version of nbdime, you will need [npm installed](https://nodejs.org/en/download/) and available on your PATH while installing.
 
-For a **development install**, clone the [repository](https://github.com/jupyter/nbdime) and then install from source:
+For a **development install**, enter on the command line:
 
 ```bash
-git clone https://github.com/jupyter/nbdime
-cd nbdime
-pip3 install -r requirements.txt -e .
+pip install -e git+https://github.com/jupyter/nbdime
 ```
 
-See [installation]() documentation for additional detail.
+See [installation](https://nbdime.readthedocs.io/en/latest/installing.html#installing-latest-development-version) documentation for additional detail.
 
 ## Testing
 
@@ -66,15 +64,18 @@ Install the [codecov browser extension](https://github.com/codecov/browser-exten
 See [testing]() documentation for additional detail.
 
 ## License
+
 We use a shared copyright model that enables all contributors to maintain the
 copyright on their contributions.
 
 All code is licensed under the terms of the revised BSD license.
 
 ## Getting help
+
 We encourage you to ask questions on the [mailing list](https://groups.google.com/forum/#!forum/jupyter).
 
 ## Resources
+
 - [Reporting Issues](https://github.com/jupyter/nbdime/issues)
 - [Documentation for nbdime](http://nbdime.readthedocs.io/en/latest/) | [PDF (latest)](https://media.readthedocs.org/pdf/nbdime/latest/nbdime.pdf)
 
