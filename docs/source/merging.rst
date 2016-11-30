@@ -1,7 +1,7 @@
 Merge details
 =============
 
-TODO: screenshot of merge-web
+.. image:: images/nbmerge-web.png
 
 nbdime implements a three-way merge of Jupyter notebooks and a
 subset of generic JSON objects.
