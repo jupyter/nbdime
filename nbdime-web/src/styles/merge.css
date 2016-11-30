@@ -53,6 +53,15 @@
   border: solid gray thin;
 }
 
+.jp-Merge-output-drop-delete {
+  border: 3px dashed var(--jp-nbdime-output-color2);
+  border-radius: 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+
 .jp-Notebook-merge .CodeMirror-merge-pane-deleted,
 .jp-Notebook-merge .CodeMirror-merge-pane-added {
   width: 100%;
