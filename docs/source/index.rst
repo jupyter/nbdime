@@ -3,7 +3,7 @@ nbdime -- diffing and merging of Jupyter Notebooks
 
 Version: |version|
 
-**nbdime** provides tools for diffing and merging `Jupyter notebooks <jupyter-notebook>`_.
+**nbdime** provides tools for diffing and merging `Jupyter notebooks`_.
 
 .. figure:: images/nbdiff-web.png
    :alt: example of nbdime nbdiff-web
@@ -132,4 +132,4 @@ Contents
 
 .. links
 
-.. jupyter-notebook: https://jupyter-notebook.readthedocs.io
+.. _`Jupyter notebooks`: http://jupyter-notebook.readthedocs.io/en/latest/
