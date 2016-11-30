@@ -5,10 +5,12 @@ Version control integration
 .. note::
 
     Currently only integration with git is supported
-    out of the box. However, as long as the version 
-    control software allows for external drivers 
-    and/or tools, integration with nbdime should be
-    possible following the same patterns as outlined
+    out of the box.
+
+    Integration with other version control software
+    should be possible if the version control software
+    allows for external drivers and/or tools. For integration,
+    follow the same patterns as outlined
     in the manual registration sections.
 
 .. _git-integration:
@@ -17,17 +19,26 @@ Git integration
 ---------------
 
 Git integration of nbdime is supported in two ways:
-through *drivers* for diff and merge operations, where
-nbdime takes on the responsiblity for performing the
-diff/merge; and through defining nbdime as diff and 
-merge *tools*, which allow it to display the 
-diff/merge to the user without having to actually 
-depend on git.
 
-Configuring git is done by editing the ``.gitconfig``
+- through **drivers** for diff and merge operations, where
+  nbdime takes on the responsibility for performing the
+  diff/merge:
+
+      * `Diff driver`_
+      * `Merge driver`_
+
+- through defining nbdime as diff and
+  merge **tools**, which allow nbdime to display the
+  diff/merge to the user without having to actually
+  depend on git:
+
+      * `Diff web tool`_
+      * `Merge web tool`_
+
+Configure git integration by editing the ``.gitconfig``
 (or ``.git/config``) and ``.gitattributes`` in each
 git repository or in the home directory for global effect.
-Read on for commands that edit these files for you
+Read on for commands that edit these files
 and execute nbdime through git.
 
 Diff driver
@@ -36,9 +47,14 @@ Diff driver
 Registering an external diff driver with git tells git
 to call that application to calculate and display diffs
 to the user. The driver will be called for commands such
-as `git diff`, but will not be used for all git commands
-(e.g. `git add --patch` will not use the driver).
+as :command:`git diff`, but will not be used for all git commands
+(e.g. :command:`git add --patch` will not use the driver).
 Consult the git documentation for further details.
+
+Registration can be done in two ways -- at the command line or manually.
+
+Command line registration
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 nbdime supplies an entry point for registering its driver
 with git::
@@ -46,8 +62,9 @@ with git::
     git-nbdiffdriver config --enable [--global]
 
 This command will register the nbdime diff driver with 
-git on the project (repository) or global (user) level. 
-Additionaly, the command will associate the driver with
+git on the project (repository) or global (user) level
+when the ``--global`` option is used.
+Additionally, this command will associate the diff driver with
 the ``.ipynb`` file extension, again either on the project
 or global level.
 
@@ -58,7 +75,7 @@ Alternatively, the diff driver can be registered manually
 with the following steps:
 
 - To register the driver with git under the name 
-  "jupyternotebook", add the following entries to the 
+  ``"jupyternotebook"``, add the following entries to the
   appropriate ``.gitconfig`` file::
 
     [diff "jupyternotebook"]
@@ -75,9 +92,14 @@ Merge driver
 ************
 
 Registering an external merge driver with git tells git
-to call that application to calculate merges of certain
+to call that driver application to calculate merges of certain
 files. This allows nbdime to become responsible for
 merging all notebooks.
+
+Registration can be done in two ways -- at the command line or manually.
+
+Command line registration
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 nbdime supplies an entry point for registering its merge 
 driver with git::
@@ -115,8 +137,12 @@ Diff web tool
 
 The rich, web-based diff view can be installed as a git
 *diff tool*. This enables the diff viewer to display diffs
-of repository history instead of just files. To register
-nbdime as a git diff tool, run the command::
+of repository history instead of just files.
+
+Command line registration
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To register nbdime as a git diff tool, run the command::
 
     git-nbdifftool config --enable [--global]
 
@@ -131,17 +157,18 @@ flag to the registration command::
 
     git-nbdifftool config --enable [--global] --set-default
 
-This will set the CLI differ as the default diff tool, and
+This command will set the CLI's diff tool as the default diff tool, and
 the web based diff tool as the default GUI diff tool. To 
 launch the web view with this configuration, run the
 git command as follows::
 
     git difftool -g [<commit> [<commit>]] [--] [<path>…​]
 
-.. note:: 
-    Git does not allow to select different tools per file type,
-    so if you set nbdime as the default tool it will be called
-    for *all changed files*. This includes non-notebooks, which
+.. note::
+
+    Git does not allow selection of different tools per file type.
+    If you set nbdime as the default tool it will be called
+    for **all** changed files. This includes non-notebook files, which
     nbdime will fail to process.
 
 Manual registration
@@ -172,8 +199,12 @@ Merge web tool
 
 The rich, web-based merge view can be installed as a git
 *merge tool*. This enables nbdime to process merge conflicts
-during merging in git. To register nbdime as a git 
-merge tool, run the command::
+during merging in git.
+
+Command line registration
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To register nbdime as a git merge tool, run the command::
 
     git-nbmergetool config --enable [--global]
 
