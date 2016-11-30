@@ -96,7 +96,7 @@ and can take different actions based on the type of data with the conflict.
     and is subject to change.
 
 The ``-m, --merge-strategy`` option lets you select a global strategy to use.
-The following options are currently implemented::
+The following options are currently implemented:
 
 inline
     This is the default.
