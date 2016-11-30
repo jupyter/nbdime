@@ -305,7 +305,7 @@ def pretty_print_metadata(md, known_keys, prefix="", out=sys.stdout):
 
 def pretty_print_output(i, output, prefix="", out=sys.stdout):
     oprefix = prefix+IND
-    t = output.output_type
+    t = output['output_type']
     numstr = "" if i is None else " %d" % i
     k = "output%s" % (numstr,)
     pretty_print_key(k, prefix, out)
