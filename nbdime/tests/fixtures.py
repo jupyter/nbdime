@@ -7,6 +7,7 @@ from __future__ import unicode_literals
 from __future__ import print_function
 
 from six.moves import xrange as range
+from six import string_types
 
 import io
 import pytest
@@ -164,7 +165,10 @@ def sources_to_notebook(sources):
     assert isinstance(sources, list)
     assert len(sources) == 0 or isinstance(sources[0], list)
     nb = nbformat.v4.new_notebook()
-    nb.cells.extend(nbformat.v4.new_code_cell(source) for source in sources)
+    for source in sources:
+        if isinstance(source, list):
+            source = "".join(source)
+        nb.cells.append(nbformat.v4.new_code_cell(source))
     return nb
 
 
@@ -174,7 +178,27 @@ def notebook_to_sources(nb, as_str=True):
         source = cell["source"]
         if as_str and isinstance(source, list):
             source = "\n".join([line.strip("\n") for line in source])
-        elif not as_str and isinstance(source, str):
+        elif not as_str and isinstance(source, string_types):
             source = source.splitlines(True)
         sources.append(source)
     return sources
+
+
+def outputs_to_notebook(outputs):
+    assert isinstance(outputs, list)
+    assert len(outputs) == 0 or isinstance(outputs[0], list)
+    nb = nbformat.v4.new_notebook()
+    for cell_outputs in outputs:
+        cell = nbformat.v4.new_code_cell()
+        nb.cells.append(cell)
+        for output in cell_outputs:
+            if isinstance(output, string_types):
+                output = nbformat.v4.new_output(
+                    output_type="display_data",
+                    data={
+                        "text/plain": output,
+                    }
+                )
+            assert isinstance(output, dict)
+            cell.outputs.append(output)
+    return nb

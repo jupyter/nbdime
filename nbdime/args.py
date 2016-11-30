@@ -78,17 +78,30 @@ def add_diff_args(parser):
 def add_merge_args(parser):
     """Adds a set of arguments for commands that perform merges.
     """
-    from .merging.notebooks import generic_conflict_strategies
+    from .merging.notebooks import cli_conflict_strategies
     parser.add_argument(
         '-m', '--merge-strategy',
-        default="mergetool",
-        choices=generic_conflict_strategies,
+        default="inline",
+        choices=cli_conflict_strategies,
         help="Specify the merge strategy to use.")
     parser.add_argument(
-        '-i', '--ignore-transients',
-        action="store_true",
-        default=False,
-        help="Allow deletion of transient data such as outputs and "
+        '--input-strategy',
+        default=None,
+        choices=cli_conflict_strategies,
+        help="Specify the merge strategy to use for inputs "
+             "(overrides 'merge-strategy' for inputs).")
+    parser.add_argument(
+        '--output-strategy',
+        default=None,
+        choices=cli_conflict_strategies,
+        help="Specify the merge strategy to use for outputs "
+             "(overrides 'merge-strategy' for outputs).")
+    parser.add_argument(
+        '--no-ignore-transients',
+        dest='ignore_transients',
+        action="store_false",
+        default=True,
+        help="Disallow deletion of transient data such as outputs and "
              "execution counts in order to resolve conflicts.")
 
 

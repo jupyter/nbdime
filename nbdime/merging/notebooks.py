@@ -22,7 +22,7 @@ _logger = logging.getLogger(__name__)
 # Strategies for handling conflicts  TODO: Implement these and refine further!
 generic_conflict_strategies = (
     "fail",             # Unexpected: crash and burn in case of conflict
-    "mergetool",        # Pass on diff to external difftool (TODO: store in global metadata at end instead of in separate diff dicts?)
+    "mergetool",        # Do not modify decision (but prevent processing at deeper path)
     "use-base",         # Keep base value in case of conflict
     "use-local",        # Use local value in case of conflict
     "use-remote",       # Use remote value in case of conflict
@@ -30,27 +30,43 @@ generic_conflict_strategies = (
     "record-conflict",  # Valid for metadata only: produce new metadata with conflicts recorded for external inspection
     "inline-source",    # Valid for source only: produce new source with inline diff markers
     "inline-outputs",   # Valid for outputs only: produce new outputs with inline diff markers
-    "join",             # Join values in case of conflict, don't insert new markers.
+    "union",            # Join values in case of conflict, don't insert new markers.
     )
+
+# Strategies that can be applied to an entire notebook
+cli_conflict_strategies = (
+    "use-base",         # Keep base value in case of conflict
+    "use-local",        # Use local value in case of conflict
+    "use-remote",       # Use remote value in case of conflict
+    "union",            # Take local value, then remote, in case of conflict
+    "inline",           # Inline source and outputs, and record metadata conflicts
+)
 
 
 def autoresolve_notebook_conflicts(base, decisions, args):
     strategies = Strategies({
         "/nbformat": "fail",
         # "/nbformat_minor": "fail",
-        "/cells/*/execution_count": "clear",
         "/cells/*/cell_type": "fail",
-        "/cells/*/outputs/*/execution_count": "clear",
-        },
-        transients=[
+        })
+
+    if not args or args.ignore_transients:
+        strategies.transients = [
             "/cells/*/execution_count",
             "/cells/*/outputs",
             "/cells/*/metadata/collapsed",
             "/cells/*/metadata/autoscroll",
             "/cells/*/metadata/scrolled",
             "/cells/*/outputs/*/execution_count"
-        ])
-    if args and args.merge_strategy == "mergetool":
+        ]
+        strategies.update({
+            "/cells/*/execution_count": "clear",
+            "/cells/*/outputs/*/execution_count": "clear",
+        })
+    merge_strategy = args.merge_strategy if args else "inline"
+    input_strategy = args.input_strategy if args else None
+    output_strategy = args.output_strategy if args else None
+    if merge_strategy == "mergetool":
         # Mergetool strategy will prevent autoresolve from
         # attempting to solve conflicts on these entries:
         strategies.update({
@@ -58,17 +74,29 @@ def autoresolve_notebook_conflicts(base, decisions, args):
             "/cells/*/outputs": "mergetool",
             "/cells/*/attachments": "mergetool",
         })
+    elif merge_strategy.startswith('use-') or merge_strategy == 'union':
+        strategies.fall_back = args.merge_strategy
     else:
         strategies.update({
             "/metadata": "record-conflict",
             "/cells/*/metadata": "record-conflict",
             "/cells/*/source": "inline-source",
-            "/cells/*/outputs": "inline-outputs", # "clear", "join"
+            "/cells/*/outputs": "inline-outputs",
             # TODO: Add an inline strategy for attachments as well
             # FIXME: Find a good way to handle strategies for both parent (outputs) and child (execution_count).
             #        It might be that some strategies can be combined while others don't make sense, e.g. setting use-* on parent.
-            #"/cells/*/outputs/*/execution_count": "clear",
-            #"/cells/*/outputs/*/metadata": "record-conflict",
+        })
+    if input_strategy:
+        if input_strategy == 'inline':
+            input_strategy = 'inline-source'
+        strategies.update({
+            "/cells/*/source": input_strategy
+        })
+    if output_strategy:
+        if input_strategy == 'inline':
+            input_strategy = 'inline-outputs'
+        strategies.update({
+            "/cells/*/outputs": output_strategy
         })
     return autoresolve(base, decisions, strategies)
 

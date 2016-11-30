@@ -179,7 +179,7 @@ def is_diff_all_transients(diff, path, transients):
     return True
 
 
-def strategy2action_dict(local_base, le, re, strategy, path, dec):
+def strategy2action_dict(resolved_base, le, re, strategy, path, dec):
     assert le is None or re is None or le.key == re.key
     key = le.key if re is None else re.key
 
@@ -230,13 +230,17 @@ def strategy2action_dict(local_base, le, re, strategy, path, dec):
         # Expecting never to get this kind of conflict, raise error
         raise RuntimeError("Not expecting a conflict at path {}.".format(path))
     # ... cases using changes from both sides to produce a new value
-    elif strategy == "join":
-        dec.action = "local_then_remote"
-        dec.conflict = False
+    elif strategy == "union":
+        if isinstance(resolved_base[key], (list, string_types)):
+            dec.action = 'local_then_remote'
+            dec.conflict = False
+        else:
+            # Union doesn't make sense on non-sequence types
+            # Leave this conflict unresolved
+            pass
     else:
         # TODO: Split these into multiple decisions?
-        key = le.key if le.key else re.key
-        value = local_base[key]
+        value = resolved_base[key]
         if strategy == "inline-source":
             newvalue = make_inline_source_value(value, le, re)
         elif strategy == "inline-outputs":
@@ -257,10 +261,6 @@ def strategy2action_list(strategy, dec):
     # Make a shallow copy of dec
     dec = copy.copy(dec)
 
-    if strategy == "mergetool":
-        # Leave this type of conflict for other tool to resolve
-        return [dec]
-
     # The rest here remove the conflicts and provide a new value
     if strategy == "use-base":
         dec.action = "base"
@@ -271,7 +271,7 @@ def strategy2action_list(strategy, dec):
     elif strategy == "use-remote":
         dec.action = "remote"
         dec.conflict = False
-    elif strategy == "join":
+    elif strategy == "union":
         dec.action = "local_then_remote"
         dec.conflict = False
     elif strategy == "clear":
@@ -342,13 +342,18 @@ def autoresolve_decision_on_list(dec, base, sub, strategies):
             # and insert before patch:
             if linserts or rinserts:
                 conflict = (bool(linserts) == bool(rinserts))
-                decs.insert(i, MergeDecision(
+                d = MergeDecision(
                     common_path=dec.common_path,
                     action="local_then_remote",  # Will this suffice?
                     conflict=conflict,
                     local_diff=linserts,  # Should these be split up further?
                     remote_diff=rinserts,
-                ))
+                )
+                if conflict and strategies.fall_back:
+                    decs.extend(strategy2action_list(
+                        strategies.fall_back, d))
+                else:
+                    decs.insert(i, d)
         elif lpatches or rpatches:
             # One sided patch, with deletions on other (vs addition is not a
             # conflict)
@@ -361,7 +366,7 @@ def autoresolve_decision_on_list(dec, base, sub, strategies):
             # Only action that can be taken is to check whether the patch ops
             # are all transients, and if so, take the other side
             for p in (lpatches or rpatches):
-                # Convert to string to search transients
+                # Search subpath for transients:
                 subpath = dec.common_path + (p.key,)
                 if not is_diff_all_transients(p.diff, subpath,
                                               strategies.transients):
@@ -369,7 +374,12 @@ def autoresolve_decision_on_list(dec, base, sub, strategies):
                     subdec = copy.copy(dec)
                     subdec.local_diff = list(d0)
                     subdec.remote_diff = list(d1)
-                    decs.append(subdec)
+                    if strategies.fall_back:
+                        # Use fall-back
+                        decs.extend(strategy2action_list(
+                            strategies.fall_back, subdec))
+                    else:
+                        decs.append(subdec)
                     break
             else:
                 # All patches are all transient, pick deletion:
@@ -382,12 +392,19 @@ def autoresolve_decision_on_list(dec, base, sub, strategies):
             # FIXME: What has happened here? This is hard to follow, enumerate cases!
             # - at least one side is modified
             # - only 0 or 1 has a patch
+            # - one possiblity: range replacement on both sides
 
             # Just keep chunked decision
             subdec = copy.copy(dec)
             subdec.local_diff = list(d0)
             subdec.remote_diff = list(d1)
-            decs.append(subdec)
+            # TODO: Is it always safe to use union here?
+            if strategies.fall_back:
+                # Use fall-back
+                decs.extend(strategy2action_list(
+                    strategies.fall_back, subdec))
+            else:
+                decs.append(subdec)
 
     return decs
 
@@ -414,12 +431,13 @@ def autoresolve_decision_on_dict(dec, base, sub, strategies):
     if strategy is not None:
         decs = strategy2action_dict(sub, le, re, strategy, subpath, dec)
     elif le.op == DiffOp.PATCH and re.op == DiffOp.PATCH:
+        assert False
         # FIXME: this is not quite right:
         # Recurse if we have no strategy for this key but diffs available for the subdocument
         newdec = pop_patch_decision(dec)
         assert newdec is not None
         decs = autoresolve_decision(base, newdec, strategies)
-    elif (DiffOp.PATCH in (le.op, re.op)) and (DiffOp.REMOVE in (le.op, re.op)):
+    elif (DiffOp.PATCH in (le.op, re.op)) and (DiffOp.REMOVE in (le.op, re.op)) and strategies.transients:
         # Check for deletion vs. purely ignoreable changes (transients)
         # If not, leave conflicted
         patchop = le if le.op == DiffOp.PATCH else re
@@ -429,7 +447,9 @@ def autoresolve_decision_on_dict(dec, base, sub, strategies):
             dec.action = "local" if le.op == DiffOp.REMOVE else "remote"
             dec.conflict = False
         decs = [dec]
-
+    elif strategies.fall_back:
+        # Use fall back strategy:
+        decs = strategy2action_dict(sub, le, re, strategies.fall_back, subpath, dec)
     else:
         # Alternatives if we don't have PATCH/PATCH or PATCH/REMOVE, are:
         #  - ADD/ADD: only happens if inserted values are different,
@@ -474,7 +494,8 @@ def autoresolve_decision(base, dec, strategies):
     elif isinstance(sub, list):
         decs = autoresolve_decision_on_list(dec, base, sub, strategies)
     elif isinstance(sub, string_types):
-        raise NotImplementedError()
+        sub = sub.splitlines(True)
+        decs = autoresolve_decision_on_list(dec, base, sub, strategies)
     else:
         raise RuntimeError("Expecting dict, list or string type, got " +
                            str(type(sub)))

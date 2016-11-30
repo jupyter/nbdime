@@ -68,6 +68,7 @@ class Strategies(dict):
     """
     def __init__(self, *args, **kwargs):
         self.transients = kwargs.get("transients", [])
+        self.fall_back = kwargs.get("fall_back", None)
         super(Strategies, self).__init__(*args, **kwargs)
 
     def get(self, k, d=None):
