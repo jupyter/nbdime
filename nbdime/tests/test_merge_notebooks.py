@@ -592,17 +592,20 @@ def test_merge_input_strategy_inline_source_conflict():
     base = [["base\n", "some other\n", "lines\n", "to align\n"]]
     remote = [["remote\n", "some other\n", "lines\n", "to align\n"]]
     # Ideal case:
-    # expected_partial = [[
-    #    "<<<<<<< local\n"
-    #    "local\n"
-    #    "||||||| base\n"
-    #    "base\n"
-    #    "=======\n"
-    #    "remote\n
-    #    ">>>>>>> remote\n"
-    #    "some other\nlines\nto align\n"]]
-    # Current case:
     expected_partial = [[
+       "<<<<<<< local\n",
+       "local\n",
+       #"||||||| base\n",
+       #"base\n",
+       "=======\n",
+       "remote\n",
+       ">>>>>>> remote\n",
+       "some other\n",
+       "lines\n",
+       "to align\n",
+       ]]
+    # Current case:
+    _expected_partial = [[
         "<<<<<<< local\n",
         "local\nsome other\nlines\nto align\n",
         "||||||| base\n",
