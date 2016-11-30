@@ -49,9 +49,9 @@ def main_merge(args):
         nbdime.log.debug("Merge completed successfully with no unresolvable conflicts.")
 
     if args.decisions:
-        # Print conflicted merge decisions
+        # Print merge decisions (including unconflicted)
         out = io.StringIO()
-        pretty_print_merge_decisions(b, conflicted, out=out)
+        pretty_print_merge_decisions(b, decisions, out=out)
         nbdime.log.warning("Conflicts:\n%s", out.getvalue())
     elif mfn:
         # Write partial or fully completed merge to given foo.ipynb filename
