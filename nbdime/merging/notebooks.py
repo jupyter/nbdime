@@ -49,8 +49,8 @@ def autoresolve_notebook_conflicts(base, decisions, args):
         # These fields should never conflict, that would be an internal error:
         "/nbformat": "fail",
         "/cells/*/cell_type": "fail",
-        # Not sure what to do about this:
-        # "/nbformat_minor": "?",
+        # Pick highest minor format:
+        "/nbformat_minor": "take-max",
         })
 
     if not args or args.ignore_transients:

@@ -182,6 +182,20 @@ def strategy2action_dict(resolved_base, le, re, strategy, path, dec):
     elif strategy == "use-remote":
         dec.action = "remote"
         dec.conflict = False
+    elif strategy == "take-max":
+        # For nbformat-minor, take max value
+        bval = resolved_base[key]
+        lval = le.value if le and le.op == DiffOp.REPLACE else bval
+        rval = re.value if re and re.op == DiffOp.REPLACE else bval
+        mval = max(bval, lval, rval)
+        if bval == mval:
+            return []
+        elif lval == mval:
+            dec.action = "local"
+        else:
+            assert rval == mval
+            dec.action = "remote"
+        dec.conflict = False
     # ... cutoffs before cases using changes from both sides
     #  (NB! The position of these elif cases relative to the
     #   cases that check the strategy is important)
@@ -502,13 +516,13 @@ def autoresolve(base, decisions, strategies):
     # Sort strategy keys, shortest first
     #skeys = sorted(strategies, key=lambda x: (len(x), x))
 
-    path2dec = {}
-    for dec in decisions:
-        path = join_path(dec.common_path)
-        path = star_path(path)
-        st = strategies.get(path)
-        pstrat = get_parent_strategies(path, strategies)
-        #path2dec[path].append(dec)
+    # path2dec = {}
+    # for dec in decisions:
+    #     path = join_path(dec.common_path)
+    #     path = star_path(path)
+    #     st = strategies.get(path)
+    #     pstrat = get_parent_strategies(path, strategies)
+    #     #path2dec[path].append(dec)
 
     #import ipdb; ipdb.set_trace()
 
