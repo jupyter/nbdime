@@ -31,6 +31,10 @@ import {
 } from '../../common/mergeview';
 
 import {
+  hasEntries
+} from '../../common/util';
+
+import {
   IStringDiffModel, StringDiffModel, IDiffModel, OutputDiffModel
 } from '../../diff/model';
 
@@ -248,7 +252,7 @@ class CellMergeWidget extends Panel {
         collapser.addClass(METADATA_ROW_CLASS);
         this.addWidget(collapser);
       }
-      if (outputsChanged || model.merged.outputs && model.merged.outputs.length > 0) {
+      if (outputsChanged || hasEntries(model.merged.outputs)) {
         // We know here that we have code cell
         // -> all have outputs !== null
         let baseOut = CellMergeWidget.getOutputs(model.local.outputs!, true);
@@ -281,9 +285,11 @@ class CellMergeWidget extends Panel {
     w.addClass(CELL_HEADER_TITLE_CLASS);
     header.addWidget(w);
 
-    // Add "clear outputs" checkbox
-    let clearOutputToggle = this._createClearOutputToggle();
-    header.addWidget(clearOutputToggle);
+    if (hasEntries(this.model.merged.outputs)) {
+      // Add "clear outputs" checkbox
+      let clearOutputToggle = this._createClearOutputToggle();
+      header.addWidget(clearOutputToggle);
+    }
 
     // Add "delete cell" checkbox
     let deleteToggle = this._createDeleteToggle();
