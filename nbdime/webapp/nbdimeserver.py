@@ -37,11 +37,6 @@ here = os.path.abspath(os.path.dirname(__file__))
 static_path = os.path.join(here, "static")
 template_path = os.path.join(here, "templates")
 
-merge_args = build_merge_parser().parse_args(
-    ["--merge-strategy", "mergetool", "", "", ""])
-
-exit_code = 0
-
 
 def truncate_filename(name):
     limit = 20
@@ -167,6 +162,11 @@ class ApiMergeHandler(NbdimeApiHandler):
         base_nb = self.get_notebook_argument("base")
         local_nb = self.get_notebook_argument("local")
         remote_nb = self.get_notebook_argument("remote")
+        merge_args = self.settings.get('merge_args')
+        if merge_args is None:
+            merge_args = build_merge_parser().parse_args(["", "", ""])
+            merge_args.merge_strategy = 'mergetool'
+            self.settings['merge_args'] = merge_args
 
         try:
             decisions = decide_notebook_merge(base_nb, local_nb, remote_nb,
@@ -213,9 +213,8 @@ class ApiCloseHandler(NbdimeApiHandler):
             raise web.HTTPError(
                 400, "This server cannot be closed remotely.")
 
-        global exit_code
         # Fail if no exit code is supplied:
-        exit_code = self.request.headers.get("exit_code", 1)
+        self.settings['exit_code'] = int(self.request.headers.get("exit_code", 1))
 
         _logger.info("Closing server on remote request")
         self.finish()
@@ -239,6 +238,7 @@ def make_app(**params):
     settings = {
         "static_path": static_path,
         "template_path": template_path,
+        "exit_code": 0,
         }
 
     if nbdime.utils.is_in_repo(nbdime.__file__):
@@ -270,7 +270,7 @@ def main_server(on_port=None, closable=False, **params):
     if on_port is not None:
         on_port(port)
     ioloop.IOLoop.current().start()
-    return exit_code
+    return app.settings['exit_code']
 
 
 def _build_arg_parser():
