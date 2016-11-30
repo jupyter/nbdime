@@ -10,8 +10,10 @@ from six import string_types
 from .decisions import MergeDecisionBuilder
 from .chunks import make_merge_chunks
 from ..diffing import diff
-from ..diff_format import (DiffOp, as_dict_based_diff, op_patch, op_addrange)
+from ..diff_format import (
+    DiffOp, as_dict_based_diff, op_patch, op_addrange, op_removerange)
 from ..diffing.notebooks import notebook_predicates, notebook_differs
+from ..patching import patch
 from ..utils import star_path
 
 
@@ -263,6 +265,7 @@ def _merge_lists(base, local_diff, remote_diff, path, decisions):
 
         elif (len(d0) == len(d1) == 1 and
                 not d0[0].op == d1[0].op == DiffOp.ADDRANGE):
+
             # A/R, A/P, R/P or P/P
             # (R/R will always agree above because of chunking)
             ld, rd = d0[0], d1[0]
@@ -334,11 +337,41 @@ def _merge_lists(base, local_diff, remote_diff, path, decisions):
             ops = [d.op for d in d0 + d1]
             if DiffOp.PATCH in ops:
                 # A/AP, AR/AP or AP/AP:
-                # In these cases, simply merge the As, then conflict remaining
-                # op for autoresolve to deal with
+                # In these cases, simply merge the As, then consider patches after
                 _merge_concurrent_inserts(
                     base, d0[:1], d1[:1], path, decisions)
-                decisions.conflict(path, d0[1:], d1[1:])
+                if (len(d0) == len(d1) == 2 and
+                        d0[1].op == d1[1].op == DiffOp.PATCH):
+                    # P/P:
+                    assert d0[1].key == d1[1].key
+                    key = d0[1].key
+                    bv = base[key]
+                    if isinstance(base, string_types):
+                        # For string base, replace patches with add/remove line
+                        # TODO: This is intended as a short term workaround until
+                        # more robust chunking of strings are included
+                        lv = patch(bv, d0[1].diff)
+                        rv = patch(bv, d1[1].diff)
+                        if (lv == rv):
+                            # Agreed patch on string
+                            decisions.agreement(
+                                path + (key,),
+                                [op_addrange(key, [lv]), op_removerange(key, 1)],
+                                [op_addrange(key, [rv]), op_removerange(key, 1)])
+                        else:
+                            decisions.conflict(
+                                path + (key,),
+                                [op_addrange(key, [lv]), op_removerange(key, 1)],
+                                [op_addrange(key, [rv]), op_removerange(key, 1)])
+                    else:
+                        # Recurse
+                        _merge(bv, d0[1].diff, d1[1].diff,
+                               path + (key,), decisions)
+
+                elif (d0[1:] == d1[1:]):
+                    decisions.agreement(path, d0[1:], d1[1:])
+                else:
+                    decisions.conflict(path, d0[1:], d1[1:])
             elif len(d0) < 2 or len(d1) < 2:
                 # A/A or A/AR
                 _merge_concurrent_inserts(base, d0, d1, path, decisions)
