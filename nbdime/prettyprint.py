@@ -563,8 +563,14 @@ def pretty_print_notebook_diff(afn, bfn, a, di, out=sys.stdout):
     """
     if di:
         path = ""
-        atime = "  " + file_timestamp(afn)
-        btime = "  " + file_timestamp(bfn)
+        if os.path.isfile(afn):
+            atime = "  " + file_timestamp(afn)
+        else:
+            atime = ""
+        if os.path.isfile(bfn):
+            btime = "  " + file_timestamp(bfn)
+        else:
+            btime = ""
         out.write(notebook_diff_header.format(afn=afn, bfn=bfn, atime=atime, btime=btime))
         pretty_print_diff(a, di, path, out)
 
