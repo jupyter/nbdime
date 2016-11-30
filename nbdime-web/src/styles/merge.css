@@ -213,7 +213,7 @@
 
 .jp-Notebook-merge .jp-Merge-oneway-local .jp-Cellrow-outputs,
 .jp-Notebook-merge .jp-Merge-oneway-remote .jp-Cellrow-outputs {
-  border-top: #39f solid 1pt;
+  border-top: var(--jp-nbdime-output-color1) solid 1pt;
 }
 
 .jp-Notebook-merge .jp-Output:first-child {
