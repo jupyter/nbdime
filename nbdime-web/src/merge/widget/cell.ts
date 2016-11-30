@@ -171,6 +171,7 @@ class CellMergeWidget extends Panel {
           model.local.added && model.agreedCell || // Identical additions
           model.local.deleted && model.remote.deleted   // Deletion on both
           ) {
+      CURR_CLASSES = CURR_CLASSES.slice(1, 3);
       // Add single view of source:
       let view = CellDiffWidget.createView(
         model.merged.source, model.merged, CURR_CLASSES, this._rendermime);
@@ -187,6 +188,18 @@ class CellMergeWidget extends Panel {
       }
       view.addClass(SOURCE_ROW_CLASS);
       this.addWidget(view);
+
+      if (hasEntries(model.merged.outputs)) {
+        // Add single view of rendered output
+        let container = new Panel();
+        for (let m of model.merged.outputs) {
+          view = CellDiffWidget.createView(
+            m, model.merged, CURR_CLASSES, this._rendermime);
+          container.addWidget(view);
+        }
+        container.addClass(OUTPUTS_ROW_CLASS);
+        this.addWidget(container);
+      }
     } else {
       // Setup full 4-way mergeview of source, metadata and outputs
       // as needed (if changed). Source/metadata/output are each a "row"

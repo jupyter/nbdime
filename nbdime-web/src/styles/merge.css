@@ -194,3 +194,16 @@
 .jp-Notebook-merge .jp-Cellrow-outputs .p-FlexPanel:last-of-type .jp-OutputArea {
   margin-top: 5px;
 }
+
+.jp-Notebook-merge .jp-Diff-renderedOuput .jp-Merge-local {
+  background-color: var(--jp-merge-local-color2);
+}
+
+.jp-Notebook-merge .jp-Diff-renderedOuput .jp-Merge-remote {
+  background-color: var(--jp-merge-remote-color2);
+}
+
+.jp-Notebook-merge .jp-Merge-oneway-local .jp-Cellrow-outputs,
+.jp-Notebook-merge .jp-Merge-oneway-remote .jp-Cellrow-outputs {
+  border-top: #39f solid 1pt;
+}
