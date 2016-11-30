@@ -43,7 +43,7 @@
   flex-grow: 1;
 }
 
-.jp-Notebook-merge .jp-DragWidget-dragHandle {
+.jp-Notebook-merge .jp-DragPanel-dragHandle {
   height: 18px;
   width: 12px;
 }
@@ -166,8 +166,12 @@
   background-color: var(--jp-merge-both-color2);
 }
 
-.jp-Notebook-merge .CodeMirror-merge-pane.jp-mod-missing {
-  background-color: var(--jp-merge-both-color2);
+.jp-Notebook-merge .CodeMirror-merge-pane.CodeMirror-merge-pane-local.jp-mod-missing {
+  background-color: var(--jp-merge-local-color2);
+}
+
+.jp-Notebook-merge .CodeMirror-merge-pane.CodeMirror-merge-pane-remote.jp-mod-missing {
+  background-color: var(--jp-merge-remote-color2);
 }
 
 .jp-Notebook-merge .jp-Cell-merge.jp-mod-todelete > .p-Widget:not(.jp-Merge-cellHeader) {
