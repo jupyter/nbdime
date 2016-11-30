@@ -1,4 +1,4 @@
-# API draft for nbdime v0.1
+# REST API draft for nbdime server v0.1
 
 The following is a draft of the REST API for nbdime.  It is not yet frozen
 but is guided on preliminary work and likely close to the final

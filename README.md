@@ -21,7 +21,13 @@
 - `nbmerge-web` gives you a web-based three-way merge tool for notebooks
 - `nbshow` present a single notebook in a terminal-friendly way
 
-TODO: screenshot(s)
+Diffing notebooks in the terminal:
+
+![terminal-diff](docs/source/images/nbdiff-terminal.png)
+
+Merging notebooks in a browser:
+
+![web-merge](docs/source/images/nbmerge-web.png)
 
 ## Installation
 

@@ -21,7 +21,8 @@ nbshow
 :command:`nbshow` gives you a nice, terminal-optimized summary view of a notebook.
 You can use it to quickly peek at notebooks without launching the full notebook web application.
 
-.. TODO:: screenshot
+.. image:: images/nbshow.png
+
 
 Diffing
 =======
@@ -42,7 +43,8 @@ nbdiff
 Pass it the two notebooks you would like to compare,
 and it returns a nice, readable presentation of the changes in the notebook.
 
-.. TODO:: screenshot of console diff
+.. image:: images/nbdiff-terminal.png
+
 
 nbdiff-web
 ----------
@@ -53,7 +55,7 @@ Instead of a terminal rendering, :command:`nbdiff-web` opens a web browser,
 compares the two notebooks, and displays the rich rendered diff of images and
 other outputs.
 
-.. TODO:: screenshot of web diff
+.. image:: images/nbdiff-web.png
 
 Merging
 =======
@@ -142,7 +144,7 @@ For example::
 
     nbmerge base.ipynb local.ipynb remote.ipynb > merged.ipynb
 
-.. TODO:: screenshot of auto merge
+.. image:: images/nbmerge-terminal.png
 
 
 nbmerge-web
@@ -154,4 +156,5 @@ a webapp for manually resolving conflicts is displayed::
 
     nbmerge-web base.ipynb local.ipynb remote.ipynb -o merged.ipynb
 
-.. TODO:: screenshot of merge tool
+.. image:: images/nbmerge-web.png
+

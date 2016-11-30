@@ -12,8 +12,6 @@ To install the latest stable release using :command:`pip`::
 Dependencies
 ------------
 
-.. TODO:: do we want to bump these to 2.7.6 and 3.4?
-
 nbdime requires Python version 3.3 or higher. If you are using Python 2,
 nbdime requires 2.7.1 or higher.
 
@@ -45,8 +43,6 @@ will automatically run ``npm`` to install the required Node.js packages.
 
 Setting up a virtualenv with Node.js
 ------------------------------------
-
-.. TODO:: review these instructions re virtualenv
 
 The following steps will: create a virtualenv, named ``myenv``, in the current
 directory; activate the virtualenv; and install npm inside the virtualenv
