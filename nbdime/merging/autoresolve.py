@@ -190,6 +190,8 @@ def strategy2action_dict(resolved_base, le, re, strategy, path, dec):
         mval = max(bval, lval, rval)
         if bval == mval:
             return []
+        elif lval == mval == rval:
+            dec.action = "either"
         elif lval == mval:
             dec.action = "local"
         else:
