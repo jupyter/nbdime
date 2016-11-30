@@ -560,7 +560,7 @@ def pretty_print_notebook(nb, args=None, out=sys.stdout):
 
     if args is None or args.metadata:
         # Write notebook metadata
-        known_metadata_keys = {"kernelspec"}
+        known_metadata_keys = {"kernelspec", "language_info"}
         pretty_print_metadata(nb.metadata, known_metadata_keys, "", out)
 
     # Write notebook cells
