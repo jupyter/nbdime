@@ -94,5 +94,5 @@ and the remote changes are specified as::
       ┗━┓ patch "outputs"
         ┗━ removerange <all outputs removed>
 
-then the common path will be ``["cells", 0]``, and the :term:`diff objects`
+then the common path will be ``["cells", 0]``, and the :term:`diff object`
 will omit the ``patch "cells"`` and ``patch 0`` operations.

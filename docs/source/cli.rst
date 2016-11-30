@@ -10,7 +10,8 @@ nbdime provides the following CLI commands::
     nbmerge
     nbmerge-web
 
-Pass --help to each command to see help text for usage details.
+Pass the command line option ``--help`` to see help text for usage details on
+each command.
 
 Additional commands are available for :ref:`git-integration`.
 
@@ -20,14 +21,14 @@ nbshow
 :command:`nbshow` gives you a nice, terminal-optimized summary view of a notebook.
 You can use it to quickly peek at notebooks without launching the full notebook web application.
 
-TODO: screenshot
+.. TODO:: screenshot
 
 
 Diffing
 =======
 
 nbdime offers two commands for viewing diffs. :command:`nbdiff` for command-line diffing,
-and `nbdiff-web` for rich web-based diffing of notebooks.
+and :command:`nbdiff-web` for rich web-based diffing of notebooks.
 
 .. seealso::
 
@@ -38,9 +39,9 @@ nbdiff
 
 :command:`nbdiff` does a terminal-optimized rendering of notebook diffs.
 Pass it two notebooks you would like to compare,
-and you should get a nice, readable presentation of the changes in the notebook:
+and it returns a nice, readable presentation of the changes in the notebook.
 
-TODO: of console diff
+.. TODO:: of console diff
 
 
 nbdiff-web
@@ -50,7 +51,7 @@ Like :command:`nbdiff`, :command:`nbdiff-web` compares two notebooks.
 But instead of a terminal rendering, it will open a browser and compare the two notebooks,
 showing the rich rendered diff of images and other outputs.
 
-TODO: screenshot of web diff
+.. TODO:: screenshot of web diff
 
 
 Merging
@@ -80,7 +81,7 @@ If there are conflicts, they are stored in metadata of the destination file.
 
 :command:`nbmerge` writes the output to stdout by default,
 so you can use pipes to send the result to a file,
-or the `-o` argument to specify a file in which to save the merged notebook.
+or the ``-o, --output`` argument to specify a file in which to save the merged notebook.
 
 Because there are several categories of data in a notebook (such as input, output, and metadata),
 nbmerge has several ways to deal with conflicts,
@@ -100,10 +101,11 @@ inline
     conflicts on metadata are stored in the appropriate metadata (actual
     values are kept as their base values).
 
-TODO: Make a note about how it is stored (format, tag names, etc.)
+.. TODO:: Make a note about how it is stored (format, tag names, etc.)
 
     This gives you a valid notebook that you can open in your usual notebook editor
     and resolve conflicts, just like you might for a regular Python script.
+
 use-base
     When a conflict is encountered, use the value from the base notebook.
 use-local
@@ -135,7 +137,7 @@ To use nbmerge, pass it the three notebooks:
 
     nbmerge base.ipynb local.ipynb remote.ipynb > merged.ipynb
 
-TODO: screenshot of auto merge
+.. TODO:: screenshot of auto merge
 
 
 nbmerge-web
@@ -147,5 +149,5 @@ you get a webapp for manually resolving conflicts::
 
     nbmerge-web base.ipynb local.ipynb remote.ipynb -o merged.ipynb
 
-TODO: screenshot of merge tool
+.. TODO:: screenshot of merge tool
 

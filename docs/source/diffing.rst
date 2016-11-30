@@ -25,7 +25,8 @@ The diff objects in nbdime are:
 
 The difference between these input objects is represented by a
 json-compatible results object. A JSON schema for validating diff
-entries are available in :doc:`../nbdime/diff_format.schema.json`.
+entries is available in
+`diff_format.schema.json <https://github.com/jupyter/nbdime/blob/master/nbdime/diff_format.schema.json>`_.
 
 Diff format for mappings
 ------------------------
