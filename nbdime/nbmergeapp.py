@@ -44,7 +44,7 @@ def main_merge(args):
     returncode = 1 if conflicted else 0
 
     if conflicted:
-        nbdime.log.warn("Conflicts occured during merge operation.")
+        nbdime.log.warning("Conflicts occured during merge operation.")
     else:
         nbdime.log.debug("Merge completed successfully with no unresolvable conflicts.")
 
@@ -56,8 +56,8 @@ def main_merge(args):
     else:
         if conflicted:
             out = io.StringIO()
-            pretty_print_merge_decisions(b, conflicted, stream=out)
-            nbdime.log.warn("Conflicts: %s", out.getvalue())
+            pretty_print_merge_decisions(b, conflicted, out=out)
+            nbdime.log.warning("Conflicts: %s", out.getvalue())
         nbformat.write(merged, sys.stdout)
     return returncode
 
