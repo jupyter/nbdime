@@ -10,6 +10,8 @@ import sys
 import copy
 import logging
 
+from nbformat.v4 import new_output
+
 from ..diff_format import DiffOp, op_replace
 from ..patching import patch
 from .chunks import make_merge_chunks
@@ -129,11 +131,11 @@ def make_inline_outputs_value(value, le, re,
 
     # Note: This is very notebook specific while the rest of this file is more generic
     newvalue = (
-        [{"output_type": "stream", "name": "stderr", "text": ["<"*7 + local_title]}]
+        [new_output('stream', name='stderr', text="<" * 7 + local_title)]
         + lvalue
-        + [{"output_type": "stream", "name": "stderr", "text": ["="*7]}]
+        + [new_output('stream', name='stderr', text="=" * 7)]
         + rvalue
-        + [{"output_type": "stream", "name": "stderr", "text": ["<"*7 + remote_title]}]
+        + [new_output('stream', name='stderr', text=">" * 7 + remote_title)]
         )
 
     return newvalue

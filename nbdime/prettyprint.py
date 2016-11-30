@@ -305,7 +305,7 @@ def pretty_print_metadata(md, known_keys, prefix="", out=sys.stdout):
 
 def pretty_print_output(i, output, prefix="", out=sys.stdout):
     oprefix = prefix+IND
-    t = output.output_type
+    t = output['output_type']
     numstr = "" if i is None else " %d" % i
     k = "output%s" % (numstr,)
     pretty_print_key(k, prefix, out)
@@ -563,8 +563,14 @@ def pretty_print_notebook_diff(afn, bfn, a, di, out=sys.stdout):
     """
     if di:
         path = ""
-        atime = "  " + file_timestamp(afn)
-        btime = "  " + file_timestamp(bfn)
+        if os.path.isfile(afn):
+            atime = "  " + file_timestamp(afn)
+        else:
+            atime = ""
+        if os.path.isfile(bfn):
+            btime = "  " + file_timestamp(bfn)
+        else:
+            btime = ""
         out.write(notebook_diff_header.format(afn=afn, bfn=bfn, atime=atime, btime=btime))
         pretty_print_diff(a, di, path, out)
 
