@@ -85,36 +85,42 @@ def compare_output_data_keys(x, y):
 
 def compare_output_data(x, y):
     "Compare type and data of output cells x,y exactly."
+    # Fast cutuff
     ot = x["output_type"]
     if ot != y["output_type"]:
         return False
 
-    if ot == "stream":
-        if x["name"] != y["name"]:
-            return False
-        if x["text"] != y["text"]:
-            return False
-    elif ot == "error":
-        if x["evalue"] != y["evalue"]:
-            return False
-        if x["ename"] != y["ename"]:
-            return False
-        if x["traceback"] != y["traceback"]:
-            return False
-    else:  # if ot == "display_data" or ot == "execute_result":
-        if set(x["data"].keys()) != set(y["data"].keys()):
-            return False
-        if x["metadata"] != y["metadata"]:
-            return False
-        # TODO: approximate mime-specific output data comparison?
-        if x["data"] != y["data"]:
-            return False
+    # Sanity cutoff
+    xkeys = set(x)
+    ykeys = set(y)
+    if xkeys != ykeys:
+        return False
 
-    # NB! Ignoring metadata and execution count
+    # Handle known keys in this order (cheap cutoffs first)
+    known_keys = (
+        #"output_type",
+        "name", "text",
+        "ename", "evalue", "traceback",
+        "data", "metadata",
+        )
+    if any(x.get(key) != y.get(key) for key in known_keys):
+        return False
+
+    # Handle unknown keys for future compatibility
+    skip_keys = (
+        "output_type",  # Handled above
+        "execution_count",  # NB! Ignoring execution count
+    )
+    unknown_keys = xkeys
+    unknown_keys.difference_update(known_keys)
+    unknown_keys.difference_update(skip_keys)
+    if any(x.get(key) != y.get(key) for key in sorted(unknown_keys)):
+        return False
+
     return True
 
 
-def diff_single_outputs(a, b, path="/cells/*/output/*",
+def diff_single_outputs(a, b, path="/cells/*/outputs/*",
                         predicates=None, differs=None):
     "DiffOp a pair of output cells."
     assert path == "/cells/*/outputs/*"

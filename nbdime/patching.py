@@ -8,6 +8,7 @@ from __future__ import unicode_literals
 from six import string_types
 import copy
 import nbformat
+from nbformat import NotebookNode
 
 from .diff_format import DiffOp, NBDiffFormatError, flatten_list_of_string_diff
 
@@ -77,31 +78,34 @@ def patch_string(obj, diff):
 
 def patch_dict(obj, diff):
     newobj = {}
-    keys_to_copy = set(obj.keys())
+    deleted_keys = set()
 
     for e in diff:
         op = e.op
         key = e.key
         assert isinstance(key, string_types)
+        assert key not in newobj
 
         if op == DiffOp.ADD:
-            assert key not in keys_to_copy
+            assert key not in obj
             newobj[key] = e.value
         elif op == DiffOp.REMOVE:
-            keys_to_copy.remove(key)
+            deleted_keys.add(key)
         elif op == DiffOp.REPLACE:
-            keys_to_copy.remove(key)
+            assert key not in deleted_keys
             newobj[key] = e.value
         elif op == DiffOp.PATCH:
-            keys_to_copy.remove(key)
+            assert key not in deleted_keys
             newobj[key] = patch(obj[key], e.diff)
         else:
             raise NBDiffFormatError("Invalid op {}.".format(op))
 
     # Take items not mentioned in diff
-    for key in keys_to_copy:
-        newobj[key] = copy.deepcopy(obj[key])
-    return newobj
+    for key in obj:
+        if key not in deleted_keys and key not in newobj:
+            newobj[key] = copy.deepcopy(obj[key])
+
+    return NotebookNode(newobj)
 
 
 def patch(obj, diff):

@@ -44,20 +44,22 @@ def main_merge(args):
     returncode = 1 if conflicted else 0
 
     if conflicted:
-        nbdime.log.warn("Conflicts occured during merge operation.")
+        nbdime.log.warning("Conflicts occured during merge operation.")
     else:
         nbdime.log.debug("Merge completed successfully with no unresolvable conflicts.")
 
-    if mfn:
+    if args.decisions:
+        # Print merge decisions (including unconflicted)
+        out = io.StringIO()
+        pretty_print_merge_decisions(b, decisions, out=out)
+        nbdime.log.warning("Conflicts:\n%s", out.getvalue())
+    elif mfn:
         # Write partial or fully completed merge to given foo.ipynb filename
         with io.open(mfn, "w", encoding="utf8") as mf:
             nbformat.write(merged, mfn)
         nbdime.log.info("Merge result written to %s" % mfn)
     else:
-        if conflicted:
-            out = io.StringIO()
-            pretty_print_merge_decisions(b, conflicted, stream=out)
-            nbdime.log.warn("Conflicts: %s", out.getvalue())
+        # Write merged notebook to terminal
         nbformat.write(merged, sys.stdout)
     return returncode
 
@@ -80,6 +82,11 @@ def _build_arg_parser():
         help="if supplied, the merged notebook is written "
              "to this file. Otherwise it is printed to the "
              "terminal.")
+    parser.add_argument(
+        '-d', '--decisions',
+        action="store_true",
+        help="print a human-readable summary of conflicted "
+             "merge decisions instead of merging the notebook.")
 
     return parser
 

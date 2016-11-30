@@ -428,7 +428,8 @@ def test_autoresolve_inline_source_conflict(db):
 
     source = merged.cells[0].source
 
-    expected = """<<<<<<< local
+    builtin_expected = """\
+<<<<<<< local
 x = 1
 y = 3
 z = 4
@@ -442,6 +443,20 @@ x = 1
 y = 3
 print(x + q)
 >>>>>>> remote"""
+
+    git_expected = """\
+x = 1
+y = 3
+<<<<<<< local
+z = 4
+print(x * y / z)
+=======
+print(x + q)
+>>>>>>> remote
+"""
+
+    expected = git_expected
+
     assert source == expected
 
 

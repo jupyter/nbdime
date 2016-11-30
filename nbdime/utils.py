@@ -5,7 +5,9 @@
 
 from __future__ import unicode_literals
 
-from six import string_types
+from six import string_types, text_type
+
+import re
 import six
 import os
 
@@ -49,15 +51,18 @@ def join_path(*args):
     return ret if ret.startswith("/") else "/" + ret
 
 
+r_is_int = re.compile(r"^[-+]?\d+$")
+
 def star_path(path):
-    """Replace integers and numeric strings in a path with * """
+    """Replace integers and decimal strings in a path with * """
     path = list(path)
     for i, p in enumerate(path):
         if isinstance(p, int):
             path[i] = '*'
         else:
-            p = (p if isinstance(p, six.text_type) else p.decode())
-            if p.isnumeric():
+            if not isinstance(p, text_type):
+                p = p.decode()
+            if r_is_int.match(p):
                 path[i] = '*'
     return join_path(path)
 

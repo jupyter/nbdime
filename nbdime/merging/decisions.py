@@ -7,13 +7,14 @@ from __future__ import unicode_literals
 
 from six import string_types, text_type
 from six.moves import xrange as range
+
 import copy
 import nbformat
 
 from ..diff_format import (
     DiffOp, op_removerange, op_remove, op_patch, op_replace)
 from ..patching import patch
-
+from ..utils import r_is_int
 
 class MergeDecision(dict):
     """For internal usage in nbdime library.
@@ -311,10 +312,12 @@ SOFTWARE.
 """
     ret = []
     for s in k.common_path:
-        s = (s if isinstance(s, (int, text_type)) else s.decode())
-
-        if isinstance(s, text_type) and s.isnumeric() or isinstance(s, int):
-            ret.append(('', -int(s)))
+        if not isinstance(s, (int, text_type)):
+            s = s.decode("utf8")
+        if isinstance(s, text_type) and r_is_int.match(s):
+            s = int(s)
+        if isinstance(s, int):
+            ret.append(('', -s))
         else:
             ret.append((s,))
     return ret
@@ -397,7 +400,6 @@ def resolve_action(base, decision):
 def apply_decisions(base, decisions):
     """Apply a list of merge decisions to base.
     """
-
     merged = copy.deepcopy(base)
     prev_path = None
     parent = None
@@ -419,7 +421,7 @@ def apply_decisions(base, decisions):
             else:
                 if md.action == "clear_parent":
                     clear_parent_flag = True
-                    # Clear any exisiting decsions!
+                    # Clear any exisiting decisions!
                     diffs = []
                 ad = resolve_action(resolved, md)
                 if line:

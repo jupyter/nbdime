@@ -29,6 +29,7 @@ except ImportError:
 from .diff_format import NBDiffFormatError, DiffOp, op_patch
 from .patching import patch, patch_string
 from .utils import star_path, split_path, join_path
+from .log import warning
 
 # TODO: Make this configurable
 use_git = True
@@ -42,6 +43,11 @@ IND = "  "
 # TODO: Use this for line wrapping some places?
 MAXWIDTH = 78
 
+git_diff_print_cmd = 'git diff --no-index --color-words before after'
+diff_print_cmd = 'diff before after'
+git_mergefile_print_cmd = 'git merge-file -p local base remote'
+diff3_print_cmd = 'diff3 -m local base remote'
+
 if use_colors:
     import colorama
     RED = colorama.Fore.RED
@@ -49,14 +55,15 @@ if use_colors:
     BLUE = colorama.Fore.BLUE
     YELLOW = colorama.Fore.YELLOW
     RESET = colorama.Style.RESET_ALL
-    _git_diff_print_cmd = 'git diff --no-index --color-words'
+
 else:
     RED = ''
     GREEN = ''
     BLUE = ''
     YELLOW = ''
     RESET = ''
-    _git_diff_print_cmd = 'git diff --no-index'
+    git_diff_print_cmd = git_diff_print_cmd.replace(" --color-words ", "")
+
 
 KEEP     = '{color}   '.format(color='')
 REMOVE   = '{color}-  '.format(color=RED)
@@ -64,29 +71,111 @@ ADD      = '{color}+  '.format(color=GREEN)
 INFO     = '{color}## '.format(color=BLUE)
 DIFF_ENTRY_END = '\n'
 
-def _external_diff_render(cmd, a, b):
+
+def external_merge_render(cmd, b, l, r):
+    if isinstance(l, bytes):
+        l = l.decode("utf8")
+    if isinstance(b, bytes):
+        b = b.decode("utf8")
+    if isinstance(r, bytes):
+        r = r.decode("utf8")
+    td = tempfile.mkdtemp()
     try:
-        if isinstance(a, bytes):
-            a = a.decode("utf8")
-        if isinstance(b, bytes):
-            b = b.decode("utf8")
-        td = tempfile.mkdtemp()
+        with io.open(os.path.join(td, 'local'), 'w', encoding="utf8") as f:
+            f.write(l)
+        with io.open(os.path.join(td, 'base'), 'w', encoding="utf8") as f:
+            f.write(b)
+        with io.open(os.path.join(td, 'remote'), 'w', encoding="utf8") as f:
+            f.write(r)
+        assert all(fn in cmd for fn in ['local', 'base', 'remote'])
+        p = Popen(cmd, cwd=td, stdout=PIPE)
+        output, _ = p.communicate()
+        output = output.decode('utf8')
+    finally:
+        shutil.rmtree(td)
+    return output
+
+
+def external_diff_render(cmd, a, b):
+    if isinstance(a, bytes):
+        a = a.decode("utf8")
+    if isinstance(b, bytes):
+        b = b.decode("utf8")
+    td = tempfile.mkdtemp()
+    try:
         with io.open(os.path.join(td, 'before'), 'w', encoding="utf8") as f:
             f.write(a)
         with io.open(os.path.join(td, 'after'), 'w', encoding="utf8") as f:
             f.write(b)
-        p = Popen(cmd + ['before', 'after'], cwd=td, stdout=PIPE)
-        out, _ = p.communicate()
-        diff = out.decode('utf8')
+        assert all(fn in cmd for fn in ['before', 'after'])
+        p = Popen(cmd, cwd=td, stdout=PIPE)
+        output, _ = p.communicate()
+        output = output.decode('utf8')
         r = re.compile(r"^\\ No newline at end of file\n?", flags=re.M)
-        diff, n = r.subn("", diff)
+        output, n = r.subn("", output)
         assert n <= 2
     finally:
         shutil.rmtree(td)
-    return diff
+    return output
 
 
-def _builtin_diff_render(a, b):
+# FIXME: Move to utils
+def as_text_lines(text):
+    if isinstance(text, string_types):
+        text = text.splitlines(True)
+    if isinstance(text, tuple):
+        text = list(text)
+    assert isinstance(text, list)
+    assert all(isinstance(t, string_types) for t in text)
+    return text
+
+
+def builtin_merge_render(base, local, remote, strategy=None):
+    if strategy is None:
+        pass
+    else:
+        warning("Using builtin merge render but ignoring strategy %s" % (strategy,))
+
+    # FIXME: Use diff resolution and chunking to mark only parts that conflict
+
+    base_title = "base"
+    local_title = "local"
+    remote_title = "remote"
+
+    local = as_text_lines(local)
+    base = as_text_lines(base)
+    remote = as_text_lines(remote)
+
+    n = 7  # git uses 7 by default
+
+    lines = []
+    sep0 = "%s %s\n" % ("<"*n, local_title)
+    lines.append(sep0)
+    lines.extend(local)
+    if not lines[-1].endswith('\n'):
+        lines[-1] = lines[-1] + '\n'
+
+    include_base = True  # TODO: Make option
+    if include_base:
+        sep1 = "%s %s\n" % ("|"*n, base_title)
+        lines.append(sep1)
+        lines.extend(base)
+        if not lines[-1].endswith('\n'):
+            lines[-1] = lines[-1] + '\n'
+
+    sep2 = "%s\n" % ("="*n,)
+    lines.append(sep2)
+    lines.extend(remote)
+    if not lines[-1].endswith('\n'):
+        lines[-1] = lines[-1] + '\n'
+
+    sep3 = "%s %s" % (">"*n, remote_title)
+    lines.append(sep3)
+
+    return "".join(lines)
+
+
+def builtin_diff_render(a, b):
     gen = unified_diff(
         a.splitlines(False),
         b.splitlines(False),
@@ -108,35 +197,77 @@ def _builtin_diff_render(a, b):
     return diff
 
 
-def _diff_render_with_git(a, b):
-    diff = _external_diff_render(_git_diff_print_cmd.split(), a, b)
-    return diff.splitlines()[4:]
+def diff_render_with_git(a, b):
+    cmd = git_diff_print_cmd
+    diff = external_diff_render(cmd.split(), a, b)
+    return "".join(diff.splitlines(True)[4:])
 
 
-def _diff_render_with_diff(a, b):
-    diff = _external_diff_render(['diff'], a, b)
-    return diff.splitlines()
+def diff_render_with_diff(a, b):
+    cmd = diff_print_cmd
+    diff = external_diff_render(cmd.split(), a, b)
+    return diff
 
 
-def _diff_render_with_difflib(a, b):
-    diff = _builtin_diff_render(a, b)
-    return diff.splitlines()[2:]
+def diff_render_with_difflib(a, b):
+    diff = builtin_diff_render(a, b)
+    return "".join(diff.splitlines(True)[2:])
 
 
-def _diff_render(a, b):
+def diff_render(a, b):
     if use_git and which('git'):
-        return _diff_render_with_git(a, b)
+        return diff_render_with_git(a, b)
     elif use_diff and which('diff'):
-        return _diff_render_with_diff(a, b)
+        return diff_render_with_diff(a, b)
     else:
-        return _diff_render_with_difflib(a, b)
+        return diff_render_with_difflib(a, b)
+
+
+def merge_render_with_git(b, l, r, strategy=None):
+    cmd = git_mergefile_print_cmd
+    if strategy is None:
+        pass
+    elif strategy == "use-local":
+        cmd += " --ours"
+    elif strategy == "use-remote":
+        cmd += " --theirs"
+    elif strategy == "union":
+        cmd += " --union"
+    else:
+        warning("Using git merge-file but ignoring strategy %s" % (strategy,))
+    merged = external_merge_render(cmd.split(), b, l, r)
+    return merged
+
+
+def merge_render_with_diff3(b, l, r, strategy=None):
+    cmd = diff3_print_cmd
+    if strategy is None:
+        pass
+    else:
+        warning("Using diff3 but ignoring strategy %s" % (strategy,))
+    merged = external_merge_render(cmd.split(), b, l, r)
+    return merged
+
+
+def merge_render(b, l, r, strategy=None):
+    if strategy == "use-base":
+        return b
+    if use_git and which('git'):
+        return merge_render_with_git(b, l, r, strategy)
+    elif use_diff and which('diff3'):
+        return merge_render_with_diff3(b, l, r, strategy)
+    else:
+        return builtin_merge_render(b, l, r, strategy)
 
 
 def file_timestamp(filename):
     "Return modification time for filename as a string."
-    t = os.path.getmtime(filename)
-    dt = datetime.datetime.fromtimestamp(t)
-    return dt.isoformat(str(" "))
+    if os.path.exists(filename):
+        t = os.path.getmtime(filename)
+        dt = datetime.datetime.fromtimestamp(t)
+        return dt.isoformat(str(" "))
+    else:
+        return "(no timestamp)"
 
 
 def hash_string(s):
@@ -204,8 +335,10 @@ def pretty_print_value_at(value, path, prefix="", out=sys.stdout):
             for cell in value:
                 pretty_print_cell(None, cell, prefix, out)
         elif starred == "/cells/*/outputs/*":
+            #import ipdb; ipdb.set_trace()
             pretty_print_output(None, value, prefix, out)
         elif starred == "/cells/*/outputs":
+            #import ipdb; ipdb.set_trace()
             for output in value:
                 pretty_print_output(None, output, prefix, out)
         elif starred == "/cells/*/attachments":
@@ -304,6 +437,9 @@ def pretty_print_metadata(md, known_keys, prefix="", out=sys.stdout):
 
 
 def pretty_print_output(i, output, prefix="", out=sys.stdout):
+    #if not hasattr(output, "output_type"):
+    #    import ipdb; ipdb.set_trace()
+
     oprefix = prefix+IND
     t = output.output_type
     numstr = "" if i is None else " %d" % i
@@ -517,9 +653,9 @@ def pretty_print_string_diff(a, di, path, out=sys.stdout):
             pretty_print_value_at(b, path, ADD, out)
     elif "\n" in a or "\n" in b:
         # Delegate multiline diff formatting
-        diff_lines = _diff_render(a, b)
-        out.write("\n".join(diff_lines))
-        out.write("\n")
+        diff = diff_render(a, b)
+        out.write(diff)
+        #out.write("\n")
     else:
         # Just show simple -+ single line (usually metadata values etc)
         out.write("%s%s\n" % (REMOVE, a))
@@ -574,7 +710,7 @@ def pretty_print_merge_decision(base, decision, out=sys.stdout):
 
     path = join_path(decision.common_path)
     confnote = "conflicted " if decision.conflict else ""
-    out.write("%s%sdecision at %s:%s\n" % (INFO, confnote, path, RESET))
+    out.write("%s%sdecision at %s:%s\n" % (INFO.replace("##", "===="), confnote, path, RESET))
 
     diff_keys = ("diff", "local_diff", "remote_diff", "custom_diff")
     exclude_keys = set(diff_keys) | {"common_path", "action", "conflict"}
@@ -596,7 +732,7 @@ def pretty_print_merge_decision(base, decision, out=sys.stdout):
             note = ""
 
         if diff:
-            out.write("%s%s%s:%s\n" % (INFO, dkey, note, RESET))
+            out.write("%s%s%s:%s\n" % (INFO.replace("##", "---"), dkey, note, RESET))
             value = base
             for i, k in enumerate(decision.common_path):
                 if isinstance(value, string_types):
@@ -640,8 +776,6 @@ def pretty_print_merge_decisions(base, decisions, out=sys.stdout):
               % (len(conflicted), len(decisions)))
     for d in decisions:
         pretty_print_merge_decision(base, d, out)
-        out.write("\n")
-    out.write("\n")
 
 
 def pretty_print_notebook_merge(bfn, lfn, rfn, bnb, lnb, rnb, mnb, decisions, out=sys.stdout):

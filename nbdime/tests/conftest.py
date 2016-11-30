@@ -20,7 +20,7 @@ def nocolor(request):
         REMOVE=pp.REMOVE.replace(pp.RED,''),
         INFO=pp.INFO.replace(pp.BLUE,''),
         RESET='',
-        _git_diff_print_cmd=pp._git_diff_print_cmd.replace(' --color-words', ''),
+        git_diff_print_cmd=pp.git_diff_print_cmd.replace(' --color-words', ''),
     )
     patch.start()
     request.addfinalizer(patch.stop)
