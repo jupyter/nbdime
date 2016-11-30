@@ -1,11 +1,11 @@
 # REST API draft for nbdime server v0.1
 
-The following is a draft of the REST API for nbdime.  It is not yet frozen
+The following is a **draft** of the REST API for nbdime. It is not yet frozen
 but is guided on preliminary work and likely close to the final
 result. It is also not implemented in this form yet.
 
 The Python package, commandline, and web API should cover the same
-functionality using the same names but different methods of passing
+functionality using the same functionality names but different methods of passing
 input/output data.  Thus consider the request to be the input
 arguments and response to be the output arguments for all APIs.
 

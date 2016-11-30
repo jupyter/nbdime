@@ -2,10 +2,10 @@
 Use cases
 =========
 
-Fundamentally, we envision use cases mainly in the categories
-of a merge command for version control integration, and
+Use cases for nbdime are envisioned to be mainly in the categories
+of a merge command for version control integration and
 diff command for inspecting changes and automated regression
-testing. At the core of it all is the diff algorithms, which
+testing. At the core of nbdime is the diff algorithms, which
 must handle not only text in source cells but also a number of
 data formats based on mime types in output cells.
 
@@ -13,11 +13,11 @@ data formats based on mime types in output cells.
 Basic diffing use cases
 -----------------------
 
-We assume that basic correct diffing is fairly
-straightforward to implement, but there are still
+While developing basic correct diffing is fairly
+straightforward, there are still
 some issues to discuss.
 
-Other tasks (will make issues of these):
+Other tasks (issues will be created for these):
 
   - Plugin framework for mime type specific diffing.
 
@@ -25,11 +25,10 @@ Other tasks (will make issues of these):
 
   - Improve fundamental sequence diff algorithm.
     Current algorithm is based on a brute force
-    O(N^2) longest common subsequence (LCS) algorithm, this
+    O(N^2) longest common subsequence (LCS) algorithm. This
     will be rewritten in terms of a faster algorithm such
     as Myers O(ND) LCS based diff algorithm, optionally
-    using Pythons difflib for some use cases where it.
-
+    using Python's difflib for some use cases where it makes sense.
 
 
 Version control use cases
