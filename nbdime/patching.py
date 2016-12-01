@@ -68,11 +68,19 @@ def patch_list(obj, diff):
 
 
 def patch_string(obj, diff):
+    "Patch a multiline string, assuming diff is line based."
     # This can possibly be optimized for str if wanted, but
     # waiting until patch_list has been tested and debugged better
 
-    # String diffs are line-based, so flatten diff to character based first!
+    # Flatten line-based diff to character based first!
     diff = flatten_list_of_string_diff(obj, diff)
+    return "".join(patch_list(list(obj), diff))
+
+
+def patch_singleline_string(obj, diff):
+    "Patch a singleline string, assuming diff is character based."
+    # This can possibly be optimized for str if wanted, but
+    # waiting until patch_list has been tested and debugged better
     return "".join(patch_list(list(obj), diff))
 
 
