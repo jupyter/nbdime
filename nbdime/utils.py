@@ -12,6 +12,24 @@ import six
 import os
 
 
+def as_text(text):
+    if isinstance(text, list):
+        text = "".join(text)
+    if isinstance(text, bytes):
+        text = text.decode("utf8")
+    return text
+
+
+def as_text_lines(text):
+    if isinstance(text, string_types):
+        text = text.splitlines(True)
+    if isinstance(text, tuple):
+        text = list(text)
+    assert isinstance(text, list)
+    assert all(isinstance(t, string_types) for t in text)
+    return text
+
+
 def strings_to_lists(obj):
     if isinstance(obj, dict):
         return {k: strings_to_lists(v) for k, v in obj.items()}
