@@ -11,10 +11,6 @@ import {
 } from 'jupyterlab/lib/notebook/notebook/nbformat';
 
 import {
-  DragPanel
-} from '../../common/dragpanel';
-
-import {
   Widget
 } from 'phosphor/lib/ui/widget';
 
@@ -23,16 +19,20 @@ import {
 } from 'phosphor/lib/ui/panel';
 
 import {
-  createNbdimeMergeView
-} from '../../common/mergeview';
-
-import {
   CollapsiblePanel
 } from '../../common/collapsiblepanel';
 
 import {
-  CellMergeModel
-} from '../model';
+  DragPanel
+} from '../../common/dragpanel';
+
+import {
+  createNbdimeMergeView
+} from '../../common/mergeview';
+
+import {
+  hasEntries
+} from '../../common/util';
 
 import {
   IStringDiffModel, StringDiffModel, IDiffModel, OutputDiffModel
@@ -47,10 +47,15 @@ import {
 } from '../../upstreaming/flexpanel';
 
 import {
+  CellMergeModel
+} from '../model';
+
+import {
   RenderableOutputsMergeView
 } from './output';
 
 import {
+  createCheckbox,
   ONEWAY_LOCAL_CLASS, ONEWAY_REMOTE_CLASS,
   TWOWAY_ADDITION_CLASS, TWOWAY_DELETION_CLASS,
   MERGE_CLASSES
@@ -62,11 +67,15 @@ const CELL_HEADER_CLASS = 'jp-Merge-cellHeader';
 const CELL_HEADER_TITLE_CLASS = 'jp-Merge-cellHeader-title';
 
 const MARKED_DELETE = 'jp-mod-todelete';
+const MARKED_CLEAR_OUTPUTS = 'jp-mod-clearoutputs';
+const CLEAR_OUTPUT_TOGGLE_CLASS = 'jp-Merge-clearOutput-toggle';
+const DELETE_CELL_TOGGLE_CLASS = 'jp-Merge-delete-cell-toggle';
 
 const EXECUTIONCOUNT_ROW_CLASS = 'jp-Cellrow-executionCount';
 const SOURCE_ROW_CLASS = 'jp-Cellrow-source';
 const METADATA_ROW_CLASS = 'jp-Cellrow-metadata';
 const OUTPUTS_ROW_CLASS = 'jp-Cellrow-outputs';
+
 
 
 /**
@@ -147,6 +156,7 @@ class CellMergeWidget extends Panel {
           model.local.added && model.agreedCell || // Identical additions
           model.local.deleted && model.remote.deleted   // Deletion on both
           ) {
+      CURR_CLASSES = CURR_CLASSES.slice(1, 3);
       // Add single view of source:
       let view = CellDiffWidget.createView(
         model.merged.source, model.merged, CURR_CLASSES, this._rendermime);
@@ -163,6 +173,18 @@ class CellMergeWidget extends Panel {
       }
       view.addClass(SOURCE_ROW_CLASS);
       this.addWidget(view);
+
+      if (hasEntries(model.merged.outputs)) {
+        // Add single view of rendered output
+        let container = new Panel();
+        for (let m of model.merged.outputs) {
+          view = CellDiffWidget.createView(
+            m, model.merged, CURR_CLASSES, this._rendermime);
+          container.addWidget(view);
+        }
+        container.addClass(OUTPUTS_ROW_CLASS);
+        this.addWidget(container);
+      }
     } else {
       // Setup full 4-way mergeview of source, metadata and outputs
       // as needed (if changed). Source/metadata/output are each a "row"
@@ -228,7 +250,7 @@ class CellMergeWidget extends Panel {
         collapser.addClass(METADATA_ROW_CLASS);
         this.addWidget(collapser);
       }
-      if (outputsChanged || model.merged.outputs && model.merged.outputs.length > 0) {
+      if (outputsChanged || hasEntries(model.merged.outputs)) {
         // We know here that we have code cell
         // -> all have outputs !== null
         let baseOut = CellMergeWidget.getOutputs(model.local.outputs!, true);
@@ -261,51 +283,64 @@ class CellMergeWidget extends Panel {
     w.addClass(CELL_HEADER_TITLE_CLASS);
     header.addWidget(w);
 
-    // Add "delete cell" checkbox
-    this.deleteToggle = document.createElement('input');
-    this.deleteToggle.setAttribute('type', 'checkbox');
-    this.deleteToggle.checked = this.model.deleteCell;
-    if (this.model.deleteCell) {
-      this.addClass(MARKED_DELETE);
+    if (hasEntries(this.model.merged.outputs)) {
+      // Add "clear outputs" checkbox
+      let clearOutputToggle = this._createClearOutputToggle();
+      header.addWidget(clearOutputToggle);
     }
-    // Map button -> model
-    this.deleteToggle.onchange = (event) => {
-      this.model.deleteCell = this.deleteToggle.checked;
-      if (this.model.deleteCell) {
-        this.addClass(MARKED_DELETE);
-      } else {
-        this.removeClass(MARKED_DELETE);
-      }
-    };
-    // Map model -> button
-    this.model.deleteCellChanged.connect((_model, value) => {
-      this.deleteToggle.checked = value;
-      if (value) {
-        this.addClass(MARKED_DELETE);
-      } else {
-        this.removeClass(MARKED_DELETE);
-      }
-    });
-    // Create label for checkbox:
-    w = new Widget();
-    let label = document.createElement('label');
-    label.innerText = 'Delete cell';
-    // Combine checkbox and label:
-    label.insertBefore(this.deleteToggle, label.childNodes[0]);
-    // Add checkbox to header:
-    w.node.appendChild(label);
-    w.addClass('jp-Merge-delete-toggle');
-    header.addWidget(w);
+
+    // Add "delete cell" checkbox
+    let deleteToggle = this._createDeleteToggle();
+    header.addWidget(deleteToggle);
 
     // Add header to widget
     this.addWidget(header);
     this.header = header;
   }
 
+  private _createClearOutputToggle(): Widget {
+    let {checkbox, widget} = createCheckbox(
+      this.model.clearOutputs, 'Clear outputs');
+    if (this.model.clearOutputs) {
+      this.addClass(MARKED_CLEAR_OUTPUTS);
+    }
+    // Map checkbox -> model
+    checkbox.onchange = (event) => {
+      this.model.clearOutputs = checkbox.checked;
+      this.toggleClass(MARKED_CLEAR_OUTPUTS, checkbox.checked);
+    };
+    // Map model -> checkbox
+    this.model.clearOutputsChanged.connect((_model, value) => {
+      checkbox.checked = value;
+      this.toggleClass(MARKED_CLEAR_OUTPUTS, value);
+    });
+    widget.addClass(CLEAR_OUTPUT_TOGGLE_CLASS);
+    return widget;
+  }
+
+  private _createDeleteToggle(): Widget {
+    let {checkbox, widget} = createCheckbox(
+      this.model.deleteCell, 'Delete cell');
+    if (this.model.deleteCell) {
+      this.addClass(MARKED_DELETE);
+    }
+    // Map checkbox -> model
+    checkbox.onchange = (event) => {
+      this.model.deleteCell = checkbox.checked;
+      this.toggleClass(MARKED_DELETE, checkbox.checked);
+    };
+    // Map model -> checkbox
+    this.model.deleteCellChanged.connect((_model, value) => {
+      checkbox.checked = value;
+      this.toggleClass(MARKED_DELETE, value);
+    });
+    widget.addClass(DELETE_CELL_TOGGLE_CLASS);
+    return widget;
+  }
+
   mimetype: string;
 
   header: Panel;
-  deleteToggle: HTMLInputElement;
   headerTitleWidget: Widget;
 
   set headerTitle(value: string) {
@@ -322,6 +357,7 @@ class CellMergeWidget extends Panel {
     return this._model;
   }
 
-  protected _model: CellMergeModel;
-  protected _rendermime: IRenderMime;
+  private _model: CellMergeModel;
+  private _rendermime: IRenderMime;
+
 }

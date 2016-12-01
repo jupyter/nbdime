@@ -11,8 +11,12 @@ import {
 } from '../../common/dragpanel';
 
 import {
-  PanelLayout
-} from 'phosphor/lib/ui/panel';
+  hasEntries
+} from '../../common/util';
+
+import {
+  FlexPanel
+} from '../../upstreaming/flexpanel';
 
 import {
   NotebookMergeModel
@@ -26,8 +30,13 @@ import {
   CellMergeWidget
 } from './cell';
 
+import {
+  createCheckbox
+} from './common';
+
 
 const NBMERGE_CLASS = 'jp-Notebook-merge';
+const NB_MERGE_CONTROLS_CLASS = 'jp-Merge-notebook-controls';
 
 
 /**
@@ -40,15 +49,16 @@ class NotebookMergeWidget extends DragDropPanel {
     super();
     this._model = model;
     this._rendermime = rendermime;
-    let layout = this.layout as PanelLayout;
 
     this.addClass(NBMERGE_CLASS);
 
+    this.addWidget(new NotebookMergeControls(model));
+
     if (model.metadata.decisions.length > 0) {
-      layout.addWidget(new MetadataMergeWidget(model.metadata));
+      this.addWidget(new MetadataMergeWidget(model.metadata));
     }
     for (let c of model.cells) {
-      layout.addWidget(new CellMergeWidget(c, rendermime, model.mimetype));
+      this.addWidget(new CellMergeWidget(c, rendermime, model.mimetype));
     }
   }
 
@@ -70,4 +80,156 @@ class NotebookMergeWidget extends DragDropPanel {
 
   private _model: NotebookMergeModel;
   private _rendermime: IRenderMime;
+}
+
+
+/**
+ * Collection of notebook-wide controls
+ */
+class NotebookMergeControls extends FlexPanel {
+  constructor(model: NotebookMergeModel) {
+    super({
+      direction: 'left-to-right'
+    });
+    this.model = model;
+    this.addClass(NB_MERGE_CONTROLS_CLASS);
+    let anyOutputs = false;
+    for (let cell of model.cells) {
+      if (hasEntries(cell.merged.outputs)) {
+        anyOutputs = true;
+        break;
+      }
+    }
+    if (anyOutputs) {
+      this.init_controls();
+    }
+  }
+
+  init_controls(): void {
+    // Add "Clear all outputs" checkbox
+    let chk = createCheckbox(false, 'Clear <i>all</i> cell outputs');
+    this.clearOutputsToggle = chk.checkbox;
+    this.addWidget(chk.widget);
+
+    // Add "Clear all conflicted outputs" checkbox
+    chk = createCheckbox(false, 'Clear <i>conflicted</i> cell outputs');
+    this.clearConflictedOutputsToggle = chk.checkbox;
+    this.addWidget(chk.widget);
+
+    this.updateOutputsToggles();
+    this.connectOutputsToggles();
+  }
+
+  connectOutputsToggles(): void {
+    for (let cell of this.model.cells) {
+      if (hasEntries(cell.merged.outputs)) {
+        cell.clearOutputsChanged.connect(this.updateOutputsToggles, this);
+      }
+    }
+    this.clearOutputsToggle.addEventListener('change', this);
+    this.clearConflictedOutputsToggle.addEventListener('change', this);
+  }
+
+  disconnectOutputsToggles(): void {
+    for (let cell of this.model.cells) {
+      if (hasEntries(cell.merged.outputs)) {
+        cell.clearOutputsChanged.disconnect(this.updateOutputsToggles, this);
+      }
+    }
+    this.clearOutputsToggle.removeEventListener('change', this);
+    this.clearConflictedOutputsToggle.removeEventListener('change', this);
+  }
+
+  handleEvent(event: Event): void {
+    switch (event.type) {
+    case 'change':
+      if (event.currentTarget === this.clearOutputsToggle) {
+        this.onClearAllOutputsChanged();
+      } else if (event.currentTarget === this.clearConflictedOutputsToggle) {
+        this.onClearConflictedOutputsChanged();
+      }
+      break;
+    default:
+      break;
+    }
+  }
+
+  onClearAllOutputsChanged(): void {
+    this.disconnectOutputsToggles();
+    try {
+      let value = this.clearOutputsToggle.checked;
+      for (let cell of this.model.cells) {
+        if (hasEntries(cell.merged.outputs)) {
+          cell.clearOutputs = value;
+        }
+      }
+    } finally {
+      this.updateOutputsToggles();
+      this.connectOutputsToggles();
+    }
+  }
+
+  onClearConflictedOutputsChanged(): void {
+    this.disconnectOutputsToggles();
+    try {
+      let value = this.clearConflictedOutputsToggle.checked;
+      for (let cell of this.model.cells) {
+        if (hasEntries(cell.merged.outputs) && cell.outputsConflicted) {
+          cell.clearOutputs = value;
+        }
+      }
+    } finally {
+      this.updateOutputsToggles();
+      this.connectOutputsToggles();
+    }
+  }
+
+  updateOutputsToggles(): void {
+    // null = indeterminate
+    let all: boolean | null | undefined = undefined;
+    let conflicted: boolean | null | undefined = undefined;
+    for (let cell of this.model.cells) {
+      if (hasEntries(cell.merged.outputs)) {
+        let current = cell.clearOutputs;
+        if (all === null) {
+          // Indeterminate, current value won't change it
+        } else if (all === undefined) {
+          all = current;
+        } else if (all !== current) {
+          all = null;
+        }
+        if (cell.outputsConflicted) {
+          if (conflicted === null ) {
+            // Indeterminate, current value won't change it
+          } else if (conflicted === undefined) {
+            conflicted = current;
+          } else if (conflicted !== current) {
+            conflicted = null;
+          }
+        }
+      }
+      if (conflicted === null && all === null) {
+        // Both indeterminate, short circuit
+        break;
+      }
+    }
+
+    this.clearOutputsToggle.checked = all === true;
+    this.clearOutputsToggle.indeterminate = all === null;
+
+    this.clearConflictedOutputsToggle.checked = conflicted === true;
+    this.clearConflictedOutputsToggle.indeterminate = conflicted === null;
+    this.clearConflictedOutputsToggle.disabled = conflicted === undefined;
+    if (conflicted === undefined) {
+      this.clearConflictedOutputsToggle.parentElement.setAttribute('disabled', '');
+    } else {
+      this.clearConflictedOutputsToggle.parentElement.removeAttribute('disabled');
+    }
+  }
+
+  clearOutputsToggle: HTMLInputElement;
+
+  clearConflictedOutputsToggle: HTMLInputElement;
+
+  model: NotebookMergeModel;
 }

@@ -43,14 +43,33 @@
   flex-grow: 1;
 }
 
-.jp-Notebook-merge .jp-DragWidget-dragHandle {
+.jp-Notebook-merge .jp-DragPanel-dragHandle {
   height: 18px;
   width: 12px;
 }
 
-.jp-Notebook-merge .jp-Output.p-mod-drag-image {
-  background-color: white;
+.jp-Merge-dragimage-output {
+  background-color: var(--jp-layout-color1);
   border: solid gray thin;
+  max-width: 33%;
+}
+
+.jp-Cell-merge.p-mod-drag-image {
+  background-color: var(--jp-layout-color1);
+}
+
+.jp-Cell-merge.p-mod-drag-image .jp-Merge-cellHeader {
+  display: none;
+}
+
+
+.jp-Merge-output-drop-delete {
+  border: 3px dashed var(--jp-nbdime-output-color2);
+  border-radius: 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
 }
 
 .jp-Notebook-merge .CodeMirror-merge-pane-deleted,
@@ -166,8 +185,12 @@
   background-color: var(--jp-merge-both-color2);
 }
 
-.jp-Notebook-merge .CodeMirror-merge-pane.jp-mod-missing {
-  background-color: var(--jp-merge-both-color2);
+.jp-Notebook-merge .CodeMirror-merge-pane.CodeMirror-merge-pane-local.jp-mod-missing {
+  background-color: var(--jp-merge-local-color2);
+}
+
+.jp-Notebook-merge .CodeMirror-merge-pane.CodeMirror-merge-pane-remote.jp-mod-missing {
+  background-color: var(--jp-merge-remote-color2);
 }
 
 .jp-Notebook-merge .jp-Cell-merge.jp-mod-todelete > .p-Widget:not(.jp-Merge-cellHeader) {
@@ -179,7 +202,9 @@
   background-color: var(--jp-merge-both-color2);
 }
 
-
+.jp-Cell-merge.jp-mod-clearoutputs .jp-Cellrow-outputs {
+  display: none;
+}
 
 .jp-Notebook-merge .jp-Cellrow-outputs .jp-OutputArea {
   border: #666 solid 1pt;
@@ -188,3 +213,46 @@
 .jp-Notebook-merge .jp-Cellrow-outputs .p-FlexPanel:last-of-type .jp-OutputArea {
   margin-top: 5px;
 }
+
+.jp-Notebook-merge .jp-Diff-renderedOuput .jp-Merge-local {
+  background-color: var(--jp-merge-local-color2);
+}
+
+.jp-Notebook-merge .jp-Diff-renderedOuput .jp-Merge-remote {
+  background-color: var(--jp-merge-remote-color2);
+}
+
+.jp-Notebook-merge .jp-Cellrow-outputs .jp-OutputArea {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex-wrap: nowrap;
+  min-height: 2em;
+}
+
+.jp-Notebook-merge .jp-Merge-oneway-local .jp-Cellrow-outputs,
+.jp-Notebook-merge .jp-Merge-oneway-remote .jp-Cellrow-outputs {
+  border-top: var(--jp-nbdime-output-color1) solid 1pt;
+}
+
+.jp-Notebook-merge .jp-Output:first-child {
+  margin-top: 0;
+}
+
+.jp-Merge-notebook-controls {
+  justify-content: flex-end;
+  margin-bottom: 10px;
+  padding: 5px;
+  background-color: var(--jp-layout-color2);
+  border: solid 1px var(--jp-ui-font-color2);
+}
+
+.jp-Merge-notebook-controls:empty {
+  display: none;
+}
+
+.jp-Notebook-merge label[disabled] {
+  color: var(--jp-ui-font-color3);
+}
+
+

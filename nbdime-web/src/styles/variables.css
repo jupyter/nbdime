@@ -1,8 +1,12 @@
 
 :root {
-  --codemirror-border: 1px solid #ddd;
+  --codemirror-border-color: #ddd;
+  --codemirror-border: 1px solid var(--codemirror-border-color);
   --codemirror-gutter-background: #f8f8f8;
 
+  --jp-nbdime-output-color1: #39f;
+  --jp-nbdime-output-color2: #7bf;
+  --jp-nbdime-output-color3: #adf;
 
   --jp-diff-added-color1: #a6f3a6;
   --jp-diff-added-color2: #dbffdb;

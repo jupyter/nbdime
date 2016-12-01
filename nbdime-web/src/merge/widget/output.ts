@@ -19,8 +19,8 @@ import {
 } from 'jupyterlab/lib/notebook/notebook/nbformat';
 
 import {
-  DragDropPanel, DragPanel, findChild
-} from '../../common/dragpanel';
+  DropAction, IDragEvent
+} from 'phosphor/lib/dom/dragdrop';
 
 import {
   Widget
@@ -31,9 +31,17 @@ import {
 } from 'phosphor/lib/ui/panel';
 
 import {
+  DragDropPanel, DropPanel, DragPanel, findChild, MIME_INDEX
+} from '../../common/dragpanel';
+
+import {
   FlexPanel
 } from '../../upstreaming/flexpanel';
 
+
+const REORDERABLE_OUTPUT_CLASS = 'jp-Merge-reorder-outputs';
+const REORDERABLE_OUTPUT_DRAGIMAGE_CLASS = 'jp-Merge-dragimage-output';
+const DELETE_DROP_ZONE_CLASS = 'jp-Merge-output-drop-delete';
 
 
 /**
@@ -54,6 +62,10 @@ class ReorderableOutputModel extends OutputAreaModel {
     // like the `add` method in parent class.
     this.list.move(fromIndex, toIndex);
   }
+
+  remove(index: number): OutputAreaModel.Output | null {
+    return this.list.removeAt(index);
+  }
 }
 
 /**
@@ -66,15 +78,18 @@ class ReorderableOutputWidget extends OutputAreaWidget {
   model: ReorderableOutputModel;
 
   protected onModelStateChanged(sender: OutputAreaModel, args: IListChangedArgs<nbformat.IOutput>) {
+    let layout = this.layout as PanelLayout;
     switch (args.type) {
     case 'add':
       // Children are NOT always added at the end.
       this.addChild(args.newIndex);
       break;
     case 'move':
-      let layout = this.layout as PanelLayout;
       layout.insertWidget(args.newIndex,
         layout.widgets.at(args.oldIndex));
+      break;
+    case 'remove':
+      layout.removeWidgetAt(args.oldIndex);
       break;
     default:
       return super.onModelStateChanged(sender, args);
@@ -95,6 +110,29 @@ class ReorderableOutputWidget extends OutputAreaWidget {
   }
 }
 
+
+class DisconnectedDropTarget extends DropPanel {
+  constructor() {
+    super({acceptDropsFromExternalSource: true});
+  }
+
+  protected findDropTarget(input: HTMLElement): HTMLElement | null  {
+    if (input === this.node || this.node.contains(input)) {
+      return this.node;
+    }
+    return null;
+  }
+
+  protected processDrop(dropTarget: HTMLElement, event: IDragEvent): void {
+    if (this.callback) {
+      this.callback(dropTarget, event);
+    }
+  };
+
+  callback: ((dropTarget: HTMLElement, event: IDragEvent) => void) | null = null;
+}
+
+
 /**
  * Widget for showing side by side comparison and picking of merge outputs
  */
@@ -108,6 +146,21 @@ class RenderableOutputsMergeView extends DragDropPanel {
     }
   }
 
+  private static get deleteDrop(): DisconnectedDropTarget {
+    if (!RenderableOutputsMergeView._deleteDrop) {
+      let widget = new DisconnectedDropTarget();
+      widget.addClass(DELETE_DROP_ZONE_CLASS);
+      let icon = document.createElement('i');
+      icon.className = 'fa fa-lg fa-trash-o';
+      icon.setAttribute('aria-hidden', 'true');
+      widget.node.appendChild(icon);
+      widget.node.style.position = 'absolute';
+      RenderableOutputsMergeView._deleteDrop = widget;
+    }
+    return RenderableOutputsMergeView._deleteDrop;
+  }
+  private static _deleteDrop: DisconnectedDropTarget | null = null;
+
   /**
    *
    */
@@ -116,6 +169,7 @@ class RenderableOutputsMergeView extends DragDropPanel {
               base: nbformat.IOutput[] | null, remote: nbformat.IOutput[] | null,
               local: nbformat.IOutput[] | null) {
     super();
+    this.addClass(REORDERABLE_OUTPUT_CLASS);
 
     if (!base !== !remote || !base !== !local) {
       // Assert that either none, or all of base/remote/local are given
@@ -175,6 +229,7 @@ class RenderableOutputsMergeView extends DragDropPanel {
       this.addWidget(row);
       row = new FlexPanel({direction: 'left-to-right', evenSizes: true});
     }
+
     this.mergePane = new ReorderableOutputWidget({rendermime: this.rendermime});
     this.mergePane.addClass(classes[3]);
     this.mergePane.model = this.merged;
@@ -271,8 +326,38 @@ class RenderableOutputsMergeView extends DragDropPanel {
    * Returns null if no valid drop target was found.
    */
   protected findDropTarget(node: HTMLElement): HTMLElement | null {
+    if (node === this.mergePane.node && this.mergePane.model.length === 0) {
+      // If empty, use pane as target
+      return this.mergePane.node;
+    }
     // Only valid drop target is in merge pane!
     return findChild(this.mergePane.node, node);
+  }
+
+  protected processDrop(dropTarget: HTMLElement, event: IDragEvent): void {
+    if (dropTarget === RenderableOutputsMergeView.deleteDrop.node) {
+      // Simply remove output
+      let [paneIdx, outputIdx] = event.mimeData.getData(MIME_INDEX) as number[];
+      if (this.panes[paneIdx] !== this.mergePane) {
+        // Shouldn't happen if drop target code is correct...
+        return;
+      }
+      this.mergePane.model.remove(outputIdx);
+      // Event cleanup
+      event.preventDefault();
+      event.stopPropagation();
+      event.dropAction = 'move';
+    } else if (dropTarget === this.mergePane.node && this.mergePane.model.length === 0) {
+      // Dropping on empty merge pane
+      let sourceKey = event.mimeData.getData(MIME_INDEX) as number[];
+      this.move(sourceKey, [this.panes.indexOf(this.mergePane), 0]);
+      // Event cleanup
+      event.preventDefault();
+      event.stopPropagation();
+      event.dropAction = 'copy';
+    } else {
+      super.processDrop(dropTarget, event);
+    }
   }
 
   protected getDragImage(handle: HTMLElement) {
@@ -280,9 +365,35 @@ class RenderableOutputsMergeView extends DragDropPanel {
     if (target) {
       let image = target.cloneNode(true) as HTMLElement;
       image.style.width = target.offsetWidth.toString() + 'px';
+      image.classList.add(REORDERABLE_OUTPUT_DRAGIMAGE_CLASS)
       return image;
     }
     return null;
+  }
+
+  protected startDrag(handle: HTMLElement, clientX: number, clientY: number): void {
+    super.startDrag(handle, clientX, clientY);
+    // After starting drag, show delete drop-zone ('trash')
+    if (findChild(this.mergePane.node, handle)) {
+      let dd = RenderableOutputsMergeView.deleteDrop;
+      dd.callback = this.processDrop.bind(this);
+      // Calculate position and size:
+      let ourRect = this.mergePane.node.getBoundingClientRect();
+      dd.node.style.left = '0';
+      dd.node.style.width = (ourRect.left + window.pageXOffset).toString() + 'px';
+      dd.node.style.top = (ourRect.top + window.pageYOffset).toString() + 'px';
+      dd.node.style.height = ourRect.height.toString() + 'px';
+      // Attach to document
+      Widget.attach(dd, document.body);
+    }
+  }
+
+  protected onDragComplete(action: DropAction) {
+    super.onDragComplete(action);
+    // After finishing drag, hide delete drop-zone ('trash')
+    if (RenderableOutputsMergeView.deleteDrop.isAttached) {
+      Widget.detach(RenderableOutputsMergeView.deleteDrop);
+    }
   }
 
   base: OutputAreaModel | null = null;

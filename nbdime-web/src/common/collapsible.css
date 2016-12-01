@@ -1,6 +1,6 @@
 
 .jp-CollapsiblePanel {
-    border: #39f solid 1pt;
+    border: var(--jp-nbdime-output-color1) solid 1pt;
 }
 
 .jp-CollapsiblePanel-header-icon {
@@ -24,10 +24,10 @@
 .jp-CollapsiblePanel-header {
     padding-top: .2em;
     padding-bottom: .2em;
-    background-color: #adf;
+    background-color: var(--jp-nbdime-output-color3);
     padding-left: 2em;
     padding-right: 2em;
-    border-top: #39f solid 1pt;
+    border-top: var(--jp-nbdime-output-color1) solid 1pt;
 }
 
 .jp-CollapsiblePanel-container {

@@ -27,7 +27,7 @@ import {
 } from '../../common/collapsiblepanel';
 
 import {
-  valueIn
+  valueIn, hasEntries
 } from '../../common/util';
 
 import {
@@ -126,7 +126,7 @@ class CellDiffWidget extends Panel {
       metadataView.addClass(METADATA_ROW_CLASS);
       this.addWidget(metadataView);
     }
-    if (model.outputs && model.outputs.length > 0) {
+    if (hasEntries(model.outputs)) {
       let container = new Panel();
       let changed = false;
       for (let o of model.outputs) {
@@ -189,11 +189,14 @@ class CellDiffWidget extends Panel {
       // 1) Text-type output: Show a MergeView with text diff.
       // 2) Renderable types: Side-by-side comparison.
       // 3) Unknown types: Stringified JSON diff.
+      // If the model is one-sided or unchanged, option 2) is preferred to 1)
       let renderable = RenderableOutputView.canRenderUntrusted(model);
       for (let mt of rendermime.order) {
         let key = model.hasMimeType(mt);
         if (key) {
-          if (!renderable || valueIn(mt, stringDiffMimeTypes)) {
+          if (!renderable ||
+              !(model.added || model.deleted || model.unchanged) &&
+              valueIn(mt, stringDiffMimeTypes)) {
             // 1.
             view = createNbdimeMergeView(model.stringify(key), editorClasses);
           } else if (renderable) {
