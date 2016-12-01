@@ -22,25 +22,26 @@ _logger = logging.getLogger(__name__)
 
 # Strategies for handling conflicts  TODO: Implement these and refine further!
 generic_conflict_strategies = (
+    "clear",            # Discard value in case of conflict
     "fail",             # Unexpected: crash and burn in case of conflict
+    "inline-source",    # Valid for source only: produce new source with inline diff markers
+    "inline-outputs",   # Valid for outputs only: produce new outputs with inline diff markers
     "mergetool",        # Do not modify decision (but prevent processing at deeper path)
+    "record-conflict",  # Valid for metadata only: produce new metadata with conflicts recorded for external inspection
+    "take-max",         # Take the maximum value in case of conflict
+    "union",            # Join values in case of conflict, don't insert new markers
     "use-base",         # Keep base value in case of conflict
     "use-local",        # Use local value in case of conflict
     "use-remote",       # Use remote value in case of conflict
-    "clear",            # Discard value in case of conflict
-    "record-conflict",  # Valid for metadata only: produce new metadata with conflicts recorded for external inspection
-    "inline-source",    # Valid for source only: produce new source with inline diff markers
-    "inline-outputs",   # Valid for outputs only: produce new outputs with inline diff markers
-    "union",            # Join values in case of conflict, don't insert new markers.
     )
 
 # Strategies that can be applied to an entire notebook
 cli_conflict_strategies = (
+    "inline",           # Inline source and outputs, and record metadata conflicts
     "use-base",         # Keep base value in case of conflict
     "use-local",        # Use local value in case of conflict
     "use-remote",       # Use remote value in case of conflict
     "union",            # Take local value, then remote, in case of conflict
-    "inline",           # Inline source and outputs, and record metadata conflicts
 )
 
 

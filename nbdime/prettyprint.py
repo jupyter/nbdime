@@ -6,11 +6,9 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
-from itertools import chain
 import sys
 import io
 import os
-import time
 import datetime
 import pprint
 import re
@@ -273,13 +271,13 @@ def file_timestamp(filename):
 def hash_string(s):
     return hashlib.md5(s.encode("utf8")).hexdigest()
 
-_base64 = re.compile(r'^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$', re.MULTILINE|re.UNICODE)
+_base64 = re.compile(r'^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$', re.MULTILINE | re.UNICODE)
 
 def _trim_base64(s):
     """Trim and hash base64 strings"""
     if len(s) > 64 and _base64.match(s.replace('\n', '')):
         h = hash_string(s)
-        s =  '%s...<snip base64, md5=%s...>' % (s[:8], h[:16])
+        s = '%s...<snip base64, md5=%s...>' % (s[:8], h[:16])
     return s
 
 
@@ -335,10 +333,8 @@ def pretty_print_value_at(value, path, prefix="", out=sys.stdout):
             for cell in value:
                 pretty_print_cell(None, cell, prefix, out)
         elif starred == "/cells/*/outputs/*":
-            #import ipdb; ipdb.set_trace()
             pretty_print_output(None, value, prefix, out)
         elif starred == "/cells/*/outputs":
-            #import ipdb; ipdb.set_trace()
             for output in value:
                 pretty_print_output(None, output, prefix, out)
         elif starred == "/cells/*/attachments":
@@ -437,11 +433,7 @@ def pretty_print_metadata(md, known_keys, prefix="", out=sys.stdout):
 
 
 def pretty_print_output(i, output, prefix="", out=sys.stdout):
-    #if not hasattr(output, "output_type"):
-    #    import ipdb; ipdb.set_trace()
-
     oprefix = prefix+IND
-    t = output.output_type
     numstr = "" if i is None else " %d" % i
     k = "output%s" % (numstr,)
     pretty_print_key(k, prefix, out)
@@ -655,7 +647,6 @@ def pretty_print_string_diff(a, di, path, out=sys.stdout):
         # Delegate multiline diff formatting
         diff = diff_render(a, b)
         out.write(diff)
-        #out.write("\n")
     else:
         # Just show simple -+ single line (usually metadata values etc)
         out.write("%s%s\n" % (REMOVE, a))
@@ -719,12 +710,12 @@ def pretty_print_merge_decision(base, decision, out=sys.stdout):
     for dkey in diff_keys:
         diff = decision.get(dkey)
 
-        if (dkey == "remote_diff" and decision.action == "either"
-            and diff == decision.get("local_diff")):
+        if (dkey == "remote_diff" and decision.action == "either" and
+                diff == decision.get("local_diff")):
             # Skip remote diff
             continue
-        elif (dkey == "local_diff" and decision.action == "either"
-            and diff == decision.get("remote_diff")):
+        elif (dkey == "local_diff" and decision.action == "either" and
+                diff == decision.get("remote_diff")):
             note = " (same as remote_diff)"
         elif dkey.startswith(decision.action):
             note = " (selected)"
@@ -746,7 +737,7 @@ def pretty_print_merge_decision(base, decision, out=sys.stdout):
                     # Diffs on strings are usually line-based, _except_
                     # when common_path points to a line within a string.
                     # Wrap character based diff in a patch op with line
-                    # number to normalize. 
+                    # number to normalize.
                     diff = [op_patch(k, diff)]
                     break
                 else:

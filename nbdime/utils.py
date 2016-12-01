@@ -54,7 +54,7 @@ def join_path(*args):
 r_is_int = re.compile(r"^[-+]?\d+$")
 
 def star_path(path):
-    """Replace integers and decimal strings in a path with * """
+    """Replace integers and integer-strings in a path with * """
     path = list(path)
     for i, p in enumerate(path):
         if isinstance(p, int):
