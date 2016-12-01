@@ -55,6 +55,7 @@ import {
 } from './output';
 
 import {
+  createCheckbox,
   ONEWAY_LOCAL_CLASS, ONEWAY_REMOTE_CLASS,
   TWOWAY_ADDITION_CLASS, TWOWAY_DELETION_CLASS,
   MERGE_CLASSES
@@ -107,22 +108,6 @@ class CellMergeWidget extends Panel {
       }
     }
     return raw;
-  }
-
-  protected static createCheckbox(value: boolean, text: string): {
-      checkbox: HTMLInputElement, widget: Widget } {
-    let checkbox = document.createElement('input');
-    checkbox.setAttribute('type', 'checkbox');
-    checkbox.checked = value;
-    // Create label for checkbox:
-    let widget = new Widget();
-    let label = document.createElement('label');
-    label.innerText = text;
-    // Combine checkbox and label:
-    label.insertBefore(checkbox, label.childNodes[0]);
-    // Add checkbox to header:
-    widget.node.appendChild(label);
-    return {checkbox, widget};
   }
 
   /**
@@ -314,7 +299,7 @@ class CellMergeWidget extends Panel {
   }
 
   private _createClearOutputToggle(): Widget {
-    let {checkbox, widget} = CellMergeWidget.createCheckbox(
+    let {checkbox, widget} = createCheckbox(
       this.model.clearOutputs, 'Clear outputs');
     if (this.model.clearOutputs) {
       this.addClass(MARKED_CLEAR_OUTPUTS);
@@ -334,7 +319,7 @@ class CellMergeWidget extends Panel {
   }
 
   private _createDeleteToggle(): Widget {
-    let {checkbox, widget} = CellMergeWidget.createCheckbox(
+    let {checkbox, widget} = createCheckbox(
       this.model.deleteCell, 'Delete cell');
     if (this.model.deleteCell) {
       this.addClass(MARKED_DELETE);
