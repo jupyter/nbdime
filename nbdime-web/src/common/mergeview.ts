@@ -123,10 +123,17 @@ const mergeClassPrefix: DiffClasses = {chunk: 'CodeMirror-merge-m-chunk',
 /**
  * A wrapper view for showing StringDiffModels in a MergeView
  */
+export function createNbdimeMergeView(remote: IStringDiffModel): MergeView;
+export function createNbdimeMergeView(
+      remote: IStringDiffModel | null,
+      local: IStringDiffModel | null,
+      merged: IStringDiffModel,
+      readOnly?: boolean): MergeView;
 export
 function createNbdimeMergeView(
-      remote: IStringDiffModel, editorClasses: string[],
-      local?: IStringDiffModel, merged?: IStringDiffModel,
+      remote: IStringDiffModel | null,
+      local?: IStringDiffModel | null,
+      merged?: IStringDiffModel,
       readOnly?: boolean): MergeView {
   let opts: IMergeViewEditorConfiguration = {
     remote,
@@ -147,12 +154,13 @@ function createNbdimeMergeView(
     editors.push(mergeview.merge);
   }
 
-  if (remote.mimetype) {
+  let mimetype = (remote || merged!).mimetype;
+  if (mimetype) {
     // Set the editor mode to the MIME type.
     for (let e of editors) {
-      loadModeByMIME(e.ownEditor, remote.mimetype);
+      loadModeByMIME(e.ownEditor, mimetype);
     }
-    loadModeByMIME(mergeview.base.editor, remote.mimetype);
+    loadModeByMIME(mergeview.base.editor, mimetype);
   }
   return mergeview;
 }
@@ -779,13 +787,13 @@ interface IMergeViewEditorConfiguration extends CodeMirror.EditorConfiguration {
    * Provides remote diff of document to be shown on the right of the base.
    * To create a diff view, provide only remote.
    */
-  remote: IStringDiffModel;
+  remote: IStringDiffModel | null;
 
   /**
    * Provides local diff of the document to be shown on the left of the base.
    * To create a diff view, omit local.
    */
-  local?: IStringDiffModel;
+  local?: IStringDiffModel | null;
 
   /**
    * Provides the partial merge input for a three-way merge.
@@ -880,7 +888,7 @@ class MergeView extends Panel {
       }
 
       let rightWidget: Widget;
-      if (remote.remote === null) {
+      if (!remote || remote.remote === null) {
         // Remote value was deleted
         right = this.right = null;
         rightWidget = new Widget({node: elt('div', 'Value missing', 'jp-mod-missing')});
@@ -907,7 +915,7 @@ class MergeView extends Panel {
       this.addWidget(mergeWidget);
 
       panes = 3 + (showBase ? 1 : 0);
-    } else {
+    } else if (remote) { // If in place for type guard
       this.addWidget(this.base);
       if (remote.unchanged || remote.added || remote.deleted) {
         if (remote.unchanged) {

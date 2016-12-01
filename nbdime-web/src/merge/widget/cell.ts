@@ -84,12 +84,14 @@ const OUTPUTS_ROW_CLASS = 'jp-Cellrow-outputs';
 export
 class CellMergeWidget extends Panel {
 
-  static createMergeView(local: IDiffModel, remote: IDiffModel, merged: IDiffModel,
+  static createMergeView(local: IDiffModel | null, remote: IDiffModel | null, merged: IDiffModel,
                          editorClasses: string[], readOnly=false): Widget | null {
     let view: Widget | null = null;
     if (merged instanceof StringDiffModel) {
-      view = createNbdimeMergeView(remote as IStringDiffModel, editorClasses,
-        local as IStringDiffModel, merged, readOnly);
+      view = createNbdimeMergeView(
+        local as IStringDiffModel | null,
+        remote as IStringDiffModel | null,
+        merged, readOnly);
     }
     return view;
   }
@@ -198,15 +200,16 @@ class CellMergeWidget extends Panel {
         this.addWidget(row);
       }
       let sourceView: Widget | null = null;
-      if (model.local.source.unchanged && model.remote.source.unchanged &&
+      if (model.local && model.local.source.unchanged &&
+          model.remote && model.remote.source.unchanged &&
           model.merged.source.unchanged) {
         // Use single unchanged view of source
         sourceView = CellDiffWidget.createView(
           model.merged.source, model.merged, CURR_CLASSES, this._rendermime);
       } else {
         sourceView = CellMergeWidget.createMergeView(
-          model.local.source,
-          model.remote.source,
+          model.local ? model.local.source : null,
+          model.remote ? model.remote.source : null,
           model.merged.source,
           CURR_CLASSES);
       }
@@ -235,8 +238,8 @@ class CellMergeWidget extends Panel {
 
       if (metadataChanged) {
         let metadataView = CellMergeWidget.createMergeView(
-            model.local.metadata,
-            model.remote.metadata,
+            model.local ? model.local.metadata : null,
+            model.remote ? model.remote.metadata : null,
             model.merged.metadata,
             CURR_CLASSES,
             true);  // Do not allow manual edit of metadata
@@ -254,9 +257,12 @@ class CellMergeWidget extends Panel {
       if (outputsChanged || hasEntries(model.merged.outputs)) {
         // We know here that we have code cell
         // -> all have outputs !== null
-        let baseOut = CellMergeWidget.getOutputs(model.local.outputs!, true);
-        let localOut = CellMergeWidget.getOutputs(model.local.outputs!);
-        let remoteOut = CellMergeWidget.getOutputs(model.remote.outputs!);
+        let baseOut = CellMergeWidget.getOutputs(
+          model.local ? model.local.outputs! : [], true);
+        let localOut = CellMergeWidget.getOutputs(
+          model.local ? model.local.outputs! : []);
+        let remoteOut = CellMergeWidget.getOutputs(
+          model.remote ? model.remote.outputs! : []);
         let mergedOut = CellMergeWidget.getOutputs(model.merged.outputs!);
         let view = new RenderableOutputsMergeView(
           mergedOut, MERGE_CLASSES, this._rendermime,

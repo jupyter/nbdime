@@ -44,12 +44,11 @@ class MetadataMergeWidget extends Panel {
 
   init() {
     let model = this._model;
-    let CURR_CLASSES = MERGE_CLASSES.slice();  // copy
 
     // We know/assume that MetadataMergeModel never has
     // null values for local/remote:
     let view: Widget = createNbdimeMergeView(
-      model.remote!, CURR_CLASSES, model.local!, model.merged);
+      model.remote, model.local, model.merged);
     view = new CollapsiblePanel(
       view, 'Notebook metadata changed', true);
     this.addWidget(view);
