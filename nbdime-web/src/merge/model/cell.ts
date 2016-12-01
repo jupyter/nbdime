@@ -226,6 +226,52 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
   }
 
   /**
+   * Whether the cell has any conflicted decisions.
+   */
+  get conflicted(): boolean {
+    for (let dec of this.decisions) {
+      if (dec.conflict) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Whether the cell has any conflicted decisions on a specific key.
+   */
+  hasConflictsOn(key: string) {
+    let decs = filterDecisions(this.decisions, [key], 2);
+    for (let dec of decs) {
+      if (dec.conflict) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Whether the cell has any conflicted decisions on source.
+   */
+  get sourceConflicted(): boolean {
+    return this.hasConflictsOn('source');
+  }
+
+  /**
+   * Whether the cell has any conflicted decisions on metadata.
+   */
+  get metadataConflicted(): boolean {
+    return this.hasConflictsOn('metadata');
+  }
+
+  /**
+   * Whether the cell has any conflicted decisions.
+   */
+  get outputsConflicted(): boolean {
+    return this.hasConflictsOn('outputs');
+  }
+
+  /**
    * Get the decision on `execution_count` field (should only be one).
    *
    * Returns null if no decision on `execution_count` was found.
