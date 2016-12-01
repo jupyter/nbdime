@@ -40,6 +40,7 @@ import {
 
 
 const REORDERABLE_OUTPUT_CLASS = 'jp-Merge-reorder-outputs';
+const REORDERABLE_OUTPUT_DRAGIMAGE_CLASS = 'jp-Merge-dragimage-output';
 const DELETE_DROP_ZONE_CLASS = 'jp-Merge-output-drop-delete';
 
 
@@ -364,6 +365,7 @@ class RenderableOutputsMergeView extends DragDropPanel {
     if (target) {
       let image = target.cloneNode(true) as HTMLElement;
       image.style.width = target.offsetWidth.toString() + 'px';
+      image.classList.add(REORDERABLE_OUTPUT_DRAGIMAGE_CLASS)
       return image;
     }
     return null;
