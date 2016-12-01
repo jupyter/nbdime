@@ -93,7 +93,7 @@ def autoresolve_notebook_conflicts(base, decisions, args):
             "/cells/*/metadata": "record-conflict",
             "/cells/*/outputs/*/metadata": "record-conflict",
             "/cells/*/source": "inline-source",
-            "/cells/*/outputs": "inline-outputs",
+            "/cells/*/outputs": "clear", # "inline-outputs"
             #"/cells/*/attachments": "inline-attachments",
         })
 
