@@ -15,7 +15,7 @@
 }
 
 .nbdime-Merge-tool #nbdime-header-local {
-  background-color: #cbcbf8;
+  background-color: var(--jp-merge-local-color1);
 }
 
 .nbdime-Merge-tool #nbdime-header-base {
@@ -23,5 +23,5 @@
 }
 
 .nbdime-Merge-tool #nbdime-header-remote {
-  background-color: #beb;
+  background-color: var(--jp-merge-remote-color1);
 }

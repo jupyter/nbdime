@@ -10,11 +10,11 @@
 .nbdime-Diff-tool #nbdime-header-base {
   display: inline-block;
   width: 50%;
-  background-color: #f8cbcb
+  background-color: var(--jp-diff-deleted-color1);
 }
 
 .nbdime-Diff-tool #nbdime-header-remote {
   display: inline-block;
   width: 49%;
-  background-color: #a6f3a6;
+  background-color: var(--jp-diff-added-color1);
 }
