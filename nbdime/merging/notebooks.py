@@ -19,7 +19,7 @@ from ..prettyprint import pretty_print_notebook_diff, pretty_print_merge_decisio
 import nbdime.log
 
 
-# Strategies for handling conflicts  TODO: Implement these and refine further!
+# Strategies for handling conflicts
 generic_conflict_strategies = (
     "clear",            # Discard value in case of conflict
     "fail",             # Unexpected: crash and burn in case of conflict
@@ -41,8 +41,13 @@ cli_conflict_strategies = (
     "use-local",        # Use local value in case of conflict
     "use-remote",       # Use remote value in case of conflict
     "union",            # Take local value, then remote, in case of conflict
-)
+    )
 
+cli_conflict_strategies_input = cli_conflict_strategies
+
+cli_conflict_strategies_output = cli_conflict_strategies + (
+    "clear",  # Clear conflicting outputs
+    )
 
 def autoresolve_notebook_conflicts(base, decisions, args):
     strategies = Strategies({

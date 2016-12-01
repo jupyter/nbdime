@@ -79,7 +79,7 @@ def add_diff_args(parser):
 def add_merge_args(parser):
     """Adds a set of arguments for commands that perform merges.
     """
-    from .merging.notebooks import cli_conflict_strategies
+    from .merging.notebooks import cli_conflict_strategies, cli_conflict_strategies_input, cli_conflict_strategies_output
     parser.add_argument(
         '-m', '--merge-strategy',
         default="inline",
@@ -88,13 +88,13 @@ def add_merge_args(parser):
     parser.add_argument(
         '--input-strategy',
         default=None,
-        choices=cli_conflict_strategies,
+        choices=cli_conflict_strategies_input,
         help="Specify the merge strategy to use for inputs "
              "(overrides 'merge-strategy' for inputs).")
     parser.add_argument(
         '--output-strategy',
         default=None,
-        choices=cli_conflict_strategies,
+        choices=cli_conflict_strategies_output,
         help="Specify the merge strategy to use for outputs "
              "(overrides 'merge-strategy' for outputs).")
     parser.add_argument(
