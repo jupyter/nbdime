@@ -77,7 +77,7 @@ type DiffClasses = {
 };
 
 
-class Editor extends CodeMirrorWidget {
+class EditorWidget extends CodeMirrorWidget {
   /**
    * A message handler invoked on an `'resize'` message.
    */
@@ -171,7 +171,7 @@ class DiffView {
     this.classes = type === 'left' ?
       leftClasses : type === 'right' ? rightClasses : null;
     let ownValue = this.model.remote || '';
-    this.ownWidget = new Editor(copyObj({value: ownValue}, copyObj(options)));
+    this.ownWidget = new EditorWidget(copyObj({value: ownValue}, copyObj(options)));
     this.showDifferences = options.showDifferences !== false;
   }
 
@@ -844,7 +844,7 @@ class MergeView extends Panel {
       options.gutters = [GUTTER_CONFLICT_CLASS, GUTTER_PICKER_CLASS];
     }
 
-    this.base = new Editor(copyObj(options));
+    this.base = new EditorWidget(copyObj(options));
     this.base.addClass('CodeMirror-merge-pane');
     this.base.addClass('CodeMirror-merge-pane-base');
 
