@@ -16,8 +16,7 @@ from ..diffing.notebooks import diff_notebooks
 from ..utils import Strategies
 from ..prettyprint import pretty_print_notebook_diff, pretty_print_merge_decisions, pretty_print_notebook
 
-
-_logger = logging.getLogger(__name__)
+import nbdime.log
 
 
 # Strategies for handling conflicts  TODO: Implement these and refine further!
@@ -58,7 +57,7 @@ def autoresolve_notebook_conflicts(base, decisions, args):
         strategies.transients = [
             "/cells/*/execution_count",
             "/cells/*/outputs",
-            "/cells/*/outputs/*/execution_count"
+            "/cells/*/outputs/*/execution_count",
             "/cells/*/metadata/collapsed",
             "/cells/*/metadata/autoscroll",
             "/cells/*/metadata/scrolled",
@@ -70,6 +69,7 @@ def autoresolve_notebook_conflicts(base, decisions, args):
     merge_strategy = args.merge_strategy if args else "inline"
     input_strategy = args.input_strategy if args else None
     output_strategy = args.output_strategy if args else None
+
     if merge_strategy == "mergetool":
         # Mergetool strategy will prevent autoresolve from
         # attempting to solve conflicts on these entries:
@@ -89,25 +89,30 @@ def autoresolve_notebook_conflicts(base, decisions, args):
             "/cells/*/outputs/*/metadata": "record-conflict",
             "/cells/*/source": "inline-source",
             "/cells/*/outputs": "inline-outputs",
-
-            # TODO: Add an inline strategy for attachments as well
             #"/cells/*/attachments": "inline-attachments",
-
-            # FIXME: Find a good way to handle strategies for both parent (outputs) and child (execution_count).
-            #        It might be that some strategies can be combined while others don't make sense, e.g. setting use-* on parent.
         })
+
     if input_strategy:
         if input_strategy == 'inline':
-            input_strategy = 'inline-source'
-        strategies.update({
-            "/cells/*/source": input_strategy
-        })
+            strategies.update({
+                "/cells/*/source": "inline-source",
+                #"/cells/*/attachments": "inline-attachments",
+            })
+        else:
+            strategies.update({
+                "/cells/*/source": input_strategy,
+                #"/cells/*/attachments": input_strategy,
+            })
     if output_strategy:
-        if input_strategy == 'inline':
-            input_strategy = 'inline-outputs'
-        strategies.update({
-            "/cells/*/outputs": output_strategy
-        })
+        if output_strategy == 'inline':
+            strategies.update({
+                "/cells/*/outputs": 'inline-outputs'
+            })
+        else:
+            strategies.update({
+                "/cells/*/outputs": output_strategy
+            })
+
     return autoresolve(base, decisions, strategies)
 
 
@@ -117,34 +122,34 @@ def decide_notebook_merge(base, local, remote, args=None):
     remote_diffs = diff_notebooks(base, remote)
 
     if args and args.log_level == "DEBUG":
-        _logger.debug("In merge, base-local diff:")
+        nbdime.log.debug("In merge, base-local diff:")
         buf = StringIO()
         pretty_print_notebook_diff("<base>", "<local>", base, local_diffs, buf)
-        _logger.debug(buf.getvalue())
+        nbdime.log.debug(buf.getvalue())
 
-        _logger.debug("In merge, base-remote diff:")
+        nbdime.log.debug("In merge, base-remote diff:")
         buf = StringIO()
         pretty_print_notebook_diff("<base>", "<remote>", base, remote_diffs, buf)
-        _logger.debug(buf.getvalue())
+        nbdime.log.debug(buf.getvalue())
 
     # Execute a generic merge operation
     decisions = decide_merge_with_diff(
         base, local, remote, local_diffs, remote_diffs)
 
     if args and args.log_level == "DEBUG":
-        _logger.debug("In merge, initial decisions:")
+        nbdime.log.debug("In merge, initial decisions:")
         buf = StringIO()
         pretty_print_merge_decisions(base, decisions, buf)
-        _logger.debug(buf.getvalue())
+        nbdime.log.debug(buf.getvalue())
 
     # Try to resolve conflicts based on behavioural options
     decisions = autoresolve_notebook_conflicts(base, decisions, args)
 
     if args and args.log_level == "DEBUG":
-        _logger.debug("In merge, autoresolved decisions:")
+        nbdime.log.debug("In merge, autoresolved decisions:")
         buf = StringIO()
         pretty_print_merge_decisions(base, decisions, buf)
-        _logger.debug(buf.getvalue())
+        nbdime.log.debug(buf.getvalue())
 
     return decisions
 
@@ -156,20 +161,20 @@ def merge_notebooks(base, local, remote, args=None):
     """
     if args and args.log_level == "DEBUG":
         for (name, nb) in [("base", base), ("local", local), ("remote", remote)]:
-            _logger.debug("%s In merge, input %s notebook:" % ("="*20, name))
+            nbdime.log.debug("In merge, input %s notebook:", name)
             buf = StringIO()
             pretty_print_notebook(nb, None, buf)
-            _logger.debug(buf.getvalue())
+            nbdime.log.debug(buf.getvalue())
 
     decisions = decide_notebook_merge(base, local, remote, args)
 
     merged = apply_decisions(base, decisions)
 
     if args and args.log_level == "DEBUG":
-        _logger.debug("%s In merge, merged notebook:" % ("="*20,))
+        nbdime.log.debug("In merge, merged notebook:")
         buf = StringIO()
         pretty_print_notebook(merged, None, buf)
-        _logger.debug(buf.getvalue())
-        _logger.debug("%s End merge" % ("="*20,))
+        nbdime.log.debug(buf.getvalue())
+        nbdime.log.debug("End merge")
 
     return merged, decisions
