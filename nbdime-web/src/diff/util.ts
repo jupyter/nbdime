@@ -89,6 +89,31 @@ function areSourcesCompatible(a: ChunkSource | undefined, b: ChunkSource | undef
 }
 
 /**
+ * Remove the merge source indicator from a diff (returns a copy).
+ */
+export
+function stripSource(diff: IDiffEntry[] | null): IDiffEntry[] | null {
+  if (!diff) {
+    return null;
+  }
+  let ret: IDiffEntry[] = [];
+  for (let e of diff) {
+    if (e.op === 'patch') {
+      ret.push({
+        key: e.key,
+        op: e.op,
+        diff: stripSource(e.diff)
+      });
+    } else {
+      let d = shallowCopy(e);
+      delete d.source;
+      ret.push(d);
+    }
+  }
+  return ret;
+}
+
+/**
  * Check whether existing collection of diff ops shares a key with the new
  * diffop, and if they  also have the same op type.
  */

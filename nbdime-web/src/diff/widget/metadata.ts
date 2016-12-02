@@ -47,8 +47,7 @@ class MetadataDiffWidget extends Panel {
     let model = this._model;
     if (!model.unchanged) {
       this.addClass(TWOWAY_DIFF_CLASS);
-      let view: Widget = createNbdimeMergeView(
-        model, DIFF_CLASSES);
+      let view: Widget = createNbdimeMergeView(model);
       if (model.collapsible) {
         view = new CollapsiblePanel(
           view, model.collapsibleHeader, model.startCollapsed);

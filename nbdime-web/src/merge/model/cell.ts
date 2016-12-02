@@ -272,6 +272,16 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
   }
 
   /**
+   * Clear any conflicts on decisions on outputs
+   */
+  clearOutputConflicts() {
+    let decs = filterDecisions(this.decisions, ['outputs'], 2);
+    for (let dec of decs) {
+      dec.conflict = false;
+    }
+  }
+
+  /**
    * Get the decision on `execution_count` field (should only be one).
    *
    * Returns null if no decision on `execution_count` was found.
@@ -292,8 +302,40 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
    * Apply merge decisions to create the merged cell
    */
   serialize(): nbformat.ICell | null {
-    if (this.base === null) {
+    if (this.deleteCell) {
       return null;
+    }
+    if (this.base === null) {
+      // Only possibility is that cell is added
+      if (this.decisions.length > 1 || !this.merged.added) {
+        throw new NotifyUserError('Invalid cell decision');
+      }
+      let dec = this.decisions[0];
+      // Either onesided or identical inserts, but possibly with
+      // a custom diff on top!
+      let d: IDiffEntry;
+      if (dec.action === 'local' || dec.action === 'either') {
+        if (!dec.localDiff ) {
+          throw new NotifyUserError('Invalid cell decision');
+        }
+        d = dec.localDiff[0];
+      } else if (dec.action === 'remote') {
+        if (!dec.remoteDiff ) {
+          throw new NotifyUserError('Invalid cell decision');
+        }
+        d = dec.remoteDiff[0];
+      } else if (dec.action === 'custom') {
+        if (!dec.customDiff ) {
+          throw new NotifyUserError('Invalid cell decision');
+        }
+        d = dec.customDiff[0];
+      } else {
+        throw new NotifyUserError('Invalid cell decision');
+      }
+      if (d.op !== 'addrange') {
+        throw new NotifyUserError('Invalid cell decision');
+      }
+      return d.valuelist[0];
     }
     let decisions: MergeDecision[] = [];
     for (let md of this.decisions) {

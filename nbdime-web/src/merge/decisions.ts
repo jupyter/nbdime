@@ -14,7 +14,7 @@ import {
 } from '../diff/diffentries';
 
 import {
-  getSubDiffByKey
+  getSubDiffByKey, stripSource
 } from '../diff/util';
 
 import {
@@ -184,12 +184,12 @@ class MergeDecision {
 
   serialize(): IMergeDecision {
     return {
-      common_path: this.absolutePath,
-      local_diff: this.localDiff,
-      remote_diff: this.remoteDiff,
+      common_path: this.absolutePath.slice(),
+      local_diff: stripSource(this.localDiff),
+      remote_diff: stripSource(this.remoteDiff),
       action: this.action,
       conflict: this.conflict,
-      custom_diff: this.customDiff
+      custom_diff: stripSource(this.customDiff)
     };
   }
 

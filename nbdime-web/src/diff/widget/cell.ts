@@ -182,7 +182,7 @@ class CellDiffWidget extends Panel {
       if (model.unchanged && parent.cellType === 'markdown') {
         view = rendermime.render({bundle: {'text/markdown': model.base!}});
       } else {
-        view = createNbdimeMergeView(model, editorClasses);
+        view = createNbdimeMergeView(model);
       }
     } else if (model instanceof OutputDiffModel) {
       // Take one of three actions, depending on output types
@@ -198,7 +198,7 @@ class CellDiffWidget extends Panel {
               !(model.added || model.deleted || model.unchanged) &&
               valueIn(mt, stringDiffMimeTypes)) {
             // 1.
-            view = createNbdimeMergeView(model.stringify(key), editorClasses);
+            view = createNbdimeMergeView(model.stringify(key));
           } else if (renderable) {
             // 2.
             view = new RenderableOutputView(model, editorClasses, rendermime);
@@ -208,7 +208,7 @@ class CellDiffWidget extends Panel {
       }
       if (!view) {
         // 3.
-        view = createNbdimeMergeView(model.stringify(), editorClasses);
+        view = createNbdimeMergeView(model.stringify());
       }
     } else {
       throw new Error('Unrecognized model type.');

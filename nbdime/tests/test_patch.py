@@ -9,7 +9,6 @@ from nbdime import patch
 from nbdime.diff_format import op_patch, op_add, op_remove, op_replace, op_addrange, op_removerange
 
 
-# TODO: Check and improve test coverage
 # TODO: Add tests for invalid input and error handling
 # TODO: Add more corner cases (combinations of delete-then-add etc.)
 
@@ -37,7 +36,7 @@ def test_patch_str():
     pass
 
     # Test ++, sequence insertion
-    assert patch("", [op_patch(0, [op_addrange( 0, "34"), op_add(0, "5"), op_addrange( 0, "67")])]) == "34567"
+    assert patch("", [op_patch(0, [op_addrange(0, "34"), op_add(0, "5"), op_addrange(0, "67")])]) == "34567"
 
     # Test --, sequence deletion
     assert patch("abcd", [op_patch(0, [op_removerange(0, 2)])]) == "cd"
@@ -66,7 +65,7 @@ def test_patch_list():
                                       op_patch(1, [op_patch(0, [op_remove(0), op_add(0, "W")])])]) == ["Hello", "World"]
 
     # Test ++, sequence insertion
-    assert patch([], [op_addrange( 0, [3, 4]), op_add(0, 5), op_addrange( 0, [6, 7])]) == [3, 4, 5, 6, 7]
+    assert patch([], [op_addrange(0, [3, 4]), op_add(0, 5), op_addrange(0, [6, 7])]) == [3, 4, 5, 6, 7]
 
     # Test --, sequence deletion
     assert patch([5, 6, 7, 8], [op_removerange(0, 2)]) == [7, 8]

@@ -24,11 +24,11 @@ let hasMerge = false;
  *
  */
 export
-function closeCompare(ev: Event) {
+function closeCompare(ev: Event, unloading?: boolean) {
   if (hasMerge) {
-    closeMerge(ev);
+    return closeMerge(ev, unloading);
   } else {
-    closeTool();
+    return closeTool();
   }
 }
 
