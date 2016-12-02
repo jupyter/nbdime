@@ -85,6 +85,7 @@ def main(args=None):
     merge_parser = subparsers.add_parser('merge',
         description="The actual entrypoint for the merge tool. Git will call this."
     )
+    add_generic_args(merge_parser)
     add_diff_args(merge_parser)
     add_merge_args(merge_parser)
 
@@ -119,6 +120,8 @@ def main(args=None):
         # file named with %A by overwriting it, and exit with zero status if it
         # managed to merge them cleanly, or non-zero if there were conflicts."
         opts.output = opts.local
+        # mergeapp expects an additional decisions arg:
+        opts.decisions = False
         return nbmergeapp.main_merge(opts)
     elif opts.subcommand == 'config':
         opts.config_func(opts.global_)
