@@ -363,14 +363,14 @@ def make_cleared_value(value):
         return None
 
 
-def filter_decisions(pattern, decisions, exact):
+def filter_decisions(pattern, decisions, exact=False):
     ret = []
     cutoff = len(pattern)
     for i, md in enumerate(decisions):
         path = md.common_path[:]
-        pop = _pop_path((md.local_diff, md.remote_diff, md.custom_diff))
+        pop = _pop_path((md.local_diff, md.remote_diff, md.get('custom_diff')))
         if pop:
-            path.push(pop)
+            path.append(pop)
         starred_path = star_path(path)
         if (exact and starred_path == pattern or
                 starred_path[:cutoff] == pattern):
@@ -499,15 +499,15 @@ def _merge_tree(tree, sorted_paths):
     root = None
     for i in range(len(sorted_paths)):
         pathStr = sorted_paths[i]
-        path = tree[pathStr].path
+        path = tree[pathStr]['path']
         nextPath = None
         if i == len(sorted_paths) - 1:
             nextPath = root
         else:
             nextPathStr = sorted_paths[i + 1]
-            nextPath = tree[nextPathStr].path
+            nextPath = tree[nextPathStr]['path']
 
-        subdiffs = tree[pathStr].diff
+        subdiffs = tree[pathStr]['diff']
         trunk = trunk + subdiffs
         # First, check if path is subpath of nextPath:
         if is_prefix_array(nextPath, path):
@@ -519,7 +519,7 @@ def _merge_tree(tree, sorted_paths):
             # We have started on a new trunk
             # Collect branches on the new trunk, and merge the trunks
             newTrunk = _merge_tree(tree, sorted_paths[i + 1])
-            nextPath = tree[sorted_paths[sorted_paths.length - 1]].path
+            nextPath = tree[sorted_paths[sorted_paths.length - 1]]['path']
             prefix = find_shared_prefix(path, nextPath)
             pl = len(prefix) if prefix is not None else 0
             trunk = push_path(path[pl:], trunk) + push_path(nextPath[pl:], newTrunk)
@@ -554,22 +554,22 @@ def build_diffs(base, decisions, which):
         if str_path in tree:
             # Existing tree entry, simply add diffs to it
             if line:
-                match_diff = [d for d in tree[str_path].diff if d.key == line[0]]
+                match_diff = [d for d in tree[str_path]['diff'] if d.key == line[0]]
                 if match_diff:
                     subdiffs.extend(match_diff)
                 else:
                     subdiffs = push_path(line, subdiffs)
-                    tree[str_path].diff.append(subdiffs[0])
+                    tree[str_path]['diff'].append(subdiffs[0])
 
             else:
-                tree[str_path].diff.extend(subdiffs)
+                tree[str_path]['diff'].extend(subdiffs)
 
         else:
             # Make new entry in tree
             if line:
                 subdiffs = push_path(line, subdiffs)
             tree[str_path] = {'diff': subdiffs, 'path': path}
-            sorted_paths.push(str_path)
+            sorted_paths.append(str_path)
 
     if len(tree) == 0:
         return None
