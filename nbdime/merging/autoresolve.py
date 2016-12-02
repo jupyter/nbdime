@@ -512,14 +512,14 @@ def autoresolve_decision(base, dec, strategies):
     return [pop_all_patch_decisions(d) for d in decs]
 
 
-def get_parent_strategies(path, strategies):
-    # Get all keys that are prefixes of the current path
-    parent_skeys = [p for p in strategies if path.startswith(p)]
-    # Sort strategy keys, shortest key first
-    parent_skeys = sorted(strategies, key=lambda x: (len(x), x))
-    # Extract strategies in parent-child order
-    parent_strategies = [strategies[k] for k in parent_skeys]
-    return parent_strategies
+def autoresolve_generic(base, decisions, strategies):
+    newdecisions = []
+    for dec in decisions:
+        if dec.conflict:
+            newdecisions.extend(autoresolve_decision(base, dec, strategies))
+        else:
+            newdecisions.append(dec)
+    return newdecisions
 
 
 def autoresolve(base, decisions, strategies):
@@ -527,22 +527,5 @@ def autoresolve(base, decisions, strategies):
 
     Returns a list of new decisions, with or without further conflicts.
     """
-
-    # Sort strategy keys, shortest first
-    #skeys = sorted(strategies, key=lambda x: (len(x), x))
-
-    # path2dec = {}
-    # for dec in decisions:
-    #     path = join_path(dec.common_path)
-    #     path = star_path(path)
-    #     st = strategies.get(path)
-    #     pstrat = get_parent_strategies(path, strategies)
-    #     #path2dec[path].append(dec)
-
-    newdecisions = []
-    for dec in decisions:
-        if dec.conflict:
-            newdecisions.extend(autoresolve_decision(base, dec, strategies))
-        else:
-            newdecisions.append(dec)
-    return sorted(newdecisions, key=_sort_key, reverse=True)
+    decisions = autoresolve_generic(base, decisions, strategies)
+    return sorted(decisions, key=_sort_key, reverse=True)
