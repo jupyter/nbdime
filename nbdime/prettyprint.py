@@ -88,7 +88,8 @@ def external_merge_render(cmd, b, l, r):
         assert all(fn in cmd for fn in ['local', 'base', 'remote'])
         p = Popen(cmd, cwd=td, stdout=PIPE)
         output, _ = p.communicate()
-        output = output.decode('utf8')
+        # normalize newlines
+        output = output.decode('utf8').replace('\r\n', '\n')
     finally:
         shutil.rmtree(td)
     return output
