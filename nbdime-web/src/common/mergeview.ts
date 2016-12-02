@@ -248,7 +248,7 @@ class DiffView {
     let self: DiffView = this;
     self.updating = false;
     self.updatingFast = false;
-    function update(mode?: string) {
+    function update(mode?: 'full') {
       self.updating = true;
       self.updatingFast = false;
       if (mode === 'full') {
