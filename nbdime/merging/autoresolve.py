@@ -236,15 +236,26 @@ def strategy2action_dict(resolved_base, le, re, strategy, path, dec):
             # Leave this conflict unresolved
             pass
     elif strategy == "inline-source":
-        value = resolved_base[key]
-        newvalue = make_inline_source_value(value, le, re)
-        dec.custom_diff = [op_replace(key, newvalue)]
-        dec.action = "custom"
+        # FIXME: Leaving this conflict unresolved until we implement a better solution
+        nbdime.log.warning("Don't know how to resolve outputs yet.")
+        # assert key == "source"
+        # source = resolved_base[key]
+        # begin, end, inlined = make_inline_source_value(source, le, re)
+        # dec.custom_diff = [op_patch("source", diff=[
+        #     op_addrange(begin, inlined),
+        #     op_removerange(begin, end-begin)
+        #     ])]
+        # dec.action = "custom"
+    elif strategy == "inline-attachments":
+        # FIXME: Leaving this conflict unresolved until we implement a better solution
+        nbdime.log.warning("Don't know how to resolve attachments yet.")
     elif strategy == "inline-outputs":
-        value = resolved_base[key]
-        newvalue = make_inline_outputs_value(value, le, re)
-        dec.custom_diff = [op_replace(key, newvalue)]
-        dec.action = "custom"
+        # FIXME: Leaving this conflict unresolved until we implement a better solution
+        nbdime.log.warning("Don't know how to resolve outputs yet.")
+        #value = resolved_base[key]
+        #newvalue = make_inline_outputs_value(value, le, re)
+        #dec.custom_diff = [op_replace(key, newvalue)]
+        #dec.action = "custom"
     elif strategy == "record-conflict":
         value = resolved_base[key]
         newvalue = add_conflicts_record(value, le, re)
