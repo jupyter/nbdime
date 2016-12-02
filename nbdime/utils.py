@@ -8,7 +8,6 @@ from __future__ import unicode_literals
 from six import string_types, text_type
 
 import re
-import six
 import os
 
 
@@ -125,3 +124,18 @@ def is_in_repo(pkg_path):
         par_path = p.dirname(par_path)
 
     return False
+
+
+def is_prefix_array(parent, child):
+    if parent == child:
+        return True
+    if not parent:
+        return True
+
+    if child is None or len(parent) > len(child):
+        return False
+
+    for i in range(len(parent)):
+        if parent[i] != child[i]:
+            return False
+    return True
