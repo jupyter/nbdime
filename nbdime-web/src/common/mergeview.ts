@@ -214,7 +214,9 @@ class DiffView {
 
   syncModel() {
     if (this.modelInvalid()) {
+      let cursor = this.ownEditor.getDoc().getCursor();
       this.ownEditor.setValue(this.model.remote!);
+      this.ownEditor.getDoc().setCursor(cursor);
       this.lineChunks = this.model.getLineChunks();
       this.chunks = lineToNormalChunks(this.lineChunks);
     }
