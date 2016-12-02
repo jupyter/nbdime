@@ -53,10 +53,9 @@ class NbdimeApiHandler(web.RequestHandler):
 
     def base_args(self):
         fn = self.params.get("outputfilename", None)
-        savable = fn is not None
         return {
-            "closable": savable and self.params["closable"],
-            "savable": savable
+            "closable": self.params["closable"],
+            "savable": fn is not None
         }
 
     def get_notebook_argument(self, argname):

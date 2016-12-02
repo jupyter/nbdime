@@ -233,56 +233,60 @@ function onSubmissionFailed(response: string) {
  *
  */
 export
-function closeMerge(ev: Event, closing?: boolean): string | void | null {
+function closeMerge(ev: Event, unloading=false): string | void | null {
   if (!mergeWidget) {
     return closeTool(1);
   }
+  let savable = getConfigOption('savable');
   for (let md of mergeWidget.model.conflicts) {
     if (md.conflict) {
-      if (mergeWidget.model.unsavedChanges) {
+      if (mergeWidget.model.unsavedChanges && savable) {
         let prompt = 'There are remaining conflicts, and you have unsaved changes. Do you want to close anyway?';
+        if (unloading) {
+          ev.returnValue = true;
+          return prompt;
+        }
         alertify.confirm(prompt,
           () => {
+            window.onbeforeunload = null!;
             closeTool(1);
           },
           () => {
             ev.preventDefault();
           });
-        if (closing) {
-          ev.returnValue = true;
-          return prompt;
-        }
         return null;
       } else {
         let prompt = 'There are remaining conflicts. Do you want to close anyway?';
+        if (unloading) {
+          ev.returnValue = true;
+          return prompt;
+        }
         alertify.confirm(prompt,
           () => {
+            window.onbeforeunload = null!;
             closeTool(1);
           },
           () => {
             ev.preventDefault();
           });
-        if (closing) {
-          ev.returnValue = true;
-          return prompt;
-        }
         return null;
       }
     }
   }
-  if (mergeWidget.model.unsavedChanges) {
+  if (mergeWidget.model.unsavedChanges && savable) {
     let prompt = 'There are unsaved changes. Do you want to close anyway?';
+    if (unloading) {
+      ev.returnValue = true;
+      return prompt;
+    }
     alertify.confirm(prompt,
       () => {
+        window.onbeforeunload = null!;
         closeTool(0);
       },
       () => {
         ev.preventDefault();
       });
-    if (closing) {
-      ev.returnValue = true;
-      return prompt;
-    }
     return null;
   }
   closeTool(0);

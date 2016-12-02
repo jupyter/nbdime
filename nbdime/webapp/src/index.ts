@@ -15,7 +15,7 @@ import {
 } from './app/compare';
 
 import {
-  closeTool, getConfigOption, handleError
+  closeTool, getConfigOption, handleError, toolClosed
 } from './app/common';
 
 
@@ -46,22 +46,45 @@ import './app/merge.css';
 
 /** */
 function initialize() {
-  let onclose = (ev: Event, unloading?: boolean) => { closeTool(); };
+  let closable = getConfigOption('closable');
+  let type: 'diff' | 'merge' | 'compare';
   if (document.getElementById('compare-local')) {
     initializeCompare();
-    onclose = closeCompare;
+    type = 'compare';
   } else if (getConfigOption('local') || document.getElementById('merge-local')) {
     initializeMerge();
-    onclose = closeMerge;
+    type = 'merge';
   } else {
     initializeDiff();
+    type = 'diff';
   }
 
-  let closable = getConfigOption('closable');
   let closeBtn = document.getElementById('nbdime-close') as HTMLButtonElement;
   if (closable) {
-    closeBtn.onclick = onclose;
-    window.onbeforeunload = (ev: Event) => { return onclose(ev, true); };
+    let close = (ev: Event, unloading=false) => {
+      if (type === 'merge') {
+        return closeMerge(ev, unloading);
+      } else if (type === 'compare') {
+        return closeCompare(ev, unloading);
+      } else if (!unloading) {
+        return closeTool();
+      }
+      return null;
+    };
+    closeBtn.onclick = close;
+
+    window.onbeforeunload = (ev: Event) => {
+      if (!toolClosed) {
+        return close(ev, true);
+      }
+    };
+
+    window.onunload = (ev: Event) => {
+      if (!toolClosed) {
+        closeTool();
+      }
+    };
+
     closeBtn.style.display = 'initial';
   }
 }

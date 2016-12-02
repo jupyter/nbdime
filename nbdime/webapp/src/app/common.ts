@@ -55,6 +55,8 @@ function getConfigOption(name: string): any {
   return configData[name];
 }
 
+
+export let toolClosed = false;
 /**
  * POSTs to the server that it should shut down if it was launched as a
  * difftool/mergetool.
@@ -64,12 +66,15 @@ function getConfigOption(name: string): any {
  */
 export
 function closeTool(exitCode=0) {
-  let xhttp = new XMLHttpRequest();
-  let url = '/api/closetool';
-  xhttp.open('POST', url, false);
-  xhttp.setRequestHeader('exit_code', exitCode.toString());
-  xhttp.send();
-  window.close();
+  if (!toolClosed) {
+    toolClosed = true;
+    let xhttp = new XMLHttpRequest();
+    let url = '/api/closetool';
+    xhttp.open('POST', url, false);
+    xhttp.setRequestHeader('exit_code', exitCode.toString());
+    xhttp.send();
+    window.close();
+  }
 }
 
 
