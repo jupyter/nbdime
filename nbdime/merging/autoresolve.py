@@ -578,6 +578,7 @@ def make_bundled_source_decisions(base, cell_idx, source_decisions):
     """
     if not any(dec.conflict for dec in source_decisions):
         # no conflicts, nothing to do
+        [ dec.pop('_level') for dec in source_decisions ]
         return source_decisions
 
     source = base['cells'][cell_idx]['source']
