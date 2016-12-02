@@ -12,12 +12,14 @@ import logging
 import nbformat
 from nbformat import NotebookNode
 
-from ..diff_format import DiffOp, op_replace, op_removerange, op_addrange, op_patch
+from ..diff_format import DiffOp, DiffEntry, op_replace, op_removerange, op_addrange, op_patch
 from ..patching import patch, patch_singleline_string
 from .chunks import make_merge_chunks
 from ..utils import join_path, star_path
 from .decisions import (pop_patch_decision, push_patch_decision, MergeDecision,
-                        pop_all_patch_decisions, _sort_key)
+                        pop_all_patch_decisions, _sort_key,
+                        filter_decisions, build_diffs,
+                        )
 from ..prettyprint import merge_render
 
 import nbdime.log
@@ -173,7 +175,8 @@ def _analyse_edited_lines(baselines, patch_op):
     return lines, deleted_min, deleted_max
 
 
-def make_inline_source_value(base, le, re):
+def make_inline_source_value(base, local_diff, remote_diff):
+    """Make an inline source from conflicting local and remote diffs"""
     orig = base
     base = base.splitlines(True)
 
@@ -181,26 +184,10 @@ def make_inline_source_value(base, le, re):
     # replace = replace line e.key from base with e.value
     # patch = apply e.diff to line e.key from base
     # remove = remove lines e.key from base
-
-    # Get lines added and deleted in the two edits
-    local, local_deleted_min, local_deleted_max = _analyse_edited_lines(base, le)
-    remote, remote_deleted_min, remote_deleted_max = _analyse_edited_lines(base, re)
-    assert local_deleted_min == remote_deleted_min
-
-    # Add lines deleted only on the other side
-    local = base[local_deleted_min:remote_deleted_min] + local + base[local_deleted_max:remote_deleted_max]
-    remote = base[remote_deleted_min:local_deleted_min] + remote + base[remote_deleted_max:local_deleted_max]
-
-    # Get deleted base lines
-    begin = min(local_deleted_min, remote_deleted_max)
-    end = max(remote_deleted_max, local_deleted_max)
-    base = base[begin:end]
-
-    if 0: import ipdb; ipdb.set_trace()
-
-    # TODO: When using external merge renderer, probably want to
-    # apply to the entire source string with all changes incorporated,
-    # this is only one chunk
+    local = patch(orig, local_diff)
+    remote = patch(orig, remote_diff)
+    begin = 0
+    end = len(base)
 
     inlined = merge_render(base, local, remote)
     inlined = inlined.splitlines(True)
@@ -293,15 +280,8 @@ def strategy2action_dict(resolved_base, le, re, strategy, path, dec):
             # Leave this conflict unresolved
             pass
     elif strategy == "inline-source":
-        assert key == "source"
-        source = resolved_base[key]
-        begin, end, inlined = make_inline_source_value(source, le, re)
-        dec.custom_diff = [op_patch("source", diff=[
-            op_addrange(begin, inlined),
-            op_removerange(begin, end-begin)
-            ])]
-        dec.action = "custom"
-        dec.conflict = True
+        # inline-source is handled at a higher level
+        nbdime.log.warning("inline-source should have been handled already.")
     elif strategy == "inline-attachments":
         # FIXME: Leaving this conflict unresolved until we implement a better solution
         nbdime.log.warning("Don't know how to resolve attachments yet.")
@@ -591,13 +571,98 @@ def split_decisions_by_cell(decisions):
     return generic_decisions, cell_decisions
 
 
+def bundle_inline_source_decisions(base, source_decisions):
+    """Bundle a collection of decisions on inline-source
+    
+    All decisions will be on the same source field.
+    """
+    local_diff = []
+    remote_diff = []
+    
+    if not any(dec.conflict for dec in source_decisions):
+        # no conflicts, nothing to do
+        return source_decisions
+    
+    path = source_decisions[0].common_path[:3]
+    source = base[path[0]][path[1]][path[2]]
+
+    for dec in source_decisions:
+        if len(dec.common_path) > 3:
+            # promote per-line diff up one level
+            lineno = dec.common_path[3]
+            new_remote_diff = new_local_diff = None
+            if dec.remote_diff:
+                new_remote_diff = [
+                        DiffEntry(
+                            op=DiffOp.PATCH,
+                            key=lineno,
+                            diff=dec.remote_diff,
+                        ),
+                    ]
+            if dec.local_diff:
+                new_local_diff = [
+                        DiffEntry(
+                            op=DiffOp.PATCH,
+                            key=lineno,
+                            diff=dec.local_diff,
+                        ),
+                    ]
+            dec = MergeDecision(
+                common_path=path,
+                conflict=True,
+                local_diff=new_local_diff,
+                remote_diff=new_remote_diff,
+            )
+
+        if dec.remote_diff:
+            remote_diff.extend(dec.remote_diff)
+        if dec.local_diff:
+            local_diff.extend(dec.local_diff)
+    
+    begin, end, inlined = make_inline_source_value(source, local_diff, remote_diff)
+    custom_diff = [
+        op_removerange(begin, end-begin),
+        op_addrange(begin, inlined),
+    ]
+    
+    return [MergeDecision(
+        common_path=source_decisions[0].common_path[:3],
+        action="custom",
+        conflict=True,
+        local_diff=local_diff,
+        remote_diff=remote_diff,
+        custom_diff=custom_diff,
+    )]
+
 def autoresolve_generic(base, decisions, strategies):
     newdecisions = []
+    last_source_idx = -1
+    source_decisions = []
+
+    inline_sources = strategies.get('/cells/*/source') == 'inline-source'
     for dec in decisions:
+        path = dec.common_path
+        if (
+            inline_sources and \
+            len(path) >= 3 and path[0] == 'cells' and \
+            path[2] == 'source'
+        ):
+            # bundle decisions on source together for inline merge conflicts
+            source_idx = path[1]
+            if source_idx != last_source_idx:
+                last_source_idx = source_idx
+                # new source decision, bundle and finish last one
+                newdecisions.extend(bundle_inline_source_decisions(base, source_decisions))
+                source_decisions = []
+            source_decisions.append(dec)
+            continue
         if dec.conflict:
             newdecisions.extend(autoresolve_decision(base, dec, strategies))
         else:
             newdecisions.append(dec)
+    if source_decisions:
+        # still bundling source decisions at the end
+        newdecisions.extend(bundle_inline_source_decisions(base, source_decisions))
     return newdecisions
 
 
