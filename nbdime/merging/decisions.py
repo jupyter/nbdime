@@ -14,7 +14,8 @@ import nbformat
 from ..diff_format import (
     DiffOp, op_removerange, op_remove, op_patch, op_replace)
 from ..patching import patch
-from ..utils import r_is_int, star_path, join_path
+from ..utils import (
+    r_is_int, star_path, join_path, is_prefix_array, find_shared_prefix)
 
 
 class MergeDecision(dict):
@@ -362,7 +363,6 @@ def make_cleared_value(value):
         return None
 
 
-
 def filter_decisions(pattern, decisions, exact):
     ret = []
     cutoff = len(pattern)
@@ -372,7 +372,8 @@ def filter_decisions(pattern, decisions, exact):
         if pop:
             path.push(pop)
         starred_path = star_path(path)
-        if exact and star_path == pattern or star_path[:cutoff] == pattern:
+        if (exact and starred_path == pattern or
+                starred_path[:cutoff] == pattern):
             ret.append(i)
     return ret
 
@@ -517,9 +518,9 @@ def _merge_tree(tree, sorted_paths):
         else:
             # We have started on a new trunk
             # Collect branches on the new trunk, and merge the trunks
-            newTrunk = _mergeTree(tree, sorted_paths[i + 1])
+            newTrunk = _merge_tree(tree, sorted_paths[i + 1])
             nextPath = tree[sorted_paths[sorted_paths.length - 1]].path
-            prefix = findSharedPrefix(path, nextPath)
+            prefix = find_shared_prefix(path, nextPath)
             pl = len(prefix) if prefix is not None else 0
             trunk = push_path(path[pl:], trunk) + push_path(nextPath[pl:], newTrunk)
             break   # Recursion will exhaust sorted_paths
@@ -574,7 +575,7 @@ def build_diffs(base, decisions, which):
         return None
 
     if '/' not in tree:
-        tree['/'] = {diff: [], path: []}
+        tree['/'] = {'diff': [], 'path': []}
         sorted_paths.append('/')
 
     # Tree is constructed, now join all branches at diverging points (joints)

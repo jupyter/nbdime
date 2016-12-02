@@ -139,3 +139,17 @@ def is_prefix_array(parent, child):
         if parent[i] != child[i]:
             return False
     return True
+
+
+def find_shared_prefix(a, b):
+    if a is None or b is None:
+        return None
+
+    if a is b:
+        return a[:]
+
+    for i in range(min(len(a), len(b))):
+        if a[i] != b[i]:
+            break
+
+    return a[:i]
