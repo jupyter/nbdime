@@ -3,6 +3,8 @@
 'use strict';
 
 
+import * as alertify from 'alertify.js';
+
 import {
   nbformat
 } from 'jupyterlab/lib/notebook/notebook/nbformat';

@@ -2,39 +2,11 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
+import * as alertify from 'alertify.js';
 
 import {
   nbformat
 } from 'jupyterlab/lib/notebook/notebook/nbformat';
-
-import {
-  RenderMime
-} from 'jupyterlab/lib/rendermime';
-
-import {
-  HTMLRenderer, LatexRenderer, ImageRenderer, TextRenderer,
-  JavascriptRenderer, SVGRenderer, MarkdownRenderer
-} from 'jupyterlab/lib/renderers';
-
-import {
-  defaultSanitizer
-} from 'jupyterlab/lib/sanitizer';
-
-import {
-  Widget
-} from 'phosphor/lib/ui/widget';
-
-import {
-  Panel
-} from 'phosphor/lib/ui/panel';
-
-import {
-  NotebookMergeModel
-} from 'nbdime/lib/merge/model';
-
-import {
-  IMergeDecision
-} from 'nbdime/lib/merge/decisions';
 
 import {
   NotebookMergeWidget
