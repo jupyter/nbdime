@@ -37,7 +37,7 @@ class MergeDecision(dict):
 
     def local_path(self):
         level = self.get(_level, 0)
-        return (self.common_path or (,))[level:]
+        return (self.common_path or ())[level:]
 
 
 class MergeDecisionBuilder(object):
@@ -363,7 +363,7 @@ def make_cleared_value(value):
 
 
 
-def filter_decisions(pattern, exact):
+def filter_decisions(pattern, decisions, exact):
     ret = []
     cutoff = len(pattern)
     for i, md in enumerate(decisions):
@@ -567,7 +567,7 @@ def build_diffs(base, decisions, which):
             # Make new entry in tree
             if line:
                 subdiffs = push_path(line, subdiffs)
-            tree[str_path] = {diff: subdiffs, path: path}
+            tree[str_path] = {'diff': subdiffs, 'path': path}
             sorted_paths.push(str_path)
 
     if len(tree) == 0:
