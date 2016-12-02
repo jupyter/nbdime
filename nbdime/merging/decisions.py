@@ -36,7 +36,7 @@ class MergeDecision(dict):
         self[name] = value
 
     def local_path(self):
-        level = self.get(_level, 0)
+        level = self.get('_level', 0)
         return (self.common_path or ())[level:]
 
 
