@@ -13,7 +13,10 @@ function requestJson(url: string, argument: any, callback: (result: any) => void
   xhttp.onreadystatechange = function() {
     if (xhttp.readyState === 4) {
       if (xhttp.status === 200) {
-        let result = JSON.parse(xhttp.responseText);
+        let result: string = '';
+        if (xhttp.responseText.length > 0) {
+          result = JSON.parse(xhttp.responseText);
+        }
         callback(result);
       } else {
         onError(xhttp.responseText);
