@@ -45,7 +45,7 @@ function getConfigOption(name: string): any {
   }
   if (typeof document !== 'undefined') {
     let el = document.getElementById('nbdime-config-data');
-    if (el) {
+    if (el && el.textContent) {
       configData = JSON.parse(el.textContent);
     } else {
       configData = {};

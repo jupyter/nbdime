@@ -89,6 +89,9 @@ function showMerge(data: {
   let nbmWidget = new NotebookMergeWidget(nbmModel, rendermime);
 
   let root = document.getElementById('nbdime-root');
+  if (!root) {
+    throw new Error('Missing root element "nbidme-root"');
+  }
   root.innerHTML = '';
   let panel = new Panel();
   panel.id = 'main';
@@ -171,6 +174,9 @@ function onMergeRequestCompleted(data: any) {
 function onMergeRequestFailed(response: string) {
   console.log('Merge request failed.');
   let root = document.getElementById('nbdime-root');
+  if (!root) {
+    throw new Error('Missing root element "nbidme-root"');
+  }
   root.innerHTML = '<pre>' + response + '</pre>';
   mergeWidget = null;
 }
