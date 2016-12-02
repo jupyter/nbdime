@@ -16,7 +16,7 @@ from subprocess import check_call, check_output, CalledProcessError
 
 import nbdime.log
 from .webapp import nbmergetool
-from .args import add_filename_args
+from .args import add_filename_args, add_generic_args
 
 
 def enable(global_=False, set_default=False):
@@ -60,6 +60,7 @@ def main(args=None):
     parser = argparse.ArgumentParser('git-nbmergetool', description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
+    add_generic_args(parser)
     subparsers = parser.add_subparsers(dest='subcommand')
 
     merge_parser = subparsers.add_parser('merge',

@@ -76,7 +76,7 @@ def main(args=None):
     merge_parser = subparsers.add_parser('merge',
         description="The actual entrypoint for the merge tool. Git will call this."
     )
-    add_generic_args(merge_parser)
+    add_generic_args(parser)
     add_diff_args(merge_parser)
     add_merge_args(merge_parser)
 

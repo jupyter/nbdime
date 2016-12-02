@@ -17,6 +17,7 @@ import sys
 from subprocess import check_call, check_output, CalledProcessError
 
 import nbdime.log
+from .args import add_filename_args, add_generic_args
 from .webapp import nbdifftool
 
 
@@ -78,7 +79,7 @@ def main(args=None):
     diff_parser = subparsers.add_parser('diff',
         description="The actual entrypoint for the diff tool. Git will call this."
     )
-    from .args import add_filename_args
+    add_generic_args(parser)
     add_filename_args(diff_parser, ["local", "remote"])
 
     config = subparsers.add_parser('config',
