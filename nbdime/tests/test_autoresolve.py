@@ -428,34 +428,47 @@ def test_autoresolve_inline_source_conflict(db):
 
     source = merged.cells[0].source
 
-    builtin_expected = """\
+    git_expected = """\
+x = 1
 <<<<<<< local
-x = 1
-y = 3
-z = 4
-print(x * y / z)
-||||||| base
-x = 1
 y = 3
 print(x * y)
 =======
-x = 1
-y = 3
-print(x + q)
->>>>>>> remote"""
-
-    git_expected = """\
-x = 1
-y = 3
-<<<<<<< local
-z = 4
-print(x * y / z)
-=======
+q = 3.1
 print(x + q)
 >>>>>>> remote
 """
 
-    expected = git_expected
+    builtin_expected_course = """\
+<<<<<<< local
+x = 1
+y = 3
+z = 4
+print(x * y / z)
+=======
+x = 1
+q = 3.1
+print(x + q)
+>>>>>>> remote
+"""
+    # ||||||| base
+    # x = 1
+    # y = 3
+    # print(x * y)
+
+    builtin_expected_finegrained = """\
+x = 1
+<<<<<<< local
+y = 3
+z = 4
+print(x * y / z)
+=======
+q = 3.1
+print(x + q)
+>>>>>>> remote
+"""
+
+    expected = builtin_expected_finegrained
 
     assert source == expected
 
