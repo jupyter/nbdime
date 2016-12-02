@@ -1055,6 +1055,13 @@ class MergeView extends Panel {
     }
   }
 
+  getMergedValue(): string {
+    if (!this.merge) {
+      throw new Error('No merged value; missing "merged" view');
+    }
+    return this.merge.ownEditor.getValue();
+  }
+
   left: DiffView | null;
   right: DiffView | null;
   merge: DiffView | null;

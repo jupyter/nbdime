@@ -48,8 +48,12 @@ import {
   getConfigOption, closeTool
 } from './common';
 
+import {
+  extractMergedNotebook
+} from './save';
 
-let mergeModel: NotebookMergeModel = null;
+
+let mergeWidget: NotebookMergeWidget | null = null;
 
 /**
  * Show the merge as represented by the base notebook and a
@@ -58,7 +62,7 @@ let mergeModel: NotebookMergeModel = null;
 function showMerge(data: {
     base: nbformat.INotebookContent,
     merge_decisions: IMergeDecision[]
-    }): NotebookMergeModel {
+    }): NotebookMergeWidget {
   const transformers = [
     new JavascriptRenderer(),
     new MarkdownRenderer(),
@@ -82,16 +86,16 @@ function showMerge(data: {
 
   let nbmModel = new NotebookMergeModel(data.base,
       data.merge_decisions);
-  let nbdWidget = new NotebookMergeWidget(nbmModel, rendermime);
+  let nbmWidget = new NotebookMergeWidget(nbmModel, rendermime);
 
   let root = document.getElementById('nbdime-root');
   root.innerHTML = '';
   let panel = new Panel();
   panel.id = 'main';
   Widget.attach(panel, root);
-  panel.addWidget(nbdWidget);
+  panel.addWidget(nbmWidget);
   window.onresize = () => { panel.update(); };
-  return nbmModel;
+  return nbmWidget;
 }
 
 /**
@@ -158,7 +162,7 @@ function onPopState(e: PopStateEvent) {
  * Callback for a successfull merge request
  */
 function onMergeRequestCompleted(data: any) {
-  mergeModel = showMerge(data);
+  mergeWidget = showMerge(data);
 }
 
 /**
@@ -168,7 +172,7 @@ function onMergeRequestFailed(response: string) {
   console.log('Merge request failed.');
   let root = document.getElementById('nbdime-root');
   root.innerHTML = '<pre>' + response + '</pre>';
-  mergeModel = null;
+  mergeWidget = null;
 }
 
 
@@ -178,12 +182,12 @@ function onMergeRequestFailed(response: string) {
  */
 export
 function saveMerged() {
-  if (!mergeModel) {
+  if (!mergeWidget) {
     return;
   }
-  let nb = mergeModel.serialize();
+  let nb = extractMergedNotebook(mergeWidget);
   let conflicts: IMergeDecision[] = [];
-  for (let md of mergeModel.conflicts) {
+  for (let md of mergeWidget.model.conflicts) {
     conflicts.push(md.serialize());
   }
   submitMerge(nb, conflicts);
@@ -206,7 +210,7 @@ function submitMerge(mergedNotebook: nbformat.INotebookContent,
  */
 function onSubmissionCompleted() {
   // TODO: Indicate success to user!
-  mergeModel.unsavedChanges = false;
+  mergeWidget!.model.unsavedChanges = false;
 }
 
 /**

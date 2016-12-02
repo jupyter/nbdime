@@ -27,11 +27,11 @@ import {
 } from '../../common/dragpanel';
 
 import {
-  createNbdimeMergeView
+  createNbdimeMergeView, MergeView
 } from '../../common/mergeview';
 
 import {
-  hasEntries
+  hasEntries, splitLines
 } from '../../common/util';
 
 import {
@@ -126,6 +126,27 @@ class CellMergeWidget extends Panel {
     this.init();
   }
 
+  validateMerged(candidate: nbformat.ICell): nbformat.ICell {
+    if (this.sourceView && this.sourceView instanceof MergeView) {
+      let text = this.sourceView.getMergedValue();
+      let lines = splitLines(text);
+      if (candidate.source !== lines) {
+        candidate.source = lines;
+      }
+    }
+    if (this.metadataView && this.metadataView instanceof MergeView) {
+      let text = this.metadataView.getMergedValue();
+      if (JSON.stringify(candidate.metadata) !== text) {
+        // This will need to be validated server side,
+        // and should not be touched by client side
+        // (structure might differ from assumed form)
+        candidate.source = JSON.parse(text);
+      }
+    }
+    // Do not validate outputs, as they are not as exposed to potential errors
+    return candidate;
+  }
+
   protected init() {
     let model = this.model;
     let CURR_CLASSES = MERGE_CLASSES.slice();  // copy
@@ -216,6 +237,7 @@ class CellMergeWidget extends Panel {
       if (sourceView === null) {
         throw new Error('Was not able to create merge view for cell!');
       }
+      this.sourceView = sourceView;
       sourceView.addClass(SOURCE_ROW_CLASS);
       this.addWidget(sourceView);
 
@@ -246,6 +268,7 @@ class CellMergeWidget extends Panel {
         if (metadataView === null) {
           throw new Error('Was not able to create merge view for cell metadata!');
         }
+        this.metadataView = metadataView;
         let container = new Panel();
         container.addWidget(metadataView);
 
@@ -267,6 +290,7 @@ class CellMergeWidget extends Panel {
         let view = new RenderableOutputsMergeView(
           mergedOut, MERGE_CLASSES, this._rendermime,
           baseOut, remoteOut, localOut);
+        this.outputViews = view;
 
         let header = outputsChanged ? 'Outputs changed' : 'Outputs unchanged';
         let collapser = new CollapsiblePanel(view, header, !outputsChanged);
@@ -349,6 +373,10 @@ class CellMergeWidget extends Panel {
 
   header: Panel;
   headerTitleWidget: Widget;
+
+  sourceView: Widget | null = null;
+  metadataView: Widget | null = null;
+  outputViews: RenderableOutputsMergeView | null = null;
 
   set headerTitle(value: string) {
     this.headerTitleWidget.node.innerText = value;

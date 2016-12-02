@@ -3,6 +3,10 @@
 'use strict';
 
 import {
+  nbformat
+} from 'jupyterlab/lib/notebook/notebook/nbformat';
+
+import {
   Widget
 } from 'phosphor/lib/ui/widget';
 
@@ -11,7 +15,7 @@ import {
 } from 'phosphor/lib/ui/panel';
 
 import {
-  createNbdimeMergeView
+  createNbdimeMergeView, MergeView
 } from '../../common/mergeview';
 
 import {
@@ -47,12 +51,25 @@ class MetadataMergeWidget extends Panel {
 
     // We know/assume that MetadataMergeModel never has
     // null values for local/remote:
-    let view: Widget = createNbdimeMergeView(
+    this.view = createNbdimeMergeView(
       model.remote, model.local, model.merged);
-    view = new CollapsiblePanel(
-      view, 'Notebook metadata changed', true);
-    this.addWidget(view);
+    let wrapper = new CollapsiblePanel(
+      this.view, 'Notebook metadata changed', true);
+    this.addWidget(wrapper);
   }
+
+  validateMerged(candidate: nbformat.INotebookMetadata): nbformat.INotebookMetadata {
+    let text = this.view.getMergedValue();
+    if (JSON.stringify(candidate) !== text) {
+      // This will need to be validated server side,
+      // and should not be touched by client side
+      // (structure might differ from assumed form)
+      candidate = JSON.parse(text);
+    }
+    return candidate;
+  }
+
+  protected view: MergeView;
 
   private _model: MetadataMergeModel;
 }

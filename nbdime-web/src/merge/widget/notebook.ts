@@ -7,11 +7,15 @@ import {
 } from 'jupyterlab/lib/rendermime';
 
 import {
+  nbformat
+} from 'jupyterlab/lib/notebook/notebook/nbformat';
+
+import {
   DragDropPanel
 } from '../../common/dragpanel';
 
 import {
-  hasEntries
+  hasEntries, deepCopy
 } from '../../common/util';
 
 import {
@@ -55,11 +59,31 @@ class NotebookMergeWidget extends DragDropPanel {
     this.addWidget(new NotebookMergeControls(model));
 
     if (model.metadata.decisions.length > 0) {
-      this.addWidget(new MetadataMergeWidget(model.metadata));
+      this.metadataWidget = new MetadataMergeWidget(model.metadata);
+      this.addWidget(this.metadataWidget);
     }
+    this.cellWidgets = [];
     for (let c of model.cells) {
-      this.addWidget(new CellMergeWidget(c, rendermime, model.mimetype));
+      let w = new CellMergeWidget(c, rendermime, model.mimetype);
+      this.cellWidgets.push(w);
+      this.addWidget(w);
     }
+  }
+
+  validateMerged(candidate: nbformat.INotebookContent): nbformat.INotebookContent {
+    let validated = deepCopy(candidate);
+    // Validate metadata
+    validated.metadata = this.metadataWidget.validateMerged(candidate.metadata);
+
+    // Validate cells
+    let i = 0;
+    for (let c of this.cellWidgets) {
+      if (!c.model.deleteCell) {
+        validated.cells[i] = c.validateMerged(candidate.cells[i]);
+        ++i;
+      }
+    }
+    return validated;
   }
 
   /**
@@ -77,6 +101,9 @@ class NotebookMergeWidget extends DragDropPanel {
     this._model.cells.splice(to, 0, this._model.cells.splice(from, 1)[0]);
     super.move(from, to);
   }
+
+  protected metadataWidget: MetadataMergeWidget;
+  protected cellWidgets: CellMergeWidget[];
 
   private _model: NotebookMergeModel;
   private _rendermime: IRenderMime;
