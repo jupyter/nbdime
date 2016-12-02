@@ -43,7 +43,11 @@ import {
 
 import {
   valueIn, hasEntries
-} from '../common/util';
+} from './util';
+
+import {
+  NotifyUserError
+} from './exceptions';
 
 
 const PICKER_SYMBOL = '\u27ad';
@@ -273,6 +277,7 @@ class DiffView {
       }
 
       self.updateCallback(true);
+      checkSync(self.ownEditor)
       self.updating = false;
     }
     function setDealign(fast: boolean | CodeMirror.Editor) {
@@ -306,6 +311,13 @@ class DiffView {
       }
       // Update faster when a line was added/removed
       setDealign(change.text.length - 1 !== change.to.line - change.from.line);
+    }
+    function checkSync(cm: CodeMirror.Editor) {
+      if (self.model.remote !== cm.getValue()) {
+        throw new NotifyUserError(
+          'CRITICAL: Merge editor out of sync with model! ' +
+          'Double-check any saved merge output!');
+      }
     }
     this.baseEditor.on('change', change);
     this.ownEditor.on('change', change);
