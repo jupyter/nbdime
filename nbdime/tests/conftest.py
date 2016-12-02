@@ -50,7 +50,7 @@ def nocolor(request):
 @fixture
 def git_repo(tmpdir, request):
     if not have_git:
-        skip(reason="requires git")
+        skip("requires git")
     repo = str(tmpdir.join('repo'))
     os.mkdir(repo)
     save_cwd = os.getcwd()
