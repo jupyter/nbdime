@@ -193,6 +193,7 @@ class ApiMergeStoreHandler(NbdimeApiHandler):
         if not fn:
             raise web.HTTPError(400, "Server does not accept storing merge result.")
         path = os.path.join(self.params["cwd"], fn)
+        nbdime.log.info("Saving merge result in %s", path)
 
         body = json.loads(escape.to_unicode(self.request.body))
         merged = body["merged"]

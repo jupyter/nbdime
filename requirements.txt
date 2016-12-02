@@ -1,4 +1,0 @@
-six
-nbformat
-tornado
-colorama

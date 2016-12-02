@@ -22,16 +22,17 @@ _logger = logging.getLogger(__name__)
 # TODO: Tool server is passed a (mandatory?) single-use access token, which is
 #       used to authenticate the browser session.
 
-def build_arg_parser():
+def build_arg_parser(parser=None):
     """
     Creates an argument parser for the merge tool, that also lets the
     user specify a port and displays a help message.
     """
     description = 'mergetool for Nbdime.'
-    parser = ArgumentParser(
-        description=description,
-        add_help=True
-        )
+    if parser is None:
+        parser = ArgumentParser(
+            description=description,
+            add_help=True
+            )
     add_generic_args(parser)
     add_diff_args(parser)
     add_merge_args(parser)
@@ -58,23 +59,32 @@ def browse(port, browsername):
         threading.Thread(target=launch_browser).start()
 
 
-def main(args=None):
-    if args is None:
-        args = sys.argv[1:]
-    arguments = build_arg_parser().parse_args()
-    nbdime.log.init_logging(level=arguments.log_level)
-    port = arguments.port
-    cwd = arguments.workdirectory
-    base = arguments.base
-    local = arguments.local
-    remote = arguments.remote
-    merged = arguments.merged
-    browsername = arguments.browser
+def main_parsed(opts):
+    """Main function called after parsing CLI options
+    
+    Called by both main here and gitmergetool
+    """
+    nbdime.log.init_logging(level=opts.log_level)
+    port = opts.port
+    cwd = opts.workdirectory
+    base = opts.base
+    local = opts.local
+    remote = opts.remote
+    merged = opts.merged
+    browsername = opts.browser
     return run_server(port=port, cwd=cwd,
                       closable=True,
                       mergetool_args=dict(base=base, local=local, remote=remote),
                       outputfilename=merged,
                       on_port=lambda port: browse(port, browsername))
+
+
+def main(args=None):
+    if args is None:
+        args = sys.argv[1:]
+    opts = build_arg_parser().parse_args(args)
+    return main_parsed(opts)
+
 
 
 if __name__ == "__main__":

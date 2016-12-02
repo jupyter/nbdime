@@ -16,7 +16,7 @@ from subprocess import check_call, check_output, CalledProcessError
 
 import nbdime.log
 from .webapp import nbmergetool
-from .args import add_filename_args
+from .args import add_filename_args, add_generic_args
 
 
 def enable(global_=False, set_default=False):
@@ -60,13 +60,13 @@ def main(args=None):
     parser = argparse.ArgumentParser('git-nbmergetool', description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
+    add_generic_args(parser)
     subparsers = parser.add_subparsers(dest='subcommand')
 
     merge_parser = subparsers.add_parser('merge',
         description="The actual entrypoint for the mergetool. Git will call this."
     )
-
-    add_filename_args(merge_parser, ["base", "local", "remote", "merged"])
+    nbmergetool.build_arg_parser(merge_parser)
 
     config = subparsers.add_parser('config',
         description="Configure git to use nbdime via `git mergetool`")
@@ -88,7 +88,7 @@ def main(args=None):
     opts = parser.parse_args(args)
     nbdime.log.init_logging(level=opts.log_level)
     if opts.subcommand == 'merge':
-        return nbmergetool.main([opts.base, opts.local, opts.remote, opts.merged])
+        return nbmergetool.main_parsed(opts)
     elif opts.subcommand == 'config':
         opts.config_func(opts.global_, opts.set_default)
         return 0
