@@ -12,13 +12,15 @@ import logging
 import nbformat
 from nbformat import NotebookNode
 
-from ..diff_format import DiffOp, op_replace
-from ..patching import patch
+from ..diff_format import DiffOp, op_replace, op_removerange, op_addrange, op_patch
+from ..patching import patch, patch_singleline_string
 from .chunks import make_merge_chunks
 from ..utils import join_path, star_path
 from .decisions import (pop_patch_decision, push_patch_decision, MergeDecision,
                         pop_all_patch_decisions, _sort_key)
 from ..prettyprint import merge_render
+
+import nbdime.log
 
 _logger = logging.getLogger(__name__)
 
