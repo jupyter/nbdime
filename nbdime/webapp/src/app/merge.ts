@@ -217,7 +217,7 @@ function submitMerge(mergedNotebook: nbformat.INotebookContent,
  * Callback for a successful store of the submitted merged notebook
  */
 function onSubmissionCompleted() {
-  // TODO: Indicate success to user!
+  alertify.success('Merged notebook saved successfully');
   mergeWidget!.model.unsavedChanges = false;
 }
 
@@ -225,7 +225,7 @@ function onSubmissionCompleted() {
  * Callback for a failed store of the submitted merged notebook
  */
 function onSubmissionFailed(response: string) {
-  // TODO: Indicate failure + error to user!
+  alertify.error('Was not able to save the notebook! See console and/or server log for details.');
 }
 
 
