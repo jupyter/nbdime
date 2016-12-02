@@ -42,7 +42,7 @@ import {
 } from '../chunking';
 
 import {
-  valueIn
+  valueIn, hasEntries
 } from '../common/util';
 
 
@@ -342,6 +342,9 @@ class DiffView {
         } else if (instance === this.baseEditor) {
           for (let s of ss) {
             s.decision.action = 'base';
+            if (hasEntries(s.decision.customDiff)) {
+              s.decision.customDiff = [];
+            }
           }
         }
       } else if (gutter === GUTTER_CONFLICT_CLASS) {
