@@ -3,12 +3,22 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+import shutil
 try:
     from unittest import mock
 except ImportError:
     import mock
 
 from pytest import fixture
+
+from .fixtures import filespath
+
+@fixture
+def tempfiles(tmpdir):
+    """Fixture for copying test files into a temporary directory"""
+    dest = tmpdir.join('testfiles')
+    shutil.copytree(filespath(), str(dest))
+    return str(dest)
 
 
 @fixture

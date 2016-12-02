@@ -6,15 +6,16 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
-from six.moves import xrange as range
 from six import string_types
 
+from contextlib import contextmanager
 import io
-import pytest
-import os
 import glob
-import nbformat
+import os
 import re
+
+import pytest
+import nbformat
 
 from nbdime import patch, diff
 from nbdime.diff_format import is_valid_diff
@@ -202,3 +203,12 @@ def outputs_to_notebook(outputs):
             assert isinstance(output, dict)
             cell.outputs.append(output)
     return nb
+
+
+@contextmanager
+def assert_clean_exit():
+    """Assert that SystemExit is called with code=0"""
+    with pytest.raises(SystemExit) as e:
+        yield
+    assert e.value.code == 0
+
