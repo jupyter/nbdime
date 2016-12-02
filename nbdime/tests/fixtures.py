@@ -13,6 +13,9 @@ import io
 import glob
 import os
 import re
+import shlex
+import sys
+from subprocess import check_output, check_call, STDOUT
 
 import pytest
 import nbformat
@@ -212,3 +215,20 @@ def assert_clean_exit():
         yield
     assert e.value.code == 0
 
+
+def call(cmd):
+    """Call a command
+    
+    if str, split into command list
+    """
+    if isinstance(cmd, string_types):
+        cmd = shlex.split(cmd)
+    return check_call(cmd, stdout=sys.stdout, stderr=sys.stderr)
+
+
+def get_output(cmd, err=False):
+    """Run a command and get its output (as text)"""
+    if isinstance(cmd, string_types):
+        cmd = shlex.split(cmd)
+    stderr = STDOUT if err else sys.stderr
+    return check_output(cmd, stderr=stderr).decode('utf8', 'replace')
