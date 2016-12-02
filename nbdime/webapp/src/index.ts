@@ -46,7 +46,7 @@ import './app/merge.css';
 
 /** */
 function initialize() {
-  let onclose = (ev) => { closeTool(); };
+  let onclose = (ev: Event, unloading?: boolean) => { closeTool(); };
   if (document.getElementById('compare-local')) {
     initializeCompare();
     onclose = closeCompare;
@@ -61,7 +61,7 @@ function initialize() {
   let closeBtn = document.getElementById('nbdime-close') as HTMLButtonElement;
   if (closable) {
     closeBtn.onclick = onclose;
-    window.onbeforeunload = onclose;
+    window.onbeforeunload = (ev: Event) => { return onclose(ev, true); };
     closeBtn.style.display = 'initial';
   }
 }

@@ -233,47 +233,60 @@ function onSubmissionFailed(response: string) {
  *
  */
 export
-function closeMerge(ev: Event): string | void {
+function closeMerge(ev: Event, closing?: boolean): string | void | null {
   if (!mergeWidget) {
     return closeTool(1);
   }
   for (let md of mergeWidget.model.conflicts) {
     if (md.conflict) {
       if (mergeWidget.model.unsavedChanges) {
-        alertify.confirm(
-          'There are remaining conflicts, and you have unsaved changes. Do you want to close anyway?',
+        let prompt = 'There are remaining conflicts, and you have unsaved changes. Do you want to close anyway?';
+        alertify.confirm(prompt,
           () => {
             closeTool(1);
           },
           () => {
             ev.preventDefault();
           });
-        return;
+        if (closing) {
+          ev.returnValue = true;
+          return prompt;
+        }
+        return null;
       } else {
-        alertify.confirm(
-          'There are remaining conflicts. Do you want to close anyway?',
+        let prompt = 'There are remaining conflicts. Do you want to close anyway?';
+        alertify.confirm(prompt,
           () => {
             closeTool(1);
           },
           () => {
             ev.preventDefault();
           });
-        return;
+        if (closing) {
+          ev.returnValue = true;
+          return prompt;
+        }
+        return null;
       }
     }
   }
   if (mergeWidget.model.unsavedChanges) {
-    alertify.confirm(
-      'There are unsaved changes. Do you want to close anyway?',
+    let prompt = 'There are unsaved changes. Do you want to close anyway?';
+    alertify.confirm(prompt,
       () => {
         closeTool(0);
       },
       () => {
         ev.preventDefault();
       });
-    return;
+    if (closing) {
+      ev.returnValue = true;
+      return prompt;
+    }
+    return null;
   }
   closeTool(0);
+  return null;
 }
 
 
