@@ -104,7 +104,7 @@ class NotebookMergeWidget extends DragDropPanel {
     super.move(from, to);
   }
 
-  protected metadataWidget: MetadataMergeWidget | undefined;
+  protected metadataWidget: MetadataMergeWidget | null = null;
   protected cellWidgets: CellMergeWidget[];
 
   private _model: NotebookMergeModel;
