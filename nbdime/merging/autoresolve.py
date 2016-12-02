@@ -293,7 +293,6 @@ def strategy2action_dict(resolved_base, le, re, strategy, path, dec):
             # Leave this conflict unresolved
             pass
     elif strategy == "inline-source":
-        nbdime.log.warning("Don't know how to resolve source inline yet.")
         assert key == "source"
         source = resolved_base[key]
         begin, end, inlined = make_inline_source_value(source, le, re)
