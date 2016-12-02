@@ -42,15 +42,10 @@ def disable(global_=False, *args):
     if global_:
         cmd.append('--global')
     try:
-        previous = check_output(cmd + ['mergetool.nbdime.previous']).decode('utf8', 'replace').strip()
+        check_call(cmd + ['--unset', 'merge.tool'])
     except CalledProcessError:
-        try:
-            check_call(cmd + ['--unset', 'merge.tool'])
-        except CalledProcessError:
-            # already unset
-            pass
-    else:
-        check_call(cmd + ['merge.tool', previous])
+        # already unset
+        pass
 
 
 def main(args=None):
