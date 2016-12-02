@@ -53,15 +53,15 @@ def disable(global_=False, *args):
                 pass
 
 
-def show_diff(before, after):
+def show_diff(before, after, diff_args):
     """Run the difftool
 
-    If we are diffing a notebook, show the diff via nbdiff.
+    If we are diffing a notebook, show the diff via nbdiff-web.
     Otherwise, call out to `git diff`.
     """
     # TODO: handle /dev/null (Windows equivalent?) for new or deleted files
     if before.endswith('.ipynb') or after.endswith('ipynb'):
-        return nbdifftool.main([before, after])
+        return nbdifftool.main(diff_args)
     else:
         # Never returns
         os.execvp('git', ['git', 'diff', before, after])
@@ -99,10 +99,12 @@ def main(args=None):
         dest='config_func', const=disable,
         help="disable nbdime difftool via git config"
     )
-    opts = parser.parse_args(args)
+    opts, extra_args = parser.parse_known_args(args)
     nbdime.log.init_logging(level=opts.log_level)
     if opts.subcommand == 'diff':
-        return show_diff(opts.local, opts.remote)
+        args = list(args)
+        args.remove('diff')
+        return show_diff(opts.local, opts.remote, args)
     elif opts.subcommand == 'config':
         opts.config_func(opts.global_, opts.set_default)
         return 0

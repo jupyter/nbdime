@@ -6,16 +6,20 @@
 from __future__ import unicode_literals
 
 import io
+import json
 import logging
 import os
-from subprocess import CalledProcessError
+from subprocess import CalledProcessError, Popen, PIPE
+import time
 
 import pytest
 from pytest import mark
-
-from .fixtures import filespath, assert_clean_exit, get_output, call
+import requests
+from tornado.httputil import url_concat
 
 import nbformat
+
+from .fixtures import filespath, assert_clean_exit, get_output, call
 
 import nbdime
 from nbdime.nbshowapp import main_show
@@ -256,4 +260,99 @@ def test_mergedriver(git_repo):
     nb = nbformat.read('merge-conflict.ipynb', as_version=4)
     nbformat.validate(nb)
 
+
+WEB_TEST_TIMEOUT = 15
+
+@pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
+def test_difftool(git_repo, request):
+    nbdime.gitdifftool.main(['config', '--enable'])
+    cmd = get_output('git config --get --local difftool.nbdime.cmd').strip()
+
+    # pick a non-random port so we can connect later, and avoid opening a browser
+    port = 62021
+    cmd = cmd + ' --port=%i --browser=disabled' % port
+    call(['git', 'config', 'difftool.nbdime.cmd', cmd])
+
+    # avoid global diff driver config from disabling difftool:
+    with open('.gitattributes', 'w') as f:
+        f.write('*.ipynb\tdiff=notnbdime')
+
+    p = Popen(['git', 'difftool', '--tool=nbdime', 'base'])
+    def _term():
+        try:
+            p.terminate()
+        except OSError:
+            pass
+    request.addfinalizer(_term)
+    
+    # 3 is the number of notebooks in this diff
+    url = 'http://127.0.0.1:%i' % port
+    for i in range(3):
+        while True:
+            try:
+                r = requests.get(url + '/difftool')
+            except Exception as e:
+                assert p.poll() is None
+                print("waiting for nbdiff server %i" % i)
+                time.sleep(0.2)
+            else:
+                break
+        # server started
+        r.raise_for_status()
+        # close it
+        r = requests.post(url + '/api/closetool', headers={'exit_code': '0'})
+        r.raise_for_status()
+        time.sleep(0.25)
+    # wait for exit
+    p.wait()
+    assert p.poll() == 0
+
+
+@pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
+def test_mergetool(git_repo, request):
+    nbdime.gitmergetool.main(['config', '--enable'])
+    cmd = get_output('git config --get --local mergetool.nbdime.cmd').strip()
+
+    # pick a non-random port so we can connect later, and avoid opening a browser
+    port = 62022
+    cmd = cmd + ' --port=%i --browser=disabled' % port
+    call(['git', 'config', 'mergetool.nbdime.cmd', cmd])
+    call(['git', 'config', 'mergetool.nbdime.trustExitCode', 'true'])
+    
+    with pytest.raises(CalledProcessError):
+        call('git merge remote-conflict')
+    p = Popen(['git', 'mergetool', '--no-prompt', '--tool=nbdime', 'merge-conflict.ipynb'])
+    def _term():
+        try:
+            p.terminate()
+        except OSError:
+            pass
+    request.addfinalizer(_term)
+    
+    # 3 is the number of notebooks in this diff
+    url = 'http://127.0.0.1:%i' % port
+    while True:
+        try:
+            r = requests.get(url + '/mergetool')
+        except Exception as e:
+            assert p.poll() is None
+            print("waiting for nbmerge server")
+            time.sleep(0.2)
+        else:
+            break
+    # server started
+    r.raise_for_status()
+    r = requests.post(
+        url_concat(url + '/api/store', {'outputfilename': 'merge-conflict.ipynb'}),
+        data=json.dumps({
+            'merged': nbformat.v4.new_notebook(),
+        })
+    )
+    r.raise_for_status()
+    # close it
+    r = requests.post(url + '/api/closetool', headers={'exit_code': '0'})
+    r.raise_for_status()
+    # wait for exit
+    p.wait()
+    assert p.poll() == 0
 

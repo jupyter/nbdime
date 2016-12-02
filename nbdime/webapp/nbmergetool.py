@@ -61,7 +61,7 @@ def browse(port, browsername):
 def main(args=None):
     if args is None:
         args = sys.argv[1:]
-    arguments = build_arg_parser().parse_args()
+    arguments = build_arg_parser().parse_args(args)
     nbdime.log.init_logging(level=arguments.log_level)
     port = arguments.port
     cwd = arguments.workdirectory

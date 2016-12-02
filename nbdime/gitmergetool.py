@@ -86,10 +86,12 @@ def main(args=None):
         dest='config_func', const=disable,
         help="disable nbdime mergetool via git config"
     )
-    opts = parser.parse_args(args)
+    opts, extra_args = parser.parse_known_args(args)
     nbdime.log.init_logging(level=opts.log_level)
     if opts.subcommand == 'merge':
-        return nbmergetool.main([opts.base, opts.local, opts.remote, opts.merged])
+        args = list(args)
+        args.remove('merge')
+        return nbmergetool.main(args)
     elif opts.subcommand == 'config':
         opts.config_func(opts.global_, opts.set_default)
         return 0
