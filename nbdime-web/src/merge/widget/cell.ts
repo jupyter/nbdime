@@ -89,8 +89,8 @@ class CellMergeWidget extends Panel {
     let view: Widget | null = null;
     if (merged instanceof StringDiffModel) {
       view = createNbdimeMergeView(
-        local as IStringDiffModel | null,
         remote as IStringDiffModel | null,
+        local as IStringDiffModel | null,
         merged, readOnly);
     }
     return view;
@@ -140,7 +140,7 @@ class CellMergeWidget extends Panel {
         // This will need to be validated server side,
         // and should not be touched by client side
         // (structure might differ from assumed form)
-        candidate.source = JSON.parse(text);
+        candidate.metadata = JSON.parse(text);
       }
     }
     // Do not validate outputs, as they are not as exposed to potential errors
