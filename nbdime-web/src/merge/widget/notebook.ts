@@ -73,7 +73,9 @@ class NotebookMergeWidget extends DragDropPanel {
   validateMerged(candidate: nbformat.INotebookContent): nbformat.INotebookContent {
     let validated = deepCopy(candidate);
     // Validate metadata
-    validated.metadata = this.metadataWidget.validateMerged(candidate.metadata);
+    if (this.metadataWidget) {
+      validated.metadata = this.metadataWidget.validateMerged(candidate.metadata);
+    }
 
     // Validate cells
     let i = 0;
@@ -102,7 +104,7 @@ class NotebookMergeWidget extends DragDropPanel {
     super.move(from, to);
   }
 
-  protected metadataWidget: MetadataMergeWidget;
+  protected metadataWidget: MetadataMergeWidget | undefined;
   protected cellWidgets: CellMergeWidget[];
 
   private _model: NotebookMergeModel;
