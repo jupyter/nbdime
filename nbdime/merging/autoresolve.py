@@ -75,38 +75,50 @@ def make_join_value(value, le, re):
     return newvalue
 
 
-def make_inline_outputs_value(value, le, re,
+def output_marker(text):
+    return nbformat.v4.new_output("stream", name="stderr", text=text)
+
+
+def make_inline_outputs_value(base, le, re,
                               base_title="base", local_title="local", remote_title="remote"):
-    # FIXME: Use this for inline outputs diff?
-    # Joining e.g. an outputs list means concatenating all items
-    lvalue = patch_item(value, le)
-    rvalue = patch_item(value, re)
+    # Produce local/remote values; lists of outputs
+    values = []
+    notes = []
+    for e in (le, re):
+        if e == "deleted":
+            note = " <CELL DELETED>"
+            value = [output_marker("<CELL DELETED>")]
+        else:
+            # TODO: Add touched fields from diff e to note
+            note = ""
+            value = patch_item(base, e)
+            if value is Deleted:
+                value = []
+        values.append(value)
+        notes.append(note)
+    local, remote = values
+    local_note, remote_note = notes
 
-    if lvalue is Deleted:
-        lvalue = []
-    if rvalue is Deleted:
-        rvalue = []
+    # Define markers
+    include_base = True  # TODO: Make option
+    marker_size = 7  # default in git
+    sep0 = "<"*marker_size
+    sep1 = "|"*marker_size
+    sep2 = "="*marker_size
+    sep3 = ">"*marker_size
 
-    base = value
-    local = lvalue
-    remote = rvalue
-
-    def output_marker(text):
-        return nbformat.v4.new_output("stream", name="stderr", text=text)
+    sep0 = "%s %s%s\n" % (sep0, local_title, local_note)
+    sep1 = "%s %s\n" % (sep1, base_title)
+    sep2 = "%s\n" % (sep2,)
+    sep3 = "%s %s%s" % (sep3, remote_title, remote_note)
 
     # Note: This is very notebook specific while the rest of this file is more generic
     outputs = []
-
-    n = 7
-    sep0 = "%s %s\n" % ("<"*n, local_title)
-    sep1 = "%s %s\n" % ("|"*n, base_title)
-    sep2 = "%s\n" % ("="*n,)
-    sep3 = "%s %s" % (">"*n, remote_title)
-
     outputs.append(output_marker(sep0))
     outputs.extend(local)
-    outputs.append(output_marker(sep1))
-    outputs.extend(base)
+    if include_base:
+        outputs.append(output_marker(sep1))
+        outputs.extend(base)
     outputs.append(output_marker(sep2))
     outputs.extend(remote)
     outputs.append(output_marker(sep3))
