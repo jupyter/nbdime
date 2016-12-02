@@ -580,6 +580,18 @@ def autoresolve_decision(base, dec, strategies):
     return [pop_all_patch_decisions(d) for d in decs]
 
 
+def split_decisions_by_cell(decisions):
+    generic_decisions = []
+    cell_decisions = []
+    for dec in decisions:
+        if dec.common_path[:1] != ("cells",):
+            generic_decisions.append(dec)
+        else:
+            cell_decisions.append(dec)
+
+    return generic_decisions, cell_decisions
+
+
 def autoresolve_generic(base, decisions, strategies):
     newdecisions = []
     for dec in decisions:
@@ -590,10 +602,20 @@ def autoresolve_generic(base, decisions, strategies):
     return newdecisions
 
 
+def autoresolve_cells(base, decisions, strategies):
+    return autoresolve_generic(base, decisions, strategies)
+
+
 def autoresolve(base, decisions, strategies):
     """Autoresolve a list of decisions with given strategy configuration.
 
     Returns a list of new decisions, with or without further conflicts.
     """
-    decisions = autoresolve_generic(base, decisions, strategies)
+    generic_decisions, cell_decisions = split_decisions_by_cell(decisions)
+
+    generic_decisions = autoresolve_generic(base, generic_decisions, strategies)
+
+    cell_decisions = autoresolve_cells(base, cell_decisions, strategies)
+
+    decisions = generic_decisions + cell_decisions
     return sorted(decisions, key=_sort_key, reverse=True)
