@@ -53,7 +53,7 @@ def disable(global_=False, *args):
                 pass
 
 
-def show_diff(before, after, diff_args):
+def show_diff(before, after, opts):
     """Run the difftool
 
     If we are diffing a notebook, show the diff via nbdiff-web.
@@ -61,7 +61,7 @@ def show_diff(before, after, diff_args):
     """
     # TODO: handle /dev/null (Windows equivalent?) for new or deleted files
     if before.endswith('.ipynb') or after.endswith('ipynb'):
-        return nbdifftool.main(diff_args)
+        return nbdifftool.main_parsed(opts)
     else:
         # Never returns
         os.execvp('git', ['git', 'diff', before, after])
@@ -74,13 +74,13 @@ def main(args=None):
     parser = argparse.ArgumentParser('git-nbdifftool', description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
+    add_generic_args(parser)
     subparsers = parser.add_subparsers(dest='subcommand')
 
     diff_parser = subparsers.add_parser('diff',
         description="The actual entrypoint for the diff tool. Git will call this."
     )
-    add_generic_args(parser)
-    add_filename_args(diff_parser, ["local", "remote"])
+    nbdifftool.build_arg_parser(diff_parser)
 
     config = subparsers.add_parser('config',
         description="Configure git to use nbdime via `git difftool`")
@@ -99,12 +99,10 @@ def main(args=None):
         dest='config_func', const=disable,
         help="disable nbdime difftool via git config"
     )
-    opts, extra_args = parser.parse_known_args(args)
+    opts = parser.parse_args(args)
     nbdime.log.init_logging(level=opts.log_level)
     if opts.subcommand == 'diff':
-        args = list(args)
-        args.remove('diff')
-        return show_diff(opts.local, opts.remote, args)
+        return show_diff(opts.local, opts.remote, opts)
     elif opts.subcommand == 'config':
         opts.config_func(opts.global_, opts.set_default)
         return 0

@@ -66,8 +66,7 @@ def main(args=None):
     merge_parser = subparsers.add_parser('merge',
         description="The actual entrypoint for the mergetool. Git will call this."
     )
-
-    add_filename_args(merge_parser, ["base", "local", "remote", "merged"])
+    nbmergetool.build_arg_parser(merge_parser)
 
     config = subparsers.add_parser('config',
         description="Configure git to use nbdime via `git mergetool`")
@@ -86,12 +85,10 @@ def main(args=None):
         dest='config_func', const=disable,
         help="disable nbdime mergetool via git config"
     )
-    opts, extra_args = parser.parse_known_args(args)
+    opts = parser.parse_args(args)
     nbdime.log.init_logging(level=opts.log_level)
     if opts.subcommand == 'merge':
-        args = list(args)
-        args.remove('merge')
-        return nbmergetool.main(args)
+        return nbmergetool.main_parsed(opts)
     elif opts.subcommand == 'config':
         opts.config_func(opts.global_, opts.set_default)
         return 0
