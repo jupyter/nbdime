@@ -571,54 +571,19 @@ def split_decisions_by_cell(decisions):
     return generic_decisions, cell_decisions
 
 
-def bundle_inline_source_decisions(base, source_decisions):
+def make_bundled_source_decisions(base, cell_idx, source_decisions):
     """Bundle a collection of decisions on inline-source
     
     All decisions will be on the same source field.
     """
-    local_diff = []
-    remote_diff = []
-    
     if not any(dec.conflict for dec in source_decisions):
         # no conflicts, nothing to do
         return source_decisions
-    
-    path = source_decisions[0].common_path[:3]
-    source = base[path[0]][path[1]][path[2]]
 
-    for dec in source_decisions:
-        if len(dec.common_path) > 3:
-            # promote per-line diff up one level
-            lineno = dec.common_path[3]
-            new_remote_diff = new_local_diff = None
-            if dec.remote_diff:
-                new_remote_diff = [
-                        DiffEntry(
-                            op=DiffOp.PATCH,
-                            key=lineno,
-                            diff=dec.remote_diff,
-                        ),
-                    ]
-            if dec.local_diff:
-                new_local_diff = [
-                        DiffEntry(
-                            op=DiffOp.PATCH,
-                            key=lineno,
-                            diff=dec.local_diff,
-                        ),
-                    ]
-            dec = MergeDecision(
-                common_path=path,
-                conflict=True,
-                local_diff=new_local_diff,
-                remote_diff=new_remote_diff,
-            )
+    source = base['cells'][cell_idx]['source']
+    local_diff = build_diffs(source, source_decisions, 'local')
+    remote_diff = build_diffs(source, source_decisions, 'remote')
 
-        if dec.remote_diff:
-            remote_diff.extend(dec.remote_diff)
-        if dec.local_diff:
-            local_diff.extend(dec.local_diff)
-    
     begin, end, inlined = make_inline_source_value(source, local_diff, remote_diff)
     custom_diff = [
         op_removerange(begin, end-begin),
@@ -626,7 +591,7 @@ def bundle_inline_source_decisions(base, source_decisions):
     ]
     
     return [MergeDecision(
-        common_path=source_decisions[0].common_path[:3],
+        common_path=('cells', cell_idx, 'source'),
         action="custom",
         conflict=True,
         local_diff=local_diff,
@@ -636,38 +601,40 @@ def bundle_inline_source_decisions(base, source_decisions):
 
 def autoresolve_generic(base, decisions, strategies):
     newdecisions = []
-    last_source_idx = -1
-    source_decisions = []
-
-    inline_sources = strategies.get('/cells/*/source') == 'inline-source'
     for dec in decisions:
-        path = dec.common_path
-        if (
-            inline_sources and \
-            len(path) >= 3 and path[0] == 'cells' and \
-            path[2] == 'source'
-        ):
-            # bundle decisions on source together for inline merge conflicts
-            source_idx = path[1]
-            if source_idx != last_source_idx:
-                last_source_idx = source_idx
-                # new source decision, bundle and finish last one
-                newdecisions.extend(bundle_inline_source_decisions(base, source_decisions))
-                source_decisions = []
-            source_decisions.append(dec)
-            continue
         if dec.conflict:
             newdecisions.extend(autoresolve_decision(base, dec, strategies))
         else:
             newdecisions.append(dec)
-    if source_decisions:
-        # still bundling source decisions at the end
-        newdecisions.extend(bundle_inline_source_decisions(base, source_decisions))
     return newdecisions
 
 
 def autoresolve_cells(base, decisions, strategies):
     return autoresolve_generic(base, decisions, strategies)
+
+
+def bundle_inline_source_decisions(base, decisions):
+    source_indices = filter_decisions('/cells/*/source', decisions)
+    source_index_set = set(source_indices)
+    # all the decisions I'm not bundling:
+    other_decisions = [ decisions[i] for i in range(len(decisions)) if i not in source_index_set ]
+
+    # group decisions on any given source
+    source_decision_groups = {}
+    for i in source_indices:
+        dec = decisions[i]
+        cell_idx = dec.common_path[1]
+        if cell_idx not in source_decision_groups:
+            source_decision_groups[cell_idx] = []
+        dec._level = 3
+        source_decision_groups[cell_idx].append(dec)
+
+    # create bundles for each source
+    source_decisions = []
+    for cell_idx, dec_group in source_decision_groups.items():
+        source_decisions.extend(make_bundled_source_decisions(base, cell_idx, dec_group))
+
+    return other_decisions + source_decisions
 
 
 def autoresolve(base, decisions, strategies):
@@ -676,6 +643,10 @@ def autoresolve(base, decisions, strategies):
     Returns a list of new decisions, with or without further conflicts.
     """
     generic_decisions, cell_decisions = split_decisions_by_cell(decisions)
+    
+    if strategies.get('/cells/*/source') == 'inline-source':
+        cell_decisions = bundle_inline_source_decisions(base, cell_decisions)
+    
 
     generic_decisions = autoresolve_generic(base, generic_decisions, strategies)
 
