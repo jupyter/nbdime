@@ -108,6 +108,7 @@ def is_in_repo(pkg_path):
 
     return False
 
+
 def locate_gitattributes(global_=False):
     """Locate the .gitattributes file
     
@@ -126,4 +127,4 @@ def locate_gitattributes(global_=False):
             return None
         gitattributes = os.path.join(path, '.gitattributes')
     return gitattributes
-    
+
