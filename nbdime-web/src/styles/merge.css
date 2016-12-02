@@ -255,4 +255,13 @@
   color: var(--jp-ui-font-color3);
 }
 
+/* This fixes an alignment issue between gutter background
+ and gutter elements, but not sure *why* this is needed.
+ Might be fixing a symptom rather than the cause, but it
+ works for now.
+ */
+.jp-Notebook-merge .CodeMirror-gutter-wrapper {
+  margin-left: calc(-1 * var(--jp-code-padding));
+}
+
 
