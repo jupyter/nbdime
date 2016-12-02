@@ -16,6 +16,7 @@ import pytest
 from pytest import mark
 import requests
 from tornado.httputil import url_concat
+from tornado import ioloop
 
 import nbformat
 
@@ -35,6 +36,8 @@ from nbdime import (
     gitmergedriver,
     gitmergetool,
 )
+import nbdime.webapp.nbdiffweb
+import nbdime.webapp.nbmergeweb
 
 
 def test_nbshow_app():
@@ -263,6 +266,18 @@ def test_mergedriver(git_repo):
 
 WEB_TEST_TIMEOUT = 15
 
+def _wait_up(url, interval=0.1, check=None):
+    while True:
+        try:
+            r = requests.get(url)
+        except Exception as e:
+            if check:
+                assert check()
+            print("waiting for %s" % url)
+            time.sleep(interval)
+        else:
+            break
+
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
 def test_difftool(git_repo, request):
     nbdime.gitdifftool.main(['config', '--enable'])
@@ -288,16 +303,9 @@ def test_difftool(git_repo, request):
     # 3 is the number of notebooks in this diff
     url = 'http://127.0.0.1:%i' % port
     for i in range(3):
-        while True:
-            try:
-                r = requests.get(url + '/difftool')
-            except Exception as e:
-                assert p.poll() is None
-                print("waiting for nbdiff server %i" % i)
-                time.sleep(0.2)
-            else:
-                break
+        _wait_up(url, check=lambda : p.poll() is None)
         # server started
+        r = requests.get(url + '/difftool')
         r.raise_for_status()
         # close it
         r = requests.post(url + '/api/closetool', headers={'exit_code': '0'})
@@ -331,16 +339,9 @@ def test_mergetool(git_repo, request):
     
     # 3 is the number of notebooks in this diff
     url = 'http://127.0.0.1:%i' % port
-    while True:
-        try:
-            r = requests.get(url + '/mergetool')
-        except Exception as e:
-            assert p.poll() is None
-            print("waiting for nbmerge server")
-            time.sleep(0.2)
-        else:
-            break
+    _wait_up(url, check=lambda : p.poll() is None)
     # server started
+    r = requests.get(url + '/mergetool')
     r.raise_for_status()
     r = requests.post(
         url_concat(url + '/api/store', {'outputfilename': 'merge-conflict.ipynb'}),
@@ -356,3 +357,27 @@ def test_mergetool(git_repo, request):
     p.wait()
     assert p.poll() == 0
 
+
+@pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
+def test_diff_web():
+    port = 62023
+    files = filespath()
+    a = os.path.join(files, 'src-and-output--1.ipynb')
+    b = os.path.join(files, 'src-and-output--2.ipynb')
+    ns = {}
+    loop = ioloop.IOLoop.current()
+    loop.call_later(0, loop.stop)
+    nbdime.webapp.nbdiffweb.main(['--port=%i' % port, '--browser=disabled', a, b])
+
+
+@pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
+def test_merge_web():
+    port = 62024
+    files = filespath()
+    a = os.path.join(files, 'multilevel-test-base.ipynb')
+    b = os.path.join(files, 'multilevel-test-local.ipynb')
+    c = os.path.join(files, 'multilevel-test-remote.ipynb')
+    ns = {}
+    loop = ioloop.IOLoop.current()
+    loop.call_later(0, loop.stop)
+    nbdime.webapp.nbmergeweb.main(['--port=%i' % port, '--browser=disabled', a, b, c])
