@@ -160,7 +160,7 @@ def strategy2action_dict(resolved_base, le, re, strategy, path, dec):
     assert le is None or re is None or le.key == re.key
     key = le.key if re is None else re.key
 
-    _logger.warning('autoresolving conflict at %s with %s' % (path, strategy))
+    nbdime.log.warning('autoresolving conflict at %s with %s' % (path, strategy))
 
     # Make a shallow copy of dec
     dec = copy.copy(dec)
