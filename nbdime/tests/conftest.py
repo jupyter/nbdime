@@ -3,6 +3,7 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+import logging
 import shutil
 try:
     from unittest import mock
@@ -34,3 +35,8 @@ def nocolor(request):
     )
     patch.start()
     request.addfinalizer(patch.stop)
+
+@fixture
+def reset_log():
+    # clear root logger handlers
+    logging.getLogger().handlers[:] = []
