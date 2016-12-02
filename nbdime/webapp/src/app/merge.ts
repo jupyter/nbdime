@@ -233,18 +233,47 @@ function onSubmissionFailed(response: string) {
  *
  */
 export
-function closeMerge(ev: Event) {
-  let conflict = false;
-  for (let md of mergeModel.conflicts) {
-    conflict = md.conflict;
-    if (conflict) {
-      break;
+function closeMerge(ev: Event): string | void {
+  if (!mergeWidget) {
+    return closeTool(1);
+  }
+  for (let md of mergeWidget.model.conflicts) {
+    if (md.conflict) {
+      if (mergeWidget.model.unsavedChanges) {
+        alertify.confirm(
+          'There are remaining conflicts, and you have unsaved changes. Do you want to close anyway?',
+          () => {
+            closeTool(1);
+          },
+          () => {
+            ev.preventDefault();
+          });
+        return;
+      } else {
+        alertify.confirm(
+          'There are remaining conflicts. Do you want to close anyway?',
+          () => {
+            closeTool(1);
+          },
+          () => {
+            ev.preventDefault();
+          });
+        return;
+      }
     }
   }
-  if (mergeModel.unsavedChanges) {
-    // TODO: Ask user if he want to save
+  if (mergeWidget.model.unsavedChanges) {
+    alertify.confirm(
+      'There are unsaved changes. Do you want to close anyway?',
+      () => {
+        closeTool(0);
+      },
+      () => {
+        ev.preventDefault();
+      });
+    return;
   }
-  closeTool(conflict ? 1 : 0);
+  closeTool(0);
 }
 
 
