@@ -272,6 +272,16 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
   }
 
   /**
+   * Clear any conflicts on decisions on outputs
+   */
+  clearOutputConflicts() {
+    let decs = filterDecisions(this.decisions, ['outputs'], 2);
+    for (let dec of decs) {
+      dec.conflict = false;
+    }
+  }
+
+  /**
    * Get the decision on `execution_count` field (should only be one).
    *
    * Returns null if no decision on `execution_count` was found.

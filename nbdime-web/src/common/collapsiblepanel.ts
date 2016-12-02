@@ -46,6 +46,7 @@ class CollapsiblePanel extends Panel {
     this.inner = inner;
     let constructor = this.constructor as typeof CollapsiblePanel;
     let header = constructor.createHeader(headerTitle);
+    this.header = header;
     this.button = header.node.getElementsByClassName(
       COLLAPSIBLE_HEADER_ICON)[0] as HTMLElement;
     header.node.onclick = this.toggleCollapsed.bind(this);
@@ -89,8 +90,13 @@ class CollapsiblePanel extends Panel {
     return this.slider.hasClass(COLLAPSIBLE_CLOSED);
   }
 
+  set headerTitle(value: string) {
+    this.header.node.innerText = value;
+  }
+
   inner: Widget;
 
+  header: Panel;
   slider: Panel;
   container: Panel;
   button: HTMLElement;

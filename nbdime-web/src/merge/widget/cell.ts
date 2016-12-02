@@ -15,7 +15,7 @@ import {
 } from 'phosphor/lib/ui/widget';
 
 import {
-  Panel
+  Panel, PanelLayout
 } from 'phosphor/lib/ui/panel';
 
 import {
@@ -75,6 +75,9 @@ const EXECUTIONCOUNT_ROW_CLASS = 'jp-Cellrow-executionCount';
 const SOURCE_ROW_CLASS = 'jp-Cellrow-source';
 const METADATA_ROW_CLASS = 'jp-Cellrow-metadata';
 const OUTPUTS_ROW_CLASS = 'jp-Cellrow-outputs';
+
+const OUTPUTS_CONFLICTED_CLASS = 'jp-conflicted-outputs';
+const MARK_OUTPUTS_RESOLVED_CLASS = 'jp-conflicted-outputs-button';
 
 
 
@@ -292,9 +295,36 @@ class CellMergeWidget extends Panel {
           baseOut, remoteOut, localOut);
         this.outputViews = view;
 
-        let header = outputsChanged ? 'Outputs changed' : 'Outputs unchanged';
+        let header = outputsChanged ?
+          (model.outputsConflicted ?
+            'Outputs conflicted' :
+            'Outputs changed') :
+          'Outputs unchanged';
         let collapser = new CollapsiblePanel(view, header, !outputsChanged);
         collapser.addClass(OUTPUTS_ROW_CLASS);
+
+        if (model.outputsConflicted) {
+          collapser.addClass(OUTPUTS_CONFLICTED_CLASS);
+          let conflictClearBtn = new Widget();
+          conflictClearBtn.addClass(MARK_OUTPUTS_RESOLVED_CLASS);
+          let node = conflictClearBtn.node;
+          let btn = document.createElement('button');
+          btn.onclick = (ev: MouseEvent) => {
+            if (ev.button !== 0) {
+              return;  // Only main button clicks
+            }
+            model.clearOutputConflicts();
+            collapser.removeClass(OUTPUTS_CONFLICTED_CLASS);
+            collapser.headerTitle = 'Outputs changed';
+            ev.preventDefault();
+            ev.stopPropagation();
+            conflictClearBtn.parent = null!;
+          };
+          btn.innerText = 'Mark resolved';
+          node.appendChild(btn);
+          collapser.header.insertWidget(1, conflictClearBtn);
+        }
+
         this.addWidget(collapser);
       }
     }
