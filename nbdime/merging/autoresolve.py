@@ -126,30 +126,87 @@ def make_inline_outputs_value(base, le, re,
     return outputs
 
 
+def _analyse_edited_lines(baselines, patch_op):
+    # Strip single patch op on "source"
+    assert patch_op.op == DiffOp.PATCH
+    assert patch_op.key == "source"
+
+    diff = patch_op.diff
+
+    assert len(diff) in (1, 2)
+    if len(diff) == 2:
+        assert DiffOp.ADDRANGE in [e.op for e in diff]
+
+    lines = []
+    addlines = []
+    #deleted_min = len(baselines)
+    #deleted_max = 0
+    deleted_min = min(e.key for e in diff)
+    assert all(e.key == deleted_min for e in diff)
+    deleted_max = deleted_min
+
+    for e in diff:
+        if e.op == DiffOp.ADDRANGE:
+            # Only add lines to base
+            assert not addlines
+            addlines = e.valuelist
+        elif e.op == DiffOp.REMOVERANGE:
+            # Only remove lines from base
+            deleted_min = e.key
+            deleted_max = e.key + e.length
+        elif e.op == DiffOp.REPLACE:
+            # Replace single line with given value
+            assert not lines
+            lines = [e.value]
+            deleted_min = e.key
+            deleted_max = e.key + 1
+        elif e.op == DiffOp.PATCH:
+            # Replace single line with patched value
+            assert not lines
+            lines = [patch_singleline_string(baselines[e.key], e.diff)]
+            deleted_min = e.key
+            deleted_max = e.key + 1
+        else:
+            raise ValueError("Invalid item patch op {}".format(e.op))
+
+    lines = addlines + lines
+    return lines, deleted_min, deleted_max
+
+
 def make_inline_source_value(base, le, re):
-    if le.op == DiffOp.REPLACE:
-        local = le.value
-    elif le.op == DiffOp.PATCH:
-        local = patch(base, le.diff)
-    elif le.op == DiffOp.REMOVE:
-        local = []  # ""
-    else:
-        raise ValueError("Invalid item patch op {}".format(le.op))
+    orig = base
+    base = base.splitlines(True)
 
-    if re.op == DiffOp.REPLACE:
-        remote = re.value
-    elif re.op == DiffOp.PATCH:
-        remote = patch(base, re.diff)
-    elif re.op == DiffOp.REMOVE:
-        remote = []  # ""
-    else:
-        raise ValueError("Invalid item patch op {}".format(re.op))
+    #base = source string
+    # replace = replace line e.key from base with e.value
+    # patch = apply e.diff to line e.key from base
+    # remove = remove lines e.key from base
 
-    # FIXME: This discards diff information, and the built-in
-    #   renderer doesn't mark each conflicting chunk.
+    # Get lines added and deleted in the two edits
+    local, local_deleted_min, local_deleted_max = _analyse_edited_lines(base, le)
+    remote, remote_deleted_min, remote_deleted_max = _analyse_edited_lines(base, re)
+    assert local_deleted_min == remote_deleted_min
 
-    strategy = None  # FIXME: "use-local" | "use-remote" | "union"
-    return merge_render(base, local, remote, strategy)
+    # Add lines deleted only on the other side
+    local = base[local_deleted_min:remote_deleted_min] + local + base[local_deleted_max:remote_deleted_max]
+    remote = base[remote_deleted_min:local_deleted_min] + remote + base[remote_deleted_max:local_deleted_max]
+
+    # Get deleted base lines
+    begin = min(local_deleted_min, remote_deleted_max)
+    end = max(remote_deleted_max, local_deleted_max)
+    base = base[begin:end]
+
+    if 0: import ipdb; ipdb.set_trace()
+
+    # TODO: When using external merge renderer, probably want to
+    # apply to the entire source string with all changes incorporated,
+    # this is only one chunk
+
+    inlined = merge_render(base, local, remote)
+    inlined = inlined.splitlines(True)
+
+    # Return range to replace with marked up lines
+    return begin, end, inlined
 
 
 def is_diff_all_transients(diff, path, transients):
