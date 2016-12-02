@@ -293,16 +293,16 @@ def strategy2action_dict(resolved_base, le, re, strategy, path, dec):
             # Leave this conflict unresolved
             pass
     elif strategy == "inline-source":
-        # FIXME: Leaving this conflict unresolved until we implement a better solution
-        nbdime.log.warning("Don't know how to resolve outputs yet.")
-        # assert key == "source"
-        # source = resolved_base[key]
-        # begin, end, inlined = make_inline_source_value(source, le, re)
-        # dec.custom_diff = [op_patch("source", diff=[
-        #     op_addrange(begin, inlined),
-        #     op_removerange(begin, end-begin)
-        #     ])]
-        # dec.action = "custom"
+        nbdime.log.warning("Don't know how to resolve source inline yet.")
+        assert key == "source"
+        source = resolved_base[key]
+        begin, end, inlined = make_inline_source_value(source, le, re)
+        dec.custom_diff = [op_patch("source", diff=[
+            op_addrange(begin, inlined),
+            op_removerange(begin, end-begin)
+            ])]
+        dec.action = "custom"
+        dec.conflict = True
     elif strategy == "inline-attachments":
         # FIXME: Leaving this conflict unresolved until we implement a better solution
         nbdime.log.warning("Don't know how to resolve attachments yet.")
