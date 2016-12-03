@@ -11,6 +11,7 @@ from six import string_types
 import nbformat
 
 from nbdime.diff_format import op_patch, op_addrange, op_removerange
+from .conftest import have_git
 from .fixtures import sources_to_notebook, matching_nb_triplets, outputs_to_notebook
 from nbdime.merging.autoresolve import (
     make_inline_source_value, autoresolve)
@@ -592,28 +593,37 @@ def test_merge_input_strategy_inline_source_conflict():
     base = [["base\n", "some other\n", "lines\n", "to align\n"]]
     remote = [["remote\n", "some other\n", "lines\n", "to align\n"]]
     # Ideal case:
-    expected_partial = [[
-       "<<<<<<< local\n",
-       "local\n",
-       #"||||||| base\n",
-       #"base\n",
-       "=======\n",
-       "remote\n",
-       ">>>>>>> remote\n",
-       "some other\n",
-       "lines\n",
-       "to align\n",
-       ]]
-    inlined = (
-        ["<<<<<<< local\n"] +
-        local[0][0:1] +
-        ["=======\n"] +
-        remote[0][0:1] +
-        [">>>>>>> remote\n",
-         "some other\n",
-         "lines\n",
-         "to align\n",
-         ])
+    if have_git:
+        expected_partial = [[
+            "<<<<<<< local\n",
+            "local\n",
+            "=======\n",
+            "remote\n",
+            ">>>>>>> remote\n",
+            "some other\n",
+            "lines\n",
+            "to align\n",
+            ]]
+    else:
+        # Fallback is not very smart yet:
+        expected_partial = [[
+            "<<<<<<< local\n",
+            "local\n",
+            "some other\n",
+            "lines\n",
+            "to align\n",
+            '||||||| base\n',
+            'base\n',
+            'some other\n',
+            'lines\n',
+            'to align\n',
+            "=======\n",
+            "remote\n",
+            "some other\n",
+            "lines\n",
+            "to align\n",
+            ">>>>>>> remote",
+            ]]
     expected_conflicts = [{
         "common_path": ("cells", 0, "source"),
         "local_diff": [
@@ -625,7 +635,7 @@ def test_merge_input_strategy_inline_source_conflict():
             op_removerange(0, 1)
             ],
         "custom_diff": [
-            op_addrange(0, inlined),
+            op_addrange(0, expected_partial[0]),
             op_removerange(0, len(base[0]))
             ],
         }]
