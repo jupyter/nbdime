@@ -605,31 +605,28 @@ def test_merge_input_strategy_inline_source_conflict():
        "to align\n",
        ]]
     inlined = (
-        ["<<<<<<< local\n"]
-        + local[0][0:1]
-        + ["=======\n"]
-        + remote[0][0:1]
-        + [">>>>>>> remote\n"]
-        )
+        ["<<<<<<< local\n"] +
+        local[0][0:1] +
+        ["=======\n"] +
+        remote[0][0:1] +
+        [">>>>>>> remote\n",
+         "some other\n",
+         "lines\n",
+         "to align\n",
+         ])
     expected_conflicts = [{
         "common_path": ("cells", 0, "source"),
         "local_diff": [
-            #op_patch('source', [
-                op_addrange(0, local[0][0:1]),
-                op_removerange(0, 1)
-            #    ])
+            op_addrange(0, local[0][0:1]),
+            op_removerange(0, 1)
             ],
         "remote_diff": [
-            #op_patch('source', [
-                op_addrange(0, remote[0][0:1]),
-                op_removerange(0, 1)
-            #    ])
+            op_addrange(0, remote[0][0:1]),
+            op_removerange(0, 1)
             ],
         "custom_diff": [
-            #op_patch('source', [
-                op_addrange(0, inlined),
-                op_removerange(0, 1)
-            #    ])
+            op_addrange(0, inlined),
+            op_removerange(0, len(base[0]))
             ],
         }]
     merge_args = copy.deepcopy(args)
