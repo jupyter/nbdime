@@ -241,8 +241,10 @@ extras_require = setuptools_args['extras_require'] = {
     'test': [
         'pytest',
         'pytest-cov',
-        'mock',
+        'pytest-timeout',
         'jsonschema',
+        'mock',
+        'requests',
     ],
     'docs': [
         'sphinx',

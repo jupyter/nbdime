@@ -126,6 +126,27 @@ def is_in_repo(pkg_path):
     return False
 
 
+def locate_gitattributes(global_=False):
+    """Locate the .gitattributes file
+    
+    returns None if not in a git repo and global=False
+    """
+    if global_:
+        try:
+            bpath = check_output(['git', 'config', '--global', 'core.attributesfile'])
+            gitattributes = os.path.expanduser(bpath.decode('utf8', 'replace').strip())
+        except CalledProcessError:
+            gitattributes = os.path.expanduser('~/.gitattributes')
+    else:
+        # find .gitattributes in current dir
+        path = os.path.abspath('.')
+        if not os.path.exists(os.path.join(path, '.git')):
+            return None
+        gitattributes = os.path.join(path, '.gitattributes')
+    return gitattributes
+
+
+
 def is_prefix_array(parent, child):
     if parent == child:
         return True

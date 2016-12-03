@@ -22,20 +22,21 @@ _logger = logging.getLogger(__name__)
 # TODO: Tool server is passed a (mandatory?) single-use access token, which is
 #       used to authenticate the browser session.
 
-def build_arg_parser():
+def build_arg_parser(parser=None):
     """
     Creates an argument parser for the diff tool, that also lets the
     user specify a port and displays a help message.
     """
     description = 'difftool for nbdime.'
-    parser = ArgumentParser(
-        description=description,
-        add_help=True
-        )
+    if parser is None:
+        parser = ArgumentParser(
+            description=description,
+            add_help=True
+            )
     add_generic_args(parser)
     add_web_args(parser, 0)
     add_diff_args(parser)
-    add_filename_args(parser, ["base", "remote"])
+    add_filename_args(parser, ["local", "remote"])
     return parser
 
 
@@ -52,21 +53,29 @@ def browse(port, browsername):
         threading.Thread(target=launch_browser).start()
 
 
-def main(args=None):
-    if args is None:
-        args = sys.argv[1:]
-    arguments = build_arg_parser().parse_args(args)
-    nbdime.log.init_logging(level=arguments.log_level)
-    port = arguments.port
-    cwd = arguments.workdirectory
-    base = arguments.base
-    remote = arguments.remote
-    browsername = arguments.browser
+def main_parsed(opts):
+    """Main function called after parsing CLI options
+    
+    Called by both main here and gitdifftool
+    """
+    nbdime.log.init_logging(level=opts.log_level)
+    port = opts.port
+    cwd = opts.workdirectory
+    base = opts.local
+    remote = opts.remote
+    browsername = opts.browser
     return run_server(
         port=port, cwd=cwd,
         closable=True,
         difftool_args=dict(base=base, remote=remote),
         on_port=lambda port: browse(port, browsername))
+    
+def main(args=None):
+    if args is None:
+        args = sys.argv[1:]
+    opts = build_arg_parser().parse_args(args)
+    return main_parsed(opts)
+
 
 
 if __name__ == "__main__":

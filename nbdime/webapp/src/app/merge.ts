@@ -3,6 +3,8 @@
 'use strict';
 
 
+import * as alertify from 'alertify.js';
+
 import {
   nbformat
 } from 'jupyterlab/lib/notebook/notebook/nbformat';
@@ -48,8 +50,12 @@ import {
   getConfigOption, closeTool
 } from './common';
 
+import {
+  extractMergedNotebook
+} from './save';
 
-let mergeModel: NotebookMergeModel = null;
+
+let mergeWidget: NotebookMergeWidget | null = null;
 
 /**
  * Show the merge as represented by the base notebook and a
@@ -58,7 +64,7 @@ let mergeModel: NotebookMergeModel = null;
 function showMerge(data: {
     base: nbformat.INotebookContent,
     merge_decisions: IMergeDecision[]
-    }): NotebookMergeModel {
+    }): NotebookMergeWidget {
   const transformers = [
     new JavascriptRenderer(),
     new MarkdownRenderer(),
@@ -82,16 +88,19 @@ function showMerge(data: {
 
   let nbmModel = new NotebookMergeModel(data.base,
       data.merge_decisions);
-  let nbdWidget = new NotebookMergeWidget(nbmModel, rendermime);
+  let nbmWidget = new NotebookMergeWidget(nbmModel, rendermime);
 
   let root = document.getElementById('nbdime-root');
+  if (!root) {
+    throw new Error('Missing root element "nbidme-root"');
+  }
   root.innerHTML = '';
   let panel = new Panel();
   panel.id = 'main';
   Widget.attach(panel, root);
-  panel.addWidget(nbdWidget);
+  panel.addWidget(nbmWidget);
   window.onresize = () => { panel.update(); };
-  return nbmModel;
+  return nbmWidget;
 }
 
 /**
@@ -158,7 +167,7 @@ function onPopState(e: PopStateEvent) {
  * Callback for a successfull merge request
  */
 function onMergeRequestCompleted(data: any) {
-  mergeModel = showMerge(data);
+  mergeWidget = showMerge(data);
 }
 
 /**
@@ -167,8 +176,11 @@ function onMergeRequestCompleted(data: any) {
 function onMergeRequestFailed(response: string) {
   console.log('Merge request failed.');
   let root = document.getElementById('nbdime-root');
+  if (!root) {
+    throw new Error('Missing root element "nbidme-root"');
+  }
   root.innerHTML = '<pre>' + response + '</pre>';
-  mergeModel = null;
+  mergeWidget = null;
 }
 
 
@@ -178,12 +190,12 @@ function onMergeRequestFailed(response: string) {
  */
 export
 function saveMerged() {
-  if (!mergeModel) {
+  if (!mergeWidget) {
     return;
   }
-  let nb = mergeModel.serialize();
+  let nb = extractMergedNotebook(mergeWidget);
   let conflicts: IMergeDecision[] = [];
-  for (let md of mergeModel.conflicts) {
+  for (let md of mergeWidget.model.conflicts) {
     conflicts.push(md.serialize());
   }
   submitMerge(nb, conflicts);
@@ -205,15 +217,15 @@ function submitMerge(mergedNotebook: nbformat.INotebookContent,
  * Callback for a successful store of the submitted merged notebook
  */
 function onSubmissionCompleted() {
-  // TODO: Indicate success to user!
-  mergeModel.unsavedChanges = false;
+  alertify.success('Merged notebook saved successfully');
+  mergeWidget!.model.unsavedChanges = false;
 }
 
 /**
  * Callback for a failed store of the submitted merged notebook
  */
 function onSubmissionFailed(response: string) {
-  // TODO: Indicate failure + error to user!
+  alertify.error('Was not able to save the notebook! See console and/or server log for details.');
 }
 
 
@@ -221,18 +233,64 @@ function onSubmissionFailed(response: string) {
  *
  */
 export
-function closeMerge(ev: Event) {
-  let conflict = false;
-  for (let md of mergeModel.conflicts) {
-    conflict = md.conflict;
-    if (conflict) {
-      break;
+function closeMerge(ev: Event, unloading=false): string | void | null {
+  if (!mergeWidget) {
+    return closeTool(1);
+  }
+  let savable = getConfigOption('savable');
+  for (let md of mergeWidget.model.conflicts) {
+    if (md.conflict) {
+      if (mergeWidget.model.unsavedChanges && savable) {
+        let prompt = 'There are remaining conflicts, and you have unsaved changes. Do you want to close anyway?';
+        if (unloading) {
+          ev.returnValue = true;
+          return prompt;
+        }
+        alertify.confirm(prompt,
+          () => {
+            window.onbeforeunload = null!;
+            closeTool(1);
+          },
+          () => {
+            ev.preventDefault();
+          });
+        return null;
+      } else {
+        let prompt = 'There are remaining conflicts. Do you want to close anyway?';
+        if (unloading) {
+          ev.returnValue = true;
+          return prompt;
+        }
+        alertify.confirm(prompt,
+          () => {
+            window.onbeforeunload = null!;
+            closeTool(1);
+          },
+          () => {
+            ev.preventDefault();
+          });
+        return null;
+      }
     }
   }
-  if (mergeModel.unsavedChanges) {
-    // TODO: Ask user if he want to save
+  if (mergeWidget.model.unsavedChanges && savable) {
+    let prompt = 'There are unsaved changes. Do you want to close anyway?';
+    if (unloading) {
+      ev.returnValue = true;
+      return prompt;
+    }
+    alertify.confirm(prompt,
+      () => {
+        window.onbeforeunload = null!;
+        closeTool(0);
+      },
+      () => {
+        ev.preventDefault();
+      });
+    return null;
   }
-  closeTool(conflict ? 1 : 0);
+  closeTool(0);
+  return null;
 }
 
 

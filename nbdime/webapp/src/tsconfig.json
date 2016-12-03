@@ -11,6 +11,8 @@
     "sourceMap": true,
     "outDir": "../build",
     "noImplicitAny": false,
-    "noEmitOnError": true
+    "noEmitOnError": true,
+    "skipLibCheck": true,
+    "strictNullChecks": true
   }
 }

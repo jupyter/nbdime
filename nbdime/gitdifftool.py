@@ -17,6 +17,7 @@ import sys
 from subprocess import check_call, check_output, CalledProcessError
 
 import nbdime.log
+from .args import add_filename_args, add_generic_args
 from .webapp import nbdifftool
 
 
@@ -52,15 +53,15 @@ def disable(global_=False, *args):
                 pass
 
 
-def show_diff(before, after):
+def show_diff(before, after, opts):
     """Run the difftool
 
-    If we are diffing a notebook, show the diff via nbdiff.
+    If we are diffing a notebook, show the diff via nbdiff-web.
     Otherwise, call out to `git diff`.
     """
     # TODO: handle /dev/null (Windows equivalent?) for new or deleted files
     if before.endswith('.ipynb') or after.endswith('ipynb'):
-        return nbdifftool.main([before, after])
+        return nbdifftool.main_parsed(opts)
     else:
         # Never returns
         os.execvp('git', ['git', 'diff', before, after])
@@ -73,13 +74,13 @@ def main(args=None):
     parser = argparse.ArgumentParser('git-nbdifftool', description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
+    add_generic_args(parser)
     subparsers = parser.add_subparsers(dest='subcommand')
 
     diff_parser = subparsers.add_parser('diff',
         description="The actual entrypoint for the diff tool. Git will call this."
     )
-    from .args import add_filename_args
-    add_filename_args(diff_parser, ["local", "remote"])
+    nbdifftool.build_arg_parser(diff_parser)
 
     config = subparsers.add_parser('config',
         description="Configure git to use nbdime via `git difftool`")
@@ -101,7 +102,7 @@ def main(args=None):
     opts = parser.parse_args(args)
     nbdime.log.init_logging(level=opts.log_level)
     if opts.subcommand == 'diff':
-        return show_diff(opts.local, opts.remote)
+        return show_diff(opts.local, opts.remote, opts)
     elif opts.subcommand == 'config':
         opts.config_func(opts.global_, opts.set_default)
         return 0

@@ -9,7 +9,7 @@ import {
 
 import {
   stripSource
-} from '../testutil';
+} from '../../../src/diff/util';
 
 import {
   IMergeDecision, MergeDecision

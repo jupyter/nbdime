@@ -24,7 +24,7 @@ import sys
 from subprocess import check_call, check_output, CalledProcessError
 
 from . import nbdiffapp
-
+from .utils import locate_gitattributes
 
 def enable(global_=False):
     """Enable nbdime git diff driver"""
@@ -33,19 +33,10 @@ def enable(global_=False):
         cmd.append('--global')
 
     check_call(cmd + ['diff.jupyternotebook.command', 'git-nbdiffdriver diff'])
-    if global_:
-        try:
-            bpath = check_output(['git', 'config', '--global', 'core.attributesfile'])
-            gitattributes = os.path.expanduser(bpath.decode('utf8', 'replace').strip())
-        except CalledProcessError:
-            gitattributes = os.path.expanduser('~/.gitattributes')
-    else:
-        # find .gitattributes in current dir
-        path = os.path.abspath('.')
-        if not os.path.exists(os.path.join(path, '.git')):
-            print("No .git directory in %s, skipping git attributes" % path, file=sys.stderr)
-            return
-        gitattributes = os.path.join(path, '.gitattributes')
+    gitattributes = locate_gitattributes(global_)
+    if gitattributes is None:
+        print("No .git directory in %s, skipping git attributes" % path, file=sys.stderr)
+        return
 
     if os.path.exists(gitattributes):
         with io.open(gitattributes, encoding="utf8") as f:

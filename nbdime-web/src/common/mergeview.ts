@@ -42,8 +42,12 @@ import {
 } from '../chunking';
 
 import {
-  valueIn
-} from '../common/util';
+  valueIn, hasEntries
+} from './util';
+
+import {
+  NotifyUserError
+} from './exceptions';
 
 
 const PICKER_SYMBOL = '\u27ad';
@@ -77,7 +81,7 @@ type DiffClasses = {
 };
 
 
-class Editor extends CodeMirrorWidget {
+class EditorWidget extends CodeMirrorWidget {
   /**
    * A message handler invoked on an `'resize'` message.
    */
@@ -123,14 +127,23 @@ const mergeClassPrefix: DiffClasses = {chunk: 'CodeMirror-merge-m-chunk',
 /**
  * A wrapper view for showing StringDiffModels in a MergeView
  */
+export function createNbdimeMergeView(remote: IStringDiffModel): MergeView;
+export function createNbdimeMergeView(
+      remote: IStringDiffModel | null,
+      local: IStringDiffModel | null,
+      merged: IStringDiffModel,
+      readOnly?: boolean): MergeView;
 export
 function createNbdimeMergeView(
-      remote: IStringDiffModel, editorClasses: string[],
-      local?: IStringDiffModel, merged?: IStringDiffModel): MergeView {
+      remote: IStringDiffModel | null,
+      local?: IStringDiffModel | null,
+      merged?: IStringDiffModel,
+      readOnly?: boolean): MergeView {
   let opts: IMergeViewEditorConfiguration = {
     remote,
     local,
     merged,
+    readOnly,
     orig: null};
   opts.collapseIdentical = true;
   let mergeview = new MergeView(opts);
@@ -145,12 +158,13 @@ function createNbdimeMergeView(
     editors.push(mergeview.merge);
   }
 
-  if (remote.mimetype) {
+  let mimetype = (remote || merged!).mimetype;
+  if (mimetype) {
     // Set the editor mode to the MIME type.
     for (let e of editors) {
-      loadModeByMIME(e.ownEditor, remote.mimetype);
+      loadModeByMIME(e.ownEditor, mimetype);
     }
-    loadModeByMIME(mergeview.base.editor, remote.mimetype);
+    loadModeByMIME(mergeview.base.editor, mimetype);
   }
   return mergeview;
 }
@@ -171,7 +185,8 @@ class DiffView {
     this.classes = type === 'left' ?
       leftClasses : type === 'right' ? rightClasses : null;
     let ownValue = this.model.remote || '';
-    this.ownWidget = new Editor(copyObj({value: ownValue}, copyObj(options)));
+    this.ownWidget = new EditorWidget(copyObj(
+      {value: ownValue}, copyObj(options)));
     this.showDifferences = options.showDifferences !== false;
   }
 
@@ -203,7 +218,9 @@ class DiffView {
 
   syncModel() {
     if (this.modelInvalid()) {
+      let cursor = this.ownEditor.getDoc().getCursor();
       this.ownEditor.setValue(this.model.remote!);
+      this.ownEditor.getDoc().setCursor(cursor);
       this.lineChunks = this.model.getLineChunks();
       this.chunks = lineToNormalChunks(this.lineChunks);
     }
@@ -237,7 +254,7 @@ class DiffView {
     let self: DiffView = this;
     self.updating = false;
     self.updatingFast = false;
-    function update(mode?: string) {
+    function update(mode?: 'full') {
       self.updating = true;
       self.updatingFast = false;
       if (mode === 'full') {
@@ -260,6 +277,7 @@ class DiffView {
       }
 
       self.updateCallback(true);
+      checkSync(self.ownEditor)
       self.updating = false;
     }
     function setDealign(fast: boolean | CodeMirror.Editor) {
@@ -293,6 +311,13 @@ class DiffView {
       }
       // Update faster when a line was added/removed
       setDealign(change.text.length - 1 !== change.to.line - change.from.line);
+    }
+    function checkSync(cm: CodeMirror.Editor) {
+      if (self.model.remote !== cm.getValue()) {
+        throw new NotifyUserError(
+          'CRITICAL: Merge editor out of sync with model! ' +
+          'Double-check any saved merge output!');
+      }
     }
     this.baseEditor.on('change', change);
     this.ownEditor.on('change', change);
@@ -331,6 +356,9 @@ class DiffView {
         } else if (instance === this.baseEditor) {
           for (let s of ss) {
             s.decision.action = 'base';
+            if (hasEntries(s.decision.customDiff)) {
+              s.decision.customDiff = [];
+            }
           }
         }
       } else if (gutter === GUTTER_CONFLICT_CLASS) {
@@ -776,13 +804,13 @@ interface IMergeViewEditorConfiguration extends CodeMirror.EditorConfiguration {
    * Provides remote diff of document to be shown on the right of the base.
    * To create a diff view, provide only remote.
    */
-  remote: IStringDiffModel;
+  remote: IStringDiffModel | null;
 
   /**
    * Provides local diff of the document to be shown on the left of the base.
    * To create a diff view, omit local.
    */
-  local?: IStringDiffModel;
+  local?: IStringDiffModel | null;
 
   /**
    * Provides the partial merge input for a three-way merge.
@@ -824,6 +852,9 @@ class MergeView extends Panel {
     options.value = (main.base !== null ?
       main.base : main.remote);
     options.lineNumbers = options.lineNumbers !== false;
+    // Whether merge view should be readonly
+    let readOnly = options.readOnly;
+    // For all others:
     options.readOnly = true;
 
     /*
@@ -844,7 +875,7 @@ class MergeView extends Panel {
       options.gutters = [GUTTER_CONFLICT_CLASS, GUTTER_PICKER_CLASS];
     }
 
-    this.base = new Editor(copyObj(options));
+    this.base = new EditorWidget(copyObj(options));
     this.base.addClass('CodeMirror-merge-pane');
     this.base.addClass('CodeMirror-merge-pane-base');
 
@@ -874,7 +905,7 @@ class MergeView extends Panel {
       }
 
       let rightWidget: Widget;
-      if (remote.remote === null) {
+      if (!remote || remote.remote === null) {
         // Remote value was deleted
         right = this.right = null;
         rightWidget = new Widget({node: elt('div', 'Value missing', 'jp-mod-missing')});
@@ -893,7 +924,7 @@ class MergeView extends Panel {
       }));
 
       merge = this.merge = new DiffView(merged, 'merge', this.alignViews.bind(this),
-        copyObj({readOnly: false}, copyObj(dvOptions)));
+        copyObj({readOnly}, copyObj(dvOptions)));
       this.diffViews.push(merge);
       let mergeWidget = merge.ownWidget;
       mergeWidget.addClass('CodeMirror-merge-pane');
@@ -901,7 +932,7 @@ class MergeView extends Panel {
       this.addWidget(mergeWidget);
 
       panes = 3 + (showBase ? 1 : 0);
-    } else {
+    } else if (remote) { // If in place for type guard
       this.addWidget(this.base);
       if (remote.unchanged || remote.added || remote.deleted) {
         if (remote.unchanged) {
@@ -1022,6 +1053,13 @@ class MergeView extends Panel {
     if (this.left) {
       this.left.setShowDifferences(val);
     }
+  }
+
+  getMergedValue(): string {
+    if (!this.merge) {
+      throw new Error('No merged value; missing "merged" view');
+    }
+    return this.merge.ownEditor.getValue();
   }
 
   left: DiffView | null;

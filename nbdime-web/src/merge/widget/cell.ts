@@ -15,7 +15,7 @@ import {
 } from 'phosphor/lib/ui/widget';
 
 import {
-  Panel
+  Panel, PanelLayout
 } from 'phosphor/lib/ui/panel';
 
 import {
@@ -27,11 +27,11 @@ import {
 } from '../../common/dragpanel';
 
 import {
-  createNbdimeMergeView
+  createNbdimeMergeView, MergeView
 } from '../../common/mergeview';
 
 import {
-  hasEntries
+  hasEntries, splitLines
 } from '../../common/util';
 
 import {
@@ -76,6 +76,9 @@ const SOURCE_ROW_CLASS = 'jp-Cellrow-source';
 const METADATA_ROW_CLASS = 'jp-Cellrow-metadata';
 const OUTPUTS_ROW_CLASS = 'jp-Cellrow-outputs';
 
+const OUTPUTS_CONFLICTED_CLASS = 'jp-conflicted-outputs';
+const MARK_OUTPUTS_RESOLVED_CLASS = 'jp-conflicted-outputs-button';
+
 
 
 /**
@@ -84,12 +87,14 @@ const OUTPUTS_ROW_CLASS = 'jp-Cellrow-outputs';
 export
 class CellMergeWidget extends Panel {
 
-  static createMergeView(local: IDiffModel, remote: IDiffModel, merged: IDiffModel,
-                         editorClasses: string[]): Widget | null {
+  static createMergeView(local: IDiffModel | null, remote: IDiffModel | null, merged: IDiffModel,
+                         editorClasses: string[], readOnly=false): Widget | null {
     let view: Widget | null = null;
     if (merged instanceof StringDiffModel) {
-      view = createNbdimeMergeView(remote as IStringDiffModel, editorClasses,
-        local as IStringDiffModel, merged);
+      view = createNbdimeMergeView(
+        remote as IStringDiffModel | null,
+        local as IStringDiffModel | null,
+        merged, readOnly);
     }
     return view;
   }
@@ -122,6 +127,27 @@ class CellMergeWidget extends Panel {
     this.mimetype = mimetype;
 
     this.init();
+  }
+
+  validateMerged(candidate: nbformat.ICell): nbformat.ICell {
+    if (this.sourceView && this.sourceView instanceof MergeView) {
+      let text = this.sourceView.getMergedValue();
+      let lines = splitLines(text);
+      if (candidate.source !== lines) {
+        candidate.source = lines;
+      }
+    }
+    if (this.metadataView && this.metadataView instanceof MergeView) {
+      let text = this.metadataView.getMergedValue();
+      if (JSON.stringify(candidate.metadata) !== text) {
+        // This will need to be validated server side,
+        // and should not be touched by client side
+        // (structure might differ from assumed form)
+        candidate.metadata = JSON.parse(text);
+      }
+    }
+    // Do not validate outputs, as they are not as exposed to potential errors
+    return candidate;
   }
 
   protected init() {
@@ -198,21 +224,23 @@ class CellMergeWidget extends Panel {
         this.addWidget(row);
       }
       let sourceView: Widget | null = null;
-      if (model.local.source.unchanged && model.remote.source.unchanged &&
+      if (model.local && model.local.source.unchanged &&
+          model.remote && model.remote.source.unchanged &&
           model.merged.source.unchanged) {
         // Use single unchanged view of source
         sourceView = CellDiffWidget.createView(
           model.merged.source, model.merged, CURR_CLASSES, this._rendermime);
       } else {
         sourceView = CellMergeWidget.createMergeView(
-          model.local.source,
-          model.remote.source,
+          model.local ? model.local.source : null,
+          model.remote ? model.remote.source : null,
           model.merged.source,
           CURR_CLASSES);
       }
       if (sourceView === null) {
         throw new Error('Was not able to create merge view for cell!');
       }
+      this.sourceView = sourceView;
       sourceView.addClass(SOURCE_ROW_CLASS);
       this.addWidget(sourceView);
 
@@ -235,13 +263,15 @@ class CellMergeWidget extends Panel {
 
       if (metadataChanged) {
         let metadataView = CellMergeWidget.createMergeView(
-            model.local.metadata,
-            model.remote.metadata,
+            model.local ? model.local.metadata : null,
+            model.remote ? model.remote.metadata : null,
             model.merged.metadata,
-            CURR_CLASSES);
+            CURR_CLASSES,
+            true);  // Do not allow manual edit of metadata
         if (metadataView === null) {
           throw new Error('Was not able to create merge view for cell metadata!');
         }
+        this.metadataView = metadataView;
         let container = new Panel();
         container.addWidget(metadataView);
 
@@ -253,17 +283,48 @@ class CellMergeWidget extends Panel {
       if (outputsChanged || hasEntries(model.merged.outputs)) {
         // We know here that we have code cell
         // -> all have outputs !== null
-        let baseOut = CellMergeWidget.getOutputs(model.local.outputs!, true);
-        let localOut = CellMergeWidget.getOutputs(model.local.outputs!);
-        let remoteOut = CellMergeWidget.getOutputs(model.remote.outputs!);
+        let baseOut = CellMergeWidget.getOutputs(
+          model.local ? model.local.outputs! : [], true);
+        let localOut = CellMergeWidget.getOutputs(
+          model.local ? model.local.outputs! : []);
+        let remoteOut = CellMergeWidget.getOutputs(
+          model.remote ? model.remote.outputs! : []);
         let mergedOut = CellMergeWidget.getOutputs(model.merged.outputs!);
         let view = new RenderableOutputsMergeView(
           mergedOut, MERGE_CLASSES, this._rendermime,
           baseOut, remoteOut, localOut);
+        this.outputViews = view;
 
-        let header = outputsChanged ? 'Outputs changed' : 'Outputs unchanged';
+        let header = outputsChanged ?
+          (model.outputsConflicted ?
+            'Outputs conflicted' :
+            'Outputs changed') :
+          'Outputs unchanged';
         let collapser = new CollapsiblePanel(view, header, !outputsChanged);
         collapser.addClass(OUTPUTS_ROW_CLASS);
+
+        if (model.outputsConflicted) {
+          collapser.addClass(OUTPUTS_CONFLICTED_CLASS);
+          let conflictClearBtn = new Widget();
+          conflictClearBtn.addClass(MARK_OUTPUTS_RESOLVED_CLASS);
+          let node = conflictClearBtn.node;
+          let btn = document.createElement('button');
+          btn.onclick = (ev: MouseEvent) => {
+            if (ev.button !== 0) {
+              return;  // Only main button clicks
+            }
+            model.clearOutputConflicts();
+            collapser.removeClass(OUTPUTS_CONFLICTED_CLASS);
+            collapser.headerTitle = 'Outputs changed';
+            ev.preventDefault();
+            ev.stopPropagation();
+            conflictClearBtn.parent = null!;
+          };
+          btn.innerText = 'Mark resolved';
+          node.appendChild(btn);
+          collapser.header.insertWidget(1, conflictClearBtn);
+        }
+
         this.addWidget(collapser);
       }
     }
@@ -342,6 +403,10 @@ class CellMergeWidget extends Panel {
 
   header: Panel;
   headerTitleWidget: Widget;
+
+  sourceView: Widget | null = null;
+  metadataView: Widget | null = null;
+  outputViews: RenderableOutputsMergeView | null = null;
 
   set headerTitle(value: string) {
     this.headerTitleWidget.node.innerText = value;

@@ -214,6 +214,24 @@
   margin-top: 5px;
 }
 
+.jp-Notebook-merge .jp-Cellrow-outputs.jp-conflicted-outputs .jp-CollapsiblePanel-header {
+  background-color: var(--jp-merge-both-color2)
+}
+
+.jp-Notebook-merge .jp-Cellrow-outputs.jp-conflicted-outputs .jp-CollapsiblePanel-header {
+  background-color: var(--jp-merge-both-color2);
+  border-top: var(--jp-merge-both-color1) solid 1pt;
+}
+
+.jp-Notebook-merge .jp-Cellrow-outputs.jp-conflicted-outputs {
+    border: var(--jp-merge-both-color1) solid 1pt;
+}
+
+.jp-conflicted-outputs-button {
+  display: inline;
+  margin-left: 20px;
+}
+
 .jp-Notebook-merge .jp-Diff-renderedOuput .jp-Merge-local {
   background-color: var(--jp-merge-local-color2);
 }
@@ -253,6 +271,15 @@
 
 .jp-Notebook-merge label[disabled] {
   color: var(--jp-ui-font-color3);
+}
+
+/* This fixes an alignment issue between gutter background
+ and gutter elements, but not sure *why* this is needed.
+ Might be fixing a symptom rather than the cause, but it
+ works for now.
+ */
+.jp-Notebook-merge .CodeMirror-gutter-wrapper {
+  margin-left: calc(-1 * var(--jp-code-padding));
 }
 
 

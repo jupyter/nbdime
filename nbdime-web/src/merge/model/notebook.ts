@@ -112,7 +112,10 @@ class NotebookMergeModel {
     // Serialzie cell list
     let cells: (nbformat.ICell | null)[] = [];
     for (let c of this.cells) {
-      cells.push(c.serialize());
+      let s = c.serialize();
+      if (s !== null) {
+        cells.push(s);
+      }
     }
     nb['cells'] = cells;
 
