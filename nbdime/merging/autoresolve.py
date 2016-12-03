@@ -573,7 +573,7 @@ def split_decisions_by_cell(decisions):
 
 def make_bundled_source_decisions(base, cell_idx, source_decisions):
     """Bundle a collection of decisions on inline-source
-    
+
     All decisions will be on the same source field.
     """
     if not any(dec.conflict for dec in source_decisions):
@@ -587,10 +587,10 @@ def make_bundled_source_decisions(base, cell_idx, source_decisions):
 
     begin, end, inlined = make_inline_source_value(source, local_diff, remote_diff)
     custom_diff = [
-        op_removerange(begin, end-begin),
         op_addrange(begin, inlined),
+        op_removerange(begin, end-begin),
     ]
-    
+
     return [MergeDecision(
         common_path=('cells', cell_idx, 'source'),
         action="custom",
@@ -599,6 +599,7 @@ def make_bundled_source_decisions(base, cell_idx, source_decisions):
         remote_diff=remote_diff,
         custom_diff=custom_diff,
     )]
+
 
 def autoresolve_generic(base, decisions, strategies):
     newdecisions = []
@@ -644,10 +645,10 @@ def autoresolve(base, decisions, strategies):
     Returns a list of new decisions, with or without further conflicts.
     """
     generic_decisions, cell_decisions = split_decisions_by_cell(decisions)
-    
+
     if strategies.get('/cells/*/source') == 'inline-source':
         cell_decisions = bundle_inline_source_decisions(base, cell_decisions)
-    
+
 
     generic_decisions = autoresolve_generic(base, generic_decisions, strategies)
 
