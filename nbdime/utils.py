@@ -84,13 +84,19 @@ def star_path(path):
     return join_path(path)
 
 
+def resolve_path(obj, path):
+    for p in path:
+        obj = obj[p]
+    return obj
+
+
 class Strategies(dict):
     """Simple dict wrapper for strategies to allow for wildcard matching of
     list indices + transients collection.
     """
     def __init__(self, *args, **kwargs):
-        self.transients = kwargs.get("transients", [])
-        self.fall_back = kwargs.get("fall_back", None)
+        self.transients = kwargs.pop("transients", [])
+        self.fall_back = kwargs.pop("fall_back", None)
         super(Strategies, self).__init__(*args, **kwargs)
 
     def get(self, k, d=None):
@@ -128,7 +134,7 @@ def is_in_repo(pkg_path):
 
 def locate_gitattributes(global_=False):
     """Locate the .gitattributes file
-    
+
     returns None if not in a git repo and global=False
     """
     if global_:
