@@ -398,15 +398,18 @@ def resolve_action(base, decision):
         return decision.local_diff + decision.remote_diff
     elif a == "remote_then_local":
         return decision.remote_diff + decision.local_diff
-    elif a == "clear":
+    elif a in ("clear", "remove"):
         key = None
         for d in decision.local_diff + decision.remote_diff:
             if key:
                 assert key == d.key
             else:
                 key = d.key
-        return [op_replace(key, make_cleared_value(base[key]))]
-    elif a == "clear_parent":
+        if a == 'clear':
+            return [op_replace(key, make_cleared_value(base[key]))]
+        else:
+            return [op_remove(key)]
+    elif a == "clear_all":
         if isinstance(base, dict):
             # Ideally we would do a op_replace on the parent, but this is not
             # easily combined with this method, so simply remove all keys
@@ -427,21 +430,21 @@ def apply_decisions(base, decisions):
     last_key = None
     resolved = None
     diffs = None
-    # clear_parent actions should override other decisions on same obj, so
+    # clear_all actions should override other decisions on same obj, so
     # we need to track it
-    clear_parent_flag = False
+    clear_all_flag = False
     for md in decisions:
         path, line = split_string_path(merged, md.common_path)
         # We patch all decisions with the same path in one op
         if path == prev_path:
             # Same path as previous, collect entry
-            if clear_parent_flag:
+            if clear_all_flag:
                 # Another entry will clear the parent, all other decisions
                 # should be dropped
                 pass
             else:
-                if md.action == "clear_parent":
-                    clear_parent_flag = True
+                if md.action == "clear_all":
+                    clear_all_flag = True
                     # Clear any exisiting decisions!
                     diffs = []
                 ad = resolve_action(resolved, md)
@@ -474,7 +477,7 @@ def apply_decisions(base, decisions):
             diffs = resolve_action(resolved, md)
             if line:
                 diffs = push_path(line, diffs)
-            clear_parent_flag = md.action == "clear_parent"
+            clear_all_flag = md.action == "clear_all"
     # Apply the last collection of diffs, if present (same as above)
     if prev_path is not None:
         if parent is None:

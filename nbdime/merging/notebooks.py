@@ -21,7 +21,9 @@ import nbdime.log
 
 # Strategies for handling conflicts
 generic_conflict_strategies = (
-    "clear",            # Discard value in case of conflict
+    "clear",            # Replace value with empty in case of conflict
+    "remove",           # Discard value in case of conflict
+    "clear-all",     # Discard all values on conflict
     "fail",             # Unexpected: crash and burn in case of conflict
     "inline-source",    # Valid for source only: produce new source with inline diff markers
     "inline-outputs",   # Valid for outputs only: produce new outputs with inline diff markers
@@ -46,7 +48,8 @@ cli_conflict_strategies = (
 cli_conflict_strategies_input = cli_conflict_strategies
 
 cli_conflict_strategies_output = cli_conflict_strategies + (
-    "clear",  # Clear conflicting outputs
+    "remove",     # Remove conflicting outputs
+    "clear-all",  # Clear all outputs
     )
 
 def autoresolve_notebook_conflicts(base, decisions, args):
@@ -93,7 +96,7 @@ def autoresolve_notebook_conflicts(base, decisions, args):
             "/cells/*/metadata": "record-conflict",
             "/cells/*/outputs/*/metadata": "record-conflict",
             "/cells/*/source": "inline-source",
-            "/cells/*/outputs": "clear", # "inline-outputs"
+            "/cells/*/outputs": "clear-all", # "inline-outputs"
             #"/cells/*/attachments": "inline-attachments",
         })
 

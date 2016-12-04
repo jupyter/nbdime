@@ -698,10 +698,22 @@ def test_merge_output_strategy_clear_conflict():
     local = [["local\nsome other\nlines\nto align\n", "output2", "output3"]]
     base = [["base\nsome other\nlines\nto align\n", "output2", "output3"]]
     remote = [["remote\nsome other\nlines\nto align\n", "output2", "output3"]]
+    expected_partial = [["output2", "output3"]]
+    expected_conflicts = []
+    merge_args = copy.deepcopy(args)
+    merge_args.output_strategy = "remove"
+    _check_outputs(base, local, remote, expected_partial, expected_conflicts, merge_args)
+
+
+def test_merge_output_strategy_clear_all_conflict():
+    # Conflicting cell inserts at same location as removing old cell
+    local = [["local\nsome other\nlines\nto align\n", "output2", "output3"]]
+    base = [["base\nsome other\nlines\nto align\n", "output2", "output3"]]
+    remote = [["remote\nsome other\nlines\nto align\n", "output2", "output3"]]
     expected_partial = [[]]
     expected_conflicts = []
     merge_args = copy.deepcopy(args)
-    merge_args.output_strategy = "clear"
+    merge_args.output_strategy = "clear-all"
     _check_outputs(base, local, remote, expected_partial, expected_conflicts, merge_args)
 
 

@@ -65,7 +65,7 @@ def test_autoresolve_dict_clear():
     assert apply_decisions(base2, decisions) == {"foo": [1, 2]}
     assert decisions[0].local_diff != []
     assert decisions[0].remote_diff != []
-    strategies = Strategies({"/foo": "clear-parent"})
+    strategies = Strategies({"/foo": "clear-all"})
     resolved = autoresolve(base2, decisions, strategies)
     assert apply_decisions(base2, resolved) == {"foo": []}
     assert not any([d.conflict for d in resolved])
@@ -176,7 +176,7 @@ def test_autoresolve_list_conflicting_insertions_simple():
     assert apply_decisions(b, resolved) == [1, 2, 3]
     assert not any(d.conflict for d in resolved)
 
-    strategies = Strategies({"/*": "clear-parent"})
+    strategies = Strategies({"/*": "clear-all"})
     resolved = autoresolve(b, decisions, strategies)
     assert apply_decisions(b, resolved) == []
     assert not any(d.conflict for d in resolved)
@@ -220,7 +220,7 @@ def test_autoresolve_list_conflicting_insertions_mixed():
     assert apply_decisions(b, resolved) == [1, 2, 3, 9, 11]
     assert not any(d.conflict for d in resolved)
 
-    strategies = Strategies({"/*": "clear-parent"})
+    strategies = Strategies({"/*": "clear-all"})
     resolved = autoresolve(b, decisions, strategies)
     assert apply_decisions(b, resolved) == []
     assert not any(d.conflict for d in resolved)
@@ -258,7 +258,7 @@ def test_autoresolve_list_conflicting_insertions_mixed():
     assert apply_decisions(b, resolved) == [1, 2, 3, 7, 9]
     assert not any(d.conflict for d in resolved)
 
-    strategies = Strategies({"/*": "clear-parent"})
+    strategies = Strategies({"/*": "clear-all"})
     resolved = autoresolve(b, decisions, strategies)
     assert apply_decisions(b, resolved) == []
     assert not any(d.conflict for d in resolved)

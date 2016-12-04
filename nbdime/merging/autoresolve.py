@@ -226,8 +226,11 @@ def strategy2action_dict(resolved_base, le, re, strategy, path, dec):
     if strategy == "clear":
         dec.action = "clear"
         dec.conflict = False
-    elif strategy == "clear-parent":
-        dec.action = "clear_parent"
+    elif strategy == "clear-all":
+        dec.action = "clear_all"
+        dec.conflict = False
+    elif strategy == "remove":
+        dec.action = "remove"
         dec.conflict = False
     elif strategy == "use-base":
         dec.action = "base"
@@ -336,8 +339,8 @@ def strategy2action_list(strategy, dec):
     elif strategy == "mergetool":
         # Leave this type of conflict for external tool to resolve
         pass
-    elif strategy == "clear-parent":
-        dec.action = "clear_parent"
+    elif strategy == "clear-all":
+        dec.action = "clear_all"
         dec.conflict = False
     elif strategy == "fail":
         raise RuntimeError("Not expecting a conflict at path {}.".format(
@@ -585,10 +588,20 @@ def make_inline_source_decision(source, prefix, local_diff, remote_diff):
     )]
 
 
-def make_clear_decision(reolved_base, prefix, local_diff, remote_diff):
+def make_remove_decision(reolved_base, prefix, local_diff, remote_diff):
     return [MergeDecision(
         common_path=prefix,
-        action="clear",
+        action="remove",
+        conflict=False,
+        local_diff=local_diff,
+        remote_diff=remote_diff,
+    )]
+
+
+def make_clear_all_decision(reolved_base, prefix, local_diff, remote_diff):
+    return [MergeDecision(
+        common_path=prefix,
+        action="clear_all",
         conflict=False,
         local_diff=local_diff,
         remote_diff=remote_diff,
@@ -606,8 +619,8 @@ def make_bundled_decisions(base, prefix, decisions, callback):
         return decisions
 
     resolved_base = resolve_path(base, prefix)
-    local_diff = build_diffs(resolve_path, decisions, 'local')
-    remote_diff = build_diffs(resolve_path, decisions, 'remote')
+    local_diff = build_diffs(resolved_base, decisions, 'local')
+    remote_diff = build_diffs(resolved_base, decisions, 'remote')
 
     return callback(resolved_base, prefix, local_diff, remote_diff)
 
@@ -662,9 +675,12 @@ def autoresolve(base, decisions, strategies):
     if strategies.get('/cells/*/source') == 'inline-source':
         cell_decisions = bundle_decisions(
             base, cell_decisions, "/cells/*/source", make_inline_source_decision)
-    if strategies.get('/cells/*/outputs') == 'clear':
+    if strategies.get('/cells/*/outputs') == 'remove':
         cell_decisions = bundle_decisions(
-            base, cell_decisions, "/cells/*/outputs", make_clear_decision)
+            base, cell_decisions, "/cells/*/outputs", make_remove_decision)
+    elif strategies.get('/cells/*/outputs') == 'clear-all':
+        cell_decisions = bundle_decisions(
+            base, cell_decisions, '/cells/*/outputs', make_clear_all_decision)
 
 
     generic_decisions = autoresolve_generic(base, generic_decisions, strategies)
