@@ -209,7 +209,7 @@ def _pop_path(diffs):
         elif key != d[0].key:
             return
         # Ensure the sub diffs of all ops are suitable as outer layer
-        # if d[0].diff.length > 1:
+        # if len(d[0].diff) > 1:
         #    return
         popped_diffs.append(d[0].diff)
     if key is None:
@@ -513,13 +513,13 @@ def _merge_tree(tree, sorted_paths):
         if is_prefix_array(nextPath, path):
             # We can simply promote existing diffs to next path
             if nextPath is not None:
-                trunk = push_path(path[nextPath.length:], trunk)
+                trunk = push_path(path[len(nextPath):], trunk)
                 root = nextPath
         else:
             # We have started on a new trunk
             # Collect branches on the new trunk, and merge the trunks
             newTrunk = _merge_tree(tree, sorted_paths[i + 1])
-            nextPath = tree[sorted_paths[sorted_paths.length - 1]]['path']
+            nextPath = tree[sorted_paths[len(sorted_paths) - 1]]['path']
             prefix = find_shared_prefix(path, nextPath)
             pl = len(prefix) if prefix is not None else 0
             trunk = push_path(path[pl:], trunk) + push_path(nextPath[pl:], newTrunk)
