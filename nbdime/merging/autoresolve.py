@@ -15,7 +15,7 @@ from nbformat import NotebookNode
 from ..diff_format import DiffOp, DiffEntry, op_replace, op_removerange, op_addrange, op_patch
 from ..patching import patch, patch_singleline_string
 from .chunks import make_merge_chunks
-from ..utils import join_path, star_path
+from ..utils import join_path, split_path, star_path, is_prefix_array, resolve_path
 from .decisions import (pop_patch_decision, push_patch_decision, MergeDecision,
                         pop_all_patch_decisions, _sort_key,
                         filter_decisions, build_diffs,
@@ -487,8 +487,6 @@ def autoresolve_decision_on_dict(dec, base, sub, strategies):
     if strategy is not None:
         decs = strategy2action_dict(sub, le, re, strategy, subpath, dec)
     elif le.op == DiffOp.PATCH and re.op == DiffOp.PATCH:
-        assert False
-        # FIXME: this is not quite right:
         # Recurse if we have no strategy for this key but diffs available for the subdocument
         newdec = pop_patch_decision(dec)
         assert newdec is not None
@@ -571,34 +569,47 @@ def split_decisions_by_cell(decisions):
     return generic_decisions, cell_decisions
 
 
-def make_bundled_source_decisions(base, cell_idx, source_decisions):
-    """Bundle a collection of decisions on inline-source
-
-    All decisions will be on the same source field.
-    """
-    if not any(dec.conflict for dec in source_decisions):
-        # no conflicts, nothing to do
-        [ dec.pop('_level') for dec in source_decisions ]
-        return source_decisions
-
-    source = base['cells'][cell_idx]['source']
-    local_diff = build_diffs(source, source_decisions, 'local')
-    remote_diff = build_diffs(source, source_decisions, 'remote')
-
+def make_inline_source_decision(source, prefix, local_diff, remote_diff):
     begin, end, inlined = make_inline_source_value(source, local_diff, remote_diff)
     custom_diff = [
         op_addrange(begin, inlined),
         op_removerange(begin, end-begin),
     ]
-
     return [MergeDecision(
-        common_path=('cells', cell_idx, 'source'),
+        common_path=prefix,
         action="custom",
         conflict=True,
         local_diff=local_diff,
         remote_diff=remote_diff,
         custom_diff=custom_diff,
     )]
+
+
+def make_clear_decision(reolved_base, prefix, local_diff, remote_diff):
+    return [MergeDecision(
+        common_path=prefix,
+        action="clear",
+        conflict=False,
+        local_diff=local_diff,
+        remote_diff=remote_diff,
+    )]
+
+
+def make_bundled_decisions(base, prefix, decisions, callback):
+    """Bundle a collection of decisions on a prefix
+
+    All decisions must have the same (unstarred) path prefix.
+    """
+    if not any(dec.conflict for dec in decisions):
+        # no conflicts, nothing to do
+        [dec.pop('_level') for dec in decisions]
+        return decisions
+
+    resolved_base = resolve_path(base, prefix)
+    local_diff = build_diffs(resolve_path, decisions, 'local')
+    remote_diff = build_diffs(resolve_path, decisions, 'remote')
+
+    return callback(resolved_base, prefix, local_diff, remote_diff)
 
 
 def autoresolve_generic(base, decisions, strategies):
@@ -615,28 +626,30 @@ def autoresolve_cells(base, decisions, strategies):
     return autoresolve_generic(base, decisions, strategies)
 
 
-def bundle_inline_source_decisions(base, decisions):
-    source_indices = filter_decisions('/cells/*/source', decisions)
-    source_index_set = set(source_indices)
+def bundle_decisions(base, decisions, pattern, callback):
+    indices = filter_decisions(pattern, decisions)
+    index_set = set(indices)
     # all the decisions I'm not bundling:
-    other_decisions = [ decisions[i] for i in range(len(decisions)) if i not in source_index_set ]
+    other_decisions = [decisions[i] for i in range(len(decisions)) if i not in index_set]
 
     # group decisions on any given source
-    source_decision_groups = {}
-    for i in source_indices:
+    decision_groups = {}
+    for i in indices:
         dec = decisions[i]
-        cell_idx = dec.common_path[1]
-        if cell_idx not in source_decision_groups:
-            source_decision_groups[cell_idx] = []
-        dec._level = 3
-        source_decision_groups[cell_idx].append(dec)
+        level = len(split_path(pattern))
+        prefix = dec.common_path[:level]
+        if prefix not in decision_groups:
+            decision_groups[prefix] = []
+        dec._level = level
+        decision_groups[prefix].append(dec)
 
-    # create bundles for each source
-    source_decisions = []
-    for cell_idx, dec_group in source_decision_groups.items():
-        source_decisions.extend(make_bundled_source_decisions(base, cell_idx, dec_group))
+    # create bundles for each unique prefix
+    affected_decisions = []
+    for prefix, dec_group in decision_groups.items():
+        affected_decisions.extend(make_bundled_decisions(
+            base, prefix, dec_group, callback))
 
-    return other_decisions + source_decisions
+    return other_decisions + affected_decisions
 
 
 def autoresolve(base, decisions, strategies):
@@ -647,7 +660,11 @@ def autoresolve(base, decisions, strategies):
     generic_decisions, cell_decisions = split_decisions_by_cell(decisions)
 
     if strategies.get('/cells/*/source') == 'inline-source':
-        cell_decisions = bundle_inline_source_decisions(base, cell_decisions)
+        cell_decisions = bundle_decisions(
+            base, cell_decisions, "/cells/*/source", make_inline_source_decision)
+    if strategies.get('/cells/*/outputs') == 'clear':
+        cell_decisions = bundle_decisions(
+            base, cell_decisions, "/cells/*/outputs", make_clear_decision)
 
 
     generic_decisions = autoresolve_generic(base, generic_decisions, strategies)
