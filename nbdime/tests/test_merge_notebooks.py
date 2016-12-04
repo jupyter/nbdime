@@ -645,7 +645,7 @@ def test_merge_input_strategy_inline_source_conflict():
     _check_sources(base, local, remote, expected_partial, expected_conflicts, merge_args)
 
 
-def test_merge_output_strategy_local_source_conflict():
+def test_merge_output_strategy_local_conflict():
     # Conflicting cell inserts at same location as removing old cell
     local = [["local\nsome other\nlines\nto align\n", "output2", "output3"]]
     base = [["base\nsome other\nlines\nto align\n", "output2", "output3"]]
@@ -657,7 +657,7 @@ def test_merge_output_strategy_local_source_conflict():
     _check_outputs(base, local, remote, expected_partial, expected_conflicts, merge_args)
 
 
-def test_merge_output_strategy_remote_source_conflict():
+def test_merge_output_strategy_remote_conflict():
     # Conflicting cell inserts at same location as removing old cell
     local = [["local\nsome other\nlines\nto align\n", "output2", "output3"]]
     base = [["base\nsome other\nlines\nto align\n", "output2", "output3"]]
@@ -669,7 +669,7 @@ def test_merge_output_strategy_remote_source_conflict():
     _check_outputs(base, local, remote, expected_partial, expected_conflicts, merge_args)
 
 
-def test_merge_output_strategy_base_source_conflict():
+def test_merge_output_strategy_base_conflict():
     # Conflicting cell inserts at same location as removing old cell
     local = [["local\nsome other\nlines\nto align\n", "output2", "output3"]]
     base = [["base\nsome other\nlines\nto align\n", "output2", "output3"]]
@@ -681,7 +681,7 @@ def test_merge_output_strategy_base_source_conflict():
     _check_outputs(base, local, remote, expected_partial, expected_conflicts, merge_args)
 
 
-def test_merge_output_strategy_union_source_conflict():
+def test_merge_output_strategy_union_conflict():
     # Conflicting cell inserts at same location as removing old cell
     local = [["local\nsome other\nlines\nto align\n", "output2", "output3"]]
     base = [["base\nsome other\nlines\nto align\n", "output2", "output3"]]
@@ -690,6 +690,18 @@ def test_merge_output_strategy_union_source_conflict():
     expected_conflicts = []
     merge_args = copy.deepcopy(args)
     merge_args.output_strategy = "union"
+    _check_outputs(base, local, remote, expected_partial, expected_conflicts, merge_args)
+
+
+def test_merge_output_strategy_clear_conflict():
+    # Conflicting cell inserts at same location as removing old cell
+    local = [["local\nsome other\nlines\nto align\n", "output2", "output3"]]
+    base = [["base\nsome other\nlines\nto align\n", "output2", "output3"]]
+    remote = [["remote\nsome other\nlines\nto align\n", "output2", "output3"]]
+    expected_partial = [[]]
+    expected_conflicts = []
+    merge_args = copy.deepcopy(args)
+    merge_args.output_strategy = "clear"
     _check_outputs(base, local, remote, expected_partial, expected_conflicts, merge_args)
 
 
