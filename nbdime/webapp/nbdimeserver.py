@@ -197,10 +197,8 @@ class ApiMergeStoreHandler(NbdimeApiHandler):
 
         body = json.loads(escape.to_unicode(self.request.body))
         merged = body["merged"]
-        # TODO: Remove when merged notebook generation is verified to work as intended:
-        from pprint import pprint
-        pprint(merged)
         merged_nb = nbformat.from_dict(merged)
+
         # Somehow store unsolved conflicts?
         # conflicts = body["conflicts"]
 
