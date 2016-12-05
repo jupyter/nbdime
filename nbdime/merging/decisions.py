@@ -510,12 +510,11 @@ def _merge_tree(tree, sorted_paths):
             nextPath = tree[sorted_paths[i + 1]]['path']
 
         # First, check if path is subpath of nextPath:
-        if nextPath is None:
-            pass
-        elif is_prefix_array(nextPath, path):
+        if is_prefix_array(nextPath, path):
             # We can simply promote existing diffs to next path
-            trunk = push_path(path[len(nextPath):], trunk)
-            root = nextPath
+            if nextPath is not None:
+                trunk = push_path(path[len(nextPath):], trunk)
+                root = nextPath
         else:
             # We have started on a new trunk
             # Collect branches on the new trunk, and merge the trunks
@@ -557,10 +556,13 @@ def build_diffs(base, decisions, which):
             if line:
                 match_diff = [d for d in tree[str_path]['diff'] if d.key == line[0]]
                 if match_diff:
-                    subdiffs.extend(match_diff)
+                    assert len(match_diff) == 1
+                    assert match_diff[0].diff
+                    match_diff[0].diff.extend(subdiffs)
                 else:
-                    subdiff, = push_path(line, subdiffs)
-                    tree[str_path]['diff'].append(subdiff)
+                    subdiffs = push_path(line, subdiffs)
+                    assert len(subdiffs) == 1
+                    tree[str_path]['diff'].extend(subdiffs)
             else:
                 tree[str_path]['diff'].extend(subdiffs)
         else:

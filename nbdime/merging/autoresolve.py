@@ -81,28 +81,45 @@ def output_marker(text):
     return nbformat.v4.new_output("stream", name="stderr", text=text)
 
 
-def make_inline_outputs_value(base, le, re,
-                              base_title="base", local_title="local", remote_title="remote"):
-    # Produce local/remote values; lists of outputs
-    values = []
-    notes = []
-    for e in (le, re):
-        if e == "deleted":
-            note = " <CELL DELETED>"
-            value = [output_marker("<CELL DELETED>")]
-        else:
-            # TODO: Add touched fields from diff e to note
-            note = ""
-            value = patch_item(base, e)
-            if value is Deleted:
-                value = []
-        values.append(value)
-        notes.append(note)
-    local, remote = values
-    local_note, remote_note = notes
+def make_inline_outputs_value(base, local_diff, remote_diff):
+    """Make a list of outputs with conflict markers from conflicting local and remote diffs"""
+    base_title = "base"
+    local_title = "local"
+    remote_title = "remote"
+
+    orig = base
+
+    local = patch(orig, local_diff)
+    remote = patch(orig, remote_diff)
+
+    # TODO: Use diffs to mark only the changed outputs
+
+    pre = []
+    post = []
+    if True:
+        # Gather outputs that are equal in
+        # local and remote from beginning and end
+        i = 0
+        n = min(len(local), len(remote))
+        while i < n and local[i] == remote[i]:
+            pre.append(local[i])
+            i += 1
+        # at this point either i == n or local[i] != remote[i]
+        j = len(local)
+        k = len(remote)
+        while j > i and k > i and local[j-1] == remote[k-1]:
+            j -= 1
+            k -= 1
+            post.append(local[j])
+        post.reverse()
+
+        local = local[i:j]
+        remote = remote[i:k]
+
+    local_note = ""
+    remote_note = ""
 
     # Define markers
-    include_base = True  # TODO: Make option
     marker_size = 7  # default in git
     sep0 = "<"*marker_size
     sep1 = "|"*marker_size
@@ -112,22 +129,32 @@ def make_inline_outputs_value(base, le, re,
     sep0 = "%s %s%s\n" % (sep0, local_title, local_note)
     sep1 = "%s %s\n" % (sep1, base_title)
     sep2 = "%s\n" % (sep2,)
-    sep3 = "%s %s%s" % (sep3, remote_title, remote_note)
+    sep3 = "%s %s%s\n" % (sep3, remote_title, remote_note)
 
-    # Note: This is very notebook specific while the rest of this file is more generic
     outputs = []
     outputs.append(output_marker(sep0))
     outputs.extend(local)
-    if include_base:
-        outputs.append(output_marker(sep1))
-        outputs.extend(base)
     outputs.append(output_marker(sep2))
     outputs.extend(remote)
     outputs.append(output_marker(sep3))
 
-    return outputs
+    # DEBUGGING:
+    if pre:
+        pre = [output_marker("BEGIN PRE")] + pre + [output_marker("END PRE")]
+    if post:
+        post = [output_marker("BEGIN POST")] + post + [output_marker("END POST")]
+
+    inlined = pre + outputs + post
+
+    # Remove all from base
+    begin = 0
+    end = len(base)
+
+    # Return range to replace with marked up lines
+    return begin, end, inlined
 
 
+# TODO: Currently unused, remove?
 def _analyse_edited_lines(baselines, patch_op):
     # Strip single patch op on "source"
     assert patch_op.op == DiffOp.PATCH
@@ -284,17 +311,12 @@ def strategy2action_dict(resolved_base, le, re, strategy, path, dec):
             pass
     elif strategy == "inline-source":
         # inline-source is handled at a higher level
-        nbdime.log.warning("inline-source should have been handled already.")
+        pass
     elif strategy == "inline-attachments":
         # FIXME: Leaving this conflict unresolved until we implement a better solution
         nbdime.log.warning("Don't know how to resolve attachments yet.")
     elif strategy == "inline-outputs":
-        # FIXME: Leaving this conflict unresolved until we implement a better solution
-        nbdime.log.warning("Don't know how to resolve outputs yet.")
-        #value = resolved_base[key]
-        #newvalue = make_inline_outputs_value(value, le, re)
-        #dec.custom_diff = [op_replace(key, newvalue)]
-        #dec.action = "custom"
+        pass
     elif strategy == "record-conflict":
         value = resolved_base[key]
         newvalue = add_conflicts_record(value, le, re)
@@ -588,7 +610,26 @@ def make_inline_source_decision(source, prefix, local_diff, remote_diff):
     )]
 
 
-def make_remove_decision(reolved_base, prefix, local_diff, remote_diff):
+def make_inline_outputs_decision(outputs, prefix, local_diff, remote_diff):
+    begin, end, inlined = make_inline_outputs_value(outputs, local_diff, remote_diff)
+    custom_diff = []
+    if inlined:
+        custom_diff.append(op_addrange(begin, inlined))
+    if end > begin:
+        custom_diff.append(op_removerange(begin, end-begin))
+    if not custom_diff:
+        return []
+    return [MergeDecision(
+        common_path=prefix,
+        action="custom",
+        conflict=True,
+        local_diff=local_diff,
+        remote_diff=remote_diff,
+        custom_diff=custom_diff,
+    )]
+
+
+def make_remove_decision(resolved_base, prefix, local_diff, remote_diff):
     return [MergeDecision(
         common_path=prefix,
         action="remove",
@@ -598,7 +639,7 @@ def make_remove_decision(reolved_base, prefix, local_diff, remote_diff):
     )]
 
 
-def make_clear_all_decision(reolved_base, prefix, local_diff, remote_diff):
+def make_clear_all_decision(resolved_base, prefix, local_diff, remote_diff):
     return [MergeDecision(
         common_path=prefix,
         action="clear_all",
@@ -681,7 +722,9 @@ def autoresolve(base, decisions, strategies):
     elif strategies.get('/cells/*/outputs') == 'clear-all':
         cell_decisions = bundle_decisions(
             base, cell_decisions, '/cells/*/outputs', make_clear_all_decision)
-
+    elif strategies.get('/cells/*/outputs') == 'inline-outputs':
+        cell_decisions = bundle_decisions(
+            base, cell_decisions, '/cells/*/outputs', make_inline_outputs_decision)
 
     generic_decisions = autoresolve_generic(base, generic_decisions, strategies)
 
