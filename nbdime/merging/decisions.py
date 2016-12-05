@@ -497,31 +497,29 @@ def _merge_tree(tree, sorted_paths):
     simplify the process (deeper paths should come before its parent paths).
     This is realized by the `sorted_paths` argument.
     """
-
     trunk = []
     root = None
     for i in range(len(sorted_paths)):
-        pathStr = sorted_paths[i]
-        path = tree[pathStr]['path']
-        nextPath = None
+        path = tree[sorted_paths[i]]['path']
+        subdiffs = tree[sorted_paths[i]]['diff']
+        trunk = trunk + subdiffs
+
         if i == len(sorted_paths) - 1:
             nextPath = root
         else:
-            nextPathStr = sorted_paths[i + 1]
-            nextPath = tree[nextPathStr]['path']
+            nextPath = tree[sorted_paths[i + 1]]['path']
 
-        subdiffs = tree[pathStr]['diff']
-        trunk = trunk + subdiffs
         # First, check if path is subpath of nextPath:
-        if is_prefix_array(nextPath, path):
+        if nextPath is None:
+            pass
+        elif is_prefix_array(nextPath, path):
             # We can simply promote existing diffs to next path
-            if nextPath is not None:
-                trunk = push_path(path[len(nextPath):], trunk)
-                root = nextPath
+            trunk = push_path(path[len(nextPath):], trunk)
+            root = nextPath
         else:
             # We have started on a new trunk
             # Collect branches on the new trunk, and merge the trunks
-            newTrunk = _merge_tree(tree, sorted_paths[i + 1])
+            newTrunk = _merge_tree(tree, sorted_paths[i + 1:])
             nextPath = tree[sorted_paths[len(sorted_paths) - 1]]['path']
             prefix = find_shared_prefix(path, nextPath)
             pl = len(prefix) if prefix is not None else 0
@@ -537,19 +535,19 @@ def build_diffs(base, decisions, which):
     """
     tree = {}
     sorted_paths = []
+    assert which in ('local', 'remote', 'merged')
     local = which == 'local'
     merged = which == 'merged'
-    if not local and not merged:
-        assert which == 'remote'
 
     for md in decisions:
-        subdiffs = None
         path, line = split_string_path(base, md.local_path())
         if merged:
-            sub = base[path]
-            subdiffs = resolve_action(sub, md)
+            subdiffs = resolve_action(base[path], md)
         else:
-            subdiffs = md.local_diff if local else md.remote_diff
+            if local:
+                subdiffs = md.local_diff
+            else:
+                subdiffs = md.remote_diff
             if subdiffs is None:
                 continue
 
@@ -561,12 +559,10 @@ def build_diffs(base, decisions, which):
                 if match_diff:
                     subdiffs.extend(match_diff)
                 else:
-                    subdiffs = push_path(line, subdiffs)
-                    tree[str_path]['diff'].append(subdiffs[0])
-
+                    subdiff, = push_path(line, subdiffs)
+                    tree[str_path]['diff'].append(subdiff)
             else:
                 tree[str_path]['diff'].extend(subdiffs)
-
         else:
             # Make new entry in tree
             if line:

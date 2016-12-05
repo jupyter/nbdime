@@ -175,8 +175,9 @@ def find_shared_prefix(a, b):
     if a is b:
         return a[:]
 
-    for i in range(min(len(a), len(b))):
-        if a[i] != b[i]:
-            break
+    n = min(len(a), len(b))
+    i = 0
+    while i < n and a[i] == b[i]:
+        i += 1
 
     return a[:i]
