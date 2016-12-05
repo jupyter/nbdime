@@ -18,7 +18,7 @@ cache:
     - nbdime/webapp/node_modules # NPM packages
     - nbdime-web/node_modules # NPM packages
 before_install:
-  - nvm install 4
+  - nvm install 6
   - |
     if [[ $GROUP == python ]]; then
       pip install codecov
