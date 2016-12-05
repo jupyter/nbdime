@@ -59,32 +59,12 @@ def compare_cell_source_and_outputs(x, y):
     return True
 
 
-def compare_output_type(x, y):
-    "Compare only type of output cells x,y."
-    if x["output_type"] != y["output_type"]:
-        return False
-    # NB! Ignoring metadata and execution count
-    return True
 
 
-def compare_output_data_keys(x, y):
-    "Compare type and data of output cells x,y exactly."
-    ot = x["output_type"]
-    if ot != y["output_type"]:
-        return False
+def compare_output_approximate(x, y):
+    "Compare type and data of output cells x,y approximately."
+    # NB! This is used as a basis by the exact compare_output.
 
-    if ot == "stream" or ot == "error":
-        pass
-    else:  # if ot == "display_data" or ot == "execute_result":
-        if set(x["data"].keys()) != set(y["data"].keys()):
-            return False
-
-    # NB! Ignoring metadata and execution count
-    return True
-
-
-def compare_output_data(x, y):
-    "Compare type and data of output cells x,y exactly."
     # Fast cutuff
     ot = x["output_type"]
     if ot != y["output_type"]:
@@ -96,25 +76,69 @@ def compare_output_data(x, y):
     if xkeys != ykeys:
         return False
 
-    # Handle known keys in this order (cheap cutoffs first)
-    known_keys = (
-        #"output_type",
-        "name", "text",
-        "ename", "evalue", "traceback",
-        "data", "metadata",
-        )
-    if any(x.get(key) != y.get(key) for key in known_keys):
+    # Deliberately skipping metadata and execution count here
+    handled = set(("output_type", "metadata", "execution_count"))
+
+    if ot == "stream":
+        if x["name"] != y["name"]:
+            return False
+        if not compare_strings_approximate(x["text"], y["text"]):
+            return False
+        handled.update(("name", "text"))
+
+    elif ot == "error":
+        if x["ename"] != y["ename"]:
+            return False
+        if x["evalue"] != y["evalue"]:
+            return False
+
+        # Compare tracebacks
+        xt = x["traceback"]
+        yt = y["traceback"]
+        if len(xt) != len(yt):
+            return False
+        if not all(compare_strings_approximate(xt[i], yt[i]) for i in range(len(xt))):
+            return False
+
+        handled.update(("ename", "evalue", "traceback"))
+
+    elif ot == "display_data" or ot == "execute_result":
+        # TODO: Compare contents of mime bundles xd, yd approximately
+        xd = x["data"]
+        yd = y["data"]
+        # This only checks that the same mime types are present
+        if set(xd.keys()) != set(yd.keys()):
+            return False
+
+        handled.update(("data",))
+
+    else:
+        # Unknown type
+        pass
+
+    # Play safe on unknown keys
+    for k in xkeys - handled:
+        if x[k] != y[k]:
+            return False
+
+    # NB! Ignoring metadata and execution count
+    return True
+
+
+def compare_output(x, y):
+    "Compare type and data of output cells x,y to higher accuracy."
+    # Fall back on approximate checks first
+    if not compare_output_approximate(x, y):
         return False
 
-    # Handle unknown keys for future compatibility
-    skip_keys = (
-        "output_type",  # Handled above
-        "execution_count",  # NB! Ignoring execution count
-    )
-    unknown_keys = xkeys
-    unknown_keys.difference_update(known_keys)
-    unknown_keys.difference_update(skip_keys)
-    if any(x.get(key) != y.get(key) for key in sorted(unknown_keys)):
+    # Add strict checks on fields ignored in approximate version
+    if x.get("metadata") != y.get("metadata"):
+        return False
+    if x.get("traceback") != y.get("traceback"):
+        return False
+
+    # FIXME: Allow some diff, e.g. on repr style text in text/plain
+    if x.get("data") != y.get("data"):
         return False
 
     return True
@@ -229,8 +253,8 @@ notebook_predicates = defaultdict(lambda: [operator.__eq__], {
         ],
     # Predicates to compare output cells (within one cell) in order of low-to-high precedence
     "/cells/*/outputs": [
-        compare_output_data_keys,
-        compare_output_data,
+        compare_output_approximate,
+        compare_output,
         ]
     })
 
