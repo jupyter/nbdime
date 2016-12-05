@@ -139,10 +139,10 @@ def make_inline_outputs_value(base, local_diff, remote_diff):
     outputs.append(output_marker(sep3))
 
     # DEBUGGING:
-    if pre:
-        pre = [output_marker("BEGIN PRE")] + pre + [output_marker("END PRE")]
-    if post:
-        post = [output_marker("BEGIN POST")] + post + [output_marker("END POST")]
+    # if pre:
+    #     pre = [output_marker("BEGIN PRE")] + pre + [output_marker("END PRE")]
+    # if post:
+    #     post = [output_marker("BEGIN POST")] + post + [output_marker("END POST")]
 
     inlined = pre + outputs + post
 
