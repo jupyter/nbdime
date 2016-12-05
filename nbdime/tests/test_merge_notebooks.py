@@ -11,6 +11,7 @@ from six import string_types
 import nbformat
 
 from nbdime.diff_format import op_patch, op_addrange, op_removerange
+from .conftest import have_git
 from .fixtures import sources_to_notebook, matching_nb_triplets, outputs_to_notebook
 from nbdime.merging.autoresolve import (
     make_inline_source_value, autoresolve)
@@ -592,42 +593,51 @@ def test_merge_input_strategy_inline_source_conflict():
     base = [["base\n", "some other\n", "lines\n", "to align\n"]]
     remote = [["remote\n", "some other\n", "lines\n", "to align\n"]]
     # Ideal case:
-    expected_partial = [[
-       "<<<<<<< local\n",
-       "local\n",
-       #"||||||| base\n",
-       #"base\n",
-       "=======\n",
-       "remote\n",
-       ">>>>>>> remote\n",
-       "some other\n",
-       "lines\n",
-       "to align\n",
-       ]]
-    # Current case:
-    _expected_partial = [[
-        "<<<<<<< local\n",
-        "local\nsome other\nlines\nto align\n",
-        "||||||| base\n",
-        "base\nsome other\nlines\nto align\n",
-        "=======\n",
-        "remote\nsome other\nlines\nto align\n",
-        ">>>>>>> remote"]]
+    if have_git:
+        expected_partial = [[
+            "<<<<<<< local\n",
+            "local\n",
+            "=======\n",
+            "remote\n",
+            ">>>>>>> remote\n",
+            "some other\n",
+            "lines\n",
+            "to align\n",
+            ]]
+    else:
+        # Fallback is not very smart yet:
+        expected_partial = [[
+            "<<<<<<< local\n",
+            "local\n",
+            "some other\n",
+            "lines\n",
+            "to align\n",
+            '||||||| base\n',
+            'base\n',
+            'some other\n',
+            'lines\n',
+            'to align\n',
+            "=======\n",
+            "remote\n",
+            "some other\n",
+            "lines\n",
+            "to align\n",
+            ">>>>>>> remote",
+            ]]
     expected_conflicts = [{
-        "common_path": ("cells", 0),
+        "common_path": ("cells", 0, "source"),
         "local_diff": [
-            op_patch('source', [
-                op_addrange(
-                    0, local[0][0:1]),
-                op_removerange(0, 1)],
-            )],
+            op_addrange(0, local[0][0:1]),
+            op_removerange(0, 1)
+            ],
         "remote_diff": [
-            op_patch('source', [
-                op_addrange(
-                    0, remote[0][0:1]),
-                op_removerange(0, 1)],
-
-            )],
+            op_addrange(0, remote[0][0:1]),
+            op_removerange(0, 1)
+            ],
+        "custom_diff": [
+            op_addrange(0, expected_partial[0]),
+            op_removerange(0, len(base[0]))
+            ],
         }]
     merge_args = copy.deepcopy(args)
     merge_args.merge_strategy = "use-base"
@@ -635,7 +645,7 @@ def test_merge_input_strategy_inline_source_conflict():
     _check_sources(base, local, remote, expected_partial, expected_conflicts, merge_args)
 
 
-def test_merge_output_strategy_local_source_conflict():
+def test_merge_output_strategy_local_conflict():
     # Conflicting cell inserts at same location as removing old cell
     local = [["local\nsome other\nlines\nto align\n", "output2", "output3"]]
     base = [["base\nsome other\nlines\nto align\n", "output2", "output3"]]
@@ -647,7 +657,7 @@ def test_merge_output_strategy_local_source_conflict():
     _check_outputs(base, local, remote, expected_partial, expected_conflicts, merge_args)
 
 
-def test_merge_output_strategy_remote_source_conflict():
+def test_merge_output_strategy_remote_conflict():
     # Conflicting cell inserts at same location as removing old cell
     local = [["local\nsome other\nlines\nto align\n", "output2", "output3"]]
     base = [["base\nsome other\nlines\nto align\n", "output2", "output3"]]
@@ -659,7 +669,7 @@ def test_merge_output_strategy_remote_source_conflict():
     _check_outputs(base, local, remote, expected_partial, expected_conflicts, merge_args)
 
 
-def test_merge_output_strategy_base_source_conflict():
+def test_merge_output_strategy_base_conflict():
     # Conflicting cell inserts at same location as removing old cell
     local = [["local\nsome other\nlines\nto align\n", "output2", "output3"]]
     base = [["base\nsome other\nlines\nto align\n", "output2", "output3"]]
@@ -671,7 +681,7 @@ def test_merge_output_strategy_base_source_conflict():
     _check_outputs(base, local, remote, expected_partial, expected_conflicts, merge_args)
 
 
-def test_merge_output_strategy_union_source_conflict():
+def test_merge_output_strategy_union_conflict():
     # Conflicting cell inserts at same location as removing old cell
     local = [["local\nsome other\nlines\nto align\n", "output2", "output3"]]
     base = [["base\nsome other\nlines\nto align\n", "output2", "output3"]]
@@ -680,6 +690,30 @@ def test_merge_output_strategy_union_source_conflict():
     expected_conflicts = []
     merge_args = copy.deepcopy(args)
     merge_args.output_strategy = "union"
+    _check_outputs(base, local, remote, expected_partial, expected_conflicts, merge_args)
+
+
+def test_merge_output_strategy_clear_conflict():
+    # Conflicting cell inserts at same location as removing old cell
+    local = [["local\nsome other\nlines\nto align\n", "output2", "output3"]]
+    base = [["base\nsome other\nlines\nto align\n", "output2", "output3"]]
+    remote = [["remote\nsome other\nlines\nto align\n", "output2", "output3"]]
+    expected_partial = [["output2", "output3"]]
+    expected_conflicts = []
+    merge_args = copy.deepcopy(args)
+    merge_args.output_strategy = "remove"
+    _check_outputs(base, local, remote, expected_partial, expected_conflicts, merge_args)
+
+
+def test_merge_output_strategy_clear_all_conflict():
+    # Conflicting cell inserts at same location as removing old cell
+    local = [["local\nsome other\nlines\nto align\n", "output2", "output3"]]
+    base = [["base\nsome other\nlines\nto align\n", "output2", "output3"]]
+    remote = [["remote\nsome other\nlines\nto align\n", "output2", "output3"]]
+    expected_partial = [[]]
+    expected_conflicts = []
+    merge_args = copy.deepcopy(args)
+    merge_args.output_strategy = "clear-all"
     _check_outputs(base, local, remote, expected_partial, expected_conflicts, merge_args)
 
 

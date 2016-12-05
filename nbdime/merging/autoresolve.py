@@ -12,13 +12,17 @@ import logging
 import nbformat
 from nbformat import NotebookNode
 
-from ..diff_format import DiffOp, op_replace
-from ..patching import patch
+from ..diff_format import DiffOp, DiffEntry, op_replace, op_removerange, op_addrange, op_patch
+from ..patching import patch, patch_singleline_string
 from .chunks import make_merge_chunks
-from ..utils import join_path, star_path
+from ..utils import join_path, split_path, star_path, is_prefix_array, resolve_path
 from .decisions import (pop_patch_decision, push_patch_decision, MergeDecision,
-                        pop_all_patch_decisions, _sort_key)
+                        pop_all_patch_decisions, _sort_key,
+                        filter_decisions, build_diffs,
+                        )
 from ..prettyprint import merge_render
+
+import nbdime.log
 
 _logger = logging.getLogger(__name__)
 
@@ -73,38 +77,50 @@ def make_join_value(value, le, re):
     return newvalue
 
 
-def make_inline_outputs_value(value, le, re,
+def output_marker(text):
+    return nbformat.v4.new_output("stream", name="stderr", text=text)
+
+
+def make_inline_outputs_value(base, le, re,
                               base_title="base", local_title="local", remote_title="remote"):
-    # FIXME: Use this for inline outputs diff?
-    # Joining e.g. an outputs list means concatenating all items
-    lvalue = patch_item(value, le)
-    rvalue = patch_item(value, re)
+    # Produce local/remote values; lists of outputs
+    values = []
+    notes = []
+    for e in (le, re):
+        if e == "deleted":
+            note = " <CELL DELETED>"
+            value = [output_marker("<CELL DELETED>")]
+        else:
+            # TODO: Add touched fields from diff e to note
+            note = ""
+            value = patch_item(base, e)
+            if value is Deleted:
+                value = []
+        values.append(value)
+        notes.append(note)
+    local, remote = values
+    local_note, remote_note = notes
 
-    if lvalue is Deleted:
-        lvalue = []
-    if rvalue is Deleted:
-        rvalue = []
+    # Define markers
+    include_base = True  # TODO: Make option
+    marker_size = 7  # default in git
+    sep0 = "<"*marker_size
+    sep1 = "|"*marker_size
+    sep2 = "="*marker_size
+    sep3 = ">"*marker_size
 
-    base = value
-    local = lvalue
-    remote = rvalue
-
-    def output_marker(text):
-        return nbformat.v4.new_output("stream", name="stderr", text=text)
+    sep0 = "%s %s%s\n" % (sep0, local_title, local_note)
+    sep1 = "%s %s\n" % (sep1, base_title)
+    sep2 = "%s\n" % (sep2,)
+    sep3 = "%s %s%s" % (sep3, remote_title, remote_note)
 
     # Note: This is very notebook specific while the rest of this file is more generic
     outputs = []
-
-    n = 7
-    sep0 = "%s %s\n" % ("<"*n, local_title)
-    sep1 = "%s %s\n" % ("|"*n, base_title)
-    sep2 = "%s\n" % ("="*n,)
-    sep3 = "%s %s" % (">"*n, remote_title)
-
     outputs.append(output_marker(sep0))
     outputs.extend(local)
-    outputs.append(output_marker(sep1))
-    outputs.extend(base)
+    if include_base:
+        outputs.append(output_marker(sep1))
+        outputs.extend(base)
     outputs.append(output_marker(sep2))
     outputs.extend(remote)
     outputs.append(output_marker(sep3))
@@ -112,30 +128,72 @@ def make_inline_outputs_value(value, le, re,
     return outputs
 
 
-def make_inline_source_value(base, le, re):
-    if le.op == DiffOp.REPLACE:
-        local = le.value
-    elif le.op == DiffOp.PATCH:
-        local = patch(base, le.diff)
-    elif le.op == DiffOp.REMOVE:
-        local = []  # ""
-    else:
-        raise ValueError("Invalid item patch op {}".format(le.op))
+def _analyse_edited_lines(baselines, patch_op):
+    # Strip single patch op on "source"
+    assert patch_op.op == DiffOp.PATCH
+    assert patch_op.key == "source"
 
-    if re.op == DiffOp.REPLACE:
-        remote = re.value
-    elif re.op == DiffOp.PATCH:
-        remote = patch(base, re.diff)
-    elif re.op == DiffOp.REMOVE:
-        remote = []  # ""
-    else:
-        raise ValueError("Invalid item patch op {}".format(re.op))
+    diff = patch_op.diff
 
-    # FIXME: This discards diff information, and the built-in
-    #   renderer doesn't mark each conflicting chunk.
+    assert len(diff) in (1, 2)
+    if len(diff) == 2:
+        assert DiffOp.ADDRANGE in [e.op for e in diff]
 
-    strategy = None  # FIXME: "use-local" | "use-remote" | "union"
-    return merge_render(base, local, remote, strategy)
+    lines = []
+    addlines = []
+    #deleted_min = len(baselines)
+    #deleted_max = 0
+    deleted_min = min(e.key for e in diff)
+    assert all(e.key == deleted_min for e in diff)
+    deleted_max = deleted_min
+
+    for e in diff:
+        if e.op == DiffOp.ADDRANGE:
+            # Only add lines to base
+            assert not addlines
+            addlines = e.valuelist
+        elif e.op == DiffOp.REMOVERANGE:
+            # Only remove lines from base
+            deleted_min = e.key
+            deleted_max = e.key + e.length
+        elif e.op == DiffOp.REPLACE:
+            # Replace single line with given value
+            assert not lines
+            lines = [e.value]
+            deleted_min = e.key
+            deleted_max = e.key + 1
+        elif e.op == DiffOp.PATCH:
+            # Replace single line with patched value
+            assert not lines
+            lines = [patch_singleline_string(baselines[e.key], e.diff)]
+            deleted_min = e.key
+            deleted_max = e.key + 1
+        else:
+            raise ValueError("Invalid item patch op {}".format(e.op))
+
+    lines = addlines + lines
+    return lines, deleted_min, deleted_max
+
+
+def make_inline_source_value(base, local_diff, remote_diff):
+    """Make an inline source from conflicting local and remote diffs"""
+    orig = base
+    base = base.splitlines(True)
+
+    #base = source string
+    # replace = replace line e.key from base with e.value
+    # patch = apply e.diff to line e.key from base
+    # remove = remove lines e.key from base
+    local = patch(orig, local_diff)
+    remote = patch(orig, remote_diff)
+    begin = 0
+    end = len(base)
+
+    inlined = merge_render(base, local, remote)
+    inlined = inlined.splitlines(True)
+
+    # Return range to replace with marked up lines
+    return begin, end, inlined
 
 
 def is_diff_all_transients(diff, path, transients):
@@ -158,7 +216,7 @@ def strategy2action_dict(resolved_base, le, re, strategy, path, dec):
     assert le is None or re is None or le.key == re.key
     key = le.key if re is None else re.key
 
-    _logger.warning('autoresolving conflict at %s with %s' % (path, strategy))
+    nbdime.log.warning('autoresolving conflict at %s with %s' % (path, strategy))
 
     # Make a shallow copy of dec
     dec = copy.copy(dec)
@@ -168,8 +226,11 @@ def strategy2action_dict(resolved_base, le, re, strategy, path, dec):
     if strategy == "clear":
         dec.action = "clear"
         dec.conflict = False
-    elif strategy == "clear-parent":
-        dec.action = "clear_parent"
+    elif strategy == "clear-all":
+        dec.action = "clear_all"
+        dec.conflict = False
+    elif strategy == "remove":
+        dec.action = "remove"
         dec.conflict = False
     elif strategy == "use-base":
         dec.action = "base"
@@ -222,15 +283,18 @@ def strategy2action_dict(resolved_base, le, re, strategy, path, dec):
             # Leave this conflict unresolved
             pass
     elif strategy == "inline-source":
-        value = resolved_base[key]
-        newvalue = make_inline_source_value(value, le, re)
-        dec.custom_diff = [op_replace(key, newvalue)]
-        dec.action = "custom"
+        # inline-source is handled at a higher level
+        nbdime.log.warning("inline-source should have been handled already.")
+    elif strategy == "inline-attachments":
+        # FIXME: Leaving this conflict unresolved until we implement a better solution
+        nbdime.log.warning("Don't know how to resolve attachments yet.")
     elif strategy == "inline-outputs":
-        value = resolved_base[key]
-        newvalue = make_inline_outputs_value(value, le, re)
-        dec.custom_diff = [op_replace(key, newvalue)]
-        dec.action = "custom"
+        # FIXME: Leaving this conflict unresolved until we implement a better solution
+        nbdime.log.warning("Don't know how to resolve outputs yet.")
+        #value = resolved_base[key]
+        #newvalue = make_inline_outputs_value(value, le, re)
+        #dec.custom_diff = [op_replace(key, newvalue)]
+        #dec.action = "custom"
     elif strategy == "record-conflict":
         value = resolved_base[key]
         newvalue = add_conflicts_record(value, le, re)
@@ -275,8 +339,8 @@ def strategy2action_list(strategy, dec):
     elif strategy == "mergetool":
         # Leave this type of conflict for external tool to resolve
         pass
-    elif strategy == "clear-parent":
-        dec.action = "clear_parent"
+    elif strategy == "clear-all":
+        dec.action = "clear_all"
         dec.conflict = False
     elif strategy == "fail":
         raise RuntimeError("Not expecting a conflict at path {}.".format(
@@ -426,8 +490,6 @@ def autoresolve_decision_on_dict(dec, base, sub, strategies):
     if strategy is not None:
         decs = strategy2action_dict(sub, le, re, strategy, subpath, dec)
     elif le.op == DiffOp.PATCH and re.op == DiffOp.PATCH:
-        assert False
-        # FIXME: this is not quite right:
         # Recurse if we have no strategy for this key but diffs available for the subdocument
         newdec = pop_patch_decision(dec)
         assert newdec is not None
@@ -498,14 +560,109 @@ def autoresolve_decision(base, dec, strategies):
     return [pop_all_patch_decisions(d) for d in decs]
 
 
-def get_parent_strategies(path, strategies):
-    # Get all keys that are prefixes of the current path
-    parent_skeys = [p for p in strategies if path.startswith(p)]
-    # Sort strategy keys, shortest key first
-    parent_skeys = sorted(strategies, key=lambda x: (len(x), x))
-    # Extract strategies in parent-child order
-    parent_strategies = [strategies[k] for k in parent_skeys]
-    return parent_strategies
+def split_decisions_by_cell(decisions):
+    generic_decisions = []
+    cell_decisions = []
+    for dec in decisions:
+        if dec.common_path[:1] != ("cells",):
+            generic_decisions.append(dec)
+        else:
+            cell_decisions.append(dec)
+
+    return generic_decisions, cell_decisions
+
+
+def make_inline_source_decision(source, prefix, local_diff, remote_diff):
+    begin, end, inlined = make_inline_source_value(source, local_diff, remote_diff)
+    custom_diff = [
+        op_addrange(begin, inlined),
+        op_removerange(begin, end-begin),
+    ]
+    return [MergeDecision(
+        common_path=prefix,
+        action="custom",
+        conflict=True,
+        local_diff=local_diff,
+        remote_diff=remote_diff,
+        custom_diff=custom_diff,
+    )]
+
+
+def make_remove_decision(reolved_base, prefix, local_diff, remote_diff):
+    return [MergeDecision(
+        common_path=prefix,
+        action="remove",
+        conflict=False,
+        local_diff=local_diff,
+        remote_diff=remote_diff,
+    )]
+
+
+def make_clear_all_decision(reolved_base, prefix, local_diff, remote_diff):
+    return [MergeDecision(
+        common_path=prefix,
+        action="clear_all",
+        conflict=False,
+        local_diff=local_diff,
+        remote_diff=remote_diff,
+    )]
+
+
+def make_bundled_decisions(base, prefix, decisions, callback):
+    """Bundle a collection of decisions on a prefix
+
+    All decisions must have the same (unstarred) path prefix.
+    """
+    if not any(dec.conflict for dec in decisions):
+        # no conflicts, nothing to do
+        [dec.pop('_level') for dec in decisions]
+        return decisions
+
+    resolved_base = resolve_path(base, prefix)
+    local_diff = build_diffs(resolved_base, decisions, 'local')
+    remote_diff = build_diffs(resolved_base, decisions, 'remote')
+
+    return callback(resolved_base, prefix, local_diff, remote_diff)
+
+
+def autoresolve_generic(base, decisions, strategies):
+    newdecisions = []
+    for dec in decisions:
+        if dec.conflict:
+            newdecisions.extend(autoresolve_decision(base, dec, strategies))
+        else:
+            newdecisions.append(dec)
+    return newdecisions
+
+
+def autoresolve_cells(base, decisions, strategies):
+    return autoresolve_generic(base, decisions, strategies)
+
+
+def bundle_decisions(base, decisions, pattern, callback):
+    indices = filter_decisions(pattern, decisions)
+    index_set = set(indices)
+    # all the decisions I'm not bundling:
+    other_decisions = [decisions[i] for i in range(len(decisions)) if i not in index_set]
+
+    # group decisions on any given source
+    decision_groups = {}
+    for i in indices:
+        dec = decisions[i]
+        level = len(split_path(pattern))
+        prefix = dec.common_path[:level]
+        if prefix not in decision_groups:
+            decision_groups[prefix] = []
+        dec._level = level
+        decision_groups[prefix].append(dec)
+
+    # create bundles for each unique prefix
+    affected_decisions = []
+    for prefix, dec_group in decision_groups.items():
+        affected_decisions.extend(make_bundled_decisions(
+            base, prefix, dec_group, callback))
+
+    return other_decisions + affected_decisions
 
 
 def autoresolve(base, decisions, strategies):
@@ -513,22 +670,22 @@ def autoresolve(base, decisions, strategies):
 
     Returns a list of new decisions, with or without further conflicts.
     """
+    generic_decisions, cell_decisions = split_decisions_by_cell(decisions)
 
-    # Sort strategy keys, shortest first
-    #skeys = sorted(strategies, key=lambda x: (len(x), x))
+    if strategies.get('/cells/*/source') == 'inline-source':
+        cell_decisions = bundle_decisions(
+            base, cell_decisions, "/cells/*/source", make_inline_source_decision)
+    if strategies.get('/cells/*/outputs') == 'remove':
+        cell_decisions = bundle_decisions(
+            base, cell_decisions, "/cells/*/outputs", make_remove_decision)
+    elif strategies.get('/cells/*/outputs') == 'clear-all':
+        cell_decisions = bundle_decisions(
+            base, cell_decisions, '/cells/*/outputs', make_clear_all_decision)
 
-    # path2dec = {}
-    # for dec in decisions:
-    #     path = join_path(dec.common_path)
-    #     path = star_path(path)
-    #     st = strategies.get(path)
-    #     pstrat = get_parent_strategies(path, strategies)
-    #     #path2dec[path].append(dec)
 
-    newdecisions = []
-    for dec in decisions:
-        if dec.conflict:
-            newdecisions.extend(autoresolve_decision(base, dec, strategies))
-        else:
-            newdecisions.append(dec)
-    return sorted(newdecisions, key=_sort_key, reverse=True)
+    generic_decisions = autoresolve_generic(base, generic_decisions, strategies)
+
+    cell_decisions = autoresolve_cells(base, cell_decisions, strategies)
+
+    decisions = generic_decisions + cell_decisions
+    return sorted(decisions, key=_sort_key, reverse=True)

@@ -8,8 +8,25 @@ from __future__ import unicode_literals
 from six import string_types, text_type
 
 import re
-import six
 import os
+
+
+def as_text(text):
+    if isinstance(text, list):
+        text = "".join(text)
+    if isinstance(text, bytes):
+        text = text.decode("utf8")
+    return text
+
+
+def as_text_lines(text):
+    if isinstance(text, string_types):
+        text = text.splitlines(True)
+    if isinstance(text, tuple):
+        text = list(text)
+    assert isinstance(text, list)
+    assert all(isinstance(t, string_types) for t in text)
+    return text
 
 
 def strings_to_lists(obj):
@@ -67,13 +84,19 @@ def star_path(path):
     return join_path(path)
 
 
+def resolve_path(obj, path):
+    for p in path:
+        obj = obj[p]
+    return obj
+
+
 class Strategies(dict):
     """Simple dict wrapper for strategies to allow for wildcard matching of
     list indices + transients collection.
     """
     def __init__(self, *args, **kwargs):
-        self.transients = kwargs.get("transients", [])
-        self.fall_back = kwargs.get("fall_back", None)
+        self.transients = kwargs.pop("transients", [])
+        self.fall_back = kwargs.pop("fall_back", None)
         super(Strategies, self).__init__(*args, **kwargs)
 
     def get(self, k, d=None):
@@ -111,7 +134,7 @@ def is_in_repo(pkg_path):
 
 def locate_gitattributes(global_=False):
     """Locate the .gitattributes file
-    
+
     returns None if not in a git repo and global=False
     """
     if global_:
@@ -128,3 +151,32 @@ def locate_gitattributes(global_=False):
         gitattributes = os.path.join(path, '.gitattributes')
     return gitattributes
 
+
+
+def is_prefix_array(parent, child):
+    if parent == child:
+        return True
+    if not parent:
+        return True
+
+    if child is None or len(parent) > len(child):
+        return False
+
+    for i in range(len(parent)):
+        if parent[i] != child[i]:
+            return False
+    return True
+
+
+def find_shared_prefix(a, b):
+    if a is None or b is None:
+        return None
+
+    if a is b:
+        return a[:]
+
+    for i in range(min(len(a), len(b))):
+        if a[i] != b[i]:
+            break
+
+    return a[:i]

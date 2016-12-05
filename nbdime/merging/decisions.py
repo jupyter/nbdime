@@ -14,7 +14,9 @@ import nbformat
 from ..diff_format import (
     DiffOp, op_removerange, op_remove, op_patch, op_replace)
 from ..patching import patch
-from ..utils import r_is_int
+from ..utils import (
+    r_is_int, star_path, join_path, is_prefix_array, find_shared_prefix)
+
 
 class MergeDecision(dict):
     """For internal usage in nbdime library.
@@ -33,6 +35,10 @@ class MergeDecision(dict):
 
     def __setattr__(self, name, value):
         self[name] = value
+
+    def local_path(self):
+        level = self.get('_level', 0)
+        return (self.common_path or ())[level:]
 
 
 class MergeDecisionBuilder(object):
@@ -203,7 +209,7 @@ def _pop_path(diffs):
         elif key != d[0].key:
             return
         # Ensure the sub diffs of all ops are suitable as outer layer
-        # if d[0].diff.length > 1:
+        # if len(d[0].diff) > 1:
         #    return
         popped_diffs.append(d[0].diff)
     if key is None:
@@ -286,30 +292,30 @@ def push_patch_decision(decision, prefix):
 
 def _sort_key(k):
     """Sort key for common paths. Ensures the correct order for processing,
-without having to care about offsetting indices.
+    without having to care about offsetting indices.
 
-Heavily inspired by the natsort package:
+    Heavily inspired by the natsort package:
 
-Copyright (c) 2012-2016 Seth M. Morton
+    Copyright (c) 2012-2016 Seth M. Morton
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-of the Software, and to permit persons to whom the Software is furnished to do
-so, subject to the following conditions:
+    Permission is hereby granted, free of charge, to any person obtaining a copy of
+    this software and associated documentation files (the "Software"), to deal in
+    the Software without restriction, including without limitation the rights to
+    use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+    of the Software, and to permit persons to whom the Software is furnished to do
+    so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-"""
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+    """
     ret = []
     for s in k.common_path:
         if not isinstance(s, (int, text_type)):
@@ -357,6 +363,21 @@ def make_cleared_value(value):
         return None
 
 
+def filter_decisions(pattern, decisions, exact=False):
+    ret = []
+    cutoff = len(pattern)
+    for i, md in enumerate(decisions):
+        path = md.common_path[:]
+        pop = _pop_path((md.local_diff, md.remote_diff, md.get('custom_diff')))
+        if pop:
+            path.append(pop)
+        starred_path = star_path(path)
+        if (exact and starred_path == pattern or
+                starred_path[:cutoff] == pattern):
+            ret.append(i)
+    return ret
+
+
 # =============================================================================
 #
 # Code for applying decisions:
@@ -377,15 +398,18 @@ def resolve_action(base, decision):
         return decision.local_diff + decision.remote_diff
     elif a == "remote_then_local":
         return decision.remote_diff + decision.local_diff
-    elif a == "clear":
+    elif a in ("clear", "remove"):
         key = None
         for d in decision.local_diff + decision.remote_diff:
             if key:
                 assert key == d.key
             else:
                 key = d.key
-        return [op_replace(key, make_cleared_value(base[key]))]
-    elif a == "clear_parent":
+        if a == 'clear':
+            return [op_replace(key, make_cleared_value(base[key]))]
+        else:
+            return [op_remove(key)]
+    elif a == "clear_all":
         if isinstance(base, dict):
             # Ideally we would do a op_replace on the parent, but this is not
             # easily combined with this method, so simply remove all keys
@@ -406,21 +430,21 @@ def apply_decisions(base, decisions):
     last_key = None
     resolved = None
     diffs = None
-    # clear_parent actions should override other decisions on same obj, so
+    # clear_all actions should override other decisions on same obj, so
     # we need to track it
-    clear_parent_flag = False
+    clear_all_flag = False
     for md in decisions:
         path, line = split_string_path(merged, md.common_path)
         # We patch all decisions with the same path in one op
         if path == prev_path:
             # Same path as previous, collect entry
-            if clear_parent_flag:
+            if clear_all_flag:
                 # Another entry will clear the parent, all other decisions
                 # should be dropped
                 pass
             else:
-                if md.action == "clear_parent":
-                    clear_parent_flag = True
+                if md.action == "clear_all":
+                    clear_all_flag = True
                     # Clear any exisiting decisions!
                     diffs = []
                 ad = resolve_action(resolved, md)
@@ -453,7 +477,7 @@ def apply_decisions(base, decisions):
             diffs = resolve_action(resolved, md)
             if line:
                 diffs = push_path(line, diffs)
-            clear_parent_flag = md.action == "clear_parent"
+            clear_all_flag = md.action == "clear_all"
     # Apply the last collection of diffs, if present (same as above)
     if prev_path is not None:
         if parent is None:
@@ -463,3 +487,99 @@ def apply_decisions(base, decisions):
 
     merged = nbformat.from_dict(merged)
     return merged
+
+
+def _merge_tree(tree, sorted_paths):
+    """
+    Merge a tree of diffs at varying path levels to one diff at their shared root
+
+    Relies on the format specification about decision ordering to help
+    simplify the process (deeper paths should come before its parent paths).
+    This is realized by the `sorted_paths` argument.
+    """
+
+    trunk = []
+    root = None
+    for i in range(len(sorted_paths)):
+        pathStr = sorted_paths[i]
+        path = tree[pathStr]['path']
+        nextPath = None
+        if i == len(sorted_paths) - 1:
+            nextPath = root
+        else:
+            nextPathStr = sorted_paths[i + 1]
+            nextPath = tree[nextPathStr]['path']
+
+        subdiffs = tree[pathStr]['diff']
+        trunk = trunk + subdiffs
+        # First, check if path is subpath of nextPath:
+        if is_prefix_array(nextPath, path):
+            # We can simply promote existing diffs to next path
+            if nextPath is not None:
+                trunk = push_path(path[len(nextPath):], trunk)
+                root = nextPath
+        else:
+            # We have started on a new trunk
+            # Collect branches on the new trunk, and merge the trunks
+            newTrunk = _merge_tree(tree, sorted_paths[i + 1])
+            nextPath = tree[sorted_paths[len(sorted_paths) - 1]]['path']
+            prefix = find_shared_prefix(path, nextPath)
+            pl = len(prefix) if prefix is not None else 0
+            trunk = push_path(path[pl:], trunk) + push_path(nextPath[pl:], newTrunk)
+            break   # Recursion will exhaust sorted_paths
+    return trunk
+
+
+def build_diffs(base, decisions, which):
+    """
+    Builds a diff for direct application on base. The `which` argument either
+    selects the 'local', 'remote' or 'merged' diffs.
+    """
+    tree = {}
+    sorted_paths = []
+    local = which == 'local'
+    merged = which == 'merged'
+    if not local and not merged:
+        assert which == 'remote'
+
+    for md in decisions:
+        subdiffs = None
+        path, line = split_string_path(base, md.local_path())
+        if merged:
+            sub = base[path]
+            subdiffs = resolve_action(sub, md)
+        else:
+            subdiffs = md.local_diff if local else md.remote_diff
+            if subdiffs is None:
+                continue
+
+        str_path = join_path(path)
+        if str_path in tree:
+            # Existing tree entry, simply add diffs to it
+            if line:
+                match_diff = [d for d in tree[str_path]['diff'] if d.key == line[0]]
+                if match_diff:
+                    subdiffs.extend(match_diff)
+                else:
+                    subdiffs = push_path(line, subdiffs)
+                    tree[str_path]['diff'].append(subdiffs[0])
+
+            else:
+                tree[str_path]['diff'].extend(subdiffs)
+
+        else:
+            # Make new entry in tree
+            if line:
+                subdiffs = push_path(line, subdiffs)
+            tree[str_path] = {'diff': subdiffs, 'path': path}
+            sorted_paths.append(str_path)
+
+    if len(tree) == 0:
+        return None
+
+    if '/' not in tree:
+        tree['/'] = {'diff': [], 'path': []}
+        sorted_paths.append('/')
+
+    # Tree is constructed, now join all branches at diverging points (joints)
+    return _merge_tree(tree, sorted_paths)

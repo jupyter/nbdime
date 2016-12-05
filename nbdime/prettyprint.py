@@ -27,6 +27,7 @@ except ImportError:
 from .diff_format import NBDiffFormatError, DiffOp, op_patch
 from .patching import patch, patch_string
 from .utils import star_path, split_path, join_path
+from .utils import as_text, as_text_lines
 from .log import warning
 
 # TODO: Make this configurable
@@ -71,12 +72,9 @@ DIFF_ENTRY_END = '\n'
 
 
 def external_merge_render(cmd, b, l, r):
-    if isinstance(l, bytes):
-        l = l.decode("utf8")
-    if isinstance(b, bytes):
-        b = b.decode("utf8")
-    if isinstance(r, bytes):
-        r = r.decode("utf8")
+    b = as_text(b)
+    l = as_text(l)
+    r = as_text(r)
     td = tempfile.mkdtemp()
     try:
         with io.open(os.path.join(td, 'local'), 'w', encoding="utf8") as f:
@@ -96,10 +94,8 @@ def external_merge_render(cmd, b, l, r):
 
 
 def external_diff_render(cmd, a, b):
-    if isinstance(a, bytes):
-        a = a.decode("utf8")
-    if isinstance(b, bytes):
-        b = b.decode("utf8")
+    a = as_text(a)
+    b = as_text(b)
     td = tempfile.mkdtemp()
     try:
         with io.open(os.path.join(td, 'before'), 'w', encoding="utf8") as f:
@@ -118,15 +114,38 @@ def external_diff_render(cmd, a, b):
     return output
 
 
-# FIXME: Move to utils
-def as_text_lines(text):
-    if isinstance(text, string_types):
-        text = text.splitlines(True)
-    if isinstance(text, tuple):
-        text = list(text)
-    assert isinstance(text, list)
-    assert all(isinstance(t, string_types) for t in text)
-    return text
+def format_merge_render_lines(
+        base, local, remote,
+        base_title, local_title, remote_title,
+        marker_size, include_base):
+    sep0 = "<"*marker_size
+    sep1 = "|"*marker_size
+    sep2 = "="*marker_size
+    sep3 = ">"*marker_size
+
+    lines = []
+    sep0 = "%s %s\n" % (sep0, local_title)
+    lines.append(sep0)
+    lines.extend(local)
+    if not lines[-1].endswith('\n'):
+        lines[-1] = lines[-1] + '\n'
+
+    if include_base:
+        sep1 = "%s %s\n" % (sep1, base_title)
+        lines.append(sep1)
+        lines.extend(base)
+        if not lines[-1].endswith('\n'):
+            lines[-1] = lines[-1] + '\n'
+
+    sep2 = "%s\n" % (sep2,)
+    lines.append(sep2)
+    lines.extend(remote)
+    if not lines[-1].endswith('\n'):
+        lines[-1] = lines[-1] + '\n'
+
+    sep3 = "%s %s" % (sep3, remote_title)
+    lines.append(sep3)
+    return lines
 
 
 def builtin_merge_render(base, local, remote, strategy=None):
@@ -135,41 +154,22 @@ def builtin_merge_render(base, local, remote, strategy=None):
     else:
         warning("Using builtin merge render but ignoring strategy %s" % (strategy,))
 
-    # FIXME: Use diff resolution and chunking to mark only parts that conflict
-
-    base_title = "base"
     local_title = "local"
+    base_title = "base"
     remote_title = "remote"
 
     local = as_text_lines(local)
     base = as_text_lines(base)
     remote = as_text_lines(remote)
 
-    n = 7  # git uses 7 by default
-
-    lines = []
-    sep0 = "%s %s\n" % ("<"*n, local_title)
-    lines.append(sep0)
-    lines.extend(local)
-    if not lines[-1].endswith('\n'):
-        lines[-1] = lines[-1] + '\n'
-
+    marker_size = 7  # git uses 7 by default
     include_base = True  # TODO: Make option
-    if include_base:
-        sep1 = "%s %s\n" % ("|"*n, base_title)
-        lines.append(sep1)
-        lines.extend(base)
-        if not lines[-1].endswith('\n'):
-            lines[-1] = lines[-1] + '\n'
 
-    sep2 = "%s\n" % ("="*n,)
-    lines.append(sep2)
-    lines.extend(remote)
-    if not lines[-1].endswith('\n'):
-        lines[-1] = lines[-1] + '\n'
-
-    sep3 = "%s %s" % (">"*n, remote_title)
-    lines.append(sep3)
+    lines = format_merge_render_lines(
+        base, local, remote,
+        base_title, local_title, remote_title,
+        marker_size, include_base,
+        )
 
     return "".join(lines)
 
