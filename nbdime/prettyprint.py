@@ -235,6 +235,11 @@ def merge_render_with_git(b, l, r, strategy=None):
     else:
         warning("Using git merge-file but ignoring strategy %s" % (strategy,))
     merged = external_merge_render(cmd.split(), b, l, r)
+
+    # Remove trailing newline if ">>>>>>> remote" is the last line
+    lines = merged.splitlines(True)
+    if "\n" in lines[-1] and (">"*7) in lines[-1]:
+        merged = merged.rstrip()
     return merged
 
 
