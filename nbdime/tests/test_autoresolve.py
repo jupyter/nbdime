@@ -438,8 +438,7 @@ print(x * y)
 =======
 q = 3.1
 print(x + q)
->>>>>>> remote
-"""
+>>>>>>> remote"""
 
     builtin_expected_course = """\
 <<<<<<< local
@@ -451,8 +450,7 @@ print(x * y / z)
 x = 1
 q = 3.1
 print(x + q)
->>>>>>> remote
-"""
+>>>>>>> remote"""
     # ||||||| base
     # x = 1
     # y = 3
@@ -467,8 +465,7 @@ print(x * y / z)
 =======
 q = 3.1
 print(x + q)
->>>>>>> remote
-"""
+>>>>>>> remote"""
 
     expected = builtin_expected_finegrained
 
