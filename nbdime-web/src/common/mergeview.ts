@@ -42,7 +42,7 @@ import {
 } from '../chunking';
 
 import {
-  valueIn, hasEntries
+  valueIn, hasEntries, splitLines
 } from './util';
 
 import {
@@ -218,8 +218,23 @@ class DiffView {
 
   syncModel() {
     if (this.modelInvalid()) {
-      let cursor = this.ownEditor.getDoc().getCursor();
-      this.ownEditor.setValue(this.model.remote!);
+      let edit = this.ownEditor;
+      let cursor = edit.getDoc().getCursor();
+      let newLines = splitLines(this.model.remote!);
+      let start = edit.getDoc().firstLine()
+      let last = edit.getDoc().lastLine();
+      let end = last;
+      for (let range of this.collapsedRanges) {
+        let baseLine = range.line;
+        end = getMatchingEditLine(baseLine, this.chunks);
+        if (end !== start) {
+          edit.getDoc().replaceRange(newLines.slice(start, end - 1).join(''), CodeMirror.Pos(start, 0), CodeMirror.Pos(end - 1, 0));
+        }
+        start = end + range.size;
+      }
+      if (start < last) {
+        edit.getDoc().replaceRange(newLines.slice(start, end).join(''), CodeMirror.Pos(start, 0), CodeMirror.Pos(end, 0));
+      }
       this.ownEditor.getDoc().setCursor(cursor);
       this.lineChunks = this.model.getLineChunks();
       this.chunks = lineToNormalChunks(this.lineChunks);
@@ -561,6 +576,7 @@ class DiffView {
   lockScroll: boolean;
   updating: boolean;
   updatingFast: boolean;
+  collapsedRanges: {line: number, size: number}[] = [];
 
   protected updateCallback: (force?: boolean) => void;
   protected copyButtons: HTMLElement;
@@ -972,6 +988,11 @@ class MergeView extends Panel {
           collapseIdenticalStretches(self, options.collapseIdentical);
       });
     }
+    for (let dv of [left, right, merge]) {
+      if (dv) {
+        dv.collapsedRanges = this.collapsedRanges;
+      }
+    }
     this.initialized = true;
     if (this.left || this.right || this.merge) {
       this.alignViews(true);
@@ -1070,6 +1091,7 @@ class MergeView extends Panel {
   diffViews: DiffView[];
   aligners: CodeMirror.LineWidget[];
   initialized: boolean = false;
+  collapsedRanges: {size: number, line: number}[] = [];
 }
 
 function collapseSingle(cm: CodeMirror.Editor, from: number, to: number): {mark: CodeMirror.TextMarker, clear: () => void} {
@@ -1142,7 +1164,7 @@ function collapseIdenticalStretches(mv: MergeView, margin?: boolean | number): v
   if (mv.merge) {
     unclearNearChunks(mv.merge, margin, off, clear);
   }
-
+  mv.collapsedRanges = [];
   for (let i = 0; i < clear.length; i++) {
     if (clear[i]) {
       let line = i + off;
@@ -1166,6 +1188,16 @@ function collapseIdenticalStretches(mv: MergeView, margin?: boolean | number): v
             cm: mv.merge.ownEditor});
         }
         let mark = collapseStretch(size, editors);
+        mv.collapsedRanges.push({line, size});
+        (mark as any).on('clear', () => {
+          for (let i=0; i < mv.collapsedRanges.length; ++i) {
+            let range = mv.collapsedRanges[i];
+            if (range.line === line) {
+              mv.collapsedRanges.splice(i, 1);
+              return;
+            }
+          }
+        })
         if (mv.options.onCollapse) {
           mv.options.onCollapse(mv, line, size, mark);
         }
