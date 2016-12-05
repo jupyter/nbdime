@@ -106,13 +106,9 @@ inline
     conflicts on metadata are stored in the appropriate metadata (actual
     values are kept as their base values).
 
-.. TODO:: Make a note about how it is stored (format, tag names, etc.)
-
-.. TODO:: make sure these are accurate, work:
-
     This gives you a valid notebook that you can open in your usual notebook editor
-    and resolve conflicts, just like you might for a regular Python script.
-
+    and resolve conflicts by hand,
+    just like you might for a regular source file in your text editor.
 use-base
     When a conflict is encountered, use the value from the base notebook.
 use-local
@@ -133,6 +129,14 @@ The ``--input-strategy`` and ``--output-strategy`` options lets you specify a
 strategy to use for conflicts on inputs and outputs, respecively. They accept
 the same values as the ``--merge-strategy`` option. If these are set, they will
 take precedence over ``--merge-strategy`` for inputs and/or outputs.
+``--output-strategy`` takes two additional options: ``remove`` and ``clear-all``:
+
+remove
+    When a conflict is encountered on a single output,
+    remove that output.
+clear-all
+    When a conflict is encountered on any output in a given code cell,
+    clear all outputs for that cell.
 
 To use nbmerge, pass it three notebooks:
 

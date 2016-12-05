@@ -86,7 +86,10 @@ With these, you can trigger the :command:`tools` with::
 
     git difftool --tool nbdime [ref [ref]]
 
-.. TODO:: screenshot of diff-web
+.. figure:: images/nbdiff-web.png
+   :alt: example of nbdime's content-aware diff
+
+   Figure: nbdime's content-aware diff
 
 and::
 
