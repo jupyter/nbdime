@@ -9,19 +9,26 @@ from __future__ import print_function
 import sys
 from subprocess import call
 
+from ._version import __version__
+
 try:
     from shutil import which
 except ImportError:
     from backports.shutil_which import which
 
 COMMANDS = ["show", "diff", "merge", "diff-web", "merge-web", "mergetool"]
-
+HELP_MESSAGE_VERBOSE = ("Usage: nbdime [OPTIONS]\n\n"
+                       "OPTIONS: -h, --version, COMMANDS{%s}\n\n"
+                       "Examples: nbdime --version\n"
+                       "          nbdime show -h\n"
+                       "          nbdime merge-web\n\n"
+                       "Documentation: https://nbdime.readthedocs.io" % ", ".join(COMMANDS))
 
 def main_dispatch(args=None):
     if args is None:
         args = sys.argv[1:]
     if len(args) < 1:
-        sys.exit("Command missing, expecting one of: \n%s" % ", ".join(COMMANDS))
+        sys.exit("Option missing.\n\n%s" % HELP_MESSAGE_VERBOSE)
 
     cmd = args[0]
     args = args[1:]
@@ -42,10 +49,13 @@ def main_dispatch(args=None):
         to_call = 'git mergetool --tool=nbdimeweb *.ipynb'.split()
         return call(to_call)
     else:
-        sys.exit(
-            "Unrecognized command '%s', expecting one of:\n%s." %
-            (cmd, ", ".join(COMMANDS)))
-
+        if cmd == '--version':
+            sys.exit(__version__)
+        if cmd == '-h' or cmd == '--help':
+            sys.exit(HELP_MESSAGE_VERBOSE)
+        else:
+            sys.exit("Unrecognized command '%s'\n\n%s." %
+                     (cmd, HELP_MESSAGE_VERBOSE))
     return main(args)
 
 
