@@ -154,54 +154,6 @@ def make_inline_outputs_value(base, local_diff, remote_diff):
     return begin, end, inlined
 
 
-# TODO: Currently unused, remove?
-def _analyse_edited_lines(baselines, patch_op):
-    # Strip single patch op on "source"
-    assert patch_op.op == DiffOp.PATCH
-    assert patch_op.key == "source"
-
-    diff = patch_op.diff
-
-    assert len(diff) in (1, 2)
-    if len(diff) == 2:
-        assert DiffOp.ADDRANGE in [e.op for e in diff]
-
-    lines = []
-    addlines = []
-    #deleted_min = len(baselines)
-    #deleted_max = 0
-    deleted_min = min(e.key for e in diff)
-    assert all(e.key == deleted_min for e in diff)
-    deleted_max = deleted_min
-
-    for e in diff:
-        if e.op == DiffOp.ADDRANGE:
-            # Only add lines to base
-            assert not addlines
-            addlines = e.valuelist
-        elif e.op == DiffOp.REMOVERANGE:
-            # Only remove lines from base
-            deleted_min = e.key
-            deleted_max = e.key + e.length
-        elif e.op == DiffOp.REPLACE:
-            # Replace single line with given value
-            assert not lines
-            lines = [e.value]
-            deleted_min = e.key
-            deleted_max = e.key + 1
-        elif e.op == DiffOp.PATCH:
-            # Replace single line with patched value
-            assert not lines
-            lines = [patch_singleline_string(baselines[e.key], e.diff)]
-            deleted_min = e.key
-            deleted_max = e.key + 1
-        else:
-            raise ValueError("Invalid item patch op {}".format(e.op))
-
-    lines = addlines + lines
-    return lines, deleted_min, deleted_max
-
-
 def make_inline_source_value(base, local_diff, remote_diff):
     """Make an inline source from conflicting local and remote diffs"""
     orig = base
