@@ -2,7 +2,10 @@
 diff format
 ===========
 
-.. TODO:: screenshot of merge-web
+.. figure:: images/nbdiff-web.png
+   :alt: example of nbdime's content-aware diff
+
+   Figure: nbdime's content-aware diff
 
 Basics
 ------
