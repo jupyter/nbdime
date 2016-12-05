@@ -26,24 +26,31 @@ Limit to specific fields by passing options.
 
 def main_show(args):
 
-    fn = args.notebook
-    if not os.path.exists(fn):
-        print("Missing file {}".format(fn))
-        return 1
+    for fn in args.notebook:
+        if not os.path.exists(fn):
+            print("Missing file {}".format(fn))
+            return 1
 
-    nb = nbformat.read(fn, as_version=4)
+    for fn in args.notebook:
+        nb = nbformat.read(fn, as_version=4)
 
-    # This printer is to keep the unit tests passing,
-    # some tests capture output with capsys which doesn't
-    # pick up on sys.stdout.write()
-    class Printer:
-        def write(self, text):
-            print(text, end="")
-    if not any((args.sources, args.outputs, args.attachments, args.metadata, args.details)):
-        ppargs = None
-    else:
-        ppargs = args
-    pretty_print_notebook(nb, ppargs, Printer())
+        # This printer is to keep the unit tests passing,
+        # some tests capture output with capsys which doesn't
+        # pick up on sys.stdout.write()
+        class Printer:
+            def write(self, text):
+                print(text, end="")
+        if not any((args.sources, args.outputs, args.attachments, args.metadata, args.details)):
+            ppargs = None
+        else:
+            ppargs = args
+
+        if len(args.notebook) > 1:
+            # 'more' prints filenames with colons, should be good enough for us as well
+            print(":"*14)
+            print(fn)
+            print(":"*14)
+        pretty_print_notebook(nb, ppargs, Printer())
 
     return 0
 
@@ -55,7 +62,7 @@ def _build_arg_parser():
         add_help=True,
         )
     add_generic_args(parser)
-    add_filename_args(parser, ["notebook"])
+    parser.add_argument("notebook", nargs="*", help="notebook filename(s)")
 
     # Things we can choose to show or not
     parser.add_argument(
