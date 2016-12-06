@@ -384,8 +384,8 @@ class DiffView {
       for (let dv of this.baseEditor.state.diffViews as DiffView[]) {
         if (dv.model instanceof DecisionStringDiffModel) {
           dv.model.invalidate();
-          dv.forceUpdate('full');
         }
+        dv.forceUpdate('full')
       }
     }
   }

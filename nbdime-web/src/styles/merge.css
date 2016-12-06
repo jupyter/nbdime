@@ -17,7 +17,7 @@
 
 .jp-Notebook-merge .CodeMirror-merge-pane-local,
 .jp-Notebook-merge .CodeMirror-merge-pane-remote,
-.jp-Notebook-merge .CodeMirror-merge-pane-base:not(.CodeMirror-merge-pane-unchanged) {
+.jp-Notebook-merge .CodeMirror-merge-pane-base:not(.CodeMirror-merge-pane-unchanged):not(.CodeMirror-merge-pane-deleted):not(.CodeMirror-merge-pane-added) {
   width: 33%;
 }
 

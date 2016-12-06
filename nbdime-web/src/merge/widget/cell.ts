@@ -146,7 +146,15 @@ class CellMergeWidget extends Panel {
         candidate.metadata = JSON.parse(text);
       }
     }
-    // Do not validate outputs, as they are not as exposed to potential errors
+    if (candidate.cell_type === 'code' && this.outputViews) {
+      let model = this.outputViews.merged;
+      let outputs: nbformat.IOutput[] = [];
+      for (let i=0; i < model.length; ++i) {
+        outputs.push(model.get(i) as nbformat.IOutput);
+      }
+      let c = candidate as nbformat.ICodeCell;
+      c.outputs = outputs;
+    }
     return candidate;
   }
 
