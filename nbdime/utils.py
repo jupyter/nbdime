@@ -6,7 +6,7 @@
 from __future__ import unicode_literals
 
 from six import string_types, text_type
-
+from subprocess import check_output, CalledProcessError
 import re
 import os
 
