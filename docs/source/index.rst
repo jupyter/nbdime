@@ -123,6 +123,7 @@ Contents
    vcs
    testing
    glossary
+   changelog
 
 .. toctree::
    :maxdepth: 2
