@@ -1,7 +1,7 @@
 nbdime -- diffing and merging of Jupyter Notebooks
 ==================================================
 
-Version: |version|
+Version: |release|
 
 **nbdime** provides tools for diffing and merging `Jupyter notebooks`_.
 
