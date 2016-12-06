@@ -82,88 +82,138 @@ def output_marker(text):
     return nbformat.v4.new_output("stream", name="stderr", text=text)
 
 
+def get_outputs_and_note(base, removes, patches):
+    if removes:
+        note = " <removed>"
+        suboutputs = []
+    elif patches:
+        e, = patches  # 0 or 1 item
+
+        # Collect which mime types are modified
+        mkeys = set()
+        keys = set()
+        for d in e.diff:
+            if d.key == "data":
+                assert d.op == DiffOp.PATCH
+                for f in d.diff:
+                    mkeys.add(f.key)
+            else:
+                keys.add(d.key)
+        data = base.get("data")
+        if data:
+            ukeys = set(data.keys()) - mkeys
+        else:
+            ukeys = ()
+
+        notes = []
+        if mkeys or keys:
+            notes.append("modified: {}".format(", ".join(sorted(mkeys))))
+        if ukeys:
+            notes.append("unchanged: {}".format(", ".join(sorted(ukeys))))
+        if notes:
+            note = " <" + "; ".join(notes) + ">"
+        else:
+            note = ""
+
+        suboutputs = [patch(base, e.diff)]
+    else:
+        note = " <unchanged>"
+        suboutputs = [base]
+    return suboutputs, note
+
+
 def make_inline_outputs_value(base, local_diff, remote_diff):
     """Make a list of outputs with conflict markers from conflicting local and remote diffs"""
+
+    # TODO: This can probably be shortened, lots of local/remote copy-pasta here
+
     base_title = "base"
     local_title = "local"
     remote_title = "remote"
 
-    local = patch(base, local_diff)
-    remote = patch(base, remote_diff)
+    #local = patch(base, local_diff)
+    #remote = patch(base, remote_diff)
 
     orig_base = base
-    orig_local = local
-    orig_remote = remote
-
-    # TODO: Use chunking of diffs to mark only chunks of changed outputs, and add note for each output instead
-    local_note = ""
-    remote_note = ""
-
-    pre = []
-    post = []
-    if True:
-        # Gather outputs that are equal in
-        # local and remote from beginning and end
-        i = 0
-        n = min(len(local), len(remote))
-        while i < n and local[i] == remote[i]:
-            pre.append(local[i])
-            i += 1
-        # at this point either i == n or local[i] != remote[i]
-        j = len(local)
-        k = len(remote)
-        while j > i and k > i and local[j-1] == remote[k-1]:
-            j -= 1
-            k -= 1
-            post.append(local[j])
-        post.reverse()
-
-        local = local[i:j]
-        remote = remote[i:k]
+    #orig_local = local
+    #orig_remote = remote
 
     # Define markers
     marker_size = 7  # default in git
-    sep0 = "<"*marker_size
-    sep1 = "|"*marker_size
-    sep2 = "="*marker_size
-    sep3 = ">"*marker_size
+    m0 = "<"*marker_size
+    m1 = "|"*marker_size
+    m2 = "="*marker_size
+    m3 = ">"*marker_size
 
-    sep0 = "%s %s%s\n" % (sep0, local_title, local_note)
-    sep1 = "%s %s\n" % (sep1, base_title)
-    sep2 = "%s\n" % (sep2,)
-    sep3 = "%s %s%s\n" % (sep3, remote_title, remote_note)
+    # Split up and combine diffs into chunks [(begin, end, localdiffs, remotediffs)]
+    chunks = make_merge_chunks(base, local_diff, remote_diff, single_item=True)
 
-    outputs = []
-    outputs.append(output_marker(sep0))
-    outputs.extend(local)
-    outputs.append(output_marker(sep2))
-    outputs.extend(remote)
-    outputs.append(output_marker(sep3))
-
-    # Remove all from base except matching pre and post entries
     begin = 0
-    while begin < len(pre) and pre[begin] == orig_base[begin]:
-        begin += 1
-    # now pre[i] == orig_base[i] for i < begin
-    pre = pre[begin:]
+    end = len(orig_base)
 
-    i = 0
-    while i < len(post) and post[-(i+1)] == orig_base[-(i+1)]:
-        i += 1
-    # now post[j] == orig_base[j] for the last i elements
-    end = len(orig_base) - i
-    post = post[:-(i+1)]
+    # Loop over chunks of base[j:k], grouping insertion at j into
+    # the chunk starting with j
+    outputs = []
+    for (j, k, d0, d1) in chunks:
+        assert j + 1 == k
 
-    # DEBUGGING:
-    if pre:
-        pre = [output_marker("BEGIN PRE")] + pre + [output_marker("END PRE")]
-    if post:
-        post = [output_marker("BEGIN POST")] + post + [output_marker("END POST")]
+        lpatches = [e for e in d0 if e.op == DiffOp.PATCH]
+        rpatches = [e for e in d1 if e.op == DiffOp.PATCH]
+        linserts = [e for e in d0 if e.op == DiffOp.ADDRANGE]
+        rinserts = [e for e in d1 if e.op == DiffOp.ADDRANGE]
+        lremoves = [e for e in d0 if e.op == DiffOp.REMOVERANGE]
+        rremoves = [e for e in d1 if e.op == DiffOp.REMOVERANGE]
+        assert len(lpatches) + len(linserts) + len(lremoves) == len(d0)
+        assert len(rpatches) + len(rinserts) + len(rremoves) == len(d1)
 
-    inlined = pre + outputs + post
+        # TODO: Remove execution_count from patches here?
 
-    # Return range to replace with marked up lines
-    return begin, end, inlined
+        # Insert new outputs with surrounding markers
+        if linserts or rinserts:
+            lnote = ""
+            loutputs = []
+            for e in linserts:  # 0 or 1 item
+                loutputs.extend(e.valuelist)
+            rnote = ""
+            routputs = []
+            for e in rinserts:  # 0 or 1 item
+                routputs.extend(e.valuelist)
+
+            outputs.append(output_marker("%s %s%s\n" % (m0, local_title, lnote)))
+            outputs.extend(loutputs)
+            outputs.append(output_marker("%s\n" % (m2,)))
+            outputs.extend(routputs)
+            outputs.append(output_marker("%s %s%s\n" % (m3, remote_title, rnote)))
+
+        if not (lremoves or rremoves or lpatches or rpatches):
+            # Insert base output if untouched
+            if begin == j:
+                begin += 1
+            else:
+                outputs.append(base[j])
+
+        elif lremoves and rremoves:
+            # Just don't add base
+            assert not (lpatches or rpatches)
+
+        else:
+            assert not (lremoves and lpatches)
+            assert not (rremoves and rpatches)
+            lnote = ""
+            rnote = ""
+
+            # Insert changed output with surrounding markers
+            loutputs, lnote = get_outputs_and_note(base[j], lremoves, lpatches)
+            routputs, rnote = get_outputs_and_note(base[j], rremoves, rpatches)
+
+            outputs.append(output_marker("%s %s%s\n" % (m0, local_title, lnote)))
+            outputs.extend(loutputs)
+            outputs.append(output_marker("%s\n" % (m2,)))
+            outputs.extend(routputs)
+            outputs.append(output_marker("%s %s%s\n" % (m3, remote_title, rnote)))
+
+    # Return range to replace with marked up outputs
+    return begin, end, outputs
 
 
 def make_inline_source_value(base, local_diff, remote_diff):
