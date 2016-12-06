@@ -8,6 +8,7 @@ from __future__ import print_function, unicode_literals
 from six import string_types
 import copy
 import logging
+from itertools import chain
 
 import nbformat
 from nbformat import NotebookNode
@@ -87,12 +88,16 @@ def make_inline_outputs_value(base, local_diff, remote_diff):
     local_title = "local"
     remote_title = "remote"
 
-    orig = base
+    local = patch(base, local_diff)
+    remote = patch(base, remote_diff)
 
-    local = patch(orig, local_diff)
-    remote = patch(orig, remote_diff)
+    orig_base = base
+    orig_local = local
+    orig_remote = remote
 
-    # TODO: Use diffs to mark only the changed outputs
+    # TODO: Use chunking of diffs to mark only chunks of changed outputs, and add note for each output instead
+    local_note = ""
+    remote_note = ""
 
     pre = []
     post = []
@@ -116,9 +121,6 @@ def make_inline_outputs_value(base, local_diff, remote_diff):
         local = local[i:j]
         remote = remote[i:k]
 
-    local_note = ""
-    remote_note = ""
-
     # Define markers
     marker_size = 7  # default in git
     sep0 = "<"*marker_size
@@ -138,17 +140,27 @@ def make_inline_outputs_value(base, local_diff, remote_diff):
     outputs.extend(remote)
     outputs.append(output_marker(sep3))
 
+    # Remove all from base except matching pre and post entries
+    begin = 0
+    while begin < len(pre) and pre[begin] == orig_base[begin]:
+        begin += 1
+    # now pre[i] == orig_base[i] for i < begin
+    pre = pre[begin:]
+
+    i = 0
+    while i < len(post) and post[-(i+1)] == orig_base[-(i+1)]:
+        i += 1
+    # now post[j] == orig_base[j] for the last i elements
+    end = len(orig_base) - i
+    post = post[:-(i+1)]
+
     # DEBUGGING:
-    # if pre:
-    #     pre = [output_marker("BEGIN PRE")] + pre + [output_marker("END PRE")]
-    # if post:
-    #     post = [output_marker("BEGIN POST")] + post + [output_marker("END POST")]
+    if pre:
+        pre = [output_marker("BEGIN PRE")] + pre + [output_marker("END PRE")]
+    if post:
+        post = [output_marker("BEGIN POST")] + post + [output_marker("END POST")]
 
     inlined = pre + outputs + post
-
-    # Remove all from base
-    begin = 0
-    end = len(base)
 
     # Return range to replace with marked up lines
     return begin, end, inlined

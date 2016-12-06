@@ -13,10 +13,11 @@ Up- and down-conversion is handled by nbformat.
 """
 
 import operator
+import re
 import copy
 from collections import defaultdict
 
-from ..diff_format import source_as_string, MappingDiffBuilder
+from ..diff_format import source_as_string, MappingDiffBuilder, DiffOp
 
 from .generic import (diff, diff_sequence_multilevel,
                       compare_strings_approximate)
@@ -55,10 +56,58 @@ def compare_cell_source_and_outputs(x, y):
     if x["cell_type"] == "code":
         if x["outputs"] != y["outputs"]:
             return False
-    # NB! Ignoring metadata and execution count
+    # NB! Ignoring metadata and execution count of cell
     return True
 
 
+def compare_mime_bundles_low_accuracy(x, y):
+    if x is None and y is None:
+        return True
+    if x is None or y is None:
+        return False
+
+    # This only checks that the same mime types are present
+    if set(x.keys()) != set(y.keys()):
+        return False
+
+    # TODO: Could do some size checking?
+    # TODO: Compare contents of mime bundles approximately?
+
+    return True
+
+
+re_repr = re.compile(r"^<[a-zA-Z0-9._]+ at 0x[a-zA-Z0-9]+>$")
+
+
+def compare_mime_bundles_high_accuracy(x, y):
+    # Get the simple and cheap stuff out of the way
+    if x is None and y is None:
+        return True
+    if x is None or y is None:
+        return False
+
+    # This only checks that the same mime types are present
+    if set(x.keys()) != set(y.keys()):
+        return False
+
+    # FIXME: Allow some diff, e.g. on repr style text in text/plain
+    dd = diff_mime_bundle(x, y)
+
+    for e in dd:
+        # Fail comparison for adds and removes
+        if e.op != DiffOp.PATCH:
+            return False
+
+        # Treat some types of difference specifically
+        if e.key == "text/plain":
+            if re_repr.match(x[e.key]) and re_repr.match(y[e.key]):
+                continue
+
+    # Strict comparison:
+    #if x != y:
+    #    return False
+
+    return True
 
 
 def compare_output_approximate(x, y):
@@ -103,13 +152,8 @@ def compare_output_approximate(x, y):
         handled.update(("ename", "evalue", "traceback"))
 
     elif ot == "display_data" or ot == "execute_result":
-        # TODO: Compare contents of mime bundles xd, yd approximately
-        xd = x["data"]
-        yd = y["data"]
-        # This only checks that the same mime types are present
-        if set(xd.keys()) != set(yd.keys()):
+        if not compare_mime_bundles_low_accuracy(x.get("data"), y.get("data")):
             return False
-
         handled.update(("data",))
 
     else:
@@ -137,11 +181,7 @@ def compare_output(x, y):
     if x.get("traceback") != y.get("traceback"):
         return False
 
-    # FIXME: Allow some diff, e.g. on repr style text in text/plain
-    if x.get("data") != y.get("data"):
-        return False
-
-    return True
+    return compare_mime_bundles_high_accuracy(x.get("data"), y.get("data"))
 
 
 def diff_single_outputs(a, b, path="/cells/*/outputs/*",
@@ -171,6 +211,20 @@ def diff_single_outputs(a, b, path="/cells/*/outputs/*",
         return diff(a, b)
 
 
+_text_mimes = ('text/', 'image/svg+xml', 'application/javascript', 'application/json')
+
+
+def add_mime_diff(key, avalue, bvalue, diffbuilder):
+    # TODO: Handle output diffing with plugins?
+    # I.e. image diff, svg diff, json diff, etc.
+    if key.lower().startswith(_text_mimes):
+        dd = diff(avalue, bvalue)
+        if dd:
+            diffbuilder.patch(key, dd)
+    elif avalue != bvalue:
+        diffbuilder.replace(key, bvalue)
+
+
 def diff_attachments(a, b, path="/cells/*/attachments",
                      predicates=None, differs=None):
     """Diff a pair of attachment collections"""
@@ -181,11 +235,13 @@ def diff_attachments(a, b, path="/cells/*/attachments",
     #  2: An attachment is renamed (key change)
     # Currently, #2 is handled as two ops (an add and a remove)
 
+    # keys here are 'filenames' of the attachments
     assert isinstance(a, dict) and isinstance(b, dict)
     akeys = set(a.keys())
     bkeys = set(b.keys())
 
     di = MappingDiffBuilder()
+
     # Sorting keys in loops to get a deterministic diff result
     for key in sorted(akeys - bkeys):
         di.remove(key)
@@ -195,29 +251,24 @@ def diff_attachments(a, b, path="/cells/*/attachments",
         avalue = a[key]
         bvalue = b[key]
 
-        if key.lower().startswith(_split_mimes):
-            dd = diff_mime_bundle(avalue, bvalue)
-            if dd:
-                di.patch(key, dd)
-        elif avalue != bvalue:
-            di.replace(key, bvalue)
+        dd = diff_mime_bundle(avalue, bvalue)
+        if dd:
+            di.patch(key, dd)
 
     for key in sorted(bkeys - akeys):
         di.add(key, b[key])
     return di.validated()
 
 
-
-_split_mimes = ('text/', 'image/svg+xml', 'application/javascript', 'application/json')
-
-
 def diff_mime_bundle(a, b, path=None,
                      predicates=None, differs=None):
+    # keys here are mime/types
     assert isinstance(a, dict) and isinstance(b, dict)
-    di = MappingDiffBuilder()
-
     akeys = set(a.keys())
     bkeys = set(b.keys())
+
+    di = MappingDiffBuilder()
+
     # Sorting keys in loops to get a deterministic diff result
     for key in sorted(akeys - bkeys):
         di.remove(key)
@@ -226,15 +277,7 @@ def diff_mime_bundle(a, b, path=None,
     for key in sorted(akeys & bkeys):
         avalue = a[key]
         bvalue = b[key]
-
-        # TODO: Handle output diffing with plugins?
-        # I.e. image diff, svg diff, json diff, etc.
-        if key.lower().startswith(_split_mimes):
-            dd = diff(avalue, bvalue)
-            if dd:
-                di.patch(key, dd)
-        elif avalue != bvalue:
-            di.replace(key, bvalue)
+        add_mime_diff(key, avalue, bvalue, di)
 
     for key in sorted(bkeys - akeys):
         di.add(key, b[key])
