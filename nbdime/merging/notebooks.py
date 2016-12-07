@@ -78,6 +78,11 @@ def autoresolve_notebook_conflicts(base, decisions, args):
     input_strategy = args.input_strategy if args else None
     output_strategy = args.output_strategy if args else None
 
+    if not input_strategy:
+        input_strategy = merge_strategy
+    if not output_strategy:
+        output_strategy = merge_strategy
+
     if merge_strategy == "mergetool":
         # Mergetool strategy will prevent autoresolve from
         # attempting to solve conflicts on these entries:
@@ -96,7 +101,7 @@ def autoresolve_notebook_conflicts(base, decisions, args):
             "/cells/*/metadata": "record-conflict",
             "/cells/*/outputs/*/metadata": "record-conflict",
             "/cells/*/source": "inline-source",
-            "/cells/*/outputs": "clear-all", # "inline-outputs"
+            "/cells/*/outputs": "inline-outputs"
             #"/cells/*/attachments": "inline-attachments",
         })
 
