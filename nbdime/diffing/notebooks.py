@@ -16,6 +16,8 @@ import operator
 import re
 import copy
 from collections import defaultdict
+from six import string_types
+from six.moves import zip
 
 from ..diff_format import source_as_string, MappingDiffBuilder, DiffOp
 
@@ -24,25 +26,98 @@ from .generic import (diff, diff_sequence_multilevel,
 
 __all__ = ["diff_notebooks"]
 
+# A regexp matching base64 encoded data
+_base64 = re.compile(r'^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$', re.MULTILINE | re.UNICODE)
 
-"""
-compare_text_approximate
-compare_text_strict
-compare_mimedata_approximate
-compare_mimedata_strict
-compare_mimebundle_approximate
-compare_mimebundle_strict
-compare_source_approximate
-compare_source_strict
-compare_output_approximate
-compare_output_strict
-compare_cell_approximate
-compare_cell_moderate
-compare_cell_strict
-"""
+# A regexp matching common python repr-style output like
+# <module.type at 0xmemoryaddress>
+re_repr = re.compile(r"<[a-zA-Z0-9._]+ at 0x[a-zA-Z0-9]+>")
+
+
+# List of mimes we can diff recursively
+_text_mimes = (
+    'text/',
+    'image/svg+xml',
+    'application/javascript',
+    'application/json',
+    )
+_split_mimes = (
+    'text/',
+    'image/svg+xml',
+    'application/javascript',
+    'application/json',
+    )
+
+
+# TODO: Maybe cleaner to make the split between strict/approximate
+#       an argument instead of separate functions.
+
+
+def compare_text_approximate(x, y):
+    if isinstance(x, list):
+        x = "".join(x)
+    if isinstance(y, list):
+        y = "".join(y)
+    return compare_strings_approximate(x, y)
+
+
+def compare_text_strict(x, y):
+    # TODO: Doesn't have to be 100% equal here?
+    return x == y
+
+
+def compare_base64_approximate(x, y):
+    if len(x) != len(y):
+        return False
+    # TODO: Handle base64 data another way?
+    return compare_strings_approximate(x, y)
+
+
+def compare_base64_strict(x, y):
+    if len(x) != len(y):
+        return False
+    # TODO: Handle base64 data another way?
+    return x == y
+
+
+def _compare_mimedata(mimetype, x, y, comp_text, comp_base64):
+    mimetype = mimetype.lower()
+
+    # TODO: Test this. Match repr-style oneliners with random pointer
+    if mimetype == "text/plain":
+        if "\n" not in x and "\n" not in y:
+            if re_repr.match(x) and re_repr.match(y):
+                return True
+
+    if mimetype.startswith("text/"):
+        return comp_text(x, y)
+
+    # TODO: Compare binary images?
+    #if mimetype.startswith("image/"):
+
+    if isinstance(x, string_types) and isinstance(y, string_types):
+        # Most likely base64 encoded data
+        if _base64.match(x):
+            return comp_base64(x, y)
+        else:
+            return comp_text(x, y)
+
+    # Fallback to exactly equal
+    return x == y
+
+
+def compare_mimedata_approximate(mimetype, x, y):
+    return _compare_mimedata(mimetype, x, y,
+        compare_text_approximate, compare_base64_approximate)
+
+
+def compare_mimedata_strict(mimetype, x, y):
+    return _compare_mimedata(mimetype, x, y,
+        compare_text_strict, compare_base64_strict)
 
 
 def compare_mimebundle_approximate(x, y):
+    # Get the simple and cheap stuff out of the way
     if x is None and y is None:
         return True
     if x is None or y is None:
@@ -52,13 +127,17 @@ def compare_mimebundle_approximate(x, y):
     if set(x.keys()) != set(y.keys()):
         return False
 
-    # TODO: Could do some size checking?
-    # TODO: Compare contents of mime bundles approximately?
+    dd = diff_mime_bundle(x, y)
+    for e in dd:
+        # Fail comparison for adds and removes
+        if e.op != DiffOp.PATCH:
+            return False
+        # Delegate to mimetype specific comparison
+        if not compare_mimedata_approximate(e.key, x[e.key], y[e.key]):
+            return False
 
+    # Didn't fail up to here it must be equal
     return True
-
-
-re_repr = re.compile(r"^<[a-zA-Z0-9._]+ at 0x[a-zA-Z0-9]+>$")
 
 
 def compare_mimebundle_strict(x, y):
@@ -72,23 +151,25 @@ def compare_mimebundle_strict(x, y):
     if set(x.keys()) != set(y.keys()):
         return False
 
-    # FIXME: Allow some diff, e.g. on repr style text in text/plain
     dd = diff_mime_bundle(x, y)
-
     for e in dd:
         # Fail comparison for adds and removes
         if e.op != DiffOp.PATCH:
             return False
+        # Delegate to mimetype specific comparison
+        if not compare_mimedata_strict(e.key, x[e.key], y[e.key]):
+            return False
 
-        # Treat some types of difference specifically
-        if e.key == "text/plain":
-            if re_repr.match(x[e.key]) and re_repr.match(y[e.key]):
-                continue
+    # Didn't fail up to here it must be equal
+    return True
 
-    # Strict comparison:
-    #if x != y:
-    #    return False
 
+def compare_tracebacks(xt, yt):
+    if len(xt) != len(yt):
+        return False
+    for x, y in zip(xt, yt):
+        if not compare_strings_approximate(x, y):
+            return False
     return True
 
 
@@ -126,15 +207,15 @@ def compare_output_approximate(x, y):
         # Compare tracebacks
         xt = x["traceback"]
         yt = y["traceback"]
-        if len(xt) != len(yt):
-            return False
-        if not all(compare_strings_approximate(xt[i], yt[i]) for i in range(len(xt))):
+        if not compare_tracebacks(xt, yt):
             return False
 
         handled.update(("ename", "evalue", "traceback"))
 
     elif ot == "display_data" or ot == "execute_result":
-        if not compare_mimebundle_approximate(x.get("data"), y.get("data")):
+        xd = x["data"]
+        yd = y["data"]
+        if not compare_mimebundle_approximate(xd, yd):
             return False
         handled.update(("data",))
 
@@ -160,44 +241,71 @@ def compare_output_strict(x, y):
     # Add strict checks on fields ignored in approximate version
     if x.get("metadata") != y.get("metadata"):
         return False
-    if x.get("traceback") != y.get("traceback"):
-        return False
+    #if x.get("traceback") != y.get("traceback"):
+    #    return False
 
     return compare_mimebundle_strict(x.get("data"), y.get("data"))
 
 
 def compare_cell_approximate(x, y):
-    "Compare source of cells x,y with approximate heuristics."
+    "Compare cells x,y with approximate heuristics."
     # Cell types must match
-    if x.cell_type != y["cell_type"]:
+    if x["cell_type"] != y["cell_type"]:
         return False
 
-    # Convert from list to single string
-    xs = source_as_string(x["source"])
-    ys = source_as_string(y["source"])
+    # Compare sources
+    if not compare_text_approximate(x["source"], y["source"]):
+        return False
 
-    return compare_strings_approximate(xs, ys)
+    # NB! Ignoring metadata, execution_count, outputs
+    return True
 
 
 def compare_cell_moderate(x, y):
-    "Compare source of cells x,y exactly."
+    "Compare cells x,y with moderate accuracy heuristics."
+    # Cell types must match
     if x["cell_type"] != y["cell_type"]:
         return False
-    if x["source"] != y["source"]:
+
+    # Compare sources
+    if not compare_text_approximate(x["source"], y["source"]):
         return False
+
+    # Compare outputs for code cells
+    if x["cell_type"] == "code":
+        xop = x["outputs"] or ()
+        yop = y["outputs"] or ()
+        if len(xop) != len(yop):
+            return False
+        for xo, yo in zip(xop, yop):
+            if not compare_output_approximate(xo, yo):
+                return False
+
+    # NB! Ignoring metadata and execution_count
     return True
 
 
 def compare_cell_strict(x, y):
-    "Compare source and outputs of cells x,y exactly."
+    "Compare cells x,y with higher accuracy heuristics."
+    # Cell types must match
     if x["cell_type"] != y["cell_type"]:
         return False
-    if x["source"] != y["source"]:
+
+    # Compare sources
+    if not compare_text_strict(x["source"], y["source"]):
         return False
+
+    # Compare outputs for code cells
     if x["cell_type"] == "code":
-        if x["outputs"] != y["outputs"]:
+        xop = x["outputs"] or ()
+        yop = y["outputs"] or ()
+        if len(xop) != len(yop):
             return False
-    # NB! Ignoring metadata and execution count of cell
+        for xo, yo in zip(xop, yop):
+            if not compare_output_strict(xo, yo):
+                return False
+
+    # NB! Ignoring metadata and execution count
     return True
 
 
@@ -228,13 +336,12 @@ def diff_single_outputs(a, b, path="/cells/*/outputs/*",
         return diff(a, b)
 
 
-_text_mimes = ('text/', 'image/svg+xml', 'application/javascript', 'application/json')
-
-
 def add_mime_diff(key, avalue, bvalue, diffbuilder):
     # TODO: Handle output diffing with plugins?
     # I.e. image diff, svg diff, json diff, etc.
-    if key.lower().startswith(_text_mimes):
+
+    mimetype = key.lower()
+    if any(mimetype.startswith(tm) for tm in _split_mimes):
         dd = diff(avalue, bvalue)
         if dd:
             diffbuilder.patch(key, dd)
