@@ -42,41 +42,6 @@ compare_cell_strict
 """
 
 
-def compare_cell_approximate(x, y):
-    "Compare source of cells x,y with approximate heuristics."
-    # Cell types must match
-    if x.cell_type != y["cell_type"]:
-        return False
-
-    # Convert from list to single string
-    xs = source_as_string(x["source"])
-    ys = source_as_string(y["source"])
-
-    return compare_strings_approximate(xs, ys)
-
-
-def compare_cell_moderate(x, y):
-    "Compare source of cells x,y exactly."
-    if x["cell_type"] != y["cell_type"]:
-        return False
-    if x["source"] != y["source"]:
-        return False
-    return True
-
-
-def compare_cell_strict(x, y):
-    "Compare source and outputs of cells x,y exactly."
-    if x["cell_type"] != y["cell_type"]:
-        return False
-    if x["source"] != y["source"]:
-        return False
-    if x["cell_type"] == "code":
-        if x["outputs"] != y["outputs"]:
-            return False
-    # NB! Ignoring metadata and execution count of cell
-    return True
-
-
 def compare_mimebundle_approximate(x, y):
     if x is None and y is None:
         return True
@@ -199,6 +164,41 @@ def compare_output_strict(x, y):
         return False
 
     return compare_mimebundle_strict(x.get("data"), y.get("data"))
+
+
+def compare_cell_approximate(x, y):
+    "Compare source of cells x,y with approximate heuristics."
+    # Cell types must match
+    if x.cell_type != y["cell_type"]:
+        return False
+
+    # Convert from list to single string
+    xs = source_as_string(x["source"])
+    ys = source_as_string(y["source"])
+
+    return compare_strings_approximate(xs, ys)
+
+
+def compare_cell_moderate(x, y):
+    "Compare source of cells x,y exactly."
+    if x["cell_type"] != y["cell_type"]:
+        return False
+    if x["source"] != y["source"]:
+        return False
+    return True
+
+
+def compare_cell_strict(x, y):
+    "Compare source and outputs of cells x,y exactly."
+    if x["cell_type"] != y["cell_type"]:
+        return False
+    if x["source"] != y["source"]:
+        return False
+    if x["cell_type"] == "code":
+        if x["outputs"] != y["outputs"]:
+            return False
+    # NB! Ignoring metadata and execution count of cell
+    return True
 
 
 def diff_single_outputs(a, b, path="/cells/*/outputs/*",
