@@ -31,8 +31,9 @@ args = builder.parse_args(["", "", ""])
 def test_merge_matching_notebooks(matching_nb_triplets):
     "Test merge on pairs of notebooks with the same basename in the test suite."
     base, local, remote = matching_nb_triplets
-    merge_notebooks(base, local, remote)
-    # We can't really automate a generic merge test, at least passing through code here...
+    merged, decisions = merge_notebooks(base, local, remote)
+    # We can't really automate a generic merge test,
+    # at least passing through code here...
 
 
 def test_autoresolve_notebook_ec():
