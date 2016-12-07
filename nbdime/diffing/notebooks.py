@@ -33,14 +33,10 @@ _base64 = re.compile(r'^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]
 # <module.type at 0xmemoryaddress>
 re_repr = re.compile(r"<[a-zA-Z0-9._]+ at 0x[a-zA-Z0-9]+>")
 
+re_pointer = re.compile(r"0[xX][a-zA-Z0-9]{8,16}")
+
 
 # List of mimes we can diff recursively
-_text_mimes = (
-    'text/',
-    'image/svg+xml',
-    'application/javascript',
-    'application/json',
-    )
 _split_mimes = (
     'text/',
     'image/svg+xml',
@@ -54,16 +50,35 @@ _split_mimes = (
 
 
 def compare_text_approximate(x, y):
+    # Fast cutoff when one is empty
+    if bool(x) != bool(y):
+        return False
+
     if isinstance(x, list):
         x = "".join(x)
     if isinstance(y, list):
         y = "".join(y)
-    return compare_strings_approximate(x, y)
+
+    # TODO: Review whether this is wanted.
+    #       The motivation is to align tiny
+    #       strings in outputs such as a single number.
+    # Allow aligning short strings without comparison
+    nx = len(x)
+    ny = len(y)
+    shortlen = 10  # TODO: Add this to configuration framework
+    if nx < shortlen and ny < shortlen:
+        return True
+
+    return compare_strings_approximate(x, y, threshold=0.7)
 
 
 def compare_text_strict(x, y):
     # TODO: Doesn't have to be 100% equal here?
-    return x == y
+    if isinstance(x, list):
+        x = "".join(x)
+    if isinstance(y, list):
+        y = "".join(y)
+    return compare_strings_approximate(x, y, threshold=0.95)
 
 
 def compare_base64_approximate(x, y):
@@ -85,8 +100,11 @@ def _compare_mimedata(mimetype, x, y, comp_text, comp_base64):
 
     # TODO: Test this. Match repr-style oneliners with random pointer
     if mimetype == "text/plain":
+        # Allow short texts to only differ by pointer values
         if "\n" not in x and "\n" not in y:
-            if re_repr.match(x) and re_repr.match(y):
+            xsplit = re_pointer.split(x)
+            ysplit = re_pointer.split(y)
+            if xsplit == ysplit:
                 return True
 
     if mimetype.startswith("text/"):
@@ -128,10 +146,10 @@ def compare_mimebundle_approximate(x, y):
         return False
 
     dd = diff_mime_bundle(x, y)
+    # Fail comparison for adds and removes
+    if any(e.op != DiffOp.PATCH for e in dd):
+        return False
     for e in dd:
-        # Fail comparison for adds and removes
-        if e.op != DiffOp.PATCH:
-            return False
         # Delegate to mimetype specific comparison
         if not compare_mimedata_approximate(e.key, x[e.key], y[e.key]):
             return False
@@ -152,10 +170,10 @@ def compare_mimebundle_strict(x, y):
         return False
 
     dd = diff_mime_bundle(x, y)
+    # Fail comparison for adds and removes
+    if any(e.op != DiffOp.PATCH for e in dd):
+        return False
     for e in dd:
-        # Fail comparison for adds and removes
-        if e.op != DiffOp.PATCH:
-            return False
         # Delegate to mimetype specific comparison
         if not compare_mimedata_strict(e.key, x[e.key], y[e.key]):
             return False
@@ -244,11 +262,19 @@ def compare_output_strict(x, y):
     #if x.get("traceback") != y.get("traceback"):
     #    return False
 
-    return compare_mimebundle_strict(x.get("data"), y.get("data"))
+    if not compare_mimebundle_strict(x.get("data"), y.get("data")):
+        return True
+
+    # NB! Ignoring metadata and execution count
+    return True
 
 
 def compare_cell_approximate(x, y):
-    "Compare cells x,y with approximate heuristics."
+    """Compare cells x,y with approximate heuristics.
+
+    This is used to align cells in the /cells list
+    in the third and last multilevel diff iteration.
+    """
     # Cell types must match
     if x["cell_type"] != y["cell_type"]:
         return False
@@ -261,8 +287,22 @@ def compare_cell_approximate(x, y):
     return True
 
 
+def compare_outputs_approximate(xoutputs, youtputs):
+    dd = diff_item_at_path(xoutputs, youtputs, "/cells/*/outputs")
+    if any(e.op != DiffOp.PATCH for e in dd):
+        # Something added or removed
+        return False
+    # If nothing was added or removed, that means all
+    # items in outputs lists are determined to align
+    return True
+
+
 def compare_cell_moderate(x, y):
-    "Compare cells x,y with moderate accuracy heuristics."
+    """Compare cells x,y with moderate accuracy heuristics.
+
+    This is used to align cells in the /cells list
+    in the second multilevel diff iteration.
+    """
     # Cell types must match
     if x["cell_type"] != y["cell_type"]:
         return False
@@ -275,18 +315,20 @@ def compare_cell_moderate(x, y):
     if x["cell_type"] == "code":
         xop = x["outputs"] or ()
         yop = y["outputs"] or ()
-        if len(xop) != len(yop):
+        if bool(xop) != bool(yop):
             return False
-        for xo, yo in zip(xop, yop):
-            if not compare_output_approximate(xo, yo):
-                return False
+        return compare_outputs_approximate(xop, yop)
 
     # NB! Ignoring metadata and execution_count
     return True
 
 
 def compare_cell_strict(x, y):
-    "Compare cells x,y with higher accuracy heuristics."
+    """Compare cells x,y with higher accuracy heuristics.
+
+    This is used to align cells in the /cells list
+    in the first multilevel diff iteration.
+    """
     # Cell types must match
     if x["cell_type"] != y["cell_type"]:
         return False
@@ -299,8 +341,10 @@ def compare_cell_strict(x, y):
     if x["cell_type"] == "code":
         xop = x["outputs"] or ()
         yop = y["outputs"] or ()
+        # Be strict on number of outputs
         if len(xop) != len(yop):
             return False
+        # Be strict on order and content of outputs
         for xo, yo in zip(xop, yop):
             if not compare_output_strict(xo, yo):
                 return False
@@ -425,7 +469,6 @@ notebook_predicates = defaultdict(lambda: [operator.__eq__], {
         ]
     })
 
-
 # Recursive diffing of substructures should pick a rule from here, with diff as fallback
 notebook_differs = defaultdict(lambda: diff, {
     "/cells": diff_sequence_multilevel,
@@ -439,6 +482,10 @@ notebook_differs = defaultdict(lambda: diff, {
 def diff_cells(a, b):
     "This is currently just used by some tests."
     path = "/cells"
+    return notebook_differs[path](a, b, path=path, predicates=notebook_predicates, differs=notebook_differs)
+
+
+def diff_item_at_path(a, b, path):
     return notebook_differs[path](a, b, path=path, predicates=notebook_predicates, differs=notebook_differs)
 
 
