@@ -28,22 +28,6 @@ import nbdime.log
 _logger = logging.getLogger(__name__)
 
 
-def add_conflicts_record(value, le, re):
-    """Add an item 'nbdime-conflicts' to a metadata dict.
-
-    Simply storing metadata conflicts for mergetool inspection.
-    """
-    assert isinstance(value, dict)
-    c = {}
-    if le is not None:
-        c["local"] = le
-    if re is not None:
-        c["remote"] = re
-    newvalue = NotebookNode(value)
-    newvalue["nbdime-conflicts"] = c
-    return newvalue
-
-
 # Sentinel object
 Deleted = object()
 
@@ -333,10 +317,8 @@ def strategy2action_dict(resolved_base, le, re, strategy, path, dec):
         # inline-outputs is handled at a higher level
         pass
     elif strategy == "record-conflict":
-        value = resolved_base[key]
-        newvalue = add_conflicts_record(value, le, re)
-        dec.custom_diff = [op_replace(key, newvalue)]
-        dec.action = "custom"
+        # record-conflict is handled at a higher level
+        pass
     # ... fallthrough
     elif strategy == "mergetool":
         # Leave this type of conflict for external tool to resolve
@@ -609,6 +591,39 @@ def split_decisions_by_cell(decisions):
     return generic_decisions, cell_decisions
 
 
+def add_conflicts_record(value, le, re):
+    """Add an item 'nbdime-conflicts' to a metadata dict.
+
+    Simply storing metadata conflicts for mergetool inspection.
+    """
+    assert isinstance(value, dict)
+    c = {}
+    if le is not None:
+        c["local"] = le
+    if re is not None:
+        c["remote"] = re
+    newvalue = NotebookNode(value)
+    newvalue["nbdime-conflicts"] = c
+    return newvalue
+
+
+def make_record_conflict_decision(metadata, prefix, local_diff, remote_diff):
+    # FIXME: Merge what can be merged here
+    record = NotebookNode({
+        "local_diff": local_diff,
+        "remote_diff": local_diff,
+        })
+    custom_diff = [op_add("nbdime-conflicts", record)]
+    return [MergeDecision(
+        common_path=prefix,
+        action="custom",
+        conflict=True,
+        local_diff=local_diff,
+        remote_diff=remote_diff,
+        custom_diff=custom_diff,
+    )]
+
+
 def make_inline_source_decision(source, prefix, local_diff, remote_diff):
     begin, end, inlined = make_inline_source_value(source, local_diff, remote_diff)
     custom_diff = [
@@ -860,6 +875,14 @@ def autoresolve(base, decisions, strategies):
     if strategies.get('/cells/*/attachments') == 'inline-attachments':
         cell_decisions = bundle_decisions(
             base, cell_decisions, '/cells/*/attachments', make_inline_attachments_decision)
+
+    if strategies.get('/metadata') == 'record-conflict':
+        cell_decisions = bundle_decisions(
+            base, cell_decisions, '/metadata', make_record_conflict_decision)
+
+    if strategies.get('/cells/*/metadata') == 'record-conflict':
+        cell_decisions = bundle_decisions(
+            base, cell_decisions, '/cells/*/metadata', make_record_conflict_decision)
 
     generic_decisions = autoresolve_generic(base, generic_decisions, strategies)
 
