@@ -115,18 +115,20 @@ class SequenceDiffBuilder(object):
         assert "key" in entry
 
         # Assert consistent ordering of diff entries
-        _prev = self._diff[-1].key if self._diff else 0
-        assert _prev <= entry.key
+        #_prev = self._diff[-1].key if self._diff else 0
+        #assert _prev <= entry.key
 
-        # Add entry!
-        self._diff.append(entry)
-
-        # Swap last two entries if insertion was inserted
-        # at same location as a previous remove or patch
-        if (entry.op == DiffOp.ADDRANGE and
-            len(self._diff) >= 2 and entry.key == self._diff[-2].key
-            ):
-            self._diff[-2], self._diff[-1] = self._diff[-1], self._diff[-2]
+        # Insert new entry at sorted position
+        n = len(self._diff)
+        pos = n
+        if entry.op == DiffOp.ADDRANGE:
+            # Insert addrange before removerange or patch
+            while pos > 0 and self._diff[pos-1].key >= entry.key:
+                pos -= 1
+        else:
+            while pos > 0 and self._diff[pos-1].key > entry.key:
+                pos -= 1
+        self._diff.insert(pos, entry)
 
     def patch(self, key, diff):
         if diff:
