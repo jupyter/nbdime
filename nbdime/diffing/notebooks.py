@@ -25,7 +25,24 @@ from .generic import (diff, diff_sequence_multilevel,
 __all__ = ["diff_notebooks"]
 
 
-def compare_cell_source_approximate(x, y):
+"""
+compare_text_approximate
+compare_text_strict
+compare_mimedata_approximate
+compare_mimedata_strict
+compare_mimebundle_approximate
+compare_mimebundle_strict
+compare_source_approximate
+compare_source_strict
+compare_output_approximate
+compare_output_strict
+compare_cell_approximate
+compare_cell_moderate
+compare_cell_strict
+"""
+
+
+def compare_cell_approximate(x, y):
     "Compare source of cells x,y with approximate heuristics."
     # Cell types must match
     if x.cell_type != y["cell_type"]:
@@ -38,7 +55,7 @@ def compare_cell_source_approximate(x, y):
     return compare_strings_approximate(xs, ys)
 
 
-def compare_cell_source_exact(x, y):
+def compare_cell_moderate(x, y):
     "Compare source of cells x,y exactly."
     if x["cell_type"] != y["cell_type"]:
         return False
@@ -47,7 +64,7 @@ def compare_cell_source_exact(x, y):
     return True
 
 
-def compare_cell_source_and_outputs(x, y):
+def compare_cell_strict(x, y):
     "Compare source and outputs of cells x,y exactly."
     if x["cell_type"] != y["cell_type"]:
         return False
@@ -60,7 +77,7 @@ def compare_cell_source_and_outputs(x, y):
     return True
 
 
-def compare_mime_bundles_low_accuracy(x, y):
+def compare_mimebundle_approximate(x, y):
     if x is None and y is None:
         return True
     if x is None or y is None:
@@ -79,7 +96,7 @@ def compare_mime_bundles_low_accuracy(x, y):
 re_repr = re.compile(r"^<[a-zA-Z0-9._]+ at 0x[a-zA-Z0-9]+>$")
 
 
-def compare_mime_bundles_high_accuracy(x, y):
+def compare_mimebundle_strict(x, y):
     # Get the simple and cheap stuff out of the way
     if x is None and y is None:
         return True
@@ -152,7 +169,7 @@ def compare_output_approximate(x, y):
         handled.update(("ename", "evalue", "traceback"))
 
     elif ot == "display_data" or ot == "execute_result":
-        if not compare_mime_bundles_low_accuracy(x.get("data"), y.get("data")):
+        if not compare_mimebundle_approximate(x.get("data"), y.get("data")):
             return False
         handled.update(("data",))
 
@@ -169,7 +186,7 @@ def compare_output_approximate(x, y):
     return True
 
 
-def compare_output(x, y):
+def compare_output_strict(x, y):
     "Compare type and data of output cells x,y to higher accuracy."
     # Fall back on approximate checks first
     if not compare_output_approximate(x, y):
@@ -181,7 +198,7 @@ def compare_output(x, y):
     if x.get("traceback") != y.get("traceback"):
         return False
 
-    return compare_mime_bundles_high_accuracy(x.get("data"), y.get("data"))
+    return compare_mimebundle_strict(x.get("data"), y.get("data"))
 
 
 def diff_single_outputs(a, b, path="/cells/*/outputs/*",
@@ -290,14 +307,14 @@ def diff_mime_bundle(a, b, path=None,
 notebook_predicates = defaultdict(lambda: [operator.__eq__], {
     # Predicates to compare cells in order of low-to-high precedence
     "/cells": [
-        compare_cell_source_approximate,
-        compare_cell_source_exact,
-        compare_cell_source_and_outputs,
+        compare_cell_approximate,
+        compare_cell_moderate,
+        compare_cell_strict,
         ],
     # Predicates to compare output cells (within one cell) in order of low-to-high precedence
     "/cells/*/outputs": [
         compare_output_approximate,
-        compare_output,
+        compare_output_strict,
         ]
     })
 
