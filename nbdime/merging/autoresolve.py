@@ -13,7 +13,7 @@ from itertools import chain
 import nbformat
 from nbformat import NotebookNode
 
-from ..diff_format import DiffOp, DiffEntry, op_replace, op_removerange, op_addrange, op_patch
+from ..diff_format import DiffOp, DiffEntry, op_replace, op_removerange, op_addrange, op_patch, op_add, op_remove
 from ..patching import patch, patch_singleline_string
 from .chunks import make_merge_chunks
 from ..utils import join_path, split_path, star_path, is_prefix_array, resolve_path
@@ -327,9 +327,10 @@ def strategy2action_dict(resolved_base, le, re, strategy, path, dec):
         # inline-source is handled at a higher level
         pass
     elif strategy == "inline-attachments":
-        # FIXME: Leaving this conflict unresolved until we implement a better solution
-        nbdime.log.warning("Don't know how to resolve attachments yet.")
+        # inline-attachments is handled at a higher level
+        pass
     elif strategy == "inline-outputs":
+        # inline-outputs is handled at a higher level
         pass
     elif strategy == "record-conflict":
         value = resolved_base[key]
@@ -624,6 +625,121 @@ def make_inline_source_decision(source, prefix, local_diff, remote_diff):
     )]
 
 
+def make_inline_attachments_decision(attachments, prefix, local_diff, remote_diff):
+    local_diff = { e.key: e for e in local_diff }
+    remote_diff = { e.key: e for e in remote_diff }
+
+    lkeys = set(local_diff)
+    rkeys = set(remote_diff)
+    unchanged = set(attachments)
+    unchanged -= lkeys
+    unchanged -= rkeys
+    conflicts = lkeys & rkeys
+    lkeys -= conflicts
+    rkeys -= conflicts
+
+    decs = []
+
+    for k in lkeys:
+        ld = local_diff[k]
+        md = MergeDecision(
+            common_path=prefix,  # TODO: Add key?
+            action="local",
+            conflict=False,
+            local_diff=[ld],
+            remote_diff=[],
+            #custom_diff=[],
+        )
+        decs.append(md)
+
+    for k in rkeys:
+        rd = remote_diff[k]
+        md = MergeDecision(
+            common_path=prefix,  # TODO: Add key?
+            action="remote",
+            conflict=False,
+            local_diff=[],
+            remote_diff=[rd],
+            #custom_diff=[],
+        )
+        decs.append(md)
+
+    for k in conflicts:
+        ld = local_diff[k]
+        rd = remote_diff[k]
+        if ld.op == rd.op == DiffOp.REMOVE:
+            # Both removed, decision is either
+            md = MergeDecision(
+                common_path=prefix,  # TODO: Add key?
+                action="either",
+                conflict=False,
+                local_diff=[ld],
+                remote_diff=[rd],
+                #custom_diff=None,
+            )
+        elif ld.op == DiffOp.REMOVE:
+            # Just keep the remote change (don't know what else to do)
+            md = MergeDecision(
+                common_path=prefix,  # TODO: Add key?
+                action="remote",
+                conflict=True,
+                local_diff=[ld],
+                remote_diff=[rd],
+                #custom_diff=None,
+            )
+        elif rd.op == DiffOp.REMOVE:
+            # Just keep the local change (don't know what else to do)
+            md = MergeDecision(
+                common_path=prefix,  # TODO: Add key?
+                action="local",
+                conflict=True,
+                local_diff=[ld],
+                remote_diff=[rd],
+                #custom_diff=None,
+            )
+        else:
+            if rd.op == DiffOp.REPLACE:
+                rval = rd.value
+            elif rd.op == DiffOp.PATCH:
+                rval = patch(attachments[k], rd.diff)
+            elif rd.op == DiffOp.ADD:
+                rval = rd.value
+
+            if ld.op == DiffOp.REPLACE:
+                lval = ld.value
+            elif ld.op == DiffOp.PATCH:
+                lval = patch(attachments[k], ld.diff)
+            elif ld.op == DiffOp.ADD:
+                lval = ld.value
+
+            if lval == rval:
+                # Both result in same value, decision is either
+                md = MergeDecision(
+                    common_path=prefix,  # TODO: Add key?
+                    action="either",
+                    conflict=False,
+                    local_diff=[ld],
+                    remote_diff=[rd],
+                    #custom_diff=None,
+                )
+            else:
+                md = MergeDecision(
+                    common_path=prefix,  # TODO: Add key?
+                    action="custom",
+                    conflict=True,
+                    local_diff=[ld],
+                    remote_diff=[rd],
+                    custom_diff=[
+                        op_add("LOCAL_" + k, lval),
+                        op_add("REMOTE_" + k, rval)
+                        ]
+                )
+        # Add decision
+        decs.append(md)
+
+    return decs
+
+
 def make_inline_outputs_decision(outputs, prefix, local_diff, remote_diff):
     begin, end, inlined = make_inline_outputs_value(outputs, local_diff, remote_diff)
     custom_diff = []
@@ -730,6 +846,7 @@ def autoresolve(base, decisions, strategies):
     if strategies.get('/cells/*/source') == 'inline-source':
         cell_decisions = bundle_decisions(
             base, cell_decisions, "/cells/*/source", make_inline_source_decision)
+
     if strategies.get('/cells/*/outputs') == 'remove':
         cell_decisions = bundle_decisions(
             base, cell_decisions, "/cells/*/outputs", make_remove_decision)
@@ -739,6 +856,10 @@ def autoresolve(base, decisions, strategies):
     elif strategies.get('/cells/*/outputs') == 'inline-outputs':
         cell_decisions = bundle_decisions(
             base, cell_decisions, '/cells/*/outputs', make_inline_outputs_decision)
+
+    if strategies.get('/cells/*/attachments') == 'inline-attachments':
+        cell_decisions = bundle_decisions(
+            base, cell_decisions, '/cells/*/attachments', make_inline_attachments_decision)
 
     generic_decisions = autoresolve_generic(base, generic_decisions, strategies)
 

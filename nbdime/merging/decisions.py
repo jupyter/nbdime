@@ -370,7 +370,7 @@ def filter_decisions(pattern, decisions, exact=False):
         path = md.common_path[:]
         pop = _pop_path((md.local_diff, md.remote_diff, md.get('custom_diff')))
         if pop:
-            path.append(pop)
+            path = path + (pop["key"],)
         starred_path = star_path(path)
         if (exact and starred_path == pattern or
                 starred_path[:cutoff] == pattern):
