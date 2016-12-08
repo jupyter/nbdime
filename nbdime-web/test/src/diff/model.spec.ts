@@ -25,7 +25,7 @@ import {
 } from '../../../src/diff/model/string';
 
 import {
-  opAddRange, opPatch
+  opAddRange, opPatch, IDiffEntry
 } from '../../../src/diff/diffentries';
 
 import {
@@ -101,7 +101,7 @@ describe('diff', () => {
 
       it('should create an unchanged model by empty diff', () => {
           let base = 'foobar!';
-          let diff = [];
+          let diff: IDiffEntry[] = [];
           let model = createPatchStringDiffModel(base, diff);
           expect(model.added).to.be(false);
           expect(model.deleted).to.be(false);
@@ -112,7 +112,7 @@ describe('diff', () => {
 
       it('should create an unchanged model by empty diff for non-string input', () => {
           let base = [0, 1, 'foo'];
-          let diff = [];
+          let diff: IDiffEntry[] = [];
           let model = createPatchStringDiffModel(base, diff);
           expect(model.added).to.be(false);
           expect(model.deleted).to.be(false);

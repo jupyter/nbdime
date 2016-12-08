@@ -37,7 +37,7 @@
     "karma-typescript": "^2.1.5",
     "mocha": "^3.1.1",
     "rimraf": "^2.5.4",
-    "typescript": "~2.0.9"
+    "typescript": "~2.1.5"
   },
   "dependencies": {
     "@jupyterlab/services": "^0.34.2",

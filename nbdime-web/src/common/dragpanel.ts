@@ -76,11 +76,12 @@ const DRAG_THRESHOLD = 5;
 export
 function belongsToUs(node: HTMLElement, parentClass: string,
                      parentNode: HTMLElement): boolean {
+  let candidate: HTMLElement | null = node;
   // Traverse DOM until drag panel encountered:
-  while (node && !node.classList.contains(parentClass)) {
-    node = node.parentElement;
+  while (candidate && !candidate.classList.contains(parentClass)) {
+    candidate = candidate.parentElement;
   }
-  return node && node === parentNode;
+  return !!candidate && candidate === parentNode;
 }
 
 
@@ -102,12 +103,13 @@ function findChild(parent: HTMLElement | HTMLElement[], node: HTMLElement): HTML
       return child.parentElement === parent;
     }
   };
-  while (node && node !== parent) {
-    if (isDirectChild(node)) {
-      child = node;
+  let candidate: HTMLElement | null = node;
+  while (candidate && candidate !== parent) {
+    if (isDirectChild(candidate)) {
+      child = candidate;
       break;
     }
-    node = node.parentElement;
+    candidate = candidate.parentElement;
   }
   return child;
 }
@@ -487,12 +489,13 @@ abstract class DragDropPanelBase extends DropPanel {
       }
     } else {
       // Otherwise, traverse up DOM to check if click is on a drag handle
-      while (node && node !== this.node) {
-        if (node.classList.contains(this.dragHandleClass)) {
-          handle = node;
+      let candidate: HTMLElement | null = node;
+      while (candidate && candidate !== this.node) {
+        if (candidate.classList.contains(this.dragHandleClass)) {
+          handle = candidate;
           break;
         }
-        node = node.parentElement;
+        candidate = candidate.parentElement;
       }
       // Finally, check that handle does not belong to a nested drag panel
       if (handle !== null && !belongsToUs(
