@@ -52,7 +52,8 @@ cli_conflict_strategies_output = cli_conflict_strategies + (
     "clear-all",  # Clear all outputs
     )
 
-def autoresolve_notebook_conflicts(base, decisions, args):
+
+def notebook_merge_strategies(args):
     strategies = Strategies({
         # These fields should never conflict, that would be an internal error:
         "/nbformat": "fail",
@@ -126,10 +127,17 @@ def autoresolve_notebook_conflicts(base, decisions, args):
                 "/cells/*/outputs": output_strategy
             })
 
+    return strategies
+
+
+def autoresolve_notebook_conflicts(base, decisions, args):
+    strategies = notebook_merge_strategies(args)
     return autoresolve(base, decisions, strategies)
 
 
 def decide_notebook_merge(base, local, remote, args=None):
+    strategies = notebook_merge_strategies(args)
+
     # Compute notebook specific diffs
     local_diffs = diff_notebooks(base, local)
     remote_diffs = diff_notebooks(base, remote)
@@ -147,7 +155,9 @@ def decide_notebook_merge(base, local, remote, args=None):
 
     # Execute a generic merge operation
     decisions = decide_merge_with_diff(
-        base, local, remote, local_diffs, remote_diffs)
+        base, local, remote,
+        local_diffs, remote_diffs,
+        strategies)
 
     if args and args.log_level == "DEBUG":
         nbdime.log.debug("In merge, initial decisions:")
@@ -156,7 +166,8 @@ def decide_notebook_merge(base, local, remote, args=None):
         nbdime.log.debug(buf.getvalue())
 
     # Try to resolve conflicts based on behavioural options
-    decisions = autoresolve_notebook_conflicts(base, decisions, args)
+    #decisions = autoresolve(base, decisions, strategies)
+    #decisions = autoresolve_notebook_conflicts(base, decisions, args)
 
     if args and args.log_level == "DEBUG":
         nbdime.log.debug("In merge, autoresolved decisions:")

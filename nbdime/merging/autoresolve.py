@@ -13,7 +13,7 @@ from itertools import chain
 import nbformat
 from nbformat import NotebookNode
 
-from ..diff_format import DiffOp, DiffEntry, op_replace, op_removerange, op_addrange, op_patch, op_add, op_remove
+from ..diff_format import DiffOp, DiffEntry, Deleted, op_replace, op_removerange, op_addrange, op_patch, op_add, op_remove
 from ..patching import patch, patch_singleline_string
 from .chunks import make_merge_chunks
 from ..utils import join_path, split_path, star_path, is_prefix_array, resolve_path
@@ -22,14 +22,11 @@ from .decisions import (pop_patch_decision, push_patch_decision, MergeDecision,
                         filter_decisions, build_diffs,
                         )
 from ..prettyprint import merge_render
+from .generic import is_diff_all_transients
 
 import nbdime.log
 
 _logger = logging.getLogger(__name__)
-
-
-# Sentinel object
-Deleted = object()
 
 
 def patch_item(value, diffentry):
@@ -219,22 +216,6 @@ def make_inline_source_value(base, local_diff, remote_diff):
 
     # Return range to replace with marked up lines
     return begin, end, inlined
-
-
-def is_diff_all_transients(diff, path, transients):
-    # Resolve diff paths and check them vs transients list
-    for d in diff:
-        # Convert to string to search transients:
-        subpath = path + (d.key,)
-        if d.op == DiffOp.PATCH:
-            # Recurse
-            if not is_diff_all_transients(d.diff, subpath, transients):
-                return False
-        else:
-            # Check path vs transients
-            if star_path(subpath) not in transients:
-                return False
-    return True
 
 
 def strategy2action_dict(resolved_base, le, re, strategy, path, dec):

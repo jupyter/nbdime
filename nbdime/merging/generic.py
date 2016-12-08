@@ -11,17 +11,15 @@ from .decisions import MergeDecisionBuilder
 from .chunks import make_merge_chunks
 from ..diffing import diff
 from ..diff_format import (
-    DiffOp, as_dict_based_diff, op_patch, op_addrange, op_removerange)
+    DiffOp, ParentDeleted, Missing, as_dict_based_diff, op_patch, op_addrange, op_removerange)
 from ..diffing.notebooks import notebook_predicates, notebook_differs
 from ..patching import patch
 from ..utils import star_path
+import nbdime.log
 
 
 # Set to true to enable some expensive debugging assertions
 DEBUGGING = 0
-
-# Sentinel to allow None value
-Missing = object()
 
 
 # =============================================================================
@@ -31,7 +29,7 @@ Missing = object()
 # =============================================================================
 
 
-def _merge_dicts(base, local_diff, remote_diff, path, decisions):
+def _merge_dicts(base, local_diff, remote_diff, path, decisions, strategies):
     """Perform a three-way merge of dicts. See docstring of merge."""
     assert isinstance(base, dict)
 
@@ -65,6 +63,9 @@ def _merge_dicts(base, local_diff, remote_diff, path, decisions):
                            local_diff.get(key),
                            remote_diff.get(key))
 
+    # Get base path for strategy lookup
+    spath = star_path(path)
+
     # (4) (5) (6) (7) (8)
     # Then we have the potentially conflicting changes
     for key in sorted(brdkeys & bldkeys):
@@ -76,39 +77,77 @@ def _merge_dicts(base, local_diff, remote_diff, path, decisions):
         # Get values (using Missing as a sentinel to allow None as a value)
         bv = base.get(key, Missing)
 
-        # Switch on diff ops
-        lop = ld.op
-        rop = rd.op
-        if lop != rop:
-            # Note that this means the below cases always have the same op
-            # (5) Conflict: removed one place and edited another, or edited in
-            #     different ways
-            decisions.conflict(path, ld, rd)
-        elif lop == DiffOp.REMOVE:
+        # Get strategy for this key
+        strategy = strategies.get("/".join((spath, key)))
+
+        """Possible strategies:
+             Producing decisions with new values:
+                inline-source - callback  (path=/cells/*, key=source)
+                inline-attachments - callback  (path=/cells/*, key=attachments)
+                inline-outputs - callback  (path=/cells/*, key=outputs)
+                record-conflict - callback  (path=/cells/*, path=/, path=/cells/*/outputs/*, key=metadata)
+                union - register conflict(?)
+             Applicable in decisions.conflict:
+                fail - crash and burn
+                mergetool - as today, just register conflict
+                clear - custom decision to replace value at key on parent path!
+                use-local/base/remote - register conflict(?), mark action local/base/remote
+
+# Strategies for handling conflicts
+generic_conflict_strategies = (
+x    "fail",             # Unexpected: crash and burn in case of conflict
+
+x    "clear",            # Replace value with empty in case of conflict
+x    "take-max",         # Take the maximum value in case of conflict
+
+    "inline-source",    # Valid for source only: produce new source with inline diff markers
+
+    "remove",           # Discard value in case of conflict
+    "clear-all",        # Discard all values on conflict
+    "inline-outputs",   # Valid for outputs only: produce new outputs with inline diff markers
+
+    "record-conflict",  # Valid for metadata only: produce new metadata with conflicts recorded for external inspection
+
+    "mergetool",        # Do not modify decision (but prevent processing at deeper path)
+
+    "union",            # Join values in case of conflict, don't insert new markers
+    "use-base",         # Keep base value in case of conflict
+    "use-local",        # Use local value in case of conflict
+    "use-remote",       # Use remote value in case of conflict
+        """
+
+        if ld.op == DiffOp.REMOVE and rd.op == DiffOp.REMOVE:
             # (4) Removed in both local and remote, just don't add it to merge
             #     result
             decisions.agreement(path, ld, rd)
-        elif lop in (DiffOp.ADD, DiffOp.REPLACE, DiffOp.PATCH) and ld == rd:
+        elif ld.op == DiffOp.REMOVE or rd.op == DiffOp.REMOVE:
+            # (5) Conflict: removed one place and edited another
+            decisions.conflict(path, ld, rd, strategy=strategy)
+        elif ld.op != rd.op:
+            # Note that this means the below cases always have the same op
+            # (5) Conflict: edited in different ways
+            decisions.conflict(path, ld, rd, strategy=strategy)
+        elif ld == rd:
             # If inserting/replacing/patching produces the same value, just use
             # it
             decisions.agreement(path, ld, rd)
-        elif lop == DiffOp.ADD:
+        elif ld.op == DiffOp.ADD:
             # (6) Insert in both local and remote, values are different
             # This can possibly be resolved by recursion, but leave that to
             # autoresolve
-            decisions.conflict(path, ld, rd)
-        elif lop == DiffOp.REPLACE:
+            decisions.conflict(path, ld, rd, strategy=strategy)  # XXX FIXME: consider merging added values
+        elif ld.op == DiffOp.REPLACE:
             # (7) Replace in both local and remote, values are different,
             #     record a conflict against original base value
-            decisions.conflict(path, ld, rd)
-        elif lop == DiffOp.PATCH:
+            decisions.conflict(path, ld, rd, strategy=strategy)
+        elif ld.op == DiffOp.PATCH:
             # (8) Patch on both local and remote, values are different
             # Patches produce different values, try merging the substructures
             # (a patch command only occurs when the type is a collection, so we
             # can safely recurse here and know we won't encounter e.g. an int)
-            _merge(bv, ld.diff, rd.diff, path + (key,), decisions)
+            _merge(bv, ld.diff, rd.diff, path + (key,), decisions, strategies)  # XXX FIXME: pass parent strategy? push it on strategy stack?
         else:
-            raise ValueError("Invalid diff ops {} and {}.".format(lop, rop))
+            raise ValueError("Invalid diff ops {} and {}.".format(ld.op, rd.op))
 
 
 def _split_addrange(key, local, remote, path):
@@ -187,7 +226,7 @@ def _split_addrange(key, local, remote, path):
             offset += len(vl)
         elif d.op == DiffOp.PATCH:
             # Predicates indicate that local and remote are similar!
-            # Mark as conflcit, possibly for autoresolve to deal with
+            # Mark as conflict, possibly for autoresolve to deal with
             decisions.conflict(path,
                                [op_addrange(key, [local[d.key]])],
                                [op_addrange(key, [remote[d.key + offset]])])
@@ -206,7 +245,7 @@ def _split_addrange(key, local, remote, path):
         return None
 
 
-def _merge_concurrent_inserts(base, ldiff, rdiff, path, decisions):
+def _merge_concurrent_inserts(base, ldiff, rdiff, path, decisions, strategies):
     """Merge concurrent inserts, optionally with one or more removeranges.
 
     This method compares the addition/removals on both sides, and splits it
@@ -219,7 +258,7 @@ def _merge_concurrent_inserts(base, ldiff, rdiff, path, decisions):
 
     if subdec:
         # We were able to split insertion [+ onesided removal]
-        decisions.decisions.extend(subdec)
+        decisions.extend(subdec)
 
         # Add potential one-sided removal at end
         if len(ldiff) > 1 or len(rdiff) > 1:
@@ -230,9 +269,40 @@ def _merge_concurrent_inserts(base, ldiff, rdiff, path, decisions):
         decisions.conflict(path, ldiff, rdiff)
 
 
-def _merge_lists(base, local_diff, remote_diff, path, decisions):
+def is_diff_all_transients(diff, path, transients):
+    # Resolve diff paths and check them vs transients list
+    for d in diff:
+        # Convert to string to search transients:
+        subpath = path + (d.key,)
+        if d.op == DiffOp.PATCH:
+            # Recurse
+            if not is_diff_all_transients(d.diff, subpath, transients):
+                return False
+        else:
+            # Check path vs transients
+            if star_path(subpath) not in transients:
+                return False
+    return True
+
+
+def chunkname(diffs):
+    aname = ""
+    pname = ""
+    for e in diffs:
+        if e.op == DiffOp.ADDRANGE:
+            aname += "A"
+        elif e.op == DiffOp.REMOVERANGE:
+            pname += "R"
+        elif e.op == DiffOp.PATCH:
+            pname += "P"
+    return aname, pname
+
+
+def _merge_lists(base, local_diff, remote_diff, path, decisions, strategies):
     """Perform a three-way merge of lists. See docstring of merge."""
     assert isinstance(base, list)
+
+    transients = strategies.transients if strategies else {}
 
     # Split up and combine diffs into chunks
     # format: [(begin, end, localdiffs, remotediffs)]
@@ -241,148 +311,137 @@ def _merge_lists(base, local_diff, remote_diff, path, decisions):
     # Loop over chunks of base[j:k], grouping insertion at j into
     # the chunk starting with j
     for (j, k, d0, d1) in chunks:
-        if not (bool(d0) or bool(d1)):
-            # Unmodified chunk
+
+        laname, lpname = chunkname(d0)
+        raname, rpname = chunkname(d1)
+        lname = laname + lpname
+        rname = raname + rpname
+        chunktype = lname + "/" + rname
+        achunktype = laname + "/" + raname
+        pchunktype = lpname + "/" + rpname
+        #allops = "".join(sorted(set(lname + rname)))
+
+        # These are accessed in a lot of different combinations below
+        a0 = d0[:-1]  # local addrange (0 or 1)
+        p0 = d0[-1:]  # local patch or removerange (0 or 1)
+        a1 = d1[:-1]  # remote addrange (0 or 1)
+        p1 = d1[-1:]  # remote patch or removerange (0 or 1)
+
+        # More intuitive to read key than j far below
+        key = j
+
+        # ... The rest of this function is a big if-elif-elif 'switch'
+
+        # Unmodified chunk
+        if chunktype == "/":
             pass   # No-op
 
+        # One-sided modification of chunk
         elif not (bool(d0) and bool(d1)):
-            # One-sided modification of chunk
             decisions.onesided(path, d0, d1)
 
+        # Exactly the same modifications
         elif d0 == d1:
-            # Exactly the same modifications
             decisions.agreement(path, d0, d1)
 
-        # Below notation: A: addition, R: removal, P: patch
-        # Double operations: AP and AR (addition followed by patch or removal)
-        # 15 combinations to cover below:
-        # A/R: addition on one side, removal on other
-        # AR/R: addtion and removal on one side, removal on other
-        # etc.
-        # These can be partially resolved, except for the case of
-        # AR/AR, which is basically a sequence replacement. These are often
-        # complex enough that they are best left as conflicts!
+        # Should always agree above because of chunking
+        elif chunktype == "R/R":
+            nbdime.log.error("Not expecting conflicting two-sided removal at this point.")
 
-        elif (len(d0) == len(d1) == 1 and
-                not d0[0].op == d1[0].op == DiffOp.ADDRANGE):
+        # Workaround for string merge (FIXME: Make a separate function for string merge)
+        elif isinstance(base, string_types) and chunktype == "AP/AP":
+            # In these cases, simply merge the As, then consider patches after
+            _merge_concurrent_inserts(
+                base, a0, a1, path, decisions, strategies)
 
-            # A/R, A/P, R/P or P/P
-            # (R/R will always agree above because of chunking)
-            ld, rd = d0[0], d1[0]
-            ops = (ld.op, rd.op)
-
-            if ld.op == rd.op == DiffOp.PATCH:
-                # P/P, recurse
-                assert ld.key == rd.key
-                key = ld.key
-                bv = base[key]
-                _merge(bv, ld.diff, rd.diff,
-                       path + (key,), decisions)
-            elif DiffOp.REMOVERANGE in ops and DiffOp.PATCH in ops:
-                # R/P, always conflict
-                decisions.conflict(path, d0, d1)
+            # The rest is P/P:
+            # For string base, replace patches with add/remove line
+            # TODO: This is intended as a short term workaround until
+            # more robust chunking of strings are included
+            bv = base[key]
+            lv = patch(bv, d0[1].diff)
+            rv = patch(bv, d1[1].diff)
+            if lv == rv:
+                # Agreed patch on string
+                decisions.agreement(path + (key,),
+                    [op_addrange(key, [lv]), op_removerange(key, 1)],
+                    [op_addrange(key, [rv]), op_removerange(key, 1)])
             else:
-                # A/R or A/P, by eliminiation
-                # Simply perform addition first, then patch/removal
-                # Mark conflicted, as this is suspect
-                assert DiffOp.ADDRANGE in ops
-                if ld.op == DiffOp.ADDRANGE:
-                    # Addition locally
-                    decisions.local_then_remote(path, d0, d1, conflict=True)
-                else:
-                    # Addition remotely
-                    decisions.remote_then_local(path, d0, d1, conflict=True)
+                decisions.conflict(path + (key,),
+                    [op_addrange(key, [lv]), op_removerange(key, 1)],
+                    [op_addrange(key, [rv]), op_removerange(key, 1)])
 
-        elif d0[0].op != d1[0].op:
-            # AR/R, AP/R, AR/P or AP/P
-            if len(d0) > 1:
-                ddouble = d0
-                dsingle = d1[0]
+        # Patch/remove conflicts (with or without prior insertion)
+        elif pchunktype in ("P/P", "P/R", "R/P"):
+            # Deal with prior insertion first
+            if achunktype == "A/A":
+                # In these cases, simply merge the As, then consider patches after
+                _merge_concurrent_inserts(base, a0, a1, path, decisions, strategies)
+            elif achunktype in ("A/", "/A"):
+                # Onesided addition + conflicted patch/remove
+                # TODO: Should we mark addition before patch/remove conflicted as well?
+                decisions.onesided(path, a0, a1)  # conflict=True)
+
+            # Then deal with patches and/or removals
+            if p0 == p1:
+                decisions.agreement(path, p0, p1)
             else:
-                dsingle = d0[0]
-                ddouble = d1
-            double_ops = [d.op for d in ddouble]
-            if double_ops[1] != dsingle.op:
-                # AR/P or AP/R
-                # Onesided addition + conflicted patch/delete as above
-                # TODO: Should we make addition conflicted as well?
-                if dsingle == d1[0]:
-                    # Addition is locally
-                    decisions.onesided(path, d0[0:1], None)
-                    decisions.conflict(path, d0[1:], d1)
+                # XXX Recurse into patches but with parent deletion passed on!!!
+                ldiff = p0[0].diff if p0[0].op == DiffOp.PATCH else ParentDeleted
+                rdiff = p1[0].diff if p1[0].op == DiffOp.PATCH else ParentDeleted
+                thediff = ldiff if rdiff is ParentDeleted else rdiff
+
+                using_inlining_strategy = False  # FIXME XXX
+
+                # If one side is deleted and the other only transients, pick the deletion
+                if ldiff is ParentDeleted and is_diff_all_transients(rdiff, path, transients):
+                    decisions.local(path, p0, p1)
+                elif rdiff is ParentDeleted and is_diff_all_transients(ldiff, path, transients):
+                    decisions.remote(path, p0, p1)
+                elif using_inlining_strategy:
+                    # XXX Check for ParentDeleted in _merge_list/dict/string!
+                    # Possible results of a ParentDeleted / patch situation:
+                    #   - patch contains only transient changes and can be discarded (generic behaviour)
+                    #   - recurse and take ParentDeleted into account, making  (inline behaviour)
+                    #   - add conflict decision on parent and leave it at that (mergetool behaviour)
+                    _merge(base[key], ldiff, rdiff, path + (key,), decisions, strategies)
                 else:
-                    # Addtion is remotely
-                    decisions.onesided(path, None, d1[0:1])
-                    decisions.conflict(path, d0, d1[1:])
-            elif dsingle.op == DiffOp.REMOVERANGE:
-                # AR/R
-                # As chunking assures identical Rs, there is no conflict
-                # here! Simply split into onesided A + agreement R
-                if dsingle == d1[0]:
-                    # Addition is locally
-                    decisions.onesided(path, d0[0:1], None)
-                    decisions.agreement(path, d0[1:], d1)
-                else:
-                    # Addtion is remotely
-                    decisions.onesided(path, None, d1[0:1])
-                    decisions.agreement(path, d0, d1[1:])
-            else:
-                # AP/P, by eliminiation
-                assert dsingle.op == DiffOp.PATCH
-                # Simply mark as conflict, and let auto resolve deal with this
-                decisions.conflict(path, d0, d1)
+                    # Mergetool behaviour, behaviour when no strategy selected:
+                    # just conflicted, no further recursion
+                    decisions.conflict(path, p0, p1)
+
+        # Insert before patch or remove: apply both but mark as conflicted
+        elif chunktype in ("A/P", "A/R"):
+            decisions.local_then_remote(path, d0, d1, conflict=True)
+        elif chunktype in ("P/A", "R/A"):
+            decisions.remote_then_local(path, d0, d1, conflict=True)
+
+        # Merge insertions from both sides and add onesided patch afterwards
+        elif chunktype in ("A/AP", "AP/A"):
+            # Not including patches in merging of inserts
+            _merge_concurrent_inserts(base, a0, a1, path, decisions, strategies)
+            decisions.onesided(path, p0, p1)
+
+        # Identical (ensured by chunking) twosided removal with insertion just before one of them
+        elif chunktype in ("AR/R", "R/AR"):
+            decisions.onesided(path, a0, a1)
+            decisions.agreement(path, p0, p1)
+        # Variations of range substitutions
+        elif chunktype in "AR/AR":
+           # XXX FIXME: Support two-sided removal in _merge_concurrent_inserts, see autoresolve?
+           decisions.conflict(path, d0, d1)
+        elif chunktype in ("AR/A", "A/AR", "A/A", "AR/AR"):
+            # Including removals in merging of inserts
+            _merge_concurrent_inserts(base, d0, d1, path, decisions, strategies)
 
         else:
-            # A/AR, A/AP, AR/AP, AR/AR, AP/AP
-            ops = [d.op for d in d0 + d1]
-            if DiffOp.PATCH in ops:
-                # A/AP, AR/AP or AP/AP:
-                # In these cases, simply merge the As, then consider patches after
-                _merge_concurrent_inserts(
-                    base, d0[:1], d1[:1], path, decisions)
-                if (len(d0) == len(d1) == 2 and
-                        d0[1].op == d1[1].op == DiffOp.PATCH):
-                    # P/P:
-                    assert d0[1].key == d1[1].key
-                    key = d0[1].key
-                    bv = base[key]
-                    if isinstance(base, string_types):
-                        # For string base, replace patches with add/remove line
-                        # TODO: This is intended as a short term workaround until
-                        # more robust chunking of strings are included
-                        lv = patch(bv, d0[1].diff)
-                        rv = patch(bv, d1[1].diff)
-                        if (lv == rv):
-                            # Agreed patch on string
-                            decisions.agreement(
-                                path + (key,),
-                                [op_addrange(key, [lv]), op_removerange(key, 1)],
-                                [op_addrange(key, [rv]), op_removerange(key, 1)])
-                        else:
-                            decisions.conflict(
-                                path + (key,),
-                                [op_addrange(key, [lv]), op_removerange(key, 1)],
-                                [op_addrange(key, [rv]), op_removerange(key, 1)])
-                    else:
-                        # Recurse
-                        _merge(bv, d0[1].diff, d1[1].diff,
-                               path + (key,), decisions)
+            assert nbdime.log.error("Unhandled chunk conflict type %s" % (chunktype,))
 
-                elif (d0[1:] == d1[1:]):
-                    decisions.agreement(path, d0[1:], d1[1:])
-                else:
-                    decisions.conflict(path, d0[1:], d1[1:])
-            elif len(d0) < 2 or len(d1) < 2:
-                # A/A or A/AR
-                _merge_concurrent_inserts(base, d0, d1, path, decisions)
-            else:
-                # AR/AR
-                # This is in principle a range substitution!
-                decisions.conflict(path, d0, d1)
+    # FIXME
 
 
 def _merge_strings(base, local_diff, remote_diff,
-                   path, decisions):
+                   path, decisions, strategies):
     """Perform a three-way merge of strings. See docstring of merge."""
     assert isinstance(base, string_types)
 
@@ -410,38 +469,40 @@ def _merge_strings(base, local_diff, remote_diff,
 
         try:
             _merge_lists(
-                base, local_diff, remote_diff, path, decisions)
+                base, local_diff, remote_diff, path, decisions, strategies)
         finally:
             _merge_strings.recursion = False
 
 _merge_strings.recursion = False
 
 
-def _merge(base, local_diff, remote_diff, path, decisions):
+def _merge(base, local_diff, remote_diff, path, decisions, strategies):
     if isinstance(base, dict):
         return _merge_dicts(
-            base, local_diff, remote_diff, path, decisions)
+            base, local_diff, remote_diff, path, decisions, strategies)
     elif isinstance(base, list):
         return _merge_lists(
-            base, local_diff, remote_diff, path, decisions)
+            base, local_diff, remote_diff, path, decisions, strategies)
     elif isinstance(base, string_types):
         return _merge_strings(
-            base, local_diff, remote_diff, path, decisions)
+            base, local_diff, remote_diff, path, decisions, strategies)
     else:
         raise ValueError("Cannot handle merge of type {}.".format(type(base)))
 
 
-def decide_merge_with_diff(base, local, remote, local_diff, remote_diff):
+def decide_merge_with_diff(base, local, remote, local_diff, remote_diff, strategies=None):
     """Do a three-way merge of same-type collections b, l, r with given diffs
     b->l and b->r."""
+    if strategies is None:
+        strategies = {}
     path = ()
     decisions = MergeDecisionBuilder()
     _merge(base, local_diff, remote_diff, path,
-           decisions)
+           decisions, strategies)
     return decisions.validated(base)
 
 
-def decide_merge(base, local, remote):
+def decide_merge(base, local, remote, strategies=None):
     """Do a three-way merge of same-type collections b, l, r.
 
     Terminology:
@@ -548,6 +609,8 @@ def decide_merge(base, local, remote):
         replace / patch -- manual resolution needed, will only happen if collection type changes in replace
 
     """
+    if strategies is None:
+        strategies = {}
     local_diff = diff(base, local)
     remote_diff = diff(base, remote)
-    return decide_merge_with_diff(base, local, remote, local_diff, remote_diff)
+    return decide_merge_with_diff(base, local, remote, local_diff, remote_diff, strategies)
