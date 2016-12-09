@@ -69,6 +69,9 @@ def test_inline_merge_notebook_metadata():
             },
             "conflicted": {
                 "int_delete_replace": 3,
+                "string_delete_replace": "string that will be deleted and modified",
+                "list_delete_replace": [1],
+                "dict_delete_replace": {"k":"v"},
 
             #     "string": "string v1",
             #     "integer": 456,
@@ -93,8 +96,9 @@ def test_inline_merge_notebook_metadata():
             },
             "conflicted": {
                 "int_delete_replace": 5,
+                "list_delete_replace": [2],
 
-            #     "string": "another text",
+                # "string": "another text",
                  #"integer": 456,
             #     "float": 16.0,
             #     "list": ["hello", "world"],
@@ -121,6 +125,8 @@ def test_inline_merge_notebook_metadata():
                 "dict": {"first": "changed", "third": ".", "newkey": "newvalue"},
             },
             "conflicted": {
+                "string_delete_replace": "string that is modified here and deleted in the other version",
+                "dict_delete_replace": {"k":"x","q":"r"},
 
             #     "string": "different message",
             #     "integer": 456,
@@ -154,6 +160,9 @@ def test_inline_merge_notebook_metadata():
     }
     shared_conflicted = {
         "int_delete_replace": 3,
+        "string_delete_replace": "string that will be deleted and modified",
+        "list_delete_replace": [1],
+        "dict_delete_replace": {"k":"v"},
 
     #     #"string": "string v1",
     #     "string": "another textdifferent message",
@@ -190,6 +199,11 @@ def test_inline_merge_notebook_metadata():
         i, j, k = triplet
         local_diff = diff(md_in[i]["conflicted"], md_in[j]["conflicted"])
         remote_diff = diff(md_in[i]["conflicted"], md_in[k]["conflicted"])
+
+        # This may not be a necessary test, just checking my expectations
+        assert local_diff == sorted(local_diff, key=lambda x: x.key)
+        assert remote_diff == sorted(remote_diff, key=lambda x: x.key)
+
         c = {
             # These are patches on the /metadata dict
             "local_diff": [op_patch("conflicted", local_diff)],
@@ -230,8 +244,6 @@ def test_inline_merge_notebook_metadata():
         local = new_notebook(metadata=md_in[j])
         remote = new_notebook(metadata=md_in[k])
         expected = new_notebook(metadata=md_out[triplet])
-        #if triplet == (1,2,3):
-        #    import ipdb; ipdb.set_trace()
         merged, decisions = merge_notebooks(base, local, remote)
         for d in decisions:
             assert not d.conflict 

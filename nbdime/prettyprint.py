@@ -621,7 +621,7 @@ def pretty_print_diff_entry(a, e, path, out=sys.stdout):
 
 def pretty_print_dict_diff(a, di, path, out=sys.stdout):
     "Pretty-print a nbdime diff."
-    for key, e in sorted((e.key, e) for e in di):
+    for key, e in sorted([(e.key, e) for e in di], key=lambda x: x[0]):
         pretty_print_diff_entry(a, e, path, out)
 
 

@@ -43,6 +43,24 @@ def is_diff_all_transients(diff, path, transients):
 # Decision-making code follows
 #
 # =============================================================================
+import copy
+
+def combine_patches(diffs):
+    patches = {}
+    newdiffs = []
+    for d in diffs:
+        if d.op == DiffOp.PATCH:
+            p = patches.get(d.key)
+            if p is None:
+                p = op_patch(d.key, combine_patches(d.diff))
+                newdiffs.append(p)
+                patches[d.key] = p
+            else:
+                p.diff.extend(combine_patches(d.diff))
+        else:
+            newdiffs.append(d)
+    return sorted(newdiffs, key=lambda x: x.key)
+
 
 def _record_conflicts(base_path, base, unresolved_conflicts, decisions):
     # Collect diffs
@@ -54,12 +72,15 @@ def _record_conflicts(base_path, base, unresolved_conflicts, decisions):
         assert isinstance(rd, list)
         assert base_path == path[:len(base_path)]
         relative_path = path[len(base_path):]
-        if relative_path:
-            import ipdb; ipdb.set_trace()
+        assert not relative_path
         for d in ld:
             local_conflict_diffs.append(d)
         for d in rd:
             remote_conflict_diffs.append(d)
+
+    # Combine patches into canonical tree again
+    local_conflict_diffs = combine_patches(local_conflict_diffs)
+    remote_conflict_diffs = combine_patches(remote_conflict_diffs)
 
     # Record remaining conflicts in field nbdime-conflicts
     conflicts_dict = {
@@ -72,8 +93,10 @@ def _record_conflicts(base_path, base, unresolved_conflicts, decisions):
     else:
         nbdime.log.warning("Recording unresolved conflicts in {}/nbdime-conflicts.".format(join_path(path)))
         op = op_add("nbdime-conflicts", conflicts_dict)
+
     #for k in reversed(base_path):
     #    op = op_patch(k, [op])
+
     custom_diff = [op]
     decisions.custom(base_path, local_conflict_diffs, remote_conflict_diffs, custom_diff)
 
