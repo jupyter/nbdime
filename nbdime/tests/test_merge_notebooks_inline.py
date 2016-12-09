@@ -67,8 +67,10 @@ def test_inline_merge_notebook_metadata():
                 "dict": {"first": "Hello", "second": "World", "third": "!"},
             },
             "conflicted": {
+                "int_delete_replace": 3,
+
             #     "string": "string v1",
-            #     "integer": 456,
+                 "integer": 456,
             #     "float": 32.0,
             #     "list": ["hello", "universe"],
             #     "dict": {"first": "Hello", "second": "World"},
@@ -89,8 +91,10 @@ def test_inline_merge_notebook_metadata():
                 "dict": {"first": "changed", "second": "World", "third": "!", "newkey": "newvalue", "otherkey": "othervalue"},
             },
             "conflicted": {
+                "int_delete_replace": 5,
+
             #     "string": "another text",
-            #     #"integer": 456,
+                 #"integer": 456,
             #     "float": 16.0,
             #     "list": ["hello", "world"],
             #     "dict": {"new": "value", "first": "Hello"}, #"second": "World"},
@@ -116,8 +120,9 @@ def test_inline_merge_notebook_metadata():
                 "dict": {"first": "changed", "third": ".", "newkey": "newvalue"},
             },
             "conflicted": {
+
             #     "string": "different message",
-            #     #"integer": 456,
+            #     "integer": 456,
             #     #"float": 16.0,
             #     "list": ["hello", "again", "world"],
             #     "dict": {"new": "but different", "first": "Hello"}, #"second": "World"},
