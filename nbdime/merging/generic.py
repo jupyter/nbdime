@@ -6,6 +6,7 @@
 from __future__ import unicode_literals
 
 from six import string_types
+import copy
 
 from .decisions import MergeDecisionBuilder
 from .chunks import make_merge_chunks
@@ -18,11 +19,18 @@ from ..utils import star_path, join_path
 import nbdime.log
 
 
-# Set to true to enable some expensive debugging assertions
-DEBUGGING = 0
+# FIXME XXX: Main todos left:
+# - implement resolve_* by rewriting other handlers (search for resolve_ and follow FIXME instructions, see resolve_strategy_record_conflicts for example of expected behaviour)
+# - implement handling of ParentDeleted cases (see top of _merge_lists and _merge_dicts)
+# - _merge_strings is probably broken, test and fix 
+# - extend test_merge_notebooks_inline with more tests
+# - make existing test suite pass, either by modifying tests or fixing remaining bugs
+# - test that this still works with mergetool (it shouldn't need any changes in principle)
+# - remove autoresolve.py after checking for anything more we need from there
 
 
 def is_diff_all_transients(diff, path, transients):
+    "Check if all diffs have paths in the transients set."
     # Resolve diff paths and check them vs transients list
     for d in diff:
         # Convert to string to search transients:
@@ -38,14 +46,9 @@ def is_diff_all_transients(diff, path, transients):
     return True
 
 
-# =============================================================================
-#
-# Decision-making code follows
-#
-# =============================================================================
-import copy
-
 def combine_patches(diffs):
+    """Rewrite diffs in canonical form where only one patch
+    applies to one key and diff entries are sorted by key."""
     patches = {}
     newdiffs = []
     for d in diffs:
@@ -62,17 +65,27 @@ def combine_patches(diffs):
     return sorted(newdiffs, key=lambda x: x.key)
 
 
-def resolve_strategy_record_conflicts(base_path, base, unresolved_conflicts, decisions):
+
+# =============================================================================
+#
+# Decision-making code follows
+#
+# =============================================================================
+
+def collect_unresolved_diffs(base_path, unresolved_conflicts):
     # Collect diffs
     local_conflict_diffs = []
     remote_conflict_diffs = []
     for conf in unresolved_conflicts:
         (path, ld, rd, strategy) = conf
+
         assert isinstance(ld, list)
         assert isinstance(rd, list)
+
         assert base_path == path[:len(base_path)]
         relative_path = path[len(base_path):]
         assert not relative_path
+
         for d in ld:
             local_conflict_diffs.append(d)
         for d in rd:
@@ -81,6 +94,11 @@ def resolve_strategy_record_conflicts(base_path, base, unresolved_conflicts, dec
     # Combine patches into canonical tree again
     local_conflict_diffs = combine_patches(local_conflict_diffs)
     remote_conflict_diffs = combine_patches(remote_conflict_diffs)
+    return local_conflict_diffs, remote_conflict_diffs
+
+
+def resolve_strategy_record_conflicts(base_path, base, unresolved_conflicts, decisions):
+    local_conflict_diffs, remote_conflict_diffs = collect_unresolved_diffs(base_path, unresolved_conflicts)
 
     # Record remaining conflicts in field nbdime-conflicts
     conflicts_dict = {
@@ -91,15 +109,11 @@ def resolve_strategy_record_conflicts(base_path, base, unresolved_conflicts, dec
         nbdime.log.warning("Replacing previous nbdime-conflicts field from base notebook.")
         op = op_replace("nbdime-conflicts", conflicts_dict)
     else:
-        nbdime.log.warning("Recording unresolved conflicts in {}/nbdime-conflicts.".format(join_path(path)))
+        nbdime.log.warning("Recording unresolved conflicts in {}/nbdime-conflicts.".format(join_path(base_path)))
         op = op_add("nbdime-conflicts", conflicts_dict)
-
-    #for k in reversed(base_path):
-    #    op = op_patch(k, [op])
-
     custom_diff = [op]
-    decisions.custom(base_path, local_conflict_diffs, remote_conflict_diffs, custom_diff, conflict=True)
 
+    decisions.custom(base_path, local_conflict_diffs, remote_conflict_diffs, custom_diff, conflict=True)
 
 
 
