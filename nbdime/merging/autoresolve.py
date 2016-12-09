@@ -8,11 +8,12 @@ from __future__ import print_function, unicode_literals
 from six import string_types
 import copy
 import logging
+from itertools import chain
 
 import nbformat
 from nbformat import NotebookNode
 
-from ..diff_format import DiffOp, DiffEntry, op_replace, op_removerange, op_addrange, op_patch
+from ..diff_format import DiffOp, DiffEntry, op_replace, op_removerange, op_addrange, op_patch, op_add, op_remove
 from ..patching import patch, patch_singleline_string
 from .chunks import make_merge_chunks
 from ..utils import join_path, split_path, star_path, is_prefix_array, resolve_path
@@ -81,77 +82,138 @@ def output_marker(text):
     return nbformat.v4.new_output("stream", name="stderr", text=text)
 
 
+def get_outputs_and_note(base, removes, patches):
+    if removes:
+        note = " <removed>"
+        suboutputs = []
+    elif patches:
+        e, = patches  # 0 or 1 item
+
+        # Collect which mime types are modified
+        mkeys = set()
+        keys = set()
+        for d in e.diff:
+            if d.key == "data":
+                assert d.op == DiffOp.PATCH
+                for f in d.diff:
+                    mkeys.add(f.key)
+            else:
+                keys.add(d.key)
+        data = base.get("data")
+        if data:
+            ukeys = set(data.keys()) - mkeys
+        else:
+            ukeys = ()
+
+        notes = []
+        if mkeys or keys:
+            notes.append("modified: {}".format(", ".join(sorted(mkeys))))
+        if ukeys:
+            notes.append("unchanged: {}".format(", ".join(sorted(ukeys))))
+        if notes:
+            note = " <" + "; ".join(notes) + ">"
+        else:
+            note = ""
+
+        suboutputs = [patch(base, e.diff)]
+    else:
+        note = " <unchanged>"
+        suboutputs = [base]
+    return suboutputs, note
+
+
 def make_inline_outputs_value(base, local_diff, remote_diff):
     """Make a list of outputs with conflict markers from conflicting local and remote diffs"""
+
+    # TODO: This can probably be shortened, lots of local/remote copy-pasta here
+
     base_title = "base"
     local_title = "local"
     remote_title = "remote"
 
-    orig = base
+    #local = patch(base, local_diff)
+    #remote = patch(base, remote_diff)
 
-    local = patch(orig, local_diff)
-    remote = patch(orig, remote_diff)
-
-    # TODO: Use diffs to mark only the changed outputs
-
-    pre = []
-    post = []
-    if True:
-        # Gather outputs that are equal in
-        # local and remote from beginning and end
-        i = 0
-        n = min(len(local), len(remote))
-        while i < n and local[i] == remote[i]:
-            pre.append(local[i])
-            i += 1
-        # at this point either i == n or local[i] != remote[i]
-        j = len(local)
-        k = len(remote)
-        while j > i and k > i and local[j-1] == remote[k-1]:
-            j -= 1
-            k -= 1
-            post.append(local[j])
-        post.reverse()
-
-        local = local[i:j]
-        remote = remote[i:k]
-
-    local_note = ""
-    remote_note = ""
+    orig_base = base
+    #orig_local = local
+    #orig_remote = remote
 
     # Define markers
     marker_size = 7  # default in git
-    sep0 = "<"*marker_size
-    sep1 = "|"*marker_size
-    sep2 = "="*marker_size
-    sep3 = ">"*marker_size
+    m0 = "<"*marker_size
+    m1 = "|"*marker_size
+    m2 = "="*marker_size
+    m3 = ">"*marker_size
 
-    sep0 = "%s %s%s\n" % (sep0, local_title, local_note)
-    sep1 = "%s %s\n" % (sep1, base_title)
-    sep2 = "%s\n" % (sep2,)
-    sep3 = "%s %s%s\n" % (sep3, remote_title, remote_note)
+    # Split up and combine diffs into chunks [(begin, end, localdiffs, remotediffs)]
+    chunks = make_merge_chunks(base, local_diff, remote_diff, single_item=True)
 
-    outputs = []
-    outputs.append(output_marker(sep0))
-    outputs.extend(local)
-    outputs.append(output_marker(sep2))
-    outputs.extend(remote)
-    outputs.append(output_marker(sep3))
-
-    # DEBUGGING:
-    # if pre:
-    #     pre = [output_marker("BEGIN PRE")] + pre + [output_marker("END PRE")]
-    # if post:
-    #     post = [output_marker("BEGIN POST")] + post + [output_marker("END POST")]
-
-    inlined = pre + outputs + post
-
-    # Remove all from base
     begin = 0
-    end = len(base)
+    end = len(orig_base)
 
-    # Return range to replace with marked up lines
-    return begin, end, inlined
+    # Loop over chunks of base[j:k], grouping insertion at j into
+    # the chunk starting with j
+    outputs = []
+    for (j, k, d0, d1) in chunks:
+        assert j + 1 == k
+
+        lpatches = [e for e in d0 if e.op == DiffOp.PATCH]
+        rpatches = [e for e in d1 if e.op == DiffOp.PATCH]
+        linserts = [e for e in d0 if e.op == DiffOp.ADDRANGE]
+        rinserts = [e for e in d1 if e.op == DiffOp.ADDRANGE]
+        lremoves = [e for e in d0 if e.op == DiffOp.REMOVERANGE]
+        rremoves = [e for e in d1 if e.op == DiffOp.REMOVERANGE]
+        assert len(lpatches) + len(linserts) + len(lremoves) == len(d0)
+        assert len(rpatches) + len(rinserts) + len(rremoves) == len(d1)
+
+        # TODO: Remove execution_count from patches here?
+
+        # Insert new outputs with surrounding markers
+        if linserts or rinserts:
+            lnote = ""
+            loutputs = []
+            for e in linserts:  # 0 or 1 item
+                loutputs.extend(e.valuelist)
+            rnote = ""
+            routputs = []
+            for e in rinserts:  # 0 or 1 item
+                routputs.extend(e.valuelist)
+
+            outputs.append(output_marker("%s %s%s\n" % (m0, local_title, lnote)))
+            outputs.extend(loutputs)
+            outputs.append(output_marker("%s\n" % (m2,)))
+            outputs.extend(routputs)
+            outputs.append(output_marker("%s %s%s\n" % (m3, remote_title, rnote)))
+
+        if not (lremoves or rremoves or lpatches or rpatches):
+            # Insert base output if untouched
+            if begin == j:
+                begin += 1
+            else:
+                outputs.append(base[j])
+
+        elif lremoves and rremoves:
+            # Just don't add base
+            assert not (lpatches or rpatches)
+
+        else:
+            assert not (lremoves and lpatches)
+            assert not (rremoves and rpatches)
+            lnote = ""
+            rnote = ""
+
+            # Insert changed output with surrounding markers
+            loutputs, lnote = get_outputs_and_note(base[j], lremoves, lpatches)
+            routputs, rnote = get_outputs_and_note(base[j], rremoves, rpatches)
+
+            outputs.append(output_marker("%s %s%s\n" % (m0, local_title, lnote)))
+            outputs.extend(loutputs)
+            outputs.append(output_marker("%s\n" % (m2,)))
+            outputs.extend(routputs)
+            outputs.append(output_marker("%s %s%s\n" % (m3, remote_title, rnote)))
+
+    # Return range to replace with marked up outputs
+    return begin, end, outputs
 
 
 def make_inline_source_value(base, local_diff, remote_diff):
@@ -265,9 +327,10 @@ def strategy2action_dict(resolved_base, le, re, strategy, path, dec):
         # inline-source is handled at a higher level
         pass
     elif strategy == "inline-attachments":
-        # FIXME: Leaving this conflict unresolved until we implement a better solution
-        nbdime.log.warning("Don't know how to resolve attachments yet.")
+        # inline-attachments is handled at a higher level
+        pass
     elif strategy == "inline-outputs":
+        # inline-outputs is handled at a higher level
         pass
     elif strategy == "record-conflict":
         value = resolved_base[key]
@@ -562,6 +625,121 @@ def make_inline_source_decision(source, prefix, local_diff, remote_diff):
     )]
 
 
+def make_inline_attachments_decision(attachments, prefix, local_diff, remote_diff):
+    local_diff = { e.key: e for e in local_diff }
+    remote_diff = { e.key: e for e in remote_diff }
+
+    lkeys = set(local_diff)
+    rkeys = set(remote_diff)
+    unchanged = set(attachments)
+    unchanged -= lkeys
+    unchanged -= rkeys
+    conflicts = lkeys & rkeys
+    lkeys -= conflicts
+    rkeys -= conflicts
+
+    decs = []
+
+    for k in lkeys:
+        ld = local_diff[k]
+        md = MergeDecision(
+            common_path=prefix,  # TODO: Add key?
+            action="local",
+            conflict=False,
+            local_diff=[ld],
+            remote_diff=[],
+            #custom_diff=[],
+        )
+        decs.append(md)
+
+    for k in rkeys:
+        rd = remote_diff[k]
+        md = MergeDecision(
+            common_path=prefix,  # TODO: Add key?
+            action="remote",
+            conflict=False,
+            local_diff=[],
+            remote_diff=[rd],
+            #custom_diff=[],
+        )
+        decs.append(md)
+
+    for k in conflicts:
+        ld = local_diff[k]
+        rd = remote_diff[k]
+        if ld.op == rd.op == DiffOp.REMOVE:
+            # Both removed, decision is either
+            md = MergeDecision(
+                common_path=prefix,  # TODO: Add key?
+                action="either",
+                conflict=False,
+                local_diff=[ld],
+                remote_diff=[rd],
+                #custom_diff=None,
+            )
+        elif ld.op == DiffOp.REMOVE:
+            # Just keep the remote change (don't know what else to do)
+            md = MergeDecision(
+                common_path=prefix,  # TODO: Add key?
+                action="remote",
+                conflict=True,
+                local_diff=[ld],
+                remote_diff=[rd],
+                #custom_diff=None,
+            )
+        elif rd.op == DiffOp.REMOVE:
+            # Just keep the local change (don't know what else to do)
+            md = MergeDecision(
+                common_path=prefix,  # TODO: Add key?
+                action="local",
+                conflict=True,
+                local_diff=[ld],
+                remote_diff=[rd],
+                #custom_diff=None,
+            )
+        else:
+            if rd.op == DiffOp.REPLACE:
+                rval = rd.value
+            elif rd.op == DiffOp.PATCH:
+                rval = patch(attachments[k], rd.diff)
+            elif rd.op == DiffOp.ADD:
+                rval = rd.value
+
+            if ld.op == DiffOp.REPLACE:
+                lval = ld.value
+            elif ld.op == DiffOp.PATCH:
+                lval = patch(attachments[k], ld.diff)
+            elif ld.op == DiffOp.ADD:
+                lval = ld.value
+
+            if lval == rval:
+                # Both result in same value, decision is either
+                md = MergeDecision(
+                    common_path=prefix,  # TODO: Add key?
+                    action="either",
+                    conflict=False,
+                    local_diff=[ld],
+                    remote_diff=[rd],
+                    #custom_diff=None,
+                )
+            else:
+                md = MergeDecision(
+                    common_path=prefix,  # TODO: Add key?
+                    action="custom",
+                    conflict=True,
+                    local_diff=[ld],
+                    remote_diff=[rd],
+                    custom_diff=[
+                        op_add("LOCAL_" + k, lval),
+                        op_add("REMOTE_" + k, rval)
+                        ]
+                )
+        # Add decision
+        decs.append(md)
+
+    return decs
+
+
 def make_inline_outputs_decision(outputs, prefix, local_diff, remote_diff):
     begin, end, inlined = make_inline_outputs_value(outputs, local_diff, remote_diff)
     custom_diff = []
@@ -668,6 +846,7 @@ def autoresolve(base, decisions, strategies):
     if strategies.get('/cells/*/source') == 'inline-source':
         cell_decisions = bundle_decisions(
             base, cell_decisions, "/cells/*/source", make_inline_source_decision)
+
     if strategies.get('/cells/*/outputs') == 'remove':
         cell_decisions = bundle_decisions(
             base, cell_decisions, "/cells/*/outputs", make_remove_decision)
@@ -677,6 +856,10 @@ def autoresolve(base, decisions, strategies):
     elif strategies.get('/cells/*/outputs') == 'inline-outputs':
         cell_decisions = bundle_decisions(
             base, cell_decisions, '/cells/*/outputs', make_inline_outputs_decision)
+
+    if strategies.get('/cells/*/attachments') == 'inline-attachments':
+        cell_decisions = bundle_decisions(
+            base, cell_decisions, '/cells/*/attachments', make_inline_attachments_decision)
 
     generic_decisions = autoresolve_generic(base, generic_decisions, strategies)
 

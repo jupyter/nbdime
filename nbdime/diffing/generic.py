@@ -33,8 +33,11 @@ def default_differs():
     return defaultdict(lambda: diff)
 
 
-def compare_strings_approximate(x, y):
+def compare_strings_approximate(x, y, threshold=0.7):
     "Compare to strings with approximate heuristics."
+    # TODO: Add configuration framework
+    # TODO: Tune threshold with realistic sources
+
     # Cutoff on equality (Python has fast hash functions for strings)
     if x == y:
         return True
@@ -42,7 +45,6 @@ def compare_strings_approximate(x, y):
     # TODO: Investigate performance and quality of this difflib ratio approach,
     # possibly one of the weakest links of the notebook diffing algorithm.
     # Alternatives to try are the libraries diff-patch-match and Levenschtein
-    threshold = 0.7  # TODO: Add configuration framework and tune with real world examples?
 
     # Informal benchmark normalized to operator ==:
     #    1.0  operator ==

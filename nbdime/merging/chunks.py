@@ -106,7 +106,7 @@ def make_chunks(boundaries, diffs):
     return chunks
 
 
-def make_merge_chunks(base, *diffs):
+def make_merge_chunks(base, *diffs, **kwargs):
     """Return list of chunks (i, j, d0, d1, ..., dn) where dX are
     lists of diff entries affecting the range base[i:j].
 
@@ -119,13 +119,18 @@ def make_merge_chunks(base, *diffs):
     at i (the beginning of the range) and the other a
     removerange or patch covering the full range i:j.
     """
-    # Split diffs on union of diff entry boundaries such that
-    # no diff entry overlaps with more than one other entry.
-    # Including 0,N makes loop over chunks cleaner.
-    boundaries = set((0, len(base)))
-    for d in diffs:
-        boundaries |= get_section_boundaries(d)
-    boundaries = sorted(boundaries)
+    if kwargs.get("single_item"):
+        # Split diff on single items such that no chunk or
+        # diff entry covers more than one base item
+        boundaries = list(range(len(base)+1))
+    else:
+        # Split diffs on union of diff entry boundaries such that
+        # no diff entry overlaps with more than one other entry.
+        # Including 0,N makes loop over chunks cleaner.
+        boundaries = set((0, len(base)))
+        for d in diffs:
+            boundaries |= get_section_boundaries(d)
+        boundaries = sorted(boundaries)
 
     split_diffs = [split_diffs_on_boundaries(d, boundaries) for d in diffs]
 

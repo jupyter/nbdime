@@ -74,9 +74,13 @@ def autoresolve_notebook_conflicts(base, decisions, args):
             "/cells/*/execution_count": "clear",
             "/cells/*/outputs/*/execution_count": "clear",
         })
+
     merge_strategy = args.merge_strategy if args else "inline"
     input_strategy = args.input_strategy if args else None
     output_strategy = args.output_strategy if args else None
+
+    input_strategy = input_strategy or merge_strategy
+    output_strategy = output_strategy or merge_strategy
 
     if merge_strategy == "mergetool":
         # Mergetool strategy will prevent autoresolve from
@@ -86,7 +90,8 @@ def autoresolve_notebook_conflicts(base, decisions, args):
             "/cells/*/outputs": "mergetool",
             "/cells/*/attachments": "mergetool",
         })
-    elif merge_strategy.startswith('use-') or merge_strategy == 'union':
+    elif (merge_strategy.startswith('use-') or
+            merge_strategy == 'union'):
         strategies.fall_back = args.merge_strategy
     else:
         # Default strategies for cli tool, intended to produce
@@ -96,20 +101,20 @@ def autoresolve_notebook_conflicts(base, decisions, args):
             "/cells/*/metadata": "record-conflict",
             "/cells/*/outputs/*/metadata": "record-conflict",
             "/cells/*/source": "inline-source",
-            "/cells/*/outputs": "clear-all", # "inline-outputs"
-            #"/cells/*/attachments": "inline-attachments",
+            "/cells/*/outputs": "inline-outputs",
+            "/cells/*/attachments": "inline-attachments",
         })
 
     if input_strategy:
         if input_strategy == 'inline':
             strategies.update({
                 "/cells/*/source": "inline-source",
-                #"/cells/*/attachments": "inline-attachments",
+                "/cells/*/attachments": "inline-attachments",
             })
         else:
             strategies.update({
                 "/cells/*/source": input_strategy,
-                #"/cells/*/attachments": input_strategy,
+                "/cells/*/attachments": input_strategy,
             })
     if output_strategy:
         if output_strategy == 'inline':
