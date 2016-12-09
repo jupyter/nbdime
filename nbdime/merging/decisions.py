@@ -161,20 +161,19 @@ class MergeDecisionBuilder(object):
             remote_diff=remote_diff,
             )
 
-    def conflict(self, path, local_diff, remote_diff, strategy=None):
-        """Register a potential conflict. If strategy is given, try to resolve conflict first.
+    def tryresolve(self, path, local_diff, remote_diff, strategy):
+        """Try to resolve conflict with given strategy.
+
+        If successful, registers a decision and returns the action used.
+        If failing, does not register a decision and returns None.
 
         Valid strategies here are:
             use-local, use-remote, use-base, clear, take-max
-
-        Some more complex strategies need to be handled at an earlier
-        stage and will result in a regular conflict here.
         """
         assert local_diff and remote_diff
         assert local_diff != remote_diff
 
         # Allow strategies to defuse situation first
-        conflict = False
         action = None
         if strategy:
             # Applying strategies here works well for leaf nodes at least
@@ -191,18 +190,39 @@ class MergeDecisionBuilder(object):
             elif strategy == "fail":
                 nbdime.log.error("Unexpected conflict on {}.".format(path))
 
+        if action is not None:
+            self.add_decision(
+                path=path,
+                conflict=False,
+                action=action,
+                local_diff=local_diff,
+                remote_diff=remote_diff,
+                )
+        return action
+
+    def conflict(self, path, local_diff, remote_diff, strategy=None):
+        """Register a potential conflict.
+        
+        If strategy is given, tries to resolve conflict first with tryresolve.
+
+        Complex strategies not handled by tryresolve need to be handled at
+        an earlier stage and will result in a regular conflict here.
+        """
+        assert local_diff and remote_diff
+        assert local_diff != remote_diff
+
+        # Try to defuse situation with given strategy
+        action = self.tryresolve(path, local_diff, remote_diff, strategy)
+
         # If none of them applied, use base and mark as conflict
         if action is None:
-            conflict = True
-            action = "base"
-
-        self.add_decision(
-            path=path,
-            conflict=conflict,
-            action=action,
-            local_diff=local_diff,
-            remote_diff=remote_diff,
-            )
+            self.add_decision(
+                path=path,
+                conflict=True,
+                action="base",
+                local_diff=local_diff,
+                remote_diff=remote_diff,
+                )
 
     def local(self, path, local_diff, remote_diff, conflict=False):
         assert local_diff

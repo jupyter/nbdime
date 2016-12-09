@@ -11,10 +11,10 @@ from .decisions import MergeDecisionBuilder
 from .chunks import make_merge_chunks
 from ..diffing import diff
 from ..diff_format import (
-    DiffOp, ParentDeleted, Missing, as_dict_based_diff, op_patch, op_addrange, op_removerange)
+    DiffOp, ParentDeleted, Missing, as_dict_based_diff, op_patch, op_addrange, op_removerange, op_add, op_replace)
 from ..diffing.notebooks import notebook_predicates, notebook_differs
 from ..patching import patch
-from ..utils import star_path
+from ..utils import star_path, join_path
 import nbdime.log
 
 
@@ -44,10 +44,58 @@ def is_diff_all_transients(diff, path, transients):
 #
 # =============================================================================
 
+def _record_conflicts(base, unresolved_conflicts, decisions):
+    # Collect diffs
+    local_conflict_diffs = []
+    remote_conflict_diffs = []
+    for conf in unresolved_conflicts:
+        (path, ld, rd, strategy) = conf
+        local_conflict_diffs.extend(ld)
+        remote_conflict_diffs.extend(ld)
+
+    # Record remaining conflicts in field nbdime-conflicts
+    conflicts_dict = {
+        "local_diff": local_conflict_diffs,
+        "remote_diff": remote_conflict_diffs,
+    }
+    if "nbdime-conflicts" in base:
+        nbdime.log.warning("Replacing previous nbdime-conflicts field from base notebook.")
+        op = op_replace("nbdime-conflicts", conflicts_dict)
+    else:
+        nbdime.log.warning("Recording unresolved conflicts in {}/nbdime-conflicts.".format(join_path(path)))
+        op = op_add("nbdime-conflicts", conflicts_dict)
+    for k in reversed(path):
+        op = op_patch(k, [op])
+    custom_diff = [op]
+    decisions.custom(path, local_conflict_diffs, remote_conflict_diffs, custom_diff)
+
+
+def wrap_subconflicts(key, subconflicts):
+    unresolved_conflicts = []
+    for conf in subconflicts:
+        (path, ld, rd, strategy) = conf
+        ld = [op_patch(key, ld)]
+        rd = [op_patch(key, rd)]
+        unresolved_conflicts.append((path, ld, rd, strategy))
+    return unresolved_conflicts
+
+
+def tryresolve_conflicts(conflicts, decisions):
+    unresolved_conflicts = []
+    for conf in conflicts:
+        (path, ld, rd, strategy) = conf
+        # Try to resolve conflict with strategy
+        action_taken = decisions.tryresolve(path, ld, rd, strategy=strategy)
+        if not action_taken:
+            unresolved_conflicts.append(conf)
+    return unresolved_conflicts
+
 
 def _merge_dicts(base, local_diff, remote_diff, path, decisions, strategies):
     """Perform a three-way merge of dicts. See docstring of merge."""
     assert isinstance(base, dict)
+
+    # FIXME XXX Handle if local or remote diff is ParentDeleted
 
     # Converting to dict-based diff format for dicts for convenience
     # This step will be unnecessary if we change the diff format to work this
@@ -81,6 +129,11 @@ def _merge_dicts(base, local_diff, remote_diff, path, decisions, strategies):
 
     # Get base path for strategy lookup
     spath = star_path(path)
+
+    # Get strategy for this dict
+    parent_strategy = strategies.get(spath)
+    unresolved_conflicts = []
+    conflicts = []
 
     # (4) (5) (6) (7) (8)
     # Then we have the potentially conflicting changes
@@ -138,11 +191,11 @@ x    "take-max",         # Take the maximum value in case of conflict
             decisions.agreement(path, ld, rd)
         elif ld.op == DiffOp.REMOVE or rd.op == DiffOp.REMOVE:
             # (5) Conflict: removed one place and edited another
-            decisions.conflict(path, ld, rd, strategy=strategy)
+            conflicts.append((path, ld, rd, strategy))
         elif ld.op != rd.op:
             # Note that this means the below cases always have the same op
             # (5) Conflict: edited in different ways
-            decisions.conflict(path, ld, rd, strategy=strategy)
+            conflicts.append((path, ld, rd, strategy))
         elif ld == rd:
             # If inserting/replacing/patching produces the same value, just use
             # it
@@ -151,19 +204,41 @@ x    "take-max",         # Take the maximum value in case of conflict
             # (6) Insert in both local and remote, values are different
             # This can possibly be resolved by recursion, but leave that to
             # autoresolve
-            decisions.conflict(path, ld, rd, strategy=strategy)  # XXX FIXME: consider merging added values
+            # XXX FIXME: consider merging added values
+            conflicts.append((path, ld, rd, strategy))
         elif ld.op == DiffOp.REPLACE:
             # (7) Replace in both local and remote, values are different,
             #     record a conflict against original base value
-            decisions.conflict(path, ld, rd, strategy=strategy)
+            conflicts.append((path, ld, rd, strategy))
         elif ld.op == DiffOp.PATCH:
             # (8) Patch on both local and remote, values are different
             # Patches produce different values, try merging the substructures
             # (a patch command only occurs when the type is a collection, so we
             # can safely recurse here and know we won't encounter e.g. an int)
-            _merge(bv, ld.diff, rd.diff, path + (key,), decisions, strategies)  # XXX FIXME: pass parent strategy? push it on strategy stack?
+            subconflicts = _merge(bv, ld.diff, rd.diff, path + (key,), decisions, strategies)
+            unresolved_conflicts.extend(wrap_subconflicts(key, subconflicts))
         else:
             raise ValueError("Invalid diff ops {} and {}.".format(ld.op, rd.op))
+
+    # Attempt to resolve conflicts that occured at this level
+    unresolved_conflicts.extend(tryresolve_conflicts(conflicts, decisions))
+
+    # Resolve remaining conflicts with strategy at this level if any
+    # FIXME XXX: Make sure resolutions are marked as conflicts
+    if parent_strategy == "record-conflict":
+        # affects conflicts on dicts at /***/metadata or below
+        _record_conflicts(base, unresolved_conflicts, decisions)
+        unresolved_conflicts = []
+    elif parent_strategy == "inline-attachments":
+        # affects conflicts on string at /cells/*/attachments or below
+        _inline_attachments(base, unresolved_conflicts, decisions)  # FIXME: Implement
+        unresolved_conflicts = []
+
+    # FIXME: Move to _merge_strings
+    #elif parent_strategy == "inline-source":      # affects conflicts on string at /cells/*/source      or /cells/*/source/*
+
+    # Return the rest of the conflicts
+    return unresolved_conflicts
 
 
 def _split_addrange(key, local, remote, path, strategies=None):
@@ -186,6 +261,8 @@ def _split_addrange(key, local, remote, path, strategies=None):
                              differs=notebook_differs.copy())
 
     strategy = strategies.get(star_path(path + (key,)))
+
+    unresolved_conflicts = []
 
     # Next, translate the diff into decisions
     decisions = MergeDecisionBuilder()
@@ -213,7 +290,7 @@ def _split_addrange(key, local, remote, path, strategies=None):
             local_len = intermediate_diff[i+1].length
             ld = [op_addrange(key, local[d.key:d.key+local_len])]
             rd = [op_addrange(key, d.valuelist)]
-            decisions.conflict(path, ld, rd, strategy=strategy)
+            unresolved_conflicts.append((path, ld, rd, strategy))
             offset += len(d.valuelist) - local_len
             # (*) Here we treat two ops in one go, which we mark
             # by setting taken beyond the key of the next op:
@@ -224,7 +301,7 @@ def _split_addrange(key, local, remote, path, strategies=None):
             # (1) Conflict (one element each)
             ld = [op_addrange(key, [local[d.key]])]
             rd = [op_addrange(key, [d.value])]
-            decisions.conflict(path, ld, rd, strategy=strategy)
+            unresolved_conflicts.append((path, ld, rd, strategy))
             taken += 1
 
         elif d.op in (DiffOp.REMOVE, DiffOp.REMOVERANGE):
@@ -248,11 +325,10 @@ def _split_addrange(key, local, remote, path, strategies=None):
 
         elif d.op == DiffOp.PATCH:
             # Predicates indicate that local and remote are similar!
-            # Mark as conflict, possibly for autoresolve to deal with
-            decisions.conflict(path,
+            unresolved_conflicts.append((path,
                                [op_addrange(key, [local[d.key]])],
                                [op_addrange(key, [remote[d.key + offset]])],
-                               strategy=strategy)
+                               strategy))
             taken += 1
 
         else:
@@ -264,10 +340,11 @@ def _split_addrange(key, local, remote, path, strategies=None):
         overlap = [op_addrange(key, local[taken:])]
         decisions.agreement(path, overlap, overlap)
 
-    if len(decisions.decisions) > 1 or not decisions.decisions[0].conflict:
-        return decisions.decisions
-    else:
-        return None
+    # if len(decisions.decisions) > 1 or not decisions.decisions[0].conflict:
+    #     return decisions.decisions
+    # else:
+    #     return None
+    return decisions.decisions, unresolved_conflicts
 
 
 def _merge_concurrent_inserts(base, ldiff, rdiff, path, decisions, strategies=None):
@@ -279,11 +356,18 @@ def _merge_concurrent_inserts(base, ldiff, rdiff, path, decisions, strategies=No
     # Assume first ops are always inserts
     assert ldiff[0].op == DiffOp.ADDRANGE and rdiff[0].op == DiffOp.ADDRANGE
 
-    subdec = _split_addrange(ldiff[0].key,
+    unresolved_conflicts = []
+
+    subdec, subconflicts = _split_addrange(ldiff[0].key,
         ldiff[0].valuelist, rdiff[0].valuelist,
         path, strategies=strategies)
 
-    if subdec:
+    # FIXME XXX: _split_addrange had a very specific return condition, what does it do? Probably need to match behaviour: len(subdec) > 1 or len(subdec) == 1 and subdec[0]
+    # if subdec:
+    #     for conf in subconflicts:
+    #         unresolved_conflicts.append(conf)
+    if not subconflicts:
+
         # We were able to split insertion [+ onesided removal]
         decisions.extend(subdec)
 
@@ -294,7 +378,9 @@ def _merge_concurrent_inserts(base, ldiff, rdiff, path, decisions, strategies=No
         # Were not able to infer any additional information,
         # simply add as they are (conflicted).
         strategy = strategies.get(star_path(path + (ldiff[0].key,)))
-        decisions.conflict(path, ldiff, rdiff, strategy=strategy)
+        unresolved_conflicts.append((path, ldiff, rdiff, strategy))
+
+    return unresolved_conflicts
 
 
 def chunkname(diffs):
@@ -314,11 +400,22 @@ def _merge_lists(base, local_diff, remote_diff, path, decisions, strategies):
     """Perform a three-way merge of lists. See docstring of merge."""
     assert isinstance(base, list)
 
+    # FIXME XXX Handle if local or remote diff is ParentDeleted
+
+
     transients = strategies.transients if strategies else {}
 
     # Split up and combine diffs into chunks
     # format: [(begin, end, localdiffs, remotediffs)]
     chunks = make_merge_chunks(base, local_diff, remote_diff)
+
+    # Get base path for strategy lookup
+    spath = star_path(path)
+
+    # Get strategy for this dict
+    parent_strategy = strategies.get(spath)
+    unresolved_conflicts = []
+    conflicts = []
 
     # Loop over chunks of base[j:k], grouping insertion at j into
     # the chunk starting with j
@@ -363,8 +460,10 @@ def _merge_lists(base, local_diff, remote_diff, path, decisions, strategies):
         # Workaround for string merge (FIXME: Make a separate function for string merge)
         elif isinstance(base, string_types) and chunktype == "AP/AP":
             # In these cases, simply merge the As, then consider patches after
-            _merge_concurrent_inserts(
+            subconflicts = _merge_concurrent_inserts(
                 base, a0, a1, path, decisions, strategies)
+            conflicts.extend(subconflicts)  # FIXME XXX: Wrap or not?
+            #conflicts.extend(wrap_subconflicts(key, subconflicts))
 
             # The rest is P/P:
             # For string base, replace patches with add/remove line
@@ -379,16 +478,21 @@ def _merge_lists(base, local_diff, remote_diff, path, decisions, strategies):
                     [op_addrange(key, [lv]), op_removerange(key, 1)],
                     [op_addrange(key, [rv]), op_removerange(key, 1)])
             else:
-                decisions.conflict(path + (key,),
+                unresolved_conflicts.append(
+                    (path + (key,),
                     [op_addrange(key, [lv]), op_removerange(key, 1)],
                     [op_addrange(key, [rv]), op_removerange(key, 1)])
+                )
 
         # Patch/remove conflicts (with or without prior insertion)
         elif pchunktype in ("P/P", "P/R", "R/P"):
             # Deal with prior insertion first
             if achunktype == "A/A":
                 # In these cases, simply merge the As, then consider patches after
-                _merge_concurrent_inserts(base, a0, a1, path, decisions, strategies)
+                subconflicts = _merge_concurrent_inserts(base, a0, a1, path, decisions, strategies)
+                conflicts.extend(subconflicts)  # FIXME XXX: Wrap or not?
+                #conflicts.extend(wrap_subconflicts(key, subconflicts))
+
             elif achunktype in ("A/", "/A"):
                 # Onesided addition + conflicted patch/remove
                 # TODO: Should we mark addition before patch/remove conflicted as well?
@@ -403,24 +507,23 @@ def _merge_lists(base, local_diff, remote_diff, path, decisions, strategies):
                 rdiff = p1[0].diff if p1[0].op == DiffOp.PATCH else ParentDeleted
                 thediff = ldiff if rdiff is ParentDeleted else rdiff
 
-                using_inlining_strategy = False  # FIXME XXX
+                # Possible results of a ParentDeleted / patch situation:
+                #   - patch contains only transient changes and can be discarded (generic behaviour)
+                #   - recurse and take ParentDeleted into account, making custom decisions (inline behaviour)
+                #   - add conflict decision on parent and leave it at that (mergetool behaviour)
 
-                # If one side is deleted and the other only transients, pick the deletion
-                if ldiff is ParentDeleted and is_diff_all_transients(rdiff, path, transients):
-                    decisions.local(path, p0, p1)
-                elif rdiff is ParentDeleted and is_diff_all_transients(ldiff, path, transients):
-                    decisions.remote(path, p0, p1)
-                elif using_inlining_strategy:
-                    # XXX Check for ParentDeleted in _merge_list/dict/string!
-                    # Possible results of a ParentDeleted / patch situation:
-                    #   - patch contains only transient changes and can be discarded (generic behaviour)
-                    #   - recurse and take ParentDeleted into account, making  (inline behaviour)
-                    #   - add conflict decision on parent and leave it at that (mergetool behaviour)
-                    _merge(base[key], ldiff, rdiff, path + (key,), decisions, strategies)
+                if ( (ldiff is ParentDeleted and is_diff_all_transients(rdiff, path, transients))
+                    or (rdiff is ParentDeleted and is_diff_all_transients(ldiff, path, transients))):
+                    # If one side is deleted and the other only transients,
+                    # drop the transient diffs and let parent pick the deletion
+                    pass
+                elif ldiff is ParentDeleted or rdiff is ParentDeleted:
+                    # If one is deleted, no point in recursing? FIXME XXX: Consider if recursion is still useful to have strategies applied to subdocuments, followed by a check on subconflicts
+                    conflicts.append((path, p0, p1, strategy))
                 else:
-                    # Mergetool behaviour, behaviour when no strategy selected:
-                    # just conflicted, no further recursion
-                    decisions.conflict(path, p0, p1)
+                    # Otherwise recurse and pass on unresolved conflicts
+                    subconflicts = _merge(base[key], ldiff, rdiff, path + (key,), decisions, strategies)
+                    unresolved_conflicts.extend(wrap_subconflicts(key, subconflicts))
 
         # Insert before patch or remove: apply both but mark as conflicted
         elif chunktype in ("A/P", "A/R"):
@@ -431,7 +534,9 @@ def _merge_lists(base, local_diff, remote_diff, path, decisions, strategies):
         # Merge insertions from both sides and add onesided patch afterwards
         elif chunktype in ("A/AP", "AP/A"):
             # Not including patches in merging of inserts
-            _merge_concurrent_inserts(base, a0, a1, path, decisions, strategies)
+            subconflicts = _merge_concurrent_inserts(base, a0, a1, path, decisions, strategies)
+            conflicts.extend(subconflicts)  # FIXME XXX: Wrap or not?
+            #conflicts.extend(wrap_subconflicts(key, subconflicts))
             decisions.onesided(path, p0, p1)
 
         # Variations of range substitutions
@@ -440,20 +545,37 @@ def _merge_lists(base, local_diff, remote_diff, path, decisions, strategies):
             decisions.onesided(path, a0, a1)
             decisions.agreement(path, p0, p1)
         elif chunktype in "AR/AR":
-           # XXX FIXME: Support two-sided removal in _merge_concurrent_inserts, see autoresolve?
-           decisions.conflict(path, d0, d1)
+            # XXX FIXME: Support two-sided removal in _merge_concurrent_inserts, see autoresolve?
+            unresolved_conflicts.append((path, d0, d1, strategy))
         elif chunktype in ("AR/A", "A/AR", "A/A"): #, "AR/AR"):
             # Including removals in merging of inserts
-            _merge_concurrent_inserts(base, d0, d1, path, decisions, strategies)
-
+            subconflicts = _merge_concurrent_inserts(base, d0, d1, path, decisions, strategies)
+            conflicts.extend(subconflicts)  # FIXME XXX: Wrap or not?
+            #conflicts.extend(wrap_subconflicts(key, subconflicts))
         else:
             assert nbdime.log.error("Unhandled chunk conflict type %s" % (chunktype,))
+
+    # Attempt to resolve conflicts that occured at this level
+    unresolved_conflicts.extend(tryresolve_conflicts(conflicts, decisions))
+
+    # Resolve remaining conflicts with strategy at this level if any
+    if parent_strategy == "inline-outputs":
+        # affects conflicts on string at /cells/*/outputs     or /cells/*/outputs/*
+        _inline_outputs(base, unresolved_conflicts, decisions)  # FIXME XXX
+        unresolved_conflicts = []
+
+    # Return the rest of the conflicts
+    return unresolved_conflicts
 
 
 def _merge_strings(base, local_diff, remote_diff,
                    path, decisions, strategies):
     """Perform a three-way merge of strings. See docstring of merge."""
     assert isinstance(base, string_types)
+
+    # FIXME XXX Handle if local or remote diff is ParentDeleted
+
+    unresolved_conflicts = []
 
     # This functions uses a (static) state variable to track recursion.
     # The first time it is called, base can (potentially) be a
@@ -469,19 +591,24 @@ def _merge_strings(base, local_diff, remote_diff,
 
         # Mark as a conflict on parent (line):
         k = path[-1]
-        decisions.conflict(path[:-1],
-                           [op_patch(k, local_diff)],
-                           [op_patch(k, remote_diff)])
+        unresolved_conflicts.append(
+            (path[:-1], [op_patch(k, local_diff)], [op_patch(k, remote_diff)])
+        )
+
     else:
         # Merge lines as lists
         _merge_strings.recursion = True
         base = base.splitlines(True)
 
-        try:
-            _merge_lists(
+        try:  # FIXME XXX: Why does this throw again?
+            subconflicts = _merge_lists(
                 base, local_diff, remote_diff, path, decisions, strategies)
+            # FIXME XXX: Do we need to adjust the conflict diffs here?
+            unresolved_conflicts.extend(subconflicts)
         finally:
             _merge_strings.recursion = False
+
+    return unresolved_conflicts
 
 _merge_strings.recursion = False
 
@@ -504,11 +631,19 @@ def decide_merge_with_diff(base, local, remote, local_diff, remote_diff, strateg
     """Do a three-way merge of same-type collections b, l, r with given diffs
     b->l and b->r."""
     if strategies is None:
-        strategies = {}
+        strategies = {}  # FIXME: Create dummy with .transients or require strategies
     path = ()
     decisions = MergeDecisionBuilder()
-    _merge(base, local_diff, remote_diff, path,
-           decisions, strategies)
+
+    unresolved_conflicts = _merge(base,
+        local_diff, remote_diff,
+        path, decisions, strategies)
+
+    # Apply remaining conflicts (ignoring strategy, already attempted)
+    # TODO: Pop unneccesary patches here?
+    for (path, ld, rd, strategy) in unresolved_conflicts:
+        decisions.conflict(path, ld, rd)
+
     return decisions.validated(base)
 
 

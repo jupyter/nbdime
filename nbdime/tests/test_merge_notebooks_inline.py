@@ -4,6 +4,7 @@ import nbformat
 from nbformat.v4 import new_notebook, new_code_cell, new_markdown_cell, new_output
 
 from nbdime import merge_notebooks, diff
+from nbdime.diff_format import op_patch
 
 
 def test_inline_merge_empty_notebooks():
@@ -70,7 +71,7 @@ def test_inline_merge_notebook_metadata():
                 "int_delete_replace": 3,
 
             #     "string": "string v1",
-                 "integer": 456,
+            #     "integer": 456,
             #     "float": 32.0,
             #     "list": ["hello", "universe"],
             #     "dict": {"first": "Hello", "second": "World"},
@@ -152,6 +153,8 @@ def test_inline_merge_notebook_metadata():
         "dict": {"first": "changed", "third": ".",  "newkey": "newvalue", "otherkey": "othervalue"},
     }
     shared_conflicted = {
+        "int_delete_replace": 3,
+
     #     #"string": "string v1",
     #     "string": "another textdifferent message",
 
@@ -182,21 +185,25 @@ def test_inline_merge_notebook_metadata():
         },
     }
 
+    # Fill in expected conflict records
+    for triplet in sorted(md_out.keys()):
+        i, j, k = triplet
+        # TODO: should we have the path /metadata in diffs?
+        local_diff = diff(md_in[i]["conflicted"], md_in[j]["conflicted"])
+        remote_diff = diff(md_in[i]["conflicted"], md_in[k]["conflicted"])
+        c = {
+            "local_diff": op_patch("metadata", op_patch("conflicted", local_diff)),
+            "remote_diff": op_patch("metadata", op_patch("conflicted", remote_diff)),
+        }
+        md_out[triplet]["nbdime-conflicts"] = c  # FIXME: Fix record-conflict strategy then enable this line
+
     # Fill in the trivial merge results
     for i in (1, 2, 3):
         for j in (1, 2, 3):
             for k in (i, j):
-                # For any combination i,j,i or i,j,j the result should be j
+                # For any combination i,j,i or i,j,j the
+                # result should be j with no conflicts
                 md_out[(i,j,k)] = md_in[j]
-
-    # Fill in expected conflict records
-    for triplet in sorted(md_out.keys()):
-        i, j, k = triplet
-        c = { # TODO: missing path /metadata in diffs
-            "local_diff": diff(md_in[i]["conflicted"], md_in[j]["conflicted"]),
-            "remote_diff": diff(md_in[i]["conflicted"], md_in[k]["conflicted"]),
-        }
-        md_out[triplet]["nbdime-conflicts"] = c
 
     tested = set()
     # Check the trivial merge results
@@ -211,6 +218,8 @@ def test_inline_merge_notebook_metadata():
                 # For any combination i,j,i or i,j,j the result should be j
                 expected = new_notebook(metadata=md_in[j])
                 merged, decisions = merge_notebooks(base, local, remote)
+                for d in decisions:
+                    assert not d.conflict 
                 assert expected == merged
 
     # Check handcrafted merge results
@@ -221,8 +230,12 @@ def test_inline_merge_notebook_metadata():
         local = new_notebook(metadata=md_in[j])
         remote = new_notebook(metadata=md_in[k])
         expected = new_notebook(metadata=md_out[triplet])
+        #if triplet == (1,2,3):
+        #    import ipdb; ipdb.set_trace()
         merged, decisions = merge_notebooks(base, local, remote)
-        assert expected == merged  # FIXME: Enable when expected values are filled in
+        for d in decisions:
+            assert not d.conflict 
+        assert expected == merged
 
     # At least try to run merge without crashing for permutations
     # of md_in that we haven't constructed expected results for
