@@ -188,14 +188,14 @@ def test_inline_merge_notebook_metadata():
     # Fill in expected conflict records
     for triplet in sorted(md_out.keys()):
         i, j, k = triplet
-        # TODO: should we have the path /metadata in diffs?
         local_diff = diff(md_in[i]["conflicted"], md_in[j]["conflicted"])
         remote_diff = diff(md_in[i]["conflicted"], md_in[k]["conflicted"])
         c = {
-            "local_diff": op_patch("metadata", op_patch("conflicted", local_diff)),
-            "remote_diff": op_patch("metadata", op_patch("conflicted", remote_diff)),
+            # These are patches on the /metadata dict
+            "local_diff": [op_patch("conflicted", local_diff)],
+            "remote_diff": [op_patch("conflicted", remote_diff)],
         }
-        md_out[triplet]["nbdime-conflicts"] = c  # FIXME: Fix record-conflict strategy then enable this line
+        md_out[triplet]["nbdime-conflicts"] = c
 
     # Fill in the trivial merge results
     for i in (1, 2, 3):

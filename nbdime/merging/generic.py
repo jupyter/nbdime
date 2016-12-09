@@ -44,14 +44,22 @@ def is_diff_all_transients(diff, path, transients):
 #
 # =============================================================================
 
-def _record_conflicts(base, unresolved_conflicts, decisions):
+def _record_conflicts(base_path, base, unresolved_conflicts, decisions):
     # Collect diffs
     local_conflict_diffs = []
     remote_conflict_diffs = []
     for conf in unresolved_conflicts:
         (path, ld, rd, strategy) = conf
-        local_conflict_diffs.extend(ld)
-        remote_conflict_diffs.extend(ld)
+        assert isinstance(ld, list)
+        assert isinstance(rd, list)
+        assert base_path == path[:len(base_path)]
+        relative_path = path[len(base_path):]
+        if relative_path:
+            import ipdb; ipdb.set_trace()
+        for d in ld:
+            local_conflict_diffs.append(d)
+        for d in rd:
+            remote_conflict_diffs.append(d)
 
     # Record remaining conflicts in field nbdime-conflicts
     conflicts_dict = {
@@ -64,16 +72,18 @@ def _record_conflicts(base, unresolved_conflicts, decisions):
     else:
         nbdime.log.warning("Recording unresolved conflicts in {}/nbdime-conflicts.".format(join_path(path)))
         op = op_add("nbdime-conflicts", conflicts_dict)
-    for k in reversed(path):
-        op = op_patch(k, [op])
+    #for k in reversed(base_path):
+    #    op = op_patch(k, [op])
     custom_diff = [op]
-    decisions.custom(path, local_conflict_diffs, remote_conflict_diffs, custom_diff)
+    decisions.custom(base_path, local_conflict_diffs, remote_conflict_diffs, custom_diff)
 
 
 def wrap_subconflicts(key, subconflicts):
     unresolved_conflicts = []
     for conf in subconflicts:
         (path, ld, rd, strategy) = conf
+        assert path[-1] == key
+        path = path[:-1]
         ld = [op_patch(key, ld)]
         rd = [op_patch(key, rd)]
         unresolved_conflicts.append((path, ld, rd, strategy))
@@ -191,11 +201,11 @@ x    "take-max",         # Take the maximum value in case of conflict
             decisions.agreement(path, ld, rd)
         elif ld.op == DiffOp.REMOVE or rd.op == DiffOp.REMOVE:
             # (5) Conflict: removed one place and edited another
-            conflicts.append((path, ld, rd, strategy))
+            conflicts.append((path, [ld], [rd], strategy))
         elif ld.op != rd.op:
             # Note that this means the below cases always have the same op
             # (5) Conflict: edited in different ways
-            conflicts.append((path, ld, rd, strategy))
+            conflicts.append((path, [ld], [rd], strategy))
         elif ld == rd:
             # If inserting/replacing/patching produces the same value, just use
             # it
@@ -205,11 +215,11 @@ x    "take-max",         # Take the maximum value in case of conflict
             # This can possibly be resolved by recursion, but leave that to
             # autoresolve
             # XXX FIXME: consider merging added values
-            conflicts.append((path, ld, rd, strategy))
+            conflicts.append((path, [ld], [rd], strategy))
         elif ld.op == DiffOp.REPLACE:
             # (7) Replace in both local and remote, values are different,
             #     record a conflict against original base value
-            conflicts.append((path, ld, rd, strategy))
+            conflicts.append((path, [ld], [rd], strategy))
         elif ld.op == DiffOp.PATCH:
             # (8) Patch on both local and remote, values are different
             # Patches produce different values, try merging the substructures
@@ -227,15 +237,12 @@ x    "take-max",         # Take the maximum value in case of conflict
     # FIXME XXX: Make sure resolutions are marked as conflicts
     if parent_strategy == "record-conflict":
         # affects conflicts on dicts at /***/metadata or below
-        _record_conflicts(base, unresolved_conflicts, decisions)
+        _record_conflicts(path, base, unresolved_conflicts, decisions)
         unresolved_conflicts = []
     elif parent_strategy == "inline-attachments":
         # affects conflicts on string at /cells/*/attachments or below
         _inline_attachments(base, unresolved_conflicts, decisions)  # FIXME: Implement
         unresolved_conflicts = []
-
-    # FIXME: Move to _merge_strings
-    #elif parent_strategy == "inline-source":      # affects conflicts on string at /cells/*/source      or /cells/*/source/*
 
     # Return the rest of the conflicts
     return unresolved_conflicts
@@ -575,7 +582,16 @@ def _merge_strings(base, local_diff, remote_diff,
 
     # FIXME XXX Handle if local or remote diff is ParentDeleted
 
+    # Get base path for strategy lookup
+    spath = star_path(path)
+
+    # Get strategy for this dict
+    parent_strategy = strategies.get(spath)
     unresolved_conflicts = []
+    #conflicts = []
+
+    if parent_strategy == "inline-source":      # affects conflicts on string at /cells/*/source      or /cells/*/source/*
+        FIXME
 
     # This functions uses a (static) state variable to track recursion.
     # The first time it is called, base can (potentially) be a
