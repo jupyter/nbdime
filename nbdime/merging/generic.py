@@ -98,7 +98,7 @@ def _record_conflicts(base_path, base, unresolved_conflicts, decisions):
     #    op = op_patch(k, [op])
 
     custom_diff = [op]
-    decisions.custom(base_path, local_conflict_diffs, remote_conflict_diffs, custom_diff)
+    decisions.custom(base_path, local_conflict_diffs, remote_conflict_diffs, custom_diff, conflict=True)
 
 
 def wrap_subconflicts(key, subconflicts):

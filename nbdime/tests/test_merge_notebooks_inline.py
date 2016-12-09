@@ -232,8 +232,8 @@ def test_inline_merge_notebook_metadata():
                 # For any combination i,j,i or i,j,j the result should be j
                 expected = new_notebook(metadata=md_in[j])
                 merged, decisions = merge_notebooks(base, local, remote)
-                for d in decisions:
-                    assert not d.conflict 
+                assert "nbdime-conflicts" not in merged["metadata"]
+                assert not any(d.conflict for d in decisions)
                 assert expected == merged
 
     # Check handcrafted merge results
@@ -245,8 +245,10 @@ def test_inline_merge_notebook_metadata():
         remote = new_notebook(metadata=md_in[k])
         expected = new_notebook(metadata=md_out[triplet])
         merged, decisions = merge_notebooks(base, local, remote)
-        for d in decisions:
-            assert not d.conflict 
+        if "nbdime-conflicts" in merged["metadata"]:
+            assert any(d.conflict for d in decisions)
+        else:
+            assert not any(d.conflict for d in decisions)
         assert expected == merged
 
     # At least try to run merge without crashing for permutations
