@@ -185,6 +185,8 @@ class MergeDecisionBuilder(object):
                 action = "base"
             elif strategy == "clear":
                 action = "clear"
+            elif strategy == "remove":  # FIXME XXX Test that it works to apply this here
+                action = "remove"
             elif strategy == "take-max":
                 action = "take_max"
             elif strategy == "fail":
