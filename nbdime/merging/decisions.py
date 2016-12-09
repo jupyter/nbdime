@@ -162,6 +162,14 @@ class MergeDecisionBuilder(object):
             )
 
     def conflict(self, path, local_diff, remote_diff, strategy=None):
+        """Register a potential conflict. If strategy is given, try to resolve conflict first.
+
+        Valid strategies here are:
+            use-local, use-remote, use-base, clear, take-max
+
+        Some more complex strategies need to be handled at an earlier
+        stage and will result in a regular conflict here.
+        """
         assert local_diff and remote_diff
         assert local_diff != remote_diff
 

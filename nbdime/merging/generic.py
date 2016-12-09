@@ -22,6 +22,22 @@ import nbdime.log
 DEBUGGING = 0
 
 
+def is_diff_all_transients(diff, path, transients):
+    # Resolve diff paths and check them vs transients list
+    for d in diff:
+        # Convert to string to search transients:
+        subpath = path + (d.key,)
+        if d.op == DiffOp.PATCH:
+            # Recurse
+            if not is_diff_all_transients(d.diff, subpath, transients):
+                return False
+        else:
+            # Check path vs transients
+            if star_path(subpath) not in transients:
+                return False
+    return True
+
+
 # =============================================================================
 #
 # Decision-making code follows
@@ -150,7 +166,7 @@ x    "take-max",         # Take the maximum value in case of conflict
             raise ValueError("Invalid diff ops {} and {}.".format(ld.op, rd.op))
 
 
-def _split_addrange(key, local, remote, path):
+def _split_addrange(key, local, remote, path, strategies=None):
     """Compares two addrange value lists, and splits decisions on similarity
 
     Uses diff of value lists to identify which items to align. Identical,
@@ -168,6 +184,8 @@ def _split_addrange(key, local, remote, path):
     intermediate_diff = diff(local, remote, path=star_path(path),
                              predicates=notebook_predicates.copy(),
                              differs=notebook_differs.copy())
+
+    strategy = strategies.get(star_path(path + (key,)))
 
     # Next, translate the diff into decisions
     decisions = MergeDecisionBuilder()
@@ -195,18 +213,20 @@ def _split_addrange(key, local, remote, path):
             local_len = intermediate_diff[i+1].length
             ld = [op_addrange(key, local[d.key:d.key+local_len])]
             rd = [op_addrange(key, d.valuelist)]
-            decisions.conflict(path, ld, rd)
+            decisions.conflict(path, ld, rd, strategy=strategy)
             offset += len(d.valuelist) - local_len
             # (*) Here we treat two ops in one go, which we mark
             # by setting taken beyond the key of the next op:
             taken += local_len
+
         elif d.op == DiffOp.REPLACE:
             # Same as above, but length of one, so simpler
             # (1) Conflict (one element each)
             ld = [op_addrange(key, [local[d.key]])]
             rd = [op_addrange(key, [d.value])]
-            decisions.conflict(path, ld, rd)
+            decisions.conflict(path, ld, rd, strategy=strategy)
             taken += 1
+
         elif d.op in (DiffOp.REMOVE, DiffOp.REMOVERANGE):
             # (2) Local onesided
             if d.op == DiffOp.REMOVE:
@@ -216,6 +236,7 @@ def _split_addrange(key, local, remote, path):
             decisions.onesided(path, [op_addrange(key, vl)], None)
             offset -= len(vl)
             taken += len(vl)
+
         elif d.op in (DiffOp.ADD, DiffOp.ADDRANGE):
             # (3) Remote onesided
             if d.op == DiffOp.ADD:
@@ -224,13 +245,16 @@ def _split_addrange(key, local, remote, path):
                 vl = d.valuelist
             decisions.onesided(path, None, [op_addrange(key, vl)])
             offset += len(vl)
+
         elif d.op == DiffOp.PATCH:
             # Predicates indicate that local and remote are similar!
             # Mark as conflict, possibly for autoresolve to deal with
             decisions.conflict(path,
                                [op_addrange(key, [local[d.key]])],
-                               [op_addrange(key, [remote[d.key + offset]])])
+                               [op_addrange(key, [remote[d.key + offset]])],
+                               strategy=strategy)
             taken += 1
+
         else:
             raise ValueError("Invalid diff op: %s" % d.op)
 
@@ -239,13 +263,14 @@ def _split_addrange(key, local, remote, path):
         # Have elements that are inserted on both sides
         overlap = [op_addrange(key, local[taken:])]
         decisions.agreement(path, overlap, overlap)
+
     if len(decisions.decisions) > 1 or not decisions.decisions[0].conflict:
         return decisions.decisions
     else:
         return None
 
 
-def _merge_concurrent_inserts(base, ldiff, rdiff, path, decisions, strategies):
+def _merge_concurrent_inserts(base, ldiff, rdiff, path, decisions, strategies=None):
     """Merge concurrent inserts, optionally with one or more removeranges.
 
     This method compares the addition/removals on both sides, and splits it
@@ -254,7 +279,9 @@ def _merge_concurrent_inserts(base, ldiff, rdiff, path, decisions, strategies):
     # Assume first ops are always inserts
     assert ldiff[0].op == DiffOp.ADDRANGE and rdiff[0].op == DiffOp.ADDRANGE
 
-    subdec = _split_addrange(ldiff[0].key, ldiff[0].valuelist, rdiff[0].valuelist, path)
+    subdec = _split_addrange(ldiff[0].key,
+        ldiff[0].valuelist, rdiff[0].valuelist,
+        path, strategies=strategies)
 
     if subdec:
         # We were able to split insertion [+ onesided removal]
@@ -266,23 +293,8 @@ def _merge_concurrent_inserts(base, ldiff, rdiff, path, decisions, strategies):
     else:
         # Were not able to infer any additional information,
         # simply add as they are (conflicted).
-        decisions.conflict(path, ldiff, rdiff)
-
-
-def is_diff_all_transients(diff, path, transients):
-    # Resolve diff paths and check them vs transients list
-    for d in diff:
-        # Convert to string to search transients:
-        subpath = path + (d.key,)
-        if d.op == DiffOp.PATCH:
-            # Recurse
-            if not is_diff_all_transients(d.diff, subpath, transients):
-                return False
-        else:
-            # Check path vs transients
-            if star_path(subpath) not in transients:
-                return False
-    return True
+        strategy = strategies.get(star_path(path + (ldiff[0].key,)))
+        decisions.conflict(path, ldiff, rdiff, strategy=strategy)
 
 
 def chunkname(diffs):
@@ -422,22 +434,20 @@ def _merge_lists(base, local_diff, remote_diff, path, decisions, strategies):
             _merge_concurrent_inserts(base, a0, a1, path, decisions, strategies)
             decisions.onesided(path, p0, p1)
 
-        # Identical (ensured by chunking) twosided removal with insertion just before one of them
+        # Variations of range substitutions
         elif chunktype in ("AR/R", "R/AR"):
+            # Identical (ensured by chunking) twosided removal with insertion just before one of them
             decisions.onesided(path, a0, a1)
             decisions.agreement(path, p0, p1)
-        # Variations of range substitutions
         elif chunktype in "AR/AR":
            # XXX FIXME: Support two-sided removal in _merge_concurrent_inserts, see autoresolve?
            decisions.conflict(path, d0, d1)
-        elif chunktype in ("AR/A", "A/AR", "A/A", "AR/AR"):
+        elif chunktype in ("AR/A", "A/AR", "A/A"): #, "AR/AR"):
             # Including removals in merging of inserts
             _merge_concurrent_inserts(base, d0, d1, path, decisions, strategies)
 
         else:
             assert nbdime.log.error("Unhandled chunk conflict type %s" % (chunktype,))
-
-    # FIXME
 
 
 def _merge_strings(base, local_diff, remote_diff,
