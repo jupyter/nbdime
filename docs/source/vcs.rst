@@ -115,7 +115,7 @@ or global level.
 Manual registration
 ^^^^^^^^^^^^^^^^^^^
 
-Alternatively, the diff driver can be registered manually
+Alternatively, the merge driver can be registered manually
 with the following steps:
 
 - To register the driver with git under the name 
@@ -125,11 +125,11 @@ with the following steps:
     [merge "jupyternotebook"]
     command = git-nbmergedriver merge %O %A %B %L %P
 
-- To associate the diff driver with a file type,
+- To associate the merge driver with a file type,
   add the following entry to the appropriate 
   ``.gitattributes`` file::
     
-    *.ipynb diff=jupyternotebook
+    *.ipynb merge=jupyternotebook
 
 
 Diff web tool
