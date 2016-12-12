@@ -85,12 +85,12 @@ def external_merge_render(cmd, b, l, r):
             f.write(r)
         assert all(fn in cmd for fn in ['local', 'base', 'remote'])
         p = Popen(cmd, cwd=td, stdout=PIPE)
-        output, _ = p.communicate()
+        output, status = p.communicate()
         # normalize newlines
         output = output.decode('utf8').replace('\r\n', '\n')
     finally:
         shutil.rmtree(td)
-    return output
+    return output, status
 
 
 def external_diff_render(cmd, a, b):
@@ -104,14 +104,14 @@ def external_diff_render(cmd, a, b):
             f.write(b)
         assert all(fn in cmd for fn in ['before', 'after'])
         p = Popen(cmd, cwd=td, stdout=PIPE)
-        output, _ = p.communicate()
+        output, status = p.communicate()
         output = output.decode('utf8')
         r = re.compile(r"^\\ No newline at end of file\n?", flags=re.M)
         output, n = r.subn("", output)
         assert n <= 2
     finally:
         shutil.rmtree(td)
-    return output
+    return output, status
 
 
 def format_merge_render_lines(
@@ -123,55 +123,102 @@ def format_merge_render_lines(
     sep2 = "="*marker_size
     sep3 = ">"*marker_size
 
+    orig_local = local
+    orig_remote = remote
+
+    if local and local[-1].endswith('\n'):
+        local[-1] = local[-1] + '\n'
+    if remote and remote[-1].endswith('\n'):
+        remote[-1] = remote[-1] + '\n'
+
+    # Extract equal lines at beginning
+    prelines = []
+    i = 0
+    n = min(len(local), len(remote))
+    while i < n and local[i] == remote[i]:
+        prelines.append(local[i])
+        i += 1
+    local = local[i:]
+    remote = remote[i:]
+
+    # Extract equal lines at end
+    postlines = []
+    i = len(local) - 1
+    j = len(remote) - 1
+    while i >= 0 and j >= 0 and local[i] == remote[j]:
+        postlines.append(local[i])
+        i += 1
+        j += 1
+    postlines = reversed(postlines)
+    local = local[:i+1]
+    remote = remote[:j+1]
+
     lines = []
+    lines.extend(prelines)
+
     sep0 = "%s %s\n" % (sep0, local_title)
     lines.append(sep0)
     lines.extend(local)
-    if not lines[-1].endswith('\n'):
-        lines[-1] = lines[-1] + '\n'
 
-    if include_base:
-        sep1 = "%s %s\n" % (sep1, base_title)
-        lines.append(sep1)
-        lines.extend(base)
-        if not lines[-1].endswith('\n'):
-            lines[-1] = lines[-1] + '\n'
+    # This doesn't take prelines and postlines into account
+    # if include_base:
+    #     sep1 = "%s %s\n" % (sep1, base_title)
+    #     lines.append(sep1)
+    #     lines.extend(base)
 
     sep2 = "%s\n" % (sep2,)
     lines.append(sep2)
     lines.extend(remote)
-    if not lines[-1].endswith('\n'):
-        lines[-1] = lines[-1] + '\n'
 
-    sep3 = "%s %s" % (sep3, remote_title)
+    sep3 = "%s %s\n" % (sep3, remote_title)
     lines.append(sep3)
+
+    lines.extend(postlines)
+
+    # Make sure all but the last line ends with newline
+    for i in range(len(lines)):
+        if not lines[i].endswith('\n'):
+            lines[i] = lines[i] + '\n'
+    if lines:
+        lines[-1] = lines[-1].rstrip("\r\n")
+
     return lines
 
 
 def builtin_merge_render(base, local, remote, strategy=None):
-    if strategy is None:
-        pass
-    else:
+    if local == remote:
+        return local, 0
+
+    # In this extremely simplified merge rendering,
+    # we currently define conflict as local != remote
+
+    if strategy == "use-local":
+        return local, 0
+    elif strategy == "use-remote":
+        return remote, 0
+    elif strategy is not None:
         warning("Using builtin merge render but ignoring strategy %s" % (strategy,))
 
+    # Styling
     local_title = "local"
     base_title = "base"
     remote_title = "remote"
+    marker_size = 7  # git uses 7 by default
+
+    include_base = False  # TODO: Make option
 
     local = as_text_lines(local)
     base = as_text_lines(base)
     remote = as_text_lines(remote)
 
-    marker_size = 7  # git uses 7 by default
-    include_base = True  # TODO: Make option
-
     lines = format_merge_render_lines(
         base, local, remote,
         base_title, local_title, remote_title,
-        marker_size, include_base,
+        marker_size, include_base
         )
 
-    return "".join(lines)
+    merged = "".join(lines)
+    return merged, 1
 
 
 def builtin_diff_render(a, b):
@@ -192,20 +239,18 @@ def builtin_diff_render(a, b):
         else:
             # Don't think this will happen?
             uni.append("%s%s%s" % (KEEP, line[1:], RESET))
-    diff = '\n'.join(uni)
-    return diff
+    return '\n'.join(uni)
 
 
 def diff_render_with_git(a, b):
     cmd = git_diff_print_cmd
-    diff = external_diff_render(cmd.split(), a, b)
+    diff, status = external_diff_render(cmd.split(), a, b)
     return "".join(diff.splitlines(True)[4:])
 
 
 def diff_render_with_diff(a, b):
     cmd = diff_print_cmd
-    diff = external_diff_render(cmd.split(), a, b)
-    return diff
+    return external_diff_render(cmd.split(), a, b)
 
 
 def diff_render_with_difflib(a, b):
@@ -224,38 +269,38 @@ def diff_render(a, b):
 
 def merge_render_with_git(b, l, r, strategy=None):
     cmd = git_mergefile_print_cmd
-    if strategy is None:
-        pass
-    elif strategy == "use-local":
+    if strategy == "use-local":
         cmd += " --ours"
     elif strategy == "use-remote":
         cmd += " --theirs"
     elif strategy == "union":
         cmd += " --union"
-    else:
-        warning("Using git merge-file but ignoring strategy %s" % (strategy,))
-    merged = external_merge_render(cmd.split(), b, l, r)
+    elif strategy is not None:
+        warning("Using git merge-file but ignoring strategy %s", strategy)
+    merged, status = external_merge_render(cmd.split(), b, l, r)
 
     # Remove trailing newline if ">>>>>>> remote" is the last line
     lines = merged.splitlines(True)
     if "\n" in lines[-1] and (">"*7) in lines[-1]:
         merged = merged.rstrip()
-    return merged
+    return merged, status
 
 
 def merge_render_with_diff3(b, l, r, strategy=None):
     cmd = diff3_print_cmd
-    if strategy is None:
-        pass
-    else:
-        warning("Using diff3 but ignoring strategy %s" % (strategy,))
-    merged = external_merge_render(cmd.split(), b, l, r)
-    return merged
+    if strategy == "use-local":
+        return l, 0
+    elif strategy == "use-remote":
+        return r, 0
+    elif strategy is not None:
+        warning("Using diff3 but ignoring strategy %s", strategy)
+    merged, status = external_merge_render(cmd.split(), b, l, r)
+    return merged, status
 
 
 def merge_render(b, l, r, strategy=None):
     if strategy == "use-base":
-        return b
+        return b, 0
     if use_git and which('git'):
         return merge_render_with_git(b, l, r, strategy)
     elif use_diff and which('diff3'):

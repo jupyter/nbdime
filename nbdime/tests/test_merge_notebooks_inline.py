@@ -262,3 +262,148 @@ def test_inline_merge_notebook_metadata():
                     local = new_notebook(metadata=md_in[j])
                     remote = new_notebook(metadata=md_in[k])
                     merged, decisions = merge_notebooks(base, local, remote)
+
+
+def test_inline_merge_source_empty():
+    base = new_notebook()
+    local = new_notebook()
+    remote = new_notebook()
+    expected = new_notebook()
+    merged, decisions = merge_notebooks(base, local, remote)
+    assert merged == expected
+
+
+def code_nb(sources):
+    return new_notebook(cells=[new_code_cell(s) for s in sources])
+
+
+def test_inline_merge_source_all_equal():
+    base = code_nb([
+        "first source",
+        "other text",
+        "yet more content",
+    ])
+    local = base
+    remote = base
+    expected = base
+    merged, decisions = merge_notebooks(base, local, remote)
+    assert merged == expected
+
+
+def test_inline_merge_source_cell_deletions():
+    "Cell deletions on both sides, onesided and agreed."
+    base = code_nb([
+        "first source",
+        "other text",
+        "yet more content",
+        "and a final line",
+        ])
+    local = code_nb([
+        #"first source",
+        "other text",
+        #"yet more content",
+        #"and a final line",
+        ])
+    remote = code_nb([
+        "first source",
+        #"other text",
+        "yet more content",
+        #"and a final line",
+        ])
+    empty = code_nb([])
+    expected = code_nb([])
+    for a in [base, local, remote, empty]:
+        for b in [base, local, remote, empty]:
+            merged, decisions = merge_notebooks(base, a, b)
+            if a is b:
+                assert merged == a
+            elif a is base:
+                assert merged == b
+            elif b is base:
+                assert merged == a
+            else:
+                # All other combinations will delete all cells
+                assert merged == empty
+
+
+def test_inline_merge_source_onesided_only():
+    "A mix of changes on one side (delete, patch, remove)."
+    base = code_nb([
+        "first source",
+        "other text",
+        "yet more content",
+        ])
+    changed = code_nb([
+        #"first source", # deleted
+        "other text v2",
+        "a different cell inserted",
+        "yet more content",
+        ])
+    merged, decisions = merge_notebooks(base, changed, base)
+    assert merged == changed
+    merged, decisions = merge_notebooks(base, base, changed)
+    assert merged == changed
+
+
+def test_inline_merge_source_patches():
+    "More elaborate test of cell deletions on both sides, onesided and agreed."
+    # Note: Merge rendering of conflicted sources here will depend on git/diff/builtin params and availability
+    base = code_nb([
+        "first source",
+        "other text",
+        "this cell will be deleted and patched",
+        "yet more content",
+        "and a final line",
+        ])
+    local = code_nb([
+        "1st source",  # onesided change
+        "other text",
+        #"this cell will be deleted and patched",
+        "some more content",  # twosided equal change
+        "And a Final line",  # twosided conflicted change
+        ])
+    remote = code_nb([
+        "first source",
+        "other text?",  # onesided change
+        "this cell will be deleted and modified",
+        "some more content",   # equal
+        "and The final Line",  # conflicted
+        ])
+    expected = code_nb([
+        "1st source",
+        "other text?",
+        '<<<<<<< local <CELL DELETED>\n\n=======\nthis cell will be deleted and modified\n>>>>>>> remote'
+        "some more content",  # equal
+        '<<<<<<< local\nAnd a Final line\n=======\nand The final Line\n>>>>>>> remote'
+        ])
+    merged, decisions = merge_notebooks(base, local, remote)
+    assert merged == expected
+    expected = code_nb([
+        "1st source",
+        "other text?",
+        '<<<<<<< local\nthis cell will be deleted and modified\n=======\n>>>>>>> remote <CELL DELETED>'
+        "some more content",
+        '<<<<<<< local\nand The final Line\n=======\nAnd a Final line\n>>>>>>> remote'
+        ])
+    merged, decisions = merge_notebooks(base, remote, local)
+    assert merged == expected
+
+
+def test_inline_merge_attachments():
+    # FIXME: Use output creation utils Vidar wrote in another test file
+    base = new_notebook()
+    local = new_notebook()
+    remote = new_notebook()
+    expected = new_notebook()
+    merged, decisions = merge_notebooks(base, local, remote)
+    assert merged == expected
+
+
+def test_inline_merge_outputs():
+    # FIXME: Use output creation utils Vidar wrote in another test file
+    base = new_notebook()
+    local = new_notebook()
+    remote = new_notebook()
+    expected = new_notebook()
+    merged, decisions = merge_notebooks(base, local, remote)
+    assert merged == expected

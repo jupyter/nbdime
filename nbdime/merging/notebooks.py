@@ -65,7 +65,7 @@ def notebook_merge_strategies(args):
     if not args or args.ignore_transients:
         strategies.transients = [
             "/cells/*/execution_count",
-            "/cells/*/outputs",
+            #"/cells/*/outputs",
             "/cells/*/outputs/*/execution_count",
             "/cells/*/metadata/collapsed",
             "/cells/*/metadata/autoscroll",

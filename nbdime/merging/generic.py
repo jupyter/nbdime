@@ -98,44 +98,6 @@ def collect_unresolved_diffs(base_path, unresolved_conflicts):
     return local_conflict_diffs, remote_conflict_diffs
 
 
-
-def make_inline_source_value(base, local_diff, remote_diff):  # FIXME XXX rewrite and use for resolve_strategy_inline_source
-    """Make an inline source from conflicting local and remote diffs"""
-    orig = base
-    base = base.splitlines(True)
-
-    #base = source string
-    # replace = replace line e.key from base with e.value
-    # patch = apply e.diff to line e.key from base
-    # remove = remove lines e.key from base
-    local = patch(orig, local_diff)
-    remote = patch(orig, remote_diff)
-    begin = 0
-    end = len(base)
-
-    inlined = merge_render(base, local, remote)
-    inlined = inlined.splitlines(True)
-
-    # Return range to replace with marked up lines
-    return begin, end, inlined
-def make_inline_source_decision(source, prefix, local_diff, remote_diff):  # FIXME XXX rewrite and use for resolve_strategy_inline_source
-    begin, end, inlined = make_inline_source_value(source, local_diff, remote_diff)
-    custom_diff = [
-        op_addrange(begin, inlined),
-        op_removerange(begin, end-begin),
-    ]
-    return [MergeDecision(
-        common_path=prefix,
-        action="custom",
-        conflict=True,
-        local_diff=local_diff,
-        remote_diff=remote_diff,
-        custom_diff=custom_diff,
-    )]
-def resolve_strategy_inline_source(base_path, base, unresolved_conflicts, decisions):
-    pass # FIXME XXX: Implement by rewriting functions above copied from autoresolve.py, search for resolve_strategy_inline_source above in this file
-
-
 def resolve_strategy_inline_attachments(base_path, attachments, unresolved_conflicts, decisions):
     local_conflict_diffs, remote_conflict_diffs = collect_unresolved_diffs(base_path, unresolved_conflicts)
 
@@ -150,10 +112,10 @@ def resolve_strategy_inline_attachments(base_path, attachments, unresolved_confl
 
         if ld.op == DiffOp.REMOVE:
             assert rd.op != DiffOp.REMOVE
-            decisions.remote(base_path, ldiffs, rdiffs, conflict=True)
+            decisions.remote(base_path, ld, rd, conflict=True)
         elif rd.op == DiffOp.REMOVE:
-            decisions.local(base_path, ldiffs, rdiffs, conflict=True)
-            decisions.custom(base_path, ldiffs, rdiffs, custom_diff, conflict=True)
+            decisions.local(base_path, ld, rd, conflict=True)
+            decisions.custom(base_path, ld, rd, custom_diff, conflict=True)
         else:
             # Not merging attachment contents, but adding attachments
             # with new names LOCAL_oldname and REMOTE_oldname instead.
@@ -322,6 +284,19 @@ def split_diffs_by_index(diffs):
     return diffs_by_index
 
 
+def resolve_strategy_remove_outputs(base_path, outputs, unresolved_conflicts, decisions):
+    local_conflict_diffs, remote_conflict_diffs = collect_unresolved_diffs(base_path, unresolved_conflicts)
+
+    ldiffs_by_index = split_diffs_by_index(local_conflict_diffs)
+    rdiffs_by_index = split_diffs_by_index(remote_conflict_diffs)
+    conflict_indices = sorted(set(ldiffs_by_index) | set(rdiffs_by_index))
+
+    for i in conflict_indices:
+        ldiffs = ldiffs_by_index[i]
+        rdiffs = rdiffs_by_index[i]
+        decisions.custom(base_path, ldiffs, rdiffs, [op_removerange(i, 1)], conflict=False)
+
+
 def resolve_strategy_inline_outputs(base_path, outputs, unresolved_conflicts, decisions):
     local_conflict_diffs, remote_conflict_diffs = collect_unresolved_diffs(base_path, unresolved_conflicts)
 
@@ -360,6 +335,47 @@ def resolve_strategy_record_conflicts(base_path, base, unresolved_conflicts, dec
     decisions.custom(base_path, local_conflict_diffs, remote_conflict_diffs, custom_diff, conflict=True)
 
 
+from nbdime.prettyprint import merge_render
+
+def make_inline_source_value(base, local_diff, remote_diff):  # FIXME XXX rewrite and use for resolve_strategy_inline_source
+    """Make an inline source from conflicting local and remote diffs"""
+    orig = base
+    base = base.splitlines(True)
+
+    #base = source string
+    # replace = replace line e.key from base with e.value
+    # patch = apply e.diff to line e.key from base
+    # remove = remove lines e.key from base
+    local = patch(orig, local_diff)
+    remote = patch(orig, remote_diff)
+    begin = 0
+    end = len(base)
+
+    #merged, conflict = merge_render(base, local, remote)
+
+    inlined = merge_render(base, local, remote)
+    inlined = inlined.splitlines(True)
+
+    # Return range to replace with marked up lines
+    return begin, end, inlined
+def make_inline_source_decision(source, prefix, local_diff, remote_diff):  # FIXME XXX rewrite and use for resolve_strategy_inline_source
+    begin, end, inlined = make_inline_source_value(source, local_diff, remote_diff)
+    custom_diff = [
+        op_addrange(begin, inlined),
+        op_removerange(begin, end-begin),
+    ]
+    return [MergeDecision(
+        common_path=prefix,
+        action="custom",
+        conflict=True,
+        local_diff=local_diff,
+        remote_diff=remote_diff,
+        custom_diff=custom_diff,
+    )]
+def resolve_strategy_inline_source(base_path, base, unresolved_conflicts, decisions):
+    pass # FIXME XXX: Implement by rewriting functions above copied from autoresolve.py, search for resolve_strategy_inline_source above in this file
+
+
 def wrap_subconflicts(key, subconflicts):
     unresolved_conflicts = []
     for conf in subconflicts:
@@ -387,13 +403,14 @@ def _merge_dicts(base, local_diff, remote_diff, path, decisions, strategies):
     """Perform a three-way merge of dicts. See docstring of merge."""
     assert isinstance(base, dict)
 
-    # FIXME XXX Handle if local or remote diff is ParentDeleted
-
     # Converting to dict-based diff format for dicts for convenience
     # This step will be unnecessary if we change the diff format to work this
     # way always
-    local_diff = as_dict_based_diff(local_diff)
-    remote_diff = as_dict_based_diff(remote_diff)
+    if local_diff is not ParentDeleted:
+        local_diff = as_dict_based_diff(local_diff)
+    if remote_diff is not ParentDeleted:
+        remote_diff = as_dict_based_diff(remote_diff)
+    # FIXME XXX Handle if local or remote diff is ParentDeleted
 
     # Summary of diff entry cases with (#) references to below code
     # r\l | N/A   -   +   :   !
@@ -615,7 +632,10 @@ def _merge_concurrent_inserts(base, ldiff, rdiff, path, decisions, strategies=No
         ldiff[0].valuelist, rdiff[0].valuelist,
         path, strategies=strategies)
 
-    # FIXME XXX: _split_addrange had a very specific return condition, what does it do? Probably need to match behaviour: len(subdec) > 1 or len(subdec) == 1 and subdec[0]
+    # FIXME XXX: _split_addrange had a very specific return condition,
+    # what does it do? Probably need to match behaviour:
+    # len(subdec) > 1 or len(subdec) == 1 and not subdec[0].conflict
+
     # if subdec:
     #     for conf in subconflicts:
     #         unresolved_conflicts.append(conf)
@@ -653,22 +673,38 @@ def _merge_lists(base, local_diff, remote_diff, path, decisions, strategies):
     """Perform a three-way merge of lists. See docstring of merge."""
     assert isinstance(base, list)
 
-    # FIXME XXX Handle if local or remote diff is ParentDeleted
-
-
-    transients = strategies.transients if strategies else {}
-
-    # Split up and combine diffs into chunks
-    # format: [(begin, end, localdiffs, remotediffs)]
-    chunks = make_merge_chunks(base, local_diff, remote_diff)
-
     # Get base path for strategy lookup
     spath = star_path(path)
 
     # Get strategy for this dict
     parent_strategy = strategies.get(spath)
+
+    transients = strategies.transients if strategies else {}
+
+    # The list of unresolved conflicts to return at the end
     unresolved_conflicts = []
+
+    # Special case if local or remote diff is ParentDeleted
+    if local_diff is ParentDeleted or remote_diff is ParentDeleted:
+        if is_diff_all_transients(local_diff) and is_diff_all_transients(remote_diff):
+            pass  # Drop all changes
+        elif parent_strategy in ("inline-outputs", "remove", "clear-all"):
+            # TODO: Dropping outputs changes here for now, do we want that behaviour?
+            pass  # Drop all changes
+        else:
+            # TODO: Recurse to apply strategies to child nodes?
+            # Return all changes as a conflict
+            # FIXME XXX: How is this received by the caller? Chunk the non-empty diff alone?
+            unresolved_conflicts.append((path, local_diff, remote_diff, parent_strategy))
+        return unresolved_conflicts
+
+    # Intermediate list of conflicts recorded during first pass over diffs,
+    # resolution will be attempted at the end here
     conflicts = []
+
+    # Split up and combine diffs into chunks
+    # format: [(begin, end, localdiffs, remotediffs)]
+    chunks = make_merge_chunks(base, local_diff, remote_diff)
 
     # Loop over chunks of base[j:k], grouping insertion at j into
     # the chunk starting with j
@@ -748,8 +784,7 @@ def _merge_lists(base, local_diff, remote_diff, path, decisions, strategies):
 
             elif achunktype in ("A/", "/A"):
                 # Onesided addition + conflicted patch/remove
-                # TODO: Should we mark addition before patch/remove conflicted as well?
-                decisions.onesided(path, a0, a1)  # conflict=True)
+                decisions.onesided(path, a0, a1)
 
             # Then deal with patches and/or removals
             if p0 == p1:
@@ -765,16 +800,25 @@ def _merge_lists(base, local_diff, remote_diff, path, decisions, strategies):
                 #   - recurse and take ParentDeleted into account, making custom decisions (inline behaviour)
                 #   - add conflict decision on parent and leave it at that (mergetool behaviour)
 
-                if ( (ldiff is ParentDeleted and is_diff_all_transients(rdiff, path, transients))
-                    or (rdiff is ParentDeleted and is_diff_all_transients(ldiff, path, transients))):
+                if ldiff is ParentDeleted and is_diff_all_transients(rdiff, path, transients):
                     # If one side is deleted and the other only transients,
                     # drop the transient diffs and let parent pick the deletion
                     pass
+                elif rdiff is ParentDeleted and is_diff_all_transients(ldiff, path, transients):
+                    pass
                 elif ldiff is ParentDeleted or rdiff is ParentDeleted:
-                    # If one is deleted, no point in recursing?
-                    # FIXME XXX: Consider if recursion is still useful to have
-                    # strategies applied to subdocuments, followed by a check on subconflicts
-                    conflicts.append((path, p0, p1, parent_strategy)) # FIXME XXX Is this the right strategy?
+                    # Example:
+                    #   the current list is /cells,
+                    #   /cells/3 deleted here in a P/R or R/P case
+                    #   rdiff contains a patch on e.g. source and outputs
+                    #   want to recurse to let inline strategies insert <cell deleted> markers
+                    #   want to have inline decisions added during recursion
+                    #   want no unresolved conflicts returned
+                    #   want parent to _not_ be deleted!  FIXME XXX not sure how to communicate this
+                    # Otherwise recurse and pass on unresolved conflicts
+                    subconflicts = _merge(base[key], ldiff, rdiff, path + (key,), decisions, strategies)
+                    unresolved_conflicts.extend(wrap_subconflicts(key, subconflicts))
+                    #conflicts.append((path, p0, p1, parent_strategy)) # FIXME XXX Is this the right strategy?
                 else:
                     # Otherwise recurse and pass on unresolved conflicts
                     subconflicts = _merge(base[key], ldiff, rdiff, path + (key,), decisions, strategies)
@@ -816,15 +860,19 @@ def _merge_lists(base, local_diff, remote_diff, path, decisions, strategies):
     # Resolve remaining conflicts with strategy at this level if any
     if unresolved_conflicts:
         if parent_strategy == "inline-outputs":
-            # affects conflicts on string at /cells/*/outputs     or /cells/*/outputs/*
+            # Affects conflicts on output dicts at /cells/*/outputs
             resolve_strategy_inline_outputs(path, base, unresolved_conflicts, decisions)
             unresolved_conflicts = []
+        elif parent_strategy == "remove":
+            # Affects conflicts on output dicts at /cells/*/outputs
+            resolve_strategy_remove_outputs(path, base, unresolved_conflicts, decisions)
+            unresolved_conflicts = []
         elif parent_strategy == "clear-all":
-            # TODO: Collect local diffs and remote diffs from unresolved_conflicts
+            # Collect local diffs and remote diffs from unresolved_conflicts
+            # TODO: Should this decision record conflicted diffs or all of local_diff, remote_diff?
             local_conflict_diffs, remote_conflict_diffs = collect_unresolved_diffs(path, unresolved_conflicts)
             decisions.add_decision(path, "clear_all", local_conflict_diffs, remote_conflict_diffs, conflict=False)
             unresolved_conflicts = []
-        # TODO: Is the 'remove' strategy applied to /cells/*/outputs/*?
 
     # Return the rest of the conflicts
     return unresolved_conflicts
@@ -836,13 +884,32 @@ def _merge_strings(base, local_diff, remote_diff,
     assert isinstance(base, string_types)
 
     # FIXME XXX Handle if local or remote diff is ParentDeleted
+    if path[-1] == "source" or local_diff is ParentDeleted or remote_diff is ParentDeleted:
+        import ipdb; ipdb.set_trace()
 
     # Get base path for strategy lookup
     spath = star_path(path)
 
-    # Get strategy for this dict
-    parent_strategy = strategies.get(spath)
+    # Get strategy for this string
+    strategy = strategies.get(spath)
+
     unresolved_conflicts = []
+
+    if strategy == "inline-source":
+        local = patch(base, local_diff)
+        remote = patch(base, remote_diff)
+        merged, conflict = merge_render(base, local, remote, None)
+        assert path[-1] == "source"
+        custom_diff = [op_replace(path[-1], merged)]
+        decisions.custom(path[:-1],
+            [op_patch(path[-1], local_diff)],
+            [op_patch(path[-1], remote_diff)],
+            custom_diff, conflict=conflict)
+        return unresolved_conflicts
+
+
+    # FIXME: Handle regular resolution and conflicts for mergetool and other strategies (other text fields!)
+
     #conflicts = []
 
     # This functions uses a (static) state variable to track recursion.

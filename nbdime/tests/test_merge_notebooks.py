@@ -54,12 +54,6 @@ def test_autoresolve_notebook_ec():
 
     merged, decisions = merge_notebooks(base, local, remote, args)
 
-    if 0:
-        print()
-        print(merged)
-        print(decisions)
-        print()
-
     assert merged == expected
     assert not any(d.conflict for d in decisions)
 
@@ -196,6 +190,7 @@ def _check(partial, expected_partial, decisions, expected_conflicts):
     for e, d in zip(expected_conflicts, conflicts):
         # Only check keys specified in expectation value
         for k in e.keys():
+            #if d[k] != e[k]: import ipdb; ipdb.set_trace()
             assert d[k] == e[k]
 
 

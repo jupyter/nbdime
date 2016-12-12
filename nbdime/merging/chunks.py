@@ -95,9 +95,9 @@ def make_chunks(boundaries, diffs):
         # starting at beginning of this chunk
         sub_diffs = []
         for m, d in enumerate(diffs):
-            dis = ()
+            dis = []
             while i_diffs[m] < len(d) and d[i_diffs[m]].key == j:
-                dis += (d[i_diffs[m]],)
+                dis += [d[i_diffs[m]]]
                 i_diffs[m] += 1
             sub_diffs.append(dis)
         # Add non-empty chunks

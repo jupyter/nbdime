@@ -18,6 +18,14 @@ from ..patching import patch
 from ..utils import (
     r_is_int, star_path, join_path, is_prefix_array, find_shared_prefix)
 
+def as_list(x):
+    if x is None:
+        return x
+    if isinstance(x, tuple):
+        return list(x)
+    if not isinstance(x, list):
+        return [x]
+    return x
 
 class MergeDecision(dict):
     """For internal usage in nbdime library.
@@ -57,6 +65,10 @@ class MergeDecisionBuilder(object):
         return sorted(self.decisions, key=_sort_key, reverse=True)
 
     def extend(self, decisions):
+        for d in decisions:
+            for k in ("local_diff", "remote_diff", "custom_diff"):
+                if isinstance(d.get(k, []), tuple):
+                    import ipdb; ipdb.set_trace()
         self.decisions.extend(decisions)
 
     def add_decision(self, path, action, local_diff, remote_diff,
@@ -71,23 +83,11 @@ class MergeDecisionBuilder(object):
             path = tuple(path)
         else:
             assert isinstance(path, tuple)
-        # Ensure diffs are lists
-        if local_diff is not None:
-            if isinstance(local_diff, tuple):
-                local_diff = list(local_diff)
-            elif not isinstance(local_diff, list):
-                local_diff = [local_diff]
-        if remote_diff is not None:
-            if isinstance(remote_diff, tuple):
-                remote_diff = list(remote_diff)
-            elif not isinstance(remote_diff, list):
-                remote_diff = [remote_diff]
         custom_diff = kwargs.pop("custom_diff", None)
-        if custom_diff is not None:
-            if isinstance(custom_diff, tuple):
-                custom_diff = list(custom_diff)
-            elif not isinstance(custom_diff, list):
-                custom_diff = [custom_diff]
+        # Ensure diffs are lists or None
+        local_diff = as_list(local_diff)
+        remote_diff = as_list(remote_diff)
+        custom_diff = as_list(custom_diff)
         # Ensure paths are pushed out as far in tree as possible
         path, (local_diff, remote_diff, custom_diff) = \
             ensure_common_path(path, [local_diff, remote_diff, custom_diff])
@@ -185,7 +185,7 @@ class MergeDecisionBuilder(object):
                 action = "base"
             elif strategy == "clear":
                 action = "clear"
-            elif strategy == "remove":  # FIXME XXX Test that it works to apply this here
+            elif strategy == "remove":  # FIXME XXX This is now handled in _merge_lists, confirm that's the right place and remove here 
                 action = "remove"
             elif strategy == "take-max":
                 action = "take_max"
