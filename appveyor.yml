@@ -1,0 +1,40 @@
+# Do not build feature branch with open Pull Requests
+skip_branch_with_pr: true
+
+# environment variables
+environment:
+  nodejs_version: "6.9"
+  PYTHON: "C:\\Python35-x64"
+  PYTHON_VERSION: "3.5.x"
+  PYTHON_MAJOR: 3
+  PYTHON_ARCH: "64"
+
+# build cache to preserve files/folders between builds
+cache:
+  - nbdime/webapp/node_modules # NPM packages
+  - nbdime-web/node_modules # NPM packages
+
+# scripts that run after cloning repository
+install:
+  # Install node:
+  - ps: Install-Product node $env:nodejs_version
+  # Ensure python scripts are from right version:
+  - 'SET "PATH=%PYTHON%\\Scripts;%PATH%"'
+  # Install our package:
+  - 'pip install --upgrade -e ".[test]"'
+
+build: off
+
+# scripts to run before tests
+before_test:
+  - git config --global user.email appveyor@fake.com
+  - git config --global user.name "AppVeyor CI"
+
+
+# to run your custom scripts instead of automatic tests
+test_script:
+  - 'py.test -l'
+
+on_success:
+  # Do not cache our own packages
+  - rd /s /q .\\nbdime\\webapp\\node_modules\\nbdime
