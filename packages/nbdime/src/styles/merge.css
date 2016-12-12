@@ -134,8 +134,14 @@
 }
 
 
-.jp-Notebook-merge .CodeMirror-merge-m-chunk-start-either { border-top: 1px solid var(--jp-merge-either-color1); }
-.jp-Notebook-merge .CodeMirror-merge-m-chunk-end-either { border-bottom: 1px solid var(--jp-merge-either-color1); }
+.jp-Notebook-merge .CodeMirror-merge-m-chunk-start-either,
+.jp-Notebook-merge .CodeMirror-merge-m-chunk-start-mixed {
+  border-top: 1px solid var(--jp-merge-either-color1);
+  }
+.jp-Notebook-merge .CodeMirror-merge-m-chunk-end-either,
+.jp-Notebook-merge .CodeMirror-merge-m-chunk-end-mixed {
+  border-bottom: 1px solid var(--jp-merge-either-color1);
+  }
 
 .jp-Notebook-merge .CodeMirror-merge-m-chunk-end-either-empty + .CodeMirror-linewidget .CodeMirror-merge-spacer {
   border-bottom: 1px solid var(--jp-merge-either-color1);
