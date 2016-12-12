@@ -220,12 +220,22 @@ class DiffView {
         let baseLine = range.line;
         end = getMatchingEditLine(baseLine, this.chunks);
         if (end !== start) {
-          edit.getDoc().replaceRange(newLines.slice(start, end - 1).join(''), CodeMirror.Pos(start, 0), CodeMirror.Pos(end - 1, 0));
+          edit.getDoc().replaceRange(
+            newLines.slice(start, end - 1).join(''),
+            CodeMirror.Pos(start, 0),
+            CodeMirror.Pos(end - 1, 0),
+            'syncModel'
+          );
         }
         start = end + range.size;
       }
       if (start < last) {
-        edit.getDoc().replaceRange(newLines.slice(start, end).join(''), CodeMirror.Pos(start, 0), CodeMirror.Pos(end, 0));
+        edit.getDoc().replaceRange(
+          newLines.slice(start, end).join(''),
+          CodeMirror.Pos(start, 0),
+          CodeMirror.Pos(end, 0),
+          'syncModel'
+        );
       }
       this.ownEditor.getDoc().setCursor(cursor);
       this.lineChunks = this.model.getLineChunks();
@@ -314,7 +324,8 @@ class DiffView {
         update.bind(self, mode), fast === true ? 20 : 250);
     }
     function change(_cm: CodeMirror.Editor, change: CodeMirror.EditorChangeLinkedList) {
-      if (change.origin !== 'setValue') {
+      let userEdit = !valueIn(change.origin, ['setValue', 'syncModel']);
+      if (userEdit) {
         // Edited by hand!
         let baseLine = getMatchingBaseLine(change.from.line, self.lineChunks);
         updateModel({
@@ -334,7 +345,7 @@ class DiffView {
       }
       // Update faster when a line was added/removed
       setDealign(change.text.length - 1 !== change.to.line - change.from.line,
-        change.origin === 'setValue' ? undefined : 'full');
+        userEdit ? 'full' : undefined);
     }
     function checkSync(cm: CodeMirror.Editor) {
       if (self.model.remote !== cm.getValue()) {
