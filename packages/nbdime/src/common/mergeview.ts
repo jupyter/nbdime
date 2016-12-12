@@ -216,17 +216,24 @@ class DiffView {
       let start = edit.getDoc().firstLine();
       let last = edit.getDoc().lastLine();
       let end = last;
+      let updatedEnd = last;
+      let updatedLineChunks = this.model.getLineChunks();
+      let updatedChunks = lineToNormalChunks(updatedLineChunks);
+      let cumulativeOffset = 0;
       for (let range of this.collapsedRanges) {
         let baseLine = range.line;
         end = getMatchingEditLine(baseLine, this.chunks);
-        if (end !== start) {
+        updatedEnd = getMatchingEditLine(baseLine, updatedChunks);
+        let offset = updatedEnd - end;
+        if (end !== start || offset !== 0) {
           edit.getDoc().replaceRange(
-            newLines.slice(start, end - 1).join(''),
+            newLines.slice(start + cumulativeOffset, updatedEnd + cumulativeOffset - 1).join(''),
             CodeMirror.Pos(start, 0),
             CodeMirror.Pos(end - 1, 0),
             'syncModel'
           );
         }
+        cumulativeOffset += offset;
         start = end + range.size;
       }
       if (start < last) {
@@ -238,8 +245,8 @@ class DiffView {
         );
       }
       this.ownEditor.getDoc().setCursor(cursor);
-      this.lineChunks = this.model.getLineChunks();
-      this.chunks = lineToNormalChunks(this.lineChunks);
+      this.lineChunks = updatedLineChunks;
+      this.chunks = updatedChunks;
     }
   }
 
