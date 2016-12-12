@@ -136,123 +136,65 @@ def resolve_strategy_inline_source(base_path, base, unresolved_conflicts, decisi
     pass # FIXME XXX: Implement by rewriting functions above copied from autoresolve.py, search for resolve_strategy_inline_source above in this file
 
 
-def make_inline_attachments_decision(attachments, prefix, local_diff, remote_diff):  # FIXME XXX rewrite and use for resolve_strategy_inline_attachments
-    local_diff = { e.key: e for e in local_diff }
-    remote_diff = { e.key: e for e in remote_diff }
+def resolve_strategy_inline_attachments(base_path, attachments, unresolved_conflicts, decisions):
+    local_conflict_diffs, remote_conflict_diffs = collect_unresolved_diffs(base_path, unresolved_conflicts)
 
-    lkeys = set(local_diff)
-    rkeys = set(remote_diff)
-    unchanged = set(attachments)
-    unchanged -= lkeys
-    unchanged -= rkeys
-    conflicts = lkeys & rkeys
-    lkeys -= conflicts
-    rkeys -= conflicts
+    ldiffs_by_key = {d.key: d for d in local_conflict_diffs}
+    rdiffs_by_key = {d.key: d for d in remote_conflict_diffs}
+    conflict_keys = sorted(set(ldiffs_by_key) | set(rdiffs_by_key))
 
-    decs = []
+    for key in conflict_keys:
+        # key is the attachment filename
+        ld = ldiffs_by_key[key]
+        rd = rdiffs_by_key[key]
 
-    for k in lkeys:
-        ld = local_diff[k]
-        md = MergeDecision(
-            common_path=prefix,  # TODO: Add key?
-            action="local",
-            conflict=False,
-            local_diff=[ld],
-            remote_diff=[],
-            #custom_diff=[],
-        )
-        decs.append(md)
-
-    for k in rkeys:
-        rd = remote_diff[k]
-        md = MergeDecision(
-            common_path=prefix,  # TODO: Add key?
-            action="remote",
-            conflict=False,
-            local_diff=[],
-            remote_diff=[rd],
-            #custom_diff=[],
-        )
-        decs.append(md)
-
-    for k in conflicts:
-        ld = local_diff[k]
-        rd = remote_diff[k]
-        if ld.op == rd.op == DiffOp.REMOVE:
-            # Both removed, decision is either
-            md = MergeDecision(
-                common_path=prefix,  # TODO: Add key?
-                action="either",
-                conflict=False,
-                local_diff=[ld],
-                remote_diff=[rd],
-                #custom_diff=None,
-            )
-        elif ld.op == DiffOp.REMOVE:
-            # Just keep the remote change (don't know what else to do)
-            md = MergeDecision(
-                common_path=prefix,  # TODO: Add key?
-                action="remote",
-                conflict=True,
-                local_diff=[ld],
-                remote_diff=[rd],
-                #custom_diff=None,
-            )
+        if ld.op == DiffOp.REMOVE:
+            assert rd.op != DiffOp.REMOVE
+            decisions.remote(base_path, ldiffs, rdiffs, conflict=True)
         elif rd.op == DiffOp.REMOVE:
-            # Just keep the local change (don't know what else to do)
-            md = MergeDecision(
-                common_path=prefix,  # TODO: Add key?
-                action="local",
-                conflict=True,
-                local_diff=[ld],
-                remote_diff=[rd],
-                #custom_diff=None,
-            )
+            decisions.local(base_path, ldiffs, rdiffs, conflict=True)
+            decisions.custom(base_path, ldiffs, rdiffs, custom_diff, conflict=True)
         else:
-            if rd.op == DiffOp.REPLACE:
-                rval = rd.value
-            elif rd.op == DiffOp.PATCH:
-                rval = patch(attachments[k], rd.diff)
-            elif rd.op == DiffOp.ADD:
-                rval = rd.value
+            # Not merging attachment contents, but adding attachments
+            # with new names LOCAL_oldname and REMOTE_oldname instead.
 
-            if ld.op == DiffOp.REPLACE:
-                lval = ld.value
-            elif ld.op == DiffOp.PATCH:
-                lval = patch(attachments[k], ld.diff)
-            elif ld.op == DiffOp.ADD:
-                lval = ld.value
+            base = attachments[key]
 
-            if lval == rval:
-                # Both result in same value, decision is either
-                md = MergeDecision(
-                    common_path=prefix,  # TODO: Add key?
-                    action="either",
-                    conflict=False,
-                    local_diff=[ld],
-                    remote_diff=[rd],
-                    #custom_diff=None,
-                )
+            if ld.op == DiffOp.ADD:
+                assert rd.op == DiffOp.ADD
+                local = ld.value
+            elif ld.op == DiffOp.REPLACE:
+                local = ld.value
             else:
-                md = MergeDecision(
-                    common_path=prefix,  # TODO: Add key?
-                    action="custom",
-                    conflict=True,
-                    local_diff=[ld],
-                    remote_diff=[rd],
-                    custom_diff=[
-                        op_add("LOCAL_" + k, lval),
-                        op_add("REMOTE_" + k, rval)
-                        ]
-                )
-        # Add decision
-        decs.append(md)
+                assert ld.op == DiffOp.PATCH
+                local = patch(base, ld.diff)
 
-    return decs
-def resolve_strategy_inline_attachments(base_path, base, unresolved_conflicts, decisions):
-    pass # FIXME XXX: Implement by rewriting functions above copied from autoresolve.py, search for resolve_strategy_inline_attachments above in this file
+            if rd.op == DiffOp.ADD:
+                remote = rd.value
+            elif rd.op == DiffOp.REPLACE:
+                remote = rd.value
+            else:
+                assert rd.op == DiffOp.PATCH
+                remote = patch(base, rd.diff)
 
+            local_name = "LOCAL_" + key
+            remote_name = "REMOTE_" + key
 
+            custom_diff = []
+
+            if local_name in attachments:
+                nbdime.log.warning("Replacing previous conflicted attachment with filename '{}'".format(local_name))
+                custom_diff += [op_replace(local_name, local)]
+            else:
+                custom_diff += [op_add(local_name, local)]
+
+            if remote_name in attachments:
+                nbdime.log.warning("Replacing previous conflicted attachment with filename '{}'".format(remote_name))
+                custom_diff += [op_replace(remote_name, remote)]
+            else:
+                custom_diff += [op_add(remote_name, remote)]
+
+            decisions.custom(base_path, ldiffs, rdiffs, custom_diff, conflict=True)
 
 
 def output_marker(text):
@@ -388,11 +330,14 @@ def resolve_strategy_inline_outputs(base_path, outputs, unresolved_conflicts, de
     conflict_indices = sorted(set(ldiffs_by_index) | set(rdiffs_by_index))
 
     for i in conflict_indices:
-        inlined_conflict, keep_base = make_inline_output_conflict(outputs[i], ldiffs_by_index[i], rdiffs_by_index[i])
+        ldiffs = ldiffs_by_index[i]
+        rdiffs = rdiffs_by_index[i]
+
+        inlined_conflict, keep_base = make_inline_output_conflict(outputs[i], ldiffs, rdiffs)
         custom_diff = []
+        custom_diff += [op_addrange(i, inlined_conflict)]
         if not keep_base:
             custom_diff += [op_removerange(i, 1)]
-        custom_diff += [op_addrange(i, inlined_conflict)]
         decisions.custom(base_path, ldiffs, rdiffs, custom_diff, conflict=True)
 
 
