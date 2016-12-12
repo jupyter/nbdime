@@ -7,6 +7,7 @@ from __future__ import unicode_literals
 
 from six import string_types
 import copy
+from collections import defaultdict
 
 from .decisions import MergeDecisionBuilder
 from .chunks import make_merge_chunks
@@ -97,163 +98,6 @@ def collect_unresolved_diffs(base_path, unresolved_conflicts):
     return local_conflict_diffs, remote_conflict_diffs
 
 
-def resolve_strategy_record_conflicts(base_path, base, unresolved_conflicts, decisions):
-    local_conflict_diffs, remote_conflict_diffs = collect_unresolved_diffs(base_path, unresolved_conflicts)
-
-    # Record remaining conflicts in field nbdime-conflicts
-    conflicts_dict = {
-        "local_diff": local_conflict_diffs,
-        "remote_diff": remote_conflict_diffs,
-    }
-    if "nbdime-conflicts" in base:
-        nbdime.log.warning("Replacing previous nbdime-conflicts field from base notebook.")
-        op = op_replace("nbdime-conflicts", conflicts_dict)
-    else:
-        nbdime.log.warning("Recording unresolved conflicts in {}/nbdime-conflicts.".format(join_path(base_path)))
-        op = op_add("nbdime-conflicts", conflicts_dict)
-    custom_diff = [op]
-
-    decisions.custom(base_path, local_conflict_diffs, remote_conflict_diffs, custom_diff, conflict=True)
-
-
-
-def output_marker(text):
-    return nbformat.v4.new_output("stream", name="stderr", text=text)
-
-
-def get_outputs_and_note(base, removes, patches):
-    if removes:
-        note = " <removed>"
-        suboutputs = []
-    elif patches:
-        e, = patches  # 0 or 1 item
-
-        # Collect which mime types are modified
-        mkeys = set()
-        keys = set()
-        for d in e.diff:
-            if d.key == "data":
-                assert d.op == DiffOp.PATCH
-                for f in d.diff:
-                    mkeys.add(f.key)
-            else:
-                keys.add(d.key)
-        data = base.get("data")
-        if data:
-            ukeys = set(data.keys()) - mkeys
-        else:
-            ukeys = ()
-
-        notes = []
-        if mkeys or keys:
-            notes.append("modified: {}".format(", ".join(sorted(mkeys))))
-        if ukeys:
-            notes.append("unchanged: {}".format(", ".join(sorted(ukeys))))
-        if notes:
-            note = " <" + "; ".join(notes) + ">"
-        else:
-            note = ""
-
-        suboutputs = [patch(base, e.diff)]
-    else:
-        note = " <unchanged>"
-        suboutputs = [base]
-    return suboutputs, note
-
-
-def make_inline_outputs_value(base, local_diff, remote_diff):  # FIXME XXX rewrite and use for resolve_strategy_inline_outputs
-    """Make a list of outputs with conflict markers from conflicting local and remote diffs"""
-
-    # TODO: This can probably be shortened, lots of local/remote copy-pasta here
-
-    base_title = "base"
-    local_title = "local"
-    remote_title = "remote"
-
-    #local = patch(base, local_diff)
-    #remote = patch(base, remote_diff)
-
-    orig_base = base
-    #orig_local = local
-    #orig_remote = remote
-
-    # Define markers
-    marker_size = 7  # default in git
-    m0 = "<"*marker_size
-    m1 = "|"*marker_size
-    m2 = "="*marker_size
-    m3 = ">"*marker_size
-
-    # Split up and combine diffs into chunks [(begin, end, localdiffs, remotediffs)]
-    chunks = make_merge_chunks(base, local_diff, remote_diff, single_item=True)
-
-    begin = 0
-    end = len(orig_base)
-
-    # Loop over chunks of base[j:k], grouping insertion at j into
-    # the chunk starting with j
-    outputs = []
-    for (j, k, d0, d1) in chunks:
-        assert j + 1 == k
-
-        lpatches = [e for e in d0 if e.op == DiffOp.PATCH]
-        rpatches = [e for e in d1 if e.op == DiffOp.PATCH]
-        linserts = [e for e in d0 if e.op == DiffOp.ADDRANGE]
-        rinserts = [e for e in d1 if e.op == DiffOp.ADDRANGE]
-        lremoves = [e for e in d0 if e.op == DiffOp.REMOVERANGE]
-        rremoves = [e for e in d1 if e.op == DiffOp.REMOVERANGE]
-        assert len(lpatches) + len(linserts) + len(lremoves) == len(d0)
-        assert len(rpatches) + len(rinserts) + len(rremoves) == len(d1)
-
-        # TODO: Remove execution_count from patches here?
-
-        # Insert new outputs with surrounding markers
-        if linserts or rinserts:
-            lnote = ""
-            loutputs = []
-            for e in linserts:  # 0 or 1 item
-                loutputs.extend(e.valuelist)
-            rnote = ""
-            routputs = []
-            for e in rinserts:  # 0 or 1 item
-                routputs.extend(e.valuelist)
-
-            outputs.append(output_marker("%s %s%s\n" % (m0, local_title, lnote)))
-            outputs.extend(loutputs)
-            outputs.append(output_marker("%s\n" % (m2,)))
-            outputs.extend(routputs)
-            outputs.append(output_marker("%s %s%s\n" % (m3, remote_title, rnote)))
-
-        if not (lremoves or rremoves or lpatches or rpatches):
-            # Insert base output if untouched
-            if begin == j:
-                begin += 1
-            else:
-                outputs.append(base[j])
-
-        elif lremoves and rremoves:
-            # Just don't add base
-            assert not (lpatches or rpatches)
-
-        else:
-            assert not (lremoves and lpatches)
-            assert not (rremoves and rpatches)
-            lnote = ""
-            rnote = ""
-
-            # Insert changed output with surrounding markers
-            loutputs, lnote = get_outputs_and_note(base[j], lremoves, lpatches)
-            routputs, rnote = get_outputs_and_note(base[j], rremoves, rpatches)
-
-            outputs.append(output_marker("%s %s%s\n" % (m0, local_title, lnote)))
-            outputs.extend(loutputs)
-            outputs.append(output_marker("%s\n" % (m2,)))
-            outputs.extend(routputs)
-            outputs.append(output_marker("%s %s%s\n" % (m3, remote_title, rnote)))
-
-    # Return range to replace with marked up outputs
-    return begin, end, outputs
-
 
 def make_inline_source_value(base, local_diff, remote_diff):  # FIXME XXX rewrite and use for resolve_strategy_inline_source
     """Make an inline source from conflicting local and remote diffs"""
@@ -274,8 +118,6 @@ def make_inline_source_value(base, local_diff, remote_diff):  # FIXME XXX rewrit
 
     # Return range to replace with marked up lines
     return begin, end, inlined
-
-
 def make_inline_source_decision(source, prefix, local_diff, remote_diff):  # FIXME XXX rewrite and use for resolve_strategy_inline_source
     begin, end, inlined = make_inline_source_value(source, local_diff, remote_diff)
     custom_diff = [
@@ -290,6 +132,8 @@ def make_inline_source_decision(source, prefix, local_diff, remote_diff):  # FIX
         remote_diff=remote_diff,
         custom_diff=custom_diff,
     )]
+def resolve_strategy_inline_source(base_path, base, unresolved_conflicts, decisions):
+    pass # FIXME XXX: Implement by rewriting functions above copied from autoresolve.py, search for resolve_strategy_inline_source above in this file
 
 
 def make_inline_attachments_decision(attachments, prefix, local_diff, remote_diff):  # FIXME XXX rewrite and use for resolve_strategy_inline_attachments
@@ -405,37 +249,170 @@ def make_inline_attachments_decision(attachments, prefix, local_diff, remote_dif
         decs.append(md)
 
     return decs
-
-
-def make_inline_outputs_decision(outputs, prefix, local_diff, remote_diff):  # FIXME XXX rewrite and use for resolve_strategy_inline_outputs
-    begin, end, inlined = make_inline_outputs_value(outputs, local_diff, remote_diff)
-    custom_diff = []
-    if inlined:
-        custom_diff.append(op_addrange(begin, inlined))
-    if end > begin:
-        custom_diff.append(op_removerange(begin, end-begin))
-    if not custom_diff:
-        return []
-    return [MergeDecision(
-        common_path=prefix,
-        action="custom",
-        conflict=True,
-        local_diff=local_diff,
-        remote_diff=remote_diff,
-        custom_diff=custom_diff,
-    )]
-
-
 def resolve_strategy_inline_attachments(base_path, base, unresolved_conflicts, decisions):
     pass # FIXME XXX: Implement by rewriting functions above copied from autoresolve.py, search for resolve_strategy_inline_attachments above in this file
 
 
-def resolve_strategy_inline_outputs(base_path, base, unresolved_conflicts, decisions):
-    pass # FIXME XXX: Implement by rewriting functions above copied from autoresolve.py, search for resolve_strategy_inline_outputs above in this file
 
 
-def resolve_strategy_inline_source(base_path, base, unresolved_conflicts, decisions):
-    pass # FIXME XXX: Implement by rewriting functions above copied from autoresolve.py, search for resolve_strategy_inline_source above in this file
+def output_marker(text):
+    return nbformat.v4.new_output("stream", name="stderr", text=text)
+
+
+def get_outputs_and_note(base, removes, patches):
+    if removes:
+        note = " <removed>"
+        suboutputs = []
+    elif patches:
+        e, = patches  # 0 or 1 item
+
+        # Collect which mime types are modified
+        mkeys = set()
+        keys = set()
+        for d in e.diff:
+            if d.key == "data":
+                assert d.op == DiffOp.PATCH
+                for f in d.diff:
+                    mkeys.add(f.key)
+            else:
+                keys.add(d.key)
+        data = base.get("data")
+        if data:
+            ukeys = set(data.keys()) - mkeys
+        else:
+            ukeys = ()
+
+        notes = []
+        if mkeys or keys:
+            notes.append("modified: {}".format(", ".join(sorted(mkeys))))
+        if ukeys:
+            notes.append("unchanged: {}".format(", ".join(sorted(ukeys))))
+        if notes:
+            note = " <" + "; ".join(notes) + ">"
+        else:
+            note = ""
+
+        suboutputs = [patch(base, e.diff)]
+    else:
+        note = " <unchanged>"
+        suboutputs = [base]
+    return suboutputs, note
+
+
+def make_inline_output_conflict(base_output, local_diff, remote_diff):
+    """Make a list of outputs with conflict markers from conflicting
+    local and remote diffs applying to a single base_output"""
+
+    # Styling details
+    base_title = "base"
+    local_title = "local"
+    remote_title = "remote"
+    marker_size = 7  # default in git
+    m0 = "<"*marker_size
+    m1 = "|"*marker_size
+    m2 = "="*marker_size
+    m3 = ">"*marker_size
+
+    # Split diffs by type
+    d0 = local_diff
+    d1 = remote_diff
+    lpatches = [e for e in d0 if e.op == DiffOp.PATCH]
+    rpatches = [e for e in d1 if e.op == DiffOp.PATCH]
+    linserts = [e for e in d0 if e.op == DiffOp.ADDRANGE]
+    rinserts = [e for e in d1 if e.op == DiffOp.ADDRANGE]
+    lremoves = [e for e in d0 if e.op == DiffOp.REMOVERANGE]
+    rremoves = [e for e in d1 if e.op == DiffOp.REMOVERANGE]
+    assert len(lpatches) + len(linserts) + len(lremoves) == len(d0)
+    assert len(rpatches) + len(rinserts) + len(rremoves) == len(d1)
+
+    # Collect new outputs with surrounding markers
+    outputs = []
+
+    # Collect inserts from both sides separately
+    if linserts or rinserts:
+        lnote = ""
+        loutputs = []
+        for e in linserts:  # 0 or 1 item
+            loutputs.extend(e.valuelist)
+        rnote = ""
+        routputs = []
+        for e in rinserts:  # 0 or 1 item
+            routputs.extend(e.valuelist)
+
+        outputs.append(output_marker("%s %s%s\n" % (m0, local_title, lnote)))
+        outputs.extend(loutputs)
+        outputs.append(output_marker("%s\n" % (m2,)))
+        outputs.extend(routputs)
+        outputs.append(output_marker("%s %s%s\n" % (m3, remote_title, rnote)))
+
+    # Keep base output if untouched (only inserts)
+    keep_base = not (lremoves or rremoves or lpatches or rpatches)
+    if not keep_base:
+        assert not (lremoves and lpatches)
+        assert not (rremoves and rpatches)
+        lnote = ""
+        rnote = ""
+
+        # Insert changed output with surrounding markers
+        loutputs, lnote = get_outputs_and_note(base_output, lremoves, lpatches)
+        routputs, rnote = get_outputs_and_note(base_output, rremoves, rpatches)
+
+        outputs.append(output_marker("%s %s%s\n" % (m0, local_title, lnote)))
+        outputs.extend(loutputs)
+        outputs.append(output_marker("%s\n" % (m2,)))
+        outputs.extend(routputs)
+        outputs.append(output_marker("%s %s%s\n" % (m3, remote_title, rnote)))
+
+    # Return marked up output
+    return outputs, keep_base
+
+
+def split_diffs_by_index(diffs):
+    """Splits list diffs (removeranges) by index and return
+    dict mapping index to list of diff entries affecting that index."""
+    diffs_by_index = defaultdict(list)
+    for d in diffs:
+        if d.op == DiffOp.REMOVERANGE:
+            for i in range(d.key, d.key + d.length):
+                diffs_by_index[i].append(op_removerange(i, 1))
+        else:
+            diffs_by_index[d.key].append(d)
+    return diffs_by_index
+
+
+def resolve_strategy_inline_outputs(base_path, outputs, unresolved_conflicts, decisions):
+    local_conflict_diffs, remote_conflict_diffs = collect_unresolved_diffs(base_path, unresolved_conflicts)
+
+    ldiffs_by_index = split_diffs_by_index(local_conflict_diffs)
+    rdiffs_by_index = split_diffs_by_index(remote_conflict_diffs)
+    conflict_indices = sorted(set(ldiffs_by_index) | set(rdiffs_by_index))
+
+    for i in conflict_indices:
+        inlined_conflict, keep_base = make_inline_output_conflict(outputs[i], ldiffs_by_index[i], rdiffs_by_index[i])
+        custom_diff = []
+        if not keep_base:
+            custom_diff += [op_removerange(i, 1)]
+        custom_diff += [op_addrange(i, inlined_conflict)]
+        decisions.custom(base_path, ldiffs, rdiffs, custom_diff, conflict=True)
+
+
+def resolve_strategy_record_conflicts(base_path, base, unresolved_conflicts, decisions):
+    local_conflict_diffs, remote_conflict_diffs = collect_unresolved_diffs(base_path, unresolved_conflicts)
+
+    # Record remaining conflicts in field nbdime-conflicts
+    conflicts_dict = {
+        "local_diff": local_conflict_diffs,
+        "remote_diff": remote_conflict_diffs,
+    }
+    if "nbdime-conflicts" in base:
+        nbdime.log.warning("Replacing previous nbdime-conflicts field from base notebook.")
+        op = op_replace("nbdime-conflicts", conflicts_dict)
+    else:
+        nbdime.log.warning("Recording unresolved conflicts in {}/nbdime-conflicts.".format(join_path(base_path)))
+        op = op_add("nbdime-conflicts", conflicts_dict)
+    custom_diff = [op]
+
+    decisions.custom(base_path, local_conflict_diffs, remote_conflict_diffs, custom_diff, conflict=True)
 
 
 def wrap_subconflicts(key, subconflicts):
@@ -849,8 +826,10 @@ def _merge_lists(base, local_diff, remote_diff, path, decisions, strategies):
                     # drop the transient diffs and let parent pick the deletion
                     pass
                 elif ldiff is ParentDeleted or rdiff is ParentDeleted:
-                    # If one is deleted, no point in recursing? FIXME XXX: Consider if recursion is still useful to have strategies applied to subdocuments, followed by a check on subconflicts
-                    conflicts.append((path, p0, p1, strategy))
+                    # If one is deleted, no point in recursing?
+                    # FIXME XXX: Consider if recursion is still useful to have
+                    # strategies applied to subdocuments, followed by a check on subconflicts
+                    conflicts.append((path, p0, p1, parent_strategy)) # FIXME XXX Is this the right strategy?
                 else:
                     # Otherwise recurse and pass on unresolved conflicts
                     subconflicts = _merge(base[key], ldiff, rdiff, path + (key,), decisions, strategies)
@@ -877,7 +856,7 @@ def _merge_lists(base, local_diff, remote_diff, path, decisions, strategies):
             decisions.agreement(path, p0, p1)
         elif chunktype in "AR/AR":
             # XXX FIXME: Support two-sided removal in _merge_concurrent_inserts, see autoresolve?
-            unresolved_conflicts.append((path, d0, d1, strategy))
+            conflicts.append((path, d0, d1, parent_strategy)) # FIXME XXX Is this the right strategy?
         elif chunktype in ("AR/A", "A/AR", "A/A"): #, "AR/AR"):
             # Including removals in merging of inserts
             subconflicts = _merge_concurrent_inserts(base, d0, d1, path, decisions, strategies)
@@ -897,8 +876,10 @@ def _merge_lists(base, local_diff, remote_diff, path, decisions, strategies):
             unresolved_conflicts = []
         elif parent_strategy == "clear-all":
             # TODO: Collect local diffs and remote diffs from unresolved_conflicts
-            decisions.add_decision(path, "clear_all", [], [], conflict=False)
+            local_conflict_diffs, remote_conflict_diffs = collect_unresolved_diffs(path, unresolved_conflicts)
+            decisions.add_decision(path, "clear_all", local_conflict_diffs, remote_conflict_diffs, conflict=False)
             unresolved_conflicts = []
+        # TODO: Is the 'remove' strategy applied to /cells/*/outputs/*?
 
     # Return the rest of the conflicts
     return unresolved_conflicts
