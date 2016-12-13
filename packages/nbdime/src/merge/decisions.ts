@@ -500,6 +500,7 @@ function resolveAction(base: any, decision: MergeDecision): IDiffEntry[] {
  *
  * Returns a tuple of path and any line key.
  */
+export
 function splitDiffStringPath(base: any, path: DecisionPath):
     [DecisionPath, DecisionPath | null] {
   for (let i = 0; i < path.length; ++i) {
