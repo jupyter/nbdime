@@ -5,6 +5,7 @@
 
 from __future__ import unicode_literals
 
+import nbformat
 from six import string_types
 import copy
 from collections import defaultdict
@@ -237,11 +238,13 @@ def resolve_strategy_inline_attachments(base_path, attachments, unresolved_confl
         rd = rdiffs_by_key[key]
 
         if ld.op == DiffOp.REMOVE:
+            # If one side is removing and we have a conflict,
+            # the other side did an edit and we keep that
+            # but flag a conflict (TODO: Or don't flag conflict?)
             assert rd.op != DiffOp.REMOVE
             decisions.remote(base_path, ld, rd, conflict=True)
         elif rd.op == DiffOp.REMOVE:
             decisions.local(base_path, ld, rd, conflict=True)
-            decisions.custom(base_path, ld, rd, custom_diff, conflict=True)
         else:
             # Not merging attachment contents, but adding attachments
             # with new names LOCAL_oldname and REMOTE_oldname instead.
@@ -471,7 +474,8 @@ def resolve_strategy_inline_source(path, base, local_diff, remote_diff, decision
         # Run merge renderer on full sources
         local = patch(base, local_diff)
         remote = patch(base, remote_diff)
-        merged, conflict = merge_render(base, local, remote, None)
+        merged, status = merge_render(base, local, remote, None)
+        conflict = status != 0
 
         assert path[-1] == "source"
         custom_diff = [op_replace(path[-1], merged)]

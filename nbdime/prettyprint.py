@@ -85,9 +85,11 @@ def external_merge_render(cmd, b, l, r):
             f.write(r)
         assert all(fn in cmd for fn in ['local', 'base', 'remote'])
         p = Popen(cmd, cwd=td, stdout=PIPE)
-        output, status = p.communicate()
+        output, errors = p.communicate()
+        status = p.returncode
+        output = output.decode('utf8')
         # normalize newlines
-        output = output.decode('utf8').replace('\r\n', '\n')
+        output = output.replace('\r\n', '\n')
     finally:
         shutil.rmtree(td)
     return output, status
@@ -104,7 +106,8 @@ def external_diff_render(cmd, a, b):
             f.write(b)
         assert all(fn in cmd for fn in ['before', 'after'])
         p = Popen(cmd, cwd=td, stdout=PIPE)
-        output, status = p.communicate()
+        output, errors = p.communicate()
+        status = p.returncode
         output = output.decode('utf8')
         r = re.compile(r"^\\ No newline at end of file\n?", flags=re.M)
         output, n = r.subn("", output)
