@@ -364,10 +364,17 @@ describe('merge', () => {
         let cell = shallowCopy(codeCellStub);
         cell.source = 'abcdef\njkl\nmnpq\nuv\n';
         nbcontent.cells = [cell];
+        // Set up initial deleted cell model
         let decisions: IMergeDecision[] = [{
           common_path: ['cells'],
           local_diff: [opRemoveRange(0, 1)],
-          custom_diff: [opPatch(0, [opPatch('source', [
+          action: 'local'
+        }];
+        let nbmodel = new NotebookMergeModel(nbcontent, decisions);
+        let cellModel = nbmodel.cells[0];
+        // Simulate diff after previous manual edit
+        let dec = cellModel.decisions[0];
+        dec.customDiff = [opPatch(0, [opPatch('source', [
             opAddRange(1, ['ghi\n']),
             opRemoveRange(1, 1),
             opPatch(2, [
@@ -375,11 +382,10 @@ describe('merge', () => {
               opRemoveRange(2, 1)
             ]),
             opAddRange(3, ['rst\n'])
-          ])])],
-          action: 'local'
-        }];
-        let nbmodel = new NotebookMergeModel(nbcontent, decisions);
-        let model = nbmodel.cells[0].merged.source;
+          ])])];
+        dec.action = 'custom';
+        // Perform new edit:
+        let model = cellModel.merged.source;
         // Value at this point:
         // 'abcdef\nghi\nmnoq\nrst\nuv\n'
         updateModel({
@@ -411,10 +417,17 @@ describe('merge', () => {
         let cell = shallowCopy(codeCellStub);
         cell.source = 'abcdef\njkl\nmnpq\nuv\n';
         nbcontent.cells = [cell];
+        // Set up initial deleted cell model
         let decisions: IMergeDecision[] = [{
           common_path: ['cells'],
           local_diff: [opRemoveRange(0, 1)],
-          custom_diff: [opPatch(0, [opPatch('source', [
+          action: 'local'
+        }];
+        let nbmodel = new NotebookMergeModel(nbcontent, decisions);
+        let cellModel = nbmodel.cells[0];
+        // Simulate diff after previous manual edit
+        let dec = cellModel.decisions[0];
+        dec.customDiff = [opPatch(0, [opPatch('source', [
             opAddRange(1, ['ghi\n']),
             opRemoveRange(1, 1),
             opPatch(2, [
@@ -422,11 +435,10 @@ describe('merge', () => {
               opRemoveRange(2, 1)
             ]),
             opAddRange(3, ['rst\n'])
-          ])])],
-          action: 'local'
-        }];
-        let nbmodel = new NotebookMergeModel(nbcontent, decisions);
-        let model = nbmodel.cells[0].merged.source;
+          ])])];
+        dec.action = 'custom';
+        // Perform new edit:
+        let model = cellModel.merged.source;
         updateModel({
           model: model,
           full: 'abcdef\nghq\nrst\nuv\n',
