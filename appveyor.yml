@@ -1,6 +1,11 @@
 # Do not build feature branch with open Pull Requests
 skip_branch_with_pr: true
 
+# scripts that are called at very beginning, before repo cloning
+init:
+  - ps: (new-object net.webclient).DownloadFile('https://github.com/git-for-windows/git/releases/download/v2.11.0.windows.1/Git-2.11.0-64-bit.exe', 'C:\\git-setup.exe')
+  - cmd: START /WAIT C:\\git-setup.exe /VERYSILENT
+
 # environment variables
 environment:
   nodejs_version: "6.9"
