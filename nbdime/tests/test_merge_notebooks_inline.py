@@ -372,7 +372,8 @@ def test_inline_merge_source_patches():
     expected = code_nb([
         "1st source",
         "other text?",
-        '<<<<<<< local <CELL DELETED>\n\n=======\nthis cell will be deleted and modified\n>>>>>>> remote'
+        #'<<<<<<< local <CELL DELETED>\n\n=======\nthis cell will be deleted and modified\n>>>>>>> remote'
+        '<<<<<<< LOCAL CELL DELETED >>>>>>>\nthis cell will be deleted and modified',
         "some more content",  # equal
         '<<<<<<< local\nAnd a Final line\n=======\nand The final Line\n>>>>>>> remote'
         ])
@@ -381,7 +382,8 @@ def test_inline_merge_source_patches():
     expected = code_nb([
         "1st source",
         "other text?",
-        '<<<<<<< local\nthis cell will be deleted and modified\n=======\n>>>>>>> remote <CELL DELETED>'
+        #'<<<<<<< local\nthis cell will be deleted and modified\n=======\n>>>>>>> remote <CELL DELETED>'
+        '<<<<<<< REMOTE CELL DELETED >>>>>>>\nthis cell will be deleted and modified',
         "some more content",
         '<<<<<<< local\nand The final Line\n=======\nAnd a Final line\n>>>>>>> remote'
         ])
