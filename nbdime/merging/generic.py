@@ -791,17 +791,6 @@ def _merge_lists(base, local_diff, remote_diff, path, decisions, strategies):
     # resolution will be attempted at the end here
     conflicts = []
 
-    # Special case if local or remote diff is ParentDeleted
-    # Example: parent cell at /cells/* is deleted, spath=/cells/*/outputs
-    # if local_diff is ParentDeleted:
-    #     parent_deleted_side = "local"
-    #     local_diff = []
-    # elif remote_diff is ParentDeleted:
-    #     parent_deleted_side = "remote"
-    #     remote_diff = []
-    # else:
-    #     parent_deleted_side = ""
-
     # Split up and combine diffs into chunks
     # format: [(begin, end, localdiffs, remotediffs)]
     chunks = make_merge_chunks(base, local_diff, remote_diff)
@@ -817,7 +806,6 @@ def _merge_lists(base, local_diff, remote_diff, path, decisions, strategies):
         chunktype = lname + "/" + rname
         achunktype = laname + "/" + raname
         pchunktype = lpname + "/" + rpname
-        #allops = "".join(sorted(set(lname + rname)))
 
         # These are accessed in a lot of different combinations below
         a0 = d0[:-1]  # local addrange (0 or 1)
