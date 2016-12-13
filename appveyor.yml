@@ -4,10 +4,15 @@ skip_branch_with_pr: true
 # environment variables
 environment:
   nodejs_version: "6.9"
-  PYTHON: "C:\\Python35-x64"
-  PYTHON_VERSION: "3.5.x"
-  PYTHON_MAJOR: 3
-  PYTHON_ARCH: "64"
+  matrix:
+    - PYTHON: "C:\\Python35-x64"
+      PYTHON_VERSION: "3.5.x"
+      PYTHON_MAJOR: 3
+      PYTHON_ARCH: "64"
+    - PYTHON: "C:\\Python27"
+      PYTHON_VERSION: "2.7.x"
+      PYTHON_MAJOR: 2
+      PYTHON_ARCH: "32"
 
 # build cache to preserve files/folders between builds
 cache:
