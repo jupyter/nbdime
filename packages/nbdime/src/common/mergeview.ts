@@ -211,14 +211,20 @@ class DiffView {
   syncModel() {
     if (this.modelInvalid()) {
       let edit = this.ownEditor;
+      let updatedLineChunks = this.model.getLineChunks();
+      let updatedChunks = lineToNormalChunks(updatedLineChunks);
+      if (this.model.remote === edit.getValue()) {
+        // Nothing to do except update chunks
+        this.lineChunks = updatedLineChunks;
+        this.chunks = updatedChunks;
+        return;
+      }
       let cursor = edit.getDoc().getCursor();
       let newLines = splitLines(this.model.remote!);
       let start = edit.getDoc().firstLine();
       let last = edit.getDoc().lastLine();
       let end = last;
       let updatedEnd = last;
-      let updatedLineChunks = this.model.getLineChunks();
-      let updatedChunks = lineToNormalChunks(updatedLineChunks);
       let cumulativeOffset = 0;
       for (let range of this.collapsedRanges) {
         let baseLine = range.line;
