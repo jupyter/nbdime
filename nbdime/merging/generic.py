@@ -18,6 +18,7 @@ from ..diffing.notebooks import notebook_predicates, notebook_differs
 from ..patching import patch
 from ..utils import star_path, join_path
 import nbdime.log
+from nbdime.prettyprint import merge_render
 
 
 # FIXME XXX: Main todos left:
@@ -335,45 +336,37 @@ def resolve_strategy_record_conflicts(base_path, base, unresolved_conflicts, dec
     decisions.custom(base_path, local_conflict_diffs, remote_conflict_diffs, custom_diff, conflict=True)
 
 
-from nbdime.prettyprint import merge_render
+def resolve_strategy_inline_source(path, base, local_diff, remote_diff, decisions):
+    if local_diff is ParentDeleted:
+        # Add marker at top of cell, easier to clean up manually
+        local_diff = [op_addrange(0, ["<<<<<<< LOCAL CELL DELETED >>>>>>>"])]
+        decisions.local_then_remote(path, local_diff, remote_diff, conflict=True)
+    elif remote_diff is ParentDeleted:
+        # Add marker at top of cell, easier to clean up manually
+        remote_diff = [op_addrange(0, ["<<<<<<< REMOTE CELL DELETED >>>>>>>"])]
+        decisions.remote_then_local(path, local_diff, remote_diff, conflict=True)
+    else:
+        # This is another approach, replacing content with markers
+        # if local_diff is ParentDeleted:
+        #     local = "<CELL DELETED>"
+        # else:
+        #     local = patch(base, local_diff)
+        # if remote_diff is ParentDeleted:
+        #     remote = "<CELL DELETED>"
+        # else:
+        #     remote = patch(base, remote_diff)
 
-def make_inline_source_value(base, local_diff, remote_diff):  # FIXME XXX rewrite and use for resolve_strategy_inline_source
-    """Make an inline source from conflicting local and remote diffs"""
-    orig = base
-    base = base.splitlines(True)
+        # Run merge renderer on full sources
+        local = patch(base, local_diff)
+        remote = patch(base, remote_diff)
+        merged, conflict = merge_render(base, local, remote, None)
 
-    #base = source string
-    # replace = replace line e.key from base with e.value
-    # patch = apply e.diff to line e.key from base
-    # remove = remove lines e.key from base
-    local = patch(orig, local_diff)
-    remote = patch(orig, remote_diff)
-    begin = 0
-    end = len(base)
-
-    #merged, conflict = merge_render(base, local, remote)
-
-    inlined = merge_render(base, local, remote)
-    inlined = inlined.splitlines(True)
-
-    # Return range to replace with marked up lines
-    return begin, end, inlined
-def make_inline_source_decision(source, prefix, local_diff, remote_diff):  # FIXME XXX rewrite and use for resolve_strategy_inline_source
-    begin, end, inlined = make_inline_source_value(source, local_diff, remote_diff)
-    custom_diff = [
-        op_addrange(begin, inlined),
-        op_removerange(begin, end-begin),
-    ]
-    return [MergeDecision(
-        common_path=prefix,
-        action="custom",
-        conflict=True,
-        local_diff=local_diff,
-        remote_diff=remote_diff,
-        custom_diff=custom_diff,
-    )]
-def resolve_strategy_inline_source(base_path, base, unresolved_conflicts, decisions):
-    pass # FIXME XXX: Implement by rewriting functions above copied from autoresolve.py, search for resolve_strategy_inline_source above in this file
+        assert path[-1] == "source"
+        custom_diff = [op_replace(path[-1], merged)]
+        decisions.custom(path[:-1],
+            [op_patch(path[-1], local_diff)],
+            [op_patch(path[-1], remote_diff)],
+            custom_diff, conflict=conflict)
 
 
 def wrap_subconflicts(key, subconflicts):
@@ -1035,16 +1028,13 @@ def _merge_strings(base, local_diff, remote_diff,
 
     unresolved_conflicts = []
 
+    # For inline-source, we avoid trying to
+    # resolve our own diffs at all and leave
+    # the work to the merge conflict renderer
+    # (possibly git merge-file or diff3)
     if strategy == "inline-source":
-        local = patch(base, local_diff)
-        remote = patch(base, remote_diff)
-        merged, conflict = merge_render(base, local, remote, None)
-        assert path[-1] == "source"
-        custom_diff = [op_replace(path[-1], merged)]
-        decisions.custom(path[:-1],
-            [op_patch(path[-1], local_diff)],
-            [op_patch(path[-1], remote_diff)],
-            custom_diff, conflict=conflict)
+        resolve_strategy_inline_source(
+            path, base, local_diff, remote_diff, decisions)
         return unresolved_conflicts
 
 

@@ -268,6 +268,7 @@ def diff_render(a, b):
 
 
 def merge_render_with_git(b, l, r, strategy=None):
+    # Note: git merge-file also takes argument -L to change label if needed
     cmd = git_mergefile_print_cmd
     if strategy == "use-local":
         cmd += " --ours"
@@ -287,6 +288,7 @@ def merge_render_with_git(b, l, r, strategy=None):
 
 
 def merge_render_with_diff3(b, l, r, strategy=None):
+    # Note: diff3 also takes argument -L to change label if needed
     cmd = diff3_print_cmd
     if strategy == "use-local":
         return l, 0
