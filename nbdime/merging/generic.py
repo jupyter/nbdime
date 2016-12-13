@@ -13,7 +13,8 @@ from .decisions import MergeDecisionBuilder
 from .chunks import make_merge_chunks
 from ..diffing import diff
 from ..diff_format import (
-    DiffOp, ParentDeleted, Missing, as_dict_based_diff, op_patch, op_addrange, op_removerange, op_add, op_remove, op_replace)
+    DiffEntry, DiffOp, ParentDeleted, Missing, as_dict_based_diff,
+    op_patch, op_addrange, op_removerange, op_add, op_remove, op_replace)
 from ..diffing.notebooks import notebook_predicates, notebook_differs
 from ..patching import patch
 from ..utils import star_path, join_path
@@ -29,8 +30,6 @@ from nbdime.prettyprint import merge_render
 # - make existing test suite pass, either by modifying tests or fixing remaining bugs
 # - test that this still works with mergetool (it shouldn't need any changes in principle)
 # - remove autoresolve.py after checking for anything more we need from there
-# - Remove debugging code, search for DEBUGGING
-DEBUGGING = True
 
 
 # =============================================================================
@@ -452,11 +451,11 @@ def resolve_strategy_record_conflicts(base_path, base, unresolved_conflicts, dec
 def resolve_strategy_inline_source(path, base, local_diff, remote_diff, decisions):
     if local_diff is ParentDeleted:
         # Add marker at top of cell, easier to clean up manually
-        local_diff = [op_addrange(0, ["<<<<<<< LOCAL CELL DELETED >>>>>>>"])]
+        local_diff = [op_addrange(0, ["<<<<<<< LOCAL CELL DELETED >>>>>>>\n"])]
         decisions.local_then_remote(path, local_diff, remote_diff, conflict=True)
     elif remote_diff is ParentDeleted:
         # Add marker at top of cell, easier to clean up manually
-        remote_diff = [op_addrange(0, ["<<<<<<< REMOTE CELL DELETED >>>>>>>"])]
+        remote_diff = [op_addrange(0, ["<<<<<<< REMOTE CELL DELETED >>>>>>>\n"])]
         decisions.remote_then_local(path, local_diff, remote_diff, conflict=True)
     else:
         # This is another approach, replacing content with markers
@@ -507,80 +506,8 @@ def _merge_dicts(base, local_diff, remote_diff, path, decisions, strategies):
     # resolution will be attempted at the end here
     conflicts = []
 
-    # # Special case if local or remote diff is ParentDeleted
-    # # Example: parent cell at /cells/* is deleted, spath=/cells/*/attachments
-    # # Example: parent cell at /cells/* is deleted, spath=/cells/*/outputs/*
-    # # Example: parent cell at /cells/* is deleted, spath=/cells/*/metadata
-    # if local_diff is ParentDeleted or remote_diff is ParentDeleted:
-    #     # TODO: This means dropping metadata changes if parent cell deleted,
-    #     # do we want that behaviour?
-    #     transient_strategies = ("record-conflict",)
-
-    #     if local_diff is ParentDeleted and is_diff_all_transients(remote_diff, path, transients):
-    #         pass  # Drop all changes
-    #     elif remote_diff is ParentDeleted and is_diff_all_transients(local_diff, path, transients):
-    #         pass  # Drop all changes
-    #     elif dict_strategy in transient_strategies:
-    #         pass  # Drop all changes
-    #     else:
-    #         # TODO: Recurse to apply strategies to child nodes?
-    #         # Return all changes as a conflict
-    #         # FIXME XXX: How is this received by the caller? Chunk the non-empty diff alone?
-    #         import ipdb; ipdb.set_trace()
-    #         unresolved_conflicts.append((path, local_diff, remote_diff, dict_strategy))
-    #     return unresolved_conflicts
-
-    # TODO: May not need these
-    parent_deleted = False
-    orig_local_diff = local_diff
-    orig_remote_diff = remote_diff
-
-    # Converting to dict-based diff format for dicts for convenience
-    # This step will be unnecessary if we change the diff format to work this
-    # way always
-    if local_diff is ParentDeleted:
-        parent_deleted = "local"
-        local_diff = {e.key: ParentDeleted for e in remote_diff}
-        remote_diff = as_dict_based_diff(remote_diff)
-    elif remote_diff is ParentDeleted:
-        parent_deleted = "remote"
-        remote_diff = {e.key: ParentDeleted for e in local_diff}
-        local_diff = as_dict_based_diff(local_diff)
-    else:
-        local_diff = as_dict_based_diff(local_diff)
-        remote_diff = as_dict_based_diff(remote_diff)
-
-    # FIXME XXX Handle if local or remote diff is ParentDeleted
-    # Paths to common dicts in a notebook:
-    # /metadata
-    # /cells/* (*=cellnumber)
-    # /cells/*/metadata
-    # /cells/*/attachments
-    # /cells/*/attachments/* (*=filename)
-    # /cells/*/attachments/*/* (*=mimetype)
-    # /cells/*/outputs/*
-    # /cells/*/outputs/*/data
-    #
-    # Most relevant case:
-    # _merge_lists hits a cell that is both patched and deleted from the list at /cells
-    #    if input strategy is mergetool, simply record a conflict and don't recurse?
-    #    if strategy is use-*, simply pick one of the sides or base
-    #    if input strategy is inline, always keep cell and recurse:
-    #       if any(s in ("inline-source",) for p, s in strategies.items() if p.startswith(spath)):
-    #           local_diff = ParentDeleted
-    #           subdecisions = _merge(base, local_diff, remote_diff, path, strategies, decisions)
-    #           assert not subdecisions
-    # _merge_dicts gets ParentDeleted on one side at /cells/*
-    #    know that strategy is not mergetool!
-    #    for all non-strategic diffs on non-deleted side:
-    #        add them to decisions! as if one-sided.
-    #        if patch:
-    #            _merge(... ParentDeleted)
-    #    for all strategic diffs:
-    #        ... must hit strategy with ParentDeleted intact!
-    # _merge_dicts looks at patch on source:
-    #    call _merge_strings on source with PD arg, let it register decision with merge rendering
-    # parent_deleted
+    local_diff = as_dict_based_diff(local_diff)
+    remote_diff = as_dict_based_diff(remote_diff)
 
     # Summary of diff entry cases with (#) references to below code
     # r\l | N/A   -   +   :   !
@@ -620,50 +547,34 @@ def _merge_dicts(base, local_diff, remote_diff, path, decisions, strategies):
         # Get strategy for this key
         strategy = strategies.get("/".join((spath, key)))
 
-        # Hoping we can simplify this again, just
-        # writing out cases for now to clear my head
-        # about the possible ParentDeleted situations:
-        if parent_deleted == "local":
-            assert ld is ParentDeleted
-            # Local parent object was deleted
-            if rd.op == DiffOp.PATCH:
-                subconflicts = _merge(
-                    bv, ParentDeleted, rd.diff,
-                    path + (key,), decisions, strategies)
-                # FIXME XXX: What to do about returning conflict in ParentDeleted cases?
-                unresolved_conflicts.extend(wrap_subconflicts(key, subconflicts))
-            elif rd.op == DiffOp.REMOVE:
-                decisions.agreement(path, [op_remove(key)], [rd])
-            else:
-                decisions.add_decision(path, "remote", [op_remove(key)], [rd], conflict=True)
-        elif parent_deleted == "remote":
-            assert rd is ParentDeleted
-            # Remote parent object was deleted
-            if ld.op == DiffOp.PATCH:
-                subconflicts = _merge(
-                    bv, ld.diff, ParentDeleted,
-                    path + (key,), decisions, strategies)
-                # FIXME XXX: What to do about returning conflict in ParentDeleted cases?
-                unresolved_conflicts.extend(wrap_subconflicts(key, subconflicts))
-            elif ld.op == DiffOp.REMOVE:
-                decisions.agreement(path, [ld], [op_remove(key)])
-            else:
-                decisions.add_decision(path, "local", [ld], [op_remove(key)], conflict=True)
-        elif ld.op == DiffOp.REMOVE and rd.op == DiffOp.REMOVE:
-            # (4) Removed in both local and remote
-            decisions.agreement(path, ld, rd)
+        # Long if-else structure follows with actions for
+        # combinations of local and remote operations
+        if ld.op == "parent_deleted":
+            # Recurse to apply strategy countering parent deletion
+            assert rd.op == DiffOp.PATCH
+            subconflicts = _merge(bv, ParentDeleted, rd.diff, path + (key,), decisions, strategies)
+            unresolved_conflicts.extend(wrap_subconflicts(key, subconflicts))
+        elif rd.op == "parent_deleted":
+            # Recurse to apply strategy countering parent deletion
+            assert ld.op == DiffOp.PATCH
+            subconflicts = _merge(bv, ld.diff, ParentDeleted, path + (key,), decisions, strategies)
+            unresolved_conflicts.extend(wrap_subconflicts(key, subconflicts))
         elif ld.op == DiffOp.REMOVE or rd.op == DiffOp.REMOVE:
-            # (5) Conflict: removed one place and edited another
-            # Recurse into patches but with ParentDeleted sentinel passed instead of the diff
-            ldiff = p0[0].diff if p0[0].op == DiffOp.PATCH else ParentDeleted
-            rdiff = p1[0].diff if p1[0].op == DiffOp.PATCH else ParentDeleted
-            if ldiff is ParentDeleted and is_diff_all_transients(rdiff, path, transients):
+            if ld.op == DiffOp.REMOVE and rd.op == DiffOp.REMOVE:
+                # (4) Removed in both local and remote
+                decisions.agreement(path, ld, rd)
+            elif ld.op == DiffOp.REMOVE and is_diff_all_transients([rd], path + (key,), transients):
                 # If one side is deleted and the other only transients,
                 # drop the transient diffs and let parent pick the deletion
-                decisions.local(path, p0, p1)
-            elif rdiff is ParentDeleted and is_diff_all_transients(ldiff, path, transients):
-                decisions.remote(path, p0, p1)
+                decisions.local(path, ld, rd)
+            elif rd.op == DiffOp.REMOVE and is_diff_all_transients([ld], path + (key,), transients):
+                # If one side is deleted and the other only transients,
+                # drop the transient diffs and let parent pick the deletion
+                decisions.remote(path, ld, rd)
             else:
+                # (5) Conflict: removed one place and edited another
+                # TODO: use will_diff_counter_parent_deletion as in _merge_lists
+                #   if it becomes relevant: currently only cell deletion can be countered
                 conflicts.append((path, [ld], [rd], strategy))
         elif ld.op != rd.op:
             # Note that this means the below cases always have the same op
@@ -676,7 +587,7 @@ def _merge_dicts(base, local_diff, remote_diff, path, decisions, strategies):
         elif ld.op == DiffOp.ADD:
             # (6) Insert in both local and remote, values are different
             # This can possibly be resolved by recursion
-            # XXX FIXME: consider merging added values
+            # TODO: consider merging added values
             conflicts.append((path, [ld], [rd], strategy))
         elif ld.op == DiffOp.REPLACE:
             # (7) Replace in both local and remote, values are different,
@@ -705,12 +616,6 @@ def _merge_dicts(base, local_diff, remote_diff, path, decisions, strategies):
             # affects conflicts on string at /cells/*/attachments or below
             resolve_strategy_inline_attachments(path, base, unresolved_conflicts, decisions)
             unresolved_conflicts = []
-
-    if DEBUGGING:
-        for conf in unresolved_conflicts:
-            path, ld, rd, strategy = conf
-            if ld is ParentDeleted or rd is ParentDeleted:
-                import ipdb; ipdb.set_trace()
 
     # Return the rest of the conflicts
     return unresolved_conflicts
@@ -1030,24 +935,11 @@ def _merge_lists(base, local_diff, remote_diff, path, decisions, strategies):
                 elif will_diff_counter_parent_deletion(thediff, path + (key,), strategies):
                     # Keep the deleted item and instead let strategies for
                     # subobjects record that there has been a conflict
-
-                    # Example:
-                    #   the current list is /cells,
-                    #   /cells/3 deleted here in a R/P case
-                    #   rdiff contains a patch on e.g. source and outputs
-                    #   ldiff is ParentDeleted
-                    #   want to recurse to let inline strategies insert <cell deleted> markers
-                    #   want to have inline decisions added during recursion
-                    #   want no unresolved conflicts returned
-
-                    counterdiff = create_parent_deletion_counter_diff(thediff, path, strategies)
+                    counterdiff = create_parent_deletion_counter_diff(thediff, path + (key,), strategies)
                     if ldiff is ParentDeleted:
                         ld, rd = counterdiff, thediff
                     else:
                         ld, rd = thediff, counterdiff
-
-                    if DEBUGGING:
-                        import ipdb; ipdb.set_trace()
 
                     # Note that ldiff or rdiff is ParentDeleted here
                     subconflicts = _merge(
@@ -1108,12 +1000,6 @@ def _merge_lists(base, local_diff, remote_diff, path, decisions, strategies):
             decisions.add_decision(path, "clear_all", local_conflict_diffs, remote_conflict_diffs, conflict=False)
             unresolved_conflicts = []
 
-    if DEBUGGING:
-        for conf in unresolved_conflicts:
-            path, ld, rd, strategy = conf
-            if ld is ParentDeleted or rd is ParentDeleted:
-                import ipdb; ipdb.set_trace()
-
     # Return the rest of the conflicts
     return unresolved_conflicts
 
@@ -1122,10 +1008,6 @@ def _merge_strings(base, local_diff, remote_diff,
                    path, decisions, strategies):
     """Perform a three-way merge of strings. See docstring of merge."""
     assert isinstance(base, string_types)
-
-    # FIXME XXX Handle if local or remote diff is ParentDeleted
-    if path[-1] == "source" or local_diff is ParentDeleted or remote_diff is ParentDeleted:
-        import ipdb; ipdb.set_trace()
 
     # Get base path for strategy lookup
     spath = star_path(path)
@@ -1144,6 +1026,8 @@ def _merge_strings(base, local_diff, remote_diff,
             path, base, local_diff, remote_diff, decisions)
         return unresolved_conflicts
 
+    if local_diff is ParentDeleted or remote_diff is ParentDeleted:
+        raise ValueError("Not expecting deleted parent nodes in merge_strings with strategy {}.".format(strategy))
 
     # FIXME: Handle regular resolution and conflicts for mergetool and other strategies (other text fields!)
 
@@ -1187,12 +1071,6 @@ def _merge_strings(base, local_diff, remote_diff,
                 resolve_strategy_inline_source(path, base, unresolved_conflicts, decisions)
                 unresolved_conflicts = []
 
-    if DEBUGGING:
-        for conf in unresolved_conflicts:
-            path, ld, rd, strategy = conf
-            if ld is ParentDeleted or rd is ParentDeleted:
-                import ipdb; ipdb.set_trace()
-
     return unresolved_conflicts
 
 _merge_strings.recursion = False
@@ -1200,29 +1078,19 @@ _merge_strings.recursion = False
 
 def _merge(base, local_diff, remote_diff, path, decisions, strategies):
     if isinstance(base, dict):
-        result = _merge_dicts(
+        return _merge_dicts(
             base, local_diff, remote_diff,
             path, decisions, strategies)
     elif isinstance(base, list):
-        result = _merge_lists(
+        return _merge_lists(
             base, local_diff, remote_diff,
             path, decisions, strategies)
     elif isinstance(base, string_types):
-        result = _merge_strings(
+        return _merge_strings(
             base, local_diff, remote_diff,
             path, decisions, strategies)
     else:
         raise ValueError("Cannot handle merge of type {}.".format(type(base)))
-
-    unresolved_conflicts = result
-
-    if DEBUGGING:
-        for conf in unresolved_conflicts:
-            path, ld, rd, strategy = conf
-            if ld is ParentDeleted or rd is ParentDeleted:
-                import ipdb; ipdb.set_trace()
-
-    return unresolved_conflicts
 
 
 def decide_merge_with_diff(base, local, remote, local_diff, remote_diff, strategies=None):
