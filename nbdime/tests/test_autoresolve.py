@@ -27,125 +27,9 @@ from .conftest import have_git
 # new behaviour as needed!
 
 
-base = {"foo": 1}
-local = {"foo": 2}
-remote = {"foo": 3}
-conflicted_decisions = decide_merge(base, local, remote)
-
 # Setup default args for merge app
 builder = _build_arg_parser()
 
-
-def test_autoresolve_dict_fail():
-    """Check that "fail" strategy results in proper exception raised."""
-    strategies = Strategies({"/foo": "fail"})
-    with pytest.raises(RuntimeError):
-        autoresolve(base, conflicted_decisions, strategies)
-
-    base2 = {"foo": {"bar": 1}}
-    local2 = {"foo": {"bar": 2}}
-    remote2 = {"foo": {"bar": 3}}
-    strategies = Strategies({"/foo/bar": "fail"})
-    decisions = decide_merge(base2, local2, remote2)
-    with pytest.raises(RuntimeError):
-        autoresolve(base2, decisions, strategies)
-    strategies = Strategies({"/foo": "fail"})
-    with pytest.raises(RuntimeError):
-        autoresolve(base2, decisions, strategies)
-
-
-def test_autoresolve_dict_clear():
-    """Check strategy "clear" in various cases."""
-
-    base2 = {"foo": [1, 2]}
-    local2 = {"foo": [1, 4, 2]}
-    remote2 = {"foo": [1, 3, 2]}
-    decisions = decide_merge(base2, local2, remote2)
-    assert apply_decisions(base2, decisions) == {"foo": [1, 2]}
-    assert decisions[0].local_diff != []
-    assert decisions[0].remote_diff != []
-    strategies = Strategies({"/foo": "clear-all"})
-    resolved = autoresolve(base2, decisions, strategies)
-    assert apply_decisions(base2, resolved) == {"foo": []}
-    assert not any([d.conflict for d in resolved])
-
-    strategies = Strategies({"/foo": "clear"})
-    resolved = autoresolve(base2, decisions, strategies)
-    assert apply_decisions(base2, resolved) == {"foo": [1, None]}
-    assert not any([d.conflict for d in resolved])
-
-
-def test_autoresolve_dict_use_one_side():
-    strategies = Strategies({"/foo": "use-base"})
-    decisions = autoresolve(base, conflicted_decisions, strategies)
-    assert not any([d.conflict for d in decisions])
-    assert apply_decisions(base, decisions) == {"foo": 1}
-
-    strategies = Strategies({"/foo": "use-local"})
-    decisions = autoresolve(base, conflicted_decisions, strategies)
-    assert not any([d.conflict for d in decisions])
-    assert apply_decisions(base, decisions) == {"foo": 2}
-
-    strategies = Strategies({"/foo": "use-remote"})
-    decisions = autoresolve(base, conflicted_decisions, strategies)
-    assert not any([d.conflict for d in decisions])
-    assert apply_decisions(base, decisions) == {"foo": 3}
-
-    base2 = {"foo": {"bar": 1}}
-    local2 = {"foo": {"bar": 2}}
-    remote2 = {"foo": {"bar": 3}}
-    conflicted_decisions2 = decide_merge(base2, local2, remote2)
-
-    strategies = Strategies({"/foo/bar": "use-base"})
-    decisions = autoresolve(base2, conflicted_decisions2, strategies)
-    assert not any([d.conflict for d in decisions])
-    assert apply_decisions(base2, decisions) == {"foo": {"bar": 1}}
-
-    strategies = Strategies({"/foo/bar": "use-local"})
-    decisions = autoresolve(base2, conflicted_decisions2, strategies)
-    assert not any([d.conflict for d in decisions])
-    assert apply_decisions(base2, decisions) == {"foo": {"bar": 2}}
-
-    strategies = Strategies({"/foo/bar": "use-remote"})
-    decisions = autoresolve(base2, conflicted_decisions2, strategies)
-    assert not any([d.conflict for d in decisions])
-    assert apply_decisions(base2, decisions) == {"foo": {"bar": 3}}
-
-
-def test_autoresolve_list_transients():
-    # For this test, we need to use a custom predicate to ensure alignment
-    common = {'id': 'This ensures alignment'}
-    predicates = defaultdict(lambda: [operator.__eq__], {
-        '/': [lambda a, b: a['id'] == b['id']],
-    })
-    # Setup transient difference in base and local, deletion in remote
-    b = [{'transient': 22}]
-    l = [{'transient': 242}]
-    b[0].update(common)
-    l[0].update(common)
-    r = []
-
-    # Make decisions based on diffs with predicates
-    ld = diff(b, l, path="", predicates=predicates)
-    rd = diff(b, r, path="", predicates=predicates)
-    decisions = decide_merge_with_diff(b, l, r, ld, rd)
-
-    # Assert that generic merge gives conflict
-    assert apply_decisions(b, decisions) == b
-    assert len(decisions) == 1
-    assert decisions[0].conflict
-
-    # Without strategy, no progress is made:
-    resolved = autoresolve(b, decisions, Strategies())
-    assert resolved == decisions
-
-    # Supply transient list to autoresolve, and check that transient is ignored
-    strategies = Strategies(transients=[
-        '/*/transient'
-    ])
-    resolved = autoresolve(b, decisions, strategies)
-    assert apply_decisions(b, resolved) == r
-    assert not any(d.conflict for d in resolved)
 
 
 def test_autoresolve_list_conflicting_insertions_simple():
@@ -470,11 +354,3 @@ print(x + q)
 
     assert source == expected
 
-
-def test_autoresolve_inline_output_conflict():
-    #value =
-    #le =
-    #re =
-    #expected =
-    #assert make_inline_outputs_value(value, le, re) == expected
-    pass

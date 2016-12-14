@@ -190,7 +190,9 @@ class MergeDecisionBuilder(object):
             elif strategy == "take-max":
                 action = "take_max"
             elif strategy == "fail":
-                nbdime.log.error("Unexpected conflict on {}.".format(path))
+                msg = "Unexpected conflict on {}.".format(path)
+                nbdime.log.error(msg)
+                raise RuntimeError(msg)
 
         if action is not None:
             self.add_decision(

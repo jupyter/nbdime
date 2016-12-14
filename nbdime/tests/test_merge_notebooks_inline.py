@@ -1,10 +1,181 @@
+# coding: utf-8
 
+# Copyright (c) Jupyter Development Team.
+# Distributed under the terms of the Modified BSD License.
 
+import pytest
 import nbformat
 from nbformat.v4 import new_notebook, new_code_cell, new_markdown_cell, new_output
+from collections import defaultdict
 
 from nbdime import merge_notebooks, diff
 from nbdime.diff_format import op_patch
+from nbdime.utils import Strategies
+from nbdime.prettyprint import pretty_print_merge_decisions
+from nbdime.merging.generic import decide_merge, decide_merge_with_diff
+from nbdime.merging.decisions import apply_decisions
+
+def test_decide_merge_strategy_fail():
+    """Check that "fail" strategy results in proper exception raised."""
+    # One level dict
+    base = {"foo": 1}
+    local = {"foo": 2}
+    remote = {"foo": 3}
+    strategies = Strategies({"/foo": "fail"})
+    with pytest.raises(RuntimeError):
+        conflicted_decisions = decide_merge(base, local, remote, strategies)
+
+    # Nested dicts
+    base = {"foo": {"bar": 1}}
+    local = {"foo": {"bar": 2}}
+    remote = {"foo": {"bar": 3}}
+    strategies = Strategies({"/foo/bar": "fail"})
+    with pytest.raises(RuntimeError):
+        decisions = decide_merge(base, local, remote, strategies)
+
+    # We don't need this for non-leaf nodes and it's currently not implemented
+    # strategies = Strategies({"/foo": "fail"})
+    # with pytest.raises(RuntimeError):
+    #     decisions = decide_merge(base, local, remote, strategies)
+
+
+def test_decide_merge_strategy_clear():
+    """Check strategy "clear" in various cases."""
+    # One level dict, clearing item value (think foo==execution_count)
+    base = {"foo": 1}
+    local = {"foo": 2}
+    remote = {"foo": 3}
+    strategies = Strategies({"/foo": "clear"})
+    decisions = decide_merge(base, local, remote, strategies)
+    assert apply_decisions(base, decisions) == {"foo": None}
+    assert not any([d.conflict for d in decisions])
+
+    base = {"foo": "1"}
+    local = {"foo": "2"}
+    remote = {"foo": "3"}
+    strategies = Strategies({"/foo": "clear"})
+    decisions = decide_merge(base, local, remote, strategies)
+    assert apply_decisions(base, decisions) == {"foo": ""}
+    assert not any([d.conflict for d in decisions])
+
+    # We don't need this for non-leaf nodes and it's currently not implemented
+    # base = {"foo": [1]}
+    # local = {"foo": [2]}
+    # remote = {"foo": [3]}
+    # strategies = Strategies({"/foo": "clear"})
+    # decisions = decide_merge(base, local, remote, strategies)
+    # assert apply_decisions(base, decisions) == {"foo": []}
+    # assert not any([d.conflict for d in decisions])
+
+
+def test_decide_merge_strategy_clear_all():
+    base = {"foo": [1, 2]}
+    local = {"foo": [1, 4, 2]}
+    remote = {"foo": [1, 3, 2]}
+
+    strategies = Strategies({"/foo": "clear-all"})
+    decisions = decide_merge(base, local, remote, strategies)
+    assert apply_decisions(base, decisions) == {"foo": []}
+
+    base = {"foo": [1, 2]}
+    local = {"foo": [1, 4, 2]}
+    remote = {"foo": [1, 2, 3]}
+
+    strategies = Strategies({"/foo": "clear-all"})
+    decisions = decide_merge(base, local, remote, strategies)
+    assert apply_decisions(base, decisions) == {"foo": [1, 4, 2, 3]}
+
+
+def test_decide_merge_strategy_remove():
+    base = {"foo": [1, 2]}
+    local = {"foo": [1, 4, 2]}
+    remote = {"foo": [1, 3, 2]}
+
+    strategies = Strategies({"/foo": "remove"})
+    decisions = decide_merge(base, local, remote, strategies)
+    assert apply_decisions(base, decisions) == {"foo": [1, 2]}
+    assert decisions[0].local_diff != []
+    assert decisions[0].remote_diff != []
+
+    strategies = Strategies({})
+    decisions = decide_merge(base, local, remote, strategies)
+    assert apply_decisions(base, decisions) == {"foo": [1, 2]}
+    assert decisions[0].local_diff != []
+    assert decisions[0].remote_diff != []
+
+
+def test_decide_merge_strategy_use_foo_on_dict_items():
+    base = {"foo": 1}
+    local = {"foo": 2}
+    remote = {"foo": 3}
+
+    strategies = Strategies({"/foo": "use-base"})
+    decisions = decide_merge(base, local, remote, strategies)
+    assert not any([d.conflict for d in decisions])
+    assert apply_decisions(base, decisions) == {"foo": 1}
+
+    strategies = Strategies({"/foo": "use-local"})
+    decisions = decide_merge(base, local, remote, strategies)
+    assert not any([d.conflict for d in decisions])
+    assert apply_decisions(base, decisions) == {"foo": 2}
+
+    strategies = Strategies({"/foo": "use-remote"})
+    decisions = decide_merge(base, local, remote, strategies)
+    assert not any([d.conflict for d in decisions])
+    assert apply_decisions(base, decisions) == {"foo": 3}
+
+    base = {"foo": {"bar": 1}}
+    local = {"foo": {"bar": 2}}
+    remote = {"foo": {"bar": 3}}
+
+    strategies = Strategies({"/foo/bar": "use-base"})
+    decisions = decide_merge(base, local, remote, strategies)
+    assert not any([d.conflict for d in decisions])
+    assert apply_decisions(base, decisions) == {"foo": {"bar": 1}}
+
+    strategies = Strategies({"/foo/bar": "use-local"})
+    decisions = decide_merge(base, local, remote, strategies)
+    assert not any([d.conflict for d in decisions])
+    assert apply_decisions(base, decisions) == {"foo": {"bar": 2}}
+
+    strategies = Strategies({"/foo/bar": "use-remote"})
+    decisions = decide_merge(base, local, remote, strategies)
+    assert not any([d.conflict for d in decisions])
+    assert apply_decisions(base, decisions) == {"foo": {"bar": 3}}
+
+
+def test_decide_merge_list_transients():
+    # For this test, we need to use a custom predicate to ensure alignment
+    common = {'id': 'This ensures alignment'}
+    predicates = defaultdict(lambda: [operator.__eq__], {
+        '/': [lambda a, b: a['id'] == b['id']],
+    })
+
+    # Setup transient difference in base and local, deletion in remote
+    b = [{'transient': 22}]
+    l = [{'transient': 242}]
+    b[0].update(common)
+    l[0].update(common)
+    r = []
+
+    # Make decisions based on diffs with predicates
+    ld = diff(b, l, path="", predicates=predicates)
+    rd = diff(b, r, path="", predicates=predicates)
+
+    # Assert that generic merge without strategies gives conflict:
+    strategies = Strategies()
+    decisions = decide_merge_with_diff(b, l, r, ld, rd, strategies)
+    assert len(decisions) == 1
+    assert decisions[0].conflict
+    assert apply_decisions(b, decisions) == b
+
+    # Supply transient list to autoresolve, and check that transient is ignored
+    strategies = Strategies(transients=[
+        '/*/transient'
+    ])
+    decisions = decide_merge_with_diff(b, l, r, ld, rd, strategies)
+    assert apply_decisions(b, decisions) == r
+    assert not any(d.conflict for d in decisions)
 
 
 def test_inline_merge_empty_notebooks():
@@ -497,3 +668,4 @@ def test_inline_merge_outputs():
     expected = new_notebook()
     merged, decisions = merge_notebooks(base, local, remote)
     assert merged == expected
+

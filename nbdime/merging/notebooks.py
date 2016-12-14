@@ -22,8 +22,8 @@ import nbdime.log
 generic_conflict_strategies = (
     "clear",            # Replace value with empty in case of conflict
     "remove",           # Discard value in case of conflict
-    "clear-all",     # Discard all values on conflict
-    "fail",             # Unexpected: crash and burn in case of conflict
+    "clear-all",        # Discard all values on conflict
+    "fail",             # Unexpected: crash and burn in case of conflict (only implemented for leaf nodes)
     "inline-source",    # Valid for source only: produce new source with inline diff markers
     "inline-outputs",   # Valid for outputs only: produce new outputs with inline diff markers
     "mergetool",        # Do not modify decision (but prevent processing at deeper path)
@@ -61,7 +61,8 @@ def notebook_merge_strategies(args):
         "/nbformat_minor": "take-max",
         })
 
-    if not args or args.ignore_transients:
+    ignore_transients = args.ignore_transients if args else True
+    if ignore_transients:
         strategies.transients = [
             "/cells/*/execution_count",
             #"/cells/*/outputs",
