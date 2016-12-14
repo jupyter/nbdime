@@ -56,6 +56,18 @@ class MergeDecisionBuilder(object):
     def __init__(self):
         self.decisions = []
 
+    def __bool__(self):
+        return bool(self.decisions)
+
+    def __nonzero__(self):
+        return bool(self.decisions)
+
+    def __len__(self):
+        return len(self.decisions)
+
+    def __iter__(self):
+        return iter(self.decisions)
+
     def validated(self, base):
         """Returns decisions in state ready for application.
 
@@ -65,11 +77,15 @@ class MergeDecisionBuilder(object):
         return sorted(self.decisions, key=_sort_key, reverse=True)
 
     def extend(self, decisions):
-        for d in decisions:
-            for k in ("local_diff", "remote_diff", "custom_diff"):
-                if isinstance(d.get(k, []), tuple):
-                    import ipdb; ipdb.set_trace()
+        if isinstance(decisions, MergeDecisionBuilder):
+            decisions = decisions.decisions
         self.decisions.extend(decisions)
+
+    def get_conflicted(self):
+        return [d for d in self.decisions if d.conflict]
+
+    def has_conflicted(self):
+        return any(d.conflict for d in self.decisions)
 
     def add_decision(self, path, action, local_diff, remote_diff,
                      conflict=False, **kwargs):
@@ -185,8 +201,13 @@ class MergeDecisionBuilder(object):
                 action = "base"
             elif strategy == "clear":
                 action = "clear"
-            elif strategy == "remove":  # FIXME XXX This is now handled in _merge_lists, confirm that's the right place and remove here 
+            elif strategy == "remove":
+                # FIXME XXX This is now handled in _merge_lists,
+                # confirm that's the right place and remove here
                 action = "remove"
+                msg = "Expecting remove action to be applied at the list level."
+                nbdime.log.error(msg)
+                raise RuntimeError(msg)
             elif strategy == "take-max":
                 action = "take_max"
             elif strategy == "fail":
@@ -206,7 +227,7 @@ class MergeDecisionBuilder(object):
 
     def conflict(self, path, local_diff, remote_diff, strategy=None):
         """Register a potential conflict.
-        
+
         If strategy is given, tries to resolve conflict first with tryresolve.
 
         Complex strategies not handled by tryresolve need to be handled at
