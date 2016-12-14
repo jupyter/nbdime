@@ -164,6 +164,33 @@ function createNbdimeMergeView(
 
 
 /**
+ * Replace a range in an array of lines, with another
+ *
+ * Note: `lines` is assumed to have newlines at the ends, while
+ * newVal not.
+ */
+function replaceCodeMirrorRange(lines: string[], from: CodeMirror.Position, to: CodeMirror.Position, newVal: string[]): void {
+  // Add preceding and trailing characters to newVal, as well as newlines
+  let firstLine = lines[from.line];
+  let lastLine = lines[to.line];
+
+  newVal = newVal.slice();  // copy
+  for (let i=0; i < newVal.length; ++i) {
+    if (i === 0) {
+      newVal[i] = firstLine.slice(0, from.ch) + newVal[i];
+    }
+    if (i >= newVal.length - 1) {
+      newVal[i] = newVal[i] + lastLine.slice(to.ch);
+    } else {
+      newVal[i] = newVal[i] + '\n';
+    }
+  }
+
+  lines.splice(from.line, to.line - from.line + 1, ...newVal);
+}
+
+
+/**
  * Used by MergeView to show diff in a string diff model
  */
 export
@@ -341,10 +368,13 @@ class DiffView {
       if (userEdit) {
         // Edited by hand!
         let baseLine = getMatchingBaseLine(change.from.line, self.lineChunks);
+        let fullLines = splitLines(self.model.remote!);
+        // Update lines with changes
+        replaceCodeMirrorRange(fullLines, change.from, change.to, change.text);
         updateModel({
           model: self.model,
-          full: _cm.getValue(),
           baseLine,
+          fullLines,
           editCh: change.from.ch,
           editLine: change.from.line,
           oldval: change.removed,
@@ -761,7 +791,7 @@ function getMatchingBaseLine(editLine: number, chunks: Chunk[]): number {
 
 
 /**
- * Find which line numbers align which each other, in the
+ * Find which line numbers align with each other, in the
  * set of DiffViews. The returned array is of the format:
  *
  * [ aligned line #1:[Edit line number, (DiffView#1 line number, DiffView#2 line number,) ...],

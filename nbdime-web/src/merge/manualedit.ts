@@ -37,7 +37,7 @@ import {
 } from '../patch';
 
 import {
-  hasEntries, arraysEqual, extendArray, valueIn,
+  hasEntries, arraysEqual, extendArray, splitLines,
   isPrefixArray, removeElement
 } from '../common/util';
 
@@ -110,7 +110,7 @@ export
 interface IUpdateModelOptions {
   model: IStringDiffModel;
 
-  full: string;
+  fullLines: string[];
 
   baseLine: number;
 
@@ -142,7 +142,7 @@ function convertPatchOps(diff: IDiffArrayEntry[], options: IUpdateModelOptions):
     return diff as AddRem[];
   }
   let lineoffset = 0;
-  let lines = options.model.base!.match(/^.*(\r\n|\r|\n|$)/gm)!;
+  let lines = splitLines(options.model.base!);
   let ret: AddRem[] = [];
   for (let i=0; i < diff.length; ++i) {
     let e = diff[i];
@@ -223,14 +223,14 @@ function getPartials(diff: AddRem[], options: IUpdateModelOptions, startOffset: 
     } else if (partialStart) {
       // Addrange before current line (abutting)
       // and partial edit of current (unedited) line
-      lines = options.full.match(/^.*(\r\n|\r|\n|$)/gm)!;
+      lines = options.fullLines;
       before.push(lines[options.editLine].slice(0, ch));
       // Indicate that one unedited line should be removed
       linediff = 1;
     }
   } else if (partialStart) {
     // Replace previously unedited line:
-    lines = options.full.match(/^.*(\r\n|\r|\n|$)/gm)!;
+    lines = options.fullLines;
     before = [lines[options.editLine].slice(0, ch)];
     // Indicate that one unedited line should be removed
     linediff = 1;
@@ -258,7 +258,7 @@ function getPartials(diff: AddRem[], options: IUpdateModelOptions, startOffset: 
   if (!after && !fullDeleteEnd && !fullLineInsertions) {
     // Add remains of previously unedited line
     if (lines === null) {
-      lines = options.full.match(/^.*(\r\n|\r|\n|$)/gm)!;
+      lines = options.fullLines;
     }
     let fullLine = lines[options.editLine + newval.length - 1];
     let cut = lastAddedLine.length;
@@ -303,7 +303,7 @@ function getAddOp(diff: AddRem[], options: IUpdateModelOptions, startOffset: num
   } else if (newValuelist[newValuelist.length - 1].length === 0) {
     // Check if we were adding newline to last line of text
     // with missing newline:
-    let lines = options.full.match(/^.*(\r\n|\r|\n|$)/gm)!;
+    let lines = options.fullLines;
     if (options.editLine !== lines.length - 2 ||
         lines[lines.length - 1].length !== 0) {
       // Not, so remove tail
@@ -481,7 +481,6 @@ function updateDiff(diffToUpdate: IDiffArrayEntry[], options: IUpdateModelOption
  */
 function updateInsertedCell(options: IUpdateModelOptions): void {
   let model = options.model;
-  let full = options.full;
   let cell = model.parent as CellMergeModel;
   let path = getPathForNewDecision(model);
   let subkey = path[1];
@@ -493,7 +492,7 @@ function updateInsertedCell(options: IUpdateModelOptions): void {
   }
 
   // Update additions:
-  let lines = full.match(/^.*(\r\n|\r|\n|$)/gm)!;
+  let lines = options.fullLines;
   // TODO: Split lines touched vs untouched, and then labelSource
   // source as appropriate to give informative highlighting
   model.additions[0].to.line = lines.length - 1;
@@ -509,7 +508,7 @@ function updateInsertedCell(options: IUpdateModelOptions): void {
   }
   // We can now modify diff in place to update decision
   let cellVal = (diff[0] as IDiffAddRange).valuelist[0] as nbformat.ICell;
-  cellVal[subkey![0]] = full;
+  cellVal[subkey![0]] = options.fullLines.join('');
 
   labelSource(diff, {decision: dec, action: 'custom'});
   model.additions[0].source = diff[0].source;
@@ -642,7 +641,7 @@ function createPatchedModelDecision(options: IUpdateModelOptions, diff: AddRem[]
  * in the decision
  */
 function getDecisionChunk(base: any, decision: MergeDecision): {baseStart: number, baseEnd: number} {
-  let [path, line] = splitDiffStringPath(base, decision.localPath);
+  let line = splitDiffStringPath(base, decision.localPath)[1];
   if (hasEntries(line)) {
     let lineIdx = line[0] as number;
     // We have a decision that is a patch of a line
@@ -773,7 +772,7 @@ function updateModel(options: IUpdateModelOptions) {
   }
 
   // Update remote:
-  model.remote = options.full;
+  model.remote = options.fullLines.join('');
 
   // If edited, cell should not be marked for deletion
   if (cell.deleteCell) {
