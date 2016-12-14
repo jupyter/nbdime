@@ -61,7 +61,7 @@ function replaceArrayContent<T>(array: T[], content: T[], start?: number, end?: 
   if (end === undefined) {
     end = array.length - start;
   }
-  array.splice.apply(array, ([start, end] as any[]).concat(content));
+  array.splice.apply(array, ([start, end - start] as any[]).concat(content));
 }
 
 function isCellSimpleDeletion(cell: CellMergeModel): boolean {
