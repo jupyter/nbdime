@@ -745,6 +745,10 @@ function getMatchingBaseLine(editLine: number, chunks: Chunk[]): number {
   for (let i = 0; i < chunks.length; i++) {
     let chunk = chunks[i];
     if (chunk.remoteTo > editLine && chunk.remoteFrom <= editLine) {
+      // If remote range is larger than base range, clip
+      if (editLine + offset > chunk.baseTo) {
+        return chunk.baseTo;
+      }
       break;
     }
     if (chunk.remoteFrom > editLine) {
