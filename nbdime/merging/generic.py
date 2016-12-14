@@ -1036,6 +1036,8 @@ def _merge_lists(base, local_diff, remote_diff, path, decisions, strategies):
             local_conflict_diffs, remote_conflict_diffs = collect_unresolved_diffs(path, unresolved_conflicts)
             decisions.add_decision(path, "clear_all", local_conflict_diffs, remote_conflict_diffs, conflict=False)
             unresolved_conflicts = []
+        elif list_strategy == "union":
+            nbdime.log.error("union strategy not implemented for outputs") # FIXME
 
     # Return the rest of the conflicts
     return unresolved_conflicts
@@ -1062,11 +1064,14 @@ def _merge_strings(base, local_diff, remote_diff,
         resolve_strategy_inline_source(
             path, base, local_diff, remote_diff, decisions)
         return unresolved_conflicts
+    elif strategy == "union":
+        nbdime.log.error("union strategy not implemented for source")  # FIXME
+    # TODO: Add option to try git merge-file or diff3 even when using mergetool
+    #elif strategy == "try-external":
+    #    nbdime.log.error("try-external strategy is not implemented")
 
-    if local_diff is ParentDeleted or remote_diff is ParentDeleted:
-        raise ValueError("Not expecting deleted parent nodes in merge_strings with strategy {}.".format(strategy))
-
-    # FIXME: Handle regular resolution and conflicts for mergetool and other strategies (other text fields!)
+    # FIXME: Handle regular resolution and conflicts for
+    # mergetool and other strategies (other text fields!)
 
     #conflicts = []
 
@@ -1100,13 +1105,6 @@ def _merge_strings(base, local_diff, remote_diff,
             unresolved_conflicts.extend(subconflicts)
         finally:
             _merge_strings.recursion = False
-
-        if unresolved_conflicts:
-            if strategy == "inline-source":
-                # affects conflicts on string at /cells/*/source      or /cells/*/source/*
-                # FIXME XXX: Call this here or after trying to merge
-                resolve_strategy_inline_source(path, base, unresolved_conflicts, decisions)
-                unresolved_conflicts = []
 
     return unresolved_conflicts
 

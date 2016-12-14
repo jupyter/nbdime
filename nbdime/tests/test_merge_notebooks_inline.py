@@ -15,6 +15,7 @@ from nbdime.prettyprint import pretty_print_merge_decisions
 from nbdime.merging.generic import decide_merge, decide_merge_with_diff
 from nbdime.merging.decisions import apply_decisions
 
+
 def test_decide_merge_strategy_fail():
     """Check that "fail" strategy results in proper exception raised."""
     # One level dict
@@ -144,6 +145,139 @@ def test_decide_merge_strategy_use_foo_on_dict_items():
     assert apply_decisions(base, decisions) == {"foo": {"bar": 3}}
 
 
+def test_decide_merge_simple_list_insert_conflict_resolution():
+    # local and remote adds an entry each
+    b = [1]
+    l = [1, 2]
+    r = [1, 3]
+
+    strategies = Strategies({"/*": "use-local"})
+    decisions = decide_merge(b, l, r, strategies)
+    assert apply_decisions(b, decisions) == l
+    assert not any(d.conflict for d in decisions)
+
+    strategies = Strategies({"/*": "use-remote"})
+    decisions = decide_merge(b, l, r, strategies)
+    assert apply_decisions(b, decisions) == r
+    assert not any(d.conflict for d in decisions)
+
+    strategies = Strategies({"/*": "use-base"})
+    decisions = decide_merge(b, l, r, strategies)
+    assert apply_decisions(b, decisions) == b
+    assert not any(d.conflict for d in decisions)
+
+    strategies = Strategies({"/": "clear-all"})
+    decisions = decide_merge(b, l, r, strategies)
+    assert apply_decisions(b, decisions) == []
+    assert not any(d.conflict for d in decisions)
+
+
+def test_decide_merge_simple_list_insert_conflict_resolution__union():
+    # local and remote adds an entry each
+    b = [1]
+    l = [1, 2]
+    r = [1, 3]
+
+    strategies = Strategies({"/": "union"})
+    decisions = decide_merge(b, l, r, strategies)
+    assert apply_decisions(b, decisions) == [1, 2, 3]
+    assert not any(d.conflict for d in decisions)
+
+
+def test_decide_merge_list_conflicting_insertions_separate_chunks():
+    # local and remote adds an equal entry plus a different entry each
+    # First, test when insertions DO NOT chunk together:
+    b = [1, 9]
+    l = [1, 2, 9, 11]
+    r = [1, 3, 9, 11]
+
+    # Check strategyless resolution
+    strategies = Strategies({})
+    resolved = decide_merge(b, l, r, strategies)
+    expected_partial = [1, 9, 11]
+    assert apply_decisions(b, resolved) == expected_partial
+    assert len(resolved) == 2
+    assert resolved[0].conflict
+    assert not resolved[1].conflict
+
+    strategies = Strategies({"/*": "use-local"})
+    resolved = decide_merge(b, l, r, strategies)
+    assert apply_decisions(b, resolved) == l
+    assert not any(d.conflict for d in resolved)
+
+    strategies = Strategies({"/*": "use-remote"})
+    resolved = decide_merge(b, l, r, strategies)
+    assert apply_decisions(b, resolved) == r
+    assert not any(d.conflict for d in resolved)
+
+    strategies = Strategies({"/*": "use-base"})
+    resolved = decide_merge(b, l, r, strategies)
+    # Strategy is only applied to conflicted decisions:
+    assert apply_decisions(b, resolved) == expected_partial
+    assert not any(d.conflict for d in resolved)
+
+    strategies = Strategies({"/": "clear-all"})
+    resolved = decide_merge(b, l, r, strategies)
+    assert apply_decisions(b, resolved) == []
+    assert not any(d.conflict for d in resolved)
+
+def test_decide_merge_list_conflicting_insertions_separate_chunks__union():
+    # local and remote adds an equal entry plus a different entry each
+    # First, test when insertions DO NOT chunk together:
+    b = [1, 9]
+    l = [1, 2, 9, 11]
+    r = [1, 3, 9, 11]
+
+    strategies = Strategies({"/": "union"})
+    resolved = decide_merge(b, l, r, strategies)
+    assert apply_decisions(b, resolved) == [1, 2, 3, 9, 11]
+    assert not any(d.conflict for d in resolved)
+
+
+def test_decide_merge_list_conflicting_insertions_in_chunks():
+    # Next, test when insertions DO chunk together:
+    b = [1, 9]
+    l = [1, 2, 7, 9]
+    r = [1, 3, 7, 9]
+
+    # Check strategyless resolution
+    strategies = Strategies({})
+    resolved = decide_merge(b, l, r, strategies)
+    expected_partial = [1, 7, 9]
+    assert apply_decisions(b, resolved) == expected_partial
+
+    strategies = Strategies({"/*": "use-local"})
+    resolved = decide_merge(b, l, r, strategies)
+    assert apply_decisions(b, resolved) == l
+    assert not any(d.conflict for d in resolved)
+
+    strategies = Strategies({"/*": "use-remote"})
+    resolved = decide_merge(b, l, r, strategies)
+    assert apply_decisions(b, resolved) == r
+    assert not any(d.conflict for d in resolved)
+
+    strategies = Strategies({"/*": "use-base"})
+    resolved = decide_merge(b, l, r, strategies)
+    assert apply_decisions(b, resolved) == expected_partial
+    assert not any(d.conflict for d in resolved)
+
+    strategies = Strategies({"/": "clear-all"})
+    resolved = decide_merge(b, l, r, strategies)
+    assert apply_decisions(b, resolved) == []
+    assert not any(d.conflict for d in resolved)
+
+def test_decide_merge_list_conflicting_insertions_in_chunks__union():
+    # Next, test when insertions DO chunk together:
+    b = [1, 9]
+    l = [1, 2, 7, 9]
+    r = [1, 3, 7, 9]
+
+    strategies = Strategies({"/": "union"})
+    resolved = decide_merge(b, l, r, strategies)
+    assert apply_decisions(b, resolved) == [1, 2, 3, 7, 9]
+    assert not any(d.conflict for d in resolved)
+
+
 def test_decide_merge_list_transients():
     # For this test, we need to use a custom predicate to ensure alignment
     common = {'id': 'This ensures alignment'}
@@ -172,6 +306,61 @@ def test_decide_merge_list_transients():
     # Supply transient list to autoresolve, and check that transient is ignored
     strategies = Strategies(transients=[
         '/*/transient'
+    ])
+    decisions = decide_merge_with_diff(b, l, r, ld, rd, strategies)
+    assert apply_decisions(b, decisions) == r
+    assert not any(d.conflict for d in decisions)
+
+
+def test_decide_merge_dict_transients():
+    # Setup transient difference in base and local, deletion in remote
+    b = {'a': {'transient': 22}}
+    l = {'a': {'transient': 242}}
+    r = {}
+
+    # Assert that generic merge gives conflict
+    strategies = Strategies()
+    decisions = decide_merge(b, l, r, strategies)
+    assert apply_decisions(b, decisions) == b
+    assert len(decisions) == 1
+    assert decisions[0].conflict
+
+    # Supply transient list to autoresolve, and check that transient is ignored
+    strategies = Strategies(transients=[
+        '/a/transient'
+    ])
+    decisions = decide_merge(b, l, r, strategies)
+    assert apply_decisions(b, decisions) == r
+    assert not any(d.conflict for d in decisions)
+
+
+def test_decide_merge_mixed_nested_transients():
+    # For this test, we need to use a custom predicate to ensure alignment
+    common = {'id': 'This ensures alignment'}
+    predicates = defaultdict(lambda: [operator.__eq__], {
+        '/': [lambda a, b: a['id'] == b['id']],
+    })
+    # Setup transient difference in base and local, deletion in remote
+    b = [{'a': {'transient': 22}}]
+    l = [{'a': {'transient': 242}}]
+    b[0].update(common)
+    l[0].update(common)
+    r = []
+
+    # Make decisions based on diffs with predicates
+    ld = diff(b, l, path="", predicates=predicates)
+    rd = diff(b, r, path="", predicates=predicates)
+
+    # Assert that generic merge gives conflict
+    strategies = Strategies()
+    decisions = decide_merge_with_diff(b, l, r, ld, rd, strategies)
+    assert apply_decisions(b, decisions) == b
+    assert len(decisions) == 1
+    assert decisions[0].conflict
+
+    # Supply transient list to autoresolve, and check that transient is ignored
+    strategies = Strategies(transients=[
+        '/*/a/transient'
     ])
     decisions = decide_merge_with_diff(b, l, r, ld, rd, strategies)
     assert apply_decisions(b, decisions) == r

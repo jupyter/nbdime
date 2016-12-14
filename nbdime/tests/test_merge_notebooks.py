@@ -10,7 +10,7 @@ import copy
 from six import string_types
 import nbformat
 
-from nbdime.diff_format import op_patch, op_addrange, op_removerange
+from nbdime.diff_format import op_patch, op_addrange, op_removerange, op_replace
 from .conftest import have_git
 from .fixtures import sources_to_notebook, matching_nb_triplets, outputs_to_notebook
 from nbdime.nbmergeapp import _build_arg_parser
@@ -187,7 +187,7 @@ def _check(partial, expected_partial, decisions, expected_conflicts):
     assert len(conflicts) == len(expected_conflicts)
     for e, d in zip(expected_conflicts, conflicts):
         # Only check keys specified in expectation value
-        for k in e.keys():
+        for k in sorted(e.keys()):
             #if d[k] != e[k]: import ipdb; ipdb.set_trace()
             assert d[k] == e[k]
 
@@ -606,11 +606,11 @@ def test_merge_input_strategy_inline_source_conflict():
             "some other\n",
             "lines\n",
             "to align\n",
-            '||||||| base\n',
-            'base\n',
-            'some other\n',
-            'lines\n',
-            'to align\n',
+            #'||||||| base\n',
+            #'base\n',
+            #'some other\n',
+            #'lines\n',
+            #'to align\n',
             "=======\n",
             "remote\n",
             "some other\n",
@@ -632,6 +632,20 @@ def test_merge_input_strategy_inline_source_conflict():
             op_addrange(0, expected_partial[0]),
             op_removerange(0, len(base[0]))
             ],
+        }]
+    expected_conflicts = [{
+        "common_path": ("cells", 0),
+        "conflict": True,
+        "action": "custom",
+        "local_diff": [op_patch("source", [
+            op_addrange(0, local[0][0:1]),
+            op_removerange(0, 1)
+            ])],
+        "remote_diff": [op_patch("source", [
+            op_addrange(0, remote[0][0:1]),
+            op_removerange(0, 1)
+            ])],
+        "custom_diff": [op_replace("source", "".join(expected_partial[0]))],
         }]
     merge_args = copy.deepcopy(args)
     merge_args.merge_strategy = "use-base"
