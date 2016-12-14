@@ -135,11 +135,11 @@
 
 
 .jp-Notebook-merge .CodeMirror-merge-m-chunk-start-either,
-.jp-Notebook-merge .CodeMirror-merge-m-chunk-start-mixed {
+.jp-Notebook-merge .CodeMirror-merge-m-chunk-start-mixed:not(.CodeMirror-merge-m-chunk-custom) {
   border-top: 1px solid var(--jp-merge-either-color1);
   }
 .jp-Notebook-merge .CodeMirror-merge-m-chunk-end-either,
-.jp-Notebook-merge .CodeMirror-merge-m-chunk-end-mixed {
+.jp-Notebook-merge .CodeMirror-merge-m-chunk-end-mixed:not(.CodeMirror-merge-m-chunk-custom) {
   border-bottom: 1px solid var(--jp-merge-either-color1);
   }
 
