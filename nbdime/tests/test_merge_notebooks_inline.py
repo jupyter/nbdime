@@ -391,6 +391,94 @@ def test_inline_merge_source_patches():
     assert merged == expected
 
 
+def test_inline_merge_source_patches_both_ends():
+    "More elaborate test of cell deletions on both sides, onesided and agreed."
+    # Note: Merge rendering of conflicted sources here will depend on git/diff/builtin params and availability
+    base = code_nb([
+        "first source will be modified",
+        "other text",
+        "this cell will be untouched",
+        "yet more content",
+        "and final line will be changed",
+        ])
+    local = code_nb([
+        "first source will be modified locally",
+        "other text",
+        "this cell will be untouched",
+        "yet more content",
+        "and final line will be changed locally",
+        ])
+    remote = code_nb([
+        "first source will be modified remotely",
+        "other text",
+        "this cell will be untouched",
+        "yet more content",
+        "and final line will be changed remotely",
+        ])
+    expected = code_nb([
+        '<<<<<<< local\nfirst source will be modified locally\n=======\nfirst source will be modified remotely\n>>>>>>> remote',
+        "other text",
+        "this cell will be untouched",
+        "yet more content",
+        '<<<<<<< local\nand final line will be changed locally\n=======\nand final line will be changed remotely\n>>>>>>> remote',
+        ])
+    merged, decisions = merge_notebooks(base, local, remote)
+    assert merged == expected
+    expected = code_nb([
+        '<<<<<<< local\nfirst source will be modified remotely\n=======\nfirst source will be modified locally\n>>>>>>> remote',
+        "other text",
+        "this cell will be untouched",
+        "yet more content",
+        '<<<<<<< local\nand final line will be changed remotely\n=======\nand final line will be changed locally\n>>>>>>> remote',
+        ])
+    merged, decisions = merge_notebooks(base, remote, local)
+    assert merged == expected
+
+
+def test_inline_merge_source_patch_delete_conflicts_both_ends():
+    "More elaborate test of cell deletions on both sides, onesided and agreed."
+    # Note: Merge rendering of conflicted sources here will depend on git/diff/builtin params and availability
+    base = code_nb([
+        "first source will be modified",
+        "other text",
+        "this cell will be untouched",
+        "yet more content",
+        "and final line will be changed",
+        ])
+    local = code_nb([
+        "first source will be modified on one side",
+        "other text",
+        "this cell will be untouched",
+        "yet more content",
+        #"and final line will be deleted locally",
+        ])
+    remote = code_nb([
+        #"first source will be deleted remotely",
+        "other text",
+        "this cell will be untouched",
+        "yet more content",
+        "and final line will be changed on one side",
+        ])
+    expected = code_nb([
+        '<<<<<<< REMOTE CELL DELETED >>>>>>>\nfirst source will be modified on one side',
+        "other text",
+        "this cell will be untouched",
+        "yet more content",
+        '<<<<<<< LOCAL CELL DELETED >>>>>>>\nand final line will be changed on one side',
+        ])
+    merged, decisions = merge_notebooks(base, local, remote)
+    assert merged == expected
+    expected = code_nb([
+        '<<<<<<< LOCAL CELL DELETED >>>>>>>\nfirst source will be modified on one side',
+        "other text",
+        "this cell will be untouched",
+        "yet more content",
+        '<<<<<<< REMOTE CELL DELETED >>>>>>>\nand final line will be changed on one side',
+        ])
+    merged, decisions = merge_notebooks(base, remote, local)
+    assert merged == expected
+
+
 def test_inline_merge_attachments():
     # FIXME: Use output creation utils Vidar wrote in another test file
     base = new_notebook()

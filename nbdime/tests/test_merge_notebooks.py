@@ -13,8 +13,6 @@ import nbformat
 from nbdime.diff_format import op_patch, op_addrange, op_removerange
 from .conftest import have_git
 from .fixtures import sources_to_notebook, matching_nb_triplets, outputs_to_notebook
-from nbdime.merging.autoresolve import (
-    make_inline_source_value, autoresolve)
 from nbdime.nbmergeapp import _build_arg_parser
 from nbdime import merge_notebooks, apply_decisions
 from nbdime.diffing.notebooks import diff_notebooks
@@ -863,10 +861,13 @@ def test_autoresolve_empty_strategies():
     # Since we cannot pass directly a strategies object, include copy of relevant code:
     local_diffs = diff_notebooks(base, local)
     remote_diffs = diff_notebooks(base, remote)
-    decisions = decide_merge_with_diff(
-        base, local, remote, local_diffs, remote_diffs)
+
     strategies = Strategies()
-    decisions = autoresolve(base, decisions, strategies)
+    decisions = decide_merge_with_diff(
+        base, local, remote,
+        local_diffs, remote_diffs,
+        strategies)
+
     partial = apply_decisions(base, decisions)
 
     _check(partial, expected_partial, decisions, expected_conflicts)

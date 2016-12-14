@@ -439,6 +439,13 @@ def resolve_strategy_record_conflicts(base_path, base, unresolved_conflicts, dec
     conflicts_dict = {
         "local_diff": local_conflict_diffs,
         "remote_diff": remote_conflict_diffs,
+        # TODO: Record local and remote versions of full metadata, easier to manually select one?
+        # Don't have the full set of local and remote diffs available
+        # here right now (some are in decisions, some in unresolved_conflicts)
+        # but that's easy to get from caller:
+        #"base": base,
+        #"local": patch(base, local_diffs),
+        #"remote": patch(base, remote_diffs),
     }
     if "nbdime-conflicts" in base:
         nbdime.log.warning("Replacing previous nbdime-conflicts field from base notebook.")

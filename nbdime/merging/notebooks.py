@@ -11,7 +11,6 @@ from six import StringIO
 
 from .generic import decide_merge_with_diff
 from .decisions import apply_decisions
-from .autoresolve import autoresolve
 from ..diffing.notebooks import diff_notebooks
 from ..utils import Strategies
 from ..prettyprint import pretty_print_notebook_diff, pretty_print_merge_decisions, pretty_print_notebook
@@ -130,18 +129,15 @@ def notebook_merge_strategies(args):
     return strategies
 
 
-def autoresolve_notebook_conflicts(base, decisions, args):
-    strategies = notebook_merge_strategies(args)
-    return autoresolve(base, decisions, strategies)
-
-
 def decide_notebook_merge(base, local, remote, args=None):
+    # Build merge strategies for each document path from arguments
     strategies = notebook_merge_strategies(args)
 
     # Compute notebook specific diffs
     local_diffs = diff_notebooks(base, local)
     remote_diffs = diff_notebooks(base, remote)
 
+    # Debug outputs
     if args and args.log_level == "DEBUG":
         nbdime.log.debug("In merge, base-local diff:")
         buf = StringIO()
@@ -159,18 +155,9 @@ def decide_notebook_merge(base, local, remote, args=None):
         local_diffs, remote_diffs,
         strategies)
 
+    # Debug outputs
     if args and args.log_level == "DEBUG":
-        nbdime.log.debug("In merge, initial decisions:")
-        buf = StringIO()
-        pretty_print_merge_decisions(base, decisions, buf)
-        nbdime.log.debug(buf.getvalue())
-
-    # Try to resolve conflicts based on behavioural options
-    #decisions = autoresolve(base, decisions, strategies)
-    #decisions = autoresolve_notebook_conflicts(base, decisions, args)
-
-    if args and args.log_level == "DEBUG":
-        nbdime.log.debug("In merge, autoresolved decisions:")
+        nbdime.log.debug("In merge, decisions:")
         buf = StringIO()
         pretty_print_merge_decisions(base, decisions, buf)
         nbdime.log.debug(buf.getvalue())

@@ -13,7 +13,6 @@ import argparse
 from nbdime import merge_notebooks, diff, decide_merge, apply_decisions
 
 from nbdime.merging.generic import decide_merge_with_diff
-from nbdime.merging.autoresolve import autoresolve
 from nbdime.utils import Strategies
 from nbdime.nbmergeapp import _build_arg_parser
 
