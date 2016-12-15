@@ -155,7 +155,7 @@ def combine_patches(diffs):
                 newdiffs.append(p)
                 patches[d.key] = p
             else:
-                p.diff.extend(combine_patches(d.diff))
+                p.diff = combine_patches(p.diff + d.diff)
         else:
             newdiffs.append(d)
     return sorted(newdiffs, key=lambda x: x.key)
