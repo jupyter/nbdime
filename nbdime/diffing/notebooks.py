@@ -81,13 +81,6 @@ def compare_text_strict(x, y):
     return compare_strings_approximate(x, y, threshold=0.95)
 
 
-def compare_base64_approximate(x, y):
-    if len(x) != len(y):
-        return False
-    # TODO: Handle base64 data another way?
-    return compare_strings_approximate(x, y)
-
-
 def compare_base64_strict(x, y):
     if len(x) != len(y):
         return False
@@ -126,7 +119,7 @@ def _compare_mimedata(mimetype, x, y, comp_text, comp_base64):
 
 def compare_mimedata_approximate(mimetype, x, y):
     return _compare_mimedata(mimetype, x, y,
-        compare_text_approximate, compare_base64_approximate)
+        compare_text_approximate, compare_base64_strict)
 
 
 def compare_mimedata_strict(mimetype, x, y):
