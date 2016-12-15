@@ -9,6 +9,7 @@ import nbformat
 from six import string_types
 import copy
 from collections import defaultdict
+from itertools import chain
 
 from .decisions import MergeDecisionBuilder
 from .chunks import make_merge_chunks
@@ -21,6 +22,7 @@ from ..patching import patch
 from ..utils import star_path, join_path, Strategies
 import nbdime.log
 from nbdime.prettyprint import merge_render
+from nbdime.merging.decisions import pop_all_patch_decisions, push_patch_decision
 
 
 # FIXME XXX: Main todos left:
@@ -119,6 +121,27 @@ def split_diffs_by_index(diffs):
     return diffs_by_index
 
 
+def bundle_decisions_by_index(base_path, decisions):
+    decisions_by_index = defaultdict(list)
+    level = len(base_path)
+    for d in decisions:
+        assert base_path == d.common_path[:level]
+        if len(d.common_path) > level:
+            # At least patch/patch will have common_path on a particular item
+            key = d.common_path[level]
+            # Wrap decision diffs in patches so common_path points to list
+            prefix = d.common_path[level:]
+            d = push_patch_decision(d, prefix)
+        else:
+            # Removerange or addrange will have common_path
+            # on list and key only in the diff entries
+            keys = set(e.key for e in chain(d.local_diff, d.remote_diff, d.get("custom_diff", ())))
+            assert len(keys) == 1
+            key, = keys
+        decisions_by_index[key].append(d)
+    return decisions_by_index
+
+
 def combine_patches(diffs):
     """Rewrite diffs in canonical form where only one patch
     applies to one key and diff entries are sorted by key."""
@@ -143,8 +166,6 @@ def wrap_subconflicts(key, subconflicts):
     unresolved_conflicts = []
     for conf in subconflicts:
         (path, ld, rd, strategy) = conf
-        #if path[-1] != key:
-        #    import ipdb; ipdb.set_trace()
         assert path[-1] == key
         path = path[:-1]
         ld = [op_patch(key, ld)]
@@ -265,8 +286,14 @@ def chunkname(diffs):
 #
 # =============================================================================
 
-def resolve_strategy_inline_attachments(base_path, attachments, unresolved_conflicts, decisions):
-    local_conflict_diffs, remote_conflict_diffs = collect_unresolved_diffs(base_path, unresolved_conflicts)
+def resolve_strategy_inline_attachments(base_path, attachments, decisions):
+    #local_conflict_diffs, remote_conflict_diffs = collect_unresolved_diffs(base_path, unresolved_conflicts)
+    local_conflict_diffs, remote_conflict_diffs = collect_conflicting_diffs(base_path, decisions)
+    #local_diff, remote_diff = collect_diffs(base_path, decisions)
+    #nbdime.log.error("FIXME: Update attachment conflict inlining.")
+    # Drop conflict decisions
+    decisions.decisions = [d for d in decisions if not d.conflict]
+    # FIXME
 
     ldiffs_by_key = {d.key: d for d in local_conflict_diffs}
     rdiffs_by_key = {d.key: d for d in remote_conflict_diffs}
@@ -441,57 +468,53 @@ def make_inline_output_conflict(base_output, local_diff, remote_diff):
 
 
 def resolve_strategy_remove_outputs(base_path, outputs, decisions):
-    #local_conflict_diffs, remote_conflict_diffs = collect_unresolved_diffs(base_path, unresolved_conflicts)
-    local_conflict_diffs, remote_conflict_diffs = collect_conflicting_diffs(base_path, decisions)
-    #local_diff, remote_diff = collect_diffs(base_path, decisions)
-
-    # FIXME remove conflict decisions?
-    
-    ldiffs_by_index = split_diffs_by_index(local_conflict_diffs)
-    rdiffs_by_index = split_diffs_by_index(remote_conflict_diffs)
-    conflict_indices = sorted(set(ldiffs_by_index) | set(rdiffs_by_index))
-
-    for i in conflict_indices:
-        ldiffs = ldiffs_by_index[i]
-        rdiffs = rdiffs_by_index[i]
-        decisions.custom(base_path, ldiffs, rdiffs, [op_removerange(i, 1)], conflict=False)
+    decisions_by_index = bundle_decisions_by_index(base_path, decisions)
+    decisions.decisions = []
+    for key, decs in sorted(decisions_by_index.items()):
+        if not any(d.conflict for d in decs):
+            decisions.decisions.extend(decs)
+        else:
+            # Replace all decisions affecting key with resolution
+            local_diff, remote_diff = collect_diffs(base_path, decs)
+            decisions.custom(base_path, local_diff, remote_diff,
+                [op_removerange(key, 1)], conflict=False)
 
 
 def resolve_strategy_inline_outputs(base_path, outputs, decisions):
-
-    #local_conflict_diffs, remote_conflict_diffs = collect_unresolved_diffs(base_path, unresolved_conflicts)
-    local_conflict_diffs, remote_conflict_diffs = collect_conflicting_diffs(base_path, decisions)
-    #local_diff, remote_diff = collect_diffs(base_path, decisions)
-
-    if any(d.conflict and d.get("custom_diff") for d in decisions):
-        nbdime.log.warning("Unexpected conflict with custom diff.")
-    for d in decisions:
-        if d.conflict:
-            pass
-    # FIXME remove conflict decisions?
-
-    ldiffs_by_index = split_diffs_by_index(local_conflict_diffs)
-    rdiffs_by_index = split_diffs_by_index(remote_conflict_diffs)
-    conflict_indices = sorted(set(ldiffs_by_index) | set(rdiffs_by_index))
-
-    for i in conflict_indices:
-        ldiffs = ldiffs_by_index[i]
-        rdiffs = rdiffs_by_index[i]
-
-        inlined_conflict, keep_base = make_inline_output_conflict(outputs[i], ldiffs, rdiffs)
-        custom_diff = []
-        custom_diff += [op_addrange(i, inlined_conflict)]
-        if not keep_base:
-            custom_diff += [op_removerange(i, 1)]
-        decisions.custom(base_path, ldiffs, rdiffs, custom_diff, conflict=True)
+    decisions_by_index = bundle_decisions_by_index(base_path, decisions)
+    decisions.decisions = []
+    for key, decs in sorted(decisions_by_index.items()):
+        if not any(d.conflict for d in decs):
+            decisions.decisions.extend(decs)
+        else:
+            # Replace all decisions affecting key with resolution
+            local_diff, remote_diff = collect_diffs(base_path, decs)
+            inlined_conflict, keep_base = make_inline_output_conflict(
+                outputs[key], local_diff, remote_diff)
+            custom_diff = []
+            custom_diff += [op_addrange(key, inlined_conflict)]
+            if not keep_base:
+                custom_diff += [op_removerange(key, 1)]
+            decisions.custom(base_path, local_diff, remote_diff, custom_diff, conflict=True)
 
 
 def resolve_strategy_record_conflicts(base_path, base, decisions):
+    decisions.decisions = [push_patch_decision(d, d.common_path[len(base_path):]) for d in decisions]
+
     #local_conflict_diffs, remote_conflict_diffs = collect_unresolved_diffs(base_path, unresolved_conflicts)
     local_conflict_diffs, remote_conflict_diffs = collect_conflicting_diffs(base_path, decisions)
     #local_diff, remote_diff = collect_diffs(base_path, decisions)
+    
+    local_conflict_diffs = combine_patches(local_conflict_diffs)
+    remote_conflict_diffs = combine_patches(remote_conflict_diffs)
 
-    # FIXME remove conflict decisions?
+    #decisions_by_key = bundle_decisions_by_key(base_path, decisions)
+    #nbdime.log.error("FIXME: Update resolve_strategy_record_conflicts.")
+
+    # Drop conflict decisions
+    conflict_decisions = [d for d in decisions if d.conflict]
+    decisions.decisions = [d for d in decisions if not d.conflict]
+    #decisions.decisions = [pop_all_patch_decisions(d) for d in decisions]
 
     # Record remaining conflicts in field nbdime-conflicts
     conflicts_dict = {
@@ -513,7 +536,9 @@ def resolve_strategy_record_conflicts(base_path, base, decisions):
     decisions.custom(base_path, local_conflict_diffs, remote_conflict_diffs, custom_diff, conflict=True)
 
 
-def resolve_strategy_inline_source(path, base, local_diff, remote_diff, decisions):
+def resolve_strategy_inline_source(path, base, local_diff, remote_diff):
+    decisions = MergeDecisionBuilder()
+
     if local_diff is ParentDeleted:
         # Add marker at top of cell, easier to clean up manually
         local_diff = [op_addrange(0, ["<<<<<<< LOCAL CELL DELETED >>>>>>>\n"])]
@@ -546,8 +571,10 @@ def resolve_strategy_inline_source(path, base, local_diff, remote_diff, decision
             [op_patch(path[-1], remote_diff)],
             custom_diff, conflict=conflict)
 
+    return decisions
 
-def resolve_strategy_generic(path, base, decisions, strategy):
+
+def resolve_strategy_generic(path, decisions, strategy, transients):
     if not (strategy and strategy != "mergetool" and decisions.has_conflicted()):
         return
 
@@ -556,29 +583,30 @@ def resolve_strategy_generic(path, base, decisions, strategy):
         # patch/remove conflict on /cells/3,
         # decision is changed to action=local
         action = strategy.replace("use-", "")
-        for i, d in enumerate(decisions):
+        for d in decisions:
             if d.conflict:
-                d.action = "base"
+                d.action = action
                 d.conflict = False
     else:
+        import ipdb; ipdb.set_trace()
         msg = "Unexpected strategy {} on {}.".format(
             strategy, join_path(path))
         nbdime.log.error(msg)
 
 
-def resolve_conflicted_decisions_list(path, base, decisions, list_strategy):
-    if not (list_strategy and list_strategy != "mergetool" and decisions.has_conflicted()):
+def resolve_conflicted_decisions_list(path, base, decisions, strategy, transients):
+    if not (strategy and strategy != "mergetool" and decisions.has_conflicted()):
         return
 
-    if list_strategy == "inline-outputs":
+    if strategy == "inline-outputs":
         # Affects conflicts on output dicts at /cells/*/outputs
         resolve_strategy_inline_outputs(path, base, decisions)
 
-    elif list_strategy == "remove":
+    elif strategy == "remove":
         # Affects conflicts on output dicts at /cells/*/outputs
         resolve_strategy_remove_outputs(path, base, decisions)
 
-    elif list_strategy == "clear-all":
+    elif strategy == "clear-all":
         # Old approach that relies on special handling in apply_decisions
         # to deal with clear-all overriding other decisions:
         # Collect local diffs and remote diffs from unresolved_conflicts
@@ -591,24 +619,46 @@ def resolve_conflicted_decisions_list(path, base, decisions, list_strategy):
         decisions.decisions = []
         decisions.custom(path, local_diff, remote_diff, custom_diff)
 
+    elif strategy == "clear":
+        # FIXME: Only getting here when base is a list of the lines in a string,
+        # actually resolved in resolve_conflicted_decisions_strings
+        # Avoid error message in generic
+        pass
+
     else:
-        resolve_strategy_generic(path, base, decisions, list_strategy)
+        resolve_strategy_generic(path, decisions, strategy, transients)
 
 
-def resolve_conflicted_decisions_dict(path, base, decisions, dict_strategy):
-    if not (dict_strategy and dict_strategy != "mergetool" and decisions.has_conflicted()):
+def resolve_conflicted_decisions_dict(path, base, decisions, strategy, transients):
+    if not (strategy and strategy != "mergetool" and decisions.has_conflicted()):
         return
 
-    if dict_strategy == "record-conflict":
+    if strategy == "record-conflict":
         # affects conflicts on dicts at /***/metadata or below
         resolve_strategy_record_conflicts(path, base, decisions)
 
-    elif dict_strategy == "inline-attachments":
+    elif strategy == "inline-attachments":
         # affects conflicts on string at /cells/*/attachments or below
         resolve_strategy_inline_attachments(path, base, decisions)
 
     else:
-        resolve_strategy_generic(path, base, decisions, dict_strategy)
+        resolve_strategy_generic(path, decisions, strategy, transients)
+
+
+def resolve_conflicted_decisions_strings(path, decisions, strategy, transients):
+    if not (strategy and strategy != "mergetool" and decisions.has_conflicted()):
+        return
+
+    if strategy == "clear":
+        for i, d in enumerate(decisions):
+            if d.conflict:
+                d.action = "clear"
+                d.conflict = False
+    elif strategy == "inline-source":
+        # Avoid error message in generic
+        pass
+    else:
+        resolve_strategy_generic(path, decisions, strategy, transients)
 
 
 
@@ -641,9 +691,6 @@ def _merge_dicts(base, local_diff, remote_diff, path, parent_decisions, strategi
     transients = strategies.transients
 
     decisions = MergeDecisionBuilder()
-
-    # The list of unresolved conflicts to return at the end
-    unresolved_conflicts = []
 
     # Intermediate list of conflicts recorded during first pass over diffs,
     # resolution will be attempted at the end here
@@ -708,11 +755,11 @@ def _merge_dicts(base, local_diff, remote_diff, path, parent_decisions, strategi
             if ld.op == DiffOp.REMOVE and rd.op == DiffOp.REMOVE:
                 # (4) Removed in both local and remote
                 decisions.agreement(path, ld, rd)
-            elif ld.op == DiffOp.REMOVE and is_diff_all_transients([rd], item_path, transients):
+            elif ld.op == DiffOp.REMOVE and is_diff_all_transients([rd], path, transients):
                 # If one side is deleted and the other only transients,
                 # drop the transient diffs and let parent pick the deletion
                 decisions.local(path, ld, rd)
-            elif rd.op == DiffOp.REMOVE and is_diff_all_transients([ld], item_path, transients):
+            elif rd.op == DiffOp.REMOVE and is_diff_all_transients([ld], path, transients):
                 # If one side is deleted and the other only transients,
                 # drop the transient diffs and let parent pick the deletion
                 decisions.remote(path, ld, rd)
@@ -749,11 +796,11 @@ def _merge_dicts(base, local_diff, remote_diff, path, parent_decisions, strategi
             raise ValueError("Invalid diff ops {} and {}.".format(ld.op, rd.op))
 
     # Resolve remaining conflicts with strategy at this level if any
-    resolve_conflicted_decisions_dict(path, base, decisions, dict_strategy)
+    resolve_conflicted_decisions_dict(path, base, decisions, dict_strategy, transients)
     return decisions
 
 
-def _split_addrange(key, local, remote, path, strategies=None):
+def _split_addrange(key, local, remote, path, strategies):
     """Compares two addrange value lists, and splits decisions on similarity
 
     Uses diff of value lists to identify which items to align. Identical,
@@ -855,7 +902,7 @@ def _split_addrange(key, local, remote, path, strategies=None):
     return decisions
 
 
-def _merge_concurrent_inserts(base, ldiff, rdiff, path, decisions, strategies=None):
+def _merge_concurrent_inserts(base, ldiff, rdiff, path, decisions, strategies):
     """Merge concurrent inserts, optionally with one or more removeranges.
 
     This method compares the addition/removals on both sides, and splits it
@@ -868,7 +915,7 @@ def _merge_concurrent_inserts(base, ldiff, rdiff, path, decisions, strategies=No
     assert len(ldiff) == 1 or ldiff[1].op == DiffOp.REMOVERANGE
     assert len(rdiff) == 1 or rdiff[1].op == DiffOp.REMOVERANGE
 
-    #decisions = MergeDecisionBuilder()  # TODO: Define our own decisions collection?
+    decisions = MergeDecisionBuilder()
 
     # FIXME: This function doesn't work out so well with new conflict handling,
     # when an insert (e.g. [2,7] vs [3,7]) gets split into agreement on [7] and
@@ -894,7 +941,7 @@ def _merge_concurrent_inserts(base, ldiff, rdiff, path, decisions, strategies=No
 
     subdecisions = _split_addrange(ldiff[0].key,
         ldiff[0].valuelist, rdiff[0].valuelist,
-        path, strategies=strategies)
+        path, strategies)
 
     # Example:
     # b  l  r
@@ -910,12 +957,13 @@ def _merge_concurrent_inserts(base, ldiff, rdiff, path, decisions, strategies=No
     # [insert x, y; remove 1-2]
     # That results in remove 3 not being conflicted.
 
-    if subdecisions:
+    #if subdecisions:
+    if not subdecisions.has_conflicted():
         # If we managed to make any decisions,
         # use them and the remaining conflicts
         decisions.extend(subdecisions)
 
-        conflict = subdecisions.has_conflicted()
+        conflict = False # subdecisions.has_conflicted()  # FIXME: which way?
 
         # FIXME: Add removals to conflicts in subdecisions?
         # If there are removals at the end, add them
@@ -949,10 +997,6 @@ def _merge_lists(base, local_diff, remote_diff, path, parent_decisions, strategi
     transients = strategies.transients
 
     decisions = MergeDecisionBuilder()
-
-    # FIXME XXX: Use intermediate DecisionBuilder to avoid losing ordering of conflicts
-    # The list of unresolved conflicts to return at the end
-    unresolved_conflicts = []
 
     # Intermediate list of conflicts recorded during first pass over diffs,
     # resolution will be attempted at the end here
@@ -1135,7 +1179,8 @@ def _merge_lists(base, local_diff, remote_diff, path, parent_decisions, strategi
             assert nbdime.log.error("Unhandled chunk conflict type %s" % (chunktype,))
 
     # Resolve remaining conflicts with strategy at this level if any
-    resolve_conflicted_decisions_list(path, base, decisions, list_strategy)
+    #resolve_transients(path, base, decisions, transients)
+    resolve_conflicted_decisions_list(path, base, decisions, list_strategy, transients)
     return decisions
 
 
@@ -1143,7 +1188,6 @@ def _merge_strings(base, local_diff, remote_diff,
                    path, parent_decisions, strategies):
     """Perform a three-way merge of strings. See docstring of merge."""
     assert isinstance(base, string_types)
-    decisions = MergeDecisionBuilder()
 
     # This functions uses a (static) state variable to track recursion.
     # The first time it is called, base can (potentially) be a
@@ -1155,6 +1199,7 @@ def _merge_strings(base, local_diff, remote_diff,
         # base is a single line with differing edits. We could merge as list of
         # characters, but this is unreliable, and will conflict with line-based
         # chunking.
+        decisions = MergeDecisionBuilder()
 
         # Get strategy for the parent string (path points to line)
         strategy = strategies.get(star_path(path[:-1]))
@@ -1174,26 +1219,31 @@ def _merge_strings(base, local_diff, remote_diff,
         # the work to the merge conflict renderer
         # (possibly git merge-file or diff3)
         if strategy == "inline-source":
-            resolve_strategy_inline_source(
-                path, base, local_diff, remote_diff, decisions)
-        elif strategy == "union":
-            nbdime.log.error("union strategy not implemented for source")  # FIXME
-        # TODO: Add option to try git merge-file or diff3 even when using mergetool
-        #elif strategy == "try-external":
-        #    nbdime.log.error("try-external strategy is not implemented")
+            decisions = resolve_strategy_inline_source(
+                path, base, local_diff, remote_diff)
         else:
             # FIXME XXX: Test regular string merge well also for no specific strategy!
 
             # Merge lines as lists
-            base = base.splitlines(True)
+            base_lines = base.splitlines(True)
             _merge_strings.recursion = True
             try:
-                subdecisions = _merge_lists(
-                    base, local_diff, remote_diff,
-                    path, decisions, strategies)
+                #import ipdb; ipdb.set_trace()
+                decisions = _merge_lists(
+                    base_lines, local_diff, remote_diff,
+                    path, parent_decisions, strategies)
             finally:
                 # Ensure recursion stops even in case of exceptions
                 _merge_strings.recursion = False
+        #elif strategy == "union":
+        #    nbdime.log.error("union strategy not implemented for source")  # FIXME
+        # TODO: Add option to try git merge-file or diff3 even when using mergetool
+        #elif strategy == "try-external":
+        #    nbdime.log.error("try-external strategy is not implemented")
+        resolve_conflicted_decisions_strings(path, decisions, strategy, strategies.transients)
+
+    if any(decisions.decisions[i] == decisions.decisions[j] for i in range(len(decisions.decisions))  for j in range(len(decisions.decisions)) if i != j):
+        import ipdb; ipdb.set_trace()
 
     return decisions
 
@@ -1236,9 +1286,13 @@ def decide_merge_with_diff(base, local, remote, local_diff, remote_diff, strateg
     # in all the _merge* functions
     assert not parent_decisions
 
+    # FIXME: Do this?
     # Apply fallback strategy to resolve remaining conflicts
-    strategy = strategies.get("/", strategies.fall_back)
-    resolve_strategy_generic(path, base, decisions, strategy)
+    #strategy = strategies.get("/", strategies.fall_back)
+    #resolve_strategy_generic(path, decisions, strategy, strategies.transients)
+
+    # FIXME: Do this?
+    #decisions.decisions = [pop_all_patch_decisions(d) for d in decisions]
 
     return decisions.validated(base)
 

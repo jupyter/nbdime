@@ -84,6 +84,7 @@ def make_bundled_decisions(base, prefix, decisions, callback):
 
     return callback(resolved_base, prefix, local_diff, remote_diff)
 
+
 def bundle_decisions(base, decisions, pattern, callback):
     indices = filter_decisions(pattern, decisions)
     index_set = set(indices)
@@ -104,7 +105,7 @@ def bundle_decisions(base, decisions, pattern, callback):
     # create bundles for each unique prefix
     affected_decisions = []
     for prefix, dec_group in decision_groups.items():
-        affected_decisions.extend(make_bundled_decisions(
-            base, prefix, dec_group, callback))
+        bundled_decisions = make_bundled_decisions(base, prefix, dec_group, callback)
+        affected_decisions.extend(bundled_decisions)
 
     return other_decisions + affected_decisions

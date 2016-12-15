@@ -40,7 +40,7 @@ def test_decide_merge_strategy_fail():
     #     decisions = decide_merge(base, local, remote, strategies)
 
 
-def test_decide_merge_strategy_clear():
+def test_decide_merge_strategy_clear1():
     """Check strategy "clear" in various cases."""
     # One level dict, clearing item value (think foo==execution_count)
     base = {"foo": 1}
@@ -51,11 +51,13 @@ def test_decide_merge_strategy_clear():
     assert apply_decisions(base, decisions) == {"foo": None}
     assert not any([d.conflict for d in decisions])
 
+def test_decide_merge_strategy_clear2():
     base = {"foo": "1"}
     local = {"foo": "2"}
     remote = {"foo": "3"}
     strategies = Strategies({"/foo": "clear"})
     decisions = decide_merge(base, local, remote, strategies)
+    #assert decisions == []
     assert apply_decisions(base, decisions) == {"foo": ""}
     assert not any([d.conflict for d in decisions])
 
