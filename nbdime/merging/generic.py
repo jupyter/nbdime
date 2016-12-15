@@ -476,8 +476,17 @@ def resolve_strategy_remove_outputs(base_path, outputs, decisions):
         else:
             # Replace all decisions affecting key with resolution
             local_diff, remote_diff = collect_diffs(base_path, decs)
+            if (
+                len(local_diff) == len(remote_diff) == 1 and
+                local_diff[0].op == remote_diff[0].op == DiffOp.ADDRANGE
+            ):
+                # remove in add vs add is a no-op
+                custom_diff = []
+            else:
+                custom_diff = [op_removerange(key, 1)]
+            print(key, local_diff, remote_diff, custom_diff)
             decisions.custom(base_path, local_diff, remote_diff,
-                [op_removerange(key, 1)], conflict=False)
+                custom_diff, conflict=False)
 
 
 def resolve_strategy_inline_outputs(base_path, outputs, decisions):

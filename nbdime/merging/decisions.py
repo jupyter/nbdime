@@ -269,7 +269,6 @@ class MergeDecisionBuilder(object):
             )
 
     def custom(self, path, local_diff, remote_diff, custom_diff, conflict=False):
-        assert custom_diff
         action = "custom"
         self.add_decision(
             path=path,
