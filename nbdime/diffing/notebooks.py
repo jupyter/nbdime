@@ -252,15 +252,24 @@ def compare_output_approximate(x, y):
 
 def compare_output_strict(x, y):
     "Compare type and data of output cells x,y to higher accuracy."
-    # Fall back on approximate checks first
-    if not compare_output_approximate(x, y):
+
+    # Fast cutuff
+    ot = x["output_type"]
+    if ot != y["output_type"]:
         return False
 
-    # Add strict checks on fields ignored in approximate version
-    if x.get("metadata") != y.get("metadata"):
+    # Sanity cutoff
+    xkeys = set(x)
+    ykeys = set(y)
+    if xkeys != ykeys:
         return False
-    #if x.get("traceback") != y.get("traceback"):
-    #    return False
+
+    handled = set(("output_type", "data"))
+
+    # Strict match on all keys we do not otherwise handle
+    for k in xkeys - handled:
+        if x[k] != y[k]:
+            return False
 
     if not compare_mimebundle_strict(x.get("data"), y.get("data")):
         return False
