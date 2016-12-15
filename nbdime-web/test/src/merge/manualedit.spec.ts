@@ -56,7 +56,7 @@ describe('merge', () => {
         let model = nbmodel.cells[0].merged.source;
         updateModel({
           model: model,
-          full: 'abcdef\nghi\njkl\n',
+          fullLines: ['abcdef\n', 'ghi\n', 'jkl\n', ''],
           baseLine: 1,
           editLine: 1,
           editCh: 0,
@@ -82,7 +82,7 @@ describe('merge', () => {
         let model = nbmodel.cells[0].merged.source;
         updateModel({
           model: model,
-          full: 'abcdef\n',
+          fullLines: ['abcdef\n', ''],
           baseLine: 1,
           editLine: 1,
           editCh: 0,
@@ -117,7 +117,7 @@ describe('merge', () => {
         let model = nbmodel.cells[0].merged.source;
         updateModel({
           model: model,
-          full: 'abcdef\nghi\njkl\n',
+          fullLines: ['abcdef\n', 'ghi\n', 'jkl\n', ''],
           baseLine: 1,
           editLine: 1,
           editCh: 0,
@@ -149,7 +149,7 @@ describe('merge', () => {
         let model = nbmodel.cells[0].merged.source;
         updateModel({
           model: model,
-          full: 'abcdef\nghi\njkl\n',
+          fullLines: ['abcdef\n', 'ghi\n', 'jkl\n', ''],
           baseLine: 1,
           editLine: 1,
           editCh: 0,
@@ -177,7 +177,7 @@ describe('merge', () => {
         let model = nbmodel.cells[0].merged.source;
         updateModel({
           model: model,
-          full: 'abcdef\n',
+          fullLines: ['abcdef\n', ''],
           baseLine: 1,
           editLine: 1,
           editCh: 0,
@@ -205,7 +205,7 @@ describe('merge', () => {
         let model = nbmodel.cells[0].merged.source;
         updateModel({
           model: model,
-          full: 'abcdef\ngh\njkl\n',
+          fullLines: ['abcdef\n', 'gh\n', 'jkl\n', ''],
           baseLine: 1,
           editLine: 1,
           editCh: 0,
@@ -233,7 +233,7 @@ describe('merge', () => {
         let model = nbmodel.cells[0].merged.source;
         updateModel({
           model: model,
-          full: 'abcdef\nmnp\n',
+          fullLines: ['abcdef\n', 'mnp\n', ''],
           baseLine: 1,
           editLine: 1,
           editCh: 0,
@@ -242,7 +242,7 @@ describe('merge', () => {
         });
         updateModel({
           model: model,
-          full: 'abcdef\n',
+          fullLines: ['abcdef\n', ''],
           baseLine: 1,
           editLine: 1,
           editCh: 0,
@@ -270,7 +270,7 @@ describe('merge', () => {
         let model = nbmodel.cells[0].merged.source;
         updateModel({
           model: model,
-          full: 'abcdef\nghi\n',
+          fullLines: ['abcdef\n', 'ghi\n', ''],
           baseLine: 1,
           editLine: 1,
           editCh: 0,
@@ -305,7 +305,7 @@ describe('merge', () => {
         let model = nbmodel.cells[0].merged.source;
         updateModel({
           model: model,
-          full: 'abcdef\nghi\njkl\n',
+          fullLines: ['abcdef\n', 'ghi\n', 'jkl\n', ''],
           baseLine: 1,
           editLine: 1,
           editCh: 0,
@@ -340,7 +340,7 @@ describe('merge', () => {
         let model = nbmodel.cells[0].merged.source;
         updateModel({
           model: model,
-          full: 'abcdef\njkl\n',
+          fullLines: ['abcdef\n', 'jkl\n', ''],
           baseLine: 1,
           editLine: 1,
           editCh: 0,
@@ -390,7 +390,7 @@ describe('merge', () => {
         // 'abcdef\nghi\nmnoq\nrst\nuv\n'
         updateModel({
           model: model,
-          full: 'abcv\n',
+          fullLines: ['abcv\n', ''],
           baseLine: 0,
           editLine: 0,
           editCh: 3,
@@ -441,7 +441,7 @@ describe('merge', () => {
         let model = cellModel.merged.source;
         updateModel({
           model: model,
-          full: 'abcdef\nghq\nrst\nuv\n',
+          fullLines: ['abcdef\n', 'ghq\n', 'rst\n', 'uv\n', ''],
           baseLine: 1,
           editLine: 1,
           editCh: 2,
@@ -476,7 +476,7 @@ describe('merge', () => {
         let model = nbmodel.cells[0].merged.source;
         updateModel({
           model: model,
-          full: 'abcdef\nghi\njkl\n',
+          fullLines: ['abcdef\n', 'ghi\n', 'jkl\n', ''],
           baseLine: 1,
           editLine: 1,
           editCh: 0,
@@ -485,7 +485,7 @@ describe('merge', () => {
         });
         updateModel({
           model: model,
-          full: 'abcdef\nghi\nxyz\njkl\n',
+          fullLines: ['abcdef\n', 'ghi\n', 'xyz\n', 'jkl\n', ''],
           baseLine: 1,
           editLine: 2,
           editCh: 0,
@@ -520,7 +520,7 @@ describe('merge', () => {
         let model = nbmodel.cells[0].merged.source;
         updateModel({
           model: model,
-          full: 'abcdef\n\njkl\n',
+          fullLines: ['abcdef\n', '\n', 'jkl\n', ''],
           baseLine: 0,
           editLine: 0,
           editCh: 6,
@@ -557,7 +557,7 @@ describe('merge', () => {
         let model = nbmodel.cells[0].merged.source;
         updateModel({
           model: model,
-          full: 'abc\ndef\njkl\n',
+          fullLines: ['abc\n', 'def\n', 'jkl\n', ''],
           baseLine: 0,
           editLine: 0,
           editCh: 3,
@@ -594,7 +594,7 @@ describe('merge', () => {
         // Insert new line
         updateModel({
           model: model,
-          full: 'abcdef\nghi\n\njkl\nmnop\n',
+          fullLines: ['abcdef\n', 'ghi\n', '\n', 'jkl\n', 'mnop\n', ''],
           baseLine: 2,
           editLine: 2,
           editCh: 0,
@@ -603,7 +603,7 @@ describe('merge', () => {
         });
         updateModel({
           model: model,
-          full: 'abcdef\nghi\n1\njkl\nmnop\n',
+          fullLines: ['abcdef\n', 'ghi\n', '1\n', 'jkl\n', 'mnop\n', ''],
           baseLine: 2,
           editLine: 2,
           editCh: 0,
@@ -612,7 +612,7 @@ describe('merge', () => {
         });
         updateModel({
           model: model,
-          full: 'abcdef\nghi\n13\njkl\nmnop\n',
+          fullLines: ['abcdef\n', 'ghi\n', '13\n', 'jkl\n', 'mnop\n', ''],
           baseLine: 2,
           editLine: 2,
           editCh: 1,
@@ -621,7 +621,7 @@ describe('merge', () => {
         });
         updateModel({
           model: model,
-          full: 'abcdef\nghi\n123\njkl\nmnop\n',
+          fullLines: ['abcdef\n', 'ghi\n', '123\n', 'jkl\n', 'mnop\n', ''],
           baseLine: 2,
           editLine: 2,
           editCh: 1,
@@ -631,7 +631,7 @@ describe('merge', () => {
         // Insert new line
         updateModel({
           model: model,
-          full: 'abcdef\n\nghi\n123\njkl\nmnop\n',
+          fullLines: ['abcdef\n', '\n', 'ghi\n', '123\n', 'jkl\n', 'mnop\n', ''],
           baseLine: 1,
           editLine: 1,
           editCh: 0,
@@ -640,7 +640,7 @@ describe('merge', () => {
         });
         updateModel({
           model: model,
-          full: 'abcdef\n4\nghi\n123\njkl\nmnop\n',
+          fullLines: ['abcdef\n', '4\n', 'ghi\n', '123\n', 'jkl\n', 'mnop\n', ''],
           baseLine: 1,
           editLine: 1,
           editCh: 0,
@@ -649,7 +649,7 @@ describe('merge', () => {
         });
         updateModel({
           model: model,
-          full: 'abcdef\n45\nghi\n123\njkl\nmnop\n',
+          fullLines: ['abcdef\n', '45\n', 'ghi\n', '123\n', 'jkl\n', 'mnop\n', ''],
           baseLine: 1,
           editLine: 1,
           editCh: 1,
@@ -658,7 +658,7 @@ describe('merge', () => {
         });
         updateModel({
           model: model,
-          full: 'abcdef\n45\n6ghi\n123\njkl\nmnop\n',
+          fullLines: ['abcdef\n', '45\n', '6ghi\n', '123\n', 'jkl\n', 'mnop\n', ''],
           baseLine: 1,
           editLine: 2,
           editCh: 0,
@@ -667,7 +667,7 @@ describe('merge', () => {
         });
         updateModel({
           model: model,
-          full: 'abcdef\n45\n67ghi\n123\njkl\nmnop\n',
+          fullLines: ['abcdef\n', '45\n', '67ghi\n', '123\n', 'jkl\n', 'mnop\n', ''],
           baseLine: 1,
           editLine: 2,
           editCh: 1,
