@@ -201,19 +201,16 @@ class MergeDecisionBuilder(object):
                 action = "base"
             elif strategy == "clear":
                 action = "clear"
-            elif strategy == "remove":
-                # FIXME XXX This is now handled in _merge_lists,
-                # confirm that's the right place and remove here
-                action = "remove"
-                msg = "Expecting remove action to be applied at the list level."
-                nbdime.log.error(msg)
-                raise RuntimeError(msg)
             elif strategy == "take-max":
                 action = "take_max"
             elif strategy == "fail":
                 msg = "Unexpected conflict on {}.".format(path)
                 nbdime.log.error(msg)
                 raise RuntimeError(msg)
+            else:
+                msg = "Unhandled conflict strategy {} on {}".format(
+                    strategy, join_path(path))
+                nbdime.log.warning(msg)
 
         if action is not None:
             self.add_decision(

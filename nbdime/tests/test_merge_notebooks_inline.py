@@ -171,7 +171,7 @@ def test_decide_merge_simple_list_insert_conflict_resolution():
     assert apply_decisions(b, decisions) == []
     assert not any(d.conflict for d in decisions)
 
-
+@pytest.mark.skip
 def test_decide_merge_simple_list_insert_conflict_resolution__union():
     # local and remote adds an entry each
     b = [1]
@@ -221,6 +221,8 @@ def test_decide_merge_list_conflicting_insertions_separate_chunks():
     assert apply_decisions(b, resolved) == []
     assert not any(d.conflict for d in resolved)
 
+
+@pytest.mark.skip
 def test_decide_merge_list_conflicting_insertions_separate_chunks__union():
     # local and remote adds an equal entry plus a different entry each
     # First, test when insertions DO NOT chunk together:
@@ -266,6 +268,8 @@ def test_decide_merge_list_conflicting_insertions_in_chunks():
     assert apply_decisions(b, resolved) == []
     assert not any(d.conflict for d in resolved)
 
+
+@pytest.mark.skip
 def test_decide_merge_list_conflicting_insertions_in_chunks__union():
     # Next, test when insertions DO chunk together:
     b = [1, 9]
