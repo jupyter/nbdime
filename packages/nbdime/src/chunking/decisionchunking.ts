@@ -88,7 +88,7 @@ function splitDiffsOnBoundaries(diffs: IDiffArrayEntry[], boundaries: number[]):
  * Make list of chunks on the form (j, k, diffs0, diffs1, ..., diffsN),
  * where `j` and `k` are line numbers in the base, and the `diffsX`
  * entries are subsets from `diffs` that are part of the chunk.
-
+ *
  * Because the diff entries have been split on the union of
  * begin/end boundaries of all diff entries, the keys of
  * diff entries on each side will always match a boundary

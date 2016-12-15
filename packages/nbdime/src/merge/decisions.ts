@@ -380,10 +380,11 @@ function resolveCommonPaths(decisions: MergeDecision[]) {
   for (let md of decisions) {
     let diffs = md.diffs;
     let path = md.absolutePath || [];
-    let popped: {diffs: DiffCollection, key: string | number} | null = null;
-    while (popped = popPath(diffs, true)) {
+    let popped = popPath(diffs, true);
+    while (popped) {
       path.push(popped.key);
       diffs = popped.diffs;
+      popped = popPath(diffs, true);
     }
     md.absolutePath = path;
     md.diffs = diffs;

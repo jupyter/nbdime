@@ -26,10 +26,6 @@ import {
 } from '../merge/model';
 
 import {
-  MergeDecision
-} from '../merge/decisions';
-
-import {
   DiffRangePos
 } from '../diff/range';
 
