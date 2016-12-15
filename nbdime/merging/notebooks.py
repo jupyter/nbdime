@@ -41,7 +41,7 @@ cli_conflict_strategies = (
     "use-base",         # Keep base value in case of conflict
     "use-local",        # Use local value in case of conflict
     "use-remote",       # Use remote value in case of conflict
-    "union",            # Take local value, then remote, in case of conflict
+    #"union",            # Take local value, then remote, in case of conflict
     )
 
 cli_conflict_strategies_input = cli_conflict_strategies

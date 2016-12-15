@@ -569,6 +569,7 @@ def test_merge_input_strategy_base_source_conflict():
     _check_sources(base, local, remote, expected_partial, expected_conflicts, merge_args)
 
 
+@pytest.mark.skip
 def test_merge_input_strategy_union_source_conflict():
     # Conflicting cell inserts at same location as removing old cell
     local = [["local\n", "some other\n", "lines\n", "to align\n"]]
@@ -689,6 +690,7 @@ def test_merge_output_strategy_base_conflict():
     _check_outputs(base, local, remote, expected_partial, expected_conflicts, merge_args)
 
 
+@pytest.mark.skip
 def test_merge_output_strategy_union_conflict():
     # Conflicting cell inserts at same location as removing old cell
     local = [["local\nsome other\nlines\nto align\n", "output2", "output3"]]
@@ -764,6 +766,7 @@ def _make_notebook_with_multi_conflicts(
     return base, local, remote, expected_partial
 
 
+@pytest.mark.skip
 def test_metadata_union_strategy_metadata():
     # Conflicting cell inserts at same location as removing old cell
     expected_partial_source = [["remote\n", "some other\n", "lines\n", "to align\n"]]
@@ -784,6 +787,7 @@ def test_metadata_union_strategy_metadata():
     _check(partial, expected_partial, decisions, expected_conflicts)
 
 
+@pytest.mark.skip
 def test_metadata_union_strategy_not_applied_immutable_on_dict():
     # Conflicting cell inserts at same location as removing old cell
     expected_partial_source = [["remote\n", "some other\n", "lines\n", "to align\n"]]
@@ -813,6 +817,7 @@ def test_metadata_union_strategy_not_applied_immutable_on_dict():
     _check(partial, expected_partial, decisions, expected_conflicts)
 
 
+@pytest.mark.skip
 def test_merge_mix_strategies():
     # Conflicting cell inserts at same location as removing old cell
     expected_partial_source = [["remote\n", "some other\n", "lines\n", "to align\n"]]
