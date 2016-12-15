@@ -107,7 +107,6 @@ def _compare_mimedata(mimetype, x, y, comp_text, comp_base64):
 
     # TODO: Compare binary images?
     #if mimetype.startswith("image/"):
-
     if isinstance(x, string_types) and isinstance(y, string_types):
         # Most likely base64 encoded data
         if _base64.match(x):
@@ -140,13 +139,9 @@ def compare_mimebundle_approximate(x, y):
     if set(x.keys()) != set(y.keys()):
         return False
 
-    dd = diff_mime_bundle(x, y)
-    # Fail comparison for adds and removes
-    if any(e.op != DiffOp.PATCH for e in dd):
-        return False
-    for e in dd:
+    for key in x.keys():
         # Delegate to mimetype specific comparison
-        if not compare_mimedata_approximate(e.key, x[e.key], y[e.key]):
+        if not compare_mimedata_approximate(key, x[key], y[key]):
             return False
 
     # Didn't fail up to here it must be equal
@@ -164,13 +159,9 @@ def compare_mimebundle_strict(x, y):
     if set(x.keys()) != set(y.keys()):
         return False
 
-    dd = diff_mime_bundle(x, y)
-    # Fail comparison for adds and removes
-    if any(e.op != DiffOp.PATCH for e in dd):
-        return False
-    for e in dd:
+    for key in x.keys():
         # Delegate to mimetype specific comparison
-        if not compare_mimedata_strict(e.key, x[e.key], y[e.key]):
+        if not compare_mimedata_strict(key, x[key], y[key]):
             return False
 
     # Didn't fail up to here it must be equal
