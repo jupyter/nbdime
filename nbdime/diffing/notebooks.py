@@ -78,6 +78,8 @@ def compare_text_strict(x, y):
         x = "".join(x)
     if isinstance(y, list):
         y = "".join(y)
+    if len(x) == len(y) and x == y:
+        return True
     return compare_strings_approximate(x, y, threshold=0.95)
 
 
