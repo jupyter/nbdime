@@ -499,12 +499,14 @@ def resolve_strategy_inline_outputs(base_path, outputs, decisions):
 
 
 def resolve_strategy_record_conflicts(base_path, base, decisions):
+    #import ipdb; ipdb.set_trace()
+
     decisions.decisions = [push_patch_decision(d, d.common_path[len(base_path):]) for d in decisions]
 
     #local_conflict_diffs, remote_conflict_diffs = collect_unresolved_diffs(base_path, unresolved_conflicts)
     local_conflict_diffs, remote_conflict_diffs = collect_conflicting_diffs(base_path, decisions)
     #local_diff, remote_diff = collect_diffs(base_path, decisions)
-    
+
     local_conflict_diffs = combine_patches(local_conflict_diffs)
     remote_conflict_diffs = combine_patches(remote_conflict_diffs)
 

@@ -599,7 +599,7 @@ def test_inline_merge_notebook_metadata():
                 expected = new_notebook(metadata=md_in[j])
                 merged, decisions = merge_notebooks(base, local, remote)
                 assert "nbdime-conflicts" not in merged["metadata"]
-                assert not any(d.conflict for d in decisions)
+                assert not any([d.conflict for d in decisions])
                 assert expected == merged
 
     # Check handcrafted merge results
@@ -612,9 +612,9 @@ def test_inline_merge_notebook_metadata():
         expected = new_notebook(metadata=md_out[triplet])
         merged, decisions = merge_notebooks(base, local, remote)
         if "nbdime-conflicts" in merged["metadata"]:
-            assert any(d.conflict for d in decisions)
+            assert any([d.conflict for d in decisions])
         else:
-            assert not any(d.conflict for d in decisions)
+            assert not any([d.conflict for d in decisions])
         assert expected == merged
 
     # At least try to run merge without crashing for permutations
@@ -628,6 +628,86 @@ def test_inline_merge_notebook_metadata():
                     local = new_notebook(metadata=md_in[j])
                     remote = new_notebook(metadata=md_in[k])
                     merged, decisions = merge_notebooks(base, local, remote)
+
+
+def test_inline_merge_notebook_metadata_reproduce_bug():
+    md_in = {
+        1: {
+            "unconflicted": {
+                "list_deleteitem": [7, "deleteme", 3, "notme", 5, "deletemetoo"],
+            },
+            "conflicted": {
+                "dict_delete_replace": {"k":"v"},
+            }
+        },
+        2: {
+            "unconflicted": {
+                "list_deleteitem": [7, 3, "notme", 5, "deletemetoo"],
+            },
+            "conflicted": {
+            }
+        },
+        3: {
+            "unconflicted": {
+                "list_deleteitem": [7, "deleteme", 3, "notme", 5],
+            },
+            "conflicted": {
+                "dict_delete_replace": {"k":"x"},
+            }
+        }
+    }
+
+    def join_dicts(dicta, dictb):
+        d = {}
+        d.update(dicta)
+        d.update(dictb)
+        return d
+
+    shared_unconflicted = {
+        "list_deleteitem": [7, 3, "notme", 5],
+    }
+    shared_conflicted = {
+        "dict_delete_replace": {"k":"v"},
+    }
+
+    md_out = {
+        (1,2,3): {
+            "unconflicted": shared_unconflicted,
+            "conflicted": shared_conflicted
+        },
+    }
+
+    # Fill in expected conflict records
+    for triplet in sorted(md_out.keys()):
+        i, j, k = triplet
+        local_diff = diff(md_in[i]["conflicted"], md_in[j]["conflicted"])
+        remote_diff = diff(md_in[i]["conflicted"], md_in[k]["conflicted"])
+
+        # This may not be a necessary test, just checking my expectations
+        assert local_diff == sorted(local_diff, key=lambda x: x.key)
+        assert remote_diff == sorted(remote_diff, key=lambda x: x.key)
+
+        c = {
+            # These are patches on the /metadata dict
+            "local_diff": [op_patch("conflicted", local_diff)],
+            "remote_diff": [op_patch("conflicted", remote_diff)],
+        }
+        md_out[triplet]["nbdime-conflicts"] = c
+
+    # Check handcrafted merge results
+    triplet = (1,2,3)
+    if 1:
+        i, j, k = triplet
+        base = new_notebook(metadata=md_in[i])
+        local = new_notebook(metadata=md_in[j])
+        remote = new_notebook(metadata=md_in[k])
+        expected = new_notebook(metadata=md_out[triplet])
+        merged, decisions = merge_notebooks(base, local, remote)
+        if "nbdime-conflicts" in merged["metadata"]:
+            assert any([d.conflict for d in decisions])
+        else:
+            assert not any([d.conflict for d in decisions])
+        assert expected == merged
 
 
 def test_inline_merge_source_empty():
