@@ -565,12 +565,14 @@ def resolve_action(base, decision):
 def apply_decisions(base, decisions):
     """Apply a list of merge decisions to base.
     """
+    from .generic import combine_patches
+    
     merged = copy.deepcopy(base)
     prev_path = None
     parent = None
     last_key = None
     resolved = None
-    diffs = None
+    diffs = []
     # clear_all actions should override other decisions on same obj, so
     # we need to track it
     clear_all_flag = False
@@ -591,7 +593,7 @@ def apply_decisions(base, decisions):
                 ad = resolve_action(resolved, md)
                 if line:
                     ad = push_path(line, ad)
-                diffs.extend(ad)
+                diffs = combine_patches(diffs + ad)
 
         else:
             # Different path, start a new collection
