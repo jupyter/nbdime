@@ -263,7 +263,7 @@ def compare_output_strict(x, y):
     #    return False
 
     if not compare_mimebundle_strict(x.get("data"), y.get("data")):
-        return True
+        return False
 
     # NB! Ignoring metadata and execution count
     return True
