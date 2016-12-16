@@ -214,7 +214,7 @@ function getPartials(diff: AddRem[], options: IUpdateModelOptions, startOffset: 
   let line = options.baseLine;
   let ch = options.editCh;
   let {oldval, newval} = options;
-  let lines: string[] | null = null;
+  let lines: string[] = options.fullLines;
   let key = line;
   let linediff = 0;
 
@@ -245,14 +245,12 @@ function getPartials(diff: AddRem[], options: IUpdateModelOptions, startOffset: 
     } else if (partialStart) {
       // Addrange before current line (abutting)
       // and partial edit of current (unedited) line
-      lines = options.fullLines;
       before.push(lines[options.editLine].slice(0, ch));
       // Indicate that one unedited line should be removed
       linediff = 1;
     }
   } else if (partialStart) {
     // Replace previously unedited line:
-    lines = options.fullLines;
     before = [lines[options.editLine].slice(0, ch)];
     // Indicate that one unedited line should be removed
     linediff = 1;
@@ -279,9 +277,6 @@ function getPartials(diff: AddRem[], options: IUpdateModelOptions, startOffset: 
   }
   if (!after && !fullDeleteEnd && !fullLineInsertions) {
     // Add remains of previously unedited line
-    if (lines === null) {
-      lines = options.fullLines;
-    }
     let fullLine = lines[options.editLine + newval.length - 1];
     let cut = lastAddedLine.length;
     if (newval.length === 1) {
@@ -771,6 +766,81 @@ function patchPatchedModel(options: IUpdateModelOptions, diffs: 'all' | 'custom'
     // Replace custom diff if existing
     // Set action to custom
   // Add new decisions for changes that do no overlap
+}
+
+
+/**
+ * Modify certain edits to use trailing newlines instead of leading
+ *
+ * Certain edits, e.g. adding a newline link this (bracketed part added):
+ *   line1[\n
+ *   line2]\n
+ * can better be treated as:
+ *   line1\n
+ *   [line2\n]
+ *
+ * Similarly (bracketed part deleted):
+ *   line1[\n
+ *   line2]\n
+ * can better be treated as:
+ *   line1\n
+ *   [line2\n]
+ *
+ * The end results are the same, but the diffs become simpler.
+ *
+ * Note that this needs to be called before base line is computed!
+ */
+export
+function shiftAddRemoveLines(base: string[], change: CodeMirror.EditorChange) {
+  if (change.from.ch === 0) {
+    // Nothing to do here
+    return;
+  }
+  if (change.removed.length === 1 && change.removed[0] === '') {
+    // Nothing removed
+    // Check whether first inserted character is newline
+    if (change.text.length > 1 && change.text[0] === '') {
+      // and first subsequent character is newline
+      let trailingLine = base[change.to.line];
+      if (trailingLine.length > change.to.ch && trailingLine[change.to.ch] === '\n') {
+        // Match, shift newline from head to tail
+        change.from.line += 1;
+        change.from.ch = 0;
+        change.text.push(change.text.shift()!);
+      }
+    }
+  } else if (change.text.length === 1 && change.text[0] === '') {
+    // Nothing added
+    // Check whether first removed character is newline
+    if (change.removed.length > 1 && change.removed[0] === '') {
+      // and first subsequent character is newline
+      let trailingLine = base[change.to.line];
+      if (trailingLine.length > change.to.ch && trailingLine[change.to.ch] === '\n') {
+        // Match, shift newline from head to tail
+        change.from.line += 1;
+        change.from.ch = 0;
+        change.to.line += 1;
+        change.to.ch = 0;
+        change.removed.push(change.removed.shift()!);
+      }
+    }
+  } else {
+    // Both added and removed
+    // Check whether first removed character is newline
+    if (change.removed.length > 1 && change.removed[0] === '') {
+      // and first subsequent character is newline
+      let trailingLine = base[change.to.line];
+      if (trailingLine.length > change.to.ch && trailingLine[change.to.ch] === '\n') {
+        // Match, shift newline from head to tail
+        change.from.line += 1;
+        change.from.ch = 0;
+        change.to.line += 1;
+        change.to.ch = 0;
+        change.text.push(change.text.shift()!);
+        change.removed.push(change.removed.shift()!);
+      }
+    }
+  }
 }
 
 export

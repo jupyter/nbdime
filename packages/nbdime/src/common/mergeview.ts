@@ -46,7 +46,7 @@ import {
 } from './exceptions';
 
 import {
-  updateModel
+  updateModel, shiftAddRemoveLines
 } from '../merge/manualedit';
 
 
@@ -359,12 +359,13 @@ class DiffView {
       debounceChange = window.setTimeout(
         update.bind(self, mode), fast === true ? 20 : 250);
     }
-    function change(_cm: CodeMirror.Editor, change: CodeMirror.EditorChangeLinkedList) {
+    function change(_cm: CodeMirror.Editor, change: CodeMirror.EditorChange) {
       let userEdit = !valueIn(change.origin, ['setValue', 'syncModel']);
       if (userEdit) {
         // Edited by hand!
-        let baseLine = getMatchingBaseLine(change.from.line, self.lineChunks);
         let fullLines = splitLines(self.model.remote!);
+        shiftAddRemoveLines(fullLines, change);
+        let baseLine = getMatchingBaseLine(change.from.line, self.lineChunks);
         // Update lines with changes
         replaceCodeMirrorRange(fullLines, change.from, change.to, change.text);
         updateModel({
