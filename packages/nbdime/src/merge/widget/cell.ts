@@ -396,11 +396,13 @@ class CellMergeWidget extends Panel {
    */
   forceFourWayViews(): void {
     // Clear previous views:
-    each(this.layout, value => {
+    let layout = this.layout as PanelLayout;
+    for (let i=layout.widgets.length-1; i >= 0; --i) {
+      let value = layout.widgets.at(i);
       if (value !== this.header) {
         value.parent = null!;
       }
-    });
+    }
     for (let cls of [
         ONEWAY_LOCAL_CLASS, ONEWAY_REMOTE_CLASS,
         TWOWAY_ADDITION_CLASS, TWOWAY_DELETION_CLASS]) {
