@@ -33,8 +33,6 @@ To run javascript/typescript tests, enter::
     cd nbdime-web/
     npm test
 
-from the ``nbdime-web`` folder.
-
 Submitting test cases
 ---------------------
 
