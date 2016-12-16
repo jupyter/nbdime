@@ -76,58 +76,46 @@ def notebook_merge_strategies(args):
             "/cells/*/outputs/*/execution_count": "clear",
         })
 
+    # Get args, default to inline for cli tool, intended to produce
+    # an editable notebook that can be manually edited
     merge_strategy = args.merge_strategy if args else "inline"
     input_strategy = args.input_strategy if args else None
     output_strategy = args.output_strategy if args else None
 
+    # Default to merge_strategy
     input_strategy = input_strategy or merge_strategy
     output_strategy = output_strategy or merge_strategy
+    metadata_strategy = merge_strategy
 
-    if merge_strategy == "mergetool":
-        # Mergetool strategy will prevent autoresolve from
-        # attempting to solve conflicts on these entries:
-        strategies.update({
-            "/cells/*/source": "mergetool",
-            "/cells/*/outputs": "mergetool",
-            "/cells/*/attachments": "mergetool",
-        })
-    elif merge_strategy.startswith('use-'):
+    # Set root strategy
+    if merge_strategy != 'inline':
         strategies["/"] = merge_strategy
-    elif merge_strategy == 'union':
-        # Not sure about this one, union only makes sense on some types
-        strategies["/"] = merge_strategy
+
+    # Translate 'inline' to specific strategies for different fields
+    if input_strategy == 'inline':
+        source_strategy = "inline-source"
+        attachments_strategy = "inline-attachments"
     else:
-        # Default strategies for cli tool, intended to produce
-        # an editable notebook that can be manually edited
-        strategies.update({
-            "/metadata": "record-conflict",
-            "/cells/*/metadata": "record-conflict",
-            "/cells/*/outputs/*/metadata": "record-conflict",
-            "/cells/*/source": "inline-source",
-            "/cells/*/outputs": "inline-outputs",
-            "/cells/*/attachments": "inline-attachments",
-        })
+        source_strategy = input_strategy
+        attachments_strategy = input_strategy
 
-    if input_strategy:
-        if input_strategy == 'inline':
-            strategies.update({
-                "/cells/*/source": "inline-source",
-                "/cells/*/attachments": "inline-attachments",
-            })
-        else:
-            strategies.update({
-                "/cells/*/source": input_strategy,
-                "/cells/*/attachments": input_strategy,
-            })
-    if output_strategy:
-        if output_strategy == 'inline':
-            strategies.update({
-                "/cells/*/outputs": 'inline-outputs'
-            })
-        else:
-            strategies.update({
-                "/cells/*/outputs": output_strategy
-            })
+    if output_strategy == 'inline':
+        outputs_strategy = "inline-outputs"
+    else:
+        outputs_strategy = output_strategy
+
+    if metadata_strategy == "inline":
+        metadata_strategy = "record-conflict"
+
+    # Set strategies on the main fields
+    strategies.update({
+        "/metadata": metadata_strategy,
+        "/cells/*/metadata": metadata_strategy,
+        "/cells/*/outputs/*/metadata": metadata_strategy,
+        "/cells/*/source": source_strategy,
+        "/cells/*/attachments": attachments_strategy,
+        "/cells/*/outputs": outputs_strategy
+    })
 
     return strategies
 
