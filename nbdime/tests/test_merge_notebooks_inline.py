@@ -186,7 +186,7 @@ def test_decide_merge_simple_list_insert_conflict_resolution__union():
     assert not any(d.conflict for d in decisions)
 
 
-def test_decide_merge_list_conflicting_insertions_separate_chunks():
+def test_decide_merge_list_conflicting_insertions_separate_chunks_v1():
     # local and remote adds an equal entry plus a different entry each
     # First, test when insertions DO NOT chunk together:
     b = [1, 9]
@@ -222,6 +222,59 @@ def test_decide_merge_list_conflicting_insertions_separate_chunks():
     resolved = decide_merge(b, l, r, strategies)
     assert apply_decisions(b, resolved) == []
     assert not any(d.conflict for d in resolved)
+
+    # from _merge_concurrent_inserts:
+    # FIXME: This function doesn't work out so well with new conflict handling,
+    # when an insert (e.g. [2,7] vs [3,7]) gets split into agreement on [7] and
+    # conflict on [2] vs [3], the ordering gets lost. I think this was always
+    # slightly ambiguous in the decision format, as the new inserts will get
+    # the same key and decisions are supposed to be possible to reorder (sort)
+    # without considering original ordering of decisions. To preserve the
+    # ordering, perhaps we can add relative local/remote indices to the decisions?
+    # We had this, where ordering made it work out correctly:
+    #   "conflicting insert [2] vs [3] at 1 (base index);
+    #    insert [7] at 1 (base index)"
+    # instead we now have this which messes up the ordering:
+    #   "insert [7] at 1 (base index);
+    #    conflicting insert [2] vs [3] at 1 (base index)"
+    # perhaps change to this:
+    #   "insert [7] at key=1 (base index) lkey=1 rkey=1;
+    #    conflicting insert [2] vs [3] at key=1 (base index) lkey=0 rkey=0"
+    # then decisions can be sorted on (key,lkey) or (key,rkey) depending on chosen side.
+    # This test covers the behaviour:
+    # py.test -k test_shallow_merge_lists_insert_conflicted -s -vv
+    #DEBUGGING = 1
+    #if DEBUGGING: import ipdb; ipdb.set_trace()
+
+    # Example:
+    # b  l  r
+    # 1  a  x
+    # 2  b  y
+    # 3  c  3
+    # 4  4  4
+    # Diffs:
+    # b/l: insert a, b, c; remove 1-3
+    # b/r: insert x, y; remove 1-2
+    # The current chunking splits the removes here:
+    # [insert a, b, c; remove 1-2]; [remove 3]
+    # [insert x, y; remove 1-2]
+    # That results in remove 3 not being conflicted.
+
+def test_decide_merge_list_conflicting_insertions_separate_chunks_v2():
+    # local and remote adds an equal entry plus a different entry each
+    # First, test when insertions DO NOT chunk together:
+    b = [1, 9]
+    l = [1, 2, 9, 11]
+    r = [1, 3, 9, 11]
+
+    # Check strategyless resolution
+    strategies = Strategies({})
+    resolved = decide_merge(b, l, r, strategies)
+    expected_partial = [1, 9, 11]
+    assert apply_decisions(b, resolved) == expected_partial
+    assert len(resolved) == 2
+    assert resolved[0].conflict
+    assert not resolved[1].conflict
 
 
 @pytest.mark.skip

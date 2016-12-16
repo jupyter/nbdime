@@ -835,12 +835,14 @@ def _split_addrange(key, local, remote, path, strategies):
     decisions = MergeDecisionBuilder()
     taken = 0
     offset = 0  # Offset between diff keys (ref local) and remote
-    for i, d in enumerate(intermediate_diff):
-        # This should only occur after (*) marked below:
-        if d.key < taken:
-            continue
+    i = 0
+    while i < len(intermediate_diff):
+        d = intermediate_diff[i]
+
+        assert d.key >= taken
+
+        # No diff in the range [taken,d.key), which means elements are inserted on both sides
         if taken < d.key:
-            # No diff, which means elements are inserted on both sides
             overlap = [op_addrange(key, local[taken:d.key])]
             decisions.agreement(path, overlap, overlap)
             taken = d.key
@@ -862,6 +864,8 @@ def _split_addrange(key, local, remote, path, strategies):
             # (*) Here we treat two ops in one go, which we mark
             # by setting taken beyond the key of the next op:
             taken += local_len
+            # Skip diff i+1
+            i += 1
 
         elif d.op == DiffOp.REPLACE:
             # Same as above, but length of one, so simpler
@@ -891,7 +895,7 @@ def _split_addrange(key, local, remote, path, strategies):
             offset += len(vl)
 
         elif d.op == DiffOp.PATCH:
-            # Predicates indicate that local and remote are similar!
+            # Predicates indicate that local and remote items are similar!
             decisions.conflict(path,
                 [op_addrange(key, [local[d.key]])],
                 [op_addrange(key, [remote[d.key + offset]])],
@@ -901,11 +905,21 @@ def _split_addrange(key, local, remote, path, strategies):
         else:
             raise ValueError("Invalid diff op: %s" % d.op)
 
-    # We have made at least one split
+        # Increment to next diff
+        i += 1
+
+    # If remote has additional items at the end, that will
+    # be an addrange in the diff and handled above.
+    # If local has additional items at the end, that's
+    # a removerange in the diff and handled above.
+    # If both have equal items at the end, that's not
+    # part of the diff so handle it here.
     if taken < len(local):
         # Have elements that are inserted on both sides
         local_items = local[taken:]
         remote_items = remote[taken-len(local)+len(remote):]
+        # TODO: Do we need global debug flags to turn
+        # off potentially expensive assertions like this?
         assert local_items == remote_items
         overlap = [op_addrange(key, local_items)]
         decisions.agreement(path, overlap, overlap)
@@ -926,69 +940,24 @@ def _merge_concurrent_inserts(base, ldiff, rdiff, path, decisions, strategies):
     assert len(ldiff) == 1 or ldiff[1].op == DiffOp.REMOVERANGE
     assert len(rdiff) == 1 or rdiff[1].op == DiffOp.REMOVERANGE
 
-    decisions = MergeDecisionBuilder()
-
-    # FIXME: This function doesn't work out so well with new conflict handling,
-    # when an insert (e.g. [2,7] vs [3,7]) gets split into agreement on [7] and
-    # conflict on [2] vs [3], the ordering gets lost. I think this was always
-    # slightly ambiguous in the decision format, as the new inserts will get
-    # the same key and decisions are supposed to be possible to reorder (sort)
-    # without considering original ordering of decisions. To preserve the
-    # ordering, perhaps we can add relative local/remote indices to the decisions?
-    # We had this, where ordering made it work out correctly:
-    #   "conflicting insert [2] vs [3] at 1 (base index);
-    #    insert [7] at 1 (base index)"
-    # instead we now have this which messes up the ordering:
-    #   "insert [7] at 1 (base index);
-    #    conflicting insert [2] vs [3] at 1 (base index)"
-    # perhaps change to this:
-    #   "insert [7] at key=1 (base index) lkey=1 rkey=1;
-    #    conflicting insert [2] vs [3] at key=1 (base index) lkey=0 rkey=0"
-    # then decisions can be sorted on (key,lkey) or (key,rkey) depending on chosen side.
-    # This test covers the behaviour:
-    # py.test -k test_shallow_merge_lists_insert_conflicted -s -vv
-    #DEBUGGING = 1
-    #if DEBUGGING: import ipdb; ipdb.set_trace()
-
-    subdecisions = _split_addrange(ldiff[0].key,
+    decisions = _split_addrange(ldiff[0].key,
         ldiff[0].valuelist, rdiff[0].valuelist,
         path, strategies)
 
-    # Example:
-    # b  l  r
-    # 1  a  x
-    # 2  b  y
-    # 3  c  3
-    # 4  4  4
-    # Diffs:
-    # b/l: insert a, b, c; remove 1-3
-    # b/r: insert x, y; remove 1-2
-    # The current chunking splits the removes here:
-    # [insert a, b, c; remove 1-2]; [remove 3]
-    # [insert x, y; remove 1-2]
-    # That results in remove 3 not being conflicted.
+    # FIXME: When should removals following inserts be marked as conflicts?
+    # FIXME: Add removals to conflicts in subdecisions instead of treating them as separate diffs here?
+    removal_conflicts = False
+    #removal_conflicts = decisions.has_conflicted()
+    #if decisions and decisions.decisions[-1].conflict:
+    #    removal_conflicts = True
 
-    #if subdecisions:
-    if not subdecisions.has_conflicted():
-        # If we managed to make any decisions,
-        # use them and the remaining conflicts
-        decisions.extend(subdecisions)
-
-        conflict = False # subdecisions.has_conflicted()  # FIXME: which way?
-
-        # FIXME: Add removals to conflicts in subdecisions?
-        # If there are removals at the end, add them
-        if len(ldiff) == 2 and len(rdiff) == 2:
-            # Same length removals ensured by chunking (see example above)
-            assert ldiff[1].length == rdiff[1].length
-            decisions.agreement(path, ldiff[1:], rdiff[1:], conflict=conflict)
-        elif len(ldiff) == 2 or len(rdiff) == 2:
-            decisions.onesided(path, ldiff[1:], rdiff[1:], conflict=conflict)
-    else:
-        # No decisions were made, just return all as unresolved
-        item_spath = "/".join((star_path(path), "*"))
-        item_strategy = strategies.get(item_spath)
-        decisions.conflict(path, ldiff, rdiff, item_strategy)  # FIXME: Right strategy?
+    # If there are removals at the end, add them
+    if len(ldiff) == 2 and len(rdiff) == 2:
+        # Same length removals ensured by chunking (see example above)
+        assert ldiff[1].length == rdiff[1].length
+        decisions.agreement(path, ldiff[1:], rdiff[1:], conflict=removal_conflicts)
+    elif len(ldiff) == 2 or len(rdiff) == 2:
+        decisions.onesided(path, ldiff[1:], rdiff[1:], conflict=removal_conflicts)
 
     return decisions
 
