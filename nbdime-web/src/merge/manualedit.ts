@@ -619,32 +619,17 @@ function updatedPatchedCell(options: IUpdateModelOptions): void {
 /**
  * Combines all decisions into the first decision
  */
-function combineDecisions(decisions: MergeDecision[], diffs: 'all' | 'custom'): void {
+function combineDecisions(decisions: MergeDecision[], diffs: 'all' | 'custom', base: any): void {
   if (decisions.length < 2) {
     return;
   }
   let target = decisions[0];
-  if (!target.customDiff) {
-    target.customDiff = [];
-  }
-  for (let dec of decisions.slice(1)) {
-    // TODO: Is this naive? Will there ever be decisions
-    // on the same path where simply concatenating the
-    // diffs will not work?
-    extendArray(target.customDiff, dec.customDiff);
-  }
+  target.customDiff = buildDiffs(base, decisions, 'merged') || [];
   if (diffs === 'all') {
-    if (!target.localDiff) {
-      target.localDiff = [];
-    }
-    if (!target.remoteDiff) {
-      target.remoteDiff = [];
-    }
-    for (let dec of decisions.slice(1)) {
-      extendArray(target.localDiff, dec.localDiff);
-      extendArray(target.remoteDiff, dec.remoteDiff);
-    }
+    target.localDiff = buildDiffs(base, decisions, 'local') || [];
+    target.remoteDiff = buildDiffs(base, decisions, 'remote') || [];
   }
+  target.action = 'custom';
   decisions.length = 1;
 }
 
@@ -691,6 +676,17 @@ function getDecisionChunk(base: any, decision: MergeDecision): {baseStart: numbe
 }
 
 
+function ensureDecisionNotOnLine(decision: MergeDecision, base: any) {
+  let line = splitDiffStringPath(base, decision.localPath)[1];
+  if (hasEntries(line)) {
+    if (line.length > 1) {
+      throw new Error('Unexpected path');
+    }
+    pushPatchDecisionInPlace(decision, line);
+  }
+}
+
+
 function patchPatchedModel(options: IUpdateModelOptions, diffs: 'all' | 'custom') {
   // Patch model
     // Update remote
@@ -720,9 +716,12 @@ function patchPatchedModel(options: IUpdateModelOptions, diffs: 'all' | 'custom'
       affectedDecisions.push(dec);
   } else if (affectedDecisions.length > 1) {
     // We merge all decisions that overlap
+    ensureDecisionNotOnLine(affectedDecisions[0], model.base);
     let path = affectedDecisions[0].absolutePath;
     let cell = model.parent as CellMergeModel;
     for (let dec of affectedDecisions.slice(1)) {
+      // Fix: Check if any decisions have path to line
+      ensureDecisionNotOnLine(dec, model.base);
       // TODO: Remove assertion once proven to work as expected:
       if (!arraysEqual(path, dec.absolutePath)) {
         throw new Error('Paths should be equal: "' + path + '", "' + dec.absolutePath + '"');
@@ -733,17 +732,12 @@ function patchPatchedModel(options: IUpdateModelOptions, diffs: 'all' | 'custom'
       removeElement(model.decisions, dec);
       removeElement(cell.decisions, dec);
     }
-    combineDecisions(affectedDecisions, diffs);
+    combineDecisions(affectedDecisions, diffs, model.base);
   } else { // affectedDecisions.length === 1
     let path = getPathForNewDecision(model)[0];
+    ensureDecisionNotOnLine(affectedDecisions[0], model.base);
     if (!arraysEqual(affectedDecisions[0].absolutePath, path)) {
-      if (!isPrefixArray(path, affectedDecisions[0].absolutePath)) {
-        throw new Error('Decision paths not compatible.');
-      }
-      affectedDecisions[0].setValuesFrom(
-        pushPatchDecision(
-          affectedDecisions[0],
-          affectedDecisions[0].absolutePath.slice(path.length)));
+      throw new Error('Paths should be equal: "' + path + '", "' + affectedDecisions[0].absolutePath + '"');
     }
   }
 
