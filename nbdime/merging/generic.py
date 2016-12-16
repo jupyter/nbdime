@@ -447,7 +447,10 @@ def make_inline_output_conflict(base_output, local_diff, remote_diff):
 
     # Keep base output if untouched (only inserts)
     keep_base = not (lremoves or rremoves or lpatches or rpatches)
-    if not keep_base:
+    if lremoves and rremoves:
+        # Don't add anything
+        pass
+    elif not keep_base:
         assert not (lremoves and lpatches)
         assert not (rremoves and rpatches)
         lnote = ""
