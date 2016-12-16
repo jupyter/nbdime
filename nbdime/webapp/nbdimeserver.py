@@ -256,7 +256,7 @@ def make_app(**params):
 
 
 def main_server(on_port=None, closable=False, **params):
-    _logger.info("Using params: %s" % params)
+    _logger.debug("Using params: %s" % params)
     params.update({"closable": closable})
     port = params.pop("port")
     app = make_app(**params)

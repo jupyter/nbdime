@@ -50,13 +50,13 @@ def browse(port, base, local, remote, browsername):
         _logger.warning('No web browser found: %s.', e)
         browser = None
 
+    url = url_concat("http://127.0.0.1:%s/merge" % port,
+                     dict(base=base, local=local, remote=remote))
+    nbdime.log.info("URL: " + url)
     if browser:
-        b = lambda: browser.open(
-            url_concat("http://127.0.0.1:%s/merge" % port,
-                       dict(base=base, local=local,
-                            remote=remote)),
-            new=2)
-        threading.Thread(target=b).start()
+        def launch_browser():
+            browser.open(url, new=2)
+        threading.Thread(target=launch_browser).start()
 
 
 def main(args=None):
