@@ -91,9 +91,11 @@ def notebook_merge_strategies(args):
             "/cells/*/outputs": "mergetool",
             "/cells/*/attachments": "mergetool",
         })
-    elif (merge_strategy.startswith('use-') or
-            merge_strategy == 'union'):
-        strategies.fall_back = args.merge_strategy
+    elif merge_strategy.startswith('use-'):
+        strategies["/"] = merge_strategy
+    elif merge_strategy == 'union':
+        # Not sure about this one, union only makes sense on some types
+        strategies["/"] = merge_strategy
     else:
         # Default strategies for cli tool, intended to produce
         # an editable notebook that can be manually edited

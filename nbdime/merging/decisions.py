@@ -74,6 +74,10 @@ class MergeDecisionBuilder(object):
         Most importantly, this sorts the decisions on the path, so that it is
         in accordance with the specs.
         """
+        # Remove fields 'strategy' used for internal decision making but not part of spec
+        for d in self.decisions:
+            if "strategy" in d:
+                del d["strategy"]
         return sorted(self.decisions, key=_sort_key, reverse=True)
 
     def extend(self, decisions):
@@ -88,7 +92,7 @@ class MergeDecisionBuilder(object):
         return any(d.conflict for d in self.decisions)
 
     def add_decision(self, path, action, local_diff, remote_diff,
-                     conflict=False, **kwargs):
+                     conflict=False, strategy=None, **kwargs):
         """Add a decision to the builder with the specified properties.
 
         Ensures data types and paths are as they should be, before creating a
@@ -109,6 +113,9 @@ class MergeDecisionBuilder(object):
             ensure_common_path(path, [local_diff, remote_diff, custom_diff])
         if custom_diff is not None:
             kwargs["custom_diff"] = custom_diff
+        # Store strategy field only if given
+        if strategy is not None:
+            kwargs["strategy"] = strategy
 
         # Finally store decision
         self.decisions.append(MergeDecision(
@@ -120,13 +127,14 @@ class MergeDecisionBuilder(object):
             **kwargs
             ))
 
-    def base(self, path, local_diff, remote_diff, conflict=False):
+    def base(self, path, local_diff, remote_diff, conflict=False, strategy=None):
         self.add_decision(
             path=path,
             action="base",
             conflict=conflict,
             local_diff=local_diff,
-            remote_diff=remote_diff
+            remote_diff=remote_diff,
+            strategy=strategy
             )
 
     def onesided(self, path, local_diff, remote_diff, conflict=False):
@@ -143,7 +151,7 @@ class MergeDecisionBuilder(object):
             remote_diff=remote_diff
             )
 
-    def local_then_remote(self, path, local_diff, remote_diff, conflict=False):
+    def local_then_remote(self, path, local_diff, remote_diff, conflict=False, strategy=None):
         assert local_diff and remote_diff
         assert local_diff != remote_diff
         action = "local_then_remote"
@@ -152,10 +160,11 @@ class MergeDecisionBuilder(object):
             conflict=conflict,
             action=action,
             local_diff=local_diff,
-            remote_diff=remote_diff
+            remote_diff=remote_diff,
+            strategy=strategy
             )
 
-    def remote_then_local(self, path, local_diff, remote_diff, conflict=False):
+    def remote_then_local(self, path, local_diff, remote_diff, conflict=False, strategy=None):
         assert local_diff and remote_diff
         assert local_diff != remote_diff
         action = "remote_then_local"
@@ -164,7 +173,8 @@ class MergeDecisionBuilder(object):
             conflict=conflict,
             action=action,
             local_diff=local_diff,
-            remote_diff=remote_diff
+            remote_diff=remote_diff,
+            strategy=strategy
             )
 
     def agreement(self, path, local_diff, remote_diff, conflict=False):
@@ -186,6 +196,9 @@ class MergeDecisionBuilder(object):
         Valid strategies here are:
             use-local, use-remote, use-base, clear, take-max
         """
+        if not strategy:
+            return None
+
         assert local_diff and remote_diff
         assert local_diff != remote_diff
 
@@ -219,6 +232,7 @@ class MergeDecisionBuilder(object):
                 action=action,
                 local_diff=local_diff,
                 remote_diff=remote_diff,
+                strategy=strategy
                 )
         return action
 
@@ -238,15 +252,17 @@ class MergeDecisionBuilder(object):
 
         # If none of them applied, use base and mark as conflict
         if action is None:
+            # If a strategy was provided but failed to apply, mark as conflict.
+            # NB! Not passing strategy argument on to decision because it hasn't been applied.
             self.add_decision(
                 path=path,
                 conflict=True,
                 action="base",
                 local_diff=local_diff,
-                remote_diff=remote_diff,
+                remote_diff=remote_diff
                 )
 
-    def local(self, path, local_diff, remote_diff, conflict=False):
+    def local(self, path, local_diff, remote_diff, conflict=False, strategy=None):
         assert local_diff
         action = "local"
         self.add_decision(
@@ -255,9 +271,10 @@ class MergeDecisionBuilder(object):
             conflict=conflict,
             local_diff=local_diff,
             remote_diff=remote_diff,
+            strategy=strategy
             )
 
-    def remote(self, path, local_diff, remote_diff, conflict=False):
+    def remote(self, path, local_diff, remote_diff, conflict=False, strategy=None):
         assert remote_diff
         action = "remote"
         self.add_decision(
@@ -266,9 +283,10 @@ class MergeDecisionBuilder(object):
             conflict=conflict,
             local_diff=local_diff,
             remote_diff=remote_diff,
+            strategy=strategy
             )
 
-    def custom(self, path, local_diff, remote_diff, custom_diff, conflict=False):
+    def custom(self, path, local_diff, remote_diff, custom_diff, conflict=False, strategy=None):
         action = "custom"
         self.add_decision(
             path=path,
@@ -277,6 +295,7 @@ class MergeDecisionBuilder(object):
             local_diff=local_diff,
             remote_diff=remote_diff,
             custom_diff=custom_diff,
+            strategy=strategy
             )
 
 
