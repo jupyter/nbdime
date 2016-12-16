@@ -11,7 +11,7 @@ try:
 except ImportError:
     import mock
 
-from pytest import fixture, skip
+from pytest import yield_fixture, fixture, skip
 import six
 
 from .fixtures import filespath, call
@@ -90,7 +90,11 @@ def git_repo(tmpdir, request):
     assert not os.path.exists('.gitattributes')
     return repo
 
-@fixture
+
+@yield_fixture
 def reset_log():
-    # clear root logger handlers
+    # clear root logger handlers before test and reset afterwards
+    handlers = list(logging.getLogger().handlers)
     logging.getLogger().handlers[:] = []
+    yield
+    logging.getLogger().handlers[:] = handlers

@@ -11,12 +11,21 @@ from six.moves import xrange as range
 import copy
 import nbformat
 
+import nbdime.log
 from ..diff_format import (
     DiffOp, op_removerange, op_remove, op_patch, op_replace)
 from ..patching import patch
 from ..utils import (
     r_is_int, star_path, join_path, is_prefix_array, find_shared_prefix)
 
+def as_list(x):
+    if x is None:
+        return x
+    if isinstance(x, tuple):
+        return list(x)
+    if not isinstance(x, list):
+        return [x]
+    return x
 
 class MergeDecision(dict):
     """For internal usage in nbdime library.
@@ -47,16 +56,43 @@ class MergeDecisionBuilder(object):
     def __init__(self):
         self.decisions = []
 
+    def __bool__(self):
+        return bool(self.decisions)
+
+    def __nonzero__(self):
+        return bool(self.decisions)
+
+    def __len__(self):
+        return len(self.decisions)
+
+    def __iter__(self):
+        return iter(self.decisions)
+
     def validated(self, base):
         """Returns decisions in state ready for application.
 
         Most importantly, this sorts the decisions on the path, so that it is
         in accordance with the specs.
         """
+        # Remove fields 'strategy' used for internal decision making but not part of spec
+        for d in self.decisions:
+            if "strategy" in d:
+                del d["strategy"]
         return sorted(self.decisions, key=_sort_key, reverse=True)
 
+    def extend(self, decisions):
+        if isinstance(decisions, MergeDecisionBuilder):
+            decisions = decisions.decisions
+        self.decisions.extend(decisions)
+
+    def get_conflicted(self):
+        return [d for d in self.decisions if d.conflict]
+
+    def has_conflicted(self):
+        return any(d.conflict for d in self.decisions)
+
     def add_decision(self, path, action, local_diff, remote_diff,
-                     conflict=False, **kwargs):
+                     conflict=False, strategy=None, **kwargs):
         """Add a decision to the builder with the specified properties.
 
         Ensures data types and paths are as they should be, before creating a
@@ -67,28 +103,19 @@ class MergeDecisionBuilder(object):
             path = tuple(path)
         else:
             assert isinstance(path, tuple)
-        # Ensure diffs are lists
-        if local_diff is not None:
-            if isinstance(local_diff, tuple):
-                local_diff = list(local_diff)
-            elif not isinstance(local_diff, list):
-                local_diff = [local_diff]
-        if remote_diff is not None:
-            if isinstance(remote_diff, tuple):
-                remote_diff = list(remote_diff)
-            elif not isinstance(remote_diff, list):
-                remote_diff = [remote_diff]
         custom_diff = kwargs.pop("custom_diff", None)
-        if custom_diff is not None:
-            if isinstance(custom_diff, tuple):
-                custom_diff = list(custom_diff)
-            elif not isinstance(custom_diff, list):
-                custom_diff = [custom_diff]
+        # Ensure diffs are lists or None
+        local_diff = as_list(local_diff)
+        remote_diff = as_list(remote_diff)
+        custom_diff = as_list(custom_diff)
         # Ensure paths are pushed out as far in tree as possible
         path, (local_diff, remote_diff, custom_diff) = \
             ensure_common_path(path, [local_diff, remote_diff, custom_diff])
         if custom_diff is not None:
             kwargs["custom_diff"] = custom_diff
+        # Store strategy field only if given
+        if strategy is not None:
+            kwargs["strategy"] = strategy
 
         # Finally store decision
         self.decisions.append(MergeDecision(
@@ -100,13 +127,15 @@ class MergeDecisionBuilder(object):
             **kwargs
             ))
 
-    def keep(self, path, key, local_diff, remote_diff):
+    def base(self, path, local_diff, remote_diff, conflict=False, strategy=None):
         self.add_decision(
             path=path,
             action="base",
+            conflict=conflict,
             local_diff=local_diff,
-            remote_diff=remote_diff
-        )
+            remote_diff=remote_diff,
+            strategy=strategy
+            )
 
     def onesided(self, path, local_diff, remote_diff, conflict=False):
         assert local_diff or remote_diff
@@ -119,10 +148,10 @@ class MergeDecisionBuilder(object):
             path=path,
             action=action,
             local_diff=local_diff,
-            remote_diff=remote_diff,
+            remote_diff=remote_diff
             )
 
-    def local_then_remote(self, path, local_diff, remote_diff, conflict=False):
+    def local_then_remote(self, path, local_diff, remote_diff, conflict=False, strategy=None):
         assert local_diff and remote_diff
         assert local_diff != remote_diff
         action = "local_then_remote"
@@ -131,10 +160,11 @@ class MergeDecisionBuilder(object):
             conflict=conflict,
             action=action,
             local_diff=local_diff,
-            remote_diff=remote_diff
+            remote_diff=remote_diff,
+            strategy=strategy
             )
 
-    def remote_then_local(self, path, local_diff, remote_diff, conflict=False):
+    def remote_then_local(self, path, local_diff, remote_diff, conflict=False, strategy=None):
         assert local_diff and remote_diff
         assert local_diff != remote_diff
         action = "remote_then_local"
@@ -143,7 +173,8 @@ class MergeDecisionBuilder(object):
             conflict=conflict,
             action=action,
             local_diff=local_diff,
-            remote_diff=remote_diff
+            remote_diff=remote_diff,
+            strategy=strategy
             )
 
     def agreement(self, path, local_diff, remote_diff, conflict=False):
@@ -156,16 +187,115 @@ class MergeDecisionBuilder(object):
             remote_diff=remote_diff,
             )
 
-    def conflict(self, path, local_diff, remote_diff):
+    def tryresolve(self, path, local_diff, remote_diff, strategy):
+        """Try to resolve conflict with given strategy.
+
+        If successful, registers a decision and returns the action used.
+        If failing, does not register a decision and returns None.
+
+        Valid strategies here are:
+            use-local, use-remote, use-base, clear, take-max
+        """
+        if not strategy:
+            return None
+
         assert local_diff and remote_diff
         assert local_diff != remote_diff
-        action = "base"
+
+        # Allow strategies to defuse situation first
+        action = None
+        if strategy:
+            # Applying strategies here works well for leaf nodes at least
+            if strategy == "use-local":
+                action = "local"
+            elif strategy == "use-remote":
+                action = "remote"
+            elif strategy == "use-base":
+                action = "base"
+            elif strategy == "clear":
+                action = "clear"
+            elif strategy == "take-max":
+                action = "take_max"
+            elif strategy == "fail":
+                msg = "Unexpected conflict on {}.".format(path)
+                nbdime.log.error(msg)
+                raise RuntimeError(msg)
+            else:
+                msg = "Unhandled conflict strategy {} on {}".format(
+                    strategy, join_path(path))
+                nbdime.log.warning(msg)
+
+        if action is not None:
+            self.add_decision(
+                path=path,
+                conflict=False,
+                action=action,
+                local_diff=local_diff,
+                remote_diff=remote_diff,
+                strategy=strategy
+                )
+        return action
+
+    def conflict(self, path, local_diff, remote_diff, strategy=None):
+        """Register a potential conflict.
+
+        If strategy is given, tries to resolve conflict first with tryresolve.
+
+        Complex strategies not handled by tryresolve need to be handled at
+        an earlier stage and will result in a regular conflict here.
+        """
+        assert local_diff and remote_diff
+        assert local_diff != remote_diff
+
+        # Try to defuse situation with given strategy
+        action = self.tryresolve(path, local_diff, remote_diff, strategy)
+
+        # If none of them applied, use base and mark as conflict
+        if action is None:
+            # If a strategy was provided but failed to apply, mark as conflict.
+            # NB! Not passing strategy argument on to decision because it hasn't been applied.
+            self.add_decision(
+                path=path,
+                conflict=True,
+                action="base",
+                local_diff=local_diff,
+                remote_diff=remote_diff
+                )
+
+    def local(self, path, local_diff, remote_diff, conflict=False, strategy=None):
+        assert local_diff
+        action = "local"
         self.add_decision(
             path=path,
-            conflict=True,
+            action=action,
+            conflict=conflict,
+            local_diff=local_diff,
+            remote_diff=remote_diff,
+            strategy=strategy
+            )
+
+    def remote(self, path, local_diff, remote_diff, conflict=False, strategy=None):
+        assert remote_diff
+        action = "remote"
+        self.add_decision(
+            path=path,
+            action=action,
+            conflict=conflict,
+            local_diff=local_diff,
+            remote_diff=remote_diff,
+            strategy=strategy
+            )
+
+    def custom(self, path, local_diff, remote_diff, custom_diff, conflict=False, strategy=None):
+        action = "custom"
+        self.add_decision(
+            path=path,
+            conflict=conflict,
             action=action,
             local_diff=local_diff,
             remote_diff=remote_diff,
+            custom_diff=custom_diff,
+            strategy=strategy
             )
 
 
@@ -384,31 +514,48 @@ def filter_decisions(pattern, decisions, exact=False):
 #
 # =============================================================================
 
+# # Strategies for handling conflicts
+# generic_conflict_strategies = (
+#     # on /cells/*/source, string in a dict, let decision be placed on the cell dict!
+#     "inline-source",    # Valid for source only: produce new source with inline diff markers
+#     # on /cells/*/outputs, list in a dict, let decision be placed on the cell dict!
+#     "clear-all",        # Discard all values on conflict
+#     # on /cells/*/outputs, list in a dict, let decision be placed on the cell dict!
+#     "inline-outputs",   # Valid for outputs only: produce new outputs with inline diff markers
+#     # on /.../metadata, add to a dict, let decision be placed on the cell dict!
+#     "record-conflict",  # Valid for metadata only: produce new metadata with conflicts recorded for external inspection
+#     )
+
 def resolve_action(base, decision):
     a = decision.action
+
     if a == "base":
         return []   # no-op
+
     elif a in ("local", "either"):
         return copy.copy(decision.local_diff)
+
     elif a == "remote":
         return copy.copy(decision.remote_diff)
+
     elif a == "custom":
         return copy.copy(decision.custom_diff)
+
     elif a == "local_then_remote":
         return decision.local_diff + decision.remote_diff
+
     elif a == "remote_then_local":
         return decision.remote_diff + decision.local_diff
+
     elif a in ("clear", "remove"):
-        key = None
-        for d in decision.local_diff + decision.remote_diff:
-            if key:
-                assert key == d.key
-            else:
-                key = d.key
+        key, = set(d.key for d in decision.local_diff + decision.remote_diff)
         if a == 'clear':
             return [op_replace(key, make_cleared_value(base[key]))]
+        elif isinstance(base, (list,) + string_types):
+            return [op_removerange(key, 1)]
         else:
             return [op_remove(key)]
+
     elif a == "clear_all":
         if isinstance(base, dict):
             # Ideally we would do a op_replace on the parent, but this is not
@@ -417,6 +564,18 @@ def resolve_action(base, decision):
         elif isinstance(base, (list,) + string_types):
             return [op_removerange(0, len(base))]
 
+    elif a == "take_max":
+        key, = set(d.key for d in decision.local_diff + decision.remote_diff)
+        #assert len(decision.local_diff) == 1 == len(decision.remote_diff)
+        bval = base[key]
+        lval = decision.local_diff[0].value if decision.local_diff else bval
+        rval = decision.remote_diff[0].value if decision.remote_diff else bval
+        mval = max(bval, lval, rval)
+        if bval == mval:
+            return []
+        else:
+            return [op_replace(key, mval)]
+
     else:
         raise NotImplementedError("The action \"%s\" is not defined" % a)
 
@@ -424,12 +583,14 @@ def resolve_action(base, decision):
 def apply_decisions(base, decisions):
     """Apply a list of merge decisions to base.
     """
+    from .generic import combine_patches
+    
     merged = copy.deepcopy(base)
     prev_path = None
     parent = None
     last_key = None
     resolved = None
-    diffs = None
+    diffs = []
     # clear_all actions should override other decisions on same obj, so
     # we need to track it
     clear_all_flag = False
@@ -450,7 +611,7 @@ def apply_decisions(base, decisions):
                 ad = resolve_action(resolved, md)
                 if line:
                     ad = push_path(line, ad)
-                diffs.extend(ad)
+                diffs = combine_patches(diffs + ad)
 
         else:
             # Different path, start a new collection

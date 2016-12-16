@@ -13,6 +13,16 @@ import copy
 from .log import NBDiffFormatError
 
 
+# Sentinel to allow None as a value
+Missing = object()
+
+# Sentinel to represent no diff argument because parent was deleted
+ParentDeleted = object()
+
+# Sentinel object used to allow item patching in autoresolve to return None as a valid value
+Deleted = object()
+
+
 class DiffEntry(dict):
     """For internal usage in nbdime library.
 

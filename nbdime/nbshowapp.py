@@ -26,12 +26,19 @@ Limit to specific fields by passing options.
 
 def main_show(args):
 
-    for fn in args.notebook:
-        if not os.path.exists(fn):
-            print("Missing file {}".format(fn))
+    if len(args.notebook) == 1 and args.notebook[0] == "-":
+        files = [sys.stdin]
+    else:
+        for fn in args.notebook:
+            if not os.path.exists(fn):
+                print("Missing file {}".format(fn))
+                return 1
+        files = args.notebook
+        if not files:
+            print("Missing filenames.")
             return 1
 
-    for fn in args.notebook:
+    for fn in files:
         nb = nbformat.read(fn, as_version=4)
 
         # This printer is to keep the unit tests passing,
@@ -62,7 +69,7 @@ def _build_arg_parser():
         add_help=True,
         )
     add_generic_args(parser)
-    parser.add_argument("notebook", nargs="*", help="notebook filename(s)")
+    parser.add_argument("notebook", nargs="*", help="notebook filename(s) or - to read from stdin")
 
     # Things we can choose to show or not
     parser.add_argument(

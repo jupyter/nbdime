@@ -11,7 +11,6 @@ from six import StringIO
 
 from .generic import decide_merge_with_diff
 from .decisions import apply_decisions
-from .autoresolve import autoresolve
 from ..diffing.notebooks import diff_notebooks
 from ..utils import Strategies
 from ..prettyprint import pretty_print_notebook_diff, pretty_print_merge_decisions, pretty_print_notebook
@@ -23,8 +22,8 @@ import nbdime.log
 generic_conflict_strategies = (
     "clear",            # Replace value with empty in case of conflict
     "remove",           # Discard value in case of conflict
-    "clear-all",     # Discard all values on conflict
-    "fail",             # Unexpected: crash and burn in case of conflict
+    "clear-all",        # Discard all values on conflict
+    "fail",             # Unexpected: crash and burn in case of conflict (only implemented for leaf nodes)
     "inline-source",    # Valid for source only: produce new source with inline diff markers
     "inline-outputs",   # Valid for outputs only: produce new outputs with inline diff markers
     "mergetool",        # Do not modify decision (but prevent processing at deeper path)
@@ -42,7 +41,7 @@ cli_conflict_strategies = (
     "use-base",         # Keep base value in case of conflict
     "use-local",        # Use local value in case of conflict
     "use-remote",       # Use remote value in case of conflict
-    "union",            # Take local value, then remote, in case of conflict
+    #"union",            # Take local value, then remote, in case of conflict
     )
 
 cli_conflict_strategies_input = cli_conflict_strategies
@@ -52,7 +51,8 @@ cli_conflict_strategies_output = cli_conflict_strategies + (
     "clear-all",  # Clear all outputs
     )
 
-def autoresolve_notebook_conflicts(base, decisions, args):
+
+def notebook_merge_strategies(args):
     strategies = Strategies({
         # These fields should never conflict, that would be an internal error:
         "/nbformat": "fail",
@@ -61,10 +61,11 @@ def autoresolve_notebook_conflicts(base, decisions, args):
         "/nbformat_minor": "take-max",
         })
 
-    if not args or args.ignore_transients:
+    ignore_transients = args.ignore_transients if args else True
+    if ignore_transients:
         strategies.transients = [
             "/cells/*/execution_count",
-            "/cells/*/outputs",
+            #"/cells/*/outputs",
             "/cells/*/outputs/*/execution_count",
             "/cells/*/metadata/collapsed",
             "/cells/*/metadata/autoscroll",
@@ -75,65 +76,59 @@ def autoresolve_notebook_conflicts(base, decisions, args):
             "/cells/*/outputs/*/execution_count": "clear",
         })
 
+    # Get args, default to inline for cli tool, intended to produce
+    # an editable notebook that can be manually edited
     merge_strategy = args.merge_strategy if args else "inline"
     input_strategy = args.input_strategy if args else None
     output_strategy = args.output_strategy if args else None
 
+    # Default to merge_strategy
     input_strategy = input_strategy or merge_strategy
     output_strategy = output_strategy or merge_strategy
+    metadata_strategy = merge_strategy
 
-    if merge_strategy == "mergetool":
-        # Mergetool strategy will prevent autoresolve from
-        # attempting to solve conflicts on these entries:
-        strategies.update({
-            "/cells/*/source": "mergetool",
-            "/cells/*/outputs": "mergetool",
-            "/cells/*/attachments": "mergetool",
-        })
-    elif (merge_strategy.startswith('use-') or
-            merge_strategy == 'union'):
-        strategies.fall_back = args.merge_strategy
+    # Set root strategy
+    if merge_strategy != 'inline':
+        strategies["/"] = merge_strategy
+
+    # Translate 'inline' to specific strategies for different fields
+    if input_strategy == 'inline':
+        source_strategy = "inline-source"
+        attachments_strategy = "inline-attachments"
     else:
-        # Default strategies for cli tool, intended to produce
-        # an editable notebook that can be manually edited
-        strategies.update({
-            "/metadata": "record-conflict",
-            "/cells/*/metadata": "record-conflict",
-            "/cells/*/outputs/*/metadata": "record-conflict",
-            "/cells/*/source": "inline-source",
-            "/cells/*/outputs": "inline-outputs",
-            "/cells/*/attachments": "inline-attachments",
-        })
+        source_strategy = input_strategy
+        attachments_strategy = input_strategy
 
-    if input_strategy:
-        if input_strategy == 'inline':
-            strategies.update({
-                "/cells/*/source": "inline-source",
-                "/cells/*/attachments": "inline-attachments",
-            })
-        else:
-            strategies.update({
-                "/cells/*/source": input_strategy,
-                "/cells/*/attachments": input_strategy,
-            })
-    if output_strategy:
-        if output_strategy == 'inline':
-            strategies.update({
-                "/cells/*/outputs": 'inline-outputs'
-            })
-        else:
-            strategies.update({
-                "/cells/*/outputs": output_strategy
-            })
+    if output_strategy == 'inline':
+        outputs_strategy = "inline-outputs"
+    else:
+        outputs_strategy = output_strategy
 
-    return autoresolve(base, decisions, strategies)
+    if metadata_strategy == "inline":
+        metadata_strategy = "record-conflict"
+
+    # Set strategies on the main fields
+    strategies.update({
+        "/metadata": metadata_strategy,
+        "/cells/*/metadata": metadata_strategy,
+        "/cells/*/outputs/*/metadata": metadata_strategy,
+        "/cells/*/source": source_strategy,
+        "/cells/*/attachments": attachments_strategy,
+        "/cells/*/outputs": outputs_strategy
+    })
+
+    return strategies
 
 
 def decide_notebook_merge(base, local, remote, args=None):
+    # Build merge strategies for each document path from arguments
+    strategies = notebook_merge_strategies(args)
+
     # Compute notebook specific diffs
     local_diffs = diff_notebooks(base, local)
     remote_diffs = diff_notebooks(base, remote)
 
+    # Debug outputs
     if args and args.log_level == "DEBUG":
         nbdime.log.debug("In merge, base-local diff:")
         buf = StringIO()
@@ -147,19 +142,13 @@ def decide_notebook_merge(base, local, remote, args=None):
 
     # Execute a generic merge operation
     decisions = decide_merge_with_diff(
-        base, local, remote, local_diffs, remote_diffs)
+        base, local, remote,
+        local_diffs, remote_diffs,
+        strategies)
 
+    # Debug outputs
     if args and args.log_level == "DEBUG":
-        nbdime.log.debug("In merge, initial decisions:")
-        buf = StringIO()
-        pretty_print_merge_decisions(base, decisions, buf)
-        nbdime.log.debug(buf.getvalue())
-
-    # Try to resolve conflicts based on behavioural options
-    decisions = autoresolve_notebook_conflicts(base, decisions, args)
-
-    if args and args.log_level == "DEBUG":
-        nbdime.log.debug("In merge, autoresolved decisions:")
+        nbdime.log.debug("In merge, decisions:")
         buf = StringIO()
         pretty_print_merge_decisions(base, decisions, buf)
         nbdime.log.debug(buf.getvalue())
