@@ -259,7 +259,7 @@ def test_merge_simple_cell_source_agreed_change():
 
 
 def test_merge_simple_cell_source_conflicting_edit_aligned():
-    # Conflicting cell inserts at same location as removing old cell
+    # Conflicting edit in first line of single cell
     local = [["local\n", "some other\n", "lines\n", "to align\n"]]
     base = [["base\n", "some other\n", "lines\n", "to align\n"]]
     remote = [["remote\n", "some other\n", "lines\n", "to align\n"]]
@@ -277,6 +277,7 @@ def test_merge_simple_cell_source_conflicting_edit_aligned():
         }]
     merge_args = copy.deepcopy(args)
     merge_args.merge_strategy = "mergetool"
+
     _check_sources(base, local, remote, expected_partial, expected_conflicts, merge_args)
 
 

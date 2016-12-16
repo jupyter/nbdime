@@ -508,8 +508,6 @@ def resolve_strategy_inline_outputs(base_path, outputs, decisions):
 
 
 def resolve_strategy_record_conflicts(base_path, base, decisions):
-    #import ipdb; ipdb.set_trace()
-
     decisions.decisions = [push_patch_decision(d, d.common_path[len(base_path):]) for d in decisions]
 
     #local_conflict_diffs, remote_conflict_diffs = collect_unresolved_diffs(base_path, unresolved_conflicts)
@@ -599,7 +597,6 @@ def resolve_strategy_generic(path, decisions, strategy, transients):
                 d.action = action
                 d.conflict = False
     else:
-        import ipdb; ipdb.set_trace()
         msg = "Unexpected strategy {} on {}.".format(
             strategy, join_path(path))
         nbdime.log.error(msg)
@@ -811,7 +808,7 @@ def _merge_dicts(base, local_diff, remote_diff, path, parent_decisions, strategi
     return decisions
 
 
-def _split_addrange(key, local, remote, path, strategies):
+def _split_addrange(key, local, remote, path, item_strategy):
     """Compares two addrange value lists, and splits decisions on similarity
 
     Uses diff of value lists to identify which items to align. Identical,
@@ -826,10 +823,6 @@ def _split_addrange(key, local, remote, path, strategies):
     intermediate_diff = diff(local, remote, path=star_path(path),
                              predicates=notebook_predicates.copy(),
                              differs=notebook_differs.copy())
-
-    item_path = path + (key,)
-    item_spath = star_path(item_path)
-    item_strategy = strategies.get(item_spath)
 
     # Next, translate the diff into decisions
     decisions = MergeDecisionBuilder()
@@ -927,37 +920,38 @@ def _split_addrange(key, local, remote, path, strategies):
     return decisions
 
 
-def _merge_concurrent_inserts(base, ldiff, rdiff, path, decisions, strategies):
+def _merge_concurrent_inserts(base, ldiff, rdiff, path, decisions, item_strategy):
     """Merge concurrent inserts, optionally with one or more removeranges.
 
     This method compares the addition/removals on both sides, and splits it
     into individual agreement/onesided/conflict decisions.
     """
-    # Assume first ops are always inserts
+    # Assume first diffops are always addranges and optional second diffop is a removerange
     assert 1 <= len(ldiff) <= 2
     assert 1 <= len(rdiff) <= 2
     assert ldiff[0].op == DiffOp.ADDRANGE and rdiff[0].op == DiffOp.ADDRANGE
     assert len(ldiff) == 1 or ldiff[1].op == DiffOp.REMOVERANGE
     assert len(rdiff) == 1 or rdiff[1].op == DiffOp.REMOVERANGE
 
-    decisions = _split_addrange(ldiff[0].key,
+    subdecisions = _split_addrange(ldiff[0].key,
         ldiff[0].valuelist, rdiff[0].valuelist,
-        path, strategies)
+        path, item_strategy)
 
-    # FIXME: When should removals following inserts be marked as conflicts?
-    # FIXME: Add removals to conflicts in subdecisions instead of treating them as separate diffs here?
-    removal_conflicts = False
-    #removal_conflicts = decisions.has_conflicted()
-    #if decisions and decisions.decisions[-1].conflict:
-    #    removal_conflicts = True
-
-    # If there are removals at the end, add them
-    if len(ldiff) == 2 and len(rdiff) == 2:
-        # Same length removals ensured by chunking (see example above)
-        assert ldiff[1].length == rdiff[1].length
-        decisions.agreement(path, ldiff[1:], rdiff[1:], conflict=removal_conflicts)
-    elif len(ldiff) == 2 or len(rdiff) == 2:
-        decisions.onesided(path, ldiff[1:], rdiff[1:], conflict=removal_conflicts)
+    # If there are any conflicts in the merging, and removals following...
+    if subdecisions.has_conflicted() and (len(ldiff) == 2 or len(rdiff) == 2):
+        # ... throw away subdecisions here and mark entire thing as conflicted
+        decisions = MergeDecisionBuilder()
+        decisions.conflict(path, ldiff, rdiff, item_strategy)
+    else:
+        # ... otherwise use decisions from merging of inserted values, and if
+        # there are removals at the end, add them without conflict
+        decisions = subdecisions
+        if len(ldiff) == 2 and len(rdiff) == 2:
+            # Same length removals ensured by chunking
+            assert ldiff[1].length == rdiff[1].length
+            decisions.agreement(path, ldiff[1:], rdiff[1:])
+        elif len(ldiff) == 2 or len(rdiff) == 2:
+            decisions.onesided(path, ldiff[1:], rdiff[1:])
 
     return decisions
 
@@ -1033,11 +1027,15 @@ def _merge_lists(base, local_diff, remote_diff, path, parent_decisions, strategi
 
         # Workaround for string merge
         elif isinstance(base, string_types) and chunktype == "AP/AP":
-            # If we get here, base is a single line from a parent multiline string
+            # If we get here, base is a single line from a parent multiline string.
+
+            # item_strategy points to characters, list_strategy points to lines,
+            # we might rather want parent_strategy?
+            parent_strategy = strategies.get(star_path(path[:-1]))
 
             # In these cases, simply merge the As, then consider patches after
             subdecisions = _merge_concurrent_inserts(
-                base, a0, a1, path, decisions, strategies)
+                base, a0, a1, path, decisions, parent_strategy)
             decisions.extend(subdecisions)
 
             # For string base, replace patches with add/remove line
@@ -1051,9 +1049,6 @@ def _merge_lists(base, local_diff, remote_diff, path, parent_decisions, strategi
             if lv == rv:
                 decisions.agreement(item_path, p0, p1)
             else:
-                # item_strategy points to characters, list_strategy points to lines,
-                # we might rather want parent_strategy?
-                parent_strategy = strategies.get(star_path(path[:-1]))
                 decisions.conflict(item_path, p0, p1, parent_strategy)
 
         # Patch/remove conflicts (with or without prior insertion)
@@ -1062,7 +1057,7 @@ def _merge_lists(base, local_diff, remote_diff, path, parent_decisions, strategi
             if achunktype == "A/A":
                 # In these cases, simply merge the As, then consider patches after
                 subdecisions = _merge_concurrent_inserts(
-                    base, a0, a1, path, decisions, strategies)
+                    base, a0, a1, path, decisions, item_strategy)
                 decisions.extend(subdecisions)
             elif achunktype in ("A/", "/A"):
                 # Onesided addition + conflicted patch/remove
@@ -1142,7 +1137,8 @@ def _merge_lists(base, local_diff, remote_diff, path, parent_decisions, strategi
         # Merge insertions from both sides and add onesided patch afterwards
         elif chunktype in ("A/AP", "AP/A"):
             # Not including patches in merging of inserts
-            subdecisions = _merge_concurrent_inserts(base, a0, a1, path, decisions, strategies)
+            subdecisions = _merge_concurrent_inserts(
+                base, a0, a1, path, decisions, item_strategy)
             decisions.extend(subdecisions)
             decisions.onesided(path, p0, p1)
 
@@ -1153,7 +1149,8 @@ def _merge_lists(base, local_diff, remote_diff, path, parent_decisions, strategi
             decisions.agreement(path, p0, p1)
         elif chunktype in ("AR/A", "A/AR", "A/A", "AR/AR"):
             # Including removals in merging of inserts
-            subdecisions = _merge_concurrent_inserts(base, d0, d1, path, decisions, strategies)
+            subdecisions = _merge_concurrent_inserts(
+                base, d0, d1, path, decisions, item_strategy)
             decisions.extend(subdecisions)
         else:
             assert nbdime.log.error("Unhandled chunk conflict type %s" % (chunktype,))
@@ -1208,7 +1205,6 @@ def _merge_strings(base, local_diff, remote_diff,
             base_lines = base.splitlines(True)
             _merge_strings.recursion = True
             try:
-                #import ipdb; ipdb.set_trace()
                 decisions = _merge_lists(
                     base_lines, local_diff, remote_diff,
                     path, parent_decisions, strategies)
@@ -1222,8 +1218,11 @@ def _merge_strings(base, local_diff, remote_diff,
         #    nbdime.log.error("try-external strategy is not implemented")
         resolve_conflicted_decisions_strings(path, decisions, strategy, strategies.transients)
 
-    if any(decisions.decisions[i] == decisions.decisions[j] for i in range(len(decisions.decisions))  for j in range(len(decisions.decisions)) if i != j):
-        import ipdb; ipdb.set_trace()
+    if any([decisions.decisions[i] == decisions.decisions[j]
+           for i in range(len(decisions.decisions))
+           for j in range(len(decisions.decisions))
+           if i != j]):
+        nbdime.log.error("Found duplicated decisions, most likely a bug!")
 
     return decisions
 
