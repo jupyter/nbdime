@@ -7,7 +7,8 @@ import {
 } from '@jupyterlab/services';
 
 import {
-  MergeDecision, buildDiffs, addSorted, pushPatchDecision, splitDiffStringPath
+  MergeDecision, buildDiffs, addSorted, pushPatchDecision,
+  pushPatchDecisionInPlace, splitDiffStringPath
 } from './decisions';
 
 import {
@@ -72,6 +73,27 @@ function isCellSimpleDeletion(cell: CellMergeModel): boolean {
     cell.local && cell.remote &&
     cell.local.deleted && cell.remote.deleted;  // Deletion on both
   return !!ret;
+}
+
+
+/**
+ * Get diffs in superset that precede
+ */
+function getPrecedingDiff(subset: AddRem[], superset: AddRem[]): AddRem[] {
+  if (!hasEntries(superset) || superset.length === subset.length) {
+    return [];
+  }
+  // Remove those we are sure are not a part of preceding diffs
+  let ret = superset.slice(0, subset.length);
+  for (let d of subset) {
+    let idx = ret.indexOf(d);
+    if (idx >= 0) {
+      // We assume diffs are sorted:
+      ret = ret.slice(0, idx);
+      break;
+    }
+  }
+  return ret;
 }
 
 
@@ -239,7 +261,7 @@ function getPartials(diff: AddRem[], options: IUpdateModelOptions, startOffset: 
   // Check for overlap with last diff:
   let lastDiff = getLastDiffAddRange(diff);
   if (lastDiff) {
-    let diffEditStart = lastDiff.key + endOffset;
+    let diffEditStart = lastDiff.key + startOffset + endOffset;
     let matchLine = (options.editLine - diffEditStart) + oldval.length - 1;
     if (matchLine >= 0 && matchLine < lastDiff.valuelist.length) {
       let vl = lastDiff.valuelist as string[];
@@ -433,12 +455,15 @@ function findEditOverlap(diff: IDiffArrayEntry[], options: IUpdateModelOptions):
 /**
  * Update a diff with an edit, in-place
  */
-function updateDiff(diffToUpdate: IDiffArrayEntry[], options: IUpdateModelOptions): void {
+function updateDiff(diffToUpdate: IDiffArrayEntry[], options: IUpdateModelOptions, precedingDiff?: IDiffArrayEntry[]): void {
   let diff = convertPatchOps(diffToUpdate, options);
 
    // First, figure out which part of the diff is overlapping with edit:
   let [start, end, startOffset, endOffset] = findEditOverlap(diff, options);
   let overlappingDiff = diff.slice(start, end);
+  if (precedingDiff) {
+    startOffset += findEditOverlap(precedingDiff, options)[2];
+  }
 
   // All overlapping diffs should be replaced by at maximum
   // a single addrange, and a single removerange
@@ -736,7 +761,10 @@ function patchPatchedModel(options: IUpdateModelOptions, diffs: 'all' | 'custom'
   if (dec.customDiff === null) {
     throw new Error('Unexpected missing custom diff!');
   }
-  updateDiff(dec.customDiff as IDiffArrayEntry[], options);
+  // Need to use all diffs so `updateDiff` can keep track of offsets
+  let allDiffs = buildDiffs(model.base, model.decisions, 'merged') as AddRem[] || [];
+  let precedingDiff = getPrecedingDiff(dec.customDiff as AddRem[], allDiffs);
+  updateDiff(dec.customDiff as IDiffArrayEntry[], options, precedingDiff);
   if (!hasEntries(dec.customDiff)) {
     // Diff has been modified to the point where it is equal to no changed
     dec.action = 'base';

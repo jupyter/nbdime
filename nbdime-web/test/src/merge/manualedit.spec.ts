@@ -692,6 +692,15 @@ describe('merge', () => {
 
     });
 
+
+    describe('patched cell', () => {
+
+      it('should handle a pure addition after a replace range with non-zero line diff', () => {
+        // TODO: Write
+      });
+
+    });
+
   });
 
 });
