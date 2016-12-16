@@ -43,12 +43,13 @@ def browse(port, base, remote, browsername):
         _logger.warning('No web browser found: %s.', e)
         browser = None
 
+    url = url_concat("http://127.0.0.1:%s/diff" % port,
+                     dict(base=base, remote=remote))
+    nbdime.log.info("URL: " + url)
     if browser:
-        b = lambda: browser.open(
-            url_concat("http://127.0.0.1:%s/diff" % port,
-                       dict(base=base, remote=remote)),
-            new=2)
-        threading.Thread(target=b).start()
+        def launch_browser():
+            browser.open(url, new=2)
+        threading.Thread(target=launch_browser).start()
 
 
 def main(args=None):

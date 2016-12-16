@@ -53,15 +53,17 @@ def browse(port, browsername):
         _logger.warning('No web browser found: %s.', e)
         browser = None
 
+    url = "http://127.0.0.1:%s/mergetool" % port
+    nbdime.log.info("URL: " + url)
     if browser:
         def launch_browser():
-            browser.open("http://127.0.0.1:%s/mergetool" % port, new=2)
+            browser.open(url, new=2)
         threading.Thread(target=launch_browser).start()
 
 
 def main_parsed(opts):
     """Main function called after parsing CLI options
-    
+
     Called by both main here and gitmergetool
     """
     nbdime.log.init_logging(level=opts.log_level)
