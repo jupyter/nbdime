@@ -71,7 +71,7 @@ To run Javascript tests locally, in the `nbdime-web` folder enter: `npm test`
 
 Install the [codecov browser extension](https://github.com/codecov/browser-extension#codecov-extension) to view test coverage in the source browser on github.
 
-See [testing]() documentation for additional detail.
+See [testing](https://jupyter.readthedocs.io/en/latest/testing.html) documentation for additional detail.
 
 ## License
 
@@ -87,7 +87,7 @@ We encourage you to ask questions on the [mailing list](https://groups.google.co
 ## Resources
 
 - [Reporting Issues](https://github.com/jupyter/nbdime/issues)
-- [Documentation for nbdime](http://nbdime.readthedocs.io/en/latest/) | [PDF (latest)](https://media.readthedocs.org/pdf/nbdime/latest/nbdime.pdf)
+- [Documentation for nbdime](https://nbdime.readthedocs.io/en/latest/) | [PDF (latest)](https://media.readthedocs.org/pdf/nbdime/latest/nbdime.pdf)
 
-- [Documentation for Project Jupyter](http://jupyter.readthedocs.io/en/latest/index.html) | [PDF](https://media.readthedocs.org/pdf/jupyter/latest/jupyter.pdf)
+- [Documentation for Project Jupyter](https://jupyter.readthedocs.io/en/latest/index.html) | [PDF](https://media.readthedocs.org/pdf/jupyter/latest/jupyter.pdf)
 - [Project Jupyter website](https://jupyter.org)
