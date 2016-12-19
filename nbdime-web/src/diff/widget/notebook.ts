@@ -7,11 +7,7 @@ import {
 } from 'jupyterlab/lib/rendermime';
 
 import {
-  Widget
-} from 'phosphor/lib/ui/widget';
-
-import {
-  PanelLayout
+  Panel, PanelLayout
 } from 'phosphor/lib/ui/panel';
 
 import {
@@ -34,21 +30,42 @@ const NBDIFF_CLASS = 'jp-Notebook-diff';
  * NotebookDiffWidget
  */
 export
-class NotebookDiffWidget extends Widget {
+class NotebookDiffWidget extends Panel {
   constructor(model: NotebookDiffModel, rendermime: IRenderMime) {
     super();
     this._model = model;
     this._rendermime = rendermime;
-    let layout = this.layout = new PanelLayout();
-
     this.addClass(NBDIFF_CLASS);
+  }
 
-    if (model.metadata) {
-      layout.addWidget(new MetadataDiffWidget(model.metadata));
-    }
+  /**
+   * Start adding sub-widgets.
+   *
+   * Separated from constructor to allow 'live' adding of widgets
+   */
+  init(): Promise<void> {
+    let model = this._model;
+    let rendermime = this._rendermime;
+
+    let work = Promise.resolve();
+    work = work.then(() => {
+      if (model.metadata) {
+        this.addWidget(new MetadataDiffWidget(model.metadata));
+      }
+    });
     for (let c of model.cells) {
-      layout.addWidget(new CellDiffWidget(c, rendermime, model.mimetype));
+      work = work.then(() => {
+        return new Promise<void>(resolve => {
+          this.addWidget(new CellDiffWidget(c, rendermime, model.mimetype));
+          // This limits us to drawing 60 cells per second, which shoudln't
+          // be a problem...
+          requestAnimationFrame(() => {
+            resolve();
+          });
+        });
+      });
     }
+    return work;
   }
 
   /**
