@@ -14,6 +14,22 @@
   width: 100%;
 }
 
+/* Match input border of unchanged cell source */
+.jp-Notebook-diff .jp-Diff-unchanged .CodeMirror-merge-pane-unchanged {
+  border: var(--jp-border-width) solid var(--jp-private-notebook-cell-editor-border);
+}
+
+/* Do not use border between unchanged cells */
+.jp-Notebook-diff .jp-Diff-unchanged + .jp-Diff-unchanged {
+    border: none;
+}
+
+/* We can float prompt left when unchanged */
+.jp-Notebook-diff .jp-Diff-unchanged .jp-Cellrow-executionCount {
+  float: left;
+}
+
+
 .jp-Notebook-diff .jp-Metadata-diff {
   margin-bottom: 20px;
   border: solid black thin;

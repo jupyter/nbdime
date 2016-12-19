@@ -53,6 +53,7 @@ const PROMPT_CLASS = 'jp-Cell-prompt';
 
 const CELLDIFF_CLASS = 'jp-Cell-diff';
 
+const EXECUTIONCOUNT_ROW_CLASS = 'jp-Cellrow-executionCount';
 const SOURCE_ROW_CLASS = 'jp-Cellrow-source';
 const METADATA_ROW_CLASS = 'jp-Cellrow-metadata';
 const OUTPUTS_ROW_CLASS = 'jp-Cellrow-outputs';
@@ -168,6 +169,7 @@ class CellDiffWidget extends Panel {
       container.addWidget(w);
       FlexPanel.setGrow(w, 1);
     }
+    container.addClass(EXECUTIONCOUNT_ROW_CLASS);
     return container;
   }
 
