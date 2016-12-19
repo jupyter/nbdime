@@ -12,7 +12,7 @@
 .jp-Notebook-merge .jp-Cell-merge {
   margin-bottom: 20px;
   border-top: solid #ccc 1px;
-  background-color: white;
+  background-color: var(--jp-layout-color1);
 }
 
 .jp-Notebook-merge .CodeMirror-merge-pane-local,

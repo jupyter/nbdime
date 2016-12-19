@@ -1,6 +1,5 @@
 
 
-
 .jp-Notebook-diff .jp-Diff-unchanged .jp-Output *:first-child {
   margin-left: auto;
 }
@@ -149,12 +148,14 @@
 
 
 .jp-Notebook-diff .jp-Diff-deleted .CodeMirror,
-.jp-Notebook-diff .jp-Diff-deleted .jp-Diff-renderedOuput {
+.jp-Notebook-diff .jp-Diff-deleted .jp-Diff-renderedOuput,
+.jp-Cellrow-outputs .jp-Diff-twoway .jp-Diff-base {
   background-color: var(--jp-diff-deleted-color2);
 }
 
 .jp-Notebook-diff .jp-Diff-added .CodeMirror,
-.jp-Notebook-diff .jp-Diff-added .jp-Diff-renderedOuput {
+.jp-Notebook-diff .jp-Diff-added .jp-Diff-renderedOuput,
+.jp-Cellrow-outputs .jp-Diff-twoway .jp-Diff-remote {
   background-color: var(--jp-diff-added-color2);
 }
 
@@ -165,4 +166,8 @@
 
 .jp-Notebook-diff .jp-Cellrow-source .jp-Cell-prompt {
   text-align: left;
+}
+
+.jp-CollapsiblePanel-container {
+  background-color: var(--codemirror-gutter-background);
 }

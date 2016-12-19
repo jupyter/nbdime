@@ -8,9 +8,11 @@
   --jp-nbdime-output-color2: #7bf;
   --jp-nbdime-output-color3: #adf;
 
+  --jp-diff-added-color0: #3d3;
   --jp-diff-added-color1: #a6f3a6;
   --jp-diff-added-color2: #dbffdb;
 
+  --jp-diff-deleted-color0: #f55;
   --jp-diff-deleted-color1: #f8cbcb;
   --jp-diff-deleted-color2: #ffecec;
 
