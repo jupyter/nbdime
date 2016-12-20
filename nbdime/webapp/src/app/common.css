@@ -3,6 +3,8 @@
 body {
   --jp-layout-color3: white;
   overflow: scroll !important;
+
+  font-family: sans-serif;
 }
 
 
