@@ -3,7 +3,6 @@ module.exports = function (config) {
     basePath: '..',
     frameworks: ['mocha', 'karma-typescript'],
     files: [
-      { pattern: "node_modules/expect.js/index.js" },
       { pattern: "test/src/**/*.ts" },
       { pattern: "src/**/*.ts" }
     ],
