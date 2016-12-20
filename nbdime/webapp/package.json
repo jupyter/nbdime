@@ -1,7 +1,7 @@
 {
   "name": "nbdime-webapp",
   "main": "static/build/nbdime.js",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "scripts": {
     "build": "webpack",
     "build:test": "webpack --config test/webpack.config.js",
