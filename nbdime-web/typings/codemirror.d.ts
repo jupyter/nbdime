@@ -35,7 +35,7 @@ declare namespace CodeMirror {
     /** An object containing default values for all options.
      * You can assign to its properties to modify defaults
      * (though this won't affect editors that have already been created).*/
-    var defaults: any;
+    var defaults: CodeMirror.EditorConfiguration;
 
     /** If you want to define extra methods in terms of the CodeMirror API, it is possible to use defineExtension.
     This will cause the given value(usually a method) to be added to all CodeMirror instances created from then on. */
@@ -243,7 +243,7 @@ declare namespace CodeMirror {
         /** Programatically set the size of the editor (overriding the applicable CSS rules).
         width and height height can be either numbers(interpreted as pixels) or CSS units ("100%", for example).
         You can pass null for either of them to indicate that that dimension should not be changed. */
-        setSize(width?: any, height?: any): void;
+        setSize(width?: number | string | null, height?: number | string | null): void;
 
         /** Scroll the editor to a given(pixel) position.
          * Both arguments may be left as null or undefined to have no effect. */
@@ -428,8 +428,8 @@ declare namespace CodeMirror {
 
         /** Fired whenever a line is (re-)rendered to the DOM. Fired right after the DOM element is built, before it is added to the document.
         The handler may mess with the style of the resulting element, or add event handlers, but should not try to change the state of the editor. */
-        on(eventName: 'renderLine', handler: (instance: CodeMirror.Editor, line: number, element: HTMLElement) => void ): void;
-        off(eventName: 'renderLine', handler: (instance: CodeMirror.Editor, line: number, element: HTMLElement) => void ): void;
+        on(eventName: 'renderLine', handler: (instance: CodeMirror.Editor, line: CodeMirror.LineHandle, element: HTMLElement) => void ): void;
+        off(eventName: 'renderLine', handler: (instance: CodeMirror.Editor, line: CodeMirror.LineHandle, element: HTMLElement) => void ): void;
 
         /** Expose the state object, so that the Editor.state.completionActive property is reachable*/
         state: any;
@@ -688,6 +688,7 @@ declare namespace CodeMirror {
     interface LineHandle {
         text: string;
     }
+
     interface ScrollInfo {
         left: number;
         top: number;
@@ -824,8 +825,8 @@ declare namespace CodeMirror {
         or whether it stays fixed during horizontal scrolling (true, the default). */
         fixedGutter?: boolean;
 
-        /** boolean|string. This disables editing of the editor content by the user. If the special value "nocursor" is given (instead of simply true), focusing of the editor is also disallowed. */
-        readOnly?: any;
+        /** This disables editing of the editor content by the user. If the special value "nocursor" is given (instead of simply true), focusing of the editor is also disallowed. */
+        readOnly?: boolean | 'nocursor';
 
         /**Whether the cursor should be drawn when a selection is active. Defaults to false. */
         showCursorWhenSelecting?: boolean;
