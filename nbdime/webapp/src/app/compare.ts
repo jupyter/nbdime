@@ -18,6 +18,9 @@ import {
 
 const ERROR_COMPARE_NUMBER = 'Need two or more values to compare!';
 
+const DIFF_LOCAL_BASE_CLASS = 'jp-mod-local-base';
+const DIFF_LOCAL_REMOTE_CLASS = 'jp-mod-local-remote';
+
 let hasMerge = false;
 
 /**
@@ -52,8 +55,10 @@ function compare(b: string, c: string, r: string, pushHistory: boolean | 'replac
       count += 1;
     }
   }
+  let header = document.getElementById('nbdime-header')!;
   if (b && c && r) {
     // All values present, do merge
+    header.className = 'nbdime-Merge';
     getMerge(b, c, r);
     if (pushHistory) {
       let uri = window.location.pathname;
@@ -68,18 +73,21 @@ function compare(b: string, c: string, r: string, pushHistory: boolean | 'replac
     throw new Error(ERROR_COMPARE_NUMBER);
   } else {
     // Two values, figure out which
+    header.className = 'nbdime-Diff';
     let base: string;
     let remote: string;
     if (b) {
       base = b;
       if (c) {
         remote = c;
+        header.classList.add(DIFF_LOCAL_BASE_CLASS);
       } else {
         remote = r;
       }
     } else {
       base = c;
       remote = r;
+      header.classList.add(DIFF_LOCAL_REMOTE_CLASS);
     }
     getDiff(base, remote);
     if (pushHistory) {

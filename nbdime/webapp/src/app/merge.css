@@ -7,21 +7,21 @@
   z-index: 0;
 }
 
-.nbdime-Merge-tool #nbdime-header-base,
-.nbdime-Merge-tool #nbdime-header-remote,
-.nbdime-Merge-tool #nbdime-header-local {
+.nbdime-Merge #nbdime-header-base,
+.nbdime-Merge #nbdime-header-remote,
+.nbdime-Merge #nbdime-header-local {
   display: inline-block;
   width: 33%;
 }
 
-.nbdime-Merge-tool #nbdime-header-local {
+.nbdime-Merge #nbdime-header-local {
   background-color: var(--jp-merge-local-color1);
 }
 
-.nbdime-Merge-tool #nbdime-header-base {
+.nbdime-Merge #nbdime-header-base {
   background-color: #eee;
 }
 
-.nbdime-Merge-tool #nbdime-header-remote {
+.nbdime-Merge #nbdime-header-remote {
   background-color: var(--jp-merge-remote-color1);
 }
