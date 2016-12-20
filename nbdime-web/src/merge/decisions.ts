@@ -386,15 +386,15 @@ function makeClearedValue(value: any): any {
     if (value instanceof Array) {
         // Clearing e.g. an outputs list means setting it to an empty array
         return [];
-    } else if (value instanceof Object) {
-        // Clearing e.g. a metadata dict means setting it to an empty Object
-        return {};
     } else if (typeof(value) === 'string') {
         // Clearing e.g. a source string means setting it to an empty string
         return '';
-    } else {
+    } else if (value === null || valueIn(typeof(value), ['number', 'boolean'])) {
         // Clearing anything else (atomic values) means setting it to null
         return null;
+    } else {
+        // Clearing e.g. a metadata dict means setting it to an empty Object
+        return {};
     }
 }
 

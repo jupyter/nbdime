@@ -5,7 +5,7 @@ import expect = require('expect.js');
 
 import {
   nbformat
-} from 'jupyterlab/lib/notebook/notebook/nbformat';
+} from '@jupyterlab/services';
 
 import {
   stripSource
@@ -25,7 +25,7 @@ import {
 } from '../../../src/merge/model';
 
 
-const notebook = require('../../files/base.ipynb') as nbformat.INotebookContent;
+const notebook = require('../../files/base.ipynb.json') as nbformat.INotebookContent;
 const decisionsNB = require('../../files/decisionsA.json') as IMergeDecision[];
 
 

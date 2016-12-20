@@ -5,7 +5,7 @@ import expect = require('expect.js');
 
 import {
   nbformat
-} from 'jupyterlab/lib/notebook/notebook/nbformat';
+} from '@jupyterlab/services';
 
 import {
   RenderMime
@@ -37,7 +37,7 @@ import {
 } from '../../../src/merge/widget';
 
 
-const notebook = require('../../files/base.ipynb') as nbformat.INotebookContent;
+const notebook = require('../../files/base.ipynb.json') as nbformat.INotebookContent;
 const NBdecisions = require('../../files/decisionsA.json') as IMergeDecision[];
 
 describe('merge', () => {
@@ -92,8 +92,7 @@ describe('merge', () => {
     describe('NotebookMergeWidget', () => {
 
       it('should create a widget for a simple realistic model', () => {
-          let model = new NotebookMergeModel(
-              notebook, NBdecisions);
+          let model = new NotebookMergeModel(notebook, NBdecisions);
           let widget = new NotebookMergeWidget(model, rendermime);
           expect(widget).to.not.be(null);
           Widget.attach(widget, document.body);

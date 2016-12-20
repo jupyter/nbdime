@@ -4,7 +4,7 @@
 
 import {
   nbformat
-} from 'jupyterlab/lib/notebook/notebook/nbformat';
+} from '@jupyterlab/services';
 
 import {
   IDiffEntry, IDiffArrayEntry
@@ -53,7 +53,7 @@ export class NotebookDiffModel {
     // of source cells, so store it easily accessible:
     let mimetype: string | undefined;
     try {
-      mimetype = base.metadata.language_info.mimetype;
+      mimetype = base.metadata.language_info!.mimetype;
     } catch (e) {
       // missing metadata (probably old notebook)
     }

@@ -56,6 +56,9 @@ const CONFLICT_MARKER = '\u26A0'; // '\u2757'
 
 
 export
+type Marker = CodeMirror.LineHandle | CodeMirror.TextMarker;
+
+export
 enum DIFF_OP {
   DIFF_DELETE = -1,
   DIFF_INSERT = 1,
@@ -263,8 +266,8 @@ class DiffView {
   }
 
   protected registerUpdate() {
-    let editMarkers = [];
-    let origMarkers = [];
+    let editMarkers: Marker[] = [];
+    let origMarkers: Marker[] = [];
     let debounceChange: number;
     let self: DiffView = this;
     self.updating = false;
@@ -455,7 +458,7 @@ class DiffView {
 
 
   protected updateMarks(editor: CodeMirror.Editor, diff: DiffRangePos[],
-                        markers: any[], type: DIFF_OP) {
+                        markers: Marker[], type: DIFF_OP) {
     let classes: DiffClasses;
     if (this.classes === null) {
       // Only store prefixes here, will be completed later
@@ -587,7 +590,7 @@ class DiffView {
 
 // Updating the marks for editor content
 
-function clearMergeMarks(editor: CodeMirror.Editor, arr: any[]) {
+function clearMergeMarks(editor: CodeMirror.Editor, arr: Marker[]) {
   for (let postfix of ['-local', '-remote', '-either', '-custom']) {
     let classes = copyObj(mergeClassPrefix);
     for (let k of Object.keys(classes)) {
@@ -597,13 +600,17 @@ function clearMergeMarks(editor: CodeMirror.Editor, arr: any[]) {
   }
 }
 
-function clearMarks(editor: CodeMirror.Editor, arr: any[], classes: DiffClasses) {
+function isTextMarker(marker: Marker): marker is CodeMirror.TextMarker {
+  return 'clear' in marker;
+}
+
+function clearMarks(editor: CodeMirror.Editor, arr: Marker[], classes: DiffClasses) {
   for (let i = arr.length - 1; i >= 0; --i) {
     let mark = arr[i];
-    if ('clear' in mark) {
+    if (isTextMarker(mark)) {
       mark.clear();
       arr.splice(i, 1);
-    } else if (mark.parent) {
+    } else if ((mark as any).parent) {
       editor.removeLineClass(mark, 'background', classes.chunk);
       editor.removeLineClass(mark, 'background', classes.start);
       editor.removeLineClass(mark, 'background', classes.end);
@@ -614,7 +621,8 @@ function clearMarks(editor: CodeMirror.Editor, arr: any[], classes: DiffClasses)
       } else {
         editor.setGutterMarker(mark, GUTTER_CONFLICT_CLASS, null);
       }
-      if (!mark.bgClass || mark.bgClass.length === 0) {
+      let line = editor.lineInfo(mark);
+      if (!line.bgClass || line.bgClass.length === 0) {
         arr.splice(i, 1);
       }
     }
@@ -622,7 +630,7 @@ function clearMarks(editor: CodeMirror.Editor, arr: any[], classes: DiffClasses)
 }
 
 function highlightChars(editor: CodeMirror.Editor, ranges: DiffRangePos[],
-                        markers: any[], cls: string) {
+                        markers: Marker[], cls: string) {
   let doc = editor.getDoc();
   let origCls: string | null = null;
   if (valueIn(cls, [mergeClassPrefix.del, mergeClassPrefix.insert])) {
@@ -1127,6 +1135,7 @@ function collapseStretch(size: number, editors: {line: number, cm: CodeMirror.Ed
     let editor = editors[i];
     let mark = collapseSingle(editor.cm, editor.line, editor.line + size);
     marks.push(mark);
+    // Undocumented, but merge.js used it, so follow their lead:
     (mark.mark as any).on('clear', clear);
   }
   return marks[0].mark;
@@ -1229,7 +1238,7 @@ function elt(tag: string, content?: string | HTMLElement[] | null, className?: s
 function copyObj<T extends {[key: string]: any}>(obj: T): T;
 function copyObj<T extends {[key: string]: any}, U extends {[key: string]: any}>
 (obj: T, target?: U): T & U;
-function copyObj(obj: {[key: string]: any}, target?: {[key: string]: any}): Object {
+function copyObj(obj: {[key: string]: any}, target?: {[key: string]: any}): any {
   if (!target) {
     target = {};
   }

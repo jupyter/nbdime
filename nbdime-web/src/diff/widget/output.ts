@@ -3,16 +3,16 @@
 'use strict';
 
 import {
+  nbformat
+} from '@jupyterlab/services';
+
+import {
   IRenderMime
 } from 'jupyterlab/lib/rendermime';
 
 import {
   OutputWidget
 } from 'jupyterlab/lib/notebook/output-area';
-
-import {
-  nbformat
-} from 'jupyterlab/lib/notebook/notebook/nbformat';
 
 import {
   Widget
@@ -74,7 +74,7 @@ class RenderableOutputView extends Widget {
   /**
    * Checks if all MIME types of a MIME bundle are safe or can be sanitized.
    */
-  static safeOrSanitizable(bundle: nbformat.MimeBundle) {
+  static safeOrSanitizable(bundle: nbformat.IMimeBundle) {
     let keys = Object.keys(bundle);
     for (let key of keys) {
       if (valueIn(key, safeOutputs)) {

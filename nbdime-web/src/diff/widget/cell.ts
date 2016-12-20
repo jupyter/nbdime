@@ -7,6 +7,10 @@ import {
 } from 'jupyterlab/lib/rendermime';
 
 import {
+  every
+} from 'phosphor/lib/algorithm/iteration';
+
+import {
   Widget
 } from 'phosphor/lib/ui/widget';
 
@@ -193,7 +197,7 @@ class CellDiffWidget extends Panel {
       // 3) Unknown types: Stringified JSON diff.
       // If the model is one-sided or unchanged, option 2) is preferred to 1)
       let renderable = RenderableOutputView.canRenderUntrusted(model);
-      for (let mt of rendermime.order) {
+      every(rendermime.mimetypes(), (mt) => {
         let key = model.hasMimeType(mt);
         if (key) {
           if (!renderable ||
@@ -205,9 +209,10 @@ class CellDiffWidget extends Panel {
             // 2.
             view = new RenderableOutputView(model, editorClasses, rendermime);
           }
-          break;
+          return false;
         }
-      }
+        return true;
+      });
       if (!view) {
         // 3.
         view = createNbdimeMergeView(model.stringify());

@@ -3,12 +3,12 @@
 'use strict';
 
 import {
-  IRenderMime
-} from 'jupyterlab/lib/rendermime';
+  nbformat
+} from '@jupyterlab/services';
 
 import {
-  nbformat
-} from 'jupyterlab/lib/notebook/notebook/nbformat';
+  IRenderMime
+} from 'jupyterlab/lib/rendermime';
 
 import {
   DragDropPanel

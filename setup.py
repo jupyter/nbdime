@@ -49,7 +49,7 @@ pkg_root = pjoin(here, name)
 
 # Representative files that should exist after a successful build
 jstargets = [
-    os.path.join(here, 'nbdime', 'webapp', 'static', 'build', 'nbdime.js'),
+    os.path.join(here, 'nbdime', 'webapp', 'static', 'nbdime.js'),
 ]
 
 

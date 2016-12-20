@@ -2,6 +2,6 @@
 // Distributed under the terms of the Modified BSD License.
 
 var fs = require('fs-extra');
-fs.copySync('src/', 'lib/', { filter: /\.css$/ });
-fs.copySync('src/', 'lib/', { filter: /\.svg$/ });
-fs.copySync('src/', 'lib/', { filter: /\.png$/ });
+fs.copySync('src/', 'lib/', { filter: pth => /\.css$/.test(pth) });
+fs.copySync('src/', 'lib/', { filter: pth => /\.svg$/.test(pth) });
+fs.copySync('src/', 'lib/', { filter: pth => /\.png$/.test(pth) });
