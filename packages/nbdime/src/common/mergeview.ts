@@ -22,7 +22,7 @@ import {
 } from '../diff/model';
 
 import {
-  DecisionStringDiffModel
+  DecisionStringDiffModel, CellMergeModel
 } from '../merge/model';
 
 import {
@@ -38,7 +38,7 @@ import {
 } from './editor';
 
 import {
-  valueIn, hasEntries, splitLines, copyObj
+  valueIn, hasEntries, splitLines, copyObj, removeElement
 } from './util';
 
 import {
@@ -433,13 +433,35 @@ class DiffView {
           for (let s of ss) {
             s.decision.action = s.action;
           }
-        } else if (instance === this.baseEditor) {
+        } else if (this.type === 'merge' && instance === this.baseEditor) {
           for (let s of ss) {
             s.decision.action = 'base';
-            if (hasEntries(s.decision.customDiff)) {
-              s.decision.customDiff = [];
+          }
+        }
+        for (let i=ss.length - 1; i >= 0; --i) {
+          let s = ss[i];
+          if (this.type === 'merge' && hasEntries(s.decision.customDiff)) {
+            // Custom diffs are cleared on pick,
+            // as there is no way to re-pick them
+            s.decision.customDiff = [];
+            // If decision is now empty, remove decision:
+            if (!hasEntries(s.decision.localDiff) &&
+                !hasEntries(s.decision.remoteDiff)) {
+              // Remove decision:
+              let model = this.model as DecisionStringDiffModel;
+              let cell = model.parent as CellMergeModel;
+              removeElement(model.decisions, s.decision);
+              removeElement(cell.decisions, s.decision);
+              // Remove source
+              ss.splice(i, 1);
             }
           }
+        }
+        if (ss.length === 0) {
+          // All decisions empty, remove picker
+          // In these cases, there should only be one picker, on base
+          // so simply remove the one we have here
+          instance.setGutterMarker(line, GUTTER_PICKER_CLASS, null);
         }
       } else if (gutter === GUTTER_CONFLICT_CLASS) {
         for (let s of ss) {
