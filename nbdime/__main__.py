@@ -29,7 +29,7 @@ HELP_MESSAGE_VERBOSE = ("Usage: nbdime [OPTIONS]\n\n"
 def main_mergetool(args):
     if not which('git'):
         sys.exit("Cannot use \"nbdime mergetool\" alias as git is not preset on path")
-    to_call = 'git mergetool --tool=nbdimeweb'.split()
+    to_call = 'git mergetool --tool=nbdime'.split()
 
     if args:
         paths = [a for a in args if a.endswith(".ipynb")]
@@ -39,7 +39,7 @@ def main_mergetool(args):
         paths = ["*.ipynb"]
     to_call.extend(paths)
 
-    nbdime.log.info("Calling 'git mergetool --tool=nbdimeweb' on files {}".format(paths))
+    nbdime.log.info("Calling 'git mergetool --tool=nbdime' on files {}".format(paths))
 
     return call(to_call)
 
