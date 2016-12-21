@@ -18,12 +18,8 @@ import {
 
 import {
   opPatch, opAddRange, opRemoveRange, IDiffAddRange,
-  IDiffRemoveRange, IDiffPatchArray
+  IDiffPatchArray
 } from '../../../src/diff/diffentries';
-
-import {
-  createPatchStringDiffModel, IStringDiffModel
-} from '../../../src/diff/model';
 
 import {
   IMergeDecision

@@ -7,8 +7,8 @@ import {
 } from '@jupyterlab/services';
 
 import {
-  MergeDecision, buildDiffs, addSorted, pushPatchDecision,
-  pushPatchDecisionInPlace, splitDiffStringPath
+  MergeDecision, buildDiffs, addSorted, pushPatchDecisionInPlace,
+  splitDiffStringPath
 } from './decisions';
 
 import {
@@ -38,8 +38,7 @@ import {
 } from '../patch';
 
 import {
-  hasEntries, arraysEqual, extendArray, splitLines,
-  isPrefixArray, removeElement
+  hasEntries, arraysEqual, splitLines, removeElement
 } from '../common/util';
 
 import {
