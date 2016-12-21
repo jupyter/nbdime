@@ -55,19 +55,41 @@ class NotebookMergeWidget extends DragDropPanel {
     this._rendermime = rendermime;
 
     this.addClass(NBMERGE_CLASS);
+  }
 
+  /**
+   * Start adding sub-widgets.
+   *
+   * Separated from constructor to allow 'live' adding of widgets
+   */
+  init(): Promise<void> {
+    let model = this._model;
+    let rendermime = this._rendermime;
+
+    let work = Promise.resolve();
     this.addWidget(new NotebookMergeControls(model));
-
-    if (model.metadata.decisions.length > 0) {
-      this.metadataWidget = new MetadataMergeWidget(model.metadata);
-      this.addWidget(this.metadataWidget);
-    }
+    work = work.then(() => {
+      if (model.metadata) {
+        this.metadataWidget = new MetadataMergeWidget(model.metadata);
+        this.addWidget(this.metadataWidget);
+      }
+    });
     this.cellWidgets = [];
     for (let c of model.cells) {
-      let w = new CellMergeWidget(c, rendermime, model.mimetype);
-      this.cellWidgets.push(w);
-      this.addWidget(w);
+      work = work.then(() => {
+        return new Promise((resolve) => {
+          let w = new CellMergeWidget(c, rendermime, model.mimetype);
+          this.cellWidgets.push(w);
+          this.addWidget(w);
+          // This limits us to drawing 60 cells per second, which shoudln't
+          // be a problem...
+          requestAnimationFrame(() => {
+            resolve();
+          });
+        });
+      });
     }
+    return work;
   }
 
   validateMerged(candidate: nbformat.INotebookContent): nbformat.INotebookContent {

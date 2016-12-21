@@ -86,7 +86,10 @@ function showDiff(data: {base: nbformat.INotebookContent, diff: IDiffEntry[]}) {
   panel.id = 'main';
   Widget.attach(panel, root);
   panel.addWidget(nbdWidget);
-  window.onresize = () => { panel.update(); };
+  let work = nbdWidget.init();
+  work.then(() => {
+    window.onresize = () => { panel.update(); };
+  });
 }
 
 /**

@@ -21,4 +21,4 @@ nbdime-web/lib/
 nbdime-web/coverage/
 nbdime-web/test/build/
 
-nbdime/webapp/static/build/
+nbdime/webapp/static/

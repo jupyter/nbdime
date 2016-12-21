@@ -99,7 +99,10 @@ function showMerge(data: {
   panel.id = 'main';
   Widget.attach(panel, root);
   panel.addWidget(nbmWidget);
-  window.onresize = () => { panel.update(); };
+  let work = nbmWidget.init();
+  work.then(() => {
+    window.onresize = () => { panel.update(); };
+  });
   return nbmWidget;
 }
 

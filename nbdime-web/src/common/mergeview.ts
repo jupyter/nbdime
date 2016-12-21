@@ -89,12 +89,19 @@ class EditorWidget extends CodeMirrorWidget {
    * A message handler invoked on an `'resize'` message.
    */
   protected onResize(msg: ResizeMessage): void {
-    if (msg.width < 0 || msg.height < 0) {
-      this.editor.setSize(null, null);
-    } else {
-      super.onResize(msg);
+    if (!this.staticLoaded) {
+      if (msg.width < 0 || msg.height < 0) {
+        this.editor.setSize(null, null);
+      } else {
+        super.onResize(msg);
+      }
+      if (this.editor.isReadOnly() && document.contains(this.node)) {
+        this.staticLoaded = true;
+      }
     }
   }
+
+  staticLoaded = false;
 }
 
 
