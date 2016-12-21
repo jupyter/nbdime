@@ -17,7 +17,7 @@ import sys
 from subprocess import check_call, check_output, CalledProcessError
 
 import nbdime.log
-from .args import add_filename_args, add_generic_args
+from .args import add_generic_args
 from .webapp import nbdifftool
 
 
@@ -45,7 +45,7 @@ def disable(global_=False, *args):
     except CalledProcessError:
         pass
     else:
-        if tool in ('nbdime', 'nbdimeweb'):
+        if tool == 'nbdime':
             try:
                 check_call(cmd + ['--unset', 'diff.guitool'])
             except CalledProcessError:

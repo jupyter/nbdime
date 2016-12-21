@@ -12,11 +12,11 @@ Use with:
     git mergetool [<commit> [<commit>]]
 """
 import sys
-from subprocess import check_call, check_output, CalledProcessError
+from subprocess import check_call, CalledProcessError
 
 import nbdime.log
 from .webapp import nbmergetool
-from .args import add_filename_args, add_generic_args
+from .args import add_generic_args
 
 
 def enable(global_=False, set_default=False):
