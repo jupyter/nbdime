@@ -8,7 +8,7 @@ import {
 } from './diff';
 
 import {
-  getMerge, closeMerge, saveMerged
+  getMerge, closeMerge, saveMerged, downloadMerged
 } from './merge';
 
 import {
@@ -160,5 +160,13 @@ function initializeCompare() {
   let saveBtn = document.getElementById('nbdime-save') as HTMLButtonElement;
   if (saveBtn) {
     saveBtn.onclick = saveMerged;
+  }
+  let downloadBtn = document.getElementById('nbdime-download') as HTMLButtonElement;
+  if (hasMerge) {
+    downloadBtn.onclick = downloadMerged;
+    downloadBtn.style.display = 'initial';
+  } else {
+    downloadBtn.onclick = null!;
+    downloadBtn.style.display = 'none';
   }
 }
