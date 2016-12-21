@@ -43,6 +43,10 @@ import {
 } from 'nbdime/lib/merge/widget';
 
 import {
+  stringify
+} from 'nbdime/lib/patch';
+
+import {
   requestMerge, requestJson
 } from 'nbdime/lib/request';
 
@@ -204,6 +208,62 @@ function saveMerged() {
   submitMerge(nb, conflicts);
 }
 
+
+function downloadNotebook(notebook: nbformat.INotebookContent, filename: string) {
+  let element = document.createElement('a');
+  element.setAttribute(
+    'href', 'data:text/plain;charset=utf-8,' +
+    encodeURIComponent(stringify(notebook)));
+  element.setAttribute('download', filename);
+
+  element.style.display = 'none';
+  document.body.appendChild(element);
+  try {
+    element.click();
+  } finally {
+    document.body.removeChild(element);
+  }
+}
+
+
+function getMergeFilename() {
+  // If present use 'outputfilename'
+  let filename = getConfigOption('outputfilename');
+  // Otherwise use base name as suggestion
+  if (!filename) {
+    filename = getConfigOption('base');
+  }
+  // Fallback:
+  if (!filename) {
+    filename = 'merged.ipynb';
+  }
+  return filename;
+}
+
+/**
+ *
+ */
+export
+function downloadMerged() {
+  if (!mergeWidget) {
+    return;
+  }
+  function download() {
+    let filename = getMergeFilename();
+    let nb = extractMergedNotebook(mergeWidget!);
+    downloadNotebook(nb, filename);
+  }
+  let conflicted = mergeWidget.model.conflicts.length > 0;
+  if (conflicted) {
+    alertify.confirm('There are conflicts remaining. ' +
+      'Do you still want to download the merge output?', () => {
+        download();
+      });
+  } else {
+    download();
+  }
+}
+
 /**
  * Submit a merged notebook
  */
@@ -328,4 +388,7 @@ function initializeMerge() {
     saveBtn.onclick = saveMerged;
     saveBtn.style.display = 'initial';
   }
+  let downloadBtn = document.getElementById('nbdime-download') as HTMLButtonElement;
+  downloadBtn.onclick = downloadMerged;
+  downloadBtn.style.display = 'initial';
 }

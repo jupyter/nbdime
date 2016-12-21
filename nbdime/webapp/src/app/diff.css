@@ -7,14 +7,44 @@
   z-index: 0;
 }
 
-.nbdime-Diff-tool #nbdime-header-base {
+/* Comparing base vs remote, default */
+.nbdime-Diff #nbdime-header-base {
   display: inline-block;
   width: 50%;
   background-color: var(--jp-diff-deleted-color1);
 }
 
-.nbdime-Diff-tool #nbdime-header-remote {
+.nbdime-Diff #nbdime-header-remote {
   display: inline-block;
   width: 49%;
   background-color: var(--jp-diff-added-color1);
+}
+
+.nbdime-Diff #nbdime-header-local {
+  display: none;
+  width: 49%;
+}
+
+/* Comparing local vs remote */
+.nbdime-Diff.jp-mod-local-remote #nbdime-header-base {
+  display: none;
+}
+
+.nbdime-Diff.jp-mod-local-remote #nbdime-header-local {
+  display: inline-block;
+  background-color: var(--jp-diff-deleted-color1);
+}
+
+/* Comparing local vs base */
+.nbdime-Diff.jp-mod-local-base #nbdime-header-base {
+  background-color: var(--jp-diff-added-color1);
+}
+
+.nbdime-Diff.jp-mod-local-base #nbdime-header-local {
+  display: inline-block;
+  background-color: var(--jp-diff-deleted-color1);
+}
+
+.nbdime-Diff.jp-mod-local-base #nbdime-header-remote {
+  display: none;
 }

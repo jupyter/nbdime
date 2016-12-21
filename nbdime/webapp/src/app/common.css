@@ -28,7 +28,11 @@ body {
   margin-top: 10px;
 }
 
-.nbdime-header-button{
+.nbdime-header-button {
   display: inline-block;
   margin-right: 10px;
+}
+
+.nbdime-Diff .nbdime-header-buttonrow {
+  display: none;
 }

@@ -22,15 +22,21 @@
       <form id="nbdime-compare-form" class="nbdime-forms">
         <fieldset>
           <legend>Please input filenames of notebooks to compare:</legend>
-          Local:
+          <label>Local:</label>
           <input id="compare-local" type="text" name="local" value="{{ escape(config_data['local']) }}" />
-          Base:
+          <label>Base:</label>
           <input id="compare-base" type="text" name="base" value="{{ escape(config_data['base']) }}" />
-          Remote:
+          <label>Remote:</label>
           <input id="compare-remote" type="text" name="remote" value="{{ escape(config_data['remote']) }}" />
           <input id="nbdime-run-compare" type="submit" name="auto" value="Compare files" />
+          <button id="nbdime-download" class="nbdime-header-button" style="display: none" type="button">Download</button>
         </fieldset>
       </form> <!-- nbdime-forms -->
+      <div id=nbdime-header-banner>
+        <span id="nbdime-header-local">Local</span>
+        <span id="nbdime-header-base">Base</span>
+        <span id="nbdime-header-remote">Remote</span>
+      </div>
     </div> <!-- ndime-header -->
       <div id="nbdime-root">
     </div>
