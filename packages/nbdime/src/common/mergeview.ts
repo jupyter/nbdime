@@ -267,9 +267,9 @@ class DiffView {
       }
       if (start < last) {
         edit.getDoc().replaceRange(
-          newLines.slice(start, end).join(''),
+          newLines.slice(start, last).join(''),
           CodeMirror.Pos(start, 0),
-          CodeMirror.Pos(end, 0),
+          CodeMirror.Pos(last, 0),
           'syncModel'
         );
       }
