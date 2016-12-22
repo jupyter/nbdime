@@ -142,7 +142,10 @@ def locate_gitattributes(global_=False):
             bpath = check_output(['git', 'config', '--global', 'core.attributesfile'])
             gitattributes = os.path.expanduser(bpath.decode('utf8', 'replace').strip())
         except CalledProcessError:
-            gitattributes = os.path.expanduser('~/.gitattributes')
+            if os.environ.get('XDG_CONFIG_HOME'):
+                gitattributes = os.path.expandvars('$XDG_CONFIG_HOME/git/attributes')
+            else:
+                gitattributes = os.path.expandvars('$HOME/.config/git/attributes')
     else:
         # find .gitattributes in current dir
         path = os.path.abspath('.')
