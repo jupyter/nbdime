@@ -145,7 +145,7 @@ def locate_gitattributes(global_=False):
             if os.environ.get('XDG_CONFIG_HOME'):
                 gitattributes = os.path.expandvars('$XDG_CONFIG_HOME/git/attributes')
             else:
-                gitattributes = os.path.expandvars('$HOME/.config/git/attributes')
+                gitattributes = os.path.expanduser('~/.config/git/attributes')
     else:
         # find .gitattributes in current dir
         path = os.path.abspath('.')
