@@ -41,7 +41,7 @@ const safeOutputs = ['text/plain', 'text/latex', 'image/png', 'image/jpeg',
 /**
  * A list of outputs that are sanitizable.
  */
-const sanitizable = ['text/svg', 'text/html'];
+const sanitizable = ['text/html'];
 
 /**
  * Widget for outputs with renderable MIME data.
@@ -70,25 +70,21 @@ abstract class RenderableDiffView<T extends JSONValue> extends Widget {
   }
 
   /**
-   * Checks if all MIME types of a MIME bundle are safe or can be sanitized.
+   * Checks if any MIME types of a MIME bundle are safe or can be sanitized.
    */
   static safeOrSanitizable(bundle: nbformat.IMimeBundle) {
     let keys = Object.keys(bundle);
     for (let key of keys) {
       if (valueIn(key, safeOutputs)) {
-        continue;
+        return true;
       } else if (valueIn(key, sanitizable)) {
         let out = bundle[key];
         if (typeof out === 'string') {
-          continue;
-        } else {
-          return false;
+          return true;
         }
-      } else {
-        return false;
       }
     }
-    return true;
+    return false;
   }
 
   layout: PanelLayout;
