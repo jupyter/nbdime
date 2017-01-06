@@ -46,6 +46,8 @@ class OutputDiffModel extends RenderableDiffModel<nbformat.IOutput> {
     if (outputs.output_type === 'stream' &&
           mimetype === 'application/vnd.jupyter.console-text') {
       return 'text';
+    } else if (outputs.output_type === 'error') {
+      return 'traceback';
     } else if (outputs.output_type === 'execute_result' || outputs.output_type === 'display_data') {
       let data = outputs.data;
       if (mimetype in data) {
@@ -65,7 +67,7 @@ class OutputDiffModel extends RenderableDiffModel<nbformat.IOutput> {
    */
   protected innerMimeType(key: string) : string {
     let t = (this.base || this.remote!).output_type;
-    if (t === 'stream' && key === 'text') {
+    if (t === 'stream' && key === 'text' || t === 'error' && key === 'traceback') {
       // TODO: 'application/vnd.jupyter.console-text'?
       return 'text/plain';
     } else if ((t === 'execute_result' || t === 'display_data') &&

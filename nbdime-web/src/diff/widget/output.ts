@@ -63,8 +63,8 @@ class RenderableOutputView extends RenderableDiffView<nbformat.IOutput> {
           return false;
         }
       } else if (valueIn(o.output_type, ['stream', 'error'])) {
-        // Unknown output type
-        return false;
+        // We "render" the text output, in terms of converting ANSI codes
+        return true;
       }
     }
     return true;
