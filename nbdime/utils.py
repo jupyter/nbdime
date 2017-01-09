@@ -3,8 +3,6 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-from __future__ import unicode_literals
-
 import errno
 import os
 import re
@@ -143,12 +141,12 @@ def ensure_dir_exists(path):
                 raise
 
 
-def locate_gitattributes(global_=False):
+def locate_gitattributes(scope=None):
     """Locate the .gitattributes file
 
     returns None if not in a git repo and global=False
     """
-    if global_:
+    if scope == 'global':
         try:
             bpath = check_output(['git', 'config', '--global', 'core.attributesfile'])
             gitattributes = os.path.expanduser(bpath.decode('utf8', 'replace').strip())
@@ -157,6 +155,22 @@ def locate_gitattributes(global_=False):
                 gitattributes = os.path.expandvars('$XDG_CONFIG_HOME/git/attributes')
             else:
                 gitattributes = os.path.expanduser('~/.config/git/attributes')
+    elif scope == 'system':
+        # git docs: "Attributes for all users on a system should be placed in
+        # the $(prefix)/etc/gitattributes file". Our job is then to check for
+        # $(prefix) value.
+        try:
+            env = os.environ.copy()
+            env['GIT_EDITOR'] = 'echo'
+            bpath = check_output(['git', 'config', '--system', '-e'], env=env)
+            gitconfig = bpath.decode('utf8', 'replace').strip()
+            gitattributes = os.path.join(os.path.dirname(gitconfig), 'gitattributes')
+        except CalledProcessError:
+            # Default to most likely case of empty $(prefix)
+            # Sanity check:
+            if not os.path.exists('/etc'):
+                raise EnvironmentError('Could not find system gitattributes location!')
+            gitattributes = os.path.join(['etc', 'gitattributes'])
     else:
         # find .gitattributes in current dir
         path = os.path.abspath('.')
@@ -164,7 +178,6 @@ def locate_gitattributes(global_=False):
             return None
         gitattributes = os.path.join(path, '.gitattributes')
     return gitattributes
-
 
 
 def is_prefix_array(parent, child):

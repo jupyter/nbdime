@@ -17,15 +17,16 @@ import sys
 from subprocess import check_call, check_output, CalledProcessError
 
 import nbdime.log
-from .args import add_generic_args
+from .args import add_generic_args, add_git_config_subcommand
 from .webapp import nbdifftool
 
 
-def enable(global_=False, set_default=False):
+def enable(scope=None, set_default=False):
     """Enable nbdime git difftool"""
     cmd = ['git', 'config']
-    if global_:
-        cmd.append('--global')
+    if scope:
+        assert scope in ('global', 'system')
+        cmd.append('--' + scope)
 
     check_call(cmd + ['difftool.nbdime.cmd', 'git-nbdifftool diff "$LOCAL" "$REMOTE"'])
     if set_default:
@@ -35,11 +36,12 @@ def enable(global_=False, set_default=False):
     check_call(cmd + ['difftool.prompt', 'false'])
 
 
-def disable(global_=False, *args):
+def disable(scope=None, *args):
     """Disable nbdime git difftool"""
     cmd = ['git', 'config']
-    if global_:
-        cmd.append('--global')
+    if scope:
+        assert scope in ('global', 'system')
+        cmd.append('--' + scope)
     try:
         tool = check_output(cmd + ['diff.guitool']).decode('utf8', 'replace').strip()
     except CalledProcessError:
@@ -82,29 +84,21 @@ def main(args=None):
     )
     nbdifftool.build_arg_parser(diff_parser)
 
-    config = subparsers.add_parser('config',
-        description="Configure git to use nbdime via `git difftool`")
-    config.add_argument('--global', action='store_true', dest='global_',
-        help="configure your global git config instead of the current repo"
-    )
+    config = add_git_config_subcommand(subparsers,
+        enable, disable,
+        subparser_help="Configure git to use nbdime via `git difftool`",
+        enable_help="enable nbdime difftool via git config",
+        disable_help="disable nbdime difftool via git config")
     config.add_argument('--set-default', action='store_true', dest='set_default',
         help="set nbdime as default gui difftool"
     )
-    enable_disable = config.add_mutually_exclusive_group(required=True)
-    enable_disable.add_argument('--enable', action='store_const',
-        dest='config_func', const=enable,
-        help="enable nbdime difftool via git config"
-    )
-    enable_disable.add_argument('--disable', action='store_const',
-        dest='config_func', const=disable,
-        help="disable nbdime difftool via git config"
-    )
+
     opts = parser.parse_args(args)
     nbdime.log.init_logging(level=opts.log_level)
     if opts.subcommand == 'diff':
         return show_diff(opts.local, opts.remote, opts)
     elif opts.subcommand == 'config':
-        opts.config_func(opts.global_, opts.set_default)
+        opts.config_func(opts.scope, opts.set_default)
         return 0
     else:
         parser.print_help()

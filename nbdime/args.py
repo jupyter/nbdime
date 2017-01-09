@@ -33,6 +33,35 @@ def add_generic_args(parser):
     )
 
 
+def add_git_config_subcommand(subparsers, enable, disable, subparser_help, enable_help, disable_help):
+    # Add subparser
+    config = subparsers.add_parser('config',
+        description=subparser_help)
+
+    # Option for git scope (global/system):
+    scope = config.add_mutually_exclusive_group()
+    scope.add_argument('--global', action='store_const', dest='scope',
+        const='global',
+        help="configure your global git config instead of the current repo"
+    )
+    scope.add_argument('--system', action='store_const', dest='scope',
+        const='system',
+        help="configure your system git config instead of the current repo"
+    )
+
+    # Add enable/disable flags
+    enable_disable = config.add_mutually_exclusive_group(required=True)
+    enable_disable.add_argument('--enable', action='store_const',
+        dest='config_func', const=enable,
+        help=enable_help
+    )
+    enable_disable.add_argument('--disable', action='store_const',
+        dest='config_func', const=disable,
+        help=disable_help
+    )
+    return config
+
+
 def add_web_args(parser, default_port=8888):
     """Adds a set of arguments common to all commands that show a web gui.
     """

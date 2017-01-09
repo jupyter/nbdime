@@ -16,14 +16,14 @@ from subprocess import check_call, CalledProcessError
 
 import nbdime.log
 from .webapp import nbmergetool
-from .args import add_generic_args
+from .args import add_generic_args, add_git_config_subcommand
 
 
-def enable(global_=False, set_default=False):
+def enable(scope=None, set_default=False):
     """Enable nbdime git mergetool"""
     cmd = ['git', 'config']
-    if global_:
-        cmd.append('--global')
+    if scope:
+        cmd.append('--%s' % scope)
 
     # Register CLI tool
     check_call(cmd + ['mergetool.nbdime.cmd', 'git-nbmergetool merge "$BASE" "$LOCAL" "$REMOTE" "$MERGED"'])
@@ -36,11 +36,11 @@ def enable(global_=False, set_default=False):
         check_call(cmd + ['merge.tool', 'nbdime'])
 
 
-def disable(global_=False, *args):
+def disable(scope=None, *args):
     """Disable nbdime git mergetool"""
     cmd = ['git', 'config']
-    if global_:
-        cmd.append('--global')
+    if scope:
+        cmd.append('--%s' % scope)
     try:
         check_call(cmd + ['--unset', 'merge.tool'])
     except CalledProcessError:
@@ -63,29 +63,21 @@ def main(args=None):
     )
     nbmergetool.build_arg_parser(merge_parser)
 
-    config = subparsers.add_parser('config',
-        description="Configure git to use nbdime via `git mergetool`")
-    config.add_argument('--global', action='store_true', dest='global_',
-        help="configure your global git config instead of the current repo"
-    )
+    config = add_git_config_subcommand(subparsers,
+        enable, disable,
+        subparser_help="Configure git to use nbdime via `git mergetool`",
+        enable_help="enable nbdime mergetool via git config",
+        disable_help="disable nbdime mergetool via git config")
     config.add_argument('--set-default', action='store_true', dest='set_default',
         help="set nbdime as default mergetool"
     )
-    enable_disable = config.add_mutually_exclusive_group(required=True)
-    enable_disable.add_argument('--enable', action='store_const',
-        dest='config_func', const=enable,
-        help="enable nbdime mergetool via git config"
-    )
-    enable_disable.add_argument('--disable', action='store_const',
-        dest='config_func', const=disable,
-        help="disable nbdime mergetool via git config"
-    )
+
     opts = parser.parse_args(args)
     nbdime.log.init_logging(level=opts.log_level)
     if opts.subcommand == 'merge':
         return nbmergetool.main_parsed(opts)
     elif opts.subcommand == 'config':
-        opts.config_func(opts.global_, opts.set_default)
+        opts.config_func(opts.scope, opts.set_default)
         return 0
     else:
         parser.print_help()
