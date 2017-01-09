@@ -1,6 +1,15 @@
 # Changes in nbdime
 
-## 0.1 - 2016-12
+## 0.1
+
+###  0.1.1 - 2017-01
+
+- Fix default location of `--global` git attributes file
+- Support `--system` argument for git configuration, allowing easy setup of nbdime system-wide
+- Render tracebacks in web view
+- Render output as long as one MIME-type is safe in web view
+
+### 0.1.0 - 2016-12
 
 First release of nbdime!
 
