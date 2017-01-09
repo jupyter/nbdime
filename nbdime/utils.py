@@ -142,8 +142,8 @@ def ensure_dir_exists(path):
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
-				
-				
+
+
 @contextlib.contextmanager
 def set_env(**environ):
     """
@@ -189,7 +189,8 @@ def locate_gitattributes(scope=None):
         try:
             with set_env(GIT_EDITOR='echo'):
                 bpath = check_output(['git', 'config', '--system', '-e'])
-                gitattributes = bpath.decode('utf8', 'replace').strip()
+                gitconfig = bpath.decode('utf8', 'replace').strip()
+                gitattributes = os.path.join(os.path.dirname(gitconfig), 'gitattributes')
         except CalledProcessError:
             # Default to most likely case of empty $(prefix)
             # Sanity check:
