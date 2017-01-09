@@ -148,7 +148,9 @@ def format_merge_render_lines(
     postlines = []
     i = len(local) - 1
     j = len(remote) - 1
-    while i >= 0 and j >= 0 and local[i] == remote[j]:
+    while (i >= 0 and i < len(local) and
+            j >= 0 and j < len(remote) and
+            local[i] == remote[j]):
         postlines.append(local[i])
         i += 1
         j += 1
