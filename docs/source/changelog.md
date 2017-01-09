@@ -6,8 +6,10 @@
 
 - Fix default location of `--global` git attributes file
 - Support `--system` argument for git configuration, allowing easy setup of nbdime system-wide
-- Render tracebacks in web view
+- Render tracebacks and colors in stream output in web view
 - Render output as long as one MIME-type is safe in web view
+- Improve styling of web view
+- Fix a bug in inline-merge
 
 ### 0.1.0 - 2016-12
 
