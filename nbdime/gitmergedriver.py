@@ -27,7 +27,7 @@ from subprocess import check_call, check_output, CalledProcessError
 import nbdime.log
 from . import nbmergeapp
 from .args import add_generic_args, add_diff_args, add_merge_args, add_filename_args
-from .utils import locate_gitattributes
+from .utils import locate_gitattributes, ensure_dir_exists
 
 def enable(global_=False):
     """Enable nbdime git merge driver"""
@@ -48,6 +48,8 @@ def enable(global_=False):
             if 'merge=jupyternotebook' in f.read():
                 # already written, nothing to do
                 return
+    else:
+        ensure_dir_exists(os.path.dirname(gitattributes))
 
     with io.open(gitattributes, 'a', encoding="utf8") as f:
         f.write(u'\n*.ipynb\tmerge=jupyternotebook\n')

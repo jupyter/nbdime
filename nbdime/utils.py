@@ -5,11 +5,12 @@
 
 from __future__ import unicode_literals
 
-from six import string_types, text_type
-from subprocess import check_output, CalledProcessError
-import re
+import errno
 import os
+import re
+from subprocess import check_output, CalledProcessError
 
+from six import string_types, text_type
 
 def as_text(text):
     if isinstance(text, list):
@@ -130,6 +131,16 @@ def is_in_repo(pkg_path):
         par_path = p.dirname(par_path)
 
     return False
+
+
+def ensure_dir_exists(path):
+    """Ensure a directory exists at a given path"""
+    if not os.path.exists(path):
+        try:
+            os.makedirs(path)
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                raise
 
 
 def locate_gitattributes(global_=False):
