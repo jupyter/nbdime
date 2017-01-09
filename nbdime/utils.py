@@ -171,7 +171,7 @@ def locate_gitattributes(scope=None):
             # Default to most likely case of empty $(prefix)
             # Sanity check:
             if not os.path.exists('/etc'):
-                raise EnvironmentError('Could not find system gitattribute location!')
+                raise EnvironmentError('Could not find system gitattributes location!')
             gitattributes = os.path.join(['etc', 'gitattributes'])
     else:
         # find .gitattributes in current dir

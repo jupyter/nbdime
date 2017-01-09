@@ -37,7 +37,8 @@ def enable(scope=None):
     check_call(cmd + ['diff.jupyternotebook.command', 'git-nbdiffdriver diff'])
     gitattributes = locate_gitattributes(scope)
     if gitattributes is None:
-        print("No .git directory in %s, skipping git attributes" % gitattributes, file=sys.stderr)
+        assert scope is None, "No gitattributes found for scope: %s" % scope
+        print("No .git directory in %s, skipping git attributes" % os.curdir, file=sys.stderr)
         return
 
     if os.path.exists(gitattributes):
