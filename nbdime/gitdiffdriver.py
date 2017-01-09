@@ -24,7 +24,7 @@ import sys
 from subprocess import check_call, check_output, CalledProcessError
 
 from . import nbdiffapp
-from .utils import locate_gitattributes
+from .utils import locate_gitattributes, ensure_dir_exists
 
 def enable(global_=False):
     """Enable nbdime git diff driver"""
@@ -43,6 +43,8 @@ def enable(global_=False):
             if 'diff=jupyternotebook' in f.read():
                 # already written, nothing to do
                 return
+    else:
+        ensure_dir_exists(os.path.dirname(gitattributes))
 
     with io.open(gitattributes, 'a', encoding="utf8") as f:
         f.write(u'\n*.ipynb\tdiff=jupyternotebook\n')
