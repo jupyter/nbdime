@@ -33,7 +33,7 @@ Merging notebooks in a browser:
 
 Install nbdime with pip:
 
-    pip install --upgrade nbdime
+    pip install nbdime
 
 See [the installation docs](https://nbdime.readthedocs.io/en/latest/installing.html) for more installation details and development installation instructions.
 
@@ -71,7 +71,7 @@ To run Javascript tests locally, in the `nbdime-web` folder enter: `npm test`
 
 Install the [codecov browser extension](https://github.com/codecov/browser-extension#codecov-extension) to view test coverage in the source browser on github.
 
-See [testing](https://jupyter.readthedocs.io/en/latest/testing.html) documentation for additional detail.
+See [testing](https://nbdime.readthedocs.io/en/latest/testing.html) documentation for additional detail.
 
 ## License
 
