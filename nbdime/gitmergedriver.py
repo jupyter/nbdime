@@ -18,29 +18,31 @@ Use with:
 
 from __future__ import print_function
 
-import io
-import sys
-import os
 import argparse
-from subprocess import check_call, check_output, CalledProcessError
+import io
+import os
+import sys
+from subprocess import check_call, CalledProcessError
 
 import nbdime.log
 from . import nbmergeapp
-from .args import add_generic_args, add_diff_args, add_merge_args, add_filename_args
+from .args import (
+    add_generic_args, add_diff_args, add_merge_args, add_filename_args, add_git_config_subcommand)
 from .utils import locate_gitattributes, ensure_dir_exists
 
-def enable(global_=False):
+
+def enable(scope=None):
     """Enable nbdime git merge driver"""
     cmd = ['git', 'config']
-    if global_:
-        cmd.append('--global')
+    if scope:
+        cmd.append('--%s' % scope)
 
     check_call(cmd + ['merge.jupyternotebook.driver', 'git-nbmergedriver merge %O %A %B %L %P'])
     check_call(cmd + ['merge.jupyternotebook.name', 'jupyter notebook merge driver'])
 
-    gitattributes = locate_gitattributes(global_)
+    gitattributes = locate_gitattributes(scope)
     if gitattributes is None:
-        print("No .git directory in %s, skipping git attributes" % path, file=sys.stderr)
+        print("No .git directory in %s, skipping git attributes" % gitattributes, file=sys.stderr)
         return
 
     if os.path.exists(gitattributes):
@@ -55,11 +57,11 @@ def enable(global_=False):
         f.write(u'\n*.ipynb\tmerge=jupyternotebook\n')
 
 
-def disable(global_=False):
+def disable(scope=None):
     """Disable nbdime git merge drivers"""
     cmd = ['git', 'config']
-    if global_:
-        cmd.append('--global')
+    if scope:
+        cmd.append('--%s' % scope)
     try:
         check_call(cmd + ['--remove-section', 'merge.jupyternotebook'])
     except CalledProcessError:
@@ -92,20 +94,13 @@ def main(args=None):
     # be stored via placeholder %P"
     # - NOTE: This is not where the driver should store its output, see below!
 
-    config = subparsers.add_parser('config',
-        description="Configure git to use nbdime for notebooks in `git merge`")
-    config.add_argument('--global', action='store_true', dest='global_',
-        help="configure your global git config instead of the current repo"
-    )
-    enable_disable = config.add_mutually_exclusive_group(required=True)
-    enable_disable.add_argument('--enable', action='store_const',
-        dest='config_func', const=enable,
-        help="enable nbdime merge driver via git config"
-    )
-    enable_disable.add_argument('--disable', action='store_const',
-        dest='config_func', const=disable,
-        help="disable nbdime merge driver via git config"
-    )
+
+    config = add_git_config_subcommand(subparsers,
+        enable, disable,
+        subparser_help="Configure git to use nbdime for notebooks in `git merge`",
+        enable_help="enable nbdime merge driver via git config",
+        disable_help="disable nbdime merge driver via git config")
+
     opts = parser.parse_args(args)
     nbdime.log.init_logging(level=opts.log_level)
     if opts.subcommand == 'merge':
@@ -117,7 +112,7 @@ def main(args=None):
         opts.decisions = False
         return nbmergeapp.main_merge(opts)
     elif opts.subcommand == 'config':
-        opts.config_func(opts.global_)
+        opts.config_func(opts.scope)
         return 0
     else:
         parser.print_help()

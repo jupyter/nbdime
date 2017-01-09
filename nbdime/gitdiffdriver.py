@@ -21,21 +21,23 @@ from __future__ import print_function
 import io
 import os
 import sys
-from subprocess import check_call, check_output, CalledProcessError
+from subprocess import check_call, CalledProcessError
 
 from . import nbdiffapp
+from .args import add_git_config_subcommand
 from .utils import locate_gitattributes, ensure_dir_exists
 
-def enable(global_=False):
+
+def enable(scope=None):
     """Enable nbdime git diff driver"""
     cmd = ['git', 'config']
-    if global_:
-        cmd.append('--global')
+    if scope:
+        cmd.append('--%s' % scope)
 
     check_call(cmd + ['diff.jupyternotebook.command', 'git-nbdiffdriver diff'])
-    gitattributes = locate_gitattributes(global_)
+    gitattributes = locate_gitattributes(scope)
     if gitattributes is None:
-        print("No .git directory in %s, skipping git attributes" % path, file=sys.stderr)
+        print("No .git directory in %s, skipping git attributes" % gitattributes, file=sys.stderr)
         return
 
     if os.path.exists(gitattributes):
@@ -50,11 +52,11 @@ def enable(global_=False):
         f.write(u'\n*.ipynb\tdiff=jupyternotebook\n')
 
 
-def disable(global_=False):
+def disable(scope=None):
     """Disable nbdime git diff drivers"""
     cmd = ['git', 'config']
-    if global_:
-        cmd.append('--global')
+    if scope:
+        cmd.append('--%s' % scope)
     try:
         check_call(cmd + ['--remove-section', 'diff.jupyternotebook'])
     except CalledProcessError:
@@ -86,26 +88,17 @@ def main(args=None):
     diff_parser.add_argument('rename_to', nargs='?', default=None)
 
     # TODO: From git docs: "For a path that is unmerged, GIT_EXTERNAL_DIFF is called with 1 parameter, <path>."
+    config = add_git_config_subcommand(subparsers,
+        enable, disable,
+        subparser_help="Configure git to use nbdime for notebooks in `git diff`",
+        enable_help="enable nbdime diff driver via git config",
+        disable_help="disable nbdime diff driver via git config")
 
-    config = subparsers.add_parser('config',
-        description="Configure git to use nbdime for notebooks in `git diff`")
-    config.add_argument('--global', action='store_true', dest='global_',
-        help="configure your global git config instead of the current repo"
-    )
-    enable_disable = config.add_mutually_exclusive_group(required=True)
-    enable_disable.add_argument('--enable', action='store_const',
-        dest='config_func', const=enable,
-        help="enable nbdime diff driver via git config"
-    )
-    enable_disable.add_argument('--disable', action='store_const',
-        dest='config_func', const=disable,
-        help="disable nbdime diff driver via git config"
-    )
     opts = parser.parse_args(args)
     if opts.subcommand == 'diff':
         return nbdiffapp.main([opts.a, opts.b])
     elif opts.subcommand == 'config':
-        opts.config_func(opts.global_)
+        opts.config_func(opts.scope)
         return 0
     else:
         parser.print_help()

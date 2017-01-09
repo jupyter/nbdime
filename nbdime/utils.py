@@ -5,6 +5,7 @@
 
 from __future__ import unicode_literals
 
+import contextlib
 import errno
 import os
 import re
@@ -141,14 +142,38 @@ def ensure_dir_exists(path):
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
+				
+				
+@contextlib.contextmanager
+def set_env(**environ):
+    """
+    Temporarily set the process environment variables.
+
+    >>> with set_env(PLUGINS_DIR=u'test/plugins'):
+    ...   "PLUGINS_DIR" in os.environ
+    True
+
+    >>> "PLUGINS_DIR" in os.environ
+    False
+
+    :type environ: dict[str, unicode]
+    :param environ: Environment variables to set
+    """
+    old_environ = dict(os.environ)
+    os.environ.update(environ)
+    try:
+        yield
+    finally:
+        os.environ.clear()
+        os.environ.update(old_environ)
 
 
-def locate_gitattributes(global_=False):
+def locate_gitattributes(scope=None):
     """Locate the .gitattributes file
 
     returns None if not in a git repo and global=False
     """
-    if global_:
+    if scope == 'global':
         try:
             bpath = check_output(['git', 'config', '--global', 'core.attributesfile'])
             gitattributes = os.path.expanduser(bpath.decode('utf8', 'replace').strip())
@@ -157,6 +182,20 @@ def locate_gitattributes(global_=False):
                 gitattributes = os.path.expandvars('$XDG_CONFIG_HOME/git/attributes')
             else:
                 gitattributes = os.path.expanduser('~/.config/git/attributes')
+    elif scope == 'system':
+        # git docs: "Attributes for all users on a system should be placed in
+        # the $(prefix)/etc/gitattributes file". Our job is then to check for
+        # $(prefix) value.
+        try:
+            with set_env(GIT_EDITOR='echo'):
+                bpath = check_output(['git', 'config', '--system', '-e'])
+                gitattributes = bpath.decode('utf8', 'replace').strip()
+        except CalledProcessError:
+            # Default to most likely case of empty $(prefix)
+            # Sanity check:
+            if not os.path.exists('/etc'):
+                raise EnvironmentError('Could not find system gitattribute location!')
+            gitattributes = os.path.join(['etc', 'gitattributes'])
     else:
         # find .gitattributes in current dir
         path = os.path.abspath('.')
@@ -164,7 +203,6 @@ def locate_gitattributes(global_=False):
             return None
         gitattributes = os.path.join(path, '.gitattributes')
     return gitattributes
-
 
 
 def is_prefix_array(parent, child):
