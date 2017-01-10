@@ -64,7 +64,7 @@ Many of us who are writing and sharing notebooks do so with git and GitHub.
 Git doesn't handle diffing and merging notebooks very well by default,
 but you can configure git to use nbdime and it will get a lot better.
 
-To configure git to use nbdime to as a command-line driver to diff and merge notebooks::
+To configure git to use nbdime as a command-line driver to diff and merge notebooks::
 
     git-nbdiffdriver config --enable --global
     git-nbmergedriver config --enable --global
