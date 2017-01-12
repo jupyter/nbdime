@@ -69,7 +69,7 @@ def compare_text_approximate(x, y):
     if nx < shortlen and ny < shortlen:
         return True
 
-    return compare_strings_approximate(x, y, threshold=0.7)
+    return compare_strings_approximate(x, y, threshold=0.7, autojunk=True)
 
 
 def compare_text_strict(x, y):
