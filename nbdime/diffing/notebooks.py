@@ -357,10 +357,12 @@ def diff_single_outputs(a, b, path="/cells/*/outputs/*",
     if a.output_type in ("execute_result", "display_data"):
         di = MappingDiffBuilder()
 
+        tmp_data = a.pop('data')
         a_conj = copy.deepcopy(a)
-        del a_conj['data']
+        a.data = tmp_data
+        tmp_data = b.pop('data')
         b_conj = copy.deepcopy(b)
-        del b_conj['data']
+        b.data = tmp_data
         dd_conj = diff(a_conj, b_conj)
         if dd_conj:
             for e in dd_conj:
