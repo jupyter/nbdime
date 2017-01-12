@@ -9,7 +9,6 @@ from __future__ import unicode_literals
 Utilities for computing 'snakes', or contiguous sequences of equal elements of two sequences.
 """
 
-import operator
 from ..diff_format import SequenceDiffBuilder
 from .seq_bruteforce import bruteforce_compute_snakes
 
