@@ -245,6 +245,7 @@ extras_require = setuptools_args['extras_require'] = {
         'jsonschema',
         'mock',
         'requests',
+        'tabulate',  # For profiling
     ],
     'docs': [
         'sphinx',
