@@ -25,16 +25,6 @@ from nbdime.prettyprint import merge_render
 from nbdime.merging.decisions import pop_all_patch_decisions, push_patch_decision
 
 
-# FIXME XXX: Main todos left:
-# - Rewrite resolve_* to work directly on decisions object,
-#   trying to resolve any conflicted decisions found
-# - _merge_strings is probably broken, test and fix 
-# - extend test_merge_notebooks_inline with more tests
-# - make existing test suite pass, either by modifying tests or fixing remaining bugs
-# - test that this still works with mergetool (it shouldn't need any changes in principle)
-# - remove autoresolve.py after checking for anything more we need from there
-
-
 # =============================================================================
 #
 # Utility code follows
