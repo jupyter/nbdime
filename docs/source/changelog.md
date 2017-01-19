@@ -2,6 +2,10 @@
 
 ## 0.1
 
+###  0.1.2 - 2017-01
+
+- Fix inclusion of webapp sources in wheels
+
 ###  0.1.1 - 2017-01
 
 - Fix default location of `--global` git attributes file
