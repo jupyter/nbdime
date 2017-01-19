@@ -413,10 +413,10 @@ def push_patch_decision(decision, prefix):
         assert dec.common_path[-1] == key, "Key %s not at end of %s" % (
             key, dec.common_path)
         dec.common_path = dec.common_path[:-1]  # pop key
-        dec.local_diff = [op_patch(key, dec.local_diff)]
-        dec.remote_diff = [op_patch(key, dec.remote_diff)]
+        dec.local_diff = [op_patch(key, dec.local_diff)] if dec.local_diff else []
+        dec.remote_diff = [op_patch(key, dec.remote_diff)] if dec.remote_diff else []
         if dec.action == "custom":
-            dec.custom_diff = [op_patch(key, dec.custom_diff)]
+            dec.custom_diff = [op_patch(key, dec.custom_diff)] if dec.custom_diff else []
     return dec
 
 
