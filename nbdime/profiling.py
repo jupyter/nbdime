@@ -31,7 +31,7 @@ The output becomes:
     image/png         5   0
 
 From this we can see that the HTML comparison is really blowing up!
-Further inspection reveales that there are two html outputs in each
+Further inspection reveals that there are two html outputs in each
 notebook that contain an embedded base64 image. These caused the text
 diff to blow up.
 
