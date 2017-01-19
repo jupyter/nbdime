@@ -161,7 +161,7 @@ package_data = {
     'nbdime': [
         'tests/files/*.*',
         '*.schema.json',
-        'webapp/static/**/*.*',
+        'webapp/static/*.*',
         'webapp/templates/*.*',
         'webapp/testnotebooks/*.*',
     ]
