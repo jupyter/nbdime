@@ -33,7 +33,7 @@ def default_differs():
     return defaultdict(lambda: diff)
 
 
-def compare_strings_approximate(x, y, threshold=0.7, autojunk=False):
+def compare_strings_approximate(x, y, threshold=0.7, quick=False):
     "Compare to strings with approximate heuristics."
     # TODO: Add configuration framework
     # TODO: Tune threshold with realistic sources
@@ -63,14 +63,19 @@ def compare_strings_approximate(x, y, threshold=0.7, autojunk=False):
 
     # So the heavy ratio function is only used for close calls.
     # s = difflib.SequenceMatcher(lambda c: c in (" ", "\t"), x, y, autojunk=False)
-    s = difflib.SequenceMatcher(None, x, y, autojunk=autojunk)
+    s = difflib.SequenceMatcher(None, x, y, autojunk=False)
 
     # Use only the fast ratio approximations first
     if s.real_quick_ratio() < threshold:
         return False
     if s.quick_ratio() < threshold:
         return False
-    return s.ratio() > threshold
+
+    # Skip slower and stricter check unless if quick is set
+    if quick:
+        return True
+    else:
+        return s.ratio() > threshold
 
 
 def diff(a, b, path="", predicates=None, differs=None):

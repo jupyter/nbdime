@@ -35,6 +35,7 @@ re_repr = re.compile(r"<[a-z0-9._]+ at 0x[a-f0-9]{8,16}>", re.IGNORECASE)
 
 re_pointer = re.compile(r"0x[a-f0-9]{8,16}", re.IGNORECASE)
 
+re_number = re.compile(r"^[+-]?[0-9]*[.]?[0-9]*[eE]?[+-]?[0-9]*$")
 
 # List of mimes we can diff recursively
 _split_mimes = (
@@ -45,73 +46,77 @@ _split_mimes = (
     )
 
 
+# TODO: Rename compare_* -> align_* to better reflect what this is used for?
+
+
 # TODO: Maybe cleaner to make the split between strict/approximate
 #       an argument instead of separate functions.
 
 
+def compare_text(x, y, strict):
+    if strict:
+        return compare_strings_approximate(x, y, threshold=0.95)
+    else:
+        return compare_strings_approximate(x, y, threshold=0.7, quick=False)
+
 def compare_text_approximate(x, y):
-    # Fast cutoff when one is empty
-    if bool(x) != bool(y):
-        return False
-
-    if isinstance(x, list):
-        x = "".join(x)
-    if isinstance(y, list):
-        y = "".join(y)
-
-    # TODO: Review whether this is wanted.
-    #       The motivation is to align tiny
-    #       strings in outputs such as a single number.
-    # Allow aligning short strings without comparison
-    nx = len(x)
-    ny = len(y)
-    shortlen = 10  # TODO: Add this to configuration framework
-    if nx < shortlen and ny < shortlen:
-        return True
-
-    return compare_strings_approximate(x, y, threshold=0.7, autojunk=True)
-
+    return compare_text(x, y, strict=False)
 
 def compare_text_strict(x, y):
-    # TODO: Doesn't have to be 100% equal here?
-    if isinstance(x, list):
-        x = "".join(x)
-    if isinstance(y, list):
-        y = "".join(y)
-    if len(x) == len(y) and x == y:
-        return True
-    return compare_strings_approximate(x, y, threshold=0.95)
+    return compare_text(x, y, strict=True)
 
 
 def compare_base64_strict(x, y):
     if len(x) != len(y):
         return False
-    # TODO: Handle base64 data another way?
     return x == y
 
 
-def _compare_mimedata(mimetype, x, y, comp_text, comp_base64):
+compare_text_plain_strict = compare_text_strict
+
+def compare_text_plain_approximate(x, y):
+    assert isinstance(x, string_types)
+    assert isinstance(y, string_types)
+
+    # Special cutoffs for short texts
+    # TODO: Make this configurable behaviour? Or drop it completely?
+    shortlen = 256  # Magic number larger than typical single lines
+    if len(x) == len(y) and len(x) < shortlen:
+        # Align if differing by pointer values only
+        xsplit = re_pointer.split(x)
+        ysplit = re_pointer.split(y)
+        if xsplit == ysplit:
+            return True
+
+        # Align simple numbers
+        if re_number.match(x) and re_number.match(y):
+            return True
+
+    # Fallback to regular approximate text comparison
+    return compare_text_approximate(x, y)
+
+
+def _compare_mimedata(mimetype, x, y, comp_text, comp_text_plain, comp_base64):
     mimetype = mimetype.lower()
 
-    # TODO: Test this. Match repr-style oneliners with random pointer
+    # Special case cutoffs for simple text/plain strings
     if mimetype == "text/plain":
-        # Allow short texts to only differ by pointer values
-        if "\n" not in x and "\n" not in y:
-            xsplit = re_pointer.split(x)
-            ysplit = re_pointer.split(y)
-            if xsplit == ysplit:
-                return True
+        return comp_text_plain(x, y)
 
+    # Pure text comparison
     if mimetype.startswith("text/"):
         return comp_text(x, y)
 
     # TODO: Compare binary images?
     #if mimetype.startswith("image/"):
+
+    # Text values but not text/ type
     if isinstance(x, string_types) and isinstance(y, string_types):
         # Most likely base64 encoded data
         if _base64.match(x):
             return comp_base64(x, y)
         else:
+            # If not fallback to pure text comparison
             return comp_text(x, y)
 
     # Fallback to exactly equal
@@ -120,12 +125,12 @@ def _compare_mimedata(mimetype, x, y, comp_text, comp_base64):
 
 def compare_mimedata_approximate(mimetype, x, y):
     return _compare_mimedata(mimetype, x, y,
-        compare_text_approximate, compare_base64_strict)
+        compare_text_approximate, compare_text_plain_approximate, compare_base64_strict)
 
 
 def compare_mimedata_strict(mimetype, x, y):
     return _compare_mimedata(mimetype, x, y,
-        compare_text_strict, compare_base64_strict)
+        compare_text_strict, compare_text_plain_strict, compare_base64_strict)
 
 
 def compare_mimebundle_approximate(x, y):
