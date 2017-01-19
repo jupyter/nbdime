@@ -53,17 +53,11 @@ _split_mimes = (
 #       an argument instead of separate functions.
 
 
-def compare_text(x, y, strict):
-    if strict:
-        return compare_strings_approximate(x, y, threshold=0.95)
-    else:
-        return compare_strings_approximate(x, y, threshold=0.7, quick=False)
-
 def compare_text_approximate(x, y):
-    return compare_text(x, y, strict=False)
+    return compare_strings_approximate(x, y, threshold=0.7, quick=True)
 
 def compare_text_strict(x, y):
-    return compare_text(x, y, strict=True)
+    return compare_strings_approximate(x, y, threshold=0.95)
 
 
 def compare_base64_strict(x, y):
