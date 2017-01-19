@@ -31,9 +31,9 @@ _base64 = re.compile(r'^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]
 
 # A regexp matching common python repr-style output like
 # <module.type at 0xmemoryaddress>
-re_repr = re.compile(r"<[a-zA-Z0-9._]+ at 0x[a-zA-Z0-9]+>")
+re_repr = re.compile(r"<[a-zA-Z0-9._]+ at 0[xX][a-fA-F0-9]{8,16}>")
 
-re_pointer = re.compile(r"0[xX][a-zA-Z0-9]{8,16}")
+re_pointer = re.compile(r"0[xX][a-fA-F0-9]{8,16}")
 
 
 # List of mimes we can diff recursively
