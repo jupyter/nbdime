@@ -33,7 +33,7 @@ def default_differs():
     return defaultdict(lambda: diff)
 
 
-def compare_strings_approximate(x, y, threshold=0.7, quick=False):
+def compare_strings_approximate(x, y, threshold=0.7):
     "Compare to strings with approximate heuristics."
     # TODO: Add configuration framework
     # TODO: Tune threshold with realistic sources
@@ -70,12 +70,7 @@ def compare_strings_approximate(x, y, threshold=0.7, quick=False):
         return False
     if s.quick_ratio() < threshold:
         return False
-
-    # Skip slower and stricter check unless if quick is set
-    if quick:
-        return True
-    else:
-        return s.ratio() > threshold
+    return s.ratio() > threshold
 
 
 def diff(a, b, path="", predicates=None, differs=None):

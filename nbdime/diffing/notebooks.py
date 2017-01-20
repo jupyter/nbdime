@@ -54,7 +54,8 @@ _split_mimes = (
 
 
 def compare_text_approximate(x, y):
-    return compare_strings_approximate(x, y, threshold=0.7, quick=True)
+    return compare_strings_approximate(x, y, threshold=0.7)
+
 
 def compare_text_strict(x, y):
     return compare_strings_approximate(x, y, threshold=0.95)
