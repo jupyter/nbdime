@@ -17,7 +17,7 @@ try:
 except ImportError:
     from backports.shutil_which import which
 
-COMMANDS = ["show", "diff", "merge", "diff-web", "merge-web", "mergetool"]
+COMMANDS = ["show", "diff", "merge", "diff-web", "merge-web", "mergetool", "config-git"]
 HELP_MESSAGE_VERBOSE = ("Usage: nbdime [OPTIONS]\n\n"
                        "OPTIONS: -h, --version, COMMANDS{%s}\n\n"
                        "Examples: nbdime --version\n"
@@ -65,6 +65,20 @@ def main_dispatch(args=None):
         from nbdime.webapp.nbmergeweb import main
     elif cmd == 'mergetool':
         main = main_mergetool
+    elif cmd == 'config-git':
+        # Call all git configs
+        from nbdime.gitdiffdriver import main as diff_driver
+        from nbdime.gitdifftool import main as diff_tool
+        from nbdime.gitmergedriver import main as merge_driver
+        from nbdime.gitmergetool import main as merge_tool
+        args = ['config'] + args
+        # Short-circuit on first non-zero return code:
+        return (
+            diff_driver(args) or
+            merge_driver(args) or
+            diff_tool(args) or
+            merge_tool(args)
+        )
     else:
         if cmd == '--version':
             sys.exit(__version__)
