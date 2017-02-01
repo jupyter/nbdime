@@ -263,7 +263,7 @@ def main_server(on_port=None, closable=False, **params):
     _logger.debug("Using params: %s" % params)
     params.update({"closable": closable})
     port = params.pop("port")
-    ip = params.pop("ip")
+    ip = params.pop("ip", "127.0.0.1")
     app = make_app(**params)
     if port != 0 or on_port is None:
         app.listen(port, address=ip)
