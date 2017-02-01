@@ -18,6 +18,7 @@ cache:
     - nbdime/webapp/node_modules # NPM packages
     - nbdime-web/node_modules # NPM packages
 before_install:
+  - pip install -U pip setuptools
   - nvm install 6
   - |
     if [[ $GROUP == python ]]; then
