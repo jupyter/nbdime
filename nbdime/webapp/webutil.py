@@ -11,7 +11,7 @@ from tornado.httputil import url_concat
 _logger = logging.getLogger(__name__)
 
 
-def browse(ip, port, browsername, rel_url, **url_args):
+def browse(port, browsername=None, rel_url='diff', ip='127.0.0.1', **url_args):
     try:
         browser = webbrowser.get(browsername)
     except webbrowser.Error as e:
