@@ -148,6 +148,13 @@ def test_diffdriver_config(git_repo):
     assert not os.path.exists('.gitattributes')
 
     main(['config', '--enable'])
+    _check_diffdriver_enabled()
+
+    main(['config', '--disable'])
+    _check_diffdriver_disabled()
+
+
+def _check_diffdriver_enabled():
     assert os.path.exists('.gitattributes')
     with io.open('.gitattributes', 'r', encoding='utf8') as f:
         gitattributes = f.read()
@@ -155,9 +162,10 @@ def test_diffdriver_config(git_repo):
     out = get_output('git config --get --local diff.jupyternotebook.command')
     assert 'git-nbdiffdriver' in out
 
-    main(['config', '--disable'])
+
+def _check_diffdriver_disabled():
     with pytest.raises(CalledProcessError):
-        out = get_output('git config --get --local diff.jupyternotebook.command')
+        get_output('git config --get --local diff.jupyternotebook.command')
 
 
 def test_difftool_config(git_repo):
@@ -168,20 +176,27 @@ def test_difftool_config(git_repo):
     assert not os.path.exists('.gitattributes')
 
     main(['config', '--enable'])
-    out = get_output('git config --get --local difftool.nbdime.cmd')
-    assert 'git-nbdifftool' in out
-
-    with pytest.raises(CalledProcessError):
-        out = get_output('git config --get --local diff.guitool')
+    _check_difftool_enabled()
 
     main(['config', '--enable', '--set-default'])
     out = get_output('git config --get --local diff.guitool')
     assert 'nbdime' == out.strip()
 
     main(['config', '--disable'])
-    
+    _check_difftool_disabled()
+
+
+def _check_difftool_enabled():
+    out = get_output('git config --get --local difftool.nbdime.cmd')
+    assert 'git-nbdifftool' in out
+
     with pytest.raises(CalledProcessError):
         out = get_output('git config --get --local diff.guitool')
+
+
+def _check_difftool_disabled():
+    with pytest.raises(CalledProcessError):
+        get_output('git config --get --local diff.guitool')
 
 
 def test_mergedriver_config(git_repo):
@@ -191,6 +206,13 @@ def test_mergedriver_config(git_repo):
     assert not os.path.exists('.gitattributes')
 
     main(['config', '--enable'])
+    _check_mergedriver_enabled()
+
+    main(['config', '--disable'])
+    _check_mergedriver_disabled()
+
+
+def _check_mergedriver_enabled():
     assert os.path.exists('.gitattributes')
     with io.open('.gitattributes', 'r', encoding='utf8') as f:
         gitattributes = f.read()
@@ -198,9 +220,10 @@ def test_mergedriver_config(git_repo):
     out = get_output('git config --get --local merge.jupyternotebook.driver')
     assert 'git-nbmergedriver' in out
 
-    main(['config', '--disable'])
+
+def _check_mergedriver_disabled():
     with pytest.raises(CalledProcessError):
-        out = get_output('git config --get --local merge.jupyternotebook.driver')
+        get_output('git config --get --local merge.jupyternotebook.driver')
 
 
 def test_mergetool_config(git_repo):
@@ -209,20 +232,27 @@ def test_mergetool_config(git_repo):
         main(['config', '-h'])
 
     main(['config', '--enable'])
-    out = get_output('git config --get --local mergetool.nbdime.cmd')
-    assert 'git-nbmergetool' in out
-
-    with pytest.raises(CalledProcessError):
-        out = get_output('git config --get --local merge.tool')
+    _check_mergetool_enabled()
 
     main(['config', '--enable', '--set-default'])
     out = get_output('git config --get --local merge.tool')
     assert 'nbdime' == out.strip()
 
     main(['config', '--disable'])
+    _check_mergetool_disabled()
+
+
+def _check_mergetool_enabled():
+    out = get_output('git config --get --local mergetool.nbdime.cmd')
+    assert 'git-nbmergetool' in out
 
     with pytest.raises(CalledProcessError):
         out = get_output('git config --get --local merge.tool')
+
+
+def _check_mergetool_disabled():
+    with pytest.raises(CalledProcessError):
+        get_output('git config --get --local merge.tool')
 
 
 def test_diffdriver(git_repo):
