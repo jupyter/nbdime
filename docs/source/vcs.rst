@@ -37,7 +37,7 @@ Git integration of nbdime is supported in two ways:
 
 Configure git integration by editing the ``.gitconfig``
 (or ``.git/config``) and ``.gitattributes`` in each
-git repository or in the home directory for global effect.
+git repository or in the home/etc directory for global effect.
 Read on for commands that edit these files
 and execute nbdime through git.
 
@@ -59,11 +59,11 @@ Command line registration
 nbdime supplies an entry point for registering its driver
 with git::
 
-    git-nbdiffdriver config --enable [--global]
+    git-nbdiffdriver config --enable [--global | --system]
 
-This command will register the nbdime diff driver with 
-git on the project (repository) or global (user) level
-when the ``--global`` option is used.
+This command will register the nbdime diff driver with
+git on the repository, global (user), or ssytem level
+according to the ``--global`` or ``--system`` options.
 Additionally, this command will associate the diff driver with
 the ``.ipynb`` file extension, again either on the project
 or global level.
@@ -74,7 +74,7 @@ Manual registration
 Alternatively, the diff driver can be registered manually
 with the following steps:
 
-- To register the driver with git under the name 
+- To register the driver with git under the name
   ``"jupyternotebook"``, add the following entries to the
   appropriate ``.gitconfig`` file::
 
@@ -82,7 +82,7 @@ with the following steps:
     command = git-nbdiffdriver diff
 
 - To associate the diff driver with a file type,
-  add the following entry to the appropriate 
+  add the following entry to the appropriate
   ``.gitattributes`` file::
 
     *.ipynb diff=jupyternotebook
@@ -101,14 +101,14 @@ Registration can be done in two ways -- at the command line or manually.
 Command line registration
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-nbdime supplies an entry point for registering its merge 
+nbdime supplies an entry point for registering its merge
 driver with git::
 
-    git-nbmergedriver config --enable [--global]
+    git-nbmergedriver config --enable [--global | --system]
 
-This command will register the nbdime merge driver with 
-git on the project or global level. Additionaly, the 
-command will associate the merge driver with the 
+This command will register the nbdime merge driver with
+git on the project or global level. Additionaly, the
+command will associate the merge driver with the
 ``.ipynb`` file extension, again either on the project
 or global level.
 
@@ -118,17 +118,17 @@ Manual registration
 Alternatively, the merge driver can be registered manually
 with the following steps:
 
-- To register the driver with git under the name 
-  "jupyternotebook", add the following entries to the appropriate 
+- To register the driver with git under the name
+  "jupyternotebook", add the following entries to the appropriate
   ``.gitconfig`` file::
 
     [merge "jupyternotebook"]
     command = git-nbmergedriver merge %O %A %B %L %P
 
 - To associate the merge driver with a file type,
-  add the following entry to the appropriate 
+  add the following entry to the appropriate
   ``.gitattributes`` file::
-    
+
     *.ipynb merge=jupyternotebook
 
 
@@ -144,7 +144,7 @@ Command line registration
 
 To register nbdime as a git diff tool, run the command::
 
-    git-nbdifftool config --enable [--global]
+    git-nbdifftool config --enable [--global | --system]
 
 Once registered, the diff tool can be started by running
 the git command::
@@ -155,10 +155,10 @@ If you want to avoid specifying the tool each time, nbdime
 can be set as the default tool by adding the ``--set-default``
 flag to the registration command::
 
-    git-nbdifftool config --enable [--global] --set-default
+    git-nbdifftool config --enable [--global | --system] --set-default
 
 This command will set the CLI's diff tool as the default diff tool, and
-the web based diff tool as the default GUI diff tool. To 
+the web based diff tool as the default GUI diff tool. To
 launch the web view with this configuration, run the
 git command as follows::
 
@@ -183,13 +183,13 @@ with the following steps:
 
     [difftool "nbdime"]
     cmd = git-nbdifftool diff "$LOCAL" "$REMOTE"
-    
+
     [difftool "nbdime"]
     cmd = git-nbdifftool "$LOCAL" "$REMOTE"
 
 - To set the diff tools as the default tools, add or modify
   the following entries in the appropriate``.gitconfig`` file::
-    
+
     [diff]
     tool = nbdime
     guitool = nbdime
@@ -206,7 +206,7 @@ Command line registration
 
 To register nbdime as a git merge tool, run the command::
 
-    git-nbmergetool config --enable [--global]
+    git-nbmergetool config --enable [--global | --system]
 
 Once registered, the merge tool can be started by running
 the git command::
@@ -217,19 +217,19 @@ If you want to avoid specifying the tool each time, nbdime
 can be set as the default tool by adding the ``--set-default``
 flag to the registration command::
 
-    git-nbmergetool config --enable --set-default [--global]
+    git-nbmergetool config --enable --set-default [--global | --system]
 
 This will allow the merge tool to be launched simply by::
 
     git mergetool [<file>…​]
 
-.. note:: 
+.. note::
     Git does not allow to select different tools per file type,
     so if you set nbdime as the default tool it will be called
     for *all merge conflicts*. This includes non-notebooks, which
     nbdime will fail to process. For most repositories, it will
     therefore not make sense to have nbdime as the default, but
-    rather to call it selectively 
+    rather to call it selectively
 
 
 Manual registration

@@ -6,7 +6,7 @@ Other files are displayed via `git diff`.
 
 Enable in your global git config with:
 
-    git-nbdifftool config --enable [--global]
+    git-nbdifftool config --enable [--global | --system]
 
 Use with:
 
