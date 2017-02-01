@@ -6,9 +6,10 @@ from __future__ import unicode_literals
 
 import sys
 from argparse import ArgumentParser
+import warnings
 
 from .nbdimeserver import main_server as run_server
-from .webutil import browse
+from .webutil import browse as browse_util
 from ..args import add_generic_args, add_web_args, add_diff_args, add_filename_args
 import nbdime.log
 
@@ -30,6 +31,18 @@ def build_arg_parser():
     return parser
 
 
+def browse(port, base, remote, browser):
+    browse_util(port=port,
+                browsername=browser,
+                rel_url='diff',
+                base=base,
+                remote=remote)
+    warnings.warn(
+        'This function is deprecated. '
+        'Use nbdime.webapp.webutil.browse() instead.',
+        DeprecationWarning)
+
+
 def main(args=None):
     if args is None:
         args = sys.argv[1:]
@@ -44,7 +57,7 @@ def main(args=None):
     return run_server(
         port=port, cwd=cwd, ip=ip,
         closable=True,
-        on_port=lambda port: browse(
+        on_port=lambda port: browse_util(
             port=port,
             browsername=browsername,
             rel_url='diff',
