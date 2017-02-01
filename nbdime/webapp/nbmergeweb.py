@@ -6,18 +6,12 @@ from __future__ import unicode_literals
 
 import sys
 from argparse import ArgumentParser
-import webbrowser
-import logging
-import threading
-from tornado.httputil import url_concat
 
 from ..args import add_generic_args, add_diff_args
 from ..args import add_merge_args, add_web_args, add_filename_args
 from .nbdimeserver import main_server as run_server
+from .webutil import browse
 import nbdime.log
-
-
-_logger = logging.getLogger(__name__)
 
 
 def build_arg_parser():
@@ -43,28 +37,13 @@ def build_arg_parser():
     return parser
 
 
-def browse(port, base, local, remote, browsername):
-    try:
-        browser = webbrowser.get(browsername)
-    except webbrowser.Error as e:
-        _logger.warning('No web browser found: %s.', e)
-        browser = None
-
-    url = url_concat("http://127.0.0.1:%s/merge" % port,
-                     dict(base=base, local=local, remote=remote))
-    nbdime.log.info("URL: " + url)
-    if browser:
-        def launch_browser():
-            browser.open(url, new=2)
-        threading.Thread(target=launch_browser).start()
-
-
 def main(args=None):
     if args is None:
         args = sys.argv[1:]
     arguments = build_arg_parser().parse_args(args)
     nbdime.log.init_logging(level=arguments.log_level)
     port = arguments.port
+    ip = arguments.ip
     cwd = arguments.workdirectory
     base = arguments.base
     local = arguments.local
@@ -72,10 +51,12 @@ def main(args=None):
     output = arguments.output
     browsername = arguments.browser
     return run_server(
-        port=port, cwd=cwd,
+        port=port, cwd=cwd, ip=ip,
         closable=True,
         outputfilename=output,
-        on_port=lambda port: browse(port, base, local, remote, browsername))
+        on_port=lambda port: browse(
+            ip, port, browsername, 'merge',
+            base=base, local=local, remote=remote))
 
 
 if __name__ == "__main__":
