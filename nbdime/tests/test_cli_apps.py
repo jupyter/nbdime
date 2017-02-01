@@ -26,6 +26,7 @@ import nbdime
 from nbdime.nbshowapp import main_show
 from nbdime.nbdiffapp import main_diff
 from nbdime.nbmergeapp import main_merge
+from nbdime.__main__ import main_dispatch
 from nbdime import (
     nbshowapp,
     nbdiffapp,
@@ -253,6 +254,39 @@ def _check_mergetool_enabled():
 def _check_mergetool_disabled():
     with pytest.raises(CalledProcessError):
         get_output('git config --get --local merge.tool')
+
+
+def test_config_git(git_repo):
+    """Check that `nbime config-git` command works"""
+
+    main_dispatch(['config-git', '--enable'])
+
+    _check_diffdriver_enabled()
+    _check_difftool_enabled()
+    _check_mergedriver_enabled()
+    _check_mergetool_enabled()
+
+    main_dispatch(['config-git', '--disable'])
+
+    _check_diffdriver_disabled()
+    _check_difftool_disabled()
+    _check_mergedriver_disabled()
+    _check_mergetool_disabled()
+
+
+def test_config_git_fails(git_repo):
+    """Check that `nbime config-git` command fails given invalid option"""
+    # Check that it either gives non-zero return code (or exit code)
+    try:
+        code = main_dispatch(['config-git', '--foo'])
+        assert code != 0
+    except SystemExit as e:
+        assert e.code != 0
+    finally:
+        _check_diffdriver_disabled()
+        _check_difftool_disabled()
+        _check_mergedriver_disabled()
+        _check_mergetool_disabled()
 
 
 def test_diffdriver(git_repo):
