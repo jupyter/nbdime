@@ -72,12 +72,12 @@ def main_parsed(opts):
         difftool_args=dict(base=base, remote=remote),
         on_port=lambda port: browse(port, browsername))
 
+
 def main(args=None):
     if args is None:
         args = sys.argv[1:]
     opts = build_arg_parser().parse_args(args)
     return main_parsed(opts)
-
 
 
 if __name__ == "__main__":
