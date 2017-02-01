@@ -284,7 +284,7 @@ def test_mergedriver(git_repo):
     # run merge with conflicts
     with pytest.raises(CalledProcessError):
         call('git merge remote-conflict')
-    
+
     status = get_output('git status')
     assert 'merge-conflict.ipynb' in status
     out = get_output('git diff HEAD')
@@ -295,6 +295,7 @@ def test_mergedriver(git_repo):
 
 
 WEB_TEST_TIMEOUT = 15
+
 
 def _wait_up(url, interval=0.1, check=None):
     while True:
@@ -307,6 +308,7 @@ def _wait_up(url, interval=0.1, check=None):
             time.sleep(interval)
         else:
             break
+
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
 def test_difftool(git_repo, request):
@@ -323,17 +325,18 @@ def test_difftool(git_repo, request):
         f.write('*.ipynb\tdiff=notnbdime')
 
     p = Popen(['git', 'difftool', '--tool=nbdime', 'base'])
+
     def _term():
         try:
             p.terminate()
         except OSError:
             pass
     request.addfinalizer(_term)
-    
+
     # 3 is the number of notebooks in this diff
     url = 'http://127.0.0.1:%i' % port
     for i in range(3):
-        _wait_up(url, check=lambda : p.poll() is None)
+        _wait_up(url, check=lambda: p.poll() is None)
         # server started
         r = requests.get(url + '/difftool')
         r.raise_for_status()
@@ -356,20 +359,21 @@ def test_mergetool(git_repo, request):
     cmd = cmd + ' --port=%i --browser=disabled' % port
     call(['git', 'config', 'mergetool.nbdime.cmd', cmd])
     call(['git', 'config', 'mergetool.nbdime.trustExitCode', 'true'])
-    
+
     with pytest.raises(CalledProcessError):
         call('git merge remote-conflict')
     p = Popen(['git', 'mergetool', '--no-prompt', '--tool=nbdime', 'merge-conflict.ipynb'])
+
     def _term():
         try:
             p.terminate()
         except OSError:
             pass
     request.addfinalizer(_term)
-    
+
     # 3 is the number of notebooks in this diff
     url = 'http://127.0.0.1:%i' % port
-    _wait_up(url, check=lambda : p.poll() is None)
+    _wait_up(url, check=lambda: p.poll() is None)
     # server started
     r = requests.get(url + '/mergetool')
     r.raise_for_status()
@@ -388,13 +392,15 @@ def test_mergetool(git_repo, request):
     assert p.poll() == 0
 
 
+
+
+
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
 def test_diff_web():
     port = 62023
     files = filespath()
     a = os.path.join(files, 'src-and-output--1.ipynb')
     b = os.path.join(files, 'src-and-output--2.ipynb')
-    ns = {}
     loop = ioloop.IOLoop.current()
     loop.call_later(0, loop.stop)
     nbdime.webapp.nbdiffweb.main(['--port=%i' % port, '--browser=disabled', a, b])
@@ -407,7 +413,6 @@ def test_merge_web():
     a = os.path.join(files, 'multilevel-test-base.ipynb')
     b = os.path.join(files, 'multilevel-test-local.ipynb')
     c = os.path.join(files, 'multilevel-test-remote.ipynb')
-    ns = {}
     loop = ioloop.IOLoop.current()
     loop.call_later(0, loop.stop)
     nbdime.webapp.nbmergeweb.main(['--port=%i' % port, '--browser=disabled', a, b, c])
