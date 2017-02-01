@@ -13,6 +13,8 @@ Version control integration
     follow the same patterns as outlined
     in the manual registration sections.
 
+
+
 .. _git-integration:
 
 Git integration
@@ -41,6 +43,12 @@ git repository or in the home directory for global effect.
 Read on for commands that edit these files
 and execute nbdime through git.
 
+To configure all diff/merge drivers and tools, simply call::
+
+    nbdime config-git (--enable | --disable)
+
+
+
 Diff driver
 ***********
 
@@ -61,7 +69,7 @@ with git::
 
     git-nbdiffdriver config --enable [--global]
 
-This command will register the nbdime diff driver with 
+This command will register the nbdime diff driver with
 git on the project (repository) or global (user) level
 when the ``--global`` option is used.
 Additionally, this command will associate the diff driver with
@@ -74,7 +82,7 @@ Manual registration
 Alternatively, the diff driver can be registered manually
 with the following steps:
 
-- To register the driver with git under the name 
+- To register the driver with git under the name
   ``"jupyternotebook"``, add the following entries to the
   appropriate ``.gitconfig`` file::
 
@@ -82,7 +90,7 @@ with the following steps:
     command = git-nbdiffdriver diff
 
 - To associate the diff driver with a file type,
-  add the following entry to the appropriate 
+  add the following entry to the appropriate
   ``.gitattributes`` file::
 
     *.ipynb diff=jupyternotebook
@@ -101,14 +109,14 @@ Registration can be done in two ways -- at the command line or manually.
 Command line registration
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-nbdime supplies an entry point for registering its merge 
+nbdime supplies an entry point for registering its merge
 driver with git::
 
     git-nbmergedriver config --enable [--global]
 
-This command will register the nbdime merge driver with 
-git on the project or global level. Additionaly, the 
-command will associate the merge driver with the 
+This command will register the nbdime merge driver with
+git on the project or global level. Additionaly, the
+command will associate the merge driver with the
 ``.ipynb`` file extension, again either on the project
 or global level.
 
@@ -118,17 +126,17 @@ Manual registration
 Alternatively, the merge driver can be registered manually
 with the following steps:
 
-- To register the driver with git under the name 
-  "jupyternotebook", add the following entries to the appropriate 
+- To register the driver with git under the name
+  "jupyternotebook", add the following entries to the appropriate
   ``.gitconfig`` file::
 
     [merge "jupyternotebook"]
     command = git-nbmergedriver merge %O %A %B %L %P
 
 - To associate the merge driver with a file type,
-  add the following entry to the appropriate 
+  add the following entry to the appropriate
   ``.gitattributes`` file::
-    
+
     *.ipynb merge=jupyternotebook
 
 
@@ -158,7 +166,7 @@ flag to the registration command::
     git-nbdifftool config --enable [--global] --set-default
 
 This command will set the CLI's diff tool as the default diff tool, and
-the web based diff tool as the default GUI diff tool. To 
+the web based diff tool as the default GUI diff tool. To
 launch the web view with this configuration, run the
 git command as follows::
 
@@ -183,13 +191,13 @@ with the following steps:
 
     [difftool "nbdime"]
     cmd = git-nbdifftool diff "$LOCAL" "$REMOTE"
-    
+
     [difftool "nbdime"]
     cmd = git-nbdifftool "$LOCAL" "$REMOTE"
 
 - To set the diff tools as the default tools, add or modify
   the following entries in the appropriate``.gitconfig`` file::
-    
+
     [diff]
     tool = nbdime
     guitool = nbdime
@@ -223,13 +231,13 @@ This will allow the merge tool to be launched simply by::
 
     git mergetool [<file>…​]
 
-.. note:: 
+.. note::
     Git does not allow to select different tools per file type,
     so if you set nbdime as the default tool it will be called
     for *all merge conflicts*. This includes non-notebooks, which
     nbdime will fail to process. For most repositories, it will
     therefore not make sense to have nbdime as the default, but
-    rather to call it selectively 
+    rather to call it selectively
 
 
 Manual registration

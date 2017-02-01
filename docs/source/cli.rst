@@ -9,6 +9,8 @@ nbdime provides the following CLI commands::
     nbdiff-web
     nbmerge
     nbmerge-web
+    mergetool
+    config-git
 
 Pass ``--help`` to each command to see help text for the command's usage.
 

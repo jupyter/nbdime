@@ -23,6 +23,7 @@ HELP_MESSAGE_VERBOSE = ("Usage: nbdime [OPTIONS]\n\n"
                        "Examples: nbdime --version\n"
                        "          nbdime show -h\n"
                        "          nbdime merge-web\n\n"
+                       "          nbdime config-git (--enable | --disable)"
                        "Documentation: https://nbdime.readthedocs.io" % ", ".join(COMMANDS))
 
 
