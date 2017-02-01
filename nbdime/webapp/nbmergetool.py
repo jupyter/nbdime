@@ -55,11 +55,16 @@ def main_parsed(opts):
     remote = opts.remote
     merged = opts.merged
     browsername = opts.browser
-    return run_server(port=port, cwd=cwd, ip=ip,
-                      closable=True,
-                      mergetool_args=dict(base=base, local=local, remote=remote),
-                      outputfilename=merged,
-                      on_port=lambda port: browse(ip, port, browsername, 'mergetool'))
+    return run_server(
+        port=port, cwd=cwd, ip=ip,
+        closable=True,
+        mergetool_args=dict(base=base, local=local, remote=remote),
+        outputfilename=merged,
+        on_port=lambda port: browse(
+            port=port,
+            browsername=browsername,
+            rel_url='mergetool',
+            ip=ip))
 
 
 def main(args=None):

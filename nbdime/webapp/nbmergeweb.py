@@ -55,7 +55,10 @@ def main(args=None):
         closable=True,
         outputfilename=output,
         on_port=lambda port: browse(
-            ip, port, browsername, 'merge',
+            port=port,
+            browsername=browsername,
+            rel_url='merge',
+            ip=ip,
             base=base, local=local, remote=remote))
 
 

@@ -11,7 +11,7 @@ from tornado.httputil import url_concat
 _logger = logging.getLogger(__name__)
 
 
-def browse(port, browsername=None, rel_url='diff', ip='127.0.0.1', **url_args):
+def browse(port, browsername=None, rel_url='', ip='127.0.0.1', **url_args):
     try:
         browser = webbrowser.get(browsername)
     except webbrowser.Error as e:
@@ -20,7 +20,7 @@ def browse(port, browsername=None, rel_url='diff', ip='127.0.0.1', **url_args):
 
     if ip == '0.0.0.0':
         ip = '127.0.0.1'
-    elif ip in('::', '0:0:0:0:0:0:0:0'):
+    elif ip in ('::', '0:0:0:0:0:0:0:0'):
         ip = '::1'
 
     url = url_concat("http://%s:%s/%s" % (ip, port, rel_url), url_args)

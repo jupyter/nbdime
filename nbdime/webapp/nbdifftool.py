@@ -51,7 +51,11 @@ def main_parsed(opts):
         port=port, cwd=cwd, ip=ip,
         closable=True,
         difftool_args=dict(base=base, remote=remote),
-        on_port=lambda port: browse(ip, port, browsername, 'difftool'))
+        on_port=lambda port: browse(
+            port=port,
+            browsername=browsername,
+            rel_url='difftool',
+            ip=ip))
 
 def main(args=None):
     if args is None:

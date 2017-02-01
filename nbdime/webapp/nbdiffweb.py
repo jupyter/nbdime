@@ -45,7 +45,10 @@ def main(args=None):
         port=port, cwd=cwd, ip=ip,
         closable=True,
         on_port=lambda port: browse(
-            ip, port, browsername, 'diff',
+            port=port,
+            browsername=browsername,
+            rel_url='diff',
+            ip=ip,
             base=base, remote=remote))
 
 
