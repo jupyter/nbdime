@@ -297,7 +297,7 @@ def main(args=None):
         args = sys.argv[1:]
     arguments = _build_arg_parser().parse_args(args)
     nbdime.log.init_logging(level=arguments.log_level)
-    return main_server(port=arguments.port, cwd=arguments.workdirectory)
+    return main_server(port=arguments.port, ip=arguments.ip, cwd=arguments.workdirectory)
 
 
 if __name__ == "__main__":
