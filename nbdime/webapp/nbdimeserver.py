@@ -263,11 +263,12 @@ def main_server(on_port=None, closable=False, **params):
     _logger.debug("Using params: %s" % params)
     params.update({"closable": closable})
     port = params.pop("port")
+    ip = params.pop("ip", "127.0.0.1")
     app = make_app(**params)
     if port != 0 or on_port is None:
-        app.listen(port, address='127.0.0.1')
+        app.listen(port, address=ip)
     else:
-        sockets = netutil.bind_sockets(0, '127.0.0.1')
+        sockets = netutil.bind_sockets(0, ip)
         server = httpserver.HTTPServer(app)
         server.add_sockets(sockets)
         for s in sockets:
@@ -296,7 +297,7 @@ def main(args=None):
         args = sys.argv[1:]
     arguments = _build_arg_parser().parse_args(args)
     nbdime.log.init_logging(level=arguments.log_level)
-    return main_server(port=arguments.port, cwd=arguments.workdirectory)
+    return main_server(port=arguments.port, ip=arguments.ip, cwd=arguments.workdirectory)
 
 
 if __name__ == "__main__":
