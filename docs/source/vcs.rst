@@ -13,6 +13,8 @@ Version control integration
     follow the same patterns as outlined
     in the manual registration sections.
 
+
+
 .. _git-integration:
 
 Git integration
@@ -41,6 +43,12 @@ git repository or in the home/etc directory for global effect.
 Read on for commands that edit these files
 and execute nbdime through git.
 
+To configure all diff/merge drivers and tools, simply call::
+
+    nbdime config-git (--enable | --disable)
+
+
+
 Diff driver
 ***********
 
@@ -62,7 +70,7 @@ with git::
     git-nbdiffdriver config --enable [--global | --system]
 
 This command will register the nbdime diff driver with
-git on the repository, global (user), or ssytem level
+git on the project (repository), global (user), or sytem level
 according to the ``--global`` or ``--system`` options.
 Additionally, this command will associate the diff driver with
 the ``.ipynb`` file extension, again either on the project

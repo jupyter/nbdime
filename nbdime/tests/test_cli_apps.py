@@ -26,6 +26,7 @@ import nbdime
 from nbdime.nbshowapp import main_show
 from nbdime.nbdiffapp import main_diff
 from nbdime.nbmergeapp import main_merge
+from nbdime.__main__ import main_dispatch
 from nbdime import (
     nbshowapp,
     nbdiffapp,
@@ -148,6 +149,13 @@ def test_diffdriver_config(git_repo):
     assert not os.path.exists('.gitattributes')
 
     main(['config', '--enable'])
+    _check_diffdriver_enabled()
+
+    main(['config', '--disable'])
+    _check_diffdriver_disabled()
+
+
+def _check_diffdriver_enabled():
     assert os.path.exists('.gitattributes')
     with io.open('.gitattributes', 'r', encoding='utf8') as f:
         gitattributes = f.read()
@@ -155,9 +163,10 @@ def test_diffdriver_config(git_repo):
     out = get_output('git config --get --local diff.jupyternotebook.command')
     assert 'git-nbdiffdriver' in out
 
-    main(['config', '--disable'])
+
+def _check_diffdriver_disabled():
     with pytest.raises(CalledProcessError):
-        out = get_output('git config --get --local diff.jupyternotebook.command')
+        get_output('git config --get --local diff.jupyternotebook.command')
 
 
 def test_difftool_config(git_repo):
@@ -168,20 +177,27 @@ def test_difftool_config(git_repo):
     assert not os.path.exists('.gitattributes')
 
     main(['config', '--enable'])
-    out = get_output('git config --get --local difftool.nbdime.cmd')
-    assert 'git-nbdifftool' in out
-
-    with pytest.raises(CalledProcessError):
-        out = get_output('git config --get --local diff.guitool')
+    _check_difftool_enabled()
 
     main(['config', '--enable', '--set-default'])
     out = get_output('git config --get --local diff.guitool')
     assert 'nbdime' == out.strip()
 
     main(['config', '--disable'])
-    
+    _check_difftool_disabled()
+
+
+def _check_difftool_enabled():
+    out = get_output('git config --get --local difftool.nbdime.cmd')
+    assert 'git-nbdifftool' in out
+
     with pytest.raises(CalledProcessError):
         out = get_output('git config --get --local diff.guitool')
+
+
+def _check_difftool_disabled():
+    with pytest.raises(CalledProcessError):
+        get_output('git config --get --local diff.guitool')
 
 
 def test_mergedriver_config(git_repo):
@@ -191,6 +207,13 @@ def test_mergedriver_config(git_repo):
     assert not os.path.exists('.gitattributes')
 
     main(['config', '--enable'])
+    _check_mergedriver_enabled()
+
+    main(['config', '--disable'])
+    _check_mergedriver_disabled()
+
+
+def _check_mergedriver_enabled():
     assert os.path.exists('.gitattributes')
     with io.open('.gitattributes', 'r', encoding='utf8') as f:
         gitattributes = f.read()
@@ -198,9 +221,10 @@ def test_mergedriver_config(git_repo):
     out = get_output('git config --get --local merge.jupyternotebook.driver')
     assert 'git-nbmergedriver' in out
 
-    main(['config', '--disable'])
+
+def _check_mergedriver_disabled():
     with pytest.raises(CalledProcessError):
-        out = get_output('git config --get --local merge.jupyternotebook.driver')
+        get_output('git config --get --local merge.jupyternotebook.driver')
 
 
 def test_mergetool_config(git_repo):
@@ -209,20 +233,60 @@ def test_mergetool_config(git_repo):
         main(['config', '-h'])
 
     main(['config', '--enable'])
-    out = get_output('git config --get --local mergetool.nbdime.cmd')
-    assert 'git-nbmergetool' in out
-
-    with pytest.raises(CalledProcessError):
-        out = get_output('git config --get --local merge.tool')
+    _check_mergetool_enabled()
 
     main(['config', '--enable', '--set-default'])
     out = get_output('git config --get --local merge.tool')
     assert 'nbdime' == out.strip()
 
     main(['config', '--disable'])
+    _check_mergetool_disabled()
+
+
+def _check_mergetool_enabled():
+    out = get_output('git config --get --local mergetool.nbdime.cmd')
+    assert 'git-nbmergetool' in out
 
     with pytest.raises(CalledProcessError):
         out = get_output('git config --get --local merge.tool')
+
+
+def _check_mergetool_disabled():
+    with pytest.raises(CalledProcessError):
+        get_output('git config --get --local merge.tool')
+
+
+def test_config_git(git_repo):
+    """Check that `nbime config-git` command works"""
+
+    main_dispatch(['config-git', '--enable'])
+
+    _check_diffdriver_enabled()
+    _check_difftool_enabled()
+    _check_mergedriver_enabled()
+    _check_mergetool_enabled()
+
+    main_dispatch(['config-git', '--disable'])
+
+    _check_diffdriver_disabled()
+    _check_difftool_disabled()
+    _check_mergedriver_disabled()
+    _check_mergetool_disabled()
+
+
+def test_config_git_fails(git_repo):
+    """Check that `nbime config-git` command fails given invalid option"""
+    # Check that it either gives non-zero return code (or exit code)
+    try:
+        code = main_dispatch(['config-git', '--foo'])
+        assert code != 0
+    except SystemExit as e:
+        assert e.code != 0
+    finally:
+        _check_diffdriver_disabled()
+        _check_difftool_disabled()
+        _check_mergedriver_disabled()
+        _check_mergetool_disabled()
 
 
 def test_diffdriver(git_repo):
@@ -254,7 +318,7 @@ def test_mergedriver(git_repo):
     # run merge with conflicts
     with pytest.raises(CalledProcessError):
         call('git merge remote-conflict')
-    
+
     status = get_output('git status')
     assert 'merge-conflict.ipynb' in status
     out = get_output('git diff HEAD')
@@ -265,6 +329,7 @@ def test_mergedriver(git_repo):
 
 
 WEB_TEST_TIMEOUT = 15
+
 
 def _wait_up(url, interval=0.1, check=None):
     while True:
@@ -277,6 +342,7 @@ def _wait_up(url, interval=0.1, check=None):
             time.sleep(interval)
         else:
             break
+
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
 def test_difftool(git_repo, request):
@@ -293,17 +359,18 @@ def test_difftool(git_repo, request):
         f.write('*.ipynb\tdiff=notnbdime')
 
     p = Popen(['git', 'difftool', '--tool=nbdime', 'base'])
+
     def _term():
         try:
             p.terminate()
         except OSError:
             pass
     request.addfinalizer(_term)
-    
+
     # 3 is the number of notebooks in this diff
     url = 'http://127.0.0.1:%i' % port
     for i in range(3):
-        _wait_up(url, check=lambda : p.poll() is None)
+        _wait_up(url, check=lambda: p.poll() is None)
         # server started
         r = requests.get(url + '/difftool')
         r.raise_for_status()
@@ -326,20 +393,21 @@ def test_mergetool(git_repo, request):
     cmd = cmd + ' --port=%i --browser=disabled' % port
     call(['git', 'config', 'mergetool.nbdime.cmd', cmd])
     call(['git', 'config', 'mergetool.nbdime.trustExitCode', 'true'])
-    
+
     with pytest.raises(CalledProcessError):
         call('git merge remote-conflict')
     p = Popen(['git', 'mergetool', '--no-prompt', '--tool=nbdime', 'merge-conflict.ipynb'])
+
     def _term():
         try:
             p.terminate()
         except OSError:
             pass
     request.addfinalizer(_term)
-    
+
     # 3 is the number of notebooks in this diff
     url = 'http://127.0.0.1:%i' % port
-    _wait_up(url, check=lambda : p.poll() is None)
+    _wait_up(url, check=lambda: p.poll() is None)
     # server started
     r = requests.get(url + '/mergetool')
     r.raise_for_status()
@@ -358,13 +426,15 @@ def test_mergetool(git_repo, request):
     assert p.poll() == 0
 
 
+
+
+
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
 def test_diff_web():
     port = 62023
     files = filespath()
     a = os.path.join(files, 'src-and-output--1.ipynb')
     b = os.path.join(files, 'src-and-output--2.ipynb')
-    ns = {}
     loop = ioloop.IOLoop.current()
     loop.call_later(0, loop.stop)
     nbdime.webapp.nbdiffweb.main(['--port=%i' % port, '--browser=disabled', a, b])
@@ -377,7 +447,6 @@ def test_merge_web():
     a = os.path.join(files, 'multilevel-test-base.ipynb')
     b = os.path.join(files, 'multilevel-test-local.ipynb')
     c = os.path.join(files, 'multilevel-test-remote.ipynb')
-    ns = {}
     loop = ioloop.IOLoop.current()
     loop.call_later(0, loop.stop)
     nbdime.webapp.nbmergeweb.main(['--port=%i' % port, '--browser=disabled', a, b, c])

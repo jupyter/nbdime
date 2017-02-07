@@ -64,6 +64,12 @@ Many of us who are writing and sharing notebooks do so with git and GitHub.
 Git doesn't handle diffing and merging notebooks very well by default,
 but you can configure git to use nbdime and it will get a lot better.
 
+The quickest way to get set up for git integration is to call::
+
+    nbdime config-git --enable
+
+This will enable the both the drivers and the tools for both diff and merge.
+
 To configure git to use nbdime as a command-line driver to diff and merge notebooks::
 
     git-nbdiffdriver config --enable --global
@@ -107,6 +113,14 @@ and::
 
     You can still call :command:`nbdiff-web` to diff files directly,
     but getting the files from git refs is still on our TODO list.
+
+.. note::
+
+    If you simply call `git mergetool --tool nbdime`, it will be called
+    for all merge conflicts, even on filetypes that it cannot handle. To
+    only call on notebooks, add a filter on file paths, e.g.
+    `git mergetool --tool nbdime -- *.ipynb`. **This command has also been
+    aliased as `nbdime mergetool` for easy access**.
 
 
 For more detailed information on integrating nbdime with version control, see :doc:`vcs`.
