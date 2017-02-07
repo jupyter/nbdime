@@ -55,6 +55,28 @@ function getConfigOption(name: string): any {
   return configData[name];
 }
 
+const spinner = document.createElement('div');
+spinner.className = 'nbdime-spinner';
+/**
+ * Turn spinner (loading indicator) on/off
+ */
+export
+function toggleSpinner(state?: boolean) {
+  let header = document.getElementById('nbdime-header-buttonrow')!;
+  // Figure out current state
+  let current = header.contains(spinner);
+  if (state === undefined) {
+    state = !current;
+  } else if (state === current) {
+    return;  // Nothing to do
+  }
+  if (state) {
+    header.appendChild(spinner);
+  } else {
+    header.removeChild(spinner);
+  }
+}
+
 
 export let toolClosed = false;
 /**

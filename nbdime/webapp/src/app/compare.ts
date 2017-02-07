@@ -12,7 +12,7 @@ import {
 } from './merge';
 
 import {
-  getConfigOption, closeTool
+  getConfigOption, closeTool, toggleSpinner
 } from './common';
 
 
@@ -49,6 +49,7 @@ function onCompare(e: Event) {
 };
 
 function compare(b: string, c: string, r: string, pushHistory: boolean | 'replace') {
+  toggleSpinner(true);
   let count = 0;
   for (let v of [b, c, r]) {
     if (v) {

@@ -33,6 +33,22 @@ body {
   margin-right: 10px;
 }
 
-.nbdime-Diff .nbdime-header-buttonrow {
-  display: none;
+#nbdime-header-buttonrow .nbdime-spinner {
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  border-width: 3px;
+}
+
+.nbdime-spinner {
+    border: 16px solid #eee;
+    border-top-color: #999;
+    border-bottom-color: #999;
+    border-radius: 50%;
+    animation: spin 1.3s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }

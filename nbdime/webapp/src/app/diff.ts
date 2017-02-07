@@ -45,7 +45,7 @@ import {
 } from 'nbdime/lib/request';
 
 import {
-  getConfigOption
+  getConfigOption, toggleSpinner
 } from './common';
 
 import {
@@ -112,6 +112,7 @@ function onDiff(e: Event) {
 
 
 function compare(base: string, remote: string, pushHistory: boolean | 'replace') {
+  toggleSpinner(true);
   getDiff(base, remote);
   if (pushHistory) {
     let uri = window.location.pathname;
@@ -148,6 +149,7 @@ function onDiffRequestCompleted(data: any) {
   layoutWork.then(() => {
     let exportBtn = document.getElementById('nbdime-export') as HTMLButtonElement;
     exportBtn.style.display = 'initial';
+    toggleSpinner(false);
   });
 }
 
@@ -161,6 +163,7 @@ function onDiffRequestFailed(response: string) {
     throw new Error('Missing root element "nbidme-root"');
   }
   root.innerHTML = '<pre>' + response + '</pre>';
+  toggleSpinner(false);
 }
 
 
