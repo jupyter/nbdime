@@ -5,7 +5,7 @@ Uses nbdime to merge notebooks instead of plain text merges of JSON.
 
 Enable in your global git config with:
 
-    git-nbmergetool config --enable [--global]
+    git-nbmergetool config --enable [--global | --system]
 
 Use with:
 

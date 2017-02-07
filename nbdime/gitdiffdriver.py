@@ -9,7 +9,7 @@ identify filetypes with the driver:
 
 Enable in your global git config with:
 
-    git-nbdiffdriver config --enable [--global]
+    git-nbdiffdriver config --enable [--global | --system]
 
 Use with:
 

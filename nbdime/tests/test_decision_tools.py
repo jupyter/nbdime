@@ -5,8 +5,6 @@
 
 from __future__ import unicode_literals
 
-import pytest
-
 from nbdime.diff_format import op_remove, op_patch
 from nbdime.merging.decisions import (
     ensure_common_path, resolve_action, MergeDecisionBuilder,

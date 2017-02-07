@@ -6,17 +6,12 @@ from __future__ import unicode_literals
 
 import sys
 from argparse import ArgumentParser
-import webbrowser
-import logging
-import threading
-from tornado.httputil import url_concat
+import warnings
 
 from .nbdimeserver import main_server as run_server
+from .webutil import browse as browse_util
 from ..args import add_generic_args, add_web_args, add_diff_args, add_filename_args
 import nbdime.log
-
-
-_logger = logging.getLogger(__name__)
 
 
 def build_arg_parser():
@@ -36,20 +31,16 @@ def build_arg_parser():
     return parser
 
 
-def browse(port, base, remote, browsername):
-    try:
-        browser = webbrowser.get(browsername)
-    except webbrowser.Error as e:
-        _logger.warning('No web browser found: %s.', e)
-        browser = None
-
-    url = url_concat("http://127.0.0.1:%s/diff" % port,
-                     dict(base=base, remote=remote))
-    nbdime.log.info("URL: " + url)
-    if browser:
-        def launch_browser():
-            browser.open(url, new=2)
-        threading.Thread(target=launch_browser).start()
+def browse(port, base, remote, browser):
+    browse_util(port=port,
+                browsername=browser,
+                rel_url='diff',
+                base=base,
+                remote=remote)
+    warnings.warn(
+        'This function is deprecated. '
+        'Use nbdime.webapp.webutil.browse() instead.',
+        DeprecationWarning)
 
 
 def main(args=None):
@@ -58,14 +49,20 @@ def main(args=None):
     arguments = build_arg_parser().parse_args(args)
     nbdime.log.init_logging(level=arguments.log_level)
     port = arguments.port
+    ip = arguments.ip
     cwd = arguments.workdirectory
     base = arguments.base
     remote = arguments.remote
     browsername = arguments.browser
     return run_server(
-        port=port, cwd=cwd,
+        port=port, cwd=cwd, ip=ip,
         closable=True,
-        on_port=lambda port: browse(port, base, remote, browsername))
+        on_port=lambda port: browse_util(
+            port=port,
+            browsername=browsername,
+            rel_url='diff',
+            ip=ip,
+            base=base, remote=remote))
 
 
 if __name__ == "__main__":

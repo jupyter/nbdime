@@ -39,7 +39,7 @@ Git integration of nbdime is supported in two ways:
 
 Configure git integration by editing the ``.gitconfig``
 (or ``.git/config``) and ``.gitattributes`` in each
-git repository or in the home directory for global effect.
+git repository or in the home/etc directory for global effect.
 Read on for commands that edit these files
 and execute nbdime through git.
 
@@ -67,11 +67,11 @@ Command line registration
 nbdime supplies an entry point for registering its driver
 with git::
 
-    git-nbdiffdriver config --enable [--global]
+    git-nbdiffdriver config --enable [--global | --system]
 
 This command will register the nbdime diff driver with
-git on the project (repository) or global (user) level
-when the ``--global`` option is used.
+git on the project (repository), global (user), or sytem level
+according to the ``--global`` or ``--system`` options.
 Additionally, this command will associate the diff driver with
 the ``.ipynb`` file extension, again either on the project
 or global level.
@@ -112,7 +112,7 @@ Command line registration
 nbdime supplies an entry point for registering its merge
 driver with git::
 
-    git-nbmergedriver config --enable [--global]
+    git-nbmergedriver config --enable [--global | --system]
 
 This command will register the nbdime merge driver with
 git on the project or global level. Additionaly, the
@@ -152,7 +152,7 @@ Command line registration
 
 To register nbdime as a git diff tool, run the command::
 
-    git-nbdifftool config --enable [--global]
+    git-nbdifftool config --enable [--global | --system]
 
 Once registered, the diff tool can be started by running
 the git command::
@@ -163,7 +163,7 @@ If you want to avoid specifying the tool each time, nbdime
 can be set as the default tool by adding the ``--set-default``
 flag to the registration command::
 
-    git-nbdifftool config --enable [--global] --set-default
+    git-nbdifftool config --enable [--global | --system] --set-default
 
 This command will set the CLI's diff tool as the default diff tool, and
 the web based diff tool as the default GUI diff tool. To
@@ -214,7 +214,7 @@ Command line registration
 
 To register nbdime as a git merge tool, run the command::
 
-    git-nbmergetool config --enable [--global]
+    git-nbmergetool config --enable [--global | --system]
 
 Once registered, the merge tool can be started by running
 the git command::
@@ -225,7 +225,7 @@ If you want to avoid specifying the tool each time, nbdime
 can be set as the default tool by adding the ``--set-default``
 flag to the registration command::
 
-    git-nbmergetool config --enable --set-default [--global]
+    git-nbmergetool config --enable --set-default [--global | --system]
 
 This will allow the merge tool to be launched simply by::
 

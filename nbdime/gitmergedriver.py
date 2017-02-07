@@ -9,7 +9,7 @@ identify filetypes with the driver:
 
 Enable in your global git config with:
 
-    git-nbmergedriver config --enable [--global]
+    git-nbmergedriver config --enable [--global | --system]
 
 Use with:
 
