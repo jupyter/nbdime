@@ -48,11 +48,16 @@ import {
   getConfigOption
 } from './common';
 
+import {
+  exportDiff
+} from './staticdiff';
+
+
 
 /**
  * Show the diff as represented by the base notebook and a list of diff entries
  */
-function showDiff(data: {base: nbformat.INotebookContent, diff: IDiffEntry[]}) {
+function showDiff(data: {base: nbformat.INotebookContent, diff: IDiffEntry[]}): Promise<void> {
   const transformers = [
     new JavascriptRenderer(),
     new MarkdownRenderer(),
@@ -90,6 +95,7 @@ function showDiff(data: {base: nbformat.INotebookContent, diff: IDiffEntry[]}) {
   work.then(() => {
     window.onresize = () => { panel.update(); };
   });
+  return work;
 }
 
 /**
@@ -137,7 +143,12 @@ function getDiff(base: string, remote: string) {
  * Callback for a successfull diff request
  */
 function onDiffRequestCompleted(data: any) {
-  showDiff(data);
+  let layoutWork = showDiff(data);
+
+  layoutWork.then(() => {
+    let exportBtn = document.getElementById('nbdime-export') as HTMLButtonElement;
+    exportBtn.style.display = 'initial';
+  });
 }
 
 /**
@@ -190,4 +201,7 @@ function initializeDiff() {
   if (base && remote) {
     compare(base, remote, 'replace');
   }
+
+  let exportBtn = document.getElementById('nbdime-export') as HTMLButtonElement;
+  exportBtn.onclick = exportDiff;
 }
