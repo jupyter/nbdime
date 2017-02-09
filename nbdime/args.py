@@ -92,6 +92,10 @@ def add_web_args(parser, default_port=8888):
         help="specify the working directory you want "
              "the server to run from. Default is the "
              "actual cwd at program start.")
+    parser.add_argument(
+        '--base-url',
+        default='/',
+        help="The base URL prefix under which to run the web app")
 
 
 def add_diff_args(parser):

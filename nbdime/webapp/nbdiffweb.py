@@ -50,6 +50,7 @@ def main(args=None):
     nbdime.log.init_logging(level=arguments.log_level)
     port = arguments.port
     ip = arguments.ip
+    base_url = arguments.base_url
     cwd = arguments.workdirectory
     base = arguments.base
     remote = arguments.remote
@@ -57,8 +58,10 @@ def main(args=None):
     return run_server(
         port=port, cwd=cwd, ip=ip,
         closable=True,
+        base_url=base_url,
         on_port=lambda port: browse_util(
             port=port,
+            base_url=base_url,
             browsername=browsername,
             rel_url='diff',
             ip=ip,

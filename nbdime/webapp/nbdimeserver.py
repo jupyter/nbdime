@@ -245,6 +245,13 @@ def make_app(**params):
         (r"/api/closetool", ApiCloseHandler, params),
         (r"/static", web.StaticFileHandler, {"path": static_path}),
     ]
+    base_url = params.get('base_url', '/')
+    if base_url != '/':
+        prefix = base_url.rstrip('/')
+        handlers = [
+            (prefix + path, cls, params)
+            for (path, cls, params) in handlers
+        ]
 
     settings = {
         "static_path": static_path,
@@ -303,7 +310,11 @@ def main(args=None):
         args = sys.argv[1:]
     arguments = _build_arg_parser().parse_args(args)
     nbdime.log.init_logging(level=arguments.log_level)
-    return main_server(port=arguments.port, ip=arguments.ip, cwd=arguments.workdirectory)
+    return main_server(port=arguments.port,
+                       ip=arguments.ip,
+                       cwd=arguments.workdirectory,
+                       base_url=arguments.base_url,
+                       )
 
 
 if __name__ == "__main__":

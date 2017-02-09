@@ -50,6 +50,7 @@ def main_parsed(opts):
     return run_server(
         port=port, cwd=cwd, ip=ip,
         closable=True,
+        base_url=arguments.base_url,
         difftool_args=dict(base=base, remote=remote),
         on_port=lambda port: browse(
             port=port,
