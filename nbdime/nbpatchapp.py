@@ -16,7 +16,7 @@ import io
 import nbdime
 from nbdime.patching import patch_notebook
 from nbdime.diff_format import to_diffentry_dicts
-from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook_or_empty
+from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook
 from nbdime.prettyprint import pretty_print_notebook
 
 

@@ -17,7 +17,7 @@ import nbdime
 from nbdime.diffing.notebooks import diff_notebooks
 from nbdime.prettyprint import pretty_print_notebook_diff
 from nbdime.args import add_generic_args, add_diff_args, add_filename_args
-from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook_or_empty
+from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook
 
 
 _description = "Compute the difference between two Jupyter notebooks."

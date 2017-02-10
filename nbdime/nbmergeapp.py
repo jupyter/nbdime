@@ -17,7 +17,7 @@ import nbdime
 import nbdime.log
 from nbdime.merging import merge_notebooks
 from nbdime.prettyprint import pretty_print_merge_decisions
-from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook_or_minimal
+from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook
 
 _description = ('Merge two Jupyter notebooks "local" and "remote" with a '
                 'common ancestor "base".')
