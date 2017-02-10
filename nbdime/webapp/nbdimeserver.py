@@ -19,6 +19,7 @@ import nbformat
 import nbdime
 from nbdime.merging.notebooks import decide_notebook_merge
 from nbdime.nbmergeapp import _build_arg_parser as build_merge_parser
+from nbdime.utils import EXPLICIT_MISSING_FILE
 
 from nbdime.args import add_generic_args, add_web_args
 
@@ -74,15 +75,20 @@ class NbdimeApiHandler(web.RequestHandler):
             raise web.HTTPError(400, "Expecting a filename.")
 
         # Check that file exists
-        path = os.path.join(self.params["cwd"], arg)
-        if not os.path.exists(path):
-            # Assume file is URI
-            r = requests.get(arg)
+        if arg == EXPLICIT_MISSING_FILE:
+            path = arg
+        else:
+            path = os.path.join(self.params["cwd"], arg)
+            if not os.path.exists(path):
+                # Assume file is URI
+                r = requests.get(arg)
 
         # Let nbformat do the reading and validation
         try:
             if os.path.exists(path):
                 nb = nbformat.read(path, as_version=4)
+            elif path == EXPLICIT_MISSING_FILE:
+                nb = nbformat.v4.new_notebook()
             else:
                 nb = nbformat.reads(r.text, as_version=4)
         except:

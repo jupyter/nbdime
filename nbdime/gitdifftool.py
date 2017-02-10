@@ -61,7 +61,6 @@ def show_diff(before, after, opts):
     If we are diffing a notebook, show the diff via nbdiff-web.
     Otherwise, call out to `git diff`.
     """
-    # TODO: handle /dev/null (Windows equivalent?) for new or deleted files
     if before.endswith('.ipynb') or after.endswith('ipynb'):
         return nbdifftool.main_parsed(opts)
     else:
