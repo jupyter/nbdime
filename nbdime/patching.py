@@ -117,7 +117,7 @@ def patch_dict(obj, diff):
 
 
 def patch(obj, diff):
-    """Produce a patched version of obj with given hierarchial diff.
+    """Produce a patched version of obj with given hierarchical diff.
 
     A valid input object can be any dict or list of leaf values,
     or arbitrarily nested dict or list of valid input objects.
