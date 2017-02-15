@@ -6,18 +6,11 @@
 from __future__ import unicode_literals
 
 import pytest
-import operator
-from collections import defaultdict
-import argparse
+from nbdime import merge_notebooks
 
-from nbdime import merge_notebooks, diff, decide_merge, apply_decisions
-
-from nbdime.merging.generic import decide_merge_with_diff
-from nbdime.utils import Strategies
 from nbdime.nbmergeapp import _build_arg_parser
 
-from .fixtures import db
-from .conftest import have_git
+from .fixtures import have_git
 
 # FIXME: Extend tests to more merge situations!
 

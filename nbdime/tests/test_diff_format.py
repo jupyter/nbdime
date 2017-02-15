@@ -1,8 +1,6 @@
 from jsonschema import Draft4Validator as Validator
 from nbdime import diff, diff_notebooks
 
-from .fixtures import matching_nb_pairs
-
 
 def test_check_schema(json_schema_diff):
     Validator.check_schema(json_schema_diff)
