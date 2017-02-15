@@ -160,3 +160,25 @@ def add_filename_args(parser, names):
         }
     for name in names:
         parser.add_argument(name, help=helps[name])
+
+
+def args_for_server(arguments):
+    """Translate standard arguments into kwargs for running webapp.nbdimeserver.main"""
+    # Map format: <arguments.name>='<kwargs[key]>'
+    kmap = dict(ip='ip',
+                port='port',
+                workdirectory='cwd',
+                base_url='base_url',
+                )
+    return {kmap[k]: v for k, v in vars(arguments).items() if k in kmap}
+
+
+def args_for_browse(arguments):
+    """Translate standard arguments into kwargs for webapp.webutil.browse()"""
+    # Map format: <arguments.name>='<kwargs[key]>'
+    kmap = dict(ip='ip',
+                port='port',
+                browser='browsername',
+                base_url='base_url',
+                )
+    return {kmap[k]: v for k, v in vars(arguments).items() if k in kmap}

@@ -10,7 +10,9 @@ import warnings
 
 from .nbdimeserver import main_server as run_server
 from .webutil import browse as browse_util
-from ..args import add_generic_args, add_web_args, add_diff_args, add_filename_args
+from ..args import (
+    add_generic_args, add_web_args, add_diff_args, add_filename_args,
+    args_for_server, args_for_browse)
 import nbdime.log
 
 
@@ -48,24 +50,15 @@ def main(args=None):
         args = sys.argv[1:]
     arguments = build_arg_parser().parse_args(args)
     nbdime.log.init_logging(level=arguments.log_level)
-    port = arguments.port
-    ip = arguments.ip
-    base_url = arguments.base_url
-    cwd = arguments.workdirectory
     base = arguments.base
     remote = arguments.remote
-    browsername = arguments.browser
     return run_server(
-        port=port, cwd=cwd, ip=ip,
         closable=True,
-        base_url=base_url,
         on_port=lambda port: browse_util(
-            port=port,
-            base_url=base_url,
-            browsername=browsername,
             rel_url='diff',
-            ip=ip,
-            base=base, remote=remote))
+            base=base, remote=remote,
+            **args_for_browse(arguments)),
+        **args_for_server(arguments))
 
 
 if __name__ == "__main__":
