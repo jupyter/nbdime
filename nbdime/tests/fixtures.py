@@ -218,7 +218,7 @@ def assert_clean_exit():
 
 def call(cmd):
     """Call a command
-    
+
     if str, split into command list
     """
     if isinstance(cmd, string_types):

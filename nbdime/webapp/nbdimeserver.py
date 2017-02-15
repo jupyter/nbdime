@@ -272,7 +272,7 @@ def make_app(**params):
     return app
 
 
-def main_server(on_port=None, closable=False, **params):
+def init_app(on_port=None, closable=False, **params):
     _logger.debug("Using params: %s" % params)
     params.update({"closable": closable})
     port = params.pop("port")
@@ -289,6 +289,11 @@ def main_server(on_port=None, closable=False, **params):
             port = s.getsockname()[1]
     if on_port is not None:
         on_port(port)
+    return app
+
+
+def main_server(on_port=None, closable=False, **params):
+    app = init_app(on_port, closable, **params)
     ioloop.IOLoop.current().start()
     return app.exit_code
 

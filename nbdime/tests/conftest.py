@@ -6,13 +6,16 @@
 import logging
 import os
 import shutil
+import json
+import io
 try:
     from unittest import mock
 except ImportError:
     import mock
 
+from jsonschema import Draft4Validator as Validator
+from jsonschema import RefResolver
 from pytest import yield_fixture, fixture, skip
-import six
 
 from .fixtures import filespath, call
 
@@ -21,8 +24,13 @@ try:
 except ImportError:
     from backports.shutil_which import which
 
+from nbdime.webapp.nbdimeserver import init_app
+
 have_git = which('git')
 pjoin = os.path.join
+
+
+schema_dir = os.path.abspath(pjoin(os.path.dirname(__file__), ".."))
 
 
 @fixture
@@ -98,3 +106,50 @@ def reset_log():
     logging.getLogger().handlers[:] = []
     yield
     logging.getLogger().handlers[:] = handlers
+
+
+@fixture
+def nbdime_base_url():
+    return '/this%20is/the%08base_url'
+
+
+@fixture
+def app(nbdime_base_url):
+    return init_app(
+        base_url=nbdime_base_url,
+        port=0,
+        cwd=filespath(),
+    )
+
+
+@fixture
+def json_schema_diff(request):
+    schema_path = os.path.join(schema_dir, 'diff_format.schema.json')
+    with io.open(schema_path, encoding="utf8") as f:
+        schema_json = json.load(f)
+    return schema_json
+
+
+@fixture
+def diff_validator(request, json_schema_diff):
+    return Validator(json_schema_diff)
+
+
+@fixture
+def json_schema_merge(request):
+    schema_path = os.path.join(schema_dir, 'merge_format.schema.json')
+    with io.open(schema_path, encoding="utf8") as f:
+        schema_json = json.load(f)
+    return schema_json
+
+
+@fixture
+def merge_validator(request, json_schema_merge):
+    return Validator(
+        json_schema_merge,
+        resolver=RefResolver(
+            'file://localhost/' + schema_dir.replace('\\', '/') + '/',
+            json_schema_merge),
+        # Ensure tuples validate to "array" schema type
+        types={"array" : (list, tuple)},
+    )
