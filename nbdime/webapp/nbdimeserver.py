@@ -243,7 +243,7 @@ def make_app(**params):
         (r"/api/merge", ApiMergeHandler, params),
         (r"/api/store", ApiMergeStoreHandler, params),
         (r"/api/closetool", ApiCloseHandler, params),
-        (r"/static", web.StaticFileHandler, {"path": static_path}),
+        # Static handler will be added automatically
     ]
     base_url = params.get('base_url', '/')
     if base_url != '/':
@@ -252,9 +252,12 @@ def make_app(**params):
             (prefix + path, cls, params)
             for (path, cls, params) in handlers
         ]
+    else:
+        prefix = ''
 
     settings = {
         "static_path": static_path,
+        "static_url_prefix": prefix + '/static/',
         "template_path": template_path,
         }
 
