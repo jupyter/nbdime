@@ -39,14 +39,6 @@ static_path = os.path.join(here, "static")
 template_path = os.path.join(here, "templates")
 
 
-def truncate_filename(name):
-    limit = 20
-    if len(name) < limit:
-        return name
-    else:
-        return name[:limit-3] + "..."
-
-
 class NbdimeApiHandler(web.RequestHandler):
     def initialize(self, **params):
         self.params = params
@@ -63,6 +55,16 @@ class NbdimeApiHandler(web.RequestHandler):
             base["outputfilename"] = fn
         return base
 
+    def write_error(self, status_code, **kwargs):
+        # Write error message for HTTPErrors if serve_traceback is off:
+        exc_info = kwargs.get("exc_info", None)
+        if exc_info and not self.settings.get('serve_traceback'):
+            (etype, value, traceback) = exc_info
+            self.set_header('Content-Type', 'text/plain')
+            if etype == web.HTTPError:
+                return self.finish(str(value))
+        return super(NbdimeApiHandler, self).write_error(status_code, **kwargs)
+
     def get_notebook_argument(self, argname):
         # Assuming a request on the form "{'argname':arg}"
         body = json.loads(escape.to_unicode(self.request.body))
@@ -72,7 +74,7 @@ class NbdimeApiHandler(web.RequestHandler):
         # where the server was started from, later we may
         # want to accept urls or full notebooks as well.
         if not isinstance(arg, string_types):
-            raise web.HTTPError(400, "Expecting a filename.")
+            raise web.HTTPError(400, "Expecting a filename or a URL.")
 
         # Check that file exists
         if arg == EXPLICIT_MISSING_FILE:
@@ -83,8 +85,14 @@ class NbdimeApiHandler(web.RequestHandler):
                 # Assume file is URI
                 r = requests.get(arg)
 
-        # Let nbformat do the reading and validation
         try:
+            # Check that file exists
+            path = os.path.join(self.params["cwd"], arg)
+            if not os.path.exists(path):
+                # Assume file is URI
+                r = requests.get(arg)
+
+            # Let nbformat do the reading and validation
             if os.path.exists(path):
                 nb = nbformat.read(path, as_version=4)
             elif path == EXPLICIT_MISSING_FILE:
@@ -92,7 +100,7 @@ class NbdimeApiHandler(web.RequestHandler):
             else:
                 nb = nbformat.reads(r.text, as_version=4)
         except:
-            raise web.HTTPError(400, "Invalid notebook: %s" % truncate_filename(arg))
+            raise web.HTTPError(422, "Invalid notebook: %s" % arg)
 
         return nb
 
