@@ -34,9 +34,10 @@ function requestJson(url: string, argument: any, callback: (result: any) => void
 export
 function requestDiff(
     base: string, remote: string,
+    baseUrl: string,
     onComplete: (result: any) => void,
     onFail: (result: any) => void) {
-  requestJson('/api/diff',
+  requestJson(baseUrl + '/api/diff',
               {base, remote},
               onComplete,
               onFail);
@@ -49,9 +50,10 @@ function requestDiff(
 export
 function requestMerge(
     base: string, local: string, remote: string,
+    baseUrl: string,
     onComplete: (result: any) => void,
     onFail: (result: any) => void) {
-  requestJson('/api/merge',
+  requestJson(baseUrl + '/api/merge',
               {base, local, remote},
               onComplete,
               onFail);

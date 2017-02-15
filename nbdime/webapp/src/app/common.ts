@@ -13,6 +13,11 @@ import {
  */
 let configData: any = null;
 
+/**
+ * Global  config data for jupyter.
+ */
+let jupyterConfigData: any = null;
+
 // Ensure error messages stay open until dismissed.
 alertify.delay(0).closeLogOnClick(true);
 
@@ -39,9 +44,13 @@ function deepFreeze(obj: any): any {
  * Retrive a config option
  */
 export
-function getConfigOption(name: string): any {
+function getConfigOption(name: string, defaultValue?: any): any {
   if (configData) {
-    return configData[name];
+    let ret = configData[name];
+    if (ret === undefined) {
+      return defaultValue;
+    }
+    return ret;
   }
   if (typeof document !== 'undefined') {
     let el = document.getElementById('nbdime-config-data');
@@ -52,7 +61,31 @@ function getConfigOption(name: string): any {
     }
   }
   configData = deepFreeze(configData);
-  return configData[name];
+  let ret = configData[name];
+  if (ret === undefined) {
+    return defaultValue;
+  }
+  return ret;
+}
+
+/**
+ * Get the base url.
+ */
+export
+function getBaseUrl(): string {
+  if (jupyterConfigData) {
+    return jupyterConfigData['baseUrl'];
+  }
+  if (typeof document !== 'undefined') {
+    let el = document.getElementById('jupyter-config-data');
+    if (el && el.textContent) {
+      jupyterConfigData = JSON.parse(el.textContent);
+    } else {
+      jupyterConfigData = {};
+    }
+  }
+  jupyterConfigData = deepFreeze(jupyterConfigData);
+  return jupyterConfigData['baseUrl'];
 }
 
 const spinner = document.createElement('div');
