@@ -47,7 +47,7 @@ class NbdimeApiHandler(web.RequestHandler):
     def base_args(self):
         fn = self.params.get("outputfilename", None)
         base = {
-            "closable": self.params["closable"],
+            "closable": self.params.get("closable", False),
             "savable": fn is not None
         }
         if fn:
@@ -210,7 +210,7 @@ class ApiMergeStoreHandler(NbdimeApiHandler):
         fn = self.params.get("outputfilename", None)
         if not fn:
             raise web.HTTPError(400, "Server does not accept storing merge result.")
-        path = os.path.join(self.params["cwd"], fn)
+        path = os.path.join(self.params.get("cwd", os.curdir), fn)
         nbdime.log.info("Saving merge result in %s", path)
 
         body = json.loads(escape.to_unicode(self.request.body))
@@ -286,7 +286,7 @@ def make_app(**params):
 def init_app(on_port=None, closable=False, **params):
     _logger.debug("Using params: %s" % params)
     params.update({"closable": closable})
-    port = params.pop("port")
+    port = params.pop("port", 0)
     ip = params.pop("ip", "127.0.0.1")
     app = make_app(**params)
     if port != 0 or on_port is None:
