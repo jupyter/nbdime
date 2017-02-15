@@ -10,7 +10,7 @@ from nbdime import merge_notebooks
 
 from nbdime.nbmergeapp import _build_arg_parser
 
-from .fixtures import have_git
+from .utils import have_git
 
 # FIXME: Extend tests to more merge situations!
 

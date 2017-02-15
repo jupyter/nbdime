@@ -14,7 +14,7 @@ from nbdime import patch, patch_notebook, diff_notebooks
 from nbdime.diffing.notebooks import diff_cells
 
 # pytest conf.py stuff is tricky to use robustly, this works with no magic
-from .fixtures import assert_is_valid_notebook, check_diff_and_patch
+from .utils import assert_is_valid_notebook, check_diff_and_patch
 
 
 def test_notebook_database_fixture(db):

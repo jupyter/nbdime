@@ -18,7 +18,7 @@ from tornado.httputil import url_concat
 
 import nbformat
 
-from .fixtures import assert_clean_exit, get_output, call
+from .utils import assert_clean_exit, get_output, call
 
 import nbdime
 from nbdime.nbshowapp import main_show

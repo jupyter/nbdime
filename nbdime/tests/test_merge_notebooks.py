@@ -11,7 +11,7 @@ from six import string_types
 import nbformat
 
 from nbdime.diff_format import op_patch, op_addrange, op_removerange, op_replace
-from .fixtures import sources_to_notebook, outputs_to_notebook, have_git
+from .utils import sources_to_notebook, outputs_to_notebook, have_git
 from nbdime.nbmergeapp import _build_arg_parser
 from nbdime import merge_notebooks, apply_decisions
 from nbdime.diffing.notebooks import diff_notebooks

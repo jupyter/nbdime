@@ -20,7 +20,7 @@ from jsonschema import RefResolver
 from pytest import yield_fixture, fixture, skip
 import nbformat
 
-from .fixtures import call, have_git
+from .utils import call, have_git
 
 from nbdime.webapp.nbdimeserver import init_app
 
