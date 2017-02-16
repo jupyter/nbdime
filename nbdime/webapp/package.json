@@ -14,6 +14,7 @@
     "@types/json-stable-stringify": "^1.0.29",
     "@types/node": "6.0.50",
     "@types/sanitizer": "0.0.28",
+    "@types/filesaver": "0.0.30",
     "css-loader": "^0.25.0",
     "file-loader": "^0.9.0",
     "json-loader": "^0.5.4",
@@ -29,6 +30,7 @@
   "dependencies": {
     "@jupyterlab/services": "^0.34.2",
     "alertify.js": "^1.0.12",
+    "file-saver": "^1.3.3",
     "jupyterlab": "~0.11.3",
     "nbdime": "file:../../nbdime-web",
     "phosphor": "~0.7.0"

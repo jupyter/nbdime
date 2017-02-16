@@ -45,14 +45,19 @@ import {
 } from 'nbdime/lib/request';
 
 import {
-  getConfigOption
+  getConfigOption, toggleSpinner
 } from './common';
+
+import {
+  exportDiff
+} from './staticdiff';
+
 
 
 /**
  * Show the diff as represented by the base notebook and a list of diff entries
  */
-function showDiff(data: {base: nbformat.INotebookContent, diff: IDiffEntry[]}) {
+function showDiff(data: {base: nbformat.INotebookContent, diff: IDiffEntry[]}): Promise<void> {
   const transformers = [
     new JavascriptRenderer(),
     new MarkdownRenderer(),
@@ -90,6 +95,7 @@ function showDiff(data: {base: nbformat.INotebookContent, diff: IDiffEntry[]}) {
   work.then(() => {
     window.onresize = () => { panel.update(); };
   });
+  return work;
 }
 
 /**
@@ -106,6 +112,7 @@ function onDiff(e: Event) {
 
 
 function compare(base: string, remote: string, pushHistory: boolean | 'replace') {
+  toggleSpinner(true);
   getDiff(base, remote);
   if (pushHistory) {
     let uri = window.location.pathname;
@@ -137,7 +144,13 @@ function getDiff(base: string, remote: string) {
  * Callback for a successfull diff request
  */
 function onDiffRequestCompleted(data: any) {
-  showDiff(data);
+  let layoutWork = showDiff(data);
+
+  layoutWork.then(() => {
+    let exportBtn = document.getElementById('nbdime-export') as HTMLButtonElement;
+    exportBtn.style.display = 'initial';
+    toggleSpinner(false);
+  });
 }
 
 /**
@@ -150,6 +163,7 @@ function onDiffRequestFailed(response: string) {
     throw new Error('Missing root element "nbidme-root"');
   }
   root.innerHTML = '<pre>' + response + '</pre>';
+  toggleSpinner(false);
 }
 
 
@@ -190,4 +204,7 @@ function initializeDiff() {
   if (base && remote) {
     compare(base, remote, 'replace');
   }
+
+  let exportBtn = document.getElementById('nbdime-export') as HTMLButtonElement;
+  exportBtn.onclick = exportDiff;
 }

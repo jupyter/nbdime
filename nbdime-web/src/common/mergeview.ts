@@ -84,7 +84,20 @@ type DiffClasses = {
 };
 
 
+export
 class EditorWidget extends CodeMirrorWidget {
+  /**
+   * Store all editor instances for operations that
+   * need to loop over all instances.
+   */
+  constructor(options?: CodeMirror.EditorConfiguration | undefined) {
+    super(options);
+    EditorWidget.editors.push(this.editor);
+  }
+
+  public static editors: CodeMirror.Editor[] = [];
+
+
   /**
    * A message handler invoked on an `'resize'` message.
    */

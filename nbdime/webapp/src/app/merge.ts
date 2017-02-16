@@ -51,7 +51,7 @@ import {
 } from 'nbdime/lib/request';
 
 import {
-  getConfigOption, closeTool
+  getConfigOption, closeTool, toggleSpinner
 } from './common';
 
 import {
@@ -68,7 +68,7 @@ let mergeWidget: NotebookMergeWidget | null = null;
 function showMerge(data: {
     base: nbformat.INotebookContent,
     merge_decisions: IMergeDecision[]
-    }): NotebookMergeWidget {
+    }): Promise<void> {
   const transformers = [
     new JavascriptRenderer(),
     new MarkdownRenderer(),
@@ -107,7 +107,8 @@ function showMerge(data: {
   work.then(() => {
     window.onresize = () => { panel.update(); };
   });
-  return nbmWidget;
+  mergeWidget = nbmWidget;
+  return work;
 }
 
 /**
@@ -135,6 +136,7 @@ function onMerge(e: Event) {
 
 function compare(b: string, c: string, r: string, pushHistory: boolean | 'replace') {
   // All values present, do merge
+  toggleSpinner(true);
   getMerge(b, c, r);
   if (pushHistory) {
     let uri = window.location.pathname;
@@ -174,7 +176,10 @@ function onPopState(e: PopStateEvent) {
  * Callback for a successfull merge request
  */
 function onMergeRequestCompleted(data: any) {
-  mergeWidget = showMerge(data);
+  let layoutWork = showMerge(data);
+  layoutWork.then(() => {
+    toggleSpinner(false);
+  });
 }
 
 /**
@@ -188,6 +193,7 @@ function onMergeRequestFailed(response: string) {
   }
   root.innerHTML = '<pre>' + response + '</pre>';
   mergeWidget = null;
+  toggleSpinner(false);
 }
 
 
