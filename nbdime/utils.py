@@ -8,7 +8,37 @@ import os
 import re
 from subprocess import check_output, CalledProcessError
 
+import nbformat
 from six import string_types, text_type
+
+if os.name == 'nt':
+    EXPLICIT_MISSING_FILE = 'nul'
+else:
+    EXPLICIT_MISSING_FILE = '/dev/null'
+
+
+def read_notebook(filename, on_null):
+    """Read and return notebook json from filename
+
+    Parameters:
+        filename: The filename to read from or null filename
+            ("/dev/null" on *nix, "nul" on Windows)
+        on_null: What to return when filename null
+            "empty": return empty dict
+            "minimal": return miminal valid notebook
+    """
+    if filename == EXPLICIT_MISSING_FILE:
+        if on_null == 'empty':
+            return {}
+        elif on_null == 'minimal':
+            return nbformat.v4.new_notebook()
+        else:
+            raise ValueError(
+                'Not valid value for `on_null`: "%s". Valid values '
+                'are "empty" or "minimal"', on_null)
+    else:
+        return nbformat.read(filename, as_version=4)
+
 
 def as_text(text):
     if isinstance(text, list):

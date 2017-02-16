@@ -39,6 +39,7 @@ from nbdime import (
 )
 import nbdime.webapp.nbdiffweb
 import nbdime.webapp.nbmergeweb
+from nbdime.utils import EXPLICIT_MISSING_FILE
 
 
 def test_nbshow_app():
@@ -74,6 +75,17 @@ def test_nbdiff_app():
     assert nbdime.log.logger.level == logging.WARN
 
 
+def test_nbdiff_app_null_file():
+    p = filespath()
+    fn = os.path.join(p, "multilevel-test-base.ipynb")
+
+    args = nbdiffapp._build_arg_parser().parse_args([fn, EXPLICIT_MISSING_FILE])
+    assert 0 == main_diff(args)
+
+    args = nbdiffapp._build_arg_parser().parse_args([EXPLICIT_MISSING_FILE, fn])
+    assert 0 == main_diff(args)
+
+
 def test_nbmerge_app(tempfiles, capsys):
     p = tempfiles
     bfn = os.path.join(p, "multilevel-test-base.ipynb")
@@ -100,6 +112,43 @@ def test_nbmerge_app(tempfiles, capsys):
         nb_file = f.read()
 
     assert nb_stdout == nb_file
+
+
+def test_nbmerge_app_null_base():
+    p = filespath()
+    afn = os.path.join(p, "multilevel-test-base.ipynb")
+    bfn = os.path.join(p, "multilevel-test-local.ipynb")
+
+    # Two identical files added (null base)
+    args = nbmergeapp._build_arg_parser().parse_args([
+        EXPLICIT_MISSING_FILE, afn, afn])
+    assert 0 == main_merge(args)
+
+    # Two conflicting files added (null base)
+    args = nbmergeapp._build_arg_parser().parse_args([
+        EXPLICIT_MISSING_FILE, afn, bfn])
+    assert 1 == main_merge(args)
+
+
+def test_nbmerge_app_null_side():
+    p = filespath()
+    afn = os.path.join(p, "multilevel-test-base.ipynb")
+    bfn = os.path.join(p, "multilevel-test-local.ipynb")
+
+    # Local deleted, remote modified
+    args = nbmergeapp._build_arg_parser().parse_args([
+        afn, EXPLICIT_MISSING_FILE, bfn])
+    assert 1 == main_merge(args)
+
+    # Remote deleted, local modified
+    args = nbmergeapp._build_arg_parser().parse_args([
+        afn, bfn, EXPLICIT_MISSING_FILE])
+    assert 1 == main_merge(args)
+
+    # Both deleted
+    args = nbmergeapp._build_arg_parser().parse_args([
+        afn, EXPLICIT_MISSING_FILE, EXPLICIT_MISSING_FILE])
+    assert 0 == main_merge(args)
 
 
 def test_nbmerge_app_conflict(tempfiles, capsys):

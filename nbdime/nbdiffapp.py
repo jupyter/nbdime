@@ -17,6 +17,7 @@ import nbdime
 from nbdime.diffing.notebooks import diff_notebooks
 from nbdime.prettyprint import pretty_print_notebook_diff
 from nbdime.args import add_generic_args, add_diff_args, add_filename_args
+from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook
 
 
 _description = "Compute the difference between two Jupyter notebooks."
@@ -28,12 +29,14 @@ def main_diff(args):
     dfn = args.output
 
     for fn in (afn, bfn):
-        if not os.path.exists(fn):
+        if not os.path.exists(fn) and fn != EXPLICIT_MISSING_FILE:
             print("Missing file {}".format(fn))
             return 1
+    # Both files cannot be missing
+    assert not (afn == EXPLICIT_MISSING_FILE and bfn == EXPLICIT_MISSING_FILE)
 
-    a = nbformat.read(afn, as_version=4)
-    b = nbformat.read(bfn, as_version=4)
+    a = read_notebook(afn, on_null='empty')
+    b = read_notebook(bfn, on_null='empty')
 
     d = diff_notebooks(a, b)
 

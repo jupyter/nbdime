@@ -17,7 +17,7 @@ import nbdime
 import nbdime.log
 from nbdime.merging import merge_notebooks
 from nbdime.prettyprint import pretty_print_merge_decisions
-from .merging import merge_notebooks
+from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook
 
 _description = ('Merge two Jupyter notebooks "local" and "remote" with a '
                 'common ancestor "base".')
@@ -30,13 +30,20 @@ def main_merge(args):
     mfn = args.output
 
     for fn in (bfn, lfn, rfn):
-        if not os.path.exists(fn):
+        if not os.path.exists(fn) and fn != EXPLICIT_MISSING_FILE:
             nbdime.log.error("Cannot find file '{}'".format(fn))
             return 1
 
-    b = nbformat.read(bfn, as_version=4)
-    l = nbformat.read(lfn, as_version=4)
-    r = nbformat.read(rfn, as_version=4)
+    if lfn == rfn == EXPLICIT_MISSING_FILE:
+        # Deleted both locally and remotely
+        # Special case not well solved by routines below
+        handle_agreed_deletion(bfn, mfn, args.decisions)
+        # Agreed on deletion = no conflics = return 0
+        return 0
+
+    b = read_notebook(bfn, on_null='minimal')
+    l = read_notebook(lfn, on_null='minimal')
+    r = read_notebook(rfn, on_null='minimal')
 
     merged, decisions = merge_notebooks(b, l, r, args)
     conflicted = [d for d in decisions if d.conflict]
@@ -52,7 +59,7 @@ def main_merge(args):
         # Print merge decisions (including unconflicted)
         out = io.StringIO()
         pretty_print_merge_decisions(b, decisions, out=out)
-        nbdime.log.warning("Conflicts:\n%s", out.getvalue())
+        nbdime.log.warning("Decisions:\n%s", out.getvalue())
     elif mfn:
         # Write partial or fully completed merge to given foo.ipynb filename
         with io.open(mfn, "w", encoding="utf8") as mf:
@@ -62,6 +69,32 @@ def main_merge(args):
         # Write merged notebook to terminal
         nbformat.write(merged, sys.stdout)
     return returncode
+
+
+def handle_agreed_deletion(base_fn, output_fn, print_decisions=False):
+    """Handle merge when file has been deleted both locally and remotely"""
+    assert base_fn != EXPLICIT_MISSING_FILE
+    b = read_notebook(base_fn, on_null='minimal')
+    if print_decisions:
+        # Print merge decision (delete all)
+        from nbdime.diffing.notebooks import diff_notebooks
+        from nbdime.merging.decisions import MergeDecisionBuilder
+        # Build diff for deleting all content:
+        diff = diff_notebooks(b, {})
+        # Make agreed decision from diff:
+        bld = MergeDecisionBuilder()
+        bld.agreement([], local_diff=diff, remote_diff=diff)
+        decisions = bld.validated(b)
+        # Print decition
+        out = io.StringIO()
+        pretty_print_merge_decisions(b, decisions, out=out)
+        nbdime.log.warning("Decisions:\n%s", out.getvalue())
+
+    elif output_fn:
+        # Delete file if existing, if not do nothing
+        if os.path.exists(output_fn):
+            os.remove(output_fn)
+            nbdime.log.info("Output file deleted: %s" % output_fn)
 
 
 def _build_arg_parser():

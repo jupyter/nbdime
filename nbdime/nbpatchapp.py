@@ -16,6 +16,8 @@ import io
 import nbdime
 from nbdime.patching import patch_notebook
 from nbdime.diff_format import to_diffentry_dicts
+from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook
+from nbdime.prettyprint import pretty_print_notebook
 
 
 _description = "Apply patch from nbdiff to a Jupyter notebook."
@@ -23,16 +25,16 @@ _description = "Apply patch from nbdiff to a Jupyter notebook."
 
 def main_patch(args):
     base_filename = args.base
-    path_filename = args.patch
+    patch_filename = args.patch
     output_filename = args.output
 
-    for fn in (base_filename, path_filename):
-        if not os.path.exists(fn):
+    for fn in (base_filename, patch_filename):
+        if not os.path.exists(fn) and fn != EXPLICIT_MISSING_FILE:
             print("Missing file {}".format(fn))
             return 1
 
-    before = nbformat.read(base_filename, as_version=4)
-    with io.open(path_filename, encoding="utf8") as patch_file:
+    before = read_notebook(base_filename, on_null='empty')
+    with io.open(patch_filename, encoding="utf8") as patch_file:
         diff = json.load(patch_file)
     diff = to_diffentry_dicts(diff)
 
@@ -41,7 +43,13 @@ def main_patch(args):
     if output_filename:
         nbformat.write(after, output_filename)
     else:
-        print(after)
+        try:
+            nbformat.validate(after, version=4)
+        except nbformat.ValidationError:
+            print("Patch result is not a valid notebook, printing as JSON:")
+            json.dump(after, sys.stdout)
+        else:
+            pretty_print_notebook(after)
 
     return 0
 
