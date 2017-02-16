@@ -50,6 +50,7 @@ def main(args=None):
         closable=True,
         outputfilename=output,
         on_port=lambda port: browse(
+            port=port,
             rel_url='merge',
             base=base, local=local, remote=remote,
             **args_for_browse(arguments)),

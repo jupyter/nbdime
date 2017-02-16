@@ -57,6 +57,7 @@ def main_parsed(opts):
         mergetool_args=dict(base=base, local=local, remote=remote),
         outputfilename=merged,
         on_port=lambda port: browse(
+            port=port,
             rel_url='mergetool',
             **args_for_browse(opts)),
         **args_for_server(opts))

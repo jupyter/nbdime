@@ -177,7 +177,6 @@ def args_for_browse(arguments):
     """Translate standard arguments into kwargs for webapp.webutil.browse()"""
     # Map format: <arguments.name>='<kwargs[key]>'
     kmap = dict(ip='ip',
-                port='port',
                 browser='browsername',
                 base_url='base_url',
                 )

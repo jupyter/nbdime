@@ -55,6 +55,7 @@ def main(args=None):
     return run_server(
         closable=True,
         on_port=lambda port: browse_util(
+            port=port,
             rel_url='diff',
             base=base, remote=remote,
             **args_for_browse(arguments)),

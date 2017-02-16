@@ -48,6 +48,7 @@ def main_parsed(opts):
         closable=True,
         difftool_args=dict(base=base, remote=remote),
         on_port=lambda port: browse(
+            port=port,
             rel_url='difftool',
             **args_for_browse(opts)),
         **args_for_server(opts))
