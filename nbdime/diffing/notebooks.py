@@ -27,13 +27,13 @@ from .generic import (diff, diff_sequence_multilevel,
 __all__ = ["diff_notebooks"]
 
 # A regexp matching base64 encoded data
-_base64 = re.compile(r'^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$', re.MULTILINE | re.UNICODE)
+_base64 = re.compile(r'^(?:[a-z0-9+/]{4})*(?:[a-z0-9+/]{2}==|[a-z0-9+/]{3}=)?$', re.MULTILINE | re.UNICODE | re.IGNORECASE)
 
 # A regexp matching common python repr-style output like
 # <module.type at 0xmemoryaddress>
-re_repr = re.compile(r"<[a-zA-Z0-9._]+ at 0[xX][a-fA-F0-9]{8,16}>")
+re_repr = re.compile(r"<[a-z0-9._]+ at 0x[a-f0-9]{8,16}>", re.IGNORECASE)
 
-re_pointer = re.compile(r"0[xX][a-fA-F0-9]{8,16}")
+re_pointer = re.compile(r"0x[a-f0-9]{8,16}", re.IGNORECASE)
 
 
 # List of mimes we can diff recursively
