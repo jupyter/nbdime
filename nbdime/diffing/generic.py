@@ -38,8 +38,13 @@ def compare_strings_approximate(x, y, threshold=0.7):
     # TODO: Add configuration framework
     # TODO: Tune threshold with realistic sources
 
-    # Cutoff on equality (Python has fast hash functions for strings)
-    if x == y:
+    # Fast cutoff when one is empty
+    if bool(x) != bool(y):
+        return False
+
+    # Cutoff on equality: Python has fast hash functions for strings,
+    # and lists of strings also works fine
+    if len(x) == len(y) and x == y:
         return True
 
     # TODO: Investigate performance and quality of this difflib ratio approach,
@@ -55,9 +60,12 @@ def compare_strings_approximate(x, y, threshold=0.7):
     # equal items, at least in the Myers diff algorithm.
     # Most other comparisons will likely not be very similar,
     # and the (real_)quick_ratio cutoffs will speed up those.
+
     # So the heavy ratio function is only used for close calls.
     # s = difflib.SequenceMatcher(lambda c: c in (" ", "\t"), x, y, autojunk=False)
     s = difflib.SequenceMatcher(None, x, y, autojunk=False)
+
+    # Use only the fast ratio approximations first
     if s.real_quick_ratio() < threshold:
         return False
     if s.quick_ratio() < threshold:

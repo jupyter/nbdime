@@ -94,6 +94,7 @@ def op_removerange(key, length):
 
 def op_patch(key, diff):
     "Create a diff entry to patch value at key with diff."
+    assert diff is not None
     return DiffEntry(op=DiffOp.PATCH, key=key, diff=diff)
 
 

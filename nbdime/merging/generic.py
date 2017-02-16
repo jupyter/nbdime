@@ -25,16 +25,6 @@ from nbdime.prettyprint import merge_render
 from nbdime.merging.decisions import pop_all_patch_decisions, push_patch_decision
 
 
-# FIXME XXX: Main todos left:
-# - Rewrite resolve_* to work directly on decisions object,
-#   trying to resolve any conflicted decisions found
-# - _merge_strings is probably broken, test and fix 
-# - extend test_merge_notebooks_inline with more tests
-# - make existing test suite pass, either by modifying tests or fixing remaining bugs
-# - test that this still works with mergetool (it shouldn't need any changes in principle)
-# - remove autoresolve.py after checking for anything more we need from there
-
-
 # =============================================================================
 #
 # Utility code follows
@@ -167,6 +157,8 @@ def __unused__wrap_subconflicts(key, subconflicts):
     for conf in subconflicts:
         (path, ld, rd, strategy) = conf
         assert path[-1] == key
+        assert ld is not None
+        assert rd is not None
         path = path[:-1]
         ld = [op_patch(key, ld)]
         rd = [op_patch(key, rd)]
@@ -202,6 +194,7 @@ def adjust_patch_level(target_path, common_path, diff):
     newdiff = []
     for d in diff:
         nd = d
+        assert nd is not None
         for key in remainder_path:
             nd = op_patch(key, nd)
         newdiff.append(nd)
@@ -216,6 +209,8 @@ def collect_diffs(path, decisions):
         rd = adjust_patch_level(path, d.common_path, d.remote_diff)
         local_diff.extend(ld)
         remote_diff.extend(rd)
+    local_diff = combine_patches(local_diff)
+    remote_diff = combine_patches(remote_diff)
     return local_diff, remote_diff
 
 

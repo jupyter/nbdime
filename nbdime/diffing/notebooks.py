@@ -27,13 +27,13 @@ from .generic import (diff, diff_sequence_multilevel,
 __all__ = ["diff_notebooks"]
 
 # A regexp matching base64 encoded data
-_base64 = re.compile(r'^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$', re.MULTILINE | re.UNICODE)
+_base64 = re.compile(r'^(?:[a-z0-9+/]{4})*(?:[a-z0-9+/]{2}==|[a-z0-9+/]{3}=)?$', re.MULTILINE | re.UNICODE | re.IGNORECASE)
 
 # A regexp matching common python repr-style output like
 # <module.type at 0xmemoryaddress>
-re_repr = re.compile(r"<[a-zA-Z0-9._]+ at 0x[a-zA-Z0-9]+>")
+re_repr = re.compile(r"<[a-z0-9._]+ at 0x[a-f0-9]{8,16}>", re.IGNORECASE)
 
-re_pointer = re.compile(r"0[xX][a-zA-Z0-9]{8,16}")
+re_pointer = re.compile(r"0x[a-f0-9]{8,16}", re.IGNORECASE)
 
 
 # List of mimes we can diff recursively
@@ -357,10 +357,12 @@ def diff_single_outputs(a, b, path="/cells/*/outputs/*",
     if a.output_type in ("execute_result", "display_data"):
         di = MappingDiffBuilder()
 
+        tmp_data = a.pop('data')
         a_conj = copy.deepcopy(a)
-        del a_conj['data']
+        a.data = tmp_data
+        tmp_data = b.pop('data')
         b_conj = copy.deepcopy(b)
-        del b_conj['data']
+        b.data = tmp_data
         dd_conj = diff(a_conj, b_conj)
         if dd_conj:
             for e in dd_conj:
