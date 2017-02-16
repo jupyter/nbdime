@@ -31,25 +31,6 @@ import {
 } from 'phosphor/lib/dom/dragdrop';
 
 
-//TODO: Remove when fixed:
-/**
- * Workaround for phosphor bug #165.
- */
-class WorkaroundDrag extends Drag {
-}
-
-function _attachDragImage(clientX: number, clientY: number): void {
-  (Drag as any).prototype._attachDragImage.call(this, clientX + window.pageXOffset, clientY + window.pageYOffset);
-}
-function _moveDragImage(clientX: number, clientY: number): void {
-  (Drag as any).prototype._moveDragImage.call(this, clientX + window.pageXOffset, clientY + window.pageYOffset);
-}
-
-// monkeypatch:
-(WorkaroundDrag.prototype as any)._attachDragImage = _attachDragImage;
-(WorkaroundDrag.prototype as any)._moveDragImage = _moveDragImage;
-
-
 /**
  * The class name added to the DropPanel
  */
@@ -464,7 +445,7 @@ abstract class DragDropPanelBase extends DropPanel {
     let dragImage = this.getDragImage(handle);
 
     // Set up the drag event.
-    this.drag = new WorkaroundDrag({
+    this.drag = new Drag({
       dragImage: dragImage || undefined,
       mimeData: new MimeData(),
       supportedActions: 'all',
@@ -475,6 +456,12 @@ abstract class DragDropPanelBase extends DropPanel {
 
     // Start the drag and remove the mousemove listener.
     this.drag.start(clientX, clientY).then(this.onDragComplete.bind(this));
+    //TODO: Remove when updating to phosphor 1.0:
+    // Workaround for phosphor bug #165:
+    if (dragImage) {
+      dragImage.style.position = 'fixed';
+    }
+    // End workaround
     document.removeEventListener('mousemove', this, true);
     document.removeEventListener('mouseup', this, true);
   }
