@@ -533,6 +533,7 @@ abstract class DragDropPanelBase extends DropPanel {
                         handle: handle };
       document.addEventListener('mouseup', this, true);
       document.addEventListener('mousemove', this, true);
+      event.preventDefault();
     }
   }
 
