@@ -50,11 +50,12 @@ script:
     elif [[ $GROUP == js ]]; then
       npm test
     fi
-after_success:
-    - 'if [[ $GROUP == js ]]; then cd ..; fi'
-    - codecov
 before_cache:
   # Do not cache our own package
-  - rm -rf nbdime/webapp/node_modules/nbdime
-  - rm -rf nbdime/webapp/node_modules/nbdime-webapp
-  - rm -rf nbdime-web/node_modules/nbdime
+  - |
+    if [[ $GROUP == js ]]; then cd ..; fi
+    rm -rf nbdime/webapp/node_modules/nbdime
+    rm -rf nbdime/webapp/node_modules/nbdime-webapp
+    rm -rf nbdime-web/node_modules/nbdime
+after_success:
+    - codecov
