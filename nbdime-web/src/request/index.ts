@@ -3,6 +3,19 @@
 'use strict';
 
 
+function rstrip(target: string, chars: string): string {
+  let i = 0;
+  for (; i < target.length; ++i) {
+    if (chars.indexOf(target.slice(-(i + 1), -i)) < 0) {
+      break;
+    }
+  }
+  if (i === 0) {
+    return target;
+  }
+  return target.slice(0, -i);
+}
+
 
 /**
  * Make a POST request passing a JSON argument and receiving a JSON result.
@@ -37,7 +50,7 @@ function requestDiff(
     baseUrl: string,
     onComplete: (result: any) => void,
     onFail: (result: any) => void) {
-  requestJson(baseUrl + '/api/diff',
+  requestJson(rstrip(baseUrl, '/') + '/api/diff',
               {base, remote},
               onComplete,
               onFail);
@@ -53,7 +66,7 @@ function requestMerge(
     baseUrl: string,
     onComplete: (result: any) => void,
     onFail: (result: any) => void) {
-  requestJson(baseUrl + '/api/merge',
+  requestJson(rstrip(baseUrl, '/') + '/api/merge',
               {base, local, remote},
               onComplete,
               onFail);
