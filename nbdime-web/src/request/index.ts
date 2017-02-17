@@ -39,7 +39,7 @@ function requestDiff(
     baseUrl: string,
     onComplete: (result: any) => void,
     onFail: (result: any) => void) {
-  requestJson(urlPathJoin(baseUrl, '/api/diff'),
+  requestJson(urlPathJoin(baseUrl, 'api/diff'),
               {base, remote},
               onComplete,
               onFail);
@@ -55,7 +55,7 @@ function requestMerge(
     baseUrl: string,
     onComplete: (result: any) => void,
     onFail: (result: any) => void) {
-  requestJson(urlPathJoin(baseUrl, '/api/merge'),
+  requestJson(urlPathJoin(baseUrl, 'api/merge'),
               {base, local, remote},
               onComplete,
               onFail);
