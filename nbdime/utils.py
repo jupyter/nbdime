@@ -25,7 +25,8 @@ def read_notebook(filename, on_null):
 
     Parameters:
         filename: The filename to read from or null filename
-            ("/dev/null" on *nix, "nul" on Windows)
+            ("/dev/null" on *nix, "nul" on Windows).
+            Alternatively a file-like object can be passed.
         on_null: What to return when filename null
             "empty": return empty dict
             "minimal": return miminal valid notebook

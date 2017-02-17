@@ -65,11 +65,7 @@ class NbdimeApiHandler(web.RequestHandler):
                 return self.finish(str(value))
         return super(NbdimeApiHandler, self).write_error(status_code, **kwargs)
 
-    def get_notebook_argument(self, argname):
-        # Assuming a request on the form "{'argname':arg}"
-        body = json.loads(escape.to_unicode(self.request.body))
-        arg = body[argname]
-
+    def read_notebook(self, arg):
         # Currently assuming arg is a filename relative to
         # where the server was started from, later we may
         # want to accept urls or full notebooks as well.
@@ -98,6 +94,13 @@ class NbdimeApiHandler(web.RequestHandler):
 
         return nb
 
+    def get_notebook_argument(self, argname):
+        # Assuming a request on the form "{'argname':arg}"
+        body = json.loads(escape.to_unicode(self.request.body))
+        arg = body[argname]
+
+        return self.read_notebook(arg)
+
 
 class MainHandler(NbdimeApiHandler):
     def get(self):
@@ -121,8 +124,16 @@ class MainDifftoolHandler(NbdimeApiHandler):
     def get(self):
         args = self.base_args()
         if "difftool_args" in self.params:
-            args["base"] = self.params["difftool_args"]["base"]
-            args["remote"] = self.params["difftool_args"]["remote"]
+            base = self.params["difftool_args"]["base"]
+            remote = self.params["difftool_args"]["remote"]
+            if isinstance(base, string_types):
+                args["base"] = base
+            else:
+                args["base"] = base.name
+            if isinstance(base, string_types):
+                args["remote"] = remote
+            else:
+                args["remote"] = remote.name
         else:
             args["base"] = self.get_argument("base", "")
             args["remote"] = self.get_argument("remote", "")
@@ -169,6 +180,16 @@ class ApiDiffHandler(NbdimeApiHandler):
             }
         self.finish(data)
 
+    def get_notebook_argument(self, argname):
+        if "difftool_args" in self.params:
+            arg = self.params["difftool_args"][argname]
+            if not isinstance(arg, string_types):
+                # Assume arg is file-like
+                return nbformat.read(arg, as_version=4)
+            return self.read_notebook(arg)
+        else:
+            return super(ApiDiffHandler, self).get_notebook_argument(argname)
+
 
 class ApiMergeHandler(NbdimeApiHandler):
     def post(self):
@@ -193,6 +214,13 @@ class ApiMergeHandler(NbdimeApiHandler):
             "merge_decisions": decisions
             }
         self.finish(data)
+
+    def get_notebook_argument(self, argname):
+        if "mergetool_args" in self.params:
+            arg = self.params["mergetool_args"][argname]
+            return self.read_notebook(arg)
+        else:
+            return super(ApiMergeHandler, self).get_notebook_argument(argname)
 
 
 class ApiMergeStoreHandler(NbdimeApiHandler):
