@@ -155,6 +155,7 @@ function initializeCompare() {
   try {
     compare(base, local, remote, false);
   } catch (e) {
+    toggleSpinner(false);
     if (!(e instanceof Error && e.message === ERROR_COMPARE_NUMBER)) {
       throw e;
     }
