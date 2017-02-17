@@ -2,20 +2,9 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-
-function rstrip(target: string, chars: string): string {
-  let i = 0;
-  for (; i < target.length; ++i) {
-    if (chars.indexOf(target.slice(-(i + 1), -i)) < 0) {
-      break;
-    }
-  }
-  if (i === 0) {
-    return target;
-  }
-  return target.slice(0, -i);
-}
-
+import {
+  urlPathJoin
+} from '@jupyterlab/services/lib/utils';
 
 /**
  * Make a POST request passing a JSON argument and receiving a JSON result.
@@ -50,7 +39,7 @@ function requestDiff(
     baseUrl: string,
     onComplete: (result: any) => void,
     onFail: (result: any) => void) {
-  requestJson(rstrip(baseUrl, '/') + '/api/diff',
+  requestJson(urlPathJoin(baseUrl, '/api/diff'),
               {base, remote},
               onComplete,
               onFail);
@@ -66,7 +55,7 @@ function requestMerge(
     baseUrl: string,
     onComplete: (result: any) => void,
     onFail: (result: any) => void) {
-  requestJson(rstrip(baseUrl, '/') + '/api/merge',
+  requestJson(urlPathJoin(baseUrl, '/api/merge'),
               {base, local, remote},
               onComplete,
               onFail);
