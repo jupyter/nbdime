@@ -76,21 +76,15 @@ class NbdimeApiHandler(web.RequestHandler):
         if not isinstance(arg, string_types):
             raise web.HTTPError(400, "Expecting a filename or a URL.")
 
-        # Check that file exists
-        if arg == EXPLICIT_MISSING_FILE:
-            path = arg
-        else:
-            path = os.path.join(self.params["cwd"], arg)
-            if not os.path.exists(path):
-                # Assume file is URI
-                r = requests.get(arg)
-
         try:
             # Check that file exists
-            path = os.path.join(self.params["cwd"], arg)
-            if not os.path.exists(path):
-                # Assume file is URI
-                r = requests.get(arg)
+            if arg == EXPLICIT_MISSING_FILE:
+                path = arg
+            else:
+                path = os.path.join(self.params["cwd"], arg)
+                if not os.path.exists(path):
+                    # Assume file is URI
+                    r = requests.get(arg)
 
             # Let nbformat do the reading and validation
             if os.path.exists(path):
