@@ -10,15 +10,15 @@ Version: |release|
 
    Figure: nbdime example
 
-Abstract
---------
+Why is nbdime needed?
+---------------------
 
 Jupyter notebooks are useful, rich media documents stored in a plain text JSON format.
 This format is relatively easy to parse. However, primitive line-based diff and merge tools
 do not handle well the logical structure of notebook documents. These tools
 yield diffs like this:
 
-.. figure:: images/diff-bad.png
+.. figure:: images/diff-bad-shortened.png
    :alt: diff example using traditional line-based diff tool
 
    Figure: diff using traditional line-based diff tool
@@ -135,18 +135,23 @@ Contents
    installing
    cli
    vcs
-   testing
    glossary
    changelog
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Development
+
+   testing
+   diffing
+   merging
+   restapi
 
 .. toctree::
    :maxdepth: 2
    :caption: Planning
 
    usecases
-   diffing
-   merging
-   restapi
 
 .. links
 

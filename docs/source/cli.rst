@@ -1,6 +1,6 @@
-===============
-nbdime commands
-===============
+================
+Console commands
+================
 
 nbdime provides the following CLI commands::
 
