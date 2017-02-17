@@ -92,7 +92,8 @@ function compare(b: string, c: string, r: string, pushHistory: boolean | 'replac
     }
     getDiff(base, remote);
     if (pushHistory) {
-      let uri = '/?base=' + encodeURIComponent(b) +
+      let uri = window.location.pathname;
+      uri += '?base=' + encodeURIComponent(b) +
         '&local=' + encodeURIComponent(c) +
         '&remote=' + encodeURIComponent(r);
       editHistory(pushHistory, {base, remote},
