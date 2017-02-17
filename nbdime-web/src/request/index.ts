@@ -6,6 +6,14 @@ import {
   urlPathJoin
 } from '@jupyterlab/services/lib/utils';
 
+
+function urlRStrip(target: string): string {
+  if (target.slice(-1) === '/') {
+    return target.slice(0, -1);
+  }
+  return target;
+}
+
 /**
  * Make a POST request passing a JSON argument and receiving a JSON result.
  */
@@ -39,7 +47,7 @@ function requestDiff(
     baseUrl: string,
     onComplete: (result: any) => void,
     onFail: (result: any) => void) {
-  requestJson(urlPathJoin(baseUrl, 'api/diff'),
+  requestJson(urlPathJoin(urlRStrip(baseUrl), 'api/diff'),
               {base, remote},
               onComplete,
               onFail);
@@ -55,7 +63,7 @@ function requestMerge(
     baseUrl: string,
     onComplete: (result: any) => void,
     onFail: (result: any) => void) {
-  requestJson(urlPathJoin(baseUrl, 'api/merge'),
+  requestJson(urlPathJoin(urlRStrip(baseUrl), 'api/merge'),
               {base, local, remote},
               onComplete,
               onFail);
