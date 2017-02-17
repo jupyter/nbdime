@@ -12,12 +12,15 @@ import sys
 import argparse
 import json
 
+from six import string_types
+
 import nbdime
 from nbdime.diffing.notebooks import diff_notebooks
 from nbdime.prettyprint import pretty_print_notebook_diff
 from nbdime.args import (
     add_generic_args, add_diff_args, add_filename_args, process_diff_args)
 from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook, setup_std_streams
+from .gitfiles import changed_notebooks, is_valid_gitref
 
 
 _description = "Compute the difference between two Jupyter notebooks."
@@ -32,7 +35,7 @@ def main_diff(args):
     process_diff_args(args)
 
     for fn in (afn, bfn):
-        if not os.path.exists(fn) and fn != EXPLICIT_MISSING_FILE:
+        if isinstance(fn, string_types) and not os.path.exists(fn) and fn != EXPLICIT_MISSING_FILE:
             print("Missing file {}".format(fn))
             return 1
     # Both files cannot be missing
@@ -58,6 +61,10 @@ def main_diff(args):
         class Printer:
             def write(self, text):
                 print(text, end="")
+        if not isinstance(afn, string_types):
+            afn = afn.name
+        if not isinstance(bfn, string_types):
+            bfn = bfn.name
         pretty_print_notebook_diff(afn, bfn, a, d, Printer())
 
     return 0
@@ -71,7 +78,12 @@ def _build_arg_parser():
         )
     add_generic_args(parser)
     add_diff_args(parser)
-    add_filename_args(parser, ["base", "remote"])
+    parser.add_argument(
+        "base", help="The base notebook filename OR base git-revision.",
+    )
+    parser.add_argument(
+        "remote", help="The remote modified notebook filename OR remote git-revision.",
+    )
 
     parser.add_argument(
         '--out',
@@ -87,7 +99,19 @@ def main(args=None):
         args = sys.argv[1:]
     setup_std_streams()
     arguments = _build_arg_parser().parse_args(args)
+    base = arguments.base
+    remote = arguments.remote
     nbdime.log.init_logging(level=arguments.log_level)
+    if ((not os.path.exists(base) and not os.path.exists(remote)) and
+            is_valid_gitref(base) and is_valid_gitref(remote)):
+        # We are asked to do a diff of git revisions:
+        for fbase, fremote in changed_notebooks(base, remote):
+            arguments.base = fbase
+            arguments.remote = fremote
+            status = main_diff(arguments)
+            if status != 0:
+                return status
+        return status
     return main_diff(arguments)
 
 
