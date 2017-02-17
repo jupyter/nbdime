@@ -66,6 +66,8 @@ def main_dispatch(args=None):
         from nbdime.webapp.nbmergeweb import main
     elif cmd == 'mergetool':
         main = main_mergetool
+    elif cmd == 'server':
+        from nbdime.webapp.nbdimeserver import main
     elif cmd == 'config-git':
         # Call all git configs
         from nbdime.gitdiffdriver import main as diff_driver
