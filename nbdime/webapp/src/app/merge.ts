@@ -51,7 +51,7 @@ import {
 } from 'nbdime/lib/request';
 
 import {
-  getConfigOption, closeTool, toggleSpinner
+  getBaseUrl, getConfigOption, closeTool, toggleSpinner
 } from './common';
 
 import {
@@ -116,7 +116,8 @@ function showMerge(data: {
  */
 export
 function getMerge(base: string, local: string, remote: string) {
-  requestMerge(base, local, remote, onMergeRequestCompleted, onMergeRequestFailed);
+  let baseUrl = getBaseUrl();
+  requestMerge(base, local, remote, baseUrl, onMergeRequestCompleted, onMergeRequestFailed);
 }
 
 /**

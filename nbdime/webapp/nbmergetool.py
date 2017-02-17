@@ -7,8 +7,9 @@ from __future__ import unicode_literals
 import sys
 from argparse import ArgumentParser
 
-from ..args import add_generic_args, add_filename_args
-from ..args import add_diff_args, add_merge_args, add_web_args
+from ..args import (
+    add_generic_args, add_filename_args, add_diff_args, add_merge_args,
+    add_web_args, args_for_server, args_for_browse)
 from .nbdimeserver import main_server as run_server
 from .webutil import browse
 import nbdime.log
@@ -47,24 +48,19 @@ def main_parsed(opts):
     Called by both main here and gitmergetool
     """
     nbdime.log.init_logging(level=opts.log_level)
-    port = opts.port
-    ip = opts.ip
-    cwd = opts.workdirectory
     base = opts.base
     local = opts.local
     remote = opts.remote
     merged = opts.merged
-    browsername = opts.browser
     return run_server(
-        port=port, cwd=cwd, ip=ip,
         closable=True,
         mergetool_args=dict(base=base, local=local, remote=remote),
         outputfilename=merged,
         on_port=lambda port: browse(
             port=port,
-            browsername=browsername,
             rel_url='mergetool',
-            ip=ip))
+            **args_for_browse(opts)),
+        **args_for_server(opts))
 
 
 def main(args=None):

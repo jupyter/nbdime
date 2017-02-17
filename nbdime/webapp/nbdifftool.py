@@ -7,8 +7,9 @@ from __future__ import unicode_literals
 import sys
 from argparse import ArgumentParser
 
-from ..args import add_generic_args, add_diff_args
-from ..args import add_web_args, add_filename_args
+from ..args import (
+    add_generic_args, add_diff_args, add_web_args, add_filename_args,
+    args_for_server, args_for_browse)
 from .nbdimeserver import main_server as run_server
 from .webutil import browse
 import nbdime.log
@@ -41,21 +42,16 @@ def main_parsed(opts):
     Called by both main here and gitdifftool
     """
     nbdime.log.init_logging(level=opts.log_level)
-    port = opts.port
-    ip = opts.ip
-    cwd = opts.workdirectory
     base = opts.local
     remote = opts.remote
-    browsername = opts.browser
     return run_server(
-        port=port, cwd=cwd, ip=ip,
         closable=True,
         difftool_args=dict(base=base, remote=remote),
         on_port=lambda port: browse(
             port=port,
-            browsername=browsername,
             rel_url='difftool',
-            ip=ip))
+            **args_for_browse(opts)),
+        **args_for_server(opts))
 
 
 def main(args=None):

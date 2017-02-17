@@ -92,6 +92,10 @@ def add_web_args(parser, default_port=8888):
         help="specify the working directory you want "
              "the server to run from. Default is the "
              "actual cwd at program start.")
+    parser.add_argument(
+        '--base-url',
+        default='/',
+        help="The base URL prefix under which to run the web app")
 
 
 def add_diff_args(parser):
@@ -156,3 +160,24 @@ def add_filename_args(parser, names):
         }
     for name in names:
         parser.add_argument(name, help=helps[name])
+
+
+def args_for_server(arguments):
+    """Translate standard arguments into kwargs for running webapp.nbdimeserver.main"""
+    # Map format: <arguments.name>='<kwargs[key]>'
+    kmap = dict(ip='ip',
+                port='port',
+                workdirectory='cwd',
+                base_url='base_url',
+                )
+    return {kmap[k]: v for k, v in vars(arguments).items() if k in kmap}
+
+
+def args_for_browse(arguments):
+    """Translate standard arguments into kwargs for webapp.webutil.browse()"""
+    # Map format: <arguments.name>='<kwargs[key]>'
+    kmap = dict(ip='ip',
+                browser='browsername',
+                base_url='base_url',
+                )
+    return {kmap[k]: v for k, v in vars(arguments).items() if k in kmap}

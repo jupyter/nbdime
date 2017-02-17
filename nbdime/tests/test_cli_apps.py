@@ -9,14 +9,12 @@ import io
 import json
 import logging
 import os
-from subprocess import CalledProcessError, Popen, PIPE
+from subprocess import CalledProcessError, Popen
 import time
 
 import pytest
-from pytest import mark
 import requests
 from tornado.httputil import url_concat
-from tornado import ioloop
 
 import nbformat
 
@@ -473,29 +471,3 @@ def test_mergetool(git_repo, request):
     # wait for exit
     p.wait()
     assert p.poll() == 0
-
-
-
-
-
-@pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
-def test_diff_web():
-    port = 62023
-    files = filespath()
-    a = os.path.join(files, 'src-and-output--1.ipynb')
-    b = os.path.join(files, 'src-and-output--2.ipynb')
-    loop = ioloop.IOLoop.current()
-    loop.call_later(0, loop.stop)
-    nbdime.webapp.nbdiffweb.main(['--port=%i' % port, '--browser=disabled', a, b])
-
-
-@pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
-def test_merge_web():
-    port = 62024
-    files = filespath()
-    a = os.path.join(files, 'multilevel-test-base.ipynb')
-    b = os.path.join(files, 'multilevel-test-local.ipynb')
-    c = os.path.join(files, 'multilevel-test-remote.ipynb')
-    loop = ioloop.IOLoop.current()
-    loop.call_later(0, loop.stop)
-    nbdime.webapp.nbmergeweb.main(['--port=%i' % port, '--browser=disabled', a, b, c])

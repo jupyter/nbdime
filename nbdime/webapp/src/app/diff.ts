@@ -45,7 +45,7 @@ import {
 } from 'nbdime/lib/request';
 
 import {
-  getConfigOption, toggleSpinner
+  getBaseUrl, getConfigOption, toggleSpinner
 } from './common';
 
 import {
@@ -137,7 +137,8 @@ function editHistory(pushHistory: boolean | 'replace', statedata: any, title?: s
  */
 export
 function getDiff(base: string, remote: string) {
-  requestDiff(base, remote, onDiffRequestCompleted, onDiffRequestFailed);
+  let baseUrl = getBaseUrl();
+  requestDiff(base, remote, baseUrl, onDiffRequestCompleted, onDiffRequestFailed);
 }
 
 /**

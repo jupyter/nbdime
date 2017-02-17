@@ -242,6 +242,7 @@ extras_require = setuptools_args['extras_require'] = {
         'pytest',
         'pytest-cov',
         'pytest-timeout',
+        'pytest-tornado',
         'jsonschema',
         'mock',
         'requests',

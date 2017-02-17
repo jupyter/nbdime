@@ -39,14 +39,6 @@ static_path = os.path.join(here, "static")
 template_path = os.path.join(here, "templates")
 
 
-def truncate_filename(name):
-    limit = 20
-    if len(name) < limit:
-        return name
-    else:
-        return name[:limit-3] + "..."
-
-
 class NbdimeApiHandler(web.RequestHandler):
     def initialize(self, **params):
         self.params = params
@@ -55,13 +47,23 @@ class NbdimeApiHandler(web.RequestHandler):
     def base_args(self):
         fn = self.params.get("outputfilename", None)
         base = {
-            "closable": self.params["closable"],
+            "closable": self.params.get("closable", False),
             "savable": fn is not None
         }
         if fn:
             # For reference, e.g. if user wants to download file
             base["outputfilename"] = fn
         return base
+
+    def write_error(self, status_code, **kwargs):
+        # Write error message for HTTPErrors if serve_traceback is off:
+        exc_info = kwargs.get("exc_info", None)
+        if exc_info and not self.settings.get('serve_traceback'):
+            (etype, value, traceback) = exc_info
+            self.set_header('Content-Type', 'text/plain')
+            if etype == web.HTTPError:
+                return self.finish(str(value))
+        return super(NbdimeApiHandler, self).write_error(status_code, **kwargs)
 
     def get_notebook_argument(self, argname):
         # Assuming a request on the form "{'argname':arg}"
@@ -72,19 +74,19 @@ class NbdimeApiHandler(web.RequestHandler):
         # where the server was started from, later we may
         # want to accept urls or full notebooks as well.
         if not isinstance(arg, string_types):
-            raise web.HTTPError(400, "Expecting a filename.")
+            raise web.HTTPError(400, "Expecting a filename or a URL.")
 
-        # Check that file exists
-        if arg == EXPLICIT_MISSING_FILE:
-            path = arg
-        else:
-            path = os.path.join(self.params["cwd"], arg)
-            if not os.path.exists(path):
-                # Assume file is URI
-                r = requests.get(arg)
-
-        # Let nbformat do the reading and validation
         try:
+            # Check that file exists
+            if arg == EXPLICIT_MISSING_FILE:
+                path = arg
+            else:
+                path = os.path.join(self.params["cwd"], arg)
+                if not os.path.exists(path):
+                    # Assume file is URI
+                    r = requests.get(arg)
+
+            # Let nbformat do the reading and validation
             if os.path.exists(path):
                 nb = nbformat.read(path, as_version=4)
             elif path == EXPLICIT_MISSING_FILE:
@@ -92,7 +94,7 @@ class NbdimeApiHandler(web.RequestHandler):
             else:
                 nb = nbformat.reads(r.text, as_version=4)
         except:
-            raise web.HTTPError(400, "Invalid notebook: %s" % truncate_filename(arg))
+            raise web.HTTPError(422, "Invalid notebook: %s" % arg)
 
         return nb
 
@@ -202,7 +204,7 @@ class ApiMergeStoreHandler(NbdimeApiHandler):
         fn = self.params.get("outputfilename", None)
         if not fn:
             raise web.HTTPError(400, "Server does not accept storing merge result.")
-        path = os.path.join(self.params["cwd"], fn)
+        path = os.path.join(self.params.get("cwd", os.curdir), fn)
         nbdime.log.info("Saving merge result in %s", path)
 
         body = json.loads(escape.to_unicode(self.request.body))
@@ -243,11 +245,21 @@ def make_app(**params):
         (r"/api/merge", ApiMergeHandler, params),
         (r"/api/store", ApiMergeStoreHandler, params),
         (r"/api/closetool", ApiCloseHandler, params),
-        (r"/static", web.StaticFileHandler, {"path": static_path}),
+        # Static handler will be added automatically
     ]
+    base_url = params.get('base_url', '/')
+    if base_url != '/':
+        prefix = base_url.rstrip('/')
+        handlers = [
+            (prefix + path, cls, params)
+            for (path, cls, params) in handlers
+        ]
+    else:
+        prefix = ''
 
     settings = {
         "static_path": static_path,
+        "static_url_prefix": prefix + '/static/',
         "template_path": template_path,
         }
 
@@ -265,10 +277,10 @@ def make_app(**params):
     return app
 
 
-def main_server(on_port=None, closable=False, **params):
+def init_app(on_port=None, closable=False, **params):
     _logger.debug("Using params: %s" % params)
     params.update({"closable": closable})
-    port = params.pop("port")
+    port = params.pop("port", 0)
     ip = params.pop("ip", "127.0.0.1")
     app = make_app(**params)
     if port != 0 or on_port is None:
@@ -282,6 +294,11 @@ def main_server(on_port=None, closable=False, **params):
             port = s.getsockname()[1]
     if on_port is not None:
         on_port(port)
+    return app
+
+
+def main_server(on_port=None, closable=False, **params):
+    app = init_app(on_port, closable, **params)
     ioloop.IOLoop.current().start()
     return app.exit_code
 
@@ -303,7 +320,11 @@ def main(args=None):
         args = sys.argv[1:]
     arguments = _build_arg_parser().parse_args(args)
     nbdime.log.init_logging(level=arguments.log_level)
-    return main_server(port=arguments.port, ip=arguments.ip, cwd=arguments.workdirectory)
+    return main_server(port=arguments.port,
+                       ip=arguments.ip,
+                       cwd=arguments.workdirectory,
+                       base_url=arguments.base_url,
+                       )
 
 
 if __name__ == "__main__":

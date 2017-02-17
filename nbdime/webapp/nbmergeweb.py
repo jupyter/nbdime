@@ -7,8 +7,8 @@ from __future__ import unicode_literals
 import sys
 from argparse import ArgumentParser
 
-from ..args import add_generic_args, add_diff_args
-from ..args import add_merge_args, add_web_args, add_filename_args
+from ..args import (add_generic_args, add_diff_args, add_merge_args,
+    add_web_args, add_filename_args, args_for_server, args_for_browse)
 from .nbdimeserver import main_server as run_server
 from .webutil import browse
 import nbdime.log
@@ -42,24 +42,19 @@ def main(args=None):
         args = sys.argv[1:]
     arguments = build_arg_parser().parse_args(args)
     nbdime.log.init_logging(level=arguments.log_level)
-    port = arguments.port
-    ip = arguments.ip
-    cwd = arguments.workdirectory
     base = arguments.base
     local = arguments.local
     remote = arguments.remote
     output = arguments.output
-    browsername = arguments.browser
     return run_server(
-        port=port, cwd=cwd, ip=ip,
         closable=True,
         outputfilename=output,
         on_port=lambda port: browse(
             port=port,
-            browsername=browsername,
             rel_url='merge',
-            ip=ip,
-            base=base, local=local, remote=remote))
+            base=base, local=local, remote=remote,
+            **args_for_browse(arguments)),
+        **args_for_server(arguments))
 
 
 if __name__ == "__main__":
