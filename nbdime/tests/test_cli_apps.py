@@ -18,7 +18,7 @@ from tornado.httputil import url_concat
 
 import nbformat
 
-from .fixtures import filespath, assert_clean_exit, get_output, call
+from .utils import assert_clean_exit, get_output, call
 
 import nbdime
 from nbdime.nbshowapp import main_show
@@ -40,9 +40,8 @@ import nbdime.webapp.nbmergeweb
 from nbdime.utils import EXPLICIT_MISSING_FILE
 
 
-def test_nbshow_app():
-    p = filespath()
-    afn = os.path.join(p, "multilevel-test-base.ipynb")
+def test_nbshow_app(filespath):
+    afn = os.path.join(filespath, "multilevel-test-base.ipynb")
 
     args = nbshowapp._build_arg_parser().parse_args([afn, '--log-level=CRITICAL'])
     assert 0 == main_show(args)
@@ -50,22 +49,20 @@ def test_nbshow_app():
     assert nbdime.log.logger.level == logging.CRITICAL
 
 
-def test_nbpatch_app(capsys):
+def test_nbpatch_app(capsys, filespath):
     # this entrypoint is not exported,
     # but exercise it anyway
-    p = filespath()
-    bfn = os.path.join(p, "multilevel-test-base.ipynb")
-    dfn = os.path.join(p, "multilevel-test-base-local-diff.json")
+    bfn = os.path.join(filespath, "multilevel-test-base.ipynb")
+    dfn = os.path.join(filespath, "multilevel-test-base-local-diff.json")
     assert 0 == nbpatchapp.main([bfn, dfn])
 
 
-def test_nbdiff_app():
-    p = filespath()
-    afn = os.path.join(p, "multilevel-test-base.ipynb")
-    bfn = os.path.join(p, "multilevel-test-local.ipynb")
+def test_nbdiff_app(filespath):
+    afn = os.path.join(filespath, "multilevel-test-base.ipynb")
+    bfn = os.path.join(filespath, "multilevel-test-local.ipynb")
 
     # When filename is omitted, will print to console instead
-    #dfn = ""  # os.path.join(p, "multilevel-test-local-diff.json")
+    # dfn = ""  # os.path.join(filespath, "multilevel-test-local-diff.json")
 
     args = nbdiffapp._build_arg_parser().parse_args([afn, bfn, '--log-level=WARN'])
     assert 0 == main_diff(args)
@@ -73,9 +70,8 @@ def test_nbdiff_app():
     assert nbdime.log.logger.level == logging.WARN
 
 
-def test_nbdiff_app_null_file():
-    p = filespath()
-    fn = os.path.join(p, "multilevel-test-base.ipynb")
+def test_nbdiff_app_null_file(filespath):
+    fn = os.path.join(filespath, "multilevel-test-base.ipynb")
 
     args = nbdiffapp._build_arg_parser().parse_args([fn, EXPLICIT_MISSING_FILE])
     assert 0 == main_diff(args)
@@ -85,11 +81,10 @@ def test_nbdiff_app_null_file():
 
 
 def test_nbmerge_app(tempfiles, capsys):
-    p = tempfiles
-    bfn = os.path.join(p, "multilevel-test-base.ipynb")
-    lfn = os.path.join(p, "multilevel-test-local.ipynb")
-    rfn = os.path.join(p, "multilevel-test-remote.ipynb")
-    ofn = os.path.join(p, "output.ipynb")
+    bfn = os.path.join(tempfiles, "multilevel-test-base.ipynb")
+    lfn = os.path.join(tempfiles, "multilevel-test-local.ipynb")
+    rfn = os.path.join(tempfiles, "multilevel-test-remote.ipynb")
+    ofn = os.path.join(tempfiles, "output.ipynb")
 
     args = nbmergeapp._build_arg_parser().parse_args([bfn, lfn, rfn, '--log-level=DEBUG'])
     assert args.log_level == 'DEBUG'
@@ -112,10 +107,9 @@ def test_nbmerge_app(tempfiles, capsys):
     assert nb_stdout == nb_file
 
 
-def test_nbmerge_app_null_base():
-    p = filespath()
-    afn = os.path.join(p, "multilevel-test-base.ipynb")
-    bfn = os.path.join(p, "multilevel-test-local.ipynb")
+def test_nbmerge_app_null_base(filespath):
+    afn = os.path.join(filespath, "multilevel-test-base.ipynb")
+    bfn = os.path.join(filespath, "multilevel-test-local.ipynb")
 
     # Two identical files added (null base)
     args = nbmergeapp._build_arg_parser().parse_args([
@@ -128,10 +122,9 @@ def test_nbmerge_app_null_base():
     assert 1 == main_merge(args)
 
 
-def test_nbmerge_app_null_side():
-    p = filespath()
-    afn = os.path.join(p, "multilevel-test-base.ipynb")
-    bfn = os.path.join(p, "multilevel-test-local.ipynb")
+def test_nbmerge_app_null_side(filespath):
+    afn = os.path.join(filespath, "multilevel-test-base.ipynb")
+    bfn = os.path.join(filespath, "multilevel-test-local.ipynb")
 
     # Local deleted, remote modified
     args = nbmergeapp._build_arg_parser().parse_args([
@@ -150,11 +143,10 @@ def test_nbmerge_app_null_side():
 
 
 def test_nbmerge_app_conflict(tempfiles, capsys):
-    p = tempfiles
-    bfn = os.path.join(p, "inline-conflict--1.ipynb")
-    lfn = os.path.join(p, "inline-conflict--2.ipynb")
-    rfn = os.path.join(p, "inline-conflict--3.ipynb")
-    ofn = os.path.join(p, "inline-conflict-out.ipynb")
+    bfn = os.path.join(tempfiles, "inline-conflict--1.ipynb")
+    lfn = os.path.join(tempfiles, "inline-conflict--2.ipynb")
+    rfn = os.path.join(tempfiles, "inline-conflict--3.ipynb")
+    ofn = os.path.join(tempfiles, "inline-conflict-out.ipynb")
 
     assert 1 == nbmergeapp.main([bfn, lfn, rfn])
     nb_stdout, err = capsys.readouterr()
@@ -173,11 +165,10 @@ def test_nbmerge_app_conflict(tempfiles, capsys):
 
 
 def test_nbmerge_app_decisions(tempfiles, capsys, reset_log):
-    p = tempfiles
-    bfn = os.path.join(p, "inline-conflict--1.ipynb")
-    lfn = os.path.join(p, "inline-conflict--2.ipynb")
-    rfn = os.path.join(p, "inline-conflict--3.ipynb")
-    ofn = os.path.join(p, "inline-conflict-out.ipynb")
+    bfn = os.path.join(tempfiles, "inline-conflict--1.ipynb")
+    lfn = os.path.join(tempfiles, "inline-conflict--2.ipynb")
+    rfn = os.path.join(tempfiles, "inline-conflict--3.ipynb")
+    ofn = os.path.join(tempfiles, "inline-conflict-out.ipynb")
 
     assert 1 == nbmergeapp.main([bfn, lfn, rfn, '--decisions', '-o', ofn])
     out, err = capsys.readouterr()
@@ -342,8 +333,7 @@ def test_diffdriver(git_repo):
     assert 'nbdiff' in out
 
 
-def test_mergedriver(git_repo):
-    p = filespath()
+def test_mergedriver(git_repo, filespath):
     # enable diff/merge drivers
     nbdime.gitdiffdriver.main(['config', '--enable'])
     nbdime.gitmergedriver.main(['config', '--enable'])
@@ -353,7 +343,7 @@ def test_mergedriver(git_repo):
     with open('merge-no-conflict.ipynb') as f:
         merged = f.read()
 
-    with open(os.path.join(p, 'multilevel-test-merged.ipynb')) as f:
+    with open(os.path.join(filespath, 'multilevel-test-merged.ipynb')) as f:
         expected = f.read()
 
     # verify merge success
@@ -405,11 +395,11 @@ def test_difftool(git_repo, request):
     with open('.gitattributes', 'w') as f:
         f.write('*.ipynb\tdiff=notnbdime')
 
-    p = Popen(['git', 'difftool', '--tool=nbdime', 'base'])
+    process = Popen(['git', 'difftool', '--tool=nbdime', 'base'])
 
     def _term():
         try:
-            p.terminate()
+            process.terminate()
         except OSError:
             pass
     request.addfinalizer(_term)
@@ -417,7 +407,7 @@ def test_difftool(git_repo, request):
     # 3 is the number of notebooks in this diff
     url = 'http://127.0.0.1:%i' % port
     for i in range(3):
-        _wait_up(url, check=lambda: p.poll() is None)
+        _wait_up(url, check=lambda: process.poll() is None)
         # server started
         r = requests.get(url + '/difftool')
         r.raise_for_status()
@@ -426,8 +416,8 @@ def test_difftool(git_repo, request):
         r.raise_for_status()
         time.sleep(0.25)
     # wait for exit
-    p.wait()
-    assert p.poll() == 0
+    process.wait()
+    assert process.poll() == 0
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
@@ -443,18 +433,18 @@ def test_mergetool(git_repo, request):
 
     with pytest.raises(CalledProcessError):
         call('git merge remote-conflict')
-    p = Popen(['git', 'mergetool', '--no-prompt', '--tool=nbdime', 'merge-conflict.ipynb'])
+    process = Popen(['git', 'mergetool', '--no-prompt', '--tool=nbdime', 'merge-conflict.ipynb'])
 
     def _term():
         try:
-            p.terminate()
+            process.terminate()
         except OSError:
             pass
     request.addfinalizer(_term)
 
     # 3 is the number of notebooks in this diff
     url = 'http://127.0.0.1:%i' % port
-    _wait_up(url, check=lambda: p.poll() is None)
+    _wait_up(url, check=lambda: process.poll() is None)
     # server started
     r = requests.get(url + '/mergetool')
     r.raise_for_status()
@@ -469,5 +459,5 @@ def test_mergetool(git_repo, request):
     r = requests.post(url + '/api/closetool', headers={'exit_code': '0'})
     r.raise_for_status()
     # wait for exit
-    p.wait()
-    assert p.poll() == 0
+    process.wait()
+    assert process.poll() == 0

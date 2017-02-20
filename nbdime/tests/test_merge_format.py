@@ -3,8 +3,6 @@ from jsonschema import Draft4Validator as Validator
 from nbdime import decide_merge
 from nbdime.merging.notebooks import decide_notebook_merge
 
-from .fixtures import matching_nb_triplets
-
 
 def test_check_schema(json_schema_merge):
     Validator.check_schema(json_schema_merge)

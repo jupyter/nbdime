@@ -8,15 +8,13 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
-import pytest
-import copy
 import nbformat
 
 from nbdime import patch, patch_notebook, diff_notebooks
 from nbdime.diffing.notebooks import diff_cells
 
 # pytest conf.py stuff is tricky to use robustly, this works with no magic
-from .fixtures import db, any_nb, any_nb_pair, matching_nb_pairs, assert_is_valid_notebook, check_diff_and_patch
+from .utils import assert_is_valid_notebook, check_diff_and_patch
 
 
 def test_notebook_database_fixture(db):
