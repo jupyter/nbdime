@@ -15,6 +15,10 @@ import {
   getConfigOption, closeTool, toggleSpinner
 } from './common';
 
+import {
+  exportDiff
+} from './staticdiff';
+
 
 const ERROR_COMPARE_NUMBER = 'Need two or more values to compare!';
 
@@ -172,4 +176,6 @@ function initializeCompare() {
     downloadBtn.onclick = null!;
     downloadBtn.style.display = 'none';
   }
+  let exportBtn = document.getElementById('nbdime-export') as HTMLButtonElement;
+  exportBtn.onclick = exportDiff;
 }
