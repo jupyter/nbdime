@@ -3,10 +3,13 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+import codecs
 import errno
+import locale
 import os
 import re
 from subprocess import check_output, CalledProcessError
+import sys
 
 import nbformat
 from six import string_types, text_type
@@ -238,3 +241,25 @@ def find_shared_prefix(a, b):
         i += 1
 
     return a[:i]
+
+
+def setup_std_streams():
+    """Setup encoding on stdout/err
+    
+    Ensures sys.stdout/err have error-escaping encoders,
+    rather than raising errors.
+    """
+    if os.getenv('PYTHONIOENCODING'):
+        # setting PYTHONIOENCODING overrides anything we would do here
+        return
+    _default_encoding = locale.getpreferredencoding() or 'UTF-8'
+    for name in ('stdout', 'stderr'):
+        stream = getattr(sys, name)
+        enc = getattr(stream, 'encoding', None) or _default_encoding
+        errors = getattr(stream, 'errors', None) or 'strict'
+        # if error-handler is strict, switch to replace
+        if errors == 'strict' or errors.startswith('surrogate'):
+            bin_stream = getattr(stream, 'buffer', stream)
+            new_stream = codecs.getwriter(enc)(bin_stream, errors='backslashreplace')
+            setattr(sys, name, new_stream)
+

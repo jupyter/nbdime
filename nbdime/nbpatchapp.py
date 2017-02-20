@@ -17,7 +17,7 @@ import nbdime
 from nbdime.patching import patch_notebook
 from nbdime.diff_format import to_diffentry_dicts
 from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook
-from nbdime.prettyprint import pretty_print_notebook
+from nbdime.prettyprint import pretty_print_notebook, setup_std_streams
 
 
 _description = "Apply patch from nbdiff to a Jupyter notebook."
@@ -77,6 +77,7 @@ def main(args=None):
         args = sys.argv[1:]
     arguments = _build_arg_parser().parse_args(args)
     nbdime.log.init_logging(level=arguments.log_level)
+    setup_std_streams()
     return main_patch(arguments)
 
 
