@@ -1,4 +1,4 @@
-include COPYING.md
+include LICENSE.md
 include CONTRIBUTING.md
 include README.md
 
