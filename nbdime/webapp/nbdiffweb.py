@@ -33,9 +33,11 @@ def build_arg_parser():
     add_diff_args(parser)
     parser.add_argument(
         "base", help="The base notebook filename OR base git-revision.",
+        nargs='?', default='HEAD',
     )
     parser.add_argument(
         "remote", help="The remote modified notebook filename OR remote git-revision.",
+        nargs='?', default=None,
     )
     return parser
 

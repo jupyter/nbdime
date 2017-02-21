@@ -18,7 +18,7 @@ import nbdime
 from nbdime.diffing.notebooks import diff_notebooks
 from nbdime.prettyprint import pretty_print_notebook_diff
 from nbdime.args import (
-    add_generic_args, add_diff_args, add_filename_args, process_diff_args)
+    add_generic_args, add_diff_args, process_diff_args)
 from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook, setup_std_streams
 from .gitfiles import changed_notebooks, is_valid_gitref
 
@@ -80,9 +80,11 @@ def _build_arg_parser():
     add_diff_args(parser)
     parser.add_argument(
         "base", help="The base notebook filename OR base git-revision.",
+        nargs='?', default='HEAD',
     )
     parser.add_argument(
         "remote", help="The remote modified notebook filename OR remote git-revision.",
+        nargs='?', default=None,
     )
 
     parser.add_argument(
@@ -119,7 +121,7 @@ def main(args=None):
     nbdime.log.init_logging(level=arguments.log_level)
     if is_gitref(base) and is_gitref(remote):
         # We are asked to do a diff of git revisions:
-        return handle_gitrefs(base, remote arguments)
+        return handle_gitrefs(base, remote, arguments)
     return main_diff(arguments)
 
 
