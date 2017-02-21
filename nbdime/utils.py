@@ -3,13 +3,16 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+import codecs
 import errno
+import locale
 import os
 import re
 from subprocess import check_output, CalledProcessError
+import sys
 
 import nbformat
-from six import string_types, text_type
+from six import string_types, text_type, PY2
 
 if os.name == 'nt':
     EXPLICIT_MISSING_FILE = 'nul'
@@ -238,3 +241,48 @@ def find_shared_prefix(a, b):
         i += 1
 
     return a[:i]
+
+
+def _setup_std_stream_encoding():
+    """Setup encoding on stdout/err
+    
+    Ensures sys.stdout/err have error-escaping encoders,
+    rather than raising errors.
+    """
+    if os.getenv('PYTHONIOENCODING'):
+        # setting PYTHONIOENCODING overrides anything we would do here
+        return
+    _default_encoding = locale.getpreferredencoding() or 'UTF-8'
+    for name in ('stdout', 'stderr'):
+        stream = getattr(sys, name)
+        raw_stream = getattr(sys, '__%s__' % name)
+        if stream is not raw_stream:
+            # don't wrap captured or redirected output
+            continue
+        enc = getattr(stream, 'encoding', None) or _default_encoding
+        errors = getattr(stream, 'errors', None) or 'strict'
+        # if error-handler is strict, switch to replace
+        if errors == 'strict' or errors.startswith('surrogate'):
+            if PY2:
+                bin_stream = stream
+            else:
+                bin_stream = stream.buffer
+            new_stream = codecs.getwriter(enc)(bin_stream, errors='backslashreplace')
+            setattr(sys, name, new_stream)
+
+
+def setup_std_streams():
+    """Setup sys.stdout/err
+    
+    - Ensures sys.stdout/err have error-escaping encoders,
+      rather than raising errors.
+    - enables colorama for ANSI escapes on Windows
+    """
+
+    _setup_std_stream_encoding()
+    # must enable colorama after setting up encoding,
+    # or encoding will undo colorama setup
+    if sys.platform.startswith('win'):
+        import colorama
+        colorama.init()
+

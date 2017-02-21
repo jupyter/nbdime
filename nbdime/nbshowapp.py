@@ -16,6 +16,8 @@ import json
 import nbdime
 from nbdime.prettyprint import pretty_print_notebook
 from nbdime.args import add_generic_args, add_filename_args
+from nbdime.utils import setup_std_streams
+
 
 
 _description = """Show a Jupyter notebook in terminal.
@@ -104,9 +106,7 @@ def _build_arg_parser():
 def main(args=None):
     if args is None:
         args = sys.argv[1:]
-    if sys.platform.startswith('win'):
-        import colorama
-        colorama.init()
+    setup_std_streams()
     arguments = _build_arg_parser().parse_args(args)
     nbdime.log.init_logging(level=arguments.log_level)
     return main_show(arguments)

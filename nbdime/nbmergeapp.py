@@ -17,7 +17,7 @@ import nbdime
 import nbdime.log
 from nbdime.merging import merge_notebooks
 from nbdime.prettyprint import pretty_print_merge_decisions
-from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook
+from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook, setup_std_streams
 
 _description = ('Merge two Jupyter notebooks "local" and "remote" with a '
                 'common ancestor "base".')
@@ -127,6 +127,7 @@ def _build_arg_parser():
 def main(args=None):
     if args is None:
         args = sys.argv[1:]
+    setup_std_streams()
     nbdime.log.init_logging()
     arguments = _build_arg_parser().parse_args(args)
     nbdime.log.init_logging(level=arguments.log_level)

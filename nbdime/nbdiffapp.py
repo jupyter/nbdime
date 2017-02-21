@@ -17,7 +17,7 @@ import nbdime
 from nbdime.diffing.notebooks import diff_notebooks
 from nbdime.prettyprint import pretty_print_notebook_diff
 from nbdime.args import add_generic_args, add_diff_args, add_filename_args
-from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook
+from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook, setup_std_streams
 
 
 _description = "Compute the difference between two Jupyter notebooks."
@@ -80,9 +80,7 @@ def _build_arg_parser():
 def main(args=None):
     if args is None:
         args = sys.argv[1:]
-    if sys.platform.startswith('win'):
-        import colorama
-        colorama.init()
+    setup_std_streams()
     arguments = _build_arg_parser().parse_args(args)
     nbdime.log.init_logging(level=arguments.log_level)
     return main_diff(arguments)
