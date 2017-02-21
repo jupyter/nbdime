@@ -9,7 +9,8 @@ import io
 import json
 import logging
 import os
-from subprocess import CalledProcessError, Popen
+from subprocess import CalledProcessError, Popen, check_call
+import sys
 import time
 
 import pytest
@@ -78,6 +79,15 @@ def test_nbdiff_app_null_file(filespath):
 
     args = nbdiffapp._build_arg_parser().parse_args([EXPLICIT_MISSING_FILE, fn])
     assert 0 == main_diff(args)
+
+
+def test_nbdiff_app_unicode_safe(filespath):
+    afn = os.path.join(filespath, "unicode--1.ipynb")
+    bfn = os.path.join(filespath, "unicode--2.ipynb")
+    env = os.environ.copy()
+    env['LC_ALL'] = 'C'
+    env.pop('PYTHONIOENCODING', None)
+    check_call([sys.executable, '-m', 'nbdime.nbdiffapp', afn, bfn], env=env)
 
 
 def test_nbmerge_app(tempfiles, capsys):
