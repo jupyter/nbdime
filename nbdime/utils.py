@@ -12,7 +12,7 @@ from subprocess import check_output, CalledProcessError
 import sys
 
 import nbformat
-from six import string_types, text_type
+from six import string_types, text_type, PY2
 
 if os.name == 'nt':
     EXPLICIT_MISSING_FILE = 'nul'
@@ -255,11 +255,18 @@ def _setup_std_stream_encoding():
     _default_encoding = locale.getpreferredencoding() or 'UTF-8'
     for name in ('stdout', 'stderr'):
         stream = getattr(sys, name)
+        raw_stream = getattr(sys, '__%s__' % name)
+        if stream is not raw_stream:
+            # don't wrap captured or redirected output
+            continue
         enc = getattr(stream, 'encoding', None) or _default_encoding
         errors = getattr(stream, 'errors', None) or 'strict'
         # if error-handler is strict, switch to replace
         if errors == 'strict' or errors.startswith('surrogate'):
-            bin_stream = getattr(stream, 'buffer', stream)
+            if PY2:
+                bin_stream = stream
+            else:
+                bin_stream = stream.buffer
             new_stream = codecs.getwriter(enc)(bin_stream, errors='backslashreplace')
             setattr(sys, name, new_stream)
 
