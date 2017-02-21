@@ -75,9 +75,9 @@ def _build_arg_parser():
 def main(args=None):
     if args is None:
         args = sys.argv[1:]
+    setup_std_streams()
     arguments = _build_arg_parser().parse_args(args)
     nbdime.log.init_logging(level=arguments.log_level)
-    setup_std_streams()
     return main_patch(arguments)
 
 

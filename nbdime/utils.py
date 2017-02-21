@@ -243,7 +243,7 @@ def find_shared_prefix(a, b):
     return a[:i]
 
 
-def setup_std_streams():
+def _setup_std_stream_encoding():
     """Setup encoding on stdout/err
     
     Ensures sys.stdout/err have error-escaping encoders,
@@ -262,4 +262,20 @@ def setup_std_streams():
             bin_stream = getattr(stream, 'buffer', stream)
             new_stream = codecs.getwriter(enc)(bin_stream, errors='backslashreplace')
             setattr(sys, name, new_stream)
+
+
+def setup_std_streams():
+    """Setup sys.stdout/err
+    
+    - Ensures sys.stdout/err have error-escaping encoders,
+      rather than raising errors.
+    - enables colorama for ANSI escapes on Windows
+    """
+
+    _setup_std_stream_encoding()
+    # must enable colorama after setting up encoding,
+    # or encoding will undo colorama setup
+    if sys.platform.startswith('win'):
+        import colorama
+        colorama.init()
 
