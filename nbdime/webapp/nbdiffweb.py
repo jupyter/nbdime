@@ -12,7 +12,7 @@ import warnings
 from .nbdimeserver import main_server as run_server
 from .webutil import browse as browse_util
 from ..args import (
-    add_generic_args, add_web_args, add_diff_args, add_filename_args,
+    add_generic_args, add_web_args, add_diff_args,
     args_for_server, args_for_browse, process_diff_args)
 from ..gitfiles import changed_notebooks, is_valid_gitref
 import nbdime.log
@@ -52,6 +52,26 @@ def browse(port, base, remote, browser):
         DeprecationWarning)
 
 
+def is_gitref(candidate):
+    return is_valid_gitref(candidate) and (candidate is None or not os.path.exists(candidate))
+
+
+def handle_gitrefs(base, remote, arguments):
+    status = 0
+    for fbase, fremote in changed_notebooks(base, remote):
+        status = run_server(
+            closable=True,
+            difftool_args=dict(base=fbase, remote=fremote),
+            on_port=lambda port: browse_util(
+                port=port,
+                rel_url='difftool',
+                **args_for_browse(arguments)),
+            **args_for_server(arguments))
+        if status != 0:
+            return status
+    return status
+
+
 def main(args=None):
     if args is None:
         args = sys.argv[1:]
@@ -60,29 +80,17 @@ def main(args=None):
     nbdime.log.init_logging(level=arguments.log_level)
     base = arguments.base
     remote = arguments.remote
-    if ((not os.path.exists(base) and not os.path.exists(remote)) and
-            is_valid_gitref(base) and is_valid_gitref(remote)):
+    if is_gitref(base) and is_gitref(remote):
         # We are asked to do a gui for git diff
-        for fbase, fremote in changed_notebooks(base, remote):
-            status = run_server(
-                closable=True,
-                difftool_args=dict(base=fbase, remote=fremote),
-                on_port=lambda port: browse_util(
-                    port=port,
-                    rel_url='difftool',
-                    **args_for_browse(arguments)),
-                **args_for_server(arguments))
-            if status != 0:
-                return status
-    else:
-        return run_server(
-            closable=True,
-            on_port=lambda port: browse_util(
-                port=port,
-                rel_url='diff',
-                base=base, remote=remote,
-                **args_for_browse(arguments)),
-            **args_for_server(arguments))
+        return handle_gitrefs(base, remote, arguments)
+    return run_server(
+        closable=True,
+        on_port=lambda port: browse_util(
+            port=port,
+            rel_url='diff',
+            base=base, remote=remote,
+            **args_for_browse(arguments)),
+        **args_for_server(arguments))
 
 
 if __name__ == "__main__":

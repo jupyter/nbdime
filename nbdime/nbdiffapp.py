@@ -94,6 +94,21 @@ def _build_arg_parser():
     return parser
 
 
+def is_gitref(candidate):
+    return is_valid_gitref(candidate) and (candidate is None or not os.path.exists(candidate))
+
+
+def handle_gitrefs(base, remote, arguments):
+    status = 0
+    for fbase, fremote in changed_notebooks(base, remote):
+        arguments.base = fbase
+        arguments.remote = fremote
+        status = main_diff(arguments)
+        if status != 0:
+            return status
+    return status
+
+
 def main(args=None):
     if args is None:
         args = sys.argv[1:]
@@ -102,16 +117,9 @@ def main(args=None):
     base = arguments.base
     remote = arguments.remote
     nbdime.log.init_logging(level=arguments.log_level)
-    if ((not os.path.exists(base) and not os.path.exists(remote)) and
-            is_valid_gitref(base) and is_valid_gitref(remote)):
+    if is_gitref(base) and is_gitref(remote):
         # We are asked to do a diff of git revisions:
-        for fbase, fremote in changed_notebooks(base, remote):
-            arguments.base = fbase
-            arguments.remote = fremote
-            status = main_diff(arguments)
-            if status != 0:
-                return status
-        return status
+        return handle_gitrefs(base, remote arguments)
     return main_diff(arguments)
 
 
