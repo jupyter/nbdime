@@ -390,7 +390,6 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
           splitDec.remoteDiff[0] as IDiffPatchObject : null;
 
         let subDecisions = this.splitPatch(splitDec, localDiff, remoteDiff);
-        resolveCommonPaths(subDecisions);
         // Add all split decisions:
         for (let subdec of subDecisions) {
           subdec.level = 2;
@@ -568,8 +567,10 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
         er ? [er] : null,
         action,
         md.conflict));
-    };
-    return this.splitOnSourceChunks(split);
+    }
+    let ret = this.splitOnSourceChunks(split);
+    resolveCommonPaths(ret);
+    return stableSort(ret, decisionSortKey);
   }
 
   /**
