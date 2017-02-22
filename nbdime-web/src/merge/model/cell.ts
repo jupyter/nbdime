@@ -38,7 +38,7 @@ import {
 } from '../../patch';
 
 import {
-  arraysEqual, valueIn, hasEntries, splitLines, unique
+  arraysEqual, valueIn, hasEntries, splitLines, unique, stableSort
 } from '../../common/util';
 
 import {
@@ -589,7 +589,7 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
         dec.level = 3;
         let sub = splitMergeDecisionsOnChunks(base, [dec]);
         resolveCommonPaths(sub);
-        out = out.concat(sub.sort(decisionSortKey));
+        out = out.concat(stableSort(sub, decisionSortKey));
       } else {
         out.push(dec);
       }

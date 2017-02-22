@@ -7,7 +7,7 @@ import {
 } from '@jupyterlab/services';
 
 import {
-  arraysEqual, valueIn, hasEntries
+  arraysEqual, valueIn, hasEntries, stableSort
 } from '../../common/util';
 
 import {
@@ -345,7 +345,7 @@ function splitCellListPatch(mergeDecisions: MergeDecision[]): MergeDecision[] {
         ));
     }
   }
-  return output.sort(decisionSortKey);
+  return stableSort(output, decisionSortKey);
 }
 
 
