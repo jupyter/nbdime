@@ -594,21 +594,21 @@ function _mergeTree(tree: DiffTree, sortedPaths: string[]): IDiffEntry[] {
   let trunk: IDiffEntry[] = [];
   let root: DecisionPath | null = null;
   for (let i = 0; i < sortedPaths.length; ++i) {
-    let pathStr = sortedPaths[i];
-    let path = tree[pathStr].path;
-    let nextPath: DecisionPath | null = null;
+    let path = tree[sortedPaths[i]].path;
+    let subdiffs = tree[sortedPaths[i]].diff;
+    trunk = trunk.concat(subdiffs);
+
+    let nextPath: DecisionPath | null;
     if (i === sortedPaths.length - 1) {
       nextPath = root;
     } else {
-      let nextPathStr = sortedPaths[i + 1];
-      nextPath = tree[nextPathStr].path;
+      nextPath = tree[sortedPaths[i + 1]].path;
     }
-    let subdiffs = tree[pathStr].diff;
-    trunk = trunk.concat(subdiffs);
+
     // First, check if path is subpath of nextPath:
     if (isPrefixArray(nextPath, path)) {
       // We can simply promote existing diffs to next path
-      if (nextPath) {
+      if (nextPath !== null) {
         trunk = pushPath(trunk, path.slice(nextPath.length));
         root = nextPath;
       }
