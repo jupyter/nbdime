@@ -4,12 +4,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 from __future__ import unicode_literals
-try:
-    from shutil import which
-except ImportError:
-    from backports.shutil_which import which
 
-import pytest
 import mock
 import os
 from os.path import join as pjoin
@@ -44,8 +39,8 @@ expected_output = """nbdiff {0} {1}
 
 """
 
-@pytest.mark.skipif(not which('git'), reason="Missing git.")
-def test_git_diff_driver(capsys, nocolor):
+
+def test_git_diff_driver(capsys, nocolor, needs_git):
     # Simulate a call from `git diff` to check basic driver functionality
     test_dir = os.path.abspath(os.path.dirname(__file__))
 

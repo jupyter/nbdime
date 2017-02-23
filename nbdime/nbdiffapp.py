@@ -20,7 +20,7 @@ from nbdime.prettyprint import pretty_print_notebook_diff
 from nbdime.args import (
     add_generic_args, add_diff_args, process_diff_args)
 from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook, setup_std_streams
-from .gitfiles import changed_notebooks, is_valid_gitref
+from .gitfiles import changed_notebooks, is_gitref
 
 
 _description = "Compute the difference between two Jupyter notebooks."
@@ -94,10 +94,6 @@ def _build_arg_parser():
              "Otherwise it is printed to the terminal.")
 
     return parser
-
-
-def is_gitref(candidate):
-    return is_valid_gitref(candidate) and (candidate is None or not os.path.exists(candidate))
 
 
 def handle_gitrefs(base, remote, arguments):

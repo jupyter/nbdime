@@ -5,12 +5,9 @@
 
 from __future__ import unicode_literals
 
-import pytest
 from nbdime import merge_notebooks
 
 from nbdime.nbmergeapp import _build_arg_parser
-
-from .utils import have_git
 
 # FIXME: Extend tests to more merge situations!
 
@@ -112,8 +109,7 @@ def test_autoresolve_notebook_ignore_fallback():
     assert not any(d.conflict for d in decisions)
 
 
-@pytest.mark.skipif(not have_git, reason="Missing git.")
-def test_autoresolve_inline_source_conflict(db):
+def test_autoresolve_inline_source_conflict(db, needs_git):
     nbb = db["inline-conflict--1"]
     nbl = db["inline-conflict--2"]
     nbr = db["inline-conflict--3"]
@@ -167,4 +163,3 @@ print(x + q)
     expected = builtin_expected_finegrained
 
     assert source == expected
-

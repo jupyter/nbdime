@@ -2,41 +2,67 @@
 # -*- coding:utf-8 -*-
 
 import os
-
 import io
+from collections import deque
+
+from six import string_types
 
 from git import Repo, InvalidGitRepositoryError, BadName
 
 from .utils import EXPLICIT_MISSING_FILE
 
 
-# Ensure that we can use name attr:
 class BlobWrapper(io.StringIO):
+    """StringIO with a name attribute"""
     name = ''
 
 
 def get_repo(path):
-    popped = []
+    """Gets a Repo for path, also if path is a subidrectory of a repository
+
+    Returns a tuple with the Repo object, and a list of subdirectories
+    between path and the parent repository"""
+    path = os.path.abspath(path)
+    popped = deque()
     while True:
         try:
-            repo = Repo()
-            return (repo, popped)
+            repo = Repo(path)
+            return (repo, tuple(popped))
         except InvalidGitRepositoryError:
             path, pop = os.path.split(path)
             if not pop:
                 raise
-            popped.append(pop)
+            popped.appendleft(pop)
 
 
 def traverse_tree(tree, subdirs):
+    """Get the subtree according to given list of subdirectories"""
     if len(subdirs) == 0:
         return tree
-    tree_map = {subtree.name: subtree for subtree in tree.trees}
     sub = subdirs[0]
-    return traverse_tree(tree_map[sub], subdirs[1:])
+    # Find first subtree whose name matches sub:
+    subtree = next((st for st in tree.trees if st.name == sub), None)
+    if subtree is None:
+        raise KeyError('%s is not a subtree of %s' % (sub, tree.name))
+    return traverse_tree(subtree, subdirs[1:])
+
+
+def is_gitref(candidate):
+    """Is candidate a gitref, or is it a file/filename?
+
+    Returns false for collisions (e.g. when it is both a valid filename and gitref).
+    Tests relative to current directory.
+    """
+    return (
+        (candidate is None or not os.path.exists(candidate)) and
+        candidate != EXPLICIT_MISSING_FILE and
+        is_valid_gitref(candidate)
+        )
 
 
 def is_valid_gitref(ref, path=None):
+    """Checks whether ref is a valid gitref in `path`, per git-rev-parse
+    """
     try:
         repo = get_repo(path)[0]
         repo.commit(ref)
@@ -47,43 +73,59 @@ def is_valid_gitref(ref, path=None):
         return False
 
 
-def changed_notebooks(ref_base, ref_remote, path=None):
-    if path is None:
-        # If path is not supplied, we diff entire repo
-        repo = get_repo(os.curdir)[0]
-        popped = []
-    else:
-        # If path is supplied, we only diff that part
-        repo, popped = get_repo(path)
-    # Get trees from refs:
-    tree_base = traverse_tree(repo.commit(ref_base).tree, popped)
-    tree_remote = traverse_tree(repo.commit(ref_remote).tree, popped)
+def _get_diff_entry_stream(path, blob, ref_name):
+    """Get a stream to the notebook, for a given diff entry's path and blob
+
+    Returns None if path is not a Notebook file, and EXPLICIT_MISSING_FILE
+    if path is missing."""
+    if path:
+        if not path.endswith('.ipynb'):
+            return None
+        if blob is None:
+            # Diffing against working copy, use file on disk!
+            try:
+                return io.open(path)
+            except IOError:
+                return EXPLICIT_MISSING_FILE
+        else:
+            # There were strange issues with passing blob data_streams around,
+            # so we solve this by reading into a StringIO buffer.
+            # The penalty should be low as long as changed_notebooks are used
+            # properly as an iterator.
+            f = BlobWrapper(blob.data_stream.read().decode('utf-8'))
+            f.name = '%s (%s)' % (path, ref_name)
+            return f
+    return EXPLICIT_MISSING_FILE
+
+
+def changed_notebooks(ref_base, ref_remote, paths=None):
+    """Iterator over all notebooks in path that has changed between the two git refs
+
+    References are all valid values according to git-rev-parse. If ref_remote
+    is None, the difference is taken between ref_base and the working directory.
+    Iterator value is a base/remote pair of streams to Notebooks
+    (or possibly EXPLICIT_MISSING_FILE for added/removed files).
+    """
+    repo, popped = get_repo(os.curdir)
+    if isinstance(paths, string_types):
+        paths = (paths,)
+    if paths and popped:
+        # All paths need to be prepended by popped
+        paths = [os.path.join(*(popped + (p,))) for p in paths]
+    # Get tree for base:
+    tree_base = repo.commit(ref_base).tree
     if ref_remote is None:
         # Diff tree against working copy:
-        diff = tree_base.diff(None)
+        diff = tree_base.diff(None, paths)
     else:
-        diff = tree_base.diff(tree_remote)
+        # Get remote tree and diff against base:
+        tree_remote = repo.commit(ref_remote).tree
+        diff = tree_base.diff(tree_remote, paths)
     for entry in diff:
-        if entry.a_path:
-            if not entry.a_path.endswith('.ipynb'):
-                continue
-            if entry.a_blob is None:
-                # Diffing against working copy, use file
-                fa = io.open(entry.a_path)
-            else:
-                fa = BlobWrapper(entry.a_blob.data_stream.read().decode('utf-8'))
-                fa.name = '%s (%s)' % (entry.a_path, ref_base)
-        else:
-            fa = EXPLICIT_MISSING_FILE
-        if entry.b_path:
-            if not entry.b_path.endswith('.ipynb'):
-                continue
-            if entry.b_blob is None:
-                # Diffing against working copy, use file
-                fb = io.open(entry.b_path)
-            else:
-                fb = BlobWrapper(entry.b_blob.data_stream.read().decode('utf-8'))
-                fb.name = '%s (%s)' % (entry.b_path, ref_remote)
-        else:
-            fb = EXPLICIT_MISSING_FILE
+        fa = _get_diff_entry_stream(entry.a_path, entry.a_blob, ref_base)
+        if fa is None:
+            continue
+        fb = _get_diff_entry_stream(entry.b_path, entry.b_blob, ref_remote)
+        if fb is None:
+            continue
         yield (fa, fb)

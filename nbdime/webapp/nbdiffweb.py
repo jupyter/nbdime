@@ -14,7 +14,7 @@ from .webutil import browse as browse_util
 from ..args import (
     add_generic_args, add_web_args, add_diff_args,
     args_for_server, args_for_browse, process_diff_args)
-from ..gitfiles import changed_notebooks, is_valid_gitref
+from ..gitfiles import changed_notebooks, is_gitref
 import nbdime.log
 
 
@@ -52,10 +52,6 @@ def browse(port, base, remote, browser):
         'This function is deprecated. '
         'Use nbdime.webapp.webutil.browse() instead.',
         DeprecationWarning)
-
-
-def is_gitref(candidate):
-    return is_valid_gitref(candidate) and (candidate is None or not os.path.exists(candidate))
 
 
 def handle_gitrefs(base, remote, arguments):
