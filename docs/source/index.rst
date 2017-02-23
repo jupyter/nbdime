@@ -98,11 +98,11 @@ To use the web-based GUI viewers of notebook diffs, call::
 
    Figure: nbdime's content-aware diff
 
-If you have a merge conflict in a notebook, the merge driver will assure
+If you have a merge conflict in a notebook, the merge driver will ensure
 that the conflicted notebook is a valid notebook that can be viewed in
 the normal notebook viewer. In it, the conflicts will be marked similarly
-to how git would normally indicate conflicts, and they can be resolved as
-normal. Alternatively, nbdime provides a web-base mergetool for visualizing
+to how git would normally indicate conflicts, and they can be resolved
+manually. Alternatively, nbdime provides a web-base mergetool for visualizing
 and resolving merge conflicts, and it can be launched by calling::
 
     nbdime mergetool
