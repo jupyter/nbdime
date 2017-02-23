@@ -10,15 +10,15 @@ Version: |release|
 
    Figure: nbdime example
 
-Abstract
---------
+Why is nbdime needed?
+---------------------
 
 Jupyter notebooks are useful, rich media documents stored in a plain text JSON format.
 This format is relatively easy to parse. However, primitive line-based diff and merge tools
 do not handle well the logical structure of notebook documents. These tools
 yield diffs like this:
 
-.. figure:: images/diff-bad.png
+.. figure:: images/diff-bad-shortened.png
    :alt: diff example using traditional line-based diff tool
 
    Figure: diff using traditional line-based diff tool
@@ -66,14 +66,9 @@ but you can configure git to use nbdime and it will get a lot better.
 
 The quickest way to get set up for git integration is to call::
 
-    nbdime config-git --enable
+    nbdime config-git --enable --global
 
 This will enable the both the drivers and the tools for both diff and merge.
-
-To configure git to use nbdime as a command-line driver to diff and merge notebooks::
-
-    git-nbdiffdriver config --enable --global
-    git-nbmergedriver config --enable --global
 
 Now when you do :command:`git diff` or :command:`git merge` with notebooks,
 you should see a nice diff view, like this:
@@ -83,28 +78,11 @@ you should see a nice diff view, like this:
 
    Figure: nbdime's 'content-aware' command-line diff
 
-To configure git to use the web-based GUI viewers of notebook diffs and merges::
+To use the web-based GUI viewers of notebook diffs, call::
 
-    git-nbdifftool config --enable --global
-    git-nbmergetool config --enable --global
-
-With these, you can trigger the :command:`tools` with::
 
     git difftool --tool nbdime [ref [ref]]
 
-.. figure:: images/nbdiff-web.png
-   :alt: example of nbdime's content-aware diff
-
-   Figure: nbdime's content-aware diff
-
-and::
-
-    git mergetool --tool nbdime
-
-.. figure:: images/nbmerge-web.png
-   :alt: nbdime's merge with web-based GUI viewer
-
-   Figure: nbdime's merge with web-based GUI viewer
 
 .. note::
 
@@ -114,13 +92,25 @@ and::
     You can still call :command:`nbdiff-web` to diff files directly,
     but getting the files from git refs is still on our TODO list.
 
-.. note::
 
-    If you simply call `git mergetool --tool nbdime`, it will be called
-    for all merge conflicts, even on filetypes that it cannot handle. To
-    only call on notebooks, add a filter on file paths, e.g.
-    `git mergetool --tool nbdime -- *.ipynb`. **This command has also been
-    aliased as `nbdime mergetool` for easy access**.
+.. figure:: images/nbdiff-web.png
+   :alt: example of nbdime's content-aware diff
+
+   Figure: nbdime's content-aware diff
+
+If you have a merge conflict in a notebook, the merge driver will ensure
+that the conflicted notebook is a valid notebook that can be viewed in
+the normal notebook viewer. In it, the conflicts will be marked similarly
+to how git would normally indicate conflicts, and they can be resolved
+manually. Alternatively, nbdime provides a web-base mergetool for visualizing
+and resolving merge conflicts, and it can be launched by calling::
+
+    nbdime mergetool
+
+.. figure:: images/nbmerge-web.png
+   :alt: nbdime's merge with web-based GUI viewer
+
+   Figure: nbdime's merge with web-based GUI viewer
 
 
 For more detailed information on integrating nbdime with version control, see :doc:`vcs`.
@@ -135,18 +125,23 @@ Contents
    installing
    cli
    vcs
-   testing
    glossary
    changelog
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Development
+
+   testing
+   diffing
+   merging
+   restapi
 
 .. toctree::
    :maxdepth: 2
    :caption: Planning
 
    usecases
-   diffing
-   merging
-   restapi
 
 .. links
 

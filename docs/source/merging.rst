@@ -1,6 +1,10 @@
 Merge details
 =============
 
+This sections provide details on how nbdime handles merges, and will mostly
+be relevant for those who want to use nbdime as a library, or that want
+to contribute to nbdime.
+
 .. image:: images/nbmerge-web.png
 
 nbdime implements a three-way merge of Jupyter notebooks and a

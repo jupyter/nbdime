@@ -2,6 +2,11 @@
 diff format
 ===========
 
+This sections provide details on how nbdime represents diffs, and will mostly
+be relevant for those who want to use nbdime as a library, or that want
+to contribute to nbdime.
+
+
 .. figure:: images/nbdiff-web.png
    :alt: example of nbdime's content-aware diff
 

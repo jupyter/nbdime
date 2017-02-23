@@ -40,13 +40,71 @@ Git integration of nbdime is supported in two ways:
 Configure git integration by editing the ``.gitconfig``
 (or ``.git/config``) and ``.gitattributes`` in each
 git repository or in the home/etc directory for global effect.
-Read on for commands that edit these files
-and execute nbdime through git.
+Details for how to inidividually configure the different
+dirvers/tools are given below.
 
 To configure all diff/merge drivers and tools, simply call::
 
-    nbdime config-git (--enable | --disable)
+    nbdime config-git (--enable | --disable) [--global | --system]
 
+This command will register nbdime with git for the current project
+(repository), or on the global (user), or sytem level according to
+the ``--global`` or ``--system`` options.
+
+.. note::
+    When neither the global or system flag is given, the configuration
+    is only applied to the current project (repository). The command
+    will therefore need to be run from within a git repository.
+
+
+Usage
+*****
+Once configured, the diff/merge drivers should simply work out of the
+box. For example, the normal git diff command::
+
+    git diff [<commit> [<commit>]] [--] [<path>…​]
+
+should give you the standard diff for any non-notebook files, but
+use nbdime's command-line diff for all `.ipynb` files. Nbdime
+will also be used for all merges on notebook files (no specific
+commands needed).
+
+To launch the rich, web-based tools (for diff visualization and
+merge conflict visualization/resolution), the following git
+command will need to be executed::
+
+    git difftool --tool nbdime [ref [ref]]
+
+.. figure:: images/nbdiff-web.png
+   :alt: example of nbdime's content-aware diff
+
+   Figure: nbdime's content-aware diff
+
+and::
+
+    git mergetool --tool nbdime -- *.ipynb
+
+.. figure:: images/nbmerge-web.png
+   :alt: nbdime's merge with web-based GUI viewer
+
+   Figure: nbdime's merge with web-based GUI viewer
+
+.. note::
+
+    Using :command:`git-nbdiffdriver config` overrides the ability to call
+    :command:`git difftool` with notebooks.
+
+    You can still call :command:`nbdiff-web` to diff files directly,
+    but getting the files from git refs is still on our TODO list.
+
+.. note::
+
+    If you simply call `git mergetool --tool nbdime`, it will be called
+    for all merge conflicts, even on filetypes that it cannot handle. To
+    only call on notebooks, add a filter on file paths, e.g.
+    `git mergetool --tool nbdime -- *.ipynb`. **This command has also been
+    aliased as `nbdime mergetool` for easy access**, and you can also add
+    your own git alias for this command.
 
 
 Diff driver
@@ -70,11 +128,9 @@ with git::
     git-nbdiffdriver config --enable [--global | --system]
 
 This command will register the nbdime diff driver with
-git on the project (repository), global (user), or sytem level
-according to the ``--global`` or ``--system`` options.
-Additionally, this command will associate the diff driver with
-the ``.ipynb`` file extension, again either on the project
-or global level.
+git, and associate the diff driver with the ``.ipynb``
+file extension. The `--global | --system` flags work as
+explained above.
 
 Manual registration
 ^^^^^^^^^^^^^^^^^^^
@@ -84,7 +140,8 @@ with the following steps:
 
 - To register the driver with git under the name
   ``"jupyternotebook"``, add the following entries to the
-  appropriate ``.gitconfig`` file::
+  appropriate ``.gitconfig`` file
+  (`git config [--global | --system] -e` to edit)::
 
     [diff "jupyternotebook"]
     command = git-nbdiffdriver diff
@@ -115,10 +172,9 @@ driver with git::
     git-nbmergedriver config --enable [--global | --system]
 
 This command will register the nbdime merge driver with
-git on the project or global level. Additionaly, the
-command will associate the merge driver with the
-``.ipynb`` file extension, again either on the project
-or global level.
+git, and associate the merge driver with the ``.ipynb``
+file extension. The `--global | --system` flags work as
+explained above.
 
 Manual registration
 ^^^^^^^^^^^^^^^^^^^
@@ -128,7 +184,8 @@ with the following steps:
 
 - To register the driver with git under the name
   "jupyternotebook", add the following entries to the appropriate
-  ``.gitconfig`` file::
+  ``.gitconfig`` file
+  (`git config [--global | --system] -e` to edit)::
 
     [merge "jupyternotebook"]
     command = git-nbmergedriver merge %O %A %B %L %P
@@ -187,7 +244,8 @@ with the following steps:
 
 - To register both the CLI and web diff tools with git under
   the names "nbdime" and "nbdime", add the following entries
-  to the appropriate ``.gitconfig`` file::
+  to the appropriate ``.gitconfig`` file
+  (`git config [--global | --system] -e` to edit)::
 
     [difftool "nbdime"]
     cmd = git-nbdifftool diff "$LOCAL" "$REMOTE"
@@ -207,7 +265,7 @@ Merge web tool
 
 The rich, web-based merge view can be installed as a git
 *merge tool*. This enables nbdime to process merge conflicts
-during merging in git.
+during merging in git, and present them for resolution.
 
 Command line registration
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -237,7 +295,7 @@ This will allow the merge tool to be launched simply by::
     for *all merge conflicts*. This includes non-notebooks, which
     nbdime will fail to process. For most repositories, it will
     therefore not make sense to have nbdime as the default, but
-    rather to call it selectively
+    rather to call it selectively.
 
 
 Manual registration
@@ -248,7 +306,8 @@ with the following steps:
 
 - To register both the merge tool with git under
   the name "nbdime", add the following entry
-  to the appropriate ``.gitconfig`` file::
+  to the appropriate ``.gitconfig`` file
+  (`git config [--global | --system] -e` to edit)::
 
     [mergetool "nbdime"]
     cmd = git-nbmergetool "$BASE" "$LOCAL" "$REMOTE" "$MERGED"
