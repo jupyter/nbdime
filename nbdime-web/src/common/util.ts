@@ -176,11 +176,11 @@ function isPrefixArray(parent: any[] | null, child: any[] | null): boolean {
 }
 
 /**
- * Sort array by attribute `key` (i.e. compare by array[0][key] < array[1][key])
+ * Sort array by attribute `key` (i.e. compare by array[0][key] < array[1][key]). Stable.
  */
 export
 function sortByKey<T extends {[key: string]: any}>(array: T[], key: string): T[] {
-    return array.sort(function(a, b) {
+    return stableSort(array, function(a, b) {
         let x = a[key]; let y = b[key];
         return ((x < y) ? -1 : ((x > y) ? 1 : 0));
     });
@@ -228,4 +228,25 @@ function accumulateLengths(arr: string[]) {
 export
 function unique<T>(value: T, index: number, self: T[]): boolean {
   return self.indexOf(value) === index;
+}
+
+
+/**
+ * Similar to Array.sort, but guaranteed to keep order stable
+ * when compare function returns 0
+ */
+export
+function stableSort<T>(arr: T[], compare: (a: T, b: T) => number): T[] {
+  let sorters: {index: number, key: T}[] = [];
+  for (let i=0; i < arr.length; ++i) {
+    sorters.push({index: i, key: arr[i]});
+  }
+  sorters = sorters.sort((a: {index: number, key: T}, b: {index: number, key: T}): number => {
+    return compare(a.key, b.key) || a.index - b.index;
+  });
+  let out: T[] = new Array<T>(arr.length);
+  for (let i=0; i < arr.length; ++i) {
+    out[i] = arr[sorters[i].index];
+  }
+  return out;
 }

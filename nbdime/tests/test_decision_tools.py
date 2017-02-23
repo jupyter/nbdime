@@ -5,10 +5,13 @@
 
 from __future__ import unicode_literals
 
+import pytest
+
 from nbdime.diff_format import op_remove, op_patch
 from nbdime.merging.decisions import (
     ensure_common_path, resolve_action, MergeDecisionBuilder,
-    MergeDecision, pop_patch_decision, push_patch_decision)
+    MergeDecision, pop_patch_decision, push_patch_decision,
+    build_diffs)
 
 
 # `ensure_common_path` tests:
@@ -116,3 +119,36 @@ def test_pop_patch_multilevel():
     assert dec.common_path == ("a", "b", "c", "d")
     assert dec.local_diff == [op_remove("e")]
     assert dec.remote_diff == [op_remove("f")]
+
+
+@pytest.mark.xfail()
+def test_build_diffs_unsorted():
+    b = MergeDecisionBuilder()
+    b.onesided((), [op_remove('a')], None)
+    b.onesided(('b',), [op_remove('j')], None)
+    b.onesided(('c',), [op_remove('k')], None)
+    b.onesided(('d',), [op_remove('l')], None)
+    base = dict(a=1, b=dict(i=2), c=dict(j=3), d=dict(k=4))
+    diff = build_diffs(base, b.decisions, 'local')
+    assert len(diff) == 4
+    assert diff[0] == op_remove('a')
+    assert diff[1] == op_patch('b', [op_remove('j')])
+    assert diff[2] == op_patch('c', [op_remove('k')])
+    assert diff[3] == op_patch('d', [op_remove('l')])
+
+
+def test_build_diffs_sorted():
+    b = MergeDecisionBuilder()
+    b.onesided((), [op_remove('a')], None)
+    b.onesided(('b',), [op_remove('j')], None)
+    b.onesided(('c',), [op_remove('k')], None)
+    b.onesided(('d',), [op_remove('l')], None)
+    base = dict(a=1, b=dict(i=2), c=dict(j=3), d=dict(k=4))
+    decisions = b.validated(base)
+    diff = build_diffs(base, decisions, 'local')
+    assert len(diff) == 4
+    assert diff[0] == op_patch('d', [op_remove('l')])
+    assert diff[1] == op_patch('c', [op_remove('k')])
+    assert diff[2] == op_patch('b', [op_remove('j')])
+    assert diff[3] == op_remove('a')
+
