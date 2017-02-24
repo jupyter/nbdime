@@ -115,6 +115,7 @@ and resolving merge conflicts, and it can be launched by calling::
 
 For more detailed information on integrating nbdime with version control, see :doc:`vcs`.
 
+
 Contents
 --------
 
@@ -142,6 +143,17 @@ Contents
    :caption: Planning
 
    usecases
+
+
+Acknowledgements
+----------------
+
+nbdime is developed with financial support from:
+
+- OpenDreamKit Horizon 2020 European Research Infrastructures project (#676541), http://opendreamkit.org .
+
+- The Gordon and Betty Moore Foundation through Grant GBMF #4856,by the Alfred P. Sloan Foundation and by the Helmsley Trust.
+
 
 .. links
 
