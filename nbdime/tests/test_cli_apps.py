@@ -79,6 +79,26 @@ def test_nbdiff_app_null_file(filespath):
     assert 0 == main_diff(args)
 
 
+def test_nbdiff_app_gitrefs(git_repo2):
+    args = nbdiffapp._build_arg_parser().parse_args(['local', 'remote'])
+    assert 0 == main_diff(args)
+
+    args = nbdiffapp._build_arg_parser().parse_args(['local', 'remote', 'sub/subfile.ipynb'])
+    assert 0 == main_diff(args)
+
+    args = nbdiffapp._build_arg_parser().parse_args(['local', 'remote', 'sub/subfile.ipynb', 'diff.ipynb'])
+    assert 0 == main_diff(args)
+
+    args = nbdiffapp._build_arg_parser().parse_args(['local', 'sub/subfile.ipynb', 'diff.ipynb'])
+    assert 0 == main_diff(args)
+
+    args = nbdiffapp._build_arg_parser().parse_args(['sub/subfile.ipynb'])
+    assert 0 == main_diff(args)
+
+    args = nbdiffapp._build_arg_parser().parse_args([])
+    assert 0 == main_diff(args)
+
+
 def test_nbdiff_app_unicode_safe(filespath):
     afn = os.path.join(filespath, "unicode--1.ipynb")
     bfn = os.path.join(filespath, "unicode--2.ipynb")

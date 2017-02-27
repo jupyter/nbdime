@@ -30,13 +30,13 @@ def main_diff(args):
     """Main handler of diff CLI"""
     output = args.out
     process_diff_flags(args)
-    base, remote, path = resolve_diff_args(args)
+    base, remote, paths = resolve_diff_args(args)
 
     # Check if base/remote are gitrefs:
     if is_gitref(base) and is_gitref(remote):
         # We are asked to do a diff of git revisions:
         status = 0
-        for fbase, fremote in changed_notebooks(base, remote, path):
+        for fbase, fremote in changed_notebooks(base, remote, paths):
             status = _handle_diff(fbase, fremote)
             if status != 0:
                 # Short-circuit on error in diff handling
@@ -103,8 +103,8 @@ def _build_arg_parser():
         nargs='?', default=None,
     )
     parser.add_argument(
-        "path", help="Filter diffs for git-revisions based on path",
-        nargs='?', default=None,
+        "paths", help="Filter diffs for git-revisions based on path",
+        nargs='*', default=None,
     )
 
     parser.add_argument(

@@ -210,21 +210,36 @@ def resolve_diff_args(args):
     Cases:
      - No args: Use defaults
      - One arg: Either base or path, check with is_gitref.
-     - Two args: Last arg either remote or path, check with is_gitref
-     - Three args: Use values
+     - Two args or more: Check if first two are base/remote by is_gitref
     """
     base = args.base
     remote = args.remote
-    path = args.path
-    if remote is None and path is None:
+    paths = args.paths
+    if not paths:
+        paths = None
+    if remote is None and paths is None:
         # One arg only:
         if not is_gitref(base):
-            path = base
+            paths = base
             base = 'HEAD'
-    elif path is None and is_gitref(base) and not is_gitref(remote):
-        path = remote
-        remote = None
-    return base, remote, path
+    # Two or more args:
+    elif paths is None:
+        # Two exactly
+        # - Two files (not git-mode, do nothing)
+        # - Base gitref one file (remote=None, path = file)
+        # - Base gitref remote gitref (do nothing)
+        if is_gitref(base) and not is_gitref(remote):
+            paths = remote
+            remote = None
+    elif base and remote:
+        # Three or more
+        if not is_gitref(base):
+            paths = [base, remote] + paths
+            base = remote = None
+        elif is_gitref(base) and not is_gitref(remote):
+            paths = [remote] + paths
+            remote = None
+    return base, remote, paths
 
 
 def add_merge_args(parser):

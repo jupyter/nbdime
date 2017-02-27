@@ -41,8 +41,8 @@ def build_arg_parser():
         nargs='?', default=None,
     )
     parser.add_argument(
-        "path", help="Filter diffs for git-revisions based on path",
-        nargs='?', default=None,
+        "paths", help="Filter diffs for git-revisions based on path",
+        nargs='*', default=None,
     )
     return parser
 
