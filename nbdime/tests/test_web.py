@@ -36,6 +36,17 @@ def test_diff_web(filespath, unique_port):
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
+def test_diff_web_gitrefs(git_repo2, unique_port):
+    a = 'local'
+    b = 'remote'
+    c = 'diff.ipynb'
+    d = 'sub/subfile.ipynb'
+    loop = ioloop.IOLoop.current()
+    loop.call_later(0, loop.stop)
+    nbdime.webapp.nbdiffweb.main(['--port=%i' % unique_port, '--browser=disabled', a, b, c, d])
+
+
+@pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
 def test_merge_web(filespath, unique_port):
     a = os.path.join(filespath, merge_a)
     b = os.path.join(filespath, merge_b)
