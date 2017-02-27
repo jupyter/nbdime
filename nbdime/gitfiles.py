@@ -64,7 +64,7 @@ def is_valid_gitref(ref, path=None):
     """Checks whether ref is a valid gitref in `path`, per git-rev-parse
     """
     try:
-        repo = get_repo(path)[0]
+        repo = get_repo(path or os.curdir)[0]
         repo.commit(ref)
         return True
     except InvalidGitRepositoryError:
