@@ -313,3 +313,13 @@ def matching_nb_triplets(request):
     a, b, c = request.param
     print(a, b, c)
     return _db[a], _db[b], _db[c]
+
+
+_port = 62019
+
+
+@fixture()
+def unique_port():
+    global _port
+    _port += 1
+    return _port
