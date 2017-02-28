@@ -4,15 +4,11 @@
 
 import {
   nbformat
-} from '@jupyterlab/services';
-
-import {
-  Widget
-} from 'phosphor/lib/ui/widget';
+} from '@jupyterlab/coreutils';
 
 import {
   Panel
-} from 'phosphor/lib/ui/panel';
+} from '@phosphor/widgets';
 
 import {
   createNbdimeMergeView, MergeView

@@ -3,12 +3,8 @@
 'use strict';
 
 import {
-  Widget
-} from 'phosphor/lib/ui/widget';
-
-import {
-  Panel
-} from 'phosphor/lib/ui/panel';
+  Panel, Widget
+} from '@phosphor/widgets';
 
 import {
   createNbdimeMergeView

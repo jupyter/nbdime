@@ -3,32 +3,20 @@
 'use strict';
 
 import {
-  Panel, PanelLayout
-} from 'phosphor/lib/ui/panel';
-
-import {
-  Widget
-} from 'phosphor/lib/ui/widget';
+  Panel, PanelLayout, Widget
+} from '@phosphor/widgets';
 
 import {
   Message
-} from 'phosphor/lib/core/messaging';
-
-import {
-  ISequence
-} from 'phosphor/lib/algorithm/sequence';
-
-import {
-  ISignal, defineSignal
-} from 'phosphor/lib/core/signaling';
+} from '@phosphor/messaging';
 
 import {
   MimeData
-} from 'phosphor/lib/core/mimedata';
+} from '@phosphor/coreutils';
 
 import {
   Drag, IDragEvent, DropAction, SupportedActions
-} from 'phosphor/lib/dom/dragdrop';
+} from '@phosphor/dragdrop';
 
 
 /**
@@ -458,12 +446,6 @@ abstract class DragDropPanelBase extends DropPanel {
 
     // Start the drag and remove the mousemove listener.
     this.drag.start(clientX, clientY).then(this.onDragComplete.bind(this));
-    //TODO: Remove when updating to phosphor 1.0:
-    // Workaround for phosphor bug #165:
-    if (dragImage) {
-      dragImage.style.position = 'fixed';
-    }
-    // End workaround
     document.removeEventListener('mousemove', this, true);
     document.removeEventListener('mouseup', this, true);
   }
@@ -683,7 +665,7 @@ class DragDropPanel extends DragDropPanelBase {
       if (to > from) {
         to -= 1;
       }
-      this.insertWidget(to, this.widgets.at(from));
+      this.insertWidget(to, this.widgets[from]);
     }
   }
 
@@ -698,7 +680,7 @@ class DragDropPanel extends DragDropPanelBase {
   protected getIndexOfChildNode(node: HTMLElement | null, parent?: PanelLayout): any {
     parent = parent || this.layout as PanelLayout;
     for (let i = 0; i < parent.widgets.length; i++) {
-      if (parent.widgets.at(i).node === node) {
+      if (parent.widgets[i].node === node) {
         return i;
       }
     }

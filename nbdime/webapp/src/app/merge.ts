@@ -7,28 +7,19 @@ import * as alertify from 'alertify.js';
 
 import {
   nbformat
-} from '@jupyterlab/services';
+} from '@jupyterlab/coreutils';
+
+import {
+  Panel, Widget
+} from '@phosphor/widgets';
 
 import {
   RenderMime
-} from 'jupyterlab/lib/rendermime';
-
-import {
-  HTMLRenderer, LatexRenderer, ImageRenderer, TextRenderer,
-  JavascriptRenderer, SVGRenderer, MarkdownRenderer
-} from 'jupyterlab/lib/renderers';
+} from '@jupyterlab/rendermime';
 
 import {
   defaultSanitizer
-} from 'jupyterlab/lib/sanitizer';
-
-import {
-  Widget
-} from 'phosphor/lib/ui/widget';
-
-import {
-  Panel
-} from 'phosphor/lib/ui/panel';
+} from '@jupyterlab/apputils';
 
 import {
   NotebookMergeModel
@@ -70,26 +61,9 @@ function showMerge(data: {
     base: nbformat.INotebookContent,
     merge_decisions: IMergeDecision[]
     }): Promise<void> {
-  const transformers = [
-    new JavascriptRenderer(),
-    new MarkdownRenderer(),
-    new HTMLRenderer(),
-    new ImageRenderer(),
-    new SVGRenderer(),
-    new LatexRenderer(),
-    new TextRenderer()
-  ];
 
-  let renderers: RenderMime.MimeMap<RenderMime.IRenderer> = {};
-  let order: string[] = [];
-  for (let t of transformers) {
-    for (let m of t.mimetypes) {
-      renderers[m] = t;
-      order.push(m);
-    }
-  }
   let rendermime = new RenderMime({
-    renderers: renderers, order: order, sanitizer: defaultSanitizer});
+    items: RenderMime.getDefaultItems(), sanitizer: defaultSanitizer});
 
   let nbmModel = new NotebookMergeModel(data.base,
       data.merge_decisions);

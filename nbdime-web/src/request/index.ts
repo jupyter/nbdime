@@ -3,8 +3,8 @@
 'use strict';
 
 import {
-  urlPathJoin
-} from '@jupyterlab/services/lib/utils';
+  utils
+} from '@jupyterlab/services';
 
 
 function urlRStrip(target: string): string {
@@ -47,7 +47,7 @@ function requestDiff(
     baseUrl: string,
     onComplete: (result: any) => void,
     onFail: (result: any) => void) {
-  requestJson(urlPathJoin(urlRStrip(baseUrl), 'api/diff'),
+  requestJson(utils.urlPathJoin(urlRStrip(baseUrl), 'api/diff'),
               {base, remote},
               onComplete,
               onFail);
@@ -63,7 +63,7 @@ function requestMerge(
     baseUrl: string,
     onComplete: (result: any) => void,
     onFail: (result: any) => void) {
-  requestJson(urlPathJoin(urlRStrip(baseUrl), 'api/merge'),
+  requestJson(utils.urlPathJoin(urlRStrip(baseUrl), 'api/merge'),
               {base, local, remote},
               onComplete,
               onFail);

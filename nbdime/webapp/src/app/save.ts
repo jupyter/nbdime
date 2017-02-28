@@ -6,7 +6,7 @@ import * as alertify from 'alertify.js';
 
 import {
   nbformat
-} from '@jupyterlab/services';
+} from '@jupyterlab/coreutils';
 
 import {
   NotebookMergeWidget

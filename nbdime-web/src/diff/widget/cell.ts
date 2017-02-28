@@ -3,20 +3,16 @@
 'use strict';
 
 import {
-  IRenderMime
-} from 'jupyterlab/lib/rendermime';
-
-import {
   every
-} from 'phosphor/lib/algorithm/iteration';
+} from '@phosphor/algorithm';
 
 import {
-  Widget
-} from 'phosphor/lib/ui/widget';
+  Panel, Widget
+} from '@phosphor/widgets';
 
 import {
-  Panel
-} from 'phosphor/lib/ui/panel';
+  IRenderMime, MimeModel
+} from '@jupyterlab/rendermime';
 
 import {
   createNbdimeMergeView
@@ -187,7 +183,7 @@ class CellDiffWidget extends Panel {
     let view: Widget | null = null;
     if (model instanceof StringDiffModel) {
       if (model.unchanged && parent.cellType === 'markdown') {
-        view = rendermime.render({bundle: {'text/markdown': model.base!}});
+        view = rendermime.render(new MimeModel({data: {'text/markdown': model.base!}, trusted: false}));
       } else {
         view = createNbdimeMergeView(model);
       }
@@ -198,7 +194,7 @@ class CellDiffWidget extends Panel {
       // 3) Unknown types: Stringified JSON diff.
       // If the model is one-sided or unchanged, option 2) is preferred to 1)
       let renderable = RenderableOutputView.canRenderUntrusted(model);
-      every(rendermime.mimetypes(), (mt) => {
+      every(rendermime.mimeTypes(), (mt) => {
         let key = model.hasMimeType(mt);
         if (key) {
           if (!renderable ||

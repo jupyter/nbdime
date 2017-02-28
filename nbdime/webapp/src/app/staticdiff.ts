@@ -8,7 +8,7 @@ import {
 
 import {
   EditorWidget
-} from 'nbdime/lib/common/mergeview';
+} from 'nbdime/lib/common/editor';
 
 
 

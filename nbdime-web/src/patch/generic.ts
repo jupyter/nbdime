@@ -4,7 +4,7 @@
 
 import {
   JSONValue, JSONArray, JSONObject
-} from 'phosphor/lib/algorithm/json';
+} from '@phosphor/coreutils';
 
 import {
   deepCopy
@@ -34,6 +34,8 @@ export function patch(base: JSONValue, diff: IDiffEntry[] | null): JSONValue {
     return patchSequence(base, diff as IDiffArrayEntry[]);
   } else if (typeof base === 'number' || typeof base === 'boolean') {
     throw new TypeError('Cannot patch an atomic type: ' + typeof base);
+  } else if (base === null) {
+    throw new TypeError('Cannot patch a null base!')
   } else {
     return patchObject(base, diff as IDiffObjectEntry[]);
   }

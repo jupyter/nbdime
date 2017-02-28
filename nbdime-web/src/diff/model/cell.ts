@@ -4,7 +4,11 @@
 
 import {
   nbformat
-} from '@jupyterlab/services';
+} from '@jupyterlab/coreutils';
+
+import {
+  JSONObject
+} from '@phosphor/coreutils';
 
 import {
   NotifyUserError
@@ -22,6 +26,7 @@ import {
   IStringDiffModel, StringDiffModel, createDirectStringDiffModel,
   createPatchStringDiffModel, setMimetypeFromCellType
 } from './string';
+
 import {
   OutputDiffModel, makeOutputModels
 } from './output';
@@ -138,10 +143,10 @@ function createPatchedCellDiffModel(
 
   subDiff = getSubDiffByKey(diff, 'metadata');
   metadata = subDiff ?
-    createPatchStringDiffModel(base.metadata, subDiff) :
-    createDirectStringDiffModel(base.metadata, base.metadata);
+    createPatchStringDiffModel(base.metadata as JSONObject, subDiff) :
+    createDirectStringDiffModel(base.metadata as JSONObject, base.metadata as JSONObject);
 
-  if (base.cell_type === 'code') {
+  if (nbformat.isCode(base)) {
     let outputsBase = base.outputs;
     let outputsDiff = getSubDiffByKey(diff, 'outputs') as IDiffArrayEntry[];
     if (outputsDiff) {
@@ -166,11 +171,11 @@ function createUnchangedCellDiffModel(
       base: nbformat.ICell, nbMimetype: string): CellDiffModel {
   let source = createDirectStringDiffModel(base.source, base.source);
   setMimetypeFromCellType(source, base, nbMimetype);
-  let metadata = createDirectStringDiffModel(base.metadata, base.metadata);
+  let metadata = createDirectStringDiffModel(base.metadata as JSONObject, base.metadata as JSONObject);
   let outputs: OutputDiffModel[] | null = null;
   let executionCount: ImmutableDiffModel | null = null;
 
-  if (base.cell_type === 'code') {
+  if (nbformat.isCode(base)) {
     outputs = makeOutputModels(base.outputs,
       base.outputs);
     let execBase = base.execution_count;
@@ -186,10 +191,10 @@ function createAddedCellDiffModel(
       remote: nbformat.ICell, nbMimetype: string): CellDiffModel {
   let source = createDirectStringDiffModel(null, remote.source);
   setMimetypeFromCellType(source, remote, nbMimetype);
-  let metadata = createDirectStringDiffModel(null, remote.metadata);
+  let metadata = createDirectStringDiffModel(null, remote.metadata as JSONObject);
   let outputs: OutputDiffModel[] | null = null;
   let executionCount: ImmutableDiffModel | null = null;
-  if (remote.cell_type === 'code') {
+  if (nbformat.isCode(remote)) {
     outputs = makeOutputModels(
       null, remote.outputs);
     executionCount = createImmutableModel(null, remote.execution_count);
@@ -202,10 +207,10 @@ function createDeletedCellDiffModel(
       base: nbformat.ICell, nbMimetype: string): CellDiffModel {
   let source = createDirectStringDiffModel(base.source, null);
   setMimetypeFromCellType(source, base, nbMimetype);
-  let metadata = createDirectStringDiffModel(base.metadata, null);
+  let metadata = createDirectStringDiffModel(base.metadata as JSONObject, null);
   let outputs: OutputDiffModel[] | null = null;
   let executionCount: ImmutableDiffModel | null = null;
-  if (base.cell_type === 'code') {
+  if (nbformat.isCode(base)) {
     outputs = makeOutputModels(base.outputs, null);
     let execBase = base.execution_count;
     executionCount = createImmutableModel(execBase, null);

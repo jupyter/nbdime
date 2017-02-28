@@ -4,7 +4,7 @@
 
 import {
   Widget
-} from 'phosphor/lib/ui/widget';
+} from '@phosphor/widgets';
 
 
 // Merge classes:

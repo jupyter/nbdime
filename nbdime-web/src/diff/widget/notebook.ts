@@ -3,12 +3,12 @@
 'use strict';
 
 import {
-  IRenderMime
-} from 'jupyterlab/lib/rendermime';
+  Panel
+} from '@phosphor/widgets';
 
 import {
-  Panel, PanelLayout
-} from 'phosphor/lib/ui/panel';
+  IRenderMime
+} from '@jupyterlab/rendermime';
 
 import {
   CellDiffWidget

@@ -5,11 +5,11 @@ import expect = require('expect.js');
 
 import {
   Widget
-} from 'phosphor/lib/ui/widget';
+} from '@phosphor/widgets';
 
 import {
   each
-} from 'phosphor/lib/algorithm/iteration';
+} from '@phosphor/algorithm';
 
 import {
   FlexPanel
@@ -126,7 +126,7 @@ describe('upstreaming', () => {
       p.addWidget(new Widget());
       p.addWidget(new Widget());
       while (p.widgets.length > 0) {
-        let child = p.widgets.at(0);
+        let child = p.widgets[0];
         child.parent = null!;
         expect(child.hasClass('p-FlexPanel-child')).to.be(false);
       }

@@ -4,11 +4,11 @@
 
 import {
   nbformat
-} from '@jupyterlab/services';
+} from '@jupyterlab/coreutils';
 
 import {
   JSONObject, JSONArray, JSONValue
-} from 'phosphor/lib/algorithm/json';
+} from '@phosphor/coreutils';
 
 import {
   IDiffEntry
@@ -387,7 +387,7 @@ function setMimetypeFromCellType(model: IStringDiffModel, cell: nbformat.ICell,
     model.mimetype = nbMimetype;
   } else if (cell.cell_type === 'markdown') {
     model.mimetype = 'text/markdown';
-  } else if (cell.cell_type === 'raw') {
+  } else if (nbformat.isRaw(cell)) {
     model.mimetype = cell.metadata.format || 'text/plain';
   }
 }

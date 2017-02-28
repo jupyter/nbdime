@@ -20,16 +20,17 @@ import {
 
 
 import 'codemirror/lib/codemirror.css';
-import 'jupyterlab/lib/codemirror/index.css';
+import '@jupyterlab/codemirror/style/index.css';
 
-import 'phosphor/styles/base.css';
-import 'jupyterlab/lib/basestyle/materialcolors.css';
-import 'jupyterlab/lib/default-theme/variables.css';
-import 'jupyterlab/lib/markdownwidget/index.css';
-import 'jupyterlab/lib/notebook/index.css';
-import 'jupyterlab/lib/renderers/index.css';
-import 'jupyterlab/lib/editorwidget/index.css';
-import 'jupyterlab/lib/editorwidget/index.css';
+import '@phosphor/widgets/style/index.css';
+import '@phosphor/dragdrop/style/index.css';
+
+import '@jupyterlab/apputils/style/materialcolors.css';
+import '@jupyterlab/default-theme/style/variables.css';
+import '@jupyterlab/markdownwidget/style/index.css';
+import '@jupyterlab/notebook/style/index.css';
+import '@jupyterlab/rendermime/style/index.css';
+import '@jupyterlab/editorwidget/style/index.css';
 
 import 'nbdime/lib/common/collapsible.css';
 import 'nbdime/lib/upstreaming/flexpanel.css';

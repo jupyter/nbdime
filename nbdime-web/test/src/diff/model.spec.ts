@@ -5,7 +5,11 @@ import expect = require('expect.js');
 
 import {
   nbformat
-} from '@jupyterlab/services';
+} from '@jupyterlab/coreutils';
+
+import {
+  JSONValue
+} from '@phosphor/coreutils';
 
 import {
   createAddedCellDiffModel, createDeletedCellDiffModel,
@@ -205,7 +209,7 @@ describe('diff', () => {
         expect(model.source.base).to.be(null);
         expect(model.source.remote).to.eql(codeCellA.source);
         expect(model.metadata.base).to.be(null);
-        expect(model.metadata.remote).to.eql(stringify(codeCellA.metadata));
+        expect(model.metadata.remote).to.eql(stringify(codeCellA.metadata as JSONValue));
         expect(model.outputs!.length).to.equal(codeCellA.outputs.length);
       });
 
@@ -216,7 +220,7 @@ describe('diff', () => {
         expect(model.unchanged).to.be(false);
         expect(model.source.base).to.eql(codeCellA.source);
         expect(model.source.remote).to.be(null);
-        expect(model.metadata.base).to.eql(stringify(codeCellA.metadata));
+        expect(model.metadata.base).to.eql(stringify(codeCellA.metadata as JSONValue));
         expect(model.metadata.remote).to.be(null);
         expect(model.outputs!.length).to.equal(codeCellA.outputs.length);
       });
@@ -228,8 +232,8 @@ describe('diff', () => {
         expect(model.unchanged).to.be(true);
         expect(model.source.base).to.eql(codeCellA.source);
         expect(model.source.remote).to.eql(codeCellA.source);
-        expect(model.metadata.base).to.eql(stringify(codeCellA.metadata));
-        expect(model.metadata.remote).to.eql(stringify(codeCellA.metadata));
+        expect(model.metadata.base).to.eql(stringify(codeCellA.metadata as JSONValue));
+        expect(model.metadata.remote).to.eql(stringify(codeCellA.metadata as JSONValue));
         expect(model.outputs!.length).to.equal(codeCellA.outputs.length);
       });
 
@@ -242,8 +246,8 @@ describe('diff', () => {
           expect(model.unchanged).to.be(true);
           expect(model.source.base).to.eql(codeCellA.source);
           expect(model.source.remote).to.eql(codeCellA.source);
-          expect(model.metadata.base).to.eql(stringify(codeCellA.metadata));
-          expect(model.metadata.remote).to.eql(stringify(codeCellA.metadata));
+          expect(model.metadata.base).to.eql(stringify(codeCellA.metadata as JSONValue));
+          expect(model.metadata.remote).to.eql(stringify(codeCellA.metadata as JSONValue));
           expect(model.outputs!.length).to.equal(codeCellA.outputs.length);
         });
 
@@ -254,8 +258,8 @@ describe('diff', () => {
           expect(model.unchanged).to.be(true);
           expect(model.source.base).to.eql(codeCellA.source);
           expect(model.source.remote).to.eql(codeCellA.source);
-          expect(model.metadata.base).to.eql(stringify(codeCellA.metadata));
-          expect(model.metadata.remote).to.eql(stringify(codeCellA.metadata));
+          expect(model.metadata.base).to.eql(stringify(codeCellA.metadata as JSONValue));
+          expect(model.metadata.remote).to.eql(stringify(codeCellA.metadata as JSONValue));
           expect(model.outputs!.length).to.equal(codeCellA.outputs.length);
         });
 
@@ -269,8 +273,8 @@ describe('diff', () => {
           expect(model.unchanged).to.be(false);
           expect(model.source.base).to.eql(codeCellA.source);
           expect(model.source.remote).to.eql('l = f(3, 4)\nl += 2\nprint(l)');
-          expect(model.metadata.base).to.eql(stringify(codeCellA.metadata));
-          expect(model.metadata.remote).to.eql(stringify(codeCellA.metadata));
+          expect(model.metadata.base).to.eql(stringify(codeCellA.metadata as JSONValue));
+          expect(model.metadata.remote).to.eql(stringify(codeCellA.metadata as JSONValue));
           expect(model.outputs!.length).to.equal(codeCellA.outputs.length);
         });
 

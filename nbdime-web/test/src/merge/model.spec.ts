@@ -5,7 +5,7 @@ import expect = require('expect.js');
 
 import {
   nbformat
-} from '@jupyterlab/services';
+} from '@jupyterlab/coreutils';
 
 import {
   stripSource
