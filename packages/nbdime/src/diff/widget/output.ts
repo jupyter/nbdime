@@ -75,6 +75,11 @@ const TRUST_BUTTON_CLASS = 'jp-Diff-trustOutputButton';
 const SOURCE_BUTTON_CLASS = 'jp-Diff-showOutputSourceButton';
 
 /**
+ * Class for outputs which data is base64
+ */
+const DATA_IS_BASE64_CLASS = 'jp-diff-base64Output';
+
+/**
  * Class of dropdown for selecting mimetype to show
  */
 
@@ -135,6 +140,7 @@ class OutputPanel extends Panel {
     this.initContainer(view);
 
     this.createHoverMenu();
+    this.addClass(OUTPUT_VIEW_CLASS);
   }
 
   /**
@@ -221,6 +227,11 @@ class OutputPanel extends Panel {
     return view;
   }
 
+  /**
+   * Creates a menu that is shown when hovering over the output.
+   *
+   * Stored in this.menu.
+   */
   protected createHoverMenu() {
     this.menu = new FlexPanel({direction: 'left-to-right', evenSizes: true});
     this.menu.addClass(HOVER_MENU_CLASS);
@@ -243,8 +254,8 @@ class OutputPanel extends Panel {
     let btnTrust = document.createElement('button');
     btnTrust.innerText = 'Trust';
     btnTrust.onclick = (ev: MouseEvent) => {
-      // No reason to un-trust
-      this.model.trusted = true;
+      // Triggers change event:
+      this.model.trusted = !this.model.trusted;
     };
     w = new Widget({node: btnTrust});
     w.addClass(TRUST_BUTTON_CLASS);
@@ -376,6 +387,9 @@ class RenderableOutputView extends RenderableDiffView<nbformat.IOutput> {
     let widget = new OutputWidget();
     let widget = this.rendermime.render(new OutputModel({value: output, trusted}));
     widget.addClass(RENDERED_OUTPUT_CLASS);
+    if (this.isOutputBase64(output)) {
+      this.addClass(DATA_IS_BASE64_CLASS);
+    }
     return widget;
   }
 
@@ -409,6 +423,18 @@ class RenderableOutputView extends RenderableDiffView<nbformat.IOutput> {
     });
   }
 
+  /**
+   * Whether the output's data is base64 with the view's mimetype
+   */
+  protected isOutputBase64(output: nbformat.IOutput): boolean {
+    let bundle = convertBundle(getBundle(output));
+    let mimetype = this.rendermime.preferredMimetype(bundle, this.model.trusted);
+    if (!mimetype) {
+      return false;
+    }
+    return isBase64(bundle[mimetype]);
+  }
+
   protected model: OutputDiffModel;
 
   /**
@@ -416,13 +442,7 @@ class RenderableOutputView extends RenderableDiffView<nbformat.IOutput> {
    * sanitizable)
    */
   static canRender(model: OutputDiffModel, rendermime: RenderMime): boolean {
-    let toTest: nbformat.IOutput[] = [];
-    if (model.base) {
-      toTest.push(model.base);
-    }
-    if (model.remote && model.remote !== model.base) {
-      toTest.push(model.remote);
-    }
+    let toTest = model.contents;
     for (let o of toTest) {
       let mimetype = rendermime.preferredMimeType(
         new OutputModel({value: o, trusted: model.trusted}));
