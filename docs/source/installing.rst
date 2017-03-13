@@ -100,7 +100,7 @@ Install the development version
 
 Download and install directly from source::
 
-    pip install -e git+https://github.com/jupyter/nbdime
+    pip install -e git+https://github.com/jupyter/nbdime#egg=nbdime
 
 Or clone the `nbdime repository <https://github.com/jupyter/nbdime>`_
 and use ``pip`` to install::
