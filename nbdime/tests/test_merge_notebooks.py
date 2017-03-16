@@ -14,7 +14,7 @@ from nbdime.diff_format import op_patch, op_addrange, op_removerange, op_replace
 from .utils import sources_to_notebook, outputs_to_notebook, have_git
 from nbdime.nbmergeapp import _build_arg_parser
 from nbdime import merge_notebooks, apply_decisions
-from nbdime.diffing.notebooks import diff_notebooks
+from nbdime.diffing.notebooks import diff_notebooks, set_notebook_diff_targets
 from nbdime.merging.notebooks import decide_merge_with_diff, Strategies
 
 # FIXME: Extend tests to more merge situations!
@@ -890,3 +890,66 @@ def test_autoresolve_empty_strategies():
     partial = apply_decisions(base, decisions)
 
     _check(partial, expected_partial, decisions, expected_conflicts)
+
+
+class TestMergeDiffIgnores:
+
+    def teardown(self):
+        set_notebook_diff_targets(True, True, True, True)
+
+    def test_only_sources(self, db):
+        base = db["mixed-conflicts--1"]
+        local = db["mixed-conflicts--2"]
+        remote = db["mixed-conflicts--3"]
+        set_notebook_diff_targets(True, False, False, False)
+
+        merge_args = copy.deepcopy(args)
+        merge_args.merge_strategy = "mergetool"
+
+        partial, decisions = merge_notebooks(base, local, remote, merge_args)
+
+        assert len(decisions) > 0
+        for d in decisions:
+            path = d['common_path']
+            # Still have some decisions on cell root, so avoid with len == 2 check
+            assert len(path) == 2 or path[2] == 'source'
+
+    def test_only_outputs(self, db):
+        base = db["mixed-conflicts--1"]
+        local = db["mixed-conflicts--2"]
+        remote = db["mixed-conflicts--3"]
+        set_notebook_diff_targets(False, True, False, False)
+
+        merge_args = copy.deepcopy(args)
+        merge_args.merge_strategy = "mergetool"
+
+        partial, decisions = merge_notebooks(base, local, remote, merge_args)
+
+        assert len(decisions) > 0
+        for d in decisions:
+            path = d['common_path']
+            # Still have some decisions on cell root, so avoid with len == 2 check
+            assert len(path) == 2 or path[2] == 'outputs'
+
+    def test_only_metadata(self, db):
+        base = db["mixed-conflicts--1"]
+        local = db["mixed-conflicts--2"]
+        remote = db["mixed-conflicts--3"]
+        set_notebook_diff_targets(False, False, False, True)
+
+        merge_args = copy.deepcopy(args)
+        merge_args.merge_strategy = "mergetool"
+
+        partial, decisions = merge_notebooks(base, local, remote, merge_args)
+
+        assert len(decisions) > 0
+        for d in decisions:
+            path = d['common_path']
+            # Still have some decisions on cell root, so avoid with len == 2 check
+            assert (
+                len(path) == 2 or
+                path[0] == 'metadata' or
+                path[2] == 'metadata' or
+                path[4] == 'metadata'
+            )
+

@@ -88,6 +88,38 @@ def test_nbdiff_app_unicode_safe(filespath):
     check_call([sys.executable, '-m', 'nbdime.nbdiffapp', afn, bfn], env=env)
 
 
+def test_nbdiff_app_only_source(filespath, tmpdir):
+    afn = os.path.join(filespath, "multilevel-test-base.ipynb")
+    bfn = os.path.join(filespath, "multilevel-test-local.ipynb")
+    dfn = os.path.join(tmpdir.dirname, "diff_output.json")
+
+    args = nbdiffapp._build_arg_parser().parse_args([afn, bfn, '--out', dfn, '-s'])
+    assert 0 == main_diff(args)
+    with io.open(dfn) as df:
+        diff = json.load(df)
+    for key in ('cells', 1, 'source'):
+        assert len(diff) == 1
+        assert diff[0]['key'] == key
+        assert diff[0]['op'] == 'patch'
+        diff = diff[0]['diff']
+
+
+def test_nbdiff_app_ignore_source(filespath, tmpdir):
+    afn = os.path.join(filespath, "multilevel-test-base.ipynb")
+    bfn = os.path.join(filespath, "multilevel-test-local.ipynb")
+    dfn = os.path.join(tmpdir.dirname, "diff_output.json")
+
+    args = nbdiffapp._build_arg_parser().parse_args([afn, bfn, '--out', dfn, '-S'])
+    assert 0 == main_diff(args)
+    with io.open(dfn) as df:
+        diff = json.load(df)
+    for key in ('cells', 2, 'outputs'):
+        assert len(diff) == 1
+        assert diff[0]['key'] == key
+        assert diff[0]['op'] == 'patch'
+        diff = diff[0]['diff']
+
+
 def test_nbmerge_app(tempfiles, capsys):
     bfn = os.path.join(tempfiles, "multilevel-test-base.ipynb")
     lfn = os.path.join(tempfiles, "multilevel-test-local.ipynb")
