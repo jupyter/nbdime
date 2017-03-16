@@ -8,7 +8,8 @@ import sys
 from argparse import ArgumentParser
 
 from ..args import (add_generic_args, add_diff_args, add_merge_args,
-    add_web_args, add_filename_args, args_for_server, args_for_browse)
+    add_web_args, add_filename_args, args_for_server, args_for_browse,
+    process_diff_args)
 from .nbdimeserver import main_server as run_server
 from .webutil import browse
 import nbdime.log
@@ -42,6 +43,7 @@ def main(args=None):
         args = sys.argv[1:]
     arguments = build_arg_parser().parse_args(args)
     nbdime.log.init_logging(level=arguments.log_level)
+    process_diff_args(arguments)
     base = arguments.base
     local = arguments.local
     remote = arguments.remote

@@ -29,6 +29,9 @@ def main_merge(args):
     rfn = args.remote
     mfn = args.out
 
+    from .args import process_diff_args
+    process_diff_args(args)
+
     for fn in (bfn, lfn, rfn):
         if not os.path.exists(fn) and fn != EXPLICIT_MISSING_FILE:
             nbdime.log.error("Cannot find file '{}'".format(fn))

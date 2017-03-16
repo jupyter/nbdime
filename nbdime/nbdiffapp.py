@@ -15,7 +15,8 @@ import json
 import nbdime
 from nbdime.diffing.notebooks import diff_notebooks
 from nbdime.prettyprint import pretty_print_notebook_diff
-from nbdime.args import add_generic_args, add_diff_args, add_filename_args
+from nbdime.args import (
+    add_generic_args, add_diff_args, add_filename_args, process_diff_args)
 from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook, setup_std_streams
 
 
@@ -27,6 +28,8 @@ def main_diff(args):
     afn = args.base
     bfn = args.remote
     dfn = args.out
+
+    process_diff_args(args)
 
     for fn in (afn, bfn):
         if not os.path.exists(fn) and fn != EXPLICIT_MISSING_FILE:

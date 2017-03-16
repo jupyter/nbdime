@@ -9,6 +9,8 @@ import os
 
 from ._version import __version__
 from .log import init_logging, set_nbdime_log_level
+from .diffing.notebooks import set_notebook_diff_targets
+
 
 class LogLevelAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
@@ -16,6 +18,62 @@ class LogLevelAction(argparse.Action):
         level = getattr(logging, values)
         init_logging(level=level)
         set_nbdime_log_level(level)
+
+
+class IgnorableAction(argparse.Action):
+    """Adds the supplied positive options and negative/ignore version as well"""
+
+    def __init__(self, option_strings, dest, default=None, required=False, help=None):
+        opts = []
+        for opt in option_strings:
+            if len(opt) == 2 and opt[0] == '-':
+                if not opt[1].islower():
+                    raise ValueError('Single character flags should be lower-case for IgnorableAction')
+                opts.append(opt)
+                opts.append(opt.upper())
+            elif opt[:2] == '--':
+                opts.append(opt)
+                opts.append('--ignore-' + opt[2:])
+            else:
+                ValueError('Could not turn option "%s" into an IgnoreAction option.')
+
+        # Put positives first, negatives last:
+        opts = opts[0::2] + opts[1::2]
+
+        super(IgnorableAction, self).__init__(
+            opts, dest, nargs=0, const=None,
+            default=default, required=required,
+            help=help)
+
+    def __call__(self, parser, ns, values, option_string):
+        if len(option_string) == 2:
+            setattr(ns, self.dest, option_string[1].islower())
+        else:
+            setattr(ns, self.dest, option_string[2:2 + len('ignore')] != 'ignore')
+
+
+def process_exclusive_ignorables(ns, arg_names, default=True):
+    """Parse a set of ignorables.
+
+    It checks that all specified options are either all positive or all negative.
+    It then returns a namespace with the parsed options.
+    """
+    state = getattr(ns, arg_names[0])
+    for name in arg_names[1:]:
+        opt = getattr(ns, name)
+        if state is None:
+            state = opt
+        elif state != opt and opt is not None:
+            message = 'Arguments must either all be negative or all positive: %r' % (arg_names,)
+            raise argparse.ArgumentError(None, message)
+    if state is None:
+        state = not default
+
+    # Set all unset to the opposite of state (if all specified are True, others are False and vice versa)
+    for name in arg_names:
+        if getattr(ns, name) is None:
+            setattr(ns, name, not state)
+
 
 def add_generic_args(parser):
     """Adds a set of arguments common to all nbdime commands.
@@ -105,14 +163,38 @@ def add_diff_args(parser):
         Merge applications also performs diff operations to compute
         the merge, so these arguments should also be included there.
     """
-    # TODO: Add diff strategy options that are reusable for the
-    # merge command here
-
     # TODO: Define sensible strategy variables and implement
     #parser.add_argument('-d', '--diff-strategy',
     #                    default="default", choices=("foo", "bar"),
     #                    help="specify the diff strategy to use.")
-    pass
+
+    # Things we can choose to diff or not
+    ignorables = parser.add_argument_group(
+        title='ignorables',
+        description='Set which parts of the notebook (not) to process.')
+    ignorables.add_argument(
+        '-s', '--sources',
+        action=IgnorableAction,
+        help="process/ignore sources.")
+    ignorables.add_argument(
+        '-o', '--outputs',
+        action=IgnorableAction,
+        help="process/ignore outputs.")
+    ignorables.add_argument(
+        '-a', '--attachments',
+        action=IgnorableAction,
+        help="process/ignore attachments.")
+    ignorables.add_argument(
+        '-m', '--metadata',
+        action=IgnorableAction,
+        help="process/ignore metadata.")
+
+
+def process_diff_args(args):
+    exclusives = ('sources', 'outputs', 'attachments', 'metadata')
+    process_exclusive_ignorables(args, exclusives)
+    set_notebook_diff_targets(args.sources, args.outputs,
+                              args.attachments, args.metadata)
 
 
 def add_merge_args(parser):
