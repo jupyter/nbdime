@@ -90,7 +90,7 @@ def main(args=None):
 
     # TODO: support git-config-specified conflict markers inside sources
     merge_parser.add_argument('marker')
-    merge_parser.add_argument('output', nargs='?')
+    merge_parser.add_argument('out', nargs='?')
     # "The merge driver can learn the pathname in which the merged result will
     # be stored via placeholder %P"
     # - NOTE: This is not where the driver should store its output, see below!
@@ -108,7 +108,7 @@ def main(args=None):
         # "The merge driver is expected to leave the result of the merge in the
         # file named with %A by overwriting it, and exit with zero status if it
         # managed to merge them cleanly, or non-zero if there were conflicts."
-        opts.output = opts.local
+        opts.out = opts.local
         # mergeapp expects an additional decisions arg:
         opts.decisions = False
         return nbmergeapp.main_merge(opts)

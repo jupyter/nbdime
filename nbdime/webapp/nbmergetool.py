@@ -33,11 +33,6 @@ def build_arg_parser(parser=None):
     add_diff_args(parser)
     add_merge_args(parser)
     add_web_args(parser, 0)
-    parser.add_argument(
-        '-o', '--output',
-        default=None,
-        help="if supplied, the merged notebook is written "
-             "to this file. Otherwise it cannot be saved.")
     add_filename_args(parser, ["base", "local", "remote", "merged"])
     return parser
 

@@ -27,7 +27,7 @@ def main_merge(args):
     bfn = args.base
     lfn = args.local
     rfn = args.remote
-    mfn = args.output
+    mfn = args.out
 
     for fn in (bfn, lfn, rfn):
         if not os.path.exists(fn) and fn != EXPLICIT_MISSING_FILE:
@@ -110,7 +110,7 @@ def _build_arg_parser():
     add_filename_args(parser, ["base", "local", "remote"])
 
     parser.add_argument(
-        '-o', '--output',
+        '--out',
         default=None,
         help="if supplied, the merged notebook is written "
              "to this file. Otherwise it is printed to the "

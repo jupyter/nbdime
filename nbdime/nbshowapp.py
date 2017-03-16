@@ -6,18 +6,15 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
-import io
 import os
 import sys
 import argparse
 import nbformat
-import json
 
 import nbdime
 from nbdime.prettyprint import pretty_print_notebook
-from nbdime.args import add_generic_args, add_filename_args
+from nbdime.args import add_generic_args
 from nbdime.utils import setup_std_streams
-
 
 
 _description = """Show a Jupyter notebook in terminal.

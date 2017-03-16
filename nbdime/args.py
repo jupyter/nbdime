@@ -120,7 +120,7 @@ def add_merge_args(parser):
     """
     from .merging.notebooks import cli_conflict_strategies, cli_conflict_strategies_input, cli_conflict_strategies_output
     parser.add_argument(
-        '-m', '--merge-strategy',
+        '--merge-strategy',
         default="inline",
         choices=cli_conflict_strategies,
         help="Specify the merge strategy to use.")
