@@ -58,7 +58,7 @@ def process_exclusive_ignorables(ns, arg_names, default=True):
     It checks that all specified options are either all positive or all negative.
     It then returns a namespace with the parsed options.
     """
-    # `toggle` tracks wheter:
+    # `toggle` tracks whether:
     #  - True: One or more positive options were defined
     #  - False: One or more negative options were defined
     #  - None: No options were defined
