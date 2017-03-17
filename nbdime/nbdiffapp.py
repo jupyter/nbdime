@@ -46,7 +46,7 @@ def main_diff(args):
 
     # Output diff:
     if dfn:
-        with io.open(dfn, "w", encoding="utf8") as df:
+        with open(dfn, "w") as df:
             # Compact version:
             #json.dump(d, df)
             # Verbose version:
