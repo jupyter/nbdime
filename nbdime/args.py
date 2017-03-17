@@ -58,21 +58,27 @@ def process_exclusive_ignorables(ns, arg_names, default=True):
     It checks that all specified options are either all positive or all negative.
     It then returns a namespace with the parsed options.
     """
-    state = getattr(ns, arg_names[0])
+    # `toggle` tracks wheter:
+    #  - True: One or more positive options were defined
+    #  - False: One or more negative options were defined
+    #  - None: No options were defined
+    toggle = getattr(ns, arg_names[0])
     for name in arg_names[1:]:
         opt = getattr(ns, name)
-        if state is None:
-            state = opt
-        elif state != opt and opt is not None:
+        if toggle is None:
+            toggle = opt
+        elif toggle != opt and opt is not None:
             message = 'Arguments must either all be negative or all positive: %r' % (arg_names,)
             raise argparse.ArgumentError(None, message)
-    if state is None:
-        state = not default
 
-    # Set all unset to the opposite of state (if all specified are True, others are False and vice versa)
+    if toggle is not None:
+        # One or more options were defined, set default to the opposite
+        default = not toggle
+
+    # Set all unset options to the default
     for name in arg_names:
         if getattr(ns, name) is None:
-            setattr(ns, name, not state)
+            setattr(ns, name, default)
 
 
 def add_generic_args(parser):
