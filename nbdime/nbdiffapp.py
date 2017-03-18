@@ -10,13 +10,13 @@ import io
 import os
 import sys
 import argparse
-import nbformat
 import json
 
 import nbdime
 from nbdime.diffing.notebooks import diff_notebooks
 from nbdime.prettyprint import pretty_print_notebook_diff
-from nbdime.args import add_generic_args, add_diff_args, add_filename_args
+from nbdime.args import (
+    add_generic_args, add_diff_args, add_filename_args, process_diff_args)
 from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook, setup_std_streams
 
 
@@ -24,9 +24,12 @@ _description = "Compute the difference between two Jupyter notebooks."
 
 
 def main_diff(args):
+    # Get input notebooks:
     afn = args.base
     bfn = args.remote
-    dfn = args.output
+    dfn = args.out
+
+    process_diff_args(args)
 
     for fn in (afn, bfn):
         if not os.path.exists(fn) and fn != EXPLICIT_MISSING_FILE:
@@ -38,10 +41,12 @@ def main_diff(args):
     a = read_notebook(afn, on_null='empty')
     b = read_notebook(bfn, on_null='empty')
 
+    # Perform actual diff:
     d = diff_notebooks(a, b)
 
+    # Output diff:
     if dfn:
-        with io.open(dfn, "w", encoding="utf8") as df:
+        with open(dfn, "w") as df:
             # Compact version:
             #json.dump(d, df)
             # Verbose version:
@@ -69,7 +74,7 @@ def _build_arg_parser():
     add_filename_args(parser, ["base", "remote"])
 
     parser.add_argument(
-        '-o', '--output',
+        '--out',
         default=None,
         help="if supplied, the diff is written to this file. "
              "Otherwise it is printed to the terminal.")

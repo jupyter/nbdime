@@ -6,18 +6,15 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
-import io
 import os
 import sys
 import argparse
 import nbformat
-import json
 
 import nbdime
 from nbdime.prettyprint import pretty_print_notebook
-from nbdime.args import add_generic_args, add_filename_args
+from nbdime.args import add_generic_args, IgnorableAction, process_exclusive_ignorables
 from nbdime.utils import setup_std_streams
-
 
 
 _description = """Show a Jupyter notebook in terminal.
@@ -76,28 +73,23 @@ def _build_arg_parser():
     # Things we can choose to show or not
     parser.add_argument(
         '-s', '--sources',
-        action="store_true",
-        default=False,
+        action=IgnorableAction,
         help="show sources.")
     parser.add_argument(
         '-o', '--outputs',
-        action="store_true",
-        default=False,
+        action=IgnorableAction,
         help="show outputs.")
     parser.add_argument(
         '-a', '--attachments',
-        action="store_true",
-        default=False,
+        action=IgnorableAction,
         help="show attachments.")
     parser.add_argument(
         '-m', '--metadata',
-        action="store_true",
-        default=False,
+        action=IgnorableAction,
         help="show metadata.")
     parser.add_argument(
         '-d', '--details',
-        action="store_true",
-        default=False,
+        action=IgnorableAction,
         help="show details not covered by other options.")
 
     return parser
@@ -108,6 +100,9 @@ def main(args=None):
         args = sys.argv[1:]
     setup_std_streams()
     arguments = _build_arg_parser().parse_args(args)
+    process_exclusive_ignorables(
+        arguments,
+        ('sources', 'outputs', 'attachments', 'metadata', 'details'))
     nbdime.log.init_logging(level=arguments.log_level)
     return main_show(arguments)
 

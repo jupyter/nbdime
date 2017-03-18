@@ -19,7 +19,7 @@ from collections import defaultdict
 from six import string_types
 from six.moves import zip
 
-from ..diff_format import source_as_string, MappingDiffBuilder, DiffOp
+from ..diff_format import MappingDiffBuilder, DiffOp
 
 from .generic import (diff, diff_sequence_multilevel,
                       compare_strings_approximate)
@@ -449,6 +449,10 @@ def diff_mime_bundle(a, b, path=None,
     return di.validated()
 
 
+def diff_ignore(*args, **kwargs):
+    return []
+
+
 # Sequence diffs should be applied with multilevel
 # algorithm for paths with more than one predicate,
 # and using operator.__eq__ if no match in there.
@@ -474,6 +478,33 @@ notebook_differs = defaultdict(lambda: diff, {
     "/cells/*/outputs/*": diff_single_outputs,
     "/cells/*/attachments": diff_attachments,
     })
+
+
+def set_notebook_diff_targets(sources=True, outputs=True, attachments=True, metadata=True):
+    if sources:
+        if "/cells/*/source" in notebook_differs:
+            del notebook_differs["/cells/*/source"]
+    else:
+        notebook_differs["/cells/*/source"] = diff_ignore
+
+    if outputs:
+        notebook_differs["/cells/*/outputs"] = diff_sequence_multilevel
+    else:
+        notebook_differs["/cells/*/outputs"] = diff_ignore
+
+    if attachments:
+        notebook_differs["/cells/*/attachments"] = diff_attachments
+    else:
+        notebook_differs["/cells/*/attachments"] = diff_ignore
+
+    metadata_keys = ("/cells/*/metadata", "/metadata", "/cells/*/outputs/*/metadata")
+    if metadata:
+        for key in metadata_keys:
+            if key in notebook_differs:
+                del notebook_differs[key]
+    else:
+        for key in metadata_keys:
+            notebook_differs[key] = diff_ignore
 
 
 def diff_cells(a, b):

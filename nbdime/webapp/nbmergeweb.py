@@ -8,7 +8,8 @@ import sys
 from argparse import ArgumentParser
 
 from ..args import (add_generic_args, add_diff_args, add_merge_args,
-    add_web_args, add_filename_args, args_for_server, args_for_browse)
+    add_web_args, add_filename_args, args_for_server, args_for_browse,
+    process_diff_args)
 from .nbdimeserver import main_server as run_server
 from .webutil import browse
 import nbdime.log
@@ -30,7 +31,7 @@ def build_arg_parser():
     add_web_args(parser, 0)
     add_filename_args(parser, ["base", "local", "remote"])
     parser.add_argument(
-        '-o', '--output',
+        '--out',
         default=None,
         help="if supplied, the merged notebook is written "
              "to this file. Otherwise it cannot be saved.")
@@ -42,10 +43,11 @@ def main(args=None):
         args = sys.argv[1:]
     arguments = build_arg_parser().parse_args(args)
     nbdime.log.init_logging(level=arguments.log_level)
+    process_diff_args(arguments)
     base = arguments.base
     local = arguments.local
     remote = arguments.remote
-    output = arguments.output
+    output = arguments.out
     return run_server(
         closable=True,
         outputfilename=output,

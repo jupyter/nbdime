@@ -88,6 +88,38 @@ def test_nbdiff_app_unicode_safe(filespath):
     check_call([sys.executable, '-m', 'nbdime.nbdiffapp', afn, bfn], env=env)
 
 
+def test_nbdiff_app_only_source(filespath, tmpdir):
+    afn = os.path.join(filespath, "multilevel-test-base.ipynb")
+    bfn = os.path.join(filespath, "multilevel-test-local.ipynb")
+    dfn = os.path.join(tmpdir.dirname, "diff_output.json")
+
+    args = nbdiffapp._build_arg_parser().parse_args([afn, bfn, '--out', dfn, '-s'])
+    assert 0 == main_diff(args)
+    with io.open(dfn) as df:
+        diff = json.load(df)
+    for key in ('cells', 1, 'source'):
+        assert len(diff) == 1
+        assert diff[0]['key'] == key
+        assert diff[0]['op'] == 'patch'
+        diff = diff[0]['diff']
+
+
+def test_nbdiff_app_ignore_source(filespath, tmpdir):
+    afn = os.path.join(filespath, "multilevel-test-base.ipynb")
+    bfn = os.path.join(filespath, "multilevel-test-local.ipynb")
+    dfn = os.path.join(tmpdir.dirname, "diff_output.json")
+
+    args = nbdiffapp._build_arg_parser().parse_args([afn, bfn, '--out', dfn, '-S'])
+    assert 0 == main_diff(args)
+    with io.open(dfn) as df:
+        diff = json.load(df)
+    for key in ('cells', 2, 'outputs'):
+        assert len(diff) == 1
+        assert diff[0]['key'] == key
+        assert diff[0]['op'] == 'patch'
+        diff = diff[0]['diff']
+
+
 def test_nbmerge_app(tempfiles, capsys):
     bfn = os.path.join(tempfiles, "multilevel-test-base.ipynb")
     lfn = os.path.join(tempfiles, "multilevel-test-local.ipynb")
@@ -102,7 +134,7 @@ def test_nbmerge_app(tempfiles, capsys):
 
     nb_stdout, err = capsys.readouterr()
 
-    assert 0 == nbmergeapp.main([bfn, lfn, rfn, '-o', ofn])
+    assert 0 == nbmergeapp.main([bfn, lfn, rfn, '--out', ofn])
     out, err = capsys.readouterr()
     # no stdout when sending output to file
     assert out == ''
@@ -159,7 +191,7 @@ def test_nbmerge_app_conflict(tempfiles, capsys):
     assert 1 == nbmergeapp.main([bfn, lfn, rfn])
     nb_stdout, err = capsys.readouterr()
 
-    assert 1 == nbmergeapp.main([bfn, lfn, rfn, '-o', ofn])
+    assert 1 == nbmergeapp.main([bfn, lfn, rfn, '--out', ofn])
     out, err = capsys.readouterr()
     # no stdout when sending output to file
     assert out == ''
@@ -178,7 +210,7 @@ def test_nbmerge_app_decisions(tempfiles, capsys, reset_log):
     rfn = os.path.join(tempfiles, "inline-conflict--3.ipynb")
     ofn = os.path.join(tempfiles, "inline-conflict-out.ipynb")
 
-    assert 1 == nbmergeapp.main([bfn, lfn, rfn, '--decisions', '-o', ofn])
+    assert 1 == nbmergeapp.main([bfn, lfn, rfn, '--decisions', '--out', ofn])
     out, err = capsys.readouterr()
     # decisions are logged to stderr:
     assert 'conflicted decisions' in err
