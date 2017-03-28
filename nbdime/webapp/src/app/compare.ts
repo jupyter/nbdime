@@ -157,7 +157,7 @@ function initializeCompare() {
   let local = getConfigOption('local');
   let remote = getConfigOption('remote');
   try {
-    compare(base, local, remote, false);
+    compare(base, local, remote, 'replace');
   } catch (e) {
     toggleSpinner(false);
     if (!(e instanceof Error && e.message === ERROR_COMPARE_NUMBER)) {
