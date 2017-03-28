@@ -9,6 +9,11 @@ import {
 } from 'nbdime/lib/common/exceptions';
 
 /**
+ * DOM class for whether or not to hide unchanged cells
+ */
+const HIDE_UNCHANGED_CLASS = 'jp-mod-hideUnchanged';
+
+/**
  * Global config data for the Nbdime application.
  */
 let configData: any = null;
@@ -107,6 +112,29 @@ function toggleSpinner(state?: boolean) {
     header.appendChild(spinner);
   } else {
     header.removeChild(spinner);
+  }
+}
+
+
+/**
+ * Toggle whether to show or hide unchanged cells.
+ *
+ * This simply marks with a class, real work is done by CSS.
+ */
+export
+function toggleShowUnchanged(show?: boolean) {
+  let root = document.getElementById('nbdime-root')!;
+  let hiding = root.classList.contains(HIDE_UNCHANGED_CLASS);
+  if (show === undefined) {
+    show = hiding;
+  } else if (hiding !== show) {
+    // Nothing to do
+    return;
+  }
+  if (show) {
+    root.classList.remove(HIDE_UNCHANGED_CLASS);
+  } else {
+    root.classList.add(HIDE_UNCHANGED_CLASS);
   }
 }
 

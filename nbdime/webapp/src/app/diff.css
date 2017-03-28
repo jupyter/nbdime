@@ -48,3 +48,9 @@
 .nbdime-Diff.jp-mod-local-base #nbdime-header-remote {
   display: none;
 }
+
+
+/* Hiding unchanged cells if told to */
+#nbdime-root.jp-mod-hideUnchanged .jp-Cell-diff.jp-Diff-unchanged {
+  display: none;
+}

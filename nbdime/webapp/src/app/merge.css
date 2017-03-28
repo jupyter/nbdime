@@ -25,3 +25,9 @@
 .nbdime-Merge #nbdime-header-remote {
   background-color: var(--jp-merge-remote-color1);
 }
+
+
+/* Hiding unchanged cells if told to */
+#nbdime-root.jp-mod-hideUnchanged .jp-Cell-merge.jp-Merge-unchanged {
+  display: none;
+}

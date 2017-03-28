@@ -51,7 +51,7 @@ import {
 } from 'nbdime/lib/request';
 
 import {
-  getBaseUrl, getConfigOption, closeTool, toggleSpinner
+  getBaseUrl, getConfigOption, closeTool, toggleSpinner, toggleShowUnchanged
 } from './common';
 
 import {
@@ -398,4 +398,9 @@ function initializeMerge() {
   let downloadBtn = document.getElementById('nbdime-download') as HTMLButtonElement;
   downloadBtn.onclick = downloadMerged;
   downloadBtn.style.display = 'initial';
+
+  let hideUnchangedChk = document.getElementById('nbdime-hide-unchanged') as HTMLInputElement;
+  hideUnchangedChk.onchange = () => {
+    toggleShowUnchanged(!hideUnchangedChk.checked);
+  };
 }
