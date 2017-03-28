@@ -149,7 +149,7 @@ function compare(b: string, c: string, r: string, pushHistory: boolean | 'replac
   }
 }
 
-function editHistory(pushHistory: boolean | 'replace', statedata: any, title?: string, url?: string): void {
+function editHistory(pushHistory: boolean | 'replace', statedata: any, title: string, url?: string): void {
   if (pushHistory === true) {
     history.pushState(statedata, title, url);
   } else if (pushHistory === 'replace') {

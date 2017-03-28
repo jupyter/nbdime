@@ -123,7 +123,7 @@ function compare(base: string, remote: string, pushHistory: boolean | 'replace')
   }
 }
 
-function editHistory(pushHistory: boolean | 'replace', statedata: any, title?: string, url?: string): void {
+function editHistory(pushHistory: boolean | 'replace', statedata: any, title: string, url?: string): void {
   if (pushHistory === true) {
     history.pushState(statedata, title, url);
   } else if (pushHistory === 'replace') {
@@ -195,7 +195,10 @@ function attachToForm() {
   }
 }
 
-/** */
+
+/**
+ *
+ */
 export
 function initializeDiff() {
   attachToForm();
