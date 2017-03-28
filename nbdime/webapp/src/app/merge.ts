@@ -51,7 +51,8 @@ import {
 } from 'nbdime/lib/request';
 
 import {
-  getBaseUrl, getConfigOption, closeTool, toggleSpinner, toggleShowUnchanged
+  getBaseUrl, getConfigOption, closeTool, toggleSpinner,
+  toggleShowUnchanged, markUnchangedRanges
 } from './common';
 
 import {
@@ -180,6 +181,7 @@ function onMergeRequestCompleted(data: any) {
   let layoutWork = showMerge(data);
   layoutWork.then(() => {
     toggleSpinner(false);
+    markUnchangedRanges();
   });
 }
 

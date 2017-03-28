@@ -45,7 +45,8 @@ import {
 } from 'nbdime/lib/request';
 
 import {
-  getBaseUrl, getConfigOption, toggleSpinner, toggleShowUnchanged
+  getBaseUrl, getConfigOption, toggleSpinner, toggleShowUnchanged,
+  markUnchangedRanges
 } from './common';
 
 import {
@@ -151,6 +152,7 @@ function onDiffRequestCompleted(data: any) {
     let exportBtn = document.getElementById('nbdime-export') as HTMLButtonElement;
     exportBtn.style.display = 'initial';
     toggleSpinner(false);
+    markUnchangedRanges();
   });
 }
 
