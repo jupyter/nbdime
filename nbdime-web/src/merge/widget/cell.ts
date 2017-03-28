@@ -62,6 +62,7 @@ import {
 } from './common';
 
 
+export
 const CELLMERGE_CLASS = 'jp-Cell-merge';
 const CELL_HEADER_CLASS = 'jp-Merge-cellHeader';
 const CELL_HEADER_TITLE_CLASS = 'jp-Merge-cellHeader-title';

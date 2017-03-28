@@ -55,6 +55,7 @@ import {
 const PROMPT_CLASS = 'jp-Cell-prompt';
 
 
+export
 const CELLDIFF_CLASS = 'jp-Cell-diff';
 
 const EXECUTIONCOUNT_ROW_CLASS = 'jp-Cellrow-executionCount';
