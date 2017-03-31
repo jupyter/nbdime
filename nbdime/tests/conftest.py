@@ -63,9 +63,13 @@ def nocolor(request):
 
 
 @fixture
-def git_repo(tmpdir, request, filespath):
+def needs_git():
     if not have_git:
         skip("requires git")
+
+
+@fixture
+def git_repo(tmpdir, request, filespath, needs_git):
     repo = str(tmpdir.join('repo'))
     os.mkdir(repo)
     save_cwd = os.getcwd()
@@ -102,6 +106,45 @@ def git_repo(tmpdir, request, filespath):
 
     # start on local
     call('git checkout local')
+    assert not os.path.exists('.gitattributes')
+    return repo
+
+
+@fixture
+def git_repo2(tmpdir, request, filespath, needs_git):
+    repo = str(tmpdir.join('repo'))
+    os.mkdir(repo)
+    save_cwd = os.getcwd()
+    os.chdir(repo)
+    request.addfinalizer(lambda: os.chdir(save_cwd))
+    call('git init'.split())
+
+    # setup base branch
+    src = filespath
+    shutil.copy(pjoin(src, 'src-and-output--1.ipynb'), pjoin(repo, 'diff.ipynb'))
+    os.mkdir('sub')
+    shutil.copy(pjoin(src, 'foo--1.ipynb'), pjoin(repo, 'sub', 'subfile.ipynb'))
+    call('git add --all')
+    call('git commit -m "init base branch"')
+    # create base alias for master
+    call('git checkout -b base master')
+
+    # setup local branch
+    call('git checkout -b local master')
+    shutil.copy(pjoin(src, 'src-and-output--2.ipynb'), pjoin(repo, 'diff.ipynb'))
+    shutil.copy(pjoin(src, 'foo--2.ipynb'), pjoin(repo, 'sub', 'subfile.ipynb'))
+    call('git commit -am "create local branch"')
+
+    # setup remote branch
+    call('git checkout -b remote master')
+    shutil.copy(pjoin(src, 'foo--2.ipynb'), pjoin(repo, 'sub', 'subfile.ipynb'))
+    shutil.copy(pjoin(src, 'markdown-only--1.ipynb'), pjoin(repo, 'sub', 'added.ipynb'))
+    call('git add --all')
+    call('git commit -am "create remote branch"')
+
+    # start on remote
+    call('git checkout remote')
+    call('git rm diff.ipynb')
     assert not os.path.exists('.gitattributes')
     return repo
 
@@ -270,3 +313,13 @@ def matching_nb_triplets(request):
     a, b, c = request.param
     print(a, b, c)
     return _db[a], _db[b], _db[c]
+
+
+_port = 62019
+
+
+@fixture()
+def unique_port():
+    global _port
+    _port += 1
+    return _port

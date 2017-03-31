@@ -9,6 +9,7 @@ import os
 
 from ._version import __version__
 from .log import init_logging, set_nbdime_log_level
+from .gitfiles import is_gitref
 from .diffing.notebooks import set_notebook_diff_targets
 
 
@@ -196,11 +197,49 @@ def add_diff_args(parser):
         help="process/ignore metadata.")
 
 
-def process_diff_args(args):
+def process_diff_flags(args):
     exclusives = ('sources', 'outputs', 'attachments', 'metadata')
     process_exclusive_ignorables(args, exclusives)
     set_notebook_diff_targets(args.sources, args.outputs,
                               args.attachments, args.metadata)
+
+
+def resolve_diff_args(args):
+    """Resolve ambiguity of path vs base/remote for git:
+
+    Cases:
+     - No args: Use defaults
+     - One arg: Either base or path, check with is_gitref.
+     - Two args or more: Check if first two are base/remote by is_gitref
+    """
+    base = args.base
+    remote = args.remote
+    paths = args.paths
+    if not paths:
+        paths = None
+    if remote is None and paths is None:
+        # One arg only:
+        if not is_gitref(base):
+            paths = base
+            base = 'HEAD'
+    # Two or more args:
+    elif paths is None:
+        # Two exactly
+        # - Two files (not git-mode, do nothing)
+        # - Base gitref one file (remote=None, path = file)
+        # - Base gitref remote gitref (do nothing)
+        if is_gitref(base) and not is_gitref(remote):
+            paths = remote
+            remote = None
+    elif base and remote:
+        # Three or more
+        if not is_gitref(base):
+            paths = [base, remote] + paths
+            base = remote = None
+        elif is_gitref(base) and not is_gitref(remote):
+            paths = [remote] + paths
+            remote = None
+    return base, remote, paths
 
 
 def add_merge_args(parser):

@@ -80,18 +80,7 @@ you should see a nice diff view, like this:
 
 To use the web-based GUI viewers of notebook diffs, call::
 
-
-    git difftool --tool nbdime [ref [ref]]
-
-
-.. note::
-
-    Using :command:`git-nbdiffdriver config` overrides the ability to call
-    :command:`git difftool` with notebooks.
-
-    You can still call :command:`nbdiff-web` to diff files directly,
-    but getting the files from git refs is still on our TODO list.
-
+    nbdime-web [ref [ref]]
 
 .. figure:: images/nbdiff-web.png
    :alt: example of nbdime's content-aware diff
@@ -111,7 +100,6 @@ and resolving merge conflicts, and it can be launched by calling::
    :alt: nbdime's merge with web-based GUI viewer
 
    Figure: nbdime's merge with web-based GUI viewer
-
 
 For more detailed information on integrating nbdime with version control, see :doc:`vcs`.
 

@@ -20,17 +20,18 @@ else:
     EXPLICIT_MISSING_FILE = '/dev/null'
 
 
-def read_notebook(filename, on_null):
+def read_notebook(f, on_null):
     """Read and return notebook json from filename
 
     Parameters:
-        filename: The filename to read from or null filename
-            ("/dev/null" on *nix, "nul" on Windows)
+        f:  The filename to read from or null filename
+            ("/dev/null" on *nix, "nul" on Windows).
+            Alternatively a file-like object can be passed.
         on_null: What to return when filename null
             "empty": return empty dict
             "minimal": return miminal valid notebook
     """
-    if filename == EXPLICIT_MISSING_FILE:
+    if f == EXPLICIT_MISSING_FILE:
         if on_null == 'empty':
             return {}
         elif on_null == 'minimal':
@@ -40,7 +41,7 @@ def read_notebook(filename, on_null):
                 'Not valid value for `on_null`: "%s". Valid values '
                 'are "empty" or "minimal"', on_null)
     else:
-        return nbformat.read(filename, as_version=4)
+        return nbformat.read(f, as_version=4)
 
 
 def as_text(text):
@@ -245,7 +246,7 @@ def find_shared_prefix(a, b):
 
 def _setup_std_stream_encoding():
     """Setup encoding on stdout/err
-    
+
     Ensures sys.stdout/err have error-escaping encoders,
     rather than raising errors.
     """
@@ -273,7 +274,7 @@ def _setup_std_stream_encoding():
 
 def setup_std_streams():
     """Setup sys.stdout/err
-    
+
     - Ensures sys.stdout/err have error-escaping encoders,
       rather than raising errors.
     - enables colorama for ANSI escapes on Windows

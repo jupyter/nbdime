@@ -27,24 +27,33 @@ merge_c = 'multilevel-test-remote.ipynb'
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
-def test_diff_web(filespath):
-    port = 62023
+def test_diff_web(filespath, unique_port):
     a = os.path.join(filespath, diff_a)
     b = os.path.join(filespath, diff_b)
     loop = ioloop.IOLoop.current()
     loop.call_later(0, loop.stop)
-    nbdime.webapp.nbdiffweb.main(['--port=%i' % port, '--browser=disabled', a, b])
+    nbdime.webapp.nbdiffweb.main(['--port=%i' % unique_port, '--browser=disabled', a, b])
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
-def test_merge_web(filespath):
-    port = 62024
+def test_diff_web_gitrefs(git_repo2, unique_port):
+    a = 'local'
+    b = 'remote'
+    c = 'diff.ipynb'
+    d = 'sub/subfile.ipynb'
+    loop = ioloop.IOLoop.current()
+    loop.call_later(0, loop.stop)
+    nbdime.webapp.nbdiffweb.main(['--port=%i' % unique_port, '--browser=disabled', a, b, c, d])
+
+
+@pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
+def test_merge_web(filespath, unique_port):
     a = os.path.join(filespath, merge_a)
     b = os.path.join(filespath, merge_b)
     c = os.path.join(filespath, merge_c)
     loop = ioloop.IOLoop.current()
     loop.call_later(0, loop.stop)
-    nbdime.webapp.nbmergeweb.main(['--port=%i' % port, '--browser=disabled', a, b, c])
+    nbdime.webapp.nbmergeweb.main(['--port=%i' % unique_port, '--browser=disabled', a, b, c])
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)

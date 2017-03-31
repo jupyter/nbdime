@@ -12,41 +12,61 @@ import sys
 import argparse
 import json
 
+from six import string_types
+
 import nbdime
 from nbdime.diffing.notebooks import diff_notebooks
 from nbdime.prettyprint import pretty_print_notebook_diff
 from nbdime.args import (
-    add_generic_args, add_diff_args, add_filename_args, process_diff_args)
+    add_generic_args, add_diff_args, process_diff_flags, resolve_diff_args)
 from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook, setup_std_streams
+from .gitfiles import changed_notebooks, is_gitref
 
 
 _description = "Compute the difference between two Jupyter notebooks."
 
 
 def main_diff(args):
-    # Get input notebooks:
-    afn = args.base
-    bfn = args.remote
-    dfn = args.out
+    """Main handler of diff CLI"""
+    output = args.out
+    process_diff_flags(args)
+    base, remote, paths = resolve_diff_args(args)
 
-    process_diff_args(args)
+    # Check if base/remote are gitrefs:
+    if is_gitref(base) and is_gitref(remote):
+        # We are asked to do a diff of git revisions:
+        status = 0
+        for fbase, fremote in changed_notebooks(base, remote, paths):
+            status = _handle_diff(fbase, fremote)
+            if status != 0:
+                # Short-circuit on error in diff handling
+                return status
+        return status
+    else:  # Not gitrefs:
+        return _handle_diff(base, remote, output)
 
-    for fn in (afn, bfn):
-        if not os.path.exists(fn) and fn != EXPLICIT_MISSING_FILE:
+
+def _handle_diff(base, remote, output=None):
+    """Handles diffs of files, either as filenames or file-like objects"""
+    # Check that if args are filenames they either exist, or are
+    # explicitly marked as missing (added/removed):
+    for fn in (base, remote):
+        if (isinstance(fn, string_types) and not os.path.exists(fn) and
+                fn != EXPLICIT_MISSING_FILE):
             print("Missing file {}".format(fn))
             return 1
     # Both files cannot be missing
-    assert not (afn == EXPLICIT_MISSING_FILE and bfn == EXPLICIT_MISSING_FILE)
+    assert not (base == EXPLICIT_MISSING_FILE and remote == EXPLICIT_MISSING_FILE)
 
-    a = read_notebook(afn, on_null='empty')
-    b = read_notebook(bfn, on_null='empty')
+    # Perform actual work:
+    a = read_notebook(base, on_null='empty')
+    b = read_notebook(remote, on_null='empty')
 
-    # Perform actual diff:
     d = diff_notebooks(a, b)
 
-    # Output diff:
-    if dfn:
-        with open(dfn, "w") as df:
+    # Output as JSON to file, or print to stdout:
+    if output:
+        with open(output, "w") as df:
             # Compact version:
             #json.dump(d, df)
             # Verbose version:
@@ -58,7 +78,10 @@ def main_diff(args):
         class Printer:
             def write(self, text):
                 print(text, end="")
-        pretty_print_notebook_diff(afn, bfn, a, d, Printer())
+        # Separate out filenames:
+        base_name = base if isinstance(base, string_types) else base.name
+        remote_name = remote if isinstance(remote, string_types) else remote.name
+        pretty_print_notebook_diff(base_name, remote_name, a, d, Printer())
 
     return 0
 
@@ -71,7 +94,18 @@ def _build_arg_parser():
         )
     add_generic_args(parser)
     add_diff_args(parser)
-    add_filename_args(parser, ["base", "remote"])
+    parser.add_argument(
+        "base", help="The base notebook filename OR base git-revision.",
+        nargs='?', default='HEAD',
+    )
+    parser.add_argument(
+        "remote", help="The remote modified notebook filename OR remote git-revision.",
+        nargs='?', default=None,
+    )
+    parser.add_argument(
+        "paths", help="Filter diffs for git-revisions based on path",
+        nargs='*', default=None,
+    )
 
     parser.add_argument(
         '--out',

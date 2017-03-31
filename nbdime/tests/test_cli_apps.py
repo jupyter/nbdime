@@ -34,8 +34,6 @@ from nbdime import (
     gitmergedriver,
     gitmergetool,
 )
-import nbdime.webapp.nbdiffweb
-import nbdime.webapp.nbmergeweb
 from nbdime.utils import EXPLICIT_MISSING_FILE
 
 
@@ -76,6 +74,26 @@ def test_nbdiff_app_null_file(filespath):
     assert 0 == main_diff(args)
 
     args = nbdiffapp._build_arg_parser().parse_args([EXPLICIT_MISSING_FILE, fn])
+    assert 0 == main_diff(args)
+
+
+def test_nbdiff_app_gitrefs(git_repo2):
+    args = nbdiffapp._build_arg_parser().parse_args(['local', 'remote'])
+    assert 0 == main_diff(args)
+
+    args = nbdiffapp._build_arg_parser().parse_args(['local', 'remote', 'sub/subfile.ipynb'])
+    assert 0 == main_diff(args)
+
+    args = nbdiffapp._build_arg_parser().parse_args(['local', 'remote', 'sub/subfile.ipynb', 'diff.ipynb'])
+    assert 0 == main_diff(args)
+
+    args = nbdiffapp._build_arg_parser().parse_args(['local', 'sub/subfile.ipynb', 'diff.ipynb'])
+    assert 0 == main_diff(args)
+
+    args = nbdiffapp._build_arg_parser().parse_args(['sub/subfile.ipynb'])
+    assert 0 == main_diff(args)
+
+    args = nbdiffapp._build_arg_parser().parse_args([])
     assert 0 == main_diff(args)
 
 
@@ -422,12 +440,12 @@ def _wait_up(url, interval=0.1, check=None):
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
-def test_difftool(git_repo, request):
+def test_difftool(git_repo, request, unique_port):
     nbdime.gitdifftool.main(['config', '--enable'])
     cmd = get_output('git config --get --local difftool.nbdime.cmd').strip()
 
     # pick a non-random port so we can connect later, and avoid opening a browser
-    port = 62021
+    port = unique_port
     cmd = cmd + ' --port=%i --browser=disabled' % port
     call(['git', 'config', 'difftool.nbdime.cmd', cmd])
 
@@ -461,12 +479,12 @@ def test_difftool(git_repo, request):
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
-def test_mergetool(git_repo, request):
+def test_mergetool(git_repo, request, unique_port):
     nbdime.gitmergetool.main(['config', '--enable'])
     cmd = get_output('git config --get --local mergetool.nbdime.cmd').strip()
 
     # pick a non-random port so we can connect later, and avoid opening a browser
-    port = 62022
+    port = unique_port
     cmd = cmd + ' --port=%i --browser=disabled' % port
     call(['git', 'config', 'mergetool.nbdime.cmd', cmd])
     call(['git', 'config', 'mergetool.nbdime.trustExitCode', 'true'])

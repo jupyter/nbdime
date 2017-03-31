@@ -70,10 +70,10 @@ will also be used for all merges on notebook files (no specific
 commands needed).
 
 To launch the rich, web-based tools (for diff visualization and
-merge conflict visualization/resolution), the following git
-command will need to be executed::
+merge conflict visualization/resolution), the following
+commands will need to be executed::
 
-    git difftool --tool nbdime [ref [ref]]
+    nbdime-web [ref [ref]]
 
 .. figure:: images/nbdiff-web.png
    :alt: example of nbdime's content-aware diff
@@ -196,69 +196,6 @@ with the following steps:
 
     *.ipynb merge=jupyternotebook
 
-
-Diff web tool
-*************
-
-The rich, web-based diff view can be installed as a git
-*diff tool*. This enables the diff viewer to display diffs
-of repository history instead of just files.
-
-Command line registration
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-To register nbdime as a git diff tool, run the command::
-
-    git-nbdifftool config --enable [--global | --system]
-
-Once registered, the diff tool can be started by running
-the git command::
-
-    git difftool --tool=nbdime [<commit> [<commit>]] [--] [<path>…​]
-
-If you want to avoid specifying the tool each time, nbdime
-can be set as the default tool by adding the ``--set-default``
-flag to the registration command::
-
-    git-nbdifftool config --enable [--global | --system] --set-default
-
-This command will set the CLI's diff tool as the default diff tool, and
-the web based diff tool as the default GUI diff tool. To
-launch the web view with this configuration, run the
-git command as follows::
-
-    git difftool -g [<commit> [<commit>]] [--] [<path>…​]
-
-.. note::
-
-    Git does not allow selection of different tools per file type.
-    If you set nbdime as the default tool it will be called
-    for **all** changed files. This includes non-notebook files, which
-    nbdime will fail to process.
-
-Manual registration
-^^^^^^^^^^^^^^^^^^^
-
-Alternatively, the diff tool can be registered manually
-with the following steps:
-
-- To register both the CLI and web diff tools with git under
-  the names "nbdime" and "nbdime", add the following entries
-  to the appropriate ``.gitconfig`` file
-  (`git config [--global | --system] -e` to edit)::
-
-    [difftool "nbdime"]
-    cmd = git-nbdifftool diff "$LOCAL" "$REMOTE"
-
-    [difftool "nbdime"]
-    cmd = git-nbdifftool "$LOCAL" "$REMOTE"
-
-- To set the diff tools as the default tools, add or modify
-  the following entries in the appropriate``.gitconfig`` file::
-
-    [diff]
-    tool = nbdime
-    guitool = nbdime
 
 Merge web tool
 **************

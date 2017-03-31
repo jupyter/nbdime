@@ -9,7 +9,7 @@ from argparse import ArgumentParser
 
 from ..args import (
     add_generic_args, add_filename_args, add_diff_args, add_merge_args,
-    add_web_args, args_for_server, args_for_browse, process_diff_args)
+    add_web_args, args_for_server, args_for_browse, process_diff_flags)
 from .nbdimeserver import main_server as run_server
 from .webutil import browse
 import nbdime.log
@@ -43,7 +43,7 @@ def main_parsed(opts):
     Called by both main here and gitmergetool
     """
     nbdime.log.init_logging(level=opts.log_level)
-    process_diff_args(opts)
+    process_diff_flags(opts)
     base = opts.base
     local = opts.local
     remote = opts.remote
