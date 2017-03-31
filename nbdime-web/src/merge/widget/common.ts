@@ -8,6 +8,7 @@ import {
 
 
 // Merge classes:
+export const UNCHANGED_MERGE_CLASS = 'jp-Merge-unchanged';
 export const ONEWAY_LOCAL_CLASS = 'jp-Merge-oneway-local';
 export const ONEWAY_REMOTE_CLASS = 'jp-Merge-oneway-remote';
 export const TWOWAY_ADDITION_CLASS = 'jp-Merge-twoway-addition';

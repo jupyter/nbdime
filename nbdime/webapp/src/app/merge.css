@@ -25,3 +25,41 @@
 .nbdime-Merge #nbdime-header-remote {
   background-color: var(--jp-merge-remote-color1);
 }
+
+
+/* Hiding unchanged cells if told to */
+#nbdime-root.jp-mod-hideUnchanged .jp-Cell-merge.jp-Merge-unchanged {
+  display: none;
+}
+
+/* Show a marker with the number of cells hidden before */
+#nbdime-root.jp-mod-hideUnchanged .jp-Cell-merge[data-nbdime-NCellsHiddenBefore]::before {
+  content: attr(data-nbdime-NCellsHiddenBefore) " unchanged cell(s) hidden";
+  position: absolute;
+  width: 100%;
+  top: 0;
+  background-color: #eee;
+  border-top: solid #ccc 1px;
+  border-bottom: solid #ccc 1px;
+  text-align: center;
+}
+
+/* Show a marker with the number of cells hidden after (for hidden cells at end) */
+#nbdime-root.jp-mod-hideUnchanged .jp-Cell-merge[data-nbdime-NCellsHiddenAfter]::after {
+  content: attr(data-nbdime-NCellsHiddenAfter) " unchanged cell(s) hidden";
+  position: absolute;
+  width: 100%;
+  bottom: 0;
+  background-color: #eee;
+  border-top: solid #ccc 1px;
+  border-bottom: solid #ccc 1px;
+  text-align: center;
+}
+
+#nbdime-root.jp-mod-hideUnchanged .jp-Cell-merge[data-nbdime-NCellsHiddenBefore] {
+  padding-top: 40px;
+}
+
+#nbdime-root.jp-mod-hideUnchanged .jp-Cell-merge[data-nbdime-NCellsHiddenAfter] {
+  padding-bottom: 40px;
+}

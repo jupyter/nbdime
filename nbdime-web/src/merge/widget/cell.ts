@@ -55,13 +55,14 @@ import {
 } from './output';
 
 import {
-  createCheckbox,
+  createCheckbox, UNCHANGED_MERGE_CLASS,
   ONEWAY_LOCAL_CLASS, ONEWAY_REMOTE_CLASS,
   TWOWAY_ADDITION_CLASS, TWOWAY_DELETION_CLASS,
   MERGE_CLASSES
 } from './common';
 
 
+export
 const CELLMERGE_CLASS = 'jp-Cell-merge';
 const CELL_HEADER_CLASS = 'jp-Merge-cellHeader';
 const CELL_HEADER_TITLE_CLASS = 'jp-Merge-cellHeader-title';
@@ -162,6 +163,13 @@ class CellMergeWidget extends Panel {
     let CURR_CLASSES = MERGE_CLASSES.slice();  // copy
 
     this.createHeader();
+
+    // Mark cells that have no changes:
+    if (model.merged.unchanged &&
+        model.local && model.local.unchanged &&
+        model.remote && model.remote.unchanged) {
+      this.addClass(UNCHANGED_MERGE_CLASS);
+    }
 
     /*
      Two different display layouts depending on cell merge type:

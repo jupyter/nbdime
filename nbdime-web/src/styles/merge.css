@@ -11,7 +11,6 @@
 
 .jp-Notebook-merge .jp-Cell-merge {
   margin-bottom: 20px;
-  border-top: solid #ccc 1px;
   background-color: var(--jp-layout-color1);
 }
 
@@ -33,6 +32,7 @@
 .jp-Notebook-merge .jp-Merge-cellHeader {
   display: flex;
   background-color: var(--codemirror-gutter-background);
+  border-top: solid #ccc 1px;
 }
 
 .jp-Notebook-merge .jp-Merge-cellHeader > .p-Widget {

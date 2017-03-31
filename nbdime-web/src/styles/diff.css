@@ -19,7 +19,7 @@
 }
 
 /* Do not use border between unchanged cells */
-.jp-Notebook-diff .jp-Diff-unchanged + .jp-Diff-unchanged {
+.jp-Notebook-diff .jp-Diff-unchanged + .jp-Diff-unchanged > div:first-of-type {
     border: none;
 }
 
@@ -36,6 +36,9 @@
 
 .jp-Notebook-diff .jp-Cell-diff {
   margin-bottom: 20px;
+}
+
+.jp-Notebook-diff .jp-Cell-diff > div:first-of-type {
   border-top: solid #ccc 1px;
 }
 

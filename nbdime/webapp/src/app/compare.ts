@@ -12,7 +12,7 @@ import {
 } from './merge';
 
 import {
-  getConfigOption, closeTool, toggleSpinner
+  getConfigOption, closeTool, toggleSpinner, toggleShowUnchanged
 } from './common';
 
 import {
@@ -157,7 +157,7 @@ function initializeCompare() {
   let local = getConfigOption('local');
   let remote = getConfigOption('remote');
   try {
-    compare(base, local, remote, false);
+    compare(base, local, remote, 'replace');
   } catch (e) {
     toggleSpinner(false);
     if (!(e instanceof Error && e.message === ERROR_COMPARE_NUMBER)) {
@@ -178,4 +178,9 @@ function initializeCompare() {
   }
   let exportBtn = document.getElementById('nbdime-export') as HTMLButtonElement;
   exportBtn.onclick = exportDiff;
+
+  let hideUnchangedChk = document.getElementById('nbdime-hide-unchanged') as HTMLInputElement;
+  hideUnchangedChk.onchange = () => {
+    toggleShowUnchanged(!hideUnchangedChk.checked);
+  };
 }

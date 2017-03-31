@@ -8,6 +8,28 @@ import {
   NotifyUserError
 } from 'nbdime/lib/common/exceptions';
 
+import {
+  UNCHANGED_DIFF_CLASS
+} from 'nbdime/lib/diff/widget/common';
+
+import {
+  UNCHANGED_MERGE_CLASS
+} from 'nbdime/lib/merge/widget/common';
+
+import {
+  CELLDIFF_CLASS
+} from 'nbdime/lib/diff/widget';
+
+import {
+  CELLMERGE_CLASS
+} from 'nbdime/lib/merge/widget';
+
+
+/**
+ * DOM class for whether or not to hide unchanged cells
+ */
+const HIDE_UNCHANGED_CLASS = 'jp-mod-hideUnchanged';
+
 /**
  * Global config data for the Nbdime application.
  */
@@ -107,6 +129,67 @@ function toggleSpinner(state?: boolean) {
     header.appendChild(spinner);
   } else {
     header.removeChild(spinner);
+  }
+}
+
+
+/**
+ * Toggle whether to show or hide unchanged cells.
+ *
+ * This simply marks with a class, real work is done by CSS.
+ */
+export
+function toggleShowUnchanged(show?: boolean) {
+  let root = document.getElementById('nbdime-root')!;
+  let hiding = root.classList.contains(HIDE_UNCHANGED_CLASS);
+  if (show === undefined) {
+    show = hiding;
+  } else if (hiding !== show) {
+    // Nothing to do
+    return;
+  }
+  if (show) {
+    root.classList.remove(HIDE_UNCHANGED_CLASS);
+  } else {
+    markUnchangedRanges();
+    root.classList.add(HIDE_UNCHANGED_CLASS);
+  }
+}
+
+
+/**
+ * Marks certain cells with
+ */
+export
+function markUnchangedRanges() {
+  let root = document.getElementById('nbdime-root')!;
+  let children = root.querySelectorAll(`.${CELLDIFF_CLASS}, .${CELLMERGE_CLASS}`);
+  let rangeStart = -1;
+  for (let i=0; i < children.length; ++i) {
+    let child = children[i];
+    if (!child.classList.contains(UNCHANGED_DIFF_CLASS) &&
+        !child.classList.contains(UNCHANGED_MERGE_CLASS)) {
+      // Visible
+      if (rangeStart !== -1) {
+        // Previous was hidden
+        let N = i - rangeStart;
+        child.setAttribute('data-nbdime-NCellsHiddenBefore', N.toString());
+        rangeStart = -1;
+      }
+    } else if (rangeStart === -1) {
+      rangeStart = i;
+    }
+  }
+  if (rangeStart !== -1) {
+    // Last element was part of a hidden range, need to mark
+    // the last cell that will be visible.
+    if (rangeStart === 0) {
+      // All elements were hidden, nothing to mark
+      return;
+    }
+    let N = children.length - rangeStart;
+    let lastVisible = children[rangeStart - 1];
+    lastVisible.setAttribute('data-nbdime-NCellsHiddenAfter', N.toString());
   }
 }
 

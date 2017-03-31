@@ -51,7 +51,8 @@ import {
 } from 'nbdime/lib/request';
 
 import {
-  getBaseUrl, getConfigOption, closeTool, toggleSpinner
+  getBaseUrl, getConfigOption, closeTool, toggleSpinner,
+  toggleShowUnchanged, markUnchangedRanges
 } from './common';
 
 import {
@@ -180,6 +181,7 @@ function onMergeRequestCompleted(data: any) {
   let layoutWork = showMerge(data);
   layoutWork.then(() => {
     toggleSpinner(false);
+    markUnchangedRanges();
   });
 }
 
@@ -398,4 +400,9 @@ function initializeMerge() {
   let downloadBtn = document.getElementById('nbdime-download') as HTMLButtonElement;
   downloadBtn.onclick = downloadMerged;
   downloadBtn.style.display = 'initial';
+
+  let hideUnchangedChk = document.getElementById('nbdime-hide-unchanged') as HTMLInputElement;
+  hideUnchangedChk.onchange = () => {
+    toggleShowUnchanged(!hideUnchangedChk.checked);
+  };
 }

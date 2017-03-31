@@ -29,14 +29,15 @@
           <label>Remote:</label>
           <input id="compare-remote" type="text" name="remote" value="{{ escape(config_data['remote']) }}" />
           <input id="nbdime-run-compare" type="submit" name="auto" value="Compare files" />
-          <button id="nbdime-download" class="nbdime-header-button" style="display: none" type="button">Download</button>
+          <button id="nbdime-download" style="display: none" type="button">Download</button>
         </fieldset>
       </form> <!-- nbdime-forms -->
       <div id="nbdime-header-buttonrow">
-        <button id="nbdime-save" class="nbdime-header-button" style="display: none">Save</button>
-        <button id="nbdime-download" class="nbdime-header-button" style="display: none">Download</button>
-        <button id="nbdime-close" class="nbdime-header-button" style="display: none">Close tool</button>
-        <button id="nbdime-export" class="nbdime-header-button" style="display: none">Export diff</button>
+        <input id="nbdime-hide-unchanged" type="checkbox"><label for="cbox1">Hide unchanged cells</label></input>
+        <button id="nbdime-save" style="display: none">Save</button>
+        <button id="nbdime-download" style="display: none">Download</button>
+        <button id="nbdime-close" style="display: none">Close tool</button>
+        <button id="nbdime-export" style="display: none">Export diff</button>
       </div>
       <div id=nbdime-header-banner>
         <span id="nbdime-header-local">Local</span>
