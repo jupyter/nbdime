@@ -24,7 +24,7 @@ import sys
 from subprocess import check_call, CalledProcessError
 
 from . import nbdiffapp
-from .args import add_git_config_subcommand
+from .args import add_git_config_subcommand, add_diff_args, diff_exclusives
 from .utils import locate_gitattributes, ensure_dir_exists
 
 
@@ -77,6 +77,7 @@ def main(args=None):
     diff_parser = subparsers.add_parser('diff',
         description="The actual entrypoint for the diff tool. Git will call this."
     )
+    add_diff_args(diff_parser)
     # Argument list
     # path old-file old-hex old-mode new-file new-hex new-mode [ rename-to ]
     diff_parser.add_argument('path')
@@ -97,7 +98,9 @@ def main(args=None):
 
     opts = parser.parse_args(args)
     if opts.subcommand == 'diff':
-        return nbdiffapp.main([opts.a, opts.b])
+        return nbdiffapp.main(
+            [opts.a, opts.b] +
+            ['--%s' % name for name in diff_exclusives if getattr(opts, name)])
     elif opts.subcommand == 'config':
         opts.config_func(opts.scope)
         return 0
