@@ -313,6 +313,7 @@ def init_app(on_port=None, closable=False, **params):
     app = make_app(**params)
     if port != 0 or on_port is None:
         app.listen(port, address=ip)
+        _logger.info('Listening on %s, port %d' % (ip, port))
     else:
         sockets = netutil.bind_sockets(0, ip)
         server = httpserver.HTTPServer(app)
