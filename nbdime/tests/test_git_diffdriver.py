@@ -83,7 +83,7 @@ def test_git_diff_driver(capsys, nocolor, needs_git):
         assert cap_out == expected_output.format(fn1, fn2, t1, t2)
 
 
-def test_git_diff_driver_flags(capsys, nocolor, needs_git):
+def test_git_diff_driver_flags(capsys, nocolor, needs_git, reset_diff_targets):
     # Simulate a call from `git diff` to check basic driver functionality
     test_dir = os.path.abspath(os.path.dirname(__file__))
 

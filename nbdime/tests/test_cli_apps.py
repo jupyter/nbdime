@@ -106,7 +106,7 @@ def test_nbdiff_app_unicode_safe(filespath):
     check_call([sys.executable, '-m', 'nbdime.nbdiffapp', afn, bfn], env=env)
 
 
-def test_nbdiff_app_only_source(filespath, tmpdir):
+def test_nbdiff_app_only_source(filespath, tmpdir, reset_diff_targets):
     afn = os.path.join(filespath, "multilevel-test-base.ipynb")
     bfn = os.path.join(filespath, "multilevel-test-local.ipynb")
     dfn = os.path.join(tmpdir.dirname, "diff_output.json")
@@ -122,7 +122,7 @@ def test_nbdiff_app_only_source(filespath, tmpdir):
         diff = diff[0]['diff']
 
 
-def test_nbdiff_app_ignore_source(filespath, tmpdir):
+def test_nbdiff_app_ignore_source(filespath, tmpdir, reset_diff_targets):
     afn = os.path.join(filespath, "multilevel-test-base.ipynb")
     bfn = os.path.join(filespath, "multilevel-test-local.ipynb")
     dfn = os.path.join(tmpdir.dirname, "diff_output.json")

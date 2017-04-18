@@ -23,6 +23,7 @@ import nbformat
 from .utils import call, have_git
 
 from nbdime.webapp.nbdimeserver import init_app
+from nbdime.diffing.notebooks import set_notebook_diff_targets
 
 pjoin = os.path.join
 
@@ -323,3 +324,12 @@ def unique_port():
     global _port
     _port += 1
     return _port
+
+
+@fixture()
+def reset_diff_targets():
+    try:
+        yield
+    finally:
+        # Reset diff targets (global variable)
+        set_notebook_diff_targets()

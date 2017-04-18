@@ -187,7 +187,6 @@ def _check(partial, expected_partial, decisions, expected_conflicts):
     for e, d in zip(expected_conflicts, conflicts):
         # Only check keys specified in expectation value
         for k in sorted(e.keys()):
-            #if d[k] != e[k]: import ipdb; ipdb.set_trace()
             assert d[k] == e[k]
 
 
@@ -892,64 +891,61 @@ def test_autoresolve_empty_strategies():
     _check(partial, expected_partial, decisions, expected_conflicts)
 
 
-class TestMergeDiffIgnores:
+def test_only_sources(db, reset_diff_targets):
+    base = db["mixed-conflicts--1"]
+    local = db["mixed-conflicts--2"]
+    remote = db["mixed-conflicts--3"]
+    set_notebook_diff_targets(True, False, False, False)
 
-    def teardown(self):
-        set_notebook_diff_targets(True, True, True, True)
+    merge_args = copy.deepcopy(args)
+    merge_args.merge_strategy = "mergetool"
 
-    def test_only_sources(self, db):
-        base = db["mixed-conflicts--1"]
-        local = db["mixed-conflicts--2"]
-        remote = db["mixed-conflicts--3"]
-        set_notebook_diff_targets(True, False, False, False)
+    partial, decisions = merge_notebooks(base, local, remote, merge_args)
 
-        merge_args = copy.deepcopy(args)
-        merge_args.merge_strategy = "mergetool"
+    assert len(decisions) > 0
+    for d in decisions:
+        path = d['common_path']
+        # Still have some decisions on cell root, so avoid with len == 2 check
+        assert len(path) == 2 or path[2] == 'source'
 
-        partial, decisions = merge_notebooks(base, local, remote, merge_args)
 
-        assert len(decisions) > 0
-        for d in decisions:
-            path = d['common_path']
-            # Still have some decisions on cell root, so avoid with len == 2 check
-            assert len(path) == 2 or path[2] == 'source'
+def test_only_outputs(db, reset_diff_targets):
+    base = db["mixed-conflicts--1"]
+    local = db["mixed-conflicts--2"]
+    remote = db["mixed-conflicts--3"]
+    set_notebook_diff_targets(False, True, False, False)
 
-    def test_only_outputs(self, db):
-        base = db["mixed-conflicts--1"]
-        local = db["mixed-conflicts--2"]
-        remote = db["mixed-conflicts--3"]
-        set_notebook_diff_targets(False, True, False, False)
+    merge_args = copy.deepcopy(args)
+    merge_args.merge_strategy = "mergetool"
 
-        merge_args = copy.deepcopy(args)
-        merge_args.merge_strategy = "mergetool"
+    partial, decisions = merge_notebooks(base, local, remote, merge_args)
 
-        partial, decisions = merge_notebooks(base, local, remote, merge_args)
+    assert len(decisions) > 0
+    for d in decisions:
+        path = d['common_path']
+        # Still have some decisions on cell root, so avoid with len == 2 check
+        assert len(path) == 2 or path[2] == 'outputs'
 
-        assert len(decisions) > 0
-        for d in decisions:
-            path = d['common_path']
-            # Still have some decisions on cell root, so avoid with len == 2 check
-            assert len(path) == 2 or path[2] == 'outputs'
 
-    def test_only_metadata(self, db):
-        base = db["mixed-conflicts--1"]
-        local = db["mixed-conflicts--2"]
-        remote = db["mixed-conflicts--3"]
-        set_notebook_diff_targets(False, False, False, True)
+def test_only_metadata(db, reset_diff_targets):
+    base = db["mixed-conflicts--1"]
+    local = db["mixed-conflicts--2"]
+    remote = db["mixed-conflicts--3"]
+    set_notebook_diff_targets(False, False, False, True)
 
-        merge_args = copy.deepcopy(args)
-        merge_args.merge_strategy = "mergetool"
+    merge_args = copy.deepcopy(args)
+    merge_args.merge_strategy = "mergetool"
 
-        partial, decisions = merge_notebooks(base, local, remote, merge_args)
+    partial, decisions = merge_notebooks(base, local, remote, merge_args)
 
-        assert len(decisions) > 0
-        for d in decisions:
-            path = d['common_path']
-            # Still have some decisions on cell root, so avoid with len == 2 check
-            assert (
-                len(path) == 2 or
-                path[0] == 'metadata' or
-                path[2] == 'metadata' or
-                path[4] == 'metadata'
-            )
+    assert len(decisions) > 0
+    for d in decisions:
+        path = d['common_path']
+        # Still have some decisions on cell root, so avoid with len == 2 check
+        assert (
+            len(path) == 2 or
+            path[0] == 'metadata' or
+            path[2] == 'metadata' or
+            path[4] == 'metadata'
+        )
 
