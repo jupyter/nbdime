@@ -17,7 +17,7 @@ except ImportError:
 
 from jsonschema import Draft4Validator as Validator
 from jsonschema import RefResolver
-from pytest import yield_fixture, fixture, skip
+from pytest import fixture, skip
 import nbformat
 
 from .utils import call, have_git
@@ -149,7 +149,7 @@ def git_repo2(tmpdir, request, filespath, needs_git):
     return repo
 
 
-@yield_fixture
+@fixture
 def reset_log():
     # clear root logger handlers before test and reset afterwards
     handlers = list(logging.getLogger().handlers)

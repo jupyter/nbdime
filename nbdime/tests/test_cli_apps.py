@@ -439,7 +439,7 @@ def _wait_up(url, interval=0.1, check=None):
             break
 
 
-@pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
+@pytest.mark.timeout(timeout=3*WEB_TEST_TIMEOUT)
 def test_difftool(git_repo, request, unique_port):
     nbdime.gitdifftool.main(['config', '--enable'])
     cmd = get_output('git config --get --local difftool.nbdime.cmd').strip()
@@ -478,7 +478,7 @@ def test_difftool(git_repo, request, unique_port):
     assert process.poll() == 0
 
 
-@pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
+@pytest.mark.timeout(timeout=3*WEB_TEST_TIMEOUT)
 def test_mergetool(git_repo, request, unique_port):
     nbdime.gitmergetool.main(['config', '--enable'])
     cmd = get_output('git config --get --local mergetool.nbdime.cmd').strip()
