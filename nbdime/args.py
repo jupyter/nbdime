@@ -197,9 +197,10 @@ def add_diff_args(parser):
         help="process/ignore metadata.")
 
 
+
+diff_exclusives = ('sources', 'outputs', 'attachments', 'metadata')
 def process_diff_flags(args):
-    exclusives = ('sources', 'outputs', 'attachments', 'metadata')
-    process_exclusive_ignorables(args, exclusives)
+    process_exclusive_ignorables(args, diff_exclusives)
     set_notebook_diff_targets(args.sources, args.outputs,
                               args.attachments, args.metadata)
 

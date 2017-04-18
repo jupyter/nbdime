@@ -106,7 +106,7 @@ def test_nbdiff_app_unicode_safe(filespath):
     check_call([sys.executable, '-m', 'nbdime.nbdiffapp', afn, bfn], env=env)
 
 
-def test_nbdiff_app_only_source(filespath, tmpdir):
+def test_nbdiff_app_only_source(filespath, tmpdir, reset_diff_targets):
     afn = os.path.join(filespath, "multilevel-test-base.ipynb")
     bfn = os.path.join(filespath, "multilevel-test-local.ipynb")
     dfn = os.path.join(tmpdir.dirname, "diff_output.json")
@@ -122,7 +122,7 @@ def test_nbdiff_app_only_source(filespath, tmpdir):
         diff = diff[0]['diff']
 
 
-def test_nbdiff_app_ignore_source(filespath, tmpdir):
+def test_nbdiff_app_ignore_source(filespath, tmpdir, reset_diff_targets):
     afn = os.path.join(filespath, "multilevel-test-base.ipynb")
     bfn = os.path.join(filespath, "multilevel-test-local.ipynb")
     dfn = os.path.join(tmpdir.dirname, "diff_output.json")
@@ -439,7 +439,7 @@ def _wait_up(url, interval=0.1, check=None):
             break
 
 
-@pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
+@pytest.mark.timeout(timeout=3*WEB_TEST_TIMEOUT)
 def test_difftool(git_repo, request, unique_port):
     nbdime.gitdifftool.main(['config', '--enable'])
     cmd = get_output('git config --get --local difftool.nbdime.cmd').strip()
@@ -478,7 +478,7 @@ def test_difftool(git_repo, request, unique_port):
     assert process.poll() == 0
 
 
-@pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
+@pytest.mark.timeout(timeout=3*WEB_TEST_TIMEOUT)
 def test_mergetool(git_repo, request, unique_port):
     nbdime.gitmergetool.main(['config', '--enable'])
     cmd = get_output('git config --get --local mergetool.nbdime.cmd').strip()
