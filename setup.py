@@ -33,7 +33,8 @@ from glob import glob
 
 from setuptools import setup
 
-from setupbase import create_cmdclass, install_npm, find_packages, combine_commands
+from setupbase import (create_cmdclass, install_npm, find_packages,
+    combine_commands, BaseCommand, skip_npm)
 
 pjoin = os.path.join
 here = os.path.abspath(os.path.dirname(__file__))
@@ -42,6 +43,20 @@ here = os.path.abspath(os.path.dirname(__file__))
 jstargets = [
     os.path.join(here, name, 'webapp', 'static', 'nbdime.js'),
 ]
+
+
+def ensure_targets(targets):
+    """Return a Command that checks that certain files exist"""
+
+    class TargetsCheck(BaseCommand):
+        def run(self):
+            if skip_npm:
+                return
+            missing = [t for t in targets if not os.path.exists(t)]
+            if missing:
+                raise ValueError(('missing files: %s' % missing))
+
+    return TargetsCheck
 
 
 package_data = {
@@ -63,6 +78,7 @@ cmdclass = create_cmdclass(('jsdeps',))
 cmdclass['jsdeps'] = combine_commands(
     install_npm(pjoin(here, 'nbdime-web')),
     install_npm(pjoin(here, name, 'webapp')),
+    ensure_targets(jstargets),
 )
 
 
