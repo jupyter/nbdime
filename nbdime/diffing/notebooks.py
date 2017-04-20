@@ -18,6 +18,10 @@ import copy
 from collections import defaultdict
 from six import string_types
 from six.moves import zip
+try:
+    from functools import lru_cache
+except ImportError:
+    from backports.functools_lru_cache import lru_cache
 
 from ..diff_format import MappingDiffBuilder, DiffOp
 
@@ -90,6 +94,7 @@ def compare_base64_strict(x, y):
     return x == y
 
 
+@lru_cache(maxsize=1024, typed=False)
 def _compare_mimedata(mimetype, x, y, comp_text, comp_base64):
     mimetype = mimetype.lower()
 
