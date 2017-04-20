@@ -122,7 +122,7 @@ def is_stale(target, source):
     """
     if not os.path.exists(target):
         return True
-    target_mtime = recursive_mtime(target)
+    target_mtime = recursive_mtime(target) or 0
     return compare_recursive_mtime(source, cutoff=target_mtime)
 
 
