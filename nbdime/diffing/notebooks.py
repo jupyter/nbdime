@@ -53,6 +53,7 @@ _split_mimes = (
 #       an argument instead of separate functions.
 
 
+@lru_cache(maxsize=1024, typed=False)
 def compare_text_approximate(x, y):
     # Fast cutoff when one is empty
     if bool(x) != bool(y):
@@ -94,7 +95,15 @@ def compare_base64_strict(x, y):
     return x == y
 
 
-@lru_cache(maxsize=1024, typed=False)
+@lru_cache(maxsize=128, typed=False)
+def _compare_mimedata_strings(x, y, comp_text, comp_base64):
+    # Most likely base64 encoded data
+    if _base64.match(x):
+        return comp_base64(x, y)
+    else:
+        return comp_text(x, y)
+
+
 def _compare_mimedata(mimetype, x, y, comp_text, comp_base64):
     mimetype = mimetype.lower()
 
@@ -113,12 +122,7 @@ def _compare_mimedata(mimetype, x, y, comp_text, comp_base64):
     # TODO: Compare binary images?
     #if mimetype.startswith("image/"):
     if isinstance(x, string_types) and isinstance(y, string_types):
-        # Most likely base64 encoded data
-        if _base64.match(x):
-            return comp_base64(x, y)
-        else:
-            return comp_text(x, y)
-
+        _compare_mimedata_strings(x, y, comp_text, comp_base64)
     # Fallback to exactly equal
     return x == y
 
