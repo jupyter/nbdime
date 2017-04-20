@@ -55,12 +55,13 @@ class TimePaths(object):
 
     @contextlib.contextmanager
     def time(self, key):
+        if not self.enabled:
+            yield
+            return
         start = time.time()
         yield
         end = time.time()
         secs = end - start
-        if not self.enabled:
-            return
         if key in self.map:
             self.map[key]['time'] += secs
             self.map[key]['calls'] += 1
@@ -88,8 +89,8 @@ class TimePaths(object):
         for key, data in items:
             time = data['time']
             calls = data['calls']
-            lines.append((key, calls, time))
-        return tabulate(lines, headers=['Key', 'Calls', 'Time'])
+            lines.append((key, calls, time, time / calls))
+        return tabulate(lines, headers=['Key', 'Calls', 'Time', 'Time/Call'])
 
 
 timer = TimePaths(enabled=False)
@@ -98,7 +99,8 @@ timer = TimePaths(enabled=False)
 def profile_diff_paths(args=None):
     import nbdime.nbdiffapp
     import nbdime.profiling
-    nbdime.nbdiffapp.main(args)
+    with nbdime.profiling.timer.enable():
+        nbdime.nbdiffapp.main(args)
     data = str(nbdime.profiling.timer)
     print(data)
 
