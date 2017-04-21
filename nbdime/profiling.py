@@ -40,6 +40,7 @@ diff to blow up.
 import time
 import contextlib
 from tabulate import tabulate
+from functools import wraps
 
 
 def _sort_time(value):
@@ -67,6 +68,18 @@ class TimePaths(object):
             self.map[key]['calls'] += 1
         else:
             self.map[key] = dict(time=secs, calls=1)
+
+    def profile(self, key=None):
+        def decorator(function):
+            nonlocal key
+            if key is None:
+                key = function.__name__ or 'unknown'
+            @wraps(function)
+            def inner(*args, **kwargs):
+                with self.time(key):
+                    return function(*args, **kwargs)
+            return inner
+        return decorator
 
     @contextlib.contextmanager
     def enable(self):
