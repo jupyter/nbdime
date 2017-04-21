@@ -78,7 +78,7 @@ def find_packages(top):
     packages = []
     for d, _, _ in os.walk(top):
         if os.path.exists(pjoin(d, '__init__.py')):
-            packages.append(d.replace(os.path.sep, '.'))
+            packages.append(os.path.relpath(d, top).replace(os.path.sep, '.'))
     return packages
 
 
