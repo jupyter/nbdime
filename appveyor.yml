@@ -26,7 +26,7 @@ install:
   # Ensure python scripts are from right version:
   - 'SET "PATH=%PYTHON%\\Scripts;%PATH%"'
   # Install our package:
-  - 'pip install --upgrade -e ".[test]"'
+  - 'pip install --upgrade ".[test]"'
 
 build: off
 
