@@ -40,6 +40,7 @@ diff to blow up.
 import time
 import contextlib
 from tabulate import tabulate
+from functools import wraps
 
 
 def _sort_time(value):
@@ -55,17 +56,30 @@ class TimePaths(object):
 
     @contextlib.contextmanager
     def time(self, key):
+        if not self.enabled:
+            yield
+            return
         start = time.time()
         yield
         end = time.time()
         secs = end - start
-        if not self.enabled:
-            return
         if key in self.map:
             self.map[key]['time'] += secs
             self.map[key]['calls'] += 1
         else:
             self.map[key] = dict(time=secs, calls=1)
+
+    def profile(self, key=None):
+        def decorator(function):
+            nonlocal key
+            if key is None:
+                key = function.__name__ or 'unknown'
+            @wraps(function)
+            def inner(*args, **kwargs):
+                with self.time(key):
+                    return function(*args, **kwargs)
+            return inner
+        return decorator
 
     @contextlib.contextmanager
     def enable(self):
@@ -88,8 +102,8 @@ class TimePaths(object):
         for key, data in items:
             time = data['time']
             calls = data['calls']
-            lines.append((key, calls, time))
-        return tabulate(lines, headers=['Key', 'Calls', 'Time'])
+            lines.append((key, calls, time, time / calls))
+        return tabulate(lines, headers=['Key', 'Calls', 'Time', 'Time/Call'])
 
 
 timer = TimePaths(enabled=False)
@@ -98,7 +112,8 @@ timer = TimePaths(enabled=False)
 def profile_diff_paths(args=None):
     import nbdime.nbdiffapp
     import nbdime.profiling
-    nbdime.nbdiffapp.main(args)
+    with nbdime.profiling.timer.enable():
+        nbdime.nbdiffapp.main(args)
     data = str(nbdime.profiling.timer)
     print(data)
 

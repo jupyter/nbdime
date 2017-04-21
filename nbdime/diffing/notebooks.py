@@ -3,8 +3,6 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-from __future__ import unicode_literals
-
 """Tools for diffing notebooks.
 
 All diff tools here currently assumes the notebooks have already been
@@ -12,12 +10,18 @@ converted to the same format version, currently v4 at time of writing.
 Up- and down-conversion is handled by nbformat.
 """
 
+from __future__ import unicode_literals
+
 import operator
 import re
 import copy
 from collections import defaultdict
 from six import string_types
 from six.moves import zip
+try:
+    from functools import lru_cache
+except ImportError:
+    from backports.functools_lru_cache import lru_cache
 
 from ..diff_format import MappingDiffBuilder, DiffOp
 
@@ -49,6 +53,7 @@ _split_mimes = (
 #       an argument instead of separate functions.
 
 
+@lru_cache(maxsize=1024, typed=False)
 def compare_text_approximate(x, y):
     # Fast cutoff when one is empty
     if bool(x) != bool(y):
@@ -90,6 +95,15 @@ def compare_base64_strict(x, y):
     return x == y
 
 
+@lru_cache(maxsize=128, typed=False)
+def _compare_mimedata_strings(x, y, comp_text, comp_base64):
+    # Most likely base64 encoded data
+    if _base64.match(x):
+        return comp_base64(x, y)
+    else:
+        return comp_text(x, y)
+
+
 def _compare_mimedata(mimetype, x, y, comp_text, comp_base64):
     mimetype = mimetype.lower()
 
@@ -108,12 +122,7 @@ def _compare_mimedata(mimetype, x, y, comp_text, comp_base64):
     # TODO: Compare binary images?
     #if mimetype.startswith("image/"):
     if isinstance(x, string_types) and isinstance(y, string_types):
-        # Most likely base64 encoded data
-        if _base64.match(x):
-            return comp_base64(x, y)
-        else:
-            return comp_text(x, y)
-
+        _compare_mimedata_strings(x, y, comp_text, comp_base64)
     # Fallback to exactly equal
     return x == y
 
@@ -357,17 +366,20 @@ def diff_single_outputs(a, b, path="/cells/*/outputs/*",
     if a.output_type in ("execute_result", "display_data"):
         di = MappingDiffBuilder()
 
+        # Separate data from output during diffing:
         tmp_data = a.pop('data')
-        a_conj = copy.deepcopy(a)
-        a.data = tmp_data
+        a_conj = copy.deepcopy(a)  # Output without data
+        a.data = tmp_data          # Restore output
         tmp_data = b.pop('data')
         b_conj = copy.deepcopy(b)
         b.data = tmp_data
+        # Only diff outputs without data:
         dd_conj = diff(a_conj, b_conj)
         if dd_conj:
             for e in dd_conj:
                 di.append(e)
 
+        # Only diff data:
         dd = diff_mime_bundle(a.data, b.data, path=path+"/data")
         if dd:
             di.patch("data", dd)

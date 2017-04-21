@@ -258,6 +258,7 @@ extras_require = setuptools_args['extras_require'] = {
 
     ':python_version == "2.7"': [
         'backports.shutil_which',
+        'backports.functools_lru_cache',
     ],
 }
 
