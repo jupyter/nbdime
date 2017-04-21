@@ -79,6 +79,7 @@ def find_packages(top):
     for d, _, _ in os.walk(top):
         if os.path.exists(pjoin(d, '__init__.py')):
             packages.append(d.replace(os.path.sep, '.'))
+    return packages
 
 
 def create_cmdclass(wrappers=None, data_dirs=None):
