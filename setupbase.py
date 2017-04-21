@@ -213,7 +213,7 @@ def mtime(path):
     return os.stat(path).st_mtime
 
 
-def install_npm(path=None, build_dir=None, source_dir=None, build_cmd='build'):
+def install_npm(path=None, build_dir=None, source_dir=None, build_cmd='build', force=False):
     """Return a Command for managing an npm installation.
 
     Parameters
@@ -243,11 +243,11 @@ def install_npm(path=None, build_dir=None, source_dir=None, build_cmd='build'):
                 log.error("`npm` unavailable.  If you're running this command "
                           "using sudo, make sure `npm` is availble to sudo")
                 return
-            if is_stale(node_modules, pjoin(node_package, 'package.json')):
+            if force or is_stale(node_modules, pjoin(node_package, 'package.json')):
                 log.info('Installing build dependencies with npm.  This may '
                          'take a while...')
                 run(['npm', 'install'], cwd=node_package)
-            if build_dir and source_dir:
+            if build_dir and source_dir and not force:
                 should_build = is_stale(build_dir, source_dir)
             else:
                 should_build = True
