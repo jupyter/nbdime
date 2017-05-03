@@ -16,7 +16,7 @@ name = 'nbdime'
 import sys
 
 v = sys.version_info
-if v[:2] < (2,7) or (v[0] >= 3 and v[:2] < (3,3)):
+if v[:2] < (2, 7) or (v[0] >= 3 and v[:2] < (3, 3)):
     error = "ERROR: %s requires Python version 2.7 or 3.3 or above." % name
     print(error, file=sys.stderr)
     sys.exit(1)
@@ -31,9 +31,9 @@ import io
 import os
 from glob import glob
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
-from setupbase import (create_cmdclass, install_npm, find_packages,
+from setupbase import (create_cmdclass, install_npm, ensure_targets,
     combine_commands, BaseCommand, skip_npm)
 
 pjoin = os.path.join
@@ -43,20 +43,6 @@ here = os.path.abspath(os.path.dirname(__file__))
 jstargets = [
     os.path.join(here, name, 'webapp', 'static', 'nbdime.js'),
 ]
-
-
-def ensure_targets(targets):
-    """Return a Command that checks that certain files exist"""
-
-    class TargetsCheck(BaseCommand):
-        def run(self):
-            if skip_npm:
-                return
-            missing = [t for t in targets if not os.path.exists(t)]
-            if missing:
-                raise ValueError(('missing files: %s' % missing))
-
-    return TargetsCheck
 
 
 package_data = {
