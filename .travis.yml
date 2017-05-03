@@ -28,7 +28,12 @@ before_install:
       npm install -g codecov
     fi
 install:
-  - pip install --upgrade ".[test]"
+  - |
+    if [[ $GROUP == python ]]; then
+      pip install --upgrade ".[test]" -v
+    elif [[ $GROUP == js ]]; then
+      pip install --upgrade -e ".[test]" -v
+    fi
 before_script:
   # Set up a virtual screen for Firefox browser testing:
   - |
