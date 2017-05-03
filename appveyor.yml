@@ -16,8 +16,7 @@ environment:
 
 # build cache to preserve files/folders between builds
 cache:
-  - nbdime/webapp/node_modules # NPM packages
-  - nbdime-web/node_modules # NPM packages
+  - '%AppData%/npm-cache'
 
 # scripts that run after cloning repository
 install:
@@ -26,7 +25,7 @@ install:
   # Ensure python scripts are from right version:
   - 'SET "PATH=%PYTHON%\\Scripts;%PATH%"'
   # Install our package:
-  - 'pip install --upgrade -e ".[test]"'
+  - 'pip install --upgrade ".[test]" -v'
 
 build: off
 
@@ -34,12 +33,11 @@ build: off
 before_test:
   - git config --global user.email appveyor@fake.com
   - git config --global user.name "AppVeyor CI"
+  - set "tmptestdir=%tmp%\nbdime-%RANDOM%"
+  - mkdir "%tmptestdir%"
+  - cd "%tmptestdir%"
 
 
 # to run your custom scripts instead of automatic tests
 test_script:
-  - 'py.test -l'
-
-on_success:
-  # Do not cache our own packages
-  - rd /s /q .\\nbdime\\webapp\\node_modules\\nbdime
+  - 'py.test -l --pyargs nbdime'

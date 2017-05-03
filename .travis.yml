@@ -17,6 +17,7 @@ cache:
   directories:
     - nbdime/webapp/node_modules # NPM packages
     - nbdime-web/node_modules # NPM packages
+    - $HOME/.npm
 before_install:
   - pip install -U pip setuptools
   - nvm install 6
@@ -27,11 +28,11 @@ before_install:
       npm install -g codecov
     fi
 install:
-  - pip install --upgrade -e ".[test]"
   - |
-    if [[ $GROUP == js ]]; then
-      cd nbdime-web
-      npm install
+    if [[ $GROUP == python ]]; then
+      pip install --upgrade ".[test]" -v
+    elif [[ $GROUP == js ]]; then
+      pip install --upgrade -e ".[test]" -v
     fi
 before_script:
   # Set up a virtual screen for Firefox browser testing:
@@ -46,16 +47,16 @@ before_script:
 script:
   - |
     if [[ $GROUP == python ]]; then
-      py.test -l --cov-report html --cov=nbdime
+      pushd $(mktemp -d)
+      py.test -l --cov-report html:$TRAVIS_BUILD_DIR --cov=nbdime --pyargs nbdime
     elif [[ $GROUP == js ]]; then
+      pushd nbdime-web
       npm test
     fi
 before_cache:
   # Do not cache our own package
   - |
-    if [[ $GROUP == js ]]; then cd ..; fi
+    popd
     rm -rf nbdime/webapp/node_modules/nbdime
-    rm -rf nbdime/webapp/node_modules/nbdime-webapp
-    rm -rf nbdime-web/node_modules/nbdime
 after_success:
     - codecov
