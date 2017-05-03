@@ -16,8 +16,7 @@ environment:
 
 # build cache to preserve files/folders between builds
 cache:
-  - nbdime/webapp/node_modules # NPM packages
-  - nbdime-web/node_modules # NPM packages
+  - '%AppData%/npm-cache'
 
 # scripts that run after cloning repository
 install:
@@ -39,7 +38,3 @@ before_test:
 # to run your custom scripts instead of automatic tests
 test_script:
   - 'py.test -l'
-
-on_success:
-  # Do not cache our own packages
-  - rd /s /q .\\nbdime\\webapp\\node_modules\\nbdime
