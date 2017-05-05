@@ -68,6 +68,10 @@ The quickest way to get set up for git integration is to call::
 
     nbdime config-git --enable --global
 
+.. versionadded:: 0.3
+
+    ``nbdime config-git``. Prior to 0.3, each nbdime entrypoint had to enable git integration separately.
+
 This will enable the both the drivers and the tools for both diff and merge.
 
 Now when you do :command:`git diff` or :command:`git merge` with notebooks,
@@ -81,6 +85,10 @@ you should see a nice diff view, like this:
 To use the web-based GUI viewers of notebook diffs, call::
 
     nbdime-web [ref [ref]]
+
+.. versionadded:: 0.3
+
+    support for passing git refs to nbdime commands
 
 .. figure:: images/nbdiff-web.png
    :alt: example of nbdime's content-aware diff
