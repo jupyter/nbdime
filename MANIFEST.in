@@ -2,6 +2,7 @@ include LICENSE.md
 include CONTRIBUTING.md
 include README.md
 
+include setupbase.py
 include pytest.ini
 include requirements.txt
 
