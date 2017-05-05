@@ -40,8 +40,8 @@ Git integration of nbdime is supported in two ways:
 Configure git integration by editing the ``.gitconfig``
 (or ``.git/config``) and ``.gitattributes`` in each
 git repository or in the home/etc directory for global effect.
-Details for how to inidividually configure the different
-dirvers/tools are given below.
+Details for how to individually configure the different
+drivers/tools are given below.
 
 To configure all diff/merge drivers and tools, simply call::
 
@@ -50,6 +50,10 @@ To configure all diff/merge drivers and tools, simply call::
 This command will register nbdime with git for the current project
 (repository), or on the global (user), or sytem level according to
 the ``--global`` or ``--system`` options.
+
+.. versionadded:: 0.3
+
+    ``nbdime config-git``. Prior to 0.3, each nbdime entrypoint had to enable git integration separately.
 
 .. note::
     When neither the global or system flag is given, the configuration
@@ -69,11 +73,13 @@ use nbdime's command-line diff for all `.ipynb` files. Nbdime
 will also be used for all merges on notebook files (no specific
 commands needed).
 
+.. _diff web tool:
+
 To launch the rich, web-based tools (for diff visualization and
 merge conflict visualization/resolution), the following
 commands will need to be executed::
 
-    nbdime-web [ref [ref]]
+    nbdiff-web [ref [ref]]
 
 .. figure:: images/nbdiff-web.png
    :alt: example of nbdime's content-aware diff
