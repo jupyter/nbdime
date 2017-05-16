@@ -70,10 +70,10 @@ def main_dispatch(args=None):
         from nbdime.webapp.nbdimeserver import main
     elif cmd == 'config-git':
         # Call all git configs
-        from nbdime.gitdiffdriver import main as diff_driver
-        from nbdime.gitdifftool import main as diff_tool
-        from nbdime.gitmergedriver import main as merge_driver
-        from nbdime.gitmergetool import main as merge_tool
+        from nbdime.vcs.git.diffdriver import main as diff_driver
+        from nbdime.vcs.git.difftool import main as diff_tool
+        from nbdime.vcs.git.mergedriver import main as merge_driver
+        from nbdime.vcs.git.mergetool import main as merge_tool
         args = ['config'] + args
         # Short-circuit on first non-zero return code:
         return (

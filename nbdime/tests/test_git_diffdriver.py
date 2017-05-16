@@ -5,14 +5,14 @@
 
 from __future__ import unicode_literals
 
-import mock
 import os
 from os.path import join as pjoin
 
+import mock
 import pytest
 from tornado import ioloop
 
-from nbdime.gitdiffdriver import main as gdd_main
+from nbdime.vcs.git.diffdriver import main as gdd_main
 from nbdime.prettyprint import file_timestamp
 
 from .utils import WEB_TEST_TIMEOUT

@@ -143,10 +143,10 @@ if 'setuptools' in sys.modules:
             'nbdiff-web = nbdime.webapp.nbdiffweb:main',
             'nbmerge = nbdime.nbmergeapp:main',
             'nbmerge-web = nbdime.webapp.nbmergeweb:main',
-            'git-nbdifftool = nbdime.gitdifftool:main',
-            'git-nbmergetool = nbdime.gitmergetool:main',
-            'git-nbdiffdriver = nbdime.gitdiffdriver:main',
-            'git-nbmergedriver = nbdime.gitmergedriver:main',
+            'git-nbdiffdriver = nbdime.vcs.git.diffdriver:main',
+            'git-nbdifftool = nbdime.vcs.git.difftool:main',
+            'git-nbmergedriver = nbdime.vcs.git.mergedriver:main',
+            'git-nbmergetool = nbdime.vcs.git.mergetool:main',
         ]
     }
     setup_args.pop('scripts', None)

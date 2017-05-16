@@ -29,10 +29,12 @@ from nbdime import (
     nbdiffapp,
     nbmergeapp,
     nbpatchapp,
-    gitdiffdriver,
-    gitdifftool,
-    gitmergedriver,
-    gitmergetool,
+)
+from nbdime.vcs.git import (
+    diffdriver as gitdiffdriver,
+    difftool as gitdifftool,
+    mergedriver as gitmergedriver,
+    mergetool as gitmergetool,
 )
 from nbdime.utils import EXPLICIT_MISSING_FILE
 
@@ -239,7 +241,7 @@ def test_nbmerge_app_decisions(tempfiles, capsys, reset_log):
 
 
 def test_diffdriver_config(git_repo):
-    main = nbdime.gitdiffdriver.main
+    main = gitdiffdriver.main
     with assert_clean_exit():
         main(['config', '-h'])
     assert not os.path.exists('.gitattributes')
@@ -266,7 +268,7 @@ def _check_diffdriver_disabled():
 
 
 def test_difftool_config(git_repo):
-    main = nbdime.gitdifftool.main
+    main = gitdifftool.main
 
     with assert_clean_exit():
         main(['config', '-h'])
@@ -297,7 +299,7 @@ def _check_difftool_disabled():
 
 
 def test_mergedriver_config(git_repo):
-    main = nbdime.gitmergedriver.main
+    main = gitmergedriver.main
     with assert_clean_exit():
         main(['config', '-h'])
     assert not os.path.exists('.gitattributes')
@@ -324,7 +326,7 @@ def _check_mergedriver_disabled():
 
 
 def test_mergetool_config(git_repo):
-    main = nbdime.gitmergetool.main
+    main = gitmergetool.main
     with assert_clean_exit():
         main(['config', '-h'])
 
@@ -386,15 +388,15 @@ def test_config_git_fails(git_repo):
 
 
 def test_diffdriver(git_repo):
-    nbdime.gitdiffdriver.main(['config', '--enable'])
+    gitdiffdriver.main(['config', '--enable'])
     out = get_output('git diff base diff.ipynb')
     assert 'nbdiff' in out
 
 
 def test_mergedriver(git_repo, filespath):
     # enable diff/merge drivers
-    nbdime.gitdiffdriver.main(['config', '--enable'])
-    nbdime.gitmergedriver.main(['config', '--enable'])
+    gitdiffdriver.main(['config', '--enable'])
+    gitmergedriver.main(['config', '--enable'])
     # run merge with no conflicts
     out = get_output('git merge remote-no-conflict', err=True)
     assert 'Auto-merging merge-no-conflict.ipynb' in out
@@ -438,7 +440,7 @@ def _wait_up(url, interval=0.1, check=None):
 
 @pytest.mark.timeout(timeout=3*WEB_TEST_TIMEOUT)
 def test_difftool(git_repo, request, unique_port):
-    nbdime.gitdifftool.main(['config', '--enable'])
+    gitdifftool.main(['config', '--enable'])
     cmd = get_output('git config --get --local difftool.nbdime.cmd').strip()
 
     # pick a non-random port so we can connect later, and avoid opening a browser
@@ -477,7 +479,7 @@ def test_difftool(git_repo, request, unique_port):
 
 @pytest.mark.timeout(timeout=3*WEB_TEST_TIMEOUT)
 def test_mergetool(git_repo, request, unique_port):
-    nbdime.gitmergetool.main(['config', '--enable'])
+    gitmergetool.main(['config', '--enable'])
     cmd = get_output('git config --get --local mergetool.nbdime.cmd').strip()
 
     # pick a non-random port so we can connect later, and avoid opening a browser
