@@ -147,6 +147,8 @@ if 'setuptools' in sys.modules:
             'git-nbdifftool = nbdime.vcs.git.difftool:main',
             'git-nbmergedriver = nbdime.vcs.git.mergedriver:main',
             'git-nbmergetool = nbdime.vcs.git.mergetool:main',
+            'hg-nbdiff = nbdime.vcs.hg.diff:main',
+            'hg-nbdiffweb = nbdime.vcs.hg.diffweb:main',
             'hg-nbmerge = nbdime.vcs.hg.merge:main',
             'hg-nbmergeweb = nbdime.vcs.hg.mergeweb:main',
         ]
