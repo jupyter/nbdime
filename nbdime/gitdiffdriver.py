@@ -98,9 +98,14 @@ def main(args=None):
 
     opts = parser.parse_args(args)
     if opts.subcommand == 'diff':
-        return nbdiffapp.main(
-            [opts.a, opts.b] +
-            ['--%s' % name for name in diff_exclusives if getattr(opts, name)])
+        subargs = [opts.a, opts.b]
+        for name in diff_exclusives:
+            included = getattr(opts, name)
+            if included:
+                subargs.append('--%s' % name)
+            elif included is not None:
+                subargs.append('--ignore-%s' % name)
+        return nbdiffapp.main(subargs)
     elif opts.subcommand == 'config':
         opts.config_func(opts.scope)
         return 0
