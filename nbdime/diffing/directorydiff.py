@@ -56,6 +56,11 @@ def find_all_sub_notebooks(dirpath):
 
 
 def diff_directories(a, b, dc=None):
+    """Iterate over differing files in two directories.
+
+    Based on directory/file name only, so renames are handled as
+    a full deletion + addition.
+    """
     if dc is None:
         dc = dircmp(a, b, ignore=[])
     # Yield deleted files from current directory, or deleted directories:

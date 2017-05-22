@@ -69,7 +69,7 @@ class IgnorableAction(argparse.Action):
         if len(option_string) == 2:
             setattr(ns, self.dest, option_string[1].islower())
         else:
-            setattr(ns, self.dest, option_string[2:2 + len('ignore')] != 'ignore')
+            setattr(ns, self.dest, option_string[2 : 2 + len('ignore')] != 'ignore')
 
 
 def process_exclusive_ignorables(ns, arg_names, default=True):

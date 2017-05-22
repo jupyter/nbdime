@@ -17,7 +17,6 @@ import sys
 import nbdime
 from nbdime.webapp import nbdifftool
 from nbdime.diffing.directorydiff import diff_directories
-from nbdime.args import add_generic_args, add_diff_args, add_filename_args, diff_exclusives
 
 
 def main(args=None):
