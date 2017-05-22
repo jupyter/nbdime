@@ -103,3 +103,25 @@ def test_git_diff_driver_flags(capsys, nocolor, needs_git, reset_diff_targets):
         assert r == 0
         cap_out = capsys.readouterr()[0]
         assert cap_out == expected_source_only.format(fn1, fn2, t1, t2)
+
+
+def test_git_diff_driver_ignore_flags(capsys, nocolor, needs_git, reset_diff_targets):
+    # Simulate a call from `git diff` to check basic driver functionality
+    test_dir = os.path.abspath(os.path.dirname(__file__))
+
+    fn1 = pjoin(test_dir, 'files/foo--1.ipynb')
+    fn2 = pjoin(test_dir, 'files/foo--2.ipynb')
+    t1 = file_timestamp(fn1)
+    t2 = file_timestamp(fn2)
+
+    mock_argv = [
+        '/mock/path/git-nbdiffdriver', 'diff', '-O',
+        fn1,
+        fn1, 'invalid_mock_checksum', '100644',
+        fn2, 'invalid_mock_checksum', '100644']
+
+    with mock.patch('sys.argv', mock_argv):
+        r = gdd_main()
+        assert r == 0
+        cap_out = capsys.readouterr()[0]
+        assert cap_out == expected_source_only.format(fn1, fn2, t1, t2)

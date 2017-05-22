@@ -24,7 +24,7 @@ import sys
 from subprocess import check_call, CalledProcessError
 
 from . import nbdiffapp
-from .args import add_git_config_subcommand, add_diff_args, diff_exclusives
+from .args import add_git_config_subcommand, add_diff_args, diff_exclusives, process_exclusive_ignorables
 from .utils import locate_gitattributes, ensure_dir_exists
 
 
@@ -98,6 +98,7 @@ def main(args=None):
 
     opts = parser.parse_args(args)
     if opts.subcommand == 'diff':
+        process_exclusive_ignorables(opts, diff_exclusives)
         return nbdiffapp.main(
             [opts.a, opts.b] +
             ['--%s' % name for name in diff_exclusives if getattr(opts, name)])
