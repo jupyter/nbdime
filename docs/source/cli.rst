@@ -59,6 +59,29 @@ other outputs.
 
 .. image:: images/nbdiff-web.png
 
+
+Common diff options
+-------------------
+
+You can specify which parts of the notebooks to compare for the diff, by supplying
+the following flags to any of the diff commands:
+
+    - ``--sources`` / ``-s``
+    - ``--outputs`` / ``-o``
+    - ``--metadata`` / ``-m``
+    - ``--attachments`` / ``-a``
+
+These flags can be combined, e.g. `-sm` will only process source and metadata.
+Alternatively, you can supply some arguments to process everything *except* some
+parts:
+
+    - ``--ignore-sources`` / ``-S``
+    - ``--ignore-outputs`` / ``-O``
+    - ``--ignore-metadata`` / ``-M``
+    - ``--ignore-attachments`` / ``-A``
+
+
+
 Merging
 =======
 
