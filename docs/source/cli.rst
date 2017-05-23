@@ -117,11 +117,6 @@ Because there are several categories of data in a notebook (such as input, outpu
 nbmerge has several ways to deal with conflicts,
 and can take different actions based on the type of data with the conflict.
 
-.. important::
-
-    Conflict-resolution in nbmerge is under active development
-    and is subject to change.
-
 The ``-m, --merge-strategy`` option lets you select a global strategy to use.
 The following options are currently implemented:
 
