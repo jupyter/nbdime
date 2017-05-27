@@ -59,6 +59,29 @@ other outputs.
 
 .. image:: images/nbdiff-web.png
 
+
+Common diff options
+-------------------
+
+You can specify which parts of the notebooks to compare for the diff, by supplying
+the following flags to any of the diff commands:
+
+    - ``--sources`` / ``-s``
+    - ``--outputs`` / ``-o``
+    - ``--metadata`` / ``-m``
+    - ``--attachments`` / ``-a``
+
+These flags can be combined, e.g. `-sm` will only process source and metadata.
+Alternatively, you can supply some arguments to process everything *except* some
+parts:
+
+    - ``--ignore-sources`` / ``-S``
+    - ``--ignore-outputs`` / ``-O``
+    - ``--ignore-metadata`` / ``-M``
+    - ``--ignore-attachments`` / ``-A``
+
+
+
 Merging
 =======
 
@@ -93,11 +116,6 @@ or the ``-o, --output`` argument to specify a file in which to save the merged n
 Because there are several categories of data in a notebook (such as input, output, and metadata),
 nbmerge has several ways to deal with conflicts,
 and can take different actions based on the type of data with the conflict.
-
-.. important::
-
-    Conflict-resolution in nbmerge is under active development
-    and is subject to change.
 
 The ``-m, --merge-strategy`` option lets you select a global strategy to use.
 The following options are currently implemented:
