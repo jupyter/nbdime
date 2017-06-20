@@ -163,6 +163,8 @@ def add_web_args(parser, default_port=8888):
         help="The base URL prefix under which to run the web app")
 
 
+web_args = ('port', 'browser', 'ip', 'workdirectory', 'base-url')
+
 def add_diff_args(parser):
     """Adds a set of arguments for commands that perform diffs.
 
@@ -197,8 +199,24 @@ def add_diff_args(parser):
         help="process/ignore metadata.")
 
 
-
 diff_exclusives = ('sources', 'outputs', 'attachments', 'metadata')
+
+
+def add_git_diff_driver_args(diff_parser):
+    """Adds a set of 7 stanard git diff driver arguments:
+        path old-file old-hex old-mode new-file new-hex new-mode [ rename-to ]
+    """
+
+    diff_parser.add_argument('path')
+    diff_parser.add_argument('a', nargs='?', default=None)
+    diff_parser.add_argument('a_sha1', nargs='?', default=None)
+    diff_parser.add_argument('a_mode', nargs='?', default=None)
+    diff_parser.add_argument('b', nargs='?', default=None)
+    diff_parser.add_argument('b_sha1', nargs='?', default=None)
+    diff_parser.add_argument('b_mode', nargs='?', default=None)
+    diff_parser.add_argument('rename_to', nargs='?', default=None)
+
+
 def process_diff_flags(args):
     process_exclusive_ignorables(args, diff_exclusives)
     set_notebook_diff_targets(args.sources, args.outputs,
