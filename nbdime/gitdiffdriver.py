@@ -80,7 +80,7 @@ def main(args=None):
         description="The actual entrypoint for the webdiff tool. Git will call this."
     )
     add_diff_args(webdiff_parser)
-    add_web_args(webdiff_parser)
+    add_web_args(webdiff_parser, 0)
     add_git_diff_driver_args(webdiff_parser)
 
     diff_parser = subparsers.add_parser('diff',
