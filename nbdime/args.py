@@ -21,6 +21,12 @@ class LogLevelAction(argparse.Action):
         set_nbdime_log_level(level)
 
 
+class SkipAction(argparse.Action):
+    """Action of an argument that will not be stored"""
+    def __call__(self, parser, ns, values, opttion_string=None):
+        pass
+
+
 class IgnorableAction(argparse.Action):
     """Adds the supplied positive options and negative/ignore version as well"""
 
@@ -46,7 +52,7 @@ class IgnorableAction(argparse.Action):
             default=default, required=required,
             help=help)
 
-    def __call__(self, parser, ns, values, option_string):
+    def __call__(self, parser, ns, values, option_string=None):
         if len(option_string) == 2:
             setattr(ns, self.dest, option_string[1].islower())
         else:
@@ -163,8 +169,6 @@ def add_web_args(parser, default_port=8888):
         help="The base URL prefix under which to run the web app")
 
 
-web_args = ('port', 'browser', 'ip', 'workdirectory', 'base-url')
-
 def add_diff_args(parser):
     """Adds a set of arguments for commands that perform diffs.
 
@@ -205,16 +209,18 @@ diff_exclusives = ('sources', 'outputs', 'attachments', 'metadata')
 def add_git_diff_driver_args(diff_parser):
     """Adds a set of 7 stanard git diff driver arguments:
         path old-file old-hex old-mode new-file new-hex new-mode [ rename-to ]
+
+    Note: Only path, base and remote are added to parsed namespace
     """
 
     diff_parser.add_argument('path')
-    diff_parser.add_argument('a', nargs='?', default=None)
-    diff_parser.add_argument('a_sha1', nargs='?', default=None)
-    diff_parser.add_argument('a_mode', nargs='?', default=None)
-    diff_parser.add_argument('b', nargs='?', default=None)
-    diff_parser.add_argument('b_sha1', nargs='?', default=None)
-    diff_parser.add_argument('b_mode', nargs='?', default=None)
-    diff_parser.add_argument('rename_to', nargs='?', default=None)
+    diff_parser.add_argument('base', nargs='?', default=None)
+    diff_parser.add_argument('base_sha1', nargs='?', default=None, action=SkipAction)
+    diff_parser.add_argument('base_mode', nargs='?', default=None, action=SkipAction)
+    diff_parser.add_argument('remote', nargs='?', default=None)
+    diff_parser.add_argument('remote_sha1', nargs='?', default=None, action=SkipAction)
+    diff_parser.add_argument('remote_mode', nargs='?', default=None, action=SkipAction)
+    diff_parser.add_argument('rename_to', nargs='?', default=None, action=SkipAction)
 
 
 def process_diff_flags(args):
@@ -233,7 +239,7 @@ def resolve_diff_args(args):
     """
     base = args.base
     remote = args.remote
-    paths = args.paths
+    paths = getattr(args, 'paths', None)
     if not paths:
         paths = None
     if remote is None and paths is None:
