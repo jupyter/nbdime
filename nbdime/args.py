@@ -23,6 +23,9 @@ class LogLevelAction(argparse.Action):
 
 class SkipAction(argparse.Action):
     """Action of an argument that will not be stored"""
+    def __init__(self, option_strings, dest, default=None, required=False, help=None):
+        super(SkipAction, self).__init__([], argparse.SUPPRESS)
+
     def __call__(self, parser, ns, values, opttion_string=None):
         pass
 
