@@ -2,7 +2,7 @@
 import pytest
 import json
 from nbdime import diff
-from nbdime.diff_format import to_clean_dicts, to_json_patch
+from nbdime.diff_utils import to_clean_dicts, to_json_patch
 
 def test_diff_to_json():
     a = { "foo": [1,2,3], "bar": {"ting": 7, "tang": 123 } }

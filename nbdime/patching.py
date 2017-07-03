@@ -5,12 +5,13 @@
 
 from __future__ import unicode_literals
 
-from six import string_types
 import copy
+from six import string_types
 import nbformat
 from nbformat import NotebookNode
 
-from .diff_format import DiffOp, NBDiffFormatError, flatten_list_of_string_diff
+from .diff_format import DiffOp, NBDiffFormatError
+from .diff_utils import flatten_list_of_string_diff
 
 
 

@@ -15,8 +15,9 @@ from .decisions import MergeDecisionBuilder
 from .chunks import make_merge_chunks
 from ..diffing import diff
 from ..diff_format import (
-    DiffEntry, DiffOp, ParentDeleted, Missing, as_dict_based_diff,
+    DiffEntry, DiffOp, ParentDeleted, Missing,
     op_patch, op_addrange, op_removerange, op_add, op_remove, op_replace)
+from ..diff_utils import as_dict_based_diff
 from ..diffing.notebooks import notebook_predicates, notebook_differs
 from ..patching import patch
 from ..utils import star_path, join_path, Strategies
@@ -1000,7 +1001,7 @@ def _merge_lists(base, local_diff, remote_diff, path, parent_decisions, strategi
         raname, rpname = chunkname(d1)
         lname = laname + lpname
         rname = raname + rpname
-        # /, A/, /A, A/A depending on addrange local and/or remote: 
+        # /, A/, /A, A/A depending on addrange local and/or remote:
         achunktype = laname + "/" + raname
         # Combinations of P (patch), R (removerange), or '',
         # e.g. P/R for local patch, remote removerange

@@ -10,12 +10,12 @@ import os
 import sys
 import argparse
 import json
-import nbformat
 import io
+import nbformat
 
 import nbdime
 from nbdime.patching import patch_notebook
-from nbdime.diff_format import to_diffentry_dicts
+from nbdime.diff_utils import to_diffentry_dicts
 from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook, setup_std_streams
 from nbdime.prettyprint import pretty_print_notebook
 
