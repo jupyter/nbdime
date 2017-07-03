@@ -35,7 +35,7 @@ def main_diff(args):
         # We are asked to do a diff of git revisions:
         status = 0
         for fbase, fremote in changed_notebooks(base, remote, paths):
-            status = _handle_diff(fbase, fremote)
+            status = _handle_diff(fbase, fremote, output)
             if status != 0:
                 # Short-circuit on error in diff handling
                 return status
@@ -88,7 +88,6 @@ def _build_arg_parser():
     """Creates an argument parser for the nbdiff command."""
     parser = argparse.ArgumentParser(
         description=_description,
-        add_help=True,
         )
     add_generic_args(parser)
     add_diff_args(parser)
