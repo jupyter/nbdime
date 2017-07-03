@@ -14,7 +14,7 @@ import {
 } from '@phosphor/widgets';
 
 import {
-  loadModeByMIME
+  Mode
 } from '@jupyterlab/codemirror';
 
 import {
@@ -147,9 +147,9 @@ function createNbdimeMergeView(
   if (mimetype) {
     // Set the editor mode to the MIME type.
     for (let e of editors) {
-      loadModeByMIME(e.ownEditor, mimetype);
+      e.ownWidget.model.mimeType = mimetype;
     }
-    loadModeByMIME(mergeview.base.cm, mimetype);
+    mergeview.base.model.mimeType = mimetype;
   }
   return mergeview;
 }

@@ -9,7 +9,7 @@ import {
 } from '@phosphor/widgets';
 
 import {
-  CodeEditorWidget, CodeEditor
+  CodeEditorWrapper, CodeEditor
 } from '@jupyterlab/codeeditor';
 
 import {
@@ -18,7 +18,7 @@ import {
 
 
 export
-class EditorWidget extends CodeEditorWidget {
+class EditorWidget extends CodeEditorWrapper {
   /**
    * Store all editor instances for operations that
    * need to loop over all instances.

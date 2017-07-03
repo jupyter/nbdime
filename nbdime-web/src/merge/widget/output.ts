@@ -11,12 +11,12 @@ import {
 } from '@jupyterlab/rendermime';
 
 import {
-  OutputAreaWidget, OutputAreaModel, IOutputAreaModel
+  OutputArea, OutputAreaModel, IOutputAreaModel
 } from '@jupyterlab/outputarea';
 
 import {
-  ObservableVector
-} from '@jupyterlab/coreutils/lib/observablevector';
+  IObservableList
+} from '@jupyterlab/coreutils/lib/observablelist';
 
 import {
   DropAction, IDragEvent
@@ -60,23 +60,23 @@ class ReorderableOutputModel extends OutputAreaModel {
   }
 
   remove(index: number): IOutputModel | null {
-    return this.list.removeAt(index);
+    return this.list.remove(index);
   }
 }
 
 /**
- * An OutputAreaWidget which supports the reordering
+ * An OutputArea which supports the reordering
  * capabilities of ReorderableOutputModel
  */
 export
-class ReorderableOutputWidget extends OutputAreaWidget {
+class ReorderableOutputWidget extends OutputArea {
 
   readonly model: ReorderableOutputModel;
 
   /**
    * Follow changes on the model state.
    */
-  protected onModelChanged(sender: IOutputAreaModel, args: ObservableVector.IChangedArgs<IOutputModel>) {
+  protected onModelChanged(sender: IOutputAreaModel, args: IObservableList.IChangedArgs<IOutputModel>) {
     let layout = this.layout as PanelLayout;
     switch (args.type) {
     case 'move':
@@ -121,7 +121,7 @@ class DisconnectedDropTarget extends DropPanel {
 export
 class RenderableOutputsMergeView extends DragDropPanel {
 
-  static makeOutputsDraggable(area: OutputAreaWidget): void {
+  static makeOutputsDraggable(area: OutputArea): void {
     let i = area.layout!.iter();
     for (let w = i.next(); w !== undefined; w = i.next()) {
       DragPanel.makeHandle(w);
@@ -187,19 +187,19 @@ class RenderableOutputsMergeView extends DragDropPanel {
   init(classes: string[]): void {
     let row = new FlexPanel({direction: 'left-to-right', evenSizes: true});
     if (this.local) {
-      let leftPane = new OutputAreaWidget({model: this.local, rendermime: this.rendermime});
+      let leftPane = new OutputArea({model: this.local, rendermime: this.rendermime});
       leftPane.addClass(classes[1]);
       row.addWidget(leftPane);
       this.panes.push(leftPane);
     }
     if (this.base) {
-      let basePane = new OutputAreaWidget({model: this.base, rendermime: this.rendermime});
+      let basePane = new OutputArea({model: this.base, rendermime: this.rendermime});
       basePane.addClass(classes[0]);
       row.addWidget(basePane);
       this.panes.push(basePane);
     }
     if (this.remote) {
-      let rightPane = new OutputAreaWidget({model: this.remote, rendermime: this.rendermime});
+      let rightPane = new OutputArea({model: this.remote, rendermime: this.rendermime});
       rightPane.addClass(classes[2]);
       row.addWidget(rightPane);
       this.panes.push(rightPane);
@@ -384,7 +384,7 @@ class RenderableOutputsMergeView extends DragDropPanel {
 
   mergePane: ReorderableOutputWidget;
 
-  panes: OutputAreaWidget[];
+  panes: OutputArea[];
 
   rendermime: IRenderMime;
 }
