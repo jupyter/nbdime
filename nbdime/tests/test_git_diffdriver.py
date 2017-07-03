@@ -9,6 +9,9 @@ import mock
 import os
 from os.path import join as pjoin
 
+import pytest
+from tornado import ioloop
+
 from nbdime.gitdiffdriver import main as gdd_main
 from nbdime.prettyprint import file_timestamp
 
@@ -124,3 +127,28 @@ def test_git_diff_driver_ignore_flags(filespath, capsys, nocolor, needs_git, res
         assert r == 0
         cap_out = capsys.readouterr()[0]
         assert cap_out == expected_source_only.format(fn1, fn2, t1, t2)
+
+
+@pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
+def test_git_web_diff_driver(filespath, unique_port):
+    # Simulate a call from `git diff` to check basic driver functionality
+
+    fn1 = os.path.join(filespath, 'foo--1.ipynb')
+    fn2 = os.path.join(filespath, 'foo--2.ipynb')
+
+    loop = ioloop.IOLoop.current()
+    loop.call_later(0, loop.stop)
+
+    mock_argv = [
+        'git-nbdiffdriver', 'webdiff',
+        fn1,
+        fn1, 'invalid_mock_checksum', '100644',
+        fn2, 'invalid_mock_checksum', '100644',
+        '--browser=disabled', '--port=%i' % unique_port]
+
+    with mock.patch('sys.argv', mock_argv):
+        # This simply checks that the function returns 0,
+        # but assumes that the function is routed to the web
+        # diff entrypoint
+        r = gdd_main()
+        assert r == 0
