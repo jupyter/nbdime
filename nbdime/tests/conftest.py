@@ -166,6 +166,11 @@ def nbdime_base_url():
 
 @fixture
 def app(nbdime_base_url, filespath):
+    """This is a fixture used by the pytest-tornado plugin.
+
+    It is indirectly called by all tests that use the `gen_test`
+    test mark.
+    """
     return init_app(
         base_url=nbdime_base_url,
         port=0,

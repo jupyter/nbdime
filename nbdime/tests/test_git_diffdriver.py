@@ -12,6 +12,8 @@ from os.path import join as pjoin
 from nbdime.gitdiffdriver import main as gdd_main
 from nbdime.prettyprint import file_timestamp
 
+from .utils import WEB_TEST_TIMEOUT
+
 
 # Expected output includes coloring characters
 expected_output = """nbdiff {0} {1}
@@ -61,12 +63,11 @@ expected_source_only = """nbdiff {0} {1}
 """
 
 
-def test_git_diff_driver(capsys, nocolor, needs_git):
+def test_git_diff_driver(filespath, capsys, nocolor, needs_git):
     # Simulate a call from `git diff` to check basic driver functionality
-    test_dir = os.path.abspath(os.path.dirname(__file__))
 
-    fn1 = pjoin(test_dir, 'files/foo--1.ipynb')
-    fn2 = pjoin(test_dir, 'files/foo--2.ipynb')
+    fn1 = pjoin(filespath, 'foo--1.ipynb')
+    fn2 = pjoin(filespath, 'foo--2.ipynb')
     t1 = file_timestamp(fn1)
     t2 = file_timestamp(fn2)
 
@@ -83,12 +84,11 @@ def test_git_diff_driver(capsys, nocolor, needs_git):
         assert cap_out == expected_output.format(fn1, fn2, t1, t2)
 
 
-def test_git_diff_driver_flags(capsys, nocolor, needs_git, reset_diff_targets):
+def test_git_diff_driver_flags(filespath, capsys, nocolor, needs_git, reset_diff_targets):
     # Simulate a call from `git diff` to check basic driver functionality
-    test_dir = os.path.abspath(os.path.dirname(__file__))
 
-    fn1 = pjoin(test_dir, 'files/foo--1.ipynb')
-    fn2 = pjoin(test_dir, 'files/foo--2.ipynb')
+    fn1 = pjoin(filespath, 'foo--1.ipynb')
+    fn2 = pjoin(filespath, 'foo--2.ipynb')
     t1 = file_timestamp(fn1)
     t2 = file_timestamp(fn2)
 
@@ -105,12 +105,11 @@ def test_git_diff_driver_flags(capsys, nocolor, needs_git, reset_diff_targets):
         assert cap_out == expected_source_only.format(fn1, fn2, t1, t2)
 
 
-def test_git_diff_driver_ignore_flags(capsys, nocolor, needs_git, reset_diff_targets):
+def test_git_diff_driver_ignore_flags(filespath, capsys, nocolor, needs_git, reset_diff_targets):
     # Simulate a call from `git diff` to check basic driver functionality
-    test_dir = os.path.abspath(os.path.dirname(__file__))
 
-    fn1 = pjoin(test_dir, 'files/foo--1.ipynb')
-    fn2 = pjoin(test_dir, 'files/foo--2.ipynb')
+    fn1 = pjoin(filespath, 'foo--1.ipynb')
+    fn2 = pjoin(filespath, 'foo--2.ipynb')
     t1 = file_timestamp(fn1)
     t2 = file_timestamp(fn2)
 
