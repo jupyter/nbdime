@@ -131,9 +131,7 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
     setup_std_streams()
-    nbdime.log.init_logging()
     arguments = _build_arg_parser().parse_args(args)
-    nbdime.log.init_logging(level=arguments.log_level)
     return main_merge(arguments)
 
 

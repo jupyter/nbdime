@@ -16,7 +16,6 @@ from ..args import (
     args_for_server, args_for_browse, process_diff_flags,
     resolve_diff_args)
 from ..gitfiles import changed_notebooks, is_gitref
-import nbdime.log
 
 
 def build_arg_parser():
@@ -81,7 +80,6 @@ def main(args=None):
         args = sys.argv[1:]
     arguments = build_arg_parser().parse_args(args)
     process_diff_flags(arguments)
-    nbdime.log.init_logging(level=arguments.log_level)
     base, remote, path = resolve_diff_args(arguments)
     if is_gitref(base) and is_gitref(remote):
         # We are asked to do a gui for git diff

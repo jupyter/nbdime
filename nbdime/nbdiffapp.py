@@ -6,7 +6,6 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
-import io
 import os
 import sys
 import argparse
@@ -14,7 +13,6 @@ import json
 
 from six import string_types
 
-import nbdime
 from nbdime.diffing.notebooks import diff_notebooks
 from nbdime.prettyprint import pretty_print_notebook_diff
 from nbdime.args import (
@@ -121,7 +119,6 @@ def main(args=None):
         args = sys.argv[1:]
     setup_std_streams()
     arguments = _build_arg_parser().parse_args(args)
-    nbdime.log.init_logging(level=arguments.log_level)
     return main_diff(arguments)
 
 

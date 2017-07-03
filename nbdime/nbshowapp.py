@@ -11,7 +11,6 @@ import sys
 import argparse
 import nbformat
 
-import nbdime
 from nbdime.prettyprint import pretty_print_notebook
 from nbdime.args import add_generic_args, IgnorableAction, process_exclusive_ignorables
 from nbdime.utils import setup_std_streams
@@ -103,7 +102,6 @@ def main(args=None):
     process_exclusive_ignorables(
         arguments,
         ('sources', 'outputs', 'attachments', 'metadata', 'details'))
-    nbdime.log.init_logging(level=arguments.log_level)
     return main_show(arguments)
 
 
