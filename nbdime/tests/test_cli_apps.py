@@ -397,7 +397,7 @@ def test_mergedriver(git_repo, filespath):
     nbdime.gitmergedriver.main(['config', '--enable'])
     # run merge with no conflicts
     out = get_output('git merge remote-no-conflict', err=True)
-    assert 'nbmergeapp' in out
+    assert 'Auto-merging merge-no-conflict.ipynb' in out
     with open('merge-no-conflict.ipynb') as f:
         merged = f.read()
 
