@@ -52,6 +52,7 @@ package_data = {
         'webapp/static/*.*',
         'webapp/templates/*.*',
         'webapp/testnotebooks/*.*',
+        'notebook_ext/*.*',
     ]
 }
 

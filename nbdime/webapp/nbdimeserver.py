@@ -26,6 +26,7 @@ from nbdime.args import add_generic_args, add_web_args
 
 from notebook.base.handlers import IPythonHandler, APIHandler
 from notebook import DEFAULT_STATIC_FILES_PATH
+from notebook.utils import url_path_join
 
 # TODO: See <notebook>/notebook/services/contents/handlers.py for possibly useful utilities:
 #@json_errors
@@ -51,7 +52,7 @@ class NbdimeHandler(IPythonHandler):
         base = {
             'closable': self.params.get('closable', False),
             'savable': fn is not None,
-            'baseUrl': self.base_url,
+            'baseUrl': self.nbdime_base_url,
         }
         if fn:
             # For reference, e.g. if user wants to download file
@@ -92,7 +93,8 @@ class NbdimeHandler(IPythonHandler):
                 nb = nbformat.v4.new_notebook()
             else:
                 nb = nbformat.reads(r.text, as_version=4)
-        except:
+        except Exception as e:
+            self.log.exception(e)
             raise web.HTTPError(422, 'Invalid notebook: %s' % arg)
 
         return nb
@@ -103,6 +105,13 @@ class NbdimeHandler(IPythonHandler):
         arg = body[argname]
 
         return self.read_notebook(arg)
+
+    @property
+    def nbdime_base_url(self):
+        relative = self.params.get('nbdime_relative_base_url', None)
+        if relative is None:
+            return self.base_url
+        return url_path_join(self.base_url, relative)
 
     @property
     def curdir(self):

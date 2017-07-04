@@ -31,6 +31,9 @@ prune packages/*/node_modules
 prune packages/*/test/build
 prune node_modules
 
+# Extension files
+graft nbdime/notebook_ext
+
 # Patterns to exclude from any directory
 global-exclude *~
 global-exclude *.pyc
