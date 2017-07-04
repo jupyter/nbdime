@@ -1,4 +1,4 @@
-{% extends "page.html" %}
+{% extends "nbdimepage.html" %}
 
     {% block nbdimeheader %}
 
@@ -10,9 +10,9 @@
         <fieldset>
           <legend>Please input filenames/URLs of notebooks to diff:</legend>
           <label>Base:</label>
-          <input id="diff-base" type="text" name="base" value="{{ escape(config_data['base']) }}" />
+          <input id="diff-base" type="text" name="base" value="{{ config_data['base']|e }}" />
           <label>Remote:</label>
-          <input id="diff-remote" type="text" name="remote" value="{{ escape(config_data['remote']) }}" />
+          <input id="diff-remote" type="text" name="remote" value="{{ config_data['remote']|e }}" />
           <input id="nbdime-run-diff" type="submit" name="diff" value="Diff files" />
         </fieldset>
       </form> <!-- nbdime-forms -->
@@ -27,4 +27,4 @@
       </div>
     </div> <!-- ndime-header -->
 
-    {% end %}
+    {% endblock %}

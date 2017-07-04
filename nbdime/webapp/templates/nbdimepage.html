@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-{% autoescape None %}
 <html>
 
   <head>
@@ -9,7 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.js"></script>
     {% if mathjax_url %}
     <script type="text/javascript" src="{{mathjax_url}}?config={{mathjax_config}}&delayStartupUntil=configured" charset="utf-8"></script>
-    {% end %}
+    {% endif %}
     <title>nbdime - diff and merge your Jupyter notebooks</title>
 
   </head>
@@ -20,12 +19,12 @@
   <body> <!-- onload="nbdime.init()" -->
 
     {% block nbdimeheader %}
-    {% end %}
+    {% endblock %}
 
     <div id="nbdime-root">
     </div>
 
-    <script id='nbdime-config-data' type="application/json">{{ json_encode(config_data) }}</script>
+    <script id='nbdime-config-data' type="application/json">{{ config_data|tojson|safe }}</script>
     <script src="{{ static_url('nbdime.js') }}"></script>
     <noscript>Nbdime relies on javascript for diff/merge views!</noscript>
   </body>

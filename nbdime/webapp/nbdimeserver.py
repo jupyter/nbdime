@@ -15,6 +15,7 @@ import requests
 from six import string_types
 from tornado import ioloop, web, escape, netutil, httpserver
 import nbformat
+from jinja2 import FileSystemLoader, Environment
 
 import nbdime
 from nbdime.merging.notebooks import decide_notebook_merge
@@ -113,11 +114,11 @@ class MainHandler(NbdimeApiHandler):
         args['base'] = self.get_argument('base', '')
         args['local'] = self.get_argument('local', '')
         args['remote'] = self.get_argument('remote', '')
-        self.render('index.html',
+        self.write(self.render_template('compare.html',
                     config_data=args,
                     mathjax_url=self.mathjax_url,
                     mathjax_config=self.mathjax_config,
-                   )
+                   ))
 
 
 class MainDiffHandler(NbdimeApiHandler):
@@ -126,11 +127,11 @@ class MainDiffHandler(NbdimeApiHandler):
         args['base'] = self.get_argument('base', '')
         args['remote'] = self.get_argument('remote', '')
 
-        self.render('diff.html',
+        self.write(self.render_template('diff.html',
                     config_data=args,
                     mathjax_url=self.mathjax_url,
                     mathjax_config=self.mathjax_config,
-                   )
+                   ))
 
 
 class MainDifftoolHandler(NbdimeApiHandler):
@@ -150,11 +151,11 @@ class MainDifftoolHandler(NbdimeApiHandler):
         else:
             args['base'] = self.get_argument('base', '')
             args['remote'] = self.get_argument('remote', '')
-        self.render('difftool.html',
+        self.write(self.render_template('difftool.html',
                     config_data=args,
                     mathjax_url=self.mathjax_url,
                     mathjax_config=self.mathjax_config,
-                   )
+                   ))
 
 
 class MainMergeHandler(NbdimeApiHandler):
@@ -163,11 +164,11 @@ class MainMergeHandler(NbdimeApiHandler):
         args['base'] = self.get_argument('base', '')
         args['local'] = self.get_argument('local', '')
         args['remote'] = self.get_argument('remote', '')
-        self.render('merge.html',
+        self.write(self.render_template('merge.html',
                     config_data=args,
                     mathjax_url=self.mathjax_url,
                     mathjax_config=self.mathjax_config,
-                   )
+                   ))
 
 
 class MainMergetoolHandler(NbdimeApiHandler):
@@ -181,11 +182,11 @@ class MainMergetoolHandler(NbdimeApiHandler):
             args['base'] = self.get_argument('base', '')
             args['local'] = self.get_argument('local', '')
             args['remote'] = self.get_argument('remote', '')
-        self.render('mergetool.html',
+        self.write(self.render_template('mergetool.html',
                     config_data=args,
                     mathjax_url=self.mathjax_url,
                     mathjax_config=self.mathjax_config,
-                   )
+                   ))
 
 
 class ApiDiffHandler(NbdimeApiHandler, APIHandler):
@@ -308,11 +309,13 @@ def make_app(**params):
     else:
         prefix = ''
 
+    env = Environment(loader=FileSystemLoader([template_path]), autoescape=False)
     settings = {
         'static_path': static_path,
         'static_url_prefix': prefix + '/static/',
-        'template_path': template_path,
+        'template_path': [template_path],
         'base_url': base_url,
+        'jinja2_env': env,
         'mathjax_url': 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js',
         }
 
