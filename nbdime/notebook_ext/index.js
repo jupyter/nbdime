@@ -44,6 +44,18 @@ define([
         nbDiffView('difftool', base, remote);
     };
 
+    /**
+     * Call nbdime difftool with current notebook against checkpointed version
+     */
+    var nbGitDiffView = function () {
+        var nb_dir = utils.url_path_split(Jupyter.notebook.notebook_path)[0];
+        var name = Jupyter.notebook.notebook_name;
+        var base = path_join(nb_dir, name);
+
+        // Empty file name triggers git, given that it is available on server path
+        nbDiffView('git-difftool', base, '');
+    };
+
 
     var load_ipython_extension = function() {
         var prefix = 'nbdime';
@@ -54,12 +66,22 @@ define([
             handler : nbCheckpointDiffView
         }, 'diff-notebook-checkpoint', prefix);
 
+        var gitAction = Jupyter.actions.register({
+            icon: 'fa-git',
+            help: 'Display nbdiff from git HEAD to currently saved version',
+            handler : nbGitDiffView
+        }, 'diff-notebook-git', prefix);
+
         var btn_group = Jupyter.toolbar.add_buttons_group([{
             action: checkpointAction,
+            label: 'nbdiff',
+        }, {
+            action: gitAction,
             label: 'nbdiff',
         }]);
 
         btn_group.children(':first-child').attr('title', Jupyter.actions.get(checkpointAction).help);
+        btn_group.children(':last-child').attr('title', Jupyter.actions.get(gitAction).help);
     };
 
     return {

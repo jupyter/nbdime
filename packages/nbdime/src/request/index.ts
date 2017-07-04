@@ -66,7 +66,7 @@ function requestDiffPromise(
  */
 export
 function requestDiff(
-    base: string, remote: string,
+    base: string, remote: string | undefined,
     baseUrl: string,
     onComplete: (result: any) => void,
     onFail: (result: any) => void): void {

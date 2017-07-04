@@ -87,13 +87,18 @@ function onDiff(e: Event) {
 };
 
 
-function compare(base: string, remote: string, pushHistory: boolean | 'replace') {
+function compare(base: string, remote: string | undefined, pushHistory: boolean | 'replace') {
   toggleSpinner(true);
   getDiff(base, remote);
   if (pushHistory) {
     let uri = window.location.pathname;
-    uri = '?base=' + encodeURIComponent(base) +
-      '&remote=' + encodeURIComponent(remote);
+    if (base.slice(0, 4) === 'git:') {
+      base = base.slice(4);
+    }
+    uri = '?base=' + encodeURIComponent(base);
+    if (remote) {
+      uri += '&remote=' + encodeURIComponent(remote);
+    }
     editHistory(pushHistory, {base, remote},
       'Diff: "' + base + '" vs "' + remote + '"', uri);
   }
@@ -112,7 +117,7 @@ function editHistory(pushHistory: boolean | 'replace', statedata: any, title: st
  * Calls `requestDiff` with our response handlers
  */
 export
-function getDiff(base: string, remote: string) {
+function getDiff(base: string, remote: string | undefined) {
   let baseUrl = getBaseUrl();
   requestDiff(base, remote, baseUrl, onDiffRequestCompleted, onDiffRequestFailed);
 }
@@ -182,7 +187,7 @@ function initializeDiff() {
   // If arguments supplied in config, run diff directly:
   let base = getConfigOption('base');
   let remote = getConfigOption('remote');
-  if (base && remote) {
+  if (base && (remote || base.slice(0, 4) === 'git:')) {
     compare(base, remote, 'replace');
   }
 
