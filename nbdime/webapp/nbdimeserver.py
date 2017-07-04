@@ -49,6 +49,7 @@ class NbdimeApiHandler(web.RequestHandler):
         base = {
             'closable': self.params.get('closable', False),
             'savable': fn is not None,
+            'baseUrl': self.base_url,
         }
         if fn:
             # For reference, e.g. if user wants to download file
@@ -108,7 +109,7 @@ class MainHandler(NbdimeApiHandler):
         args['base'] = self.get_argument('base', '')
         args['local'] = self.get_argument('local', '')
         args['remote'] = self.get_argument('remote', '')
-        self.render('index.html', config_data=args, base_url=self.base_url)
+        self.render('index.html', config_data=args)
 
 
 class MainDiffHandler(NbdimeApiHandler):
@@ -117,7 +118,7 @@ class MainDiffHandler(NbdimeApiHandler):
         args['base'] = self.get_argument('base', '')
         args['remote'] = self.get_argument('remote', '')
 
-        self.render('diff.html', config_data=args, base_url=self.base_url)
+        self.render('diff.html', config_data=args)
 
 
 class MainDifftoolHandler(NbdimeApiHandler):
@@ -137,7 +138,7 @@ class MainDifftoolHandler(NbdimeApiHandler):
         else:
             args['base'] = self.get_argument('base', '')
             args['remote'] = self.get_argument('remote', '')
-        self.render('difftool.html', config_data=args, base_url=self.base_url)
+        self.render('difftool.html', config_data=args)
 
 
 class MainMergeHandler(NbdimeApiHandler):
@@ -146,7 +147,7 @@ class MainMergeHandler(NbdimeApiHandler):
         args['base'] = self.get_argument('base', '')
         args['local'] = self.get_argument('local', '')
         args['remote'] = self.get_argument('remote', '')
-        self.render('merge.html', config_data=args, base_url=self.base_url)
+        self.render('merge.html', config_data=args)
 
 
 class MainMergetoolHandler(NbdimeApiHandler):
@@ -160,7 +161,7 @@ class MainMergetoolHandler(NbdimeApiHandler):
             args['base'] = self.get_argument('base', '')
             args['local'] = self.get_argument('local', '')
             args['remote'] = self.get_argument('remote', '')
-        self.render('mergetool.html', config_data=args, base_url=self.base_url)
+        self.render('mergetool.html', config_data=args)
 
 
 class ApiDiffHandler(NbdimeApiHandler):
