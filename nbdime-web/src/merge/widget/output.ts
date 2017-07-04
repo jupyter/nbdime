@@ -343,7 +343,7 @@ class RenderableOutputsMergeView extends DragDropPanel {
     if (target) {
       let image = target.cloneNode(true) as HTMLElement;
       image.style.width = target.offsetWidth.toString() + 'px';
-      image.classList.add(REORDERABLE_OUTPUT_DRAGIMAGE_CLASS)
+      image.classList.add(REORDERABLE_OUTPUT_DRAGIMAGE_CLASS);
       return image;
     }
     return null;
