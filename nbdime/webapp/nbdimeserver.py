@@ -35,8 +35,8 @@ _logger = logging.getLogger(__name__)
 
 
 here = os.path.abspath(os.path.dirname(__file__))
-static_path = os.path.join(here, "static")
-template_path = os.path.join(here, "templates")
+static_path = os.path.join(here, 'static')
+template_path = os.path.join(here, 'templates')
 
 
 class NbdimeApiHandler(web.RequestHandler):
@@ -45,19 +45,19 @@ class NbdimeApiHandler(web.RequestHandler):
         self.base_url = params.get("base_url", "")
 
     def base_args(self):
-        fn = self.params.get("outputfilename", None)
+        fn = self.params.get('outputfilename', None)
         base = {
-            "closable": self.params.get("closable", False),
-            "savable": fn is not None
+            'closable': self.params.get('closable', False),
+            'savable': fn is not None,
         }
         if fn:
             # For reference, e.g. if user wants to download file
-            base["outputfilename"] = fn
+            base['outputfilename'] = fn
         return base
 
     def write_error(self, status_code, **kwargs):
         # Write error message for HTTPErrors if serve_traceback is off:
-        exc_info = kwargs.get("exc_info", None)
+        exc_info = kwargs.get('exc_info', None)
         if exc_info and not self.settings.get('serve_traceback'):
             (etype, value, traceback) = exc_info
             self.set_header('Content-Type', 'text/plain')
@@ -70,14 +70,14 @@ class NbdimeApiHandler(web.RequestHandler):
         # where the server was started from, later we may
         # want to accept urls or full notebooks as well.
         if not isinstance(arg, string_types):
-            raise web.HTTPError(400, "Expecting a filename or a URL.")
+            raise web.HTTPError(400, 'Expecting a filename or a URL.')
 
         try:
             # Check that file exists
             if arg == EXPLICIT_MISSING_FILE:
                 path = arg
             else:
-                path = os.path.join(self.params["cwd"], arg)
+                path = os.path.join(self.params['cwd'], arg)
                 if not os.path.exists(path):
                     # Assume file is URI
                     r = requests.get(arg)
@@ -90,7 +90,7 @@ class NbdimeApiHandler(web.RequestHandler):
             else:
                 nb = nbformat.reads(r.text, as_version=4)
         except:
-            raise web.HTTPError(422, "Invalid notebook: %s" % arg)
+            raise web.HTTPError(422, 'Invalid notebook: %s' % arg)
 
         return nb
 
@@ -105,84 +105,84 @@ class NbdimeApiHandler(web.RequestHandler):
 class MainHandler(NbdimeApiHandler):
     def get(self):
         args = self.base_args()
-        args["base"] = self.get_argument("base", "")
-        args["local"] = self.get_argument("local", "")
-        args["remote"] = self.get_argument("remote", "")
-        self.render("index.html", config_data=args, base_url=self.base_url)
+        args['base'] = self.get_argument('base', '')
+        args['local'] = self.get_argument('local', '')
+        args['remote'] = self.get_argument('remote', '')
+        self.render('index.html', config_data=args, base_url=self.base_url)
 
 
 class MainDiffHandler(NbdimeApiHandler):
     def get(self):
         args = self.base_args()
-        args["base"] = self.get_argument("base", "")
-        args["remote"] = self.get_argument("remote", "")
+        args['base'] = self.get_argument('base', '')
+        args['remote'] = self.get_argument('remote', '')
 
-        self.render("diff.html", config_data=args, base_url=self.base_url)
+        self.render('diff.html', config_data=args, base_url=self.base_url)
 
 
 class MainDifftoolHandler(NbdimeApiHandler):
     def get(self):
         args = self.base_args()
-        if "difftool_args" in self.params:
-            base = self.params["difftool_args"]["base"]
-            remote = self.params["difftool_args"]["remote"]
+        if 'difftool_args' in self.params:
+            base = self.params['difftool_args']['base']
+            remote = self.params['difftool_args']['remote']
             if isinstance(base, string_types):
-                args["base"] = base
+                args['base'] = base
             else:
-                args["base"] = base.name
+                args['base'] = base.name
             if isinstance(remote, string_types):
-                args["remote"] = remote
+                args['remote'] = remote
             else:
-                args["remote"] = remote.name
+                args['remote'] = remote.name
         else:
-            args["base"] = self.get_argument("base", "")
-            args["remote"] = self.get_argument("remote", "")
-        self.render("difftool.html", config_data=args, base_url=self.base_url)
+            args['base'] = self.get_argument('base', '')
+            args['remote'] = self.get_argument('remote', '')
+        self.render('difftool.html', config_data=args, base_url=self.base_url)
 
 
 class MainMergeHandler(NbdimeApiHandler):
     def get(self):
         args = self.base_args()
-        args["base"] = self.get_argument("base", "")
-        args["local"] = self.get_argument("local", "")
-        args["remote"] = self.get_argument("remote", "")
-        self.render("merge.html", config_data=args, base_url=self.base_url)
+        args['base'] = self.get_argument('base', '')
+        args['local'] = self.get_argument('local', '')
+        args['remote'] = self.get_argument('remote', '')
+        self.render('merge.html', config_data=args, base_url=self.base_url)
 
 
 class MainMergetoolHandler(NbdimeApiHandler):
     def get(self):
         args = self.base_args()
-        if "mergetool_args" in self.params:
-            args["base"] = self.params["mergetool_args"]["base"]
-            args["local"] = self.params["mergetool_args"]["local"]
-            args["remote"] = self.params["mergetool_args"]["remote"]
+        if 'mergetool_args' in self.params:
+            args['base'] = self.params['mergetool_args']['base']
+            args['local'] = self.params['mergetool_args']['local']
+            args['remote'] = self.params['mergetool_args']['remote']
         else:
-            args["base"] = self.get_argument("base", "")
-            args["local"] = self.get_argument("local", "")
-            args["remote"] = self.get_argument("remote", "")
-        self.render("mergetool.html", config_data=args, base_url=self.base_url)
+            args['base'] = self.get_argument('base', '')
+            args['local'] = self.get_argument('local', '')
+            args['remote'] = self.get_argument('remote', '')
+        self.render('mergetool.html', config_data=args, base_url=self.base_url)
 
 
 class ApiDiffHandler(NbdimeApiHandler):
     def post(self):
-        base_nb = self.get_notebook_argument("base")
-        remote_nb = self.get_notebook_argument("remote")
+        base_nb = self.get_notebook_argument('base')
+        remote_nb = self.get_notebook_argument('remote')
 
         try:
             thediff = nbdime.diff_notebooks(base_nb, remote_nb)
         except Exception:
-            nbdime.log.exception("Error diffing documents:")
-            raise web.HTTPError(500, "Error while attempting to diff documents")
+            nbdime.log.exception('Error diffing documents:')
+            raise web.HTTPError(500, 'Error while attempting to diff documents')
 
         data = {
-            "base": base_nb,
-            "diff": thediff,
+            'base': base_nb,
+            'diff': thediff,
             }
         self.finish(data)
 
     def get_notebook_argument(self, argname):
-        if "difftool_args" in self.params:
-            arg = self.params["difftool_args"][argname]
+        if 'difftool_args' in self.params:
+            arg = self.params['difftool_args'][argname]
             if not isinstance(arg, string_types):
                 # Assume arg is file-like
                 return nbformat.read(arg, as_version=4)
@@ -193,12 +193,12 @@ class ApiDiffHandler(NbdimeApiHandler):
 
 class ApiMergeHandler(NbdimeApiHandler):
     def post(self):
-        base_nb = self.get_notebook_argument("base")
-        local_nb = self.get_notebook_argument("local")
-        remote_nb = self.get_notebook_argument("remote")
+        base_nb = self.get_notebook_argument('base')
+        local_nb = self.get_notebook_argument('local')
+        remote_nb = self.get_notebook_argument('remote')
         merge_args = self.settings.get('merge_args')
         if merge_args is None:
-            merge_args = build_merge_parser().parse_args(["", "", ""])
+            merge_args = build_merge_parser().parse_args(['', '', ''])
             merge_args.merge_strategy = 'mergetool'
             self.settings['merge_args'] = merge_args
 
@@ -206,18 +206,18 @@ class ApiMergeHandler(NbdimeApiHandler):
             decisions = decide_notebook_merge(base_nb, local_nb, remote_nb,
                                               args=merge_args)
         except Exception:
-            nbdime.log.exception("Error merging documents:")
-            raise web.HTTPError(500, "Error while attempting to merge documents")
+            nbdime.log.exception('Error merging documents:')
+            raise web.HTTPError(500, 'Error while attempting to merge documents')
 
         data = {
-            "base": base_nb,
-            "merge_decisions": decisions
+            'base': base_nb,
+            'merge_decisions': decisions
             }
         self.finish(data)
 
     def get_notebook_argument(self, argname):
-        if "mergetool_args" in self.params:
-            arg = self.params["mergetool_args"][argname]
+        if 'mergetool_args' in self.params:
+            arg = self.params['mergetool_args'][argname]
             return self.read_notebook(arg)
         else:
             return super(ApiMergeHandler, self).get_notebook_argument(argname)
@@ -229,20 +229,20 @@ class ApiMergeStoreHandler(NbdimeApiHandler):
         # to write to from the http request, only allowing
         # this operation if the server was run with an output
         # filename as a commandline argument:
-        fn = self.params.get("outputfilename", None)
+        fn = self.params.get('outputfilename', None)
         if not fn:
-            raise web.HTTPError(400, "Server does not accept storing merge result.")
-        path = os.path.join(self.params.get("cwd", os.curdir), fn)
-        nbdime.log.info("Saving merge result in %s", path)
+            raise web.HTTPError(400, 'Server does not accept storing merge result.')
+        path = os.path.join(self.params.get('cwd', os.curdir), fn)
+        nbdime.log.info('Saving merge result in %s', path)
 
         body = json.loads(escape.to_unicode(self.request.body))
-        merged = body["merged"]
+        merged = body['merged']
         merged_nb = nbformat.from_dict(merged)
 
         # Somehow store unsolved conflicts?
-        # conflicts = body["conflicts"]
+        # conflicts = body['conflicts']
 
-        with io.open(path, "w", encoding="utf8") as f:
+        with io.open(path, 'w', encoding='utf8') as f:
             nbformat.write(merged_nb, f)
         self.finish()
 
@@ -252,27 +252,27 @@ class ApiCloseHandler(NbdimeApiHandler):
         # Only allow closing, if started as tool
         if self.params.get('closable', False) is not True:
             raise web.HTTPError(
-                400, "This server cannot be closed remotely.")
+                400, 'This server cannot be closed remotely.')
 
         # Fail if no exit code is supplied:
-        self.application.exit_code = int(self.request.headers.get("exit_code", 1))
+        self.application.exit_code = int(self.request.headers.get('exit_code', 1))
 
-        _logger.info("Closing server on remote request")
+        _logger.info('Closing server on remote request')
         self.finish()
         ioloop.IOLoop.current().stop()
 
 
 def make_app(**params):
     handlers = [
-        (r"/", MainHandler, params),
-        (r"/diff", MainDiffHandler, params),
-        (r"/difftool", MainDifftoolHandler, params),
-        (r"/merge", MainMergeHandler, params),
-        (r"/mergetool", MainMergetoolHandler, params),
-        (r"/api/diff", ApiDiffHandler, params),
-        (r"/api/merge", ApiMergeHandler, params),
-        (r"/api/store", ApiMergeStoreHandler, params),
-        (r"/api/closetool", ApiCloseHandler, params),
+        (r'/', MainHandler, params),
+        (r'/diff', MainDiffHandler, params),
+        (r'/difftool', MainDifftoolHandler, params),
+        (r'/merge', MainMergeHandler, params),
+        (r'/mergetool', MainMergetoolHandler, params),
+        (r'/api/diff', ApiDiffHandler, params),
+        (r'/api/merge', ApiMergeHandler, params),
+        (r'/api/store', ApiMergeStoreHandler, params),
+        (r'/api/closetool', ApiCloseHandler, params),
         # Static handler will be added automatically
     ]
     base_url = params.get('base_url', '/')
@@ -286,18 +286,18 @@ def make_app(**params):
         prefix = ''
 
     settings = {
-        "static_path": static_path,
-        "static_url_prefix": prefix + '/static/',
-        "template_path": template_path,
+        'static_path': static_path,
+        'static_url_prefix': prefix + '/static/',
+        'template_path': template_path,
         }
 
     if nbdime.utils.is_in_repo(nbdime.__file__):
         # don't cache when working from repo
         settings.update({
-            # "autoreload": True,
-            "compiled_template_cache": False,
-            "static_hash_cache": False,
-            # "serve_traceback": True,
+            # 'autoreload': True,
+            'compiled_template_cache': False,
+            'static_hash_cache': False,
+            # 'serve_traceback': True,
             })
 
     app = web.Application(handlers, **settings)
@@ -306,10 +306,10 @@ def make_app(**params):
 
 
 def init_app(on_port=None, closable=False, **params):
-    _logger.debug("Using params: %s" % params)
-    params.update({"closable": closable})
-    port = params.pop("port", 0)
-    ip = params.pop("ip", "127.0.0.1")
+    _logger.debug('Using params: %s' % params)
+    params.update({'closable': closable})
+    port = params.pop('port', 0)
+    ip = params.pop('ip', '127.0.0.1')
     app = make_app(**params)
     if port != 0 or on_port is None:
         server = app.listen(port, address=ip)
@@ -357,5 +357,5 @@ def main(args=None):
                       )
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     sys.exit(main())
