@@ -113,7 +113,11 @@ class MainHandler(NbdimeApiHandler):
         args['base'] = self.get_argument('base', '')
         args['local'] = self.get_argument('local', '')
         args['remote'] = self.get_argument('remote', '')
-        self.render('index.html', config_data=args)
+        self.render('index.html',
+                    config_data=args,
+                    mathjax_url=self.mathjax_url,
+                    mathjax_config=self.mathjax_config,
+                   )
 
 
 class MainDiffHandler(NbdimeApiHandler):
@@ -122,7 +126,11 @@ class MainDiffHandler(NbdimeApiHandler):
         args['base'] = self.get_argument('base', '')
         args['remote'] = self.get_argument('remote', '')
 
-        self.render('diff.html', config_data=args)
+        self.render('diff.html',
+                    config_data=args,
+                    mathjax_url=self.mathjax_url,
+                    mathjax_config=self.mathjax_config,
+                   )
 
 
 class MainDifftoolHandler(NbdimeApiHandler):
@@ -142,7 +150,11 @@ class MainDifftoolHandler(NbdimeApiHandler):
         else:
             args['base'] = self.get_argument('base', '')
             args['remote'] = self.get_argument('remote', '')
-        self.render('difftool.html', config_data=args)
+        self.render('difftool.html',
+                    config_data=args,
+                    mathjax_url=self.mathjax_url,
+                    mathjax_config=self.mathjax_config,
+                   )
 
 
 class MainMergeHandler(NbdimeApiHandler):
@@ -151,7 +163,11 @@ class MainMergeHandler(NbdimeApiHandler):
         args['base'] = self.get_argument('base', '')
         args['local'] = self.get_argument('local', '')
         args['remote'] = self.get_argument('remote', '')
-        self.render('merge.html', config_data=args)
+        self.render('merge.html',
+                    config_data=args,
+                    mathjax_url=self.mathjax_url,
+                    mathjax_config=self.mathjax_config,
+                   )
 
 
 class MainMergetoolHandler(NbdimeApiHandler):
@@ -165,7 +181,11 @@ class MainMergetoolHandler(NbdimeApiHandler):
             args['base'] = self.get_argument('base', '')
             args['local'] = self.get_argument('local', '')
             args['remote'] = self.get_argument('remote', '')
-        self.render('mergetool.html', config_data=args)
+        self.render('mergetool.html',
+                    config_data=args,
+                    mathjax_url=self.mathjax_url,
+                    mathjax_config=self.mathjax_config,
+                   )
 
 
 class ApiDiffHandler(NbdimeApiHandler, APIHandler):
@@ -293,6 +313,7 @@ def make_app(**params):
         'static_url_prefix': prefix + '/static/',
         'template_path': template_path,
         'base_url': base_url,
+        'mathjax_url': 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js',
         }
 
     if nbdime.utils.is_in_repo(nbdime.__file__):
