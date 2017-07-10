@@ -7,7 +7,7 @@ import {
 } from '@jupyterlab/coreutils';
 
 import {
-  IRenderMime, IOutputModel
+  RenderMime, IOutputModel
 } from '@jupyterlab/rendermime';
 
 import {
@@ -147,7 +147,7 @@ class RenderableOutputsMergeView extends DragDropPanel {
    *
    */
   constructor(merged: nbformat.IOutput[],
-              classes: string[], rendermime: IRenderMime,
+              classes: string[], rendermime: RenderMime,
               base: nbformat.IOutput[] | null, remote: nbformat.IOutput[] | null,
               local: nbformat.IOutput[] | null) {
     super();
@@ -386,5 +386,5 @@ class RenderableOutputsMergeView extends DragDropPanel {
 
   panes: OutputArea[];
 
-  rendermime: IRenderMime;
+  rendermime: RenderMime;
 }

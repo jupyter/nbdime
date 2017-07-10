@@ -193,7 +193,7 @@ function opPatch(key: string | number, diff: IDiffEntry[] | null): IDiffPatch {
  * Validate that a diff operation is valid to apply on a given base sequence
  */
 export
-function validateSequenceOp(base: Array<any> | string, entry: IDiffEntry): void {
+function validateSequenceOp(base: ReadonlyArray<any> | string, entry: IDiffEntry): void {
   if (typeof entry.key !== 'number') {
       throw new TypeError('Invalid patch sequence op: Key is not a number: ' + entry.key);
   }

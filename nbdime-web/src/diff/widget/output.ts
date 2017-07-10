@@ -11,7 +11,7 @@ import {
 } from '@phosphor/widgets';
 
 import {
-  IRenderMime, OutputModel
+  RenderMime, OutputModel
 } from '@jupyterlab/rendermime';
 
 import {
@@ -26,6 +26,10 @@ import {
   OutputDiffModel
 } from '../model';
 
+import {
+  stringify
+} from '../../patch/stringified';
+
 
 const RENDERED_OUTPUT_CLASS = 'jp-Diff-renderedOuput';
 
@@ -36,7 +40,7 @@ export
 class RenderableOutputView extends RenderableDiffView<nbformat.IOutput> {
   constructor(model: OutputDiffModel,
               editorClass: string[],
-              rendermime: IRenderMime) {
+              rendermime: RenderMime) {
     super(model, editorClass, rendermime);
   }
 
@@ -66,16 +70,27 @@ class RenderableOutputView extends RenderableDiffView<nbformat.IOutput> {
     return true;
   }
 
+  protected createRawView(output: OutputModel): Widget {
+    let widget = new Widget();
+    widget.node.innerText = stringify(output.data);
+    return widget;
+  }
+
   /**
    * Create a widget which renders the given cell output
    */
   protected createSubView(output: nbformat.IOutput, trusted: boolean): Widget {
     let model = new OutputModel({value: output, trusted});
-    let widget = this._rendermime.render(model);
+    let mimeType = this._rendermime.preferredMimeType(model.data, !trusted);
+    if (!mimeType) {
+      return this.createRawView(model);
+    }
+    let widget = this._rendermime.createRenderer(mimeType);
+    widget.renderModel(model);
     widget.addClass(RENDERED_OUTPUT_CLASS);
     return widget;
   }
 
   _sanitized: boolean;
-  _rendermime: IRenderMime;
+  _rendermime: RenderMime;
 }
