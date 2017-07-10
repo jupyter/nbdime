@@ -10,7 +10,7 @@ from six import string_types
 os.environ['GIT_PYTHON_REFRESH'] = 'quiet'
 from git import Repo, InvalidGitRepositoryError, BadName
 
-from .utils import EXPLICIT_MISSING_FILE
+from .utils import EXPLICIT_MISSING_FILE, pushd
 
 
 class BlobWrapper(io.StringIO):
@@ -93,11 +93,11 @@ def _get_diff_entry_stream(path, blob, ref_name, repo_dir):
             return None
         if blob is None:
             # Diffing against working copy, use file on disk!
-            try:
-                path = os.path.normpath(os.path.join(repo_dir, path))
-                return io.open(path)
-            except IOError:
-                return EXPLICIT_MISSING_FILE
+            with pushd(repo_dir):
+                try:
+                    return io.open(path)
+                except IOError:
+                    return EXPLICIT_MISSING_FILE
         else:
             # There were strange issues with passing blob data_streams around,
             # so we solve this by reading into a StringIO buffer.
@@ -109,7 +109,7 @@ def _get_diff_entry_stream(path, blob, ref_name, repo_dir):
     return EXPLICIT_MISSING_FILE
 
 
-def changed_notebooks(ref_base, ref_remote, paths=None):
+def changed_notebooks(ref_base, ref_remote, paths=None, repo_dir=None):
     """Iterator over all notebooks in path that has changed between the two git refs
 
     References are all valid values according to git-rev-parse. If ref_remote
@@ -117,8 +117,9 @@ def changed_notebooks(ref_base, ref_remote, paths=None):
     Iterator value is a base/remote pair of streams to Notebooks
     (or possibly EXPLICIT_MISSING_FILE for added/removed files).
     """
-    repo, popped = get_repo(os.curdir)
-    repo_dir = repo.working_tree_dir
+    repo, popped = get_repo(repo_dir or os.curdir)
+    if repo_dir is None:
+        repo_dir = os.path.relpath(repo.working_tree_dir, os.curdir)
     if isinstance(paths, string_types):
         paths = (paths,)
     if paths and popped:

@@ -4,6 +4,7 @@
 from __future__ import print_function
 
 import json
+import os
 
 from notebook.utils import url_path_join
 from tornado.web import HTTPError, escape
@@ -20,6 +21,7 @@ from .nbdimeserver import (
 )
 
 from ..gitfiles import changed_notebooks, is_path_in_repo, InvalidGitRepositoryError, BadName
+from ..utils import split_os_path
 
 
 class GitMainDifftoolHandler(NbdimeHandler):
@@ -49,8 +51,18 @@ class GitApiDiffHandler(ApiDiffHandler):
             return super(GitApiDiffHandler, self).post()
 
         base = base[len('git:'):]
+        root_dir = os.curdir
+        if not is_path_in_repo(root_dir):
+            # We need to traverse down 'base' until we find a repo
+            for part in split_os_path(os.path.dirname(base)):
+                root_dir = os.path.join(root_dir, part)
+                if is_path_in_repo(root_dir):
+                    break
+            else:
+                raise HTTPError(422, 'Invalid notebook: %s' % base)
+            base = os.path.relpath(base, root_dir)
         try:
-            for fbase, fremote in changed_notebooks('HEAD', None, base):
+            for fbase, fremote in changed_notebooks('HEAD', None, base, root_dir):
                 base_nb = nbformat.read(fbase, as_version=4)
                 remote_nb = nbformat.read(fremote, as_version=4)
                 break  # there should only ever be one set of files

@@ -95,7 +95,7 @@ def test_head_vs_workdir_subdir_with_path(git_repo2, filespath):
                 full_subfile_path)
     os.chdir(os.path.join(git_repo2, _subdir_name))
     expected = [
-        ('sub/subfile.ipynb (HEAD)', os.path.abspath(full_subfile_path)),
+        ('sub/subfile.ipynb (HEAD)', 'sub/subfile.ipynb'),
     ]
     for expected, actual in zip_longest(expected, changed_notebooks('HEAD', None, _subdir_filename), fillvalue=None):
         assert _nb_name(actual[0]) == expected[0]
