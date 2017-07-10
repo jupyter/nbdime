@@ -27,6 +27,8 @@ except ImportError:
 
 have_git = which('git')
 
+WEB_TEST_TIMEOUT = 15
+
 
 def assert_is_valid_notebook(nb):
     """These are the current assumptions on notebooks in these tests. Loosen on demand."""

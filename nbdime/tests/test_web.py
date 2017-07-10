@@ -4,18 +4,18 @@
 # Distributed under the terms of the Modified BSD License.
 
 import os
+import json
 
 import pytest
 from tornado import ioloop
 from tornado.httputil import url_concat
 from tornado.escape import json_encode, json_decode
 import nbformat
-import json
 
 import nbdime.webapp.nbdiffweb
 import nbdime.webapp.nbmergeweb
 
-WEB_TEST_TIMEOUT = 15
+from .utils import WEB_TEST_TIMEOUT
 
 
 diff_a = 'src-and-output--1.ipynb'

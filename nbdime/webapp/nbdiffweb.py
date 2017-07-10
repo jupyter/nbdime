@@ -4,7 +4,6 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import os
 import sys
 from argparse import ArgumentParser
 import warnings
@@ -76,24 +75,27 @@ def handle_gitrefs(base, remote, path, arguments):
     return status
 
 
-def main(args=None):
-    if args is None:
-        args = sys.argv[1:]
-    arguments = build_arg_parser().parse_args(args)
-    process_diff_flags(arguments)
-    nbdime.log.init_logging(level=arguments.log_level)
-    base, remote, path = resolve_diff_args(arguments)
+def main_diff(opts):
+    process_diff_flags(opts)
+    base, remote, path = resolve_diff_args(opts)
     if is_gitref(base) and is_gitref(remote):
         # We are asked to do a gui for git diff
-        return handle_gitrefs(base, remote, path, arguments)
+        return handle_gitrefs(base, remote, path, opts)
     return run_server(
         closable=True,
         on_port=lambda port: browse_util(
             port=port,
             rel_url='diff',
             base=base, remote=remote,
-            **args_for_browse(arguments)),
-        **args_for_server(arguments))
+            **args_for_browse(opts)),
+        **args_for_server(opts))
+
+
+def main(args=None):
+    if args is None:
+        args = sys.argv[1:]
+    opts = build_arg_parser().parse_args(args)
+    return main_diff(opts)
 
 
 if __name__ == "__main__":
