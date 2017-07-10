@@ -3,6 +3,10 @@
 'use strict';
 
 import {
+  JSONObject
+} from '@phosphor/coreutils';
+
+import {
   URLExt
 } from '@jupyterlab/coreutils/lib/url';
 
@@ -21,20 +25,40 @@ function urlRStrip(target: string): string {
  * Make a POST request passing a JSON argument and receiving a JSON result.
  */
 export
-function requestJson(url: string, argument: any, callback: (result: any) => void, onError: (result: any) => void) {
+function requestJsonPromise(url: string, argument: any): Promise<JSONObject> {
   let request = {
       url: url,
       method: 'POST',
       data: JSON.stringify(argument),
     };
-  let settings = ServerConnection.makeSettings({});
-  let promise = ServerConnection.makeRequest(request, settings);
+  let settings = ServerConnection.makeSettings();
+  return ServerConnection.makeRequest(request, settings).then((response) => {
+      return response.data;
+    });
+}
 
-  promise.then((response) => {
-    callback(response.data);
+/**
+ * Make a POST request passing a JSON argument and receiving a JSON result.
+ */
+export
+function requestJson(url: string, argument: any, callback: (result: any) => void, onError: (result: any) => void): void {
+  let promise = requestJsonPromise(url, argument);
+  promise.then((data) => {
+    callback(data);
   }, (error: ServerConnection.IError) => {
     onError(error.xhr.responseText);
   });
+}
+
+/**
+ * Make a diff request for the given base/remote specifiers (filenames)
+ */
+export
+function requestDiffPromise(
+    base: string, remote: string | undefined,
+    baseUrl: string): Promise<JSONObject> {
+  return requestJsonPromise(URLExt.join(urlRStrip(baseUrl), 'api/diff'),
+                            {base, remote});
 }
 
 /**
@@ -45,7 +69,7 @@ function requestDiff(
     base: string, remote: string,
     baseUrl: string,
     onComplete: (result: any) => void,
-    onFail: (result: any) => void) {
+    onFail: (result: any) => void): void {
   requestJson(URLExt.join(urlRStrip(baseUrl), 'api/diff'),
               {base, remote},
               onComplete,
@@ -57,11 +81,23 @@ function requestDiff(
  * Make a diff request for the given base/remote specifiers (filenames)
  */
 export
+function requestMergePrmise(
+    base: string, local: string, remote: string,
+    baseUrl: string): Promise<JSONObject> {
+  return requestJsonPromise(URLExt.join(urlRStrip(baseUrl), 'api/merge'),
+              {base, local, remote});
+}
+
+
+/**
+ * Make a diff request for the given base/remote specifiers (filenames)
+ */
+export
 function requestMerge(
     base: string, local: string, remote: string,
     baseUrl: string,
     onComplete: (result: any) => void,
-    onFail: (result: any) => void) {
+    onFail: (result: any) => void): void {
   requestJson(URLExt.join(urlRStrip(baseUrl), 'api/merge'),
               {base, local, remote},
               onComplete,
