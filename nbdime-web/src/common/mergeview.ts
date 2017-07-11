@@ -878,6 +878,10 @@ class MergeView extends Panel {
 
     if (merged) {
       options.gutters = [GUTTER_CONFLICT_CLASS, GUTTER_PICKER_CLASS];
+      if (options.lineWrapping === undefined) {
+        // Turn off linewrapping for merge view by default, keep for diff
+        options.lineWrapping = false;
+      }
     }
 
     this.base = new EditorWidget(options.value, copyObj({readOnly: !!options.readOnly}, options));
