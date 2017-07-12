@@ -24,7 +24,11 @@ module.exports = function (config) {
       tsconfig: 'test/src/tsconfig.json',
       reports: {
         "text-summary": "",
-        "html": "coverage"
+        "html": "coverage",
+        "lcovonly": {
+          "directory": "coverage",
+          "filename": "coverage.lcov"
+        }
       }
     }
   });
