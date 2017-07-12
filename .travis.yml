@@ -48,7 +48,7 @@ script:
   - |
     if [[ $GROUP == python ]]; then
       pushd $(mktemp -d)
-      py.test -l --cov-report html:$TRAVIS_BUILD_DIR --cov=nbdime --pyargs nbdime
+      py.test -l --cov-report xml:$TRAVIS_BUILD_DIR/coverage.xml --cov=nbdime --pyargs nbdime
     elif [[ $GROUP == js ]]; then
       pushd nbdime-web
       npm test
