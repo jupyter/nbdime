@@ -1,10 +1,10 @@
 {
   "name": "nbdime",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "license": "BSD-3-Clause",
   "repository": {
-    "type" : "git",
-    "url" : "https://github.com/jupyter/nbdime.git"
+    "type": "git",
+    "url": "https://github.com/jupyter/nbdime.git"
   },
   "description": "Diff and merge of Jupyter Notebooks",
   "directories": {
@@ -21,10 +21,11 @@
     "test:ie": "karma start --browsers=IE test/karma.conf.js"
   },
   "devDependencies": {
+    "@jupyterlab/apputils": "^0.7.0",
     "@types/expect.js": "^0.3.29",
     "@types/json-stable-stringify": "^1.0.29",
     "@types/mocha": "^2.2.33",
-    "@types/node": "^6.0.45",
+    "@types/node": "^8.0.7",
     "@types/sanitizer": "^0.0.28",
     "expect.js": "^0.3.1",
     "fs-extra": "^1.0.0",
@@ -34,16 +35,22 @@
     "karma-ie-launcher": "^1.0.0",
     "karma-mocha": "^1.2.0",
     "karma-mocha-reporter": "^2.2.0",
-    "karma-typescript": "^2.1.5",
+    "karma-typescript": "^3.0.4",
     "mocha": "^3.1.1",
     "rimraf": "^2.5.4",
-    "typescript": "~2.0.9"
+    "typescript": "~2.4.1"
   },
   "dependencies": {
-    "@jupyterlab/services": "^0.34.2",
-    "codemirror": "^5.17.0",
-    "json-stable-stringify": "^1.0.1",
-    "jupyterlab": "~0.11.3",
-    "phosphor": "~0.7.0"
+    "@jupyterlab/codeeditor": "^0.7.0",
+    "@jupyterlab/codemirror": "^0.7.0",
+    "@jupyterlab/coreutils": "^0.7.1",
+    "@jupyterlab/outputarea": "^0.7.0",
+    "@jupyterlab/rendermime": "^0.7.0",
+    "@phosphor/algorithm": "^1.1.2",
+    "@phosphor/coreutils": "^1.2.0",
+    "@phosphor/dragdrop": "^1.2.0",
+    "@phosphor/widgets": "^1.4.0",
+    "codemirror": "^5.23.0",
+    "json-stable-stringify": "^1.0.1"
   }
 }

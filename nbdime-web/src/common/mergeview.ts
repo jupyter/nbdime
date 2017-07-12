@@ -10,20 +10,12 @@
 import * as CodeMirror from 'codemirror';
 
 import {
-  Widget, ResizeMessage
-} from 'phosphor/lib/ui/widget';
+  Widget, Panel
+} from '@phosphor/widgets';
 
 import {
-  Panel
-} from 'phosphor/lib/ui/panel';
-
-import {
-  CodeMirrorWidget
-} from 'jupyterlab/lib/codemirror/widget';
-
-import {
-  loadModeByMIME
-} from 'jupyterlab/lib/codemirror';
+  Mode
+} from '@jupyterlab/codemirror';
 
 import {
   IStringDiffModel
@@ -40,6 +32,10 @@ import {
 import {
   ChunkSource, Chunk, lineToNormalChunks
 } from '../chunking';
+
+import {
+  EditorWidget
+} from './editor';
 
 import {
   valueIn, hasEntries, splitLines
@@ -82,40 +78,6 @@ type DiffClasses = {
   connect: string,
   gutter: string
 };
-
-
-export
-class EditorWidget extends CodeMirrorWidget {
-  /**
-   * Store all editor instances for operations that
-   * need to loop over all instances.
-   */
-  constructor(options?: CodeMirror.EditorConfiguration | undefined) {
-    super(options);
-    EditorWidget.editors.push(this.editor);
-  }
-
-  public static editors: CodeMirror.Editor[] = [];
-
-
-  /**
-   * A message handler invoked on an `'resize'` message.
-   */
-  protected onResize(msg: ResizeMessage): void {
-    if (!this.staticLoaded) {
-      if (msg.width < 0 || msg.height < 0) {
-        this.editor.setSize(null, null);
-      } else {
-        super.onResize(msg);
-      }
-      if (this.editor.isReadOnly() && document.contains(this.node)) {
-        this.staticLoaded = true;
-      }
-    }
-  }
-
-  staticLoaded = false;
-}
 
 
 const GUTTER_PICKER_CLASS = 'jp-Merge-gutter-picker';
@@ -185,9 +147,9 @@ function createNbdimeMergeView(
   if (mimetype) {
     // Set the editor mode to the MIME type.
     for (let e of editors) {
-      loadModeByMIME(e.ownEditor, mimetype);
+      e.ownWidget.model.mimeType = mimetype;
     }
-    loadModeByMIME(mergeview.base.editor, mimetype);
+    mergeview.base.model.mimeType = mimetype;
   }
   return mergeview;
 }
@@ -244,7 +206,7 @@ class DiffView {
       let edit = this.ownEditor;
       let cursor = edit.getDoc().getCursor();
       let newLines = splitLines(this.model.remote!);
-      let start = edit.getDoc().firstLine()
+      let start = edit.getDoc().firstLine();
       let last = edit.getDoc().lastLine();
       let end = last;
       for (let range of this.collapsedRanges) {
@@ -315,7 +277,7 @@ class DiffView {
       }
 
       self.updateCallback(true);
-      checkSync(self.ownEditor)
+      checkSync(self.ownEditor);
       self.updating = false;
     }
     function setDealign(fast: boolean | CodeMirror.Editor) {
@@ -408,7 +370,7 @@ class DiffView {
         if (dv.model instanceof DecisionStringDiffModel) {
           dv.model.invalidate();
         }
-        dv.forceUpdate('full')
+        dv.forceUpdate('full');
       }
     }
   }
@@ -583,10 +545,10 @@ class DiffView {
   }
 
   get ownEditor(): CodeMirror.Editor {
-    return this.ownWidget.editor;
+    return this.ownWidget.cm;
   }
 
-  ownWidget: CodeMirrorWidget;
+  ownWidget: EditorWidget;
   model: IStringDiffModel;
   type: string;
   showDifferences: boolean;
@@ -1007,12 +969,12 @@ class MergeView extends Panel {
 
     for (let dv of [left, right, merge]) {
       if (dv) {
-        dv.init(this.base.editor);
+        dv.init(this.base.cm);
       }
     }
 
     if (options.collapseIdentical) {
-      this.base.editor.operation(function() {
+      this.base.cm.operation(function() {
           collapseIdenticalStretches(self, options.collapseIdentical);
       });
     }
@@ -1059,7 +1021,7 @@ class MergeView extends Panel {
 
       // Editors (order is important, so it matches
       // format of linesToAlign)
-      let cm: CodeMirror.Editor[] = [self.base.editor];
+      let cm: CodeMirror.Editor[] = [self.base.cm];
       let scroll: number[] = [];
       for (let dv of self.diffViews) {
         cm.push(dv.ownEditor);
@@ -1079,9 +1041,9 @@ class MergeView extends Panel {
 
     // All editors should have an operation (simultaneously),
     // so set up nested operation calls.
-    if (!this.base.editor.curOp) {
+    if (!this.base.cm.curOp) {
       f = function(fn) {
-        return function() { self.base.editor.operation(fn); };
+        return function() { self.base.cm.operation(fn); };
       }(f);
     }
     for (let dv of this.diffViews) {
@@ -1114,7 +1076,7 @@ class MergeView extends Panel {
   left: DiffView | null;
   right: DiffView | null;
   merge: DiffView | null;
-  base: CodeMirrorWidget;
+  base: EditorWidget;
   options: any;
   diffViews: DiffView[];
   aligners: CodeMirror.LineWidget[];
@@ -1179,7 +1141,7 @@ function collapseIdenticalStretches(mv: MergeView, margin?: boolean | number): v
     margin = 2;
   }
   let clear: boolean[] = [];
-  let edit = mv.base.editor;
+  let edit = mv.base.cm;
   let off = edit.getDoc().firstLine();
   for (let l = off, e = edit.getDoc().lastLine(); l <= e; l++) {
     clear.push(true);
@@ -1226,7 +1188,7 @@ function collapseIdenticalStretches(mv: MergeView, margin?: boolean | number): v
               return;
             }
           }
-        })
+        });
         if (mv.options.onCollapse) {
           mv.options.onCollapse(mv, line, size, mark);
         }

@@ -4,8 +4,8 @@
 import expect = require('expect.js');
 
 import {
-    Widget
-} from 'phosphor/lib/ui/widget';
+  Widget
+} from '@phosphor/widgets';
 
 import {
     CollapsiblePanel

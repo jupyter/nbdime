@@ -4,11 +4,11 @@
 
 import {
   JSONValue, JSONArray, JSONObject
-} from 'phosphor/lib/algorithm/json';
+} from '@phosphor/coreutils';
 
 import {
   each
-} from 'phosphor/lib/algorithm/iteration';
+} from '@phosphor/algorithm';
 
 import {
   valueIn, repeatString
@@ -115,6 +115,8 @@ export function patchStringified(base: JSONValue, diff: IDiffEntry[] | null, lev
     return patchStringifiedList(base, diff as IDiffArrayEntry[] | null, level);
   } else if (typeof base === 'number' || typeof base === 'boolean') {
     throw new TypeError('Cannot patch an atomic type: ' + typeof base);
+  } else if (base === null) {
+    throw new TypeError('Cannot patch a null base!');
   } else {
     return patchStringifiedObject(base, diff as IDiffObjectEntry[] | null, level);
   }
@@ -182,7 +184,6 @@ function patchString(base: string, diff: IDiffArrayEntry[] | null, level: number
  * Patch a stringified object according to the object diff
  */
 function patchStringifiedObject(base: JSONObject, diff: IDiffObjectEntry[] | null, level: number) : StringifiedPatchResult {
-  let map: { [key: string]: JSONValue; } = base;
   let remote = '';
   let additions: DiffRangeRaw[] = [];
   let deletions: DiffRangeRaw[] = [];
@@ -233,7 +234,7 @@ function patchStringifiedObject(base: JSONObject, diff: IDiffObjectEntry[] | nul
           remote += keyString + valr;
         }
         if (e.op === 'remove' || e.op === 'replace') {
-          let valb = stringify(map[key], level + 1, false) + postfix;
+          let valb = stringify(base[key], level + 1, false) + postfix;
           let start = baseIndex;
           let length = valb.length;
           // Modify range depending on remove or replace:
@@ -254,7 +255,7 @@ function patchStringifiedObject(base: JSONObject, diff: IDiffObjectEntry[] | nul
           baseKeys.splice(baseKeys.indexOf(key), 1);
         }
       } else if (e.op === 'patch') {
-        let pd = patchStringified(map[key], e.diff, level + 1);
+        let pd = patchStringified(base[key], e.diff, level + 1);
         let valr = pd.remote;
         // Insert key string:
         valr = keyString + valr.slice((level + 1) * JSON_INDENT.length) +
@@ -266,13 +267,13 @@ function patchStringifiedObject(base: JSONObject, diff: IDiffObjectEntry[] | nul
         additions = additions.concat(pd.additions);
         deletions = deletions.concat(pd.deletions);
 
-        baseIndex += stringify(map[key], level + 1, false).length +
+        baseIndex += stringify(base[key], level + 1, false).length +
             keyString.length + postfix.length;
         baseKeys.splice(baseKeys.indexOf(key), 1);
       }
     } else {
       // Entry unchanged
-      let val = keyString + stringify(map[key], level + 1, false) + postfix;
+      let val = keyString + stringify(base[key], level + 1, false) + postfix;
       remote += val;
       baseIndex += val.length;
     }

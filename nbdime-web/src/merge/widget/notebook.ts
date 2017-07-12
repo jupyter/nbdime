@@ -4,11 +4,11 @@
 
 import {
   nbformat
-} from '@jupyterlab/services';
+} from '@jupyterlab/coreutils';
 
 import {
   IRenderMime
-} from 'jupyterlab/lib/rendermime';
+} from '@jupyterlab/rendermime';
 
 import {
   DragDropPanel
@@ -77,7 +77,7 @@ class NotebookMergeWidget extends DragDropPanel {
     this.cellWidgets = [];
     for (let c of model.cells) {
       work = work.then(() => {
-        return new Promise((resolve) => {
+        return new Promise<void>((resolve) => {
           let w = new CellMergeWidget(c, rendermime, model.mimetype);
           this.cellWidgets.push(w);
           this.addWidget(w);
@@ -272,9 +272,9 @@ class NotebookMergeControls extends FlexPanel {
     this.clearConflictedOutputsToggle.indeterminate = conflicted === null;
     this.clearConflictedOutputsToggle.disabled = conflicted === undefined;
     if (conflicted === undefined) {
-      this.clearConflictedOutputsToggle.parentElement.setAttribute('disabled', '');
+      this.clearConflictedOutputsToggle.parentElement!.setAttribute('disabled', '');
     } else {
-      this.clearConflictedOutputsToggle.parentElement.removeAttribute('disabled');
+      this.clearConflictedOutputsToggle.parentElement!.removeAttribute('disabled');
     }
   }
 

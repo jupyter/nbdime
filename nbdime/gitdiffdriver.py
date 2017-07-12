@@ -23,10 +23,10 @@ import os
 import sys
 from subprocess import check_call, CalledProcessError
 
-from . import nbdiffapp
-from .args import add_git_config_subcommand, add_diff_args, diff_exclusives, process_exclusive_ignorables
-from .utils import locate_gitattributes, ensure_dir_exists
-
+from .args import (
+    add_git_config_subcommand, add_generic_args, add_diff_args, add_web_args,
+    add_git_diff_driver_args)
+from .utils import locate_gitattributes, ensure_dir_exists, setup_std_streams
 
 def enable(scope=None):
     """Enable nbdime git diff driver"""
@@ -65,29 +65,28 @@ def disable(scope=None):
         pass
 
 
-def main(args=None):
-    if args is None:
-        args = sys.argv[1:]
+def _build_arg_parser():
     import argparse
-    parser = argparse.ArgumentParser('git-nbdiffdriver', description=__doc__,
+    parser = argparse.ArgumentParser('git-nbdiffdriver',
+        description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
+    add_generic_args(parser)
+
     subparsers = parser.add_subparsers(dest='subcommand')
 
     diff_parser = subparsers.add_parser('diff',
         description="The actual entrypoint for the diff tool. Git will call this."
     )
+    add_git_diff_driver_args(diff_parser)
     add_diff_args(diff_parser)
-    # Argument list
-    # path old-file old-hex old-mode new-file new-hex new-mode [ rename-to ]
-    diff_parser.add_argument('path')
-    diff_parser.add_argument('a', nargs='?', default=None)
-    diff_parser.add_argument('a_sha1', nargs='?', default=None)
-    diff_parser.add_argument('a_mode', nargs='?', default=None)
-    diff_parser.add_argument('b', nargs='?', default=None)
-    diff_parser.add_argument('b_sha1', nargs='?', default=None)
-    diff_parser.add_argument('b_mode', nargs='?', default=None)
-    diff_parser.add_argument('rename_to', nargs='?', default=None)
+
+    webdiff_parser = subparsers.add_parser('webdiff',
+        description="The actual entrypoint for the webdiff tool. Git will call this."
+    )
+    add_git_diff_driver_args(webdiff_parser)
+    add_diff_args(webdiff_parser)
+    add_web_args(webdiff_parser, 0)
 
     # TODO: From git docs: "For a path that is unmerged, GIT_EXTERNAL_DIFF is called with 1 parameter, <path>."
     config = add_git_config_subcommand(subparsers,
@@ -96,12 +95,23 @@ def main(args=None):
         enable_help="enable nbdime diff driver via git config",
         disable_help="disable nbdime diff driver via git config")
 
+    return parser
+
+
+def main(args=None):
+    if args is None:
+        args = sys.argv[1:]
+
+    setup_std_streams()
+    parser = _build_arg_parser()
     opts = parser.parse_args(args)
+
     if opts.subcommand == 'diff':
-        process_exclusive_ignorables(opts, diff_exclusives)
-        return nbdiffapp.main(
-            [opts.a, opts.b] +
-            ['--%s' % name for name in diff_exclusives if getattr(opts, name)])
+        from . import nbdiffapp
+        return nbdiffapp.main_diff(opts)
+    elif opts.subcommand == 'webdiff':
+        from .webapp import nbdiffweb
+        return nbdiffweb.main_diff(opts)
     elif opts.subcommand == 'config':
         opts.config_func(opts.scope)
         return 0

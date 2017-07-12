@@ -31,7 +31,7 @@ from .generic import (diff, diff_sequence_multilevel,
 __all__ = ["diff_notebooks"]
 
 # A regexp matching base64 encoded data
-_base64 = re.compile(r'^(?:[a-z0-9+/]{4})*(?:[a-z0-9+/]{2}==|[a-z0-9+/]{3}=)?$', re.MULTILINE | re.UNICODE | re.IGNORECASE)
+_base64 = re.compile(r'^(?:[a-z0-9+/]{4})*(?:[a-z0-9+/]{2}==|[a-z0-9+/]{3}=)?$', re.UNICODE | re.IGNORECASE)
 
 # A regexp matching common python repr-style output like
 # <module.type at 0xmemoryaddress>
@@ -47,6 +47,13 @@ _split_mimes = (
     'application/javascript',
     'application/json',
     )
+
+
+def _is_base64(test_string, min_len=64):
+    """Whether string is base64 data, possibly with newlines in it"""
+    if len(test_string) < min_len:
+        return False
+    return _base64.match(''.join(test_string.splitlines()))
 
 
 # TODO: Maybe cleaner to make the split between strict/approximate
@@ -98,7 +105,7 @@ def compare_base64_strict(x, y):
 @lru_cache(maxsize=128, typed=False)
 def _compare_mimedata_strings(x, y, comp_text, comp_base64):
     # Most likely base64 encoded data
-    if _base64.match(x):
+    if _is_base64(x):
         return comp_base64(x, y)
     else:
         return comp_text(x, y)

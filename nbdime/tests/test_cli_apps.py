@@ -17,7 +17,7 @@ from tornado.httputil import url_concat
 
 import nbformat
 
-from .utils import assert_clean_exit, get_output, call
+from .utils import assert_clean_exit, get_output, call, WEB_TEST_TIMEOUT
 
 import nbdime
 from nbdime.nbshowapp import main_show
@@ -421,9 +421,6 @@ def test_mergedriver(git_repo, filespath):
     # verify that the conflicted result is a valid notebook
     nb = nbformat.read('merge-conflict.ipynb', as_version=4)
     nbformat.validate(nb)
-
-
-WEB_TEST_TIMEOUT = 15
 
 
 def _wait_up(url, interval=0.1, check=None):

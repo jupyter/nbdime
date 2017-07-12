@@ -26,7 +26,7 @@ _description = "Compute the difference between two Jupyter notebooks."
 
 def main_diff(args):
     """Main handler of diff CLI"""
-    output = args.out
+    output = getattr(args, 'out', None)
     process_diff_flags(args)
     base, remote, paths = resolve_diff_args(args)
 

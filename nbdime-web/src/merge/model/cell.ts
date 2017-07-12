@@ -4,11 +4,11 @@
 
 import {
   nbformat
-} from '@jupyterlab/services';
+} from '@jupyterlab/coreutils';
 
 import {
-  defineSignal, ISignal
-} from 'phosphor/lib/core/signaling';
+  Signal
+} from '@phosphor/signaling';
 
 import {
   IDiffAddRange, IDiffEntry, IDiffArrayEntry,
@@ -88,7 +88,7 @@ function createPatchedCellDecisionDiffModel(
 
   let outputs: OutputDiffModel[] | null = null;
   let executionCount: ImmutableDiffModel | null = null;
-  if (base.cell_type === 'code') {
+  if (nbformat.isCode(base)) {
     if (base.outputs) {
       let outputBase = base.outputs;
       let outputDec = filterDecisions(decisions, ['outputs'], 2);
@@ -155,7 +155,7 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
   }
   private _deleteCell: boolean;
 
-  deleteCellChanged: ISignal<CellMergeModel, boolean>;
+  readonly deleteCellChanged = new Signal<CellMergeModel, boolean>(this);
 
 
   /**
@@ -174,7 +174,7 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
   }
   private _clearOutputs = false;
 
-  clearOutputsChanged: ISignal<CellMergeModel, boolean>;
+  readonly clearOutputsChanged = new Signal<CellMergeModel, boolean>(this);
 
   /**
    * Whether source is the same in local and remote
@@ -353,7 +353,7 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
                    'Keeping the model value.');
       output.source = splitLines(this._merged!.source.remote!);
     }
-    if (this.clearOutputs && output.cell_type === 'code') {
+    if (this.clearOutputs && nbformat.isCode(output)) {
       output.outputs = [];
     }
     return output;
@@ -617,6 +617,3 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
         this.base, this.decisions, this.local, this.remote, this.mimetype);
   }
 }
-
-defineSignal(CellMergeModel.prototype, 'deleteCellChanged');
-defineSignal(CellMergeModel.prototype, 'clearOutputsChanged');

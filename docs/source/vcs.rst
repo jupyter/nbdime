@@ -152,6 +152,10 @@ with the following steps:
     [diff "jupyternotebook"]
     command = git-nbdiffdriver diff
 
+  or if you prefer to use webdiff::
+    [diff "jupyternotebook"]
+    command = git-nbdiffdriver webdiff [--ip IP]
+
 - To associate the diff driver with a file type,
   add the following entry to the appropriate
   ``.gitattributes`` file::

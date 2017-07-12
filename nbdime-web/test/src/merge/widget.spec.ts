@@ -5,24 +5,19 @@ import expect = require('expect.js');
 
 import {
   nbformat
-} from '@jupyterlab/services';
-
-import {
-  RenderMime
-} from 'jupyterlab/lib/rendermime';
-
-import {
-  HTMLRenderer, LatexRenderer, ImageRenderer, TextRenderer,
-  JavascriptRenderer, SVGRenderer, MarkdownRenderer
-} from 'jupyterlab/lib/renderers';
-
-import {
-  defaultSanitizer
-} from 'jupyterlab/lib/sanitizer';
+} from '@jupyterlab/coreutils';
 
 import {
   Widget
-} from 'phosphor/lib/ui/widget';
+} from '@phosphor/widgets';
+
+import {
+  RenderMime
+} from '@jupyterlab/rendermime';
+
+import {
+  defaultSanitizer
+} from '@jupyterlab/apputils';
 
 import {
     IMergeDecision
@@ -44,34 +39,15 @@ describe('merge', () => {
 
   describe('widget', () => {
 
-    // Setup rendermime:
-    const transformers = [
-      new JavascriptRenderer(),
-      new MarkdownRenderer(),
-      new HTMLRenderer(),
-      new ImageRenderer(),
-      new SVGRenderer(),
-      new LatexRenderer(),
-      new TextRenderer()
-    ];
-
-    let renderers: RenderMime.MimeMap<RenderMime.IRenderer> = {};
-    let order: string[] = [];
-    for (let t of transformers) {
-      for (let m of t.mimetypes) {
-        renderers[m] = t;
-        order.push(m);
-      }
-    }
     let rendermime = new RenderMime({
-      renderers: renderers, order: order, sanitizer: defaultSanitizer});
+      items: RenderMime.getDefaultItems(), sanitizer: defaultSanitizer});
 
     // End rendermime setup
 
     describe('MetadataDiffWidget', () => {
 
       it('should create a widget for an unchanged model', () => {
-          let base: nbformat.INotebookMetadata = {
+          let base = {
               kernelspec: {
                   name: '',
                   display_name: ''
@@ -80,7 +56,7 @@ describe('merge', () => {
                   name: ''
               },
               orig_nbformat: 4
-          };
+          } as nbformat.INotebookMetadata;
           let model = new MetadataMergeModel(
               base, []);
           let widget = new MetadataMergeWidget(model);
