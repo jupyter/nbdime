@@ -3,32 +3,20 @@
 'use strict';
 
 import {
-  Panel, PanelLayout
-} from 'phosphor/lib/ui/panel';
-
-import {
-  Widget
-} from 'phosphor/lib/ui/widget';
+  Panel, PanelLayout, Widget
+} from '@phosphor/widgets';
 
 import {
   Message
-} from 'phosphor/lib/core/messaging';
-
-import {
-  ISequence
-} from 'phosphor/lib/algorithm/sequence';
-
-import {
-  ISignal, defineSignal
-} from 'phosphor/lib/core/signaling';
+} from '@phosphor/messaging';
 
 import {
   MimeData
-} from 'phosphor/lib/core/mimedata';
+} from '@phosphor/coreutils';
 
 import {
   Drag, IDragEvent, DropAction, SupportedActions
-} from 'phosphor/lib/dom/dragdrop';
+} from '@phosphor/dragdrop';
 
 
 /**
@@ -76,11 +64,12 @@ const DRAG_THRESHOLD = 5;
 export
 function belongsToUs(node: HTMLElement, parentClass: string,
                      parentNode: HTMLElement): boolean {
+  let candidate: HTMLElement | null = node;
   // Traverse DOM until drag panel encountered:
-  while (node && !node.classList.contains(parentClass)) {
-    node = node.parentElement;
+  while (candidate && !candidate.classList.contains(parentClass)) {
+    candidate = candidate.parentElement;
   }
-  return node && node === parentNode;
+  return !!candidate && candidate === parentNode;
 }
 
 
@@ -102,12 +91,13 @@ function findChild(parent: HTMLElement | HTMLElement[], node: HTMLElement): HTML
       return child.parentElement === parent;
     }
   };
-  while (node && node !== parent) {
-    if (isDirectChild(node)) {
-      child = node;
+  let candidate: HTMLElement | null = node;
+  while (candidate && candidate !== parent) {
+    if (isDirectChild(candidate)) {
+      child = candidate;
       break;
     }
-    node = node.parentElement;
+    candidate = candidate.parentElement;
   }
   return child;
 }
@@ -456,12 +446,6 @@ abstract class DragDropPanelBase extends DropPanel {
 
     // Start the drag and remove the mousemove listener.
     this.drag.start(clientX, clientY).then(this.onDragComplete.bind(this));
-    //TODO: Remove when updating to phosphor 1.0:
-    // Workaround for phosphor bug #165:
-    if (dragImage) {
-      dragImage.style.position = 'fixed';
-    }
-    // End workaround
     document.removeEventListener('mousemove', this, true);
     document.removeEventListener('mouseup', this, true);
   }
@@ -487,12 +471,13 @@ abstract class DragDropPanelBase extends DropPanel {
       }
     } else {
       // Otherwise, traverse up DOM to check if click is on a drag handle
-      while (node && node !== this.node) {
-        if (node.classList.contains(this.dragHandleClass)) {
-          handle = node;
+      let candidate: HTMLElement | null = node;
+      while (candidate && candidate !== this.node) {
+        if (candidate.classList.contains(this.dragHandleClass)) {
+          handle = candidate;
           break;
         }
-        node = node.parentElement;
+        candidate = candidate.parentElement;
       }
       // Finally, check that handle does not belong to a nested drag panel
       if (handle !== null && !belongsToUs(
@@ -680,7 +665,7 @@ class DragDropPanel extends DragDropPanelBase {
       if (to > from) {
         to -= 1;
       }
-      this.insertWidget(to, this.widgets.at(from));
+      this.insertWidget(to, this.widgets[from]);
     }
   }
 
@@ -695,7 +680,7 @@ class DragDropPanel extends DragDropPanelBase {
   protected getIndexOfChildNode(node: HTMLElement | null, parent?: PanelLayout): any {
     parent = parent || this.layout as PanelLayout;
     for (let i = 0; i < parent.widgets.length; i++) {
-      if (parent.widgets.at(i).node === node) {
+      if (parent.widgets[i].node === node) {
         return i;
       }
     }

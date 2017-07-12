@@ -3,18 +3,18 @@
   display: flex;
 }
 
-.p-mod-left-to-right {
+.p-FlexPanel.p-mod-left-to-right {
   flex-direction: row;
 }
 
-.p-mod-right-to-left {
+.p-FlexPanel.p-mod-right-to-left {
   flex-direction: row-reverse;
 }
 
-.p-mod-top-to-bottom {
+.p-FlexPanel.p-mod-top-to-bottom {
   flex-direction: column;
 }
 
-.p-mod-bottom-to-top {
+.p-FlexPanel.p-mod-bottom-to-top {
   flex-direction: column-reverse;
 }

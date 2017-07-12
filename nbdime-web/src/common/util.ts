@@ -9,7 +9,7 @@ interface DeepCopyableObject {
 }
 
 export
-type DeepCopyableValue = DeepCopyableObject | any[] | string | number | boolean;
+type DeepCopyableValue = DeepCopyableObject | any[] | string | number | boolean | null;
 
 /**
  * Check whether a value is in an array.
@@ -73,7 +73,7 @@ export function deepCopy<T extends DeepCopyableValue>(obj: T | null): T | null {
       r.prototype = a.prototype;
     }
     for (let k in obj) {
-      r[k] = deepCopy(a[k]!);
+      r[k] = deepCopy(a[k] as any);
     }
     return r as T;
   }
@@ -90,9 +90,10 @@ function shallowCopy< T extends { [key: string]: any } >(original: T): T {
 
   for (let k in original) {
     // Don't copy function
-    if (original[k] !== null && original[k] !== undefined &&
-        original[k].hasOwnProperty('constructor') &&
-        original[k].constructor === Function) {
+    let ok = original[k] as any;
+    if (ok !== null && ok !== undefined &&
+        ok.hasOwnProperty('constructor') &&
+        ok.constructor === Function) {
       continue;
     }
     let pDesc = Object.getOwnPropertyDescriptor(original, k);

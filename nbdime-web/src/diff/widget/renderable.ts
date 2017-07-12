@@ -4,23 +4,19 @@
 
 import {
   nbformat
-} from '@jupyterlab/services';
-
-import {
-  IRenderMime
-} from 'jupyterlab/lib/rendermime';
+} from '@jupyterlab/coreutils';
 
 import {
   JSONValue
-} from 'phosphor/lib/algorithm/json';
+} from '@phosphor/coreutils';
 
 import {
-  Widget
-} from 'phosphor/lib/ui/widget';
+  PanelLayout, Widget
+} from '@phosphor/widgets';
 
 import {
-  PanelLayout
-} from 'phosphor/lib/ui/panel';
+  IRenderMime
+} from '@jupyterlab/rendermime';
 
 import {
   valueIn

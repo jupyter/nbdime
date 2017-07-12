@@ -4,7 +4,7 @@
 
 import {
   nbformat
-} from '@jupyterlab/services';
+} from '@jupyterlab/coreutils';
 
 import {
   NotifyUserError
@@ -43,12 +43,12 @@ class OutputDiffModel extends RenderableDiffModel<nbformat.IOutput> {
    */
   hasMimeType(mimetype: string): string | null {
     let outputs = this.base || this.remote!;
-    if (outputs.output_type === 'stream' &&
+    if (nbformat.isStream(outputs) &&
           mimetype === 'application/vnd.jupyter.console-text') {
       return 'text';
-    } else if (outputs.output_type === 'error') {
+    } else if (nbformat.isError(outputs)) {
       return 'traceback';
-    } else if (outputs.output_type === 'execute_result' || outputs.output_type === 'display_data') {
+    } else if (nbformat.isExecuteResult(outputs) || nbformat.isDisplayData(outputs)) {
       let data = outputs.data;
       if (mimetype in data) {
         return 'data.' + mimetype;

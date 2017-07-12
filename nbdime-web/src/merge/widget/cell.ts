@@ -4,19 +4,15 @@
 
 import {
   nbformat
-} from '@jupyterlab/services';
+} from '@jupyterlab/coreutils';
+
+import {
+  Panel, Widget
+} from '@phosphor/widgets';
 
 import {
   IRenderMime
-} from 'jupyterlab/lib/rendermime';
-
-import {
-  Widget
-} from 'phosphor/lib/ui/widget';
-
-import {
-  Panel, PanelLayout
-} from 'phosphor/lib/ui/panel';
+} from '@jupyterlab/rendermime';
 
 import {
   CollapsiblePanel
@@ -147,12 +143,9 @@ class CellMergeWidget extends Panel {
         candidate.metadata = JSON.parse(text);
       }
     }
-    if (candidate.cell_type === 'code' && this.outputViews) {
+    if (nbformat.isCode(candidate) && this.outputViews) {
       let model = this.outputViews.merged;
-      let outputs: nbformat.IOutput[] = [];
-      for (let i=0; i < model.length; ++i) {
-        outputs.push(model.get(i) as nbformat.IOutput);
-      }
+      let outputs = model.toJSON();
       candidate.outputs = outputs;
     }
     return candidate;

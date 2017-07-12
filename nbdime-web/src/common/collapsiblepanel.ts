@@ -3,12 +3,8 @@
 'use strict';
 
 import {
-  Widget
-} from 'phosphor/lib/ui/widget';
-
-import {
-  Panel
-} from 'phosphor/lib/ui/panel';
+  Widget, Panel
+} from '@phosphor/widgets';
 
 const COLLAPSIBLE_CLASS = 'jp-CollapsiblePanel';
 const COLLAPSIBLE_HEADER = 'jp-CollapsiblePanel-header';

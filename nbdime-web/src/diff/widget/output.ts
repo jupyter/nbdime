@@ -4,19 +4,15 @@
 
 import {
   nbformat
-} from '@jupyterlab/services';
-
-import {
-  IRenderMime
-} from 'jupyterlab/lib/rendermime';
-
-import {
-  OutputWidget
-} from 'jupyterlab/lib/notebook/output-area';
+} from '@jupyterlab/coreutils';
 
 import {
   Widget
-} from 'phosphor/lib/ui/widget';
+} from '@phosphor/widgets';
+
+import {
+  IRenderMime, OutputModel
+} from '@jupyterlab/rendermime';
 
 import {
   RenderableDiffView
@@ -57,7 +53,7 @@ class RenderableOutputView extends RenderableDiffView<nbformat.IOutput> {
       toTest.push(model.remote);
     }
     for (let o of toTest) {
-      if (o.output_type === 'execute_result' || o.output_type === 'display_data') {
+      if (nbformat.isExecuteResult(o) || nbformat.isDisplayData(o)) {
         let bundle = o.data;
         if (!RenderableDiffView.safeOrSanitizable(bundle)) {
           return false;
@@ -74,8 +70,8 @@ class RenderableOutputView extends RenderableDiffView<nbformat.IOutput> {
    * Create a widget which renders the given cell output
    */
   protected createSubView(output: nbformat.IOutput, trusted: boolean): Widget {
-    let widget = new OutputWidget({rendermime: this._rendermime});
-    widget.render({output, trusted});
+    let model = new OutputModel({value: output, trusted});
+    let widget = this._rendermime.render(model);
     widget.addClass(RENDERED_OUTPUT_CLASS);
     return widget;
   }
