@@ -142,7 +142,7 @@ extdiff =
 [extdiff]
 cmd.nbdime = hg-nbdiff
 cmd.nbdimeweb = hg-nbdiffweb
-opts.nbdimeweb = --log-level ERROR --browser=disabled
+opts.nbdimeweb = --log-level DEBUG --browser=disabled
 
 [merge-tools]
 nbdime.priority = 2
@@ -152,7 +152,7 @@ nbdime.args = $base $local $other $output
 nbdime-web.priority = 1
 nbdime-web.premerge = False
 nbdime-web.executable = hg-nbmergeweb
-nbdime-web.args = --log-level ERROR $base $local $other $output
+nbdime-web.args = --log-level DEBUG --browser=disabled $base $local $other $output
 nbdime-web.gui = True
 
 [merge-patterns]

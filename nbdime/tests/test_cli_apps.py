@@ -483,7 +483,7 @@ def test_git_difftool(git_repo, request, unique_port):
     assert process.poll() == 0
 
 
-@pytest.mark.timeout(timeout=3*WEB_TEST_TIMEOUT)
+@pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
 def test_git_mergetool(git_repo, request, unique_port):
     gitmergetool.main(['config', '--enable'])
     cmd = get_output('git config --get --local mergetool.nbdime.cmd').strip()
@@ -505,7 +505,6 @@ def test_git_mergetool(git_repo, request, unique_port):
             pass
     request.addfinalizer(_term)
 
-    # 3 is the number of notebooks in this diff
     url = 'http://127.0.0.1:%i' % port
     _wait_up(url, check=lambda: process.poll() is None)
     # server started
@@ -593,3 +592,43 @@ def test_hg_diffweb(hg_repo, request, unique_port):
     # wait for exit
     process.wait()
     assert process.poll() == 1  # hg ExtDiff returns 1 for some reason
+
+
+@pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
+def test_hg_mergetool(hg_repo, request, unique_port):
+    # enable diff/merge drivers
+    write_local_hg_config(hg_repo)
+
+    with pytest.raises(CalledProcessError):
+        call('hg merge remote-conflict')
+    config_override = '--log-level DEBUG --browser=disabled --port=%d $base $local $other $output' % unique_port
+    process = Popen([
+        'hg', 'resolve', '--tool', 'nbdime-web',
+        '--config', 'merge-tools.nbdime-web.args=%s' % config_override,
+        'merge-conflict.ipynb'])
+
+    def _term():
+        try:
+            process.terminate()
+        except OSError:
+            pass
+    request.addfinalizer(_term)
+
+    url = 'http://127.0.0.1:%i' % unique_port
+    _wait_up(url, check=lambda: process.poll() is None)
+    # server started
+    r = requests.get(url + '/mergetool')
+    r.raise_for_status()
+    r = requests.post(
+        url_concat(url + '/api/store', {'outputfilename': 'merge-conflict.ipynb'}),
+        data=json.dumps({
+            'merged': nbformat.v4.new_notebook(),
+        })
+    )
+    r.raise_for_status()
+    # close it
+    r = requests.post(url + '/api/closetool', headers={'exit_code': '0'})
+    r.raise_for_status()
+    # wait for exit
+    process.wait()
+    assert process.poll() == 0
