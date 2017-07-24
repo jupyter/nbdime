@@ -33,8 +33,8 @@ def main(args=None):
     nbdime.log.init_logging(level=opts.log_level)
 
     # TODO: If a/b are files that are not notebooks, ensure a decent error is printed.
-    local, remote = opts.local, opts.remote
     if not os.path.isfile(opts.local) or not os.path.isfile(opts.remote):
+        local, remote = opts.local, opts.remote
         for a, b in diff_directories(local, remote):
             opts.local, opts.remote = a, b
             ret = nbdifftool.main_parsed(opts)

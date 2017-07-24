@@ -28,22 +28,22 @@ def main(args=None):
     )
 
     add_diff_args(parser)
-    add_filename_args(parser, ('base', 'local'))
+    add_filename_args(parser, ('base', 'remote'))
 
     opts = parser.parse_args(args)
 
-    # TODO: Filter base/local: If directories, find all modified notebooks
+    # TODO: Filter base/remote: If directories, find all modified notebooks
     # If files that are not notebooks, ensure a decent error is printed.
-    process_exclusive_ignorables(opts, diff_exclusives)
-    filter_args = ['--%s' % name for name in diff_exclusives if getattr(opts, name)]
-    if not os.path.isfile(opts.base) or not os.path.isfile(opts.local):
-        for a, b in diff_directories(opts.base, opts.local):
-            ret = nbdiffapp.main([a, b] + filter_args)
+    if not os.path.isfile(opts.base) or not os.path.isfile(opts.remote):
+        base, remote = opts.base, opts.remote
+        for a, b in diff_directories(base, remote):
+            opts.base, opts.remote = a, b
+            ret = nbdiffapp.main_diff(opts)
             if ret != 0:
                 return ret
         return ret
     else:
-        return nbdiffapp.main([opts.base, opts.local] + filter_args)
+        return nbdiffapp.main_diff(opts)
 
 
 
