@@ -20,7 +20,7 @@ from jsonschema import RefResolver
 from pytest import fixture, skip
 import nbformat
 
-from .utils import call, have_git
+from .utils import call, have_git, have_hg
 
 from nbdime.webapp.nbdimeserver import init_app
 from nbdime.diffing.notebooks import set_notebook_diff_targets
@@ -68,6 +68,11 @@ def needs_git():
     if not have_git:
         skip("requires git")
 
+
+@fixture
+def needs_hg():
+    if not have_hg:
+        skip("requires mercurial")
 
 @fixture
 def git_repo(tmpdir, request, filespath, needs_git):
@@ -147,6 +152,48 @@ def git_repo2(tmpdir, request, filespath, needs_git):
     call('git checkout remote')
     call('git rm diff.ipynb')
     assert not os.path.exists('.gitattributes')
+    return repo
+
+
+@fixture
+def hg_repo(tmpdir, request, filespath, needs_hg):
+    repo = str(tmpdir.join('repo'))
+    os.mkdir(repo)
+    save_cwd = os.getcwd()
+    os.chdir(repo)
+    request.addfinalizer(lambda: os.chdir(save_cwd))
+    call('hg init'.split())
+
+    # setup base branch
+    src = filespath
+    call('hg bookmark base')
+    shutil.copy(pjoin(src, 'multilevel-test-base.ipynb'), pjoin(repo, 'merge-no-conflict.ipynb'))
+    shutil.copy(pjoin(src, 'inline-conflict--1.ipynb'), pjoin(repo, 'merge-conflict.ipynb'))
+    shutil.copy(pjoin(src, 'src-and-output--1.ipynb'), pjoin(repo, 'diff.ipynb'))
+    call('hg add *.ipynb')
+    call('hg commit -m "init base brach"')
+
+    # setup local branch
+    call('hg bookmark local')
+    shutil.copy(pjoin(src, 'multilevel-test-local.ipynb'), pjoin(repo, 'merge-no-conflict.ipynb'))
+    shutil.copy(pjoin(src, 'inline-conflict--2.ipynb'), pjoin(repo, 'merge-conflict.ipynb'))
+    shutil.copy(pjoin(src, 'src-and-output--2.ipynb'), pjoin(repo, 'diff.ipynb'))
+    call('hg commit -m "create local branch"')
+
+    # setup remote branch with conflict
+    call('hg update base')
+    call('hg bookmark remote-conflict')
+    shutil.copy(pjoin(src, 'inline-conflict--3.ipynb'), pjoin(repo, 'merge-conflict.ipynb'))
+    call('hg commit -m "create remote with conflict"')
+
+    # setup remote branch with no conflict
+    call('hg update base')
+    call('hg bookmark remote-no-conflict')
+    shutil.copy(pjoin(src, 'multilevel-test-remote.ipynb'), pjoin(repo, 'merge-no-conflict.ipynb'))
+    call('hg commit -m "create remote with conflict"')
+
+    # start on local
+    call('hg update local')
     return repo
 
 

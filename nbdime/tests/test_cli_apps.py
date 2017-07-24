@@ -17,7 +17,7 @@ from tornado.httputil import url_concat
 
 import nbformat
 
-from .utils import assert_clean_exit, get_output, call, WEB_TEST_TIMEOUT
+from .utils import assert_clean_exit, get_output, call, WEB_TEST_TIMEOUT, write_local_hg_config
 
 import nbdime
 from nbdime.nbshowapp import main_show
@@ -35,6 +35,12 @@ from nbdime.vcs.git import (
     difftool as gitdifftool,
     mergedriver as gitmergedriver,
     mergetool as gitmergetool,
+)
+from nbdime.vcs.hg import (
+    diff as hgdiff,
+    diffweb as hgdiffweb,
+    merge as hgmerge,
+    mergeweb as hgmergeweb,
 )
 from nbdime.utils import EXPLICIT_MISSING_FILE
 
@@ -387,13 +393,13 @@ def test_config_git_fails(git_repo):
         _check_mergetool_disabled()
 
 
-def test_diffdriver(git_repo):
+def test_git_diffdriver(git_repo):
     gitdiffdriver.main(['config', '--enable'])
     out = get_output('git diff base diff.ipynb')
     assert 'nbdiff' in out
 
 
-def test_mergedriver(git_repo, filespath):
+def test_git_mergedriver(git_repo, filespath):
     # enable diff/merge drivers
     gitdiffdriver.main(['config', '--enable'])
     gitmergedriver.main(['config', '--enable'])
@@ -439,7 +445,7 @@ def _wait_up(url, interval=0.1, check=None):
 
 
 @pytest.mark.timeout(timeout=3*WEB_TEST_TIMEOUT)
-def test_difftool(git_repo, request, unique_port):
+def test_git_difftool(git_repo, request, unique_port):
     gitdifftool.main(['config', '--enable'])
     cmd = get_output('git config --get --local difftool.nbdime.cmd').strip()
 
@@ -478,7 +484,7 @@ def test_difftool(git_repo, request, unique_port):
 
 
 @pytest.mark.timeout(timeout=3*WEB_TEST_TIMEOUT)
-def test_mergetool(git_repo, request, unique_port):
+def test_git_mergetool(git_repo, request, unique_port):
     gitmergetool.main(['config', '--enable'])
     cmd = get_output('git config --get --local mergetool.nbdime.cmd').strip()
 
@@ -518,3 +524,72 @@ def test_mergetool(git_repo, request, unique_port):
     # wait for exit
     process.wait()
     assert process.poll() == 0
+
+
+def test_hg_diff(hg_repo):
+    write_local_hg_config(hg_repo)
+    # ExtDiff for some reason always returns 1.
+    out = get_output('hg nbdime -r base:local diff.ipynb', returncode=1)
+    assert 'nbdiff' in out
+
+
+def test_hg_mergedriver(hg_repo, filespath):
+    # enable diff/merge drivers
+    write_local_hg_config(hg_repo)
+    # run merge with no conflicts
+    out = get_output('hg merge remote-no-conflict', err=True)
+    assert 'nbmergeapp' in out
+    with open('merge-no-conflict.ipynb') as f:
+        merged = f.read()
+
+    with open(os.path.join(filespath, 'multilevel-test-merged.ipynb')) as f:
+        expected = f.read()
+
+    # verify merge success
+    assert merged == expected
+
+    # reset
+    call('hg update --clean local')
+
+    # run merge with conflicts
+    with pytest.raises(CalledProcessError):
+        call('hg merge remote-conflict')
+
+    status = get_output('hg status')
+    assert 'merge-conflict.ipynb' in status
+    out = get_output('hg nbdime', returncode=1)
+    assert 'nbdiff' in out
+    # verify that the conflicted result is a valid notebook
+    nb = nbformat.read('merge-conflict.ipynb', as_version=4)
+    nbformat.validate(nb)
+
+
+
+@pytest.mark.timeout(timeout=3*WEB_TEST_TIMEOUT)
+def test_hg_diffweb(hg_repo, request, unique_port):
+    # enable diff/merge drivers
+    write_local_hg_config(hg_repo)
+
+    process = Popen(['hg', 'nbdimeweb', '-r', 'base', '-o', '--port=%i' % unique_port])
+
+    def _term():
+        try:
+            process.terminate()
+        except OSError:
+            pass
+    request.addfinalizer(_term)
+
+    # 3 is the number of notebooks in this diff
+    url = 'http://127.0.0.1:%i' % unique_port
+    _wait_up(url, check=lambda: process.poll() is None)
+    for i in range(3):
+        # server started
+        r = requests.get(url + '/difftool')
+        r.raise_for_status()
+        # close it
+        r = requests.post(url + '/api/closetool', headers={'exit_code': '0'})
+        r.raise_for_status()
+        time.sleep(0.25)
+    # wait for exit
+    process.wait()
+    assert process.poll() == 1  # hg ExtDiff returns 1 for some reason
