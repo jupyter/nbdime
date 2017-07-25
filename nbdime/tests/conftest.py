@@ -170,7 +170,7 @@ def hg_repo(tmpdir, request, filespath, needs_hg):
     shutil.copy(pjoin(src, 'multilevel-test-base.ipynb'), pjoin(repo, 'merge-no-conflict.ipynb'))
     shutil.copy(pjoin(src, 'inline-conflict--1.ipynb'), pjoin(repo, 'merge-conflict.ipynb'))
     shutil.copy(pjoin(src, 'src-and-output--1.ipynb'), pjoin(repo, 'diff.ipynb'))
-    call('hg add *.ipynb')
+    call('hg add')
     call('hg commit -m "init base brach"')
 
     # setup local branch
@@ -222,7 +222,7 @@ def app(nbdime_base_url, filespath):
         base_url=nbdime_base_url,
         port=0,
         cwd=filespath,
-    )
+    )[0]
 
 
 @fixture
