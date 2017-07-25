@@ -1,17 +1,26 @@
 #!/usr/bin/env python
-"""A simple differ for diffing direcotries containing notebooks.
+"""A simple differ for diffing directories containing notebooks.
 
-Does not handle file moves/renames, yet.
+Does not handle file moves/renames (yet).
 """
 
 import os
 import filecmp
+from functools import partial
+
 from nbdime.utils import EXPLICIT_MISSING_FILE
 
 pjoin = os.path.join
 
-# Lifted from http://stackoverflow.com/questions/4187564/recursive-dircmp-compare-two-directories-to-ensure-they-have-the-same-files-and
-class dircmp(filecmp.dircmp):
+
+def merge_two_dicts(x, y):
+    """Given two dicts, merge them into a new dict as a shallow copy."""
+    z = x.copy()
+    z.update(y)
+    return z
+
+
+class dircmp(filecmp.dircmp, object):
     """
     Compare the content of dir1 and dir2. In contrast with filecmp.dircmp, this
     subclass compares the content of files with the same path.
@@ -23,8 +32,8 @@ class dircmp(filecmp.dircmp):
         Ensure that we only consider notebook files or directories.
         """
         super(dircmp, self).phase0()
-        self.left_list = filter(ipynb_only, self.left_list)
-        self.right_list = filter(ipynb_only, self.right_list)
+        self.left_list = list(filter(partial(ipynb_only, self.left), getattr(self, 'left_list')))
+        self.right_list = list(filter(partial(ipynb_only, self.right), getattr(self, 'right_list')))
 
     def phase2(self):
         """
@@ -32,7 +41,7 @@ class dircmp(filecmp.dircmp):
         Ensure files are only notebooks.
         """
         super(dircmp, self).phase2()
-        self.common_files = filter(ipynb_only, self.common_files)
+        self.common_files = list(filter(partial(ipynb_only, self.left), getattr(self, 'common_files')))
 
     def phase3(self):
         """
@@ -43,9 +52,29 @@ class dircmp(filecmp.dircmp):
                                  shallow=False)
         self.same_files, self.diff_files, self.funny_files = fcomp
 
+    def phase4(self):
+        """
+        Find out differences between common subdirectories
+        A new dircmp object is created for each common subdirectory,
+        these are stored in a dictionary indexed by filename.
+        The hide and ignore properties are inherited from the parent
+        """
 
-def ipynb_only(path):
-    return os.path.isdir(path) or os.path.splitext(path)[1] == '.ipynb'
+        self.subdirs = {}
+        for x in self.common_dirs:
+            a_x = os.path.join(self.left, x)
+            b_x = os.path.join(self.right, x)
+            self.subdirs[x] = self.__class__(a_x, b_x, self.ignore, self.hide)
+
+    methodmap = merge_two_dicts(filecmp.dircmp.methodmap, dict(
+                     subdirs=phase4,
+                     same_files=phase3, diff_files=phase3, funny_files=phase3,
+                     common_dirs = phase2, common_files=phase2, common_funny=phase2,
+                     left_list=phase0, right_list=phase0))
+
+
+def ipynb_only(parent, path):
+    return os.path.isdir(pjoin(parent, path)) or os.path.splitext(path)[1] == '.ipynb'
 
 
 def find_all_sub_notebooks(dirpath):
@@ -60,6 +89,12 @@ def diff_directories(a, b, dc=None):
 
     Based on directory/file name only, so renames are handled as
     a full deletion + addition.
+
+    Parameters:
+    -----------
+        a: First directory
+        b: Second directory
+        dc: Recursion variable (custom dircmp instance)
     """
     if dc is None:
         dc = dircmp(a, b, ignore=[])
@@ -80,8 +115,9 @@ def diff_directories(a, b, dc=None):
         else:
             yield (EXPLICIT_MISSING_FILE, added)
     # Recurse for common directories:
-    for _, sub_dc in dc.subdirs:
-        yield from diff_directories(None, None, sub_dc)
+    for _, sub_dc in dc.subdirs.items():
+        for sub in diff_directories(None, None, sub_dc):
+            yield sub
 
     # Yield changed files from current directory:
     for changed in dc.diff_files:
