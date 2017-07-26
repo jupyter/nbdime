@@ -528,7 +528,7 @@ def test_git_mergetool(git_repo, request, unique_port):
 def test_hg_diff(hg_repo):
     write_local_hg_config(hg_repo)
     # ExtDiff for some reason always returns 1.
-    out = get_output('hg nbdime -r base:local diff.ipynb', returncode=1)
+    out = get_output('hg nbdiff -r base:local diff.ipynb', returncode=1)
     assert 'nbdiff' in out
 
 
@@ -556,7 +556,7 @@ def test_hg_mergedriver(hg_repo, filespath):
 
     status = get_output('hg status')
     assert 'merge-conflict.ipynb' in status
-    out = get_output('hg nbdime', returncode=1)
+    out = get_output('hg nbdiff', returncode=1)
     assert 'nbdiff' in out
     # verify that the conflicted result is a valid notebook
     nb = nbformat.read('merge-conflict.ipynb', as_version=4)
@@ -569,7 +569,7 @@ def test_hg_diffweb(hg_repo, request, unique_port):
     # enable diff/merge drivers
     write_local_hg_config(hg_repo)
 
-    process = Popen(['hg', 'nbdimeweb', '-r', 'base', '-o', '--port=%i' % unique_port])
+    process = Popen(['hg', 'nbdiffweb', '-r', 'base', '-o', '--port=%i' % unique_port])
 
     def _term():
         try:
@@ -603,8 +603,8 @@ def test_hg_mergetool(hg_repo, request, unique_port):
         call('hg merge remote-conflict')
     config_override = '--log-level DEBUG --browser=disabled --port=%d $base $local $other $output' % unique_port
     process = Popen([
-        'hg', 'resolve', '--tool', 'nbdime-web',
-        '--config', 'merge-tools.nbdime-web.args=%s' % config_override,
+        'hg', 'resolve', '--tool', 'nbdimeweb',
+        '--config', 'merge-tools.nbdimeweb.args=%s' % config_override,
         'merge-conflict.ipynb'])
 
     def _term():

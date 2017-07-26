@@ -140,20 +140,20 @@ MERCURIAL_TEST_CONFIG = """
 extdiff =
 
 [extdiff]
-cmd.nbdime = hg-nbdiff
-cmd.nbdimeweb = hg-nbdiffweb
-opts.nbdimeweb = --log-level DEBUG --browser=disabled
+cmd.nbdiff = hg-nbdiff
+cmd.nbdiffweb = hg-nbdiffweb
+opts.nbdiffweb = --log-level DEBUG --browser=disabled
 
 [merge-tools]
 nbdime.priority = 2
 nbdime.premerge = False
 nbdime.executable = hg-nbmerge
 nbdime.args = $base $local $other $output
-nbdime-web.priority = 1
-nbdime-web.premerge = False
-nbdime-web.executable = hg-nbmergeweb
-nbdime-web.args = --log-level DEBUG --browser=disabled $base $local $other $output
-nbdime-web.gui = True
+nbdimeweb.priority = 1
+nbdimeweb.premerge = False
+nbdimeweb.executable = hg-nbmergeweb
+nbdimeweb.args = --log-level DEBUG --browser=disabled $base $local $other $output
+nbdimeweb.gui = True
 
 [merge-patterns]
 **.ipynb = nbdime
