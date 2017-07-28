@@ -82,6 +82,11 @@ def main_dispatch(args=None):
             diff_tool(args) or
             merge_tool(args)
         )
+    elif cmd == 'reg-extensions':
+        # Register nbdime extensions
+        call('jupyter serverextension enable --py nbdime'.split() + args)
+        call('jupyter nbextension install --py nbdime'.split() + args)
+        call('jupyter nbextension enable --py nbdime'.split() + args)
     else:
         if cmd == '--version':
             sys.exit(__version__)
