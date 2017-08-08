@@ -14,7 +14,6 @@ Use with:
 import sys
 from subprocess import check_call, CalledProcessError
 
-import nbdime.log
 from .webapp import nbmergetool
 from .args import add_generic_args, add_git_config_subcommand
 
@@ -73,7 +72,6 @@ def main(args=None):
     )
 
     opts = parser.parse_args(args)
-    nbdime.log.init_logging(level=opts.log_level)
     if opts.subcommand == 'merge':
         return nbmergetool.main_parsed(opts)
     elif opts.subcommand == 'config':

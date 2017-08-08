@@ -34,7 +34,7 @@ def main_merge(args):
 
     for fn in (bfn, lfn, rfn):
         if not os.path.exists(fn) and fn != EXPLICIT_MISSING_FILE:
-            nbdime.log.error("Cannot find file '{}'".format(fn))
+            nbdime.log.error("Cannot find file '%s'", fn)
             return 1
 
     if lfn == rfn == EXPLICIT_MISSING_FILE:
@@ -65,9 +65,9 @@ def main_merge(args):
         nbdime.log.warning("Decisions:\n%s", out.getvalue())
     elif mfn:
         # Write partial or fully completed merge to given foo.ipynb filename
-        with io.open(mfn, "w", encoding="utf8") as mf:
+        with io.open(mfn, "w", encoding="utf8"):
             nbformat.write(merged, mfn)
-        nbdime.log.info("Merge result written to %s" % mfn)
+        nbdime.log.info("Merge result written to %s", mfn)
     else:
         # Write merged notebook to terminal
         nbformat.write(merged, sys.stdout)
@@ -97,7 +97,7 @@ def handle_agreed_deletion(base_fn, output_fn, print_decisions=False):
         # Delete file if existing, if not do nothing
         if os.path.exists(output_fn):
             os.remove(output_fn)
-            nbdime.log.info("Output file deleted: %s" % output_fn)
+            nbdime.log.info("Output file deleted: %s", output_fn)
 
 
 def _build_arg_parser():
@@ -131,9 +131,7 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
     setup_std_streams()
-    nbdime.log.init_logging()
     arguments = _build_arg_parser().parse_args(args)
-    nbdime.log.init_logging(level=arguments.log_level)
     return main_merge(arguments)
 
 

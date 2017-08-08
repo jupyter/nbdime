@@ -16,7 +16,6 @@ import os
 import sys
 from subprocess import check_call, check_output, CalledProcessError
 
-import nbdime.log
 from .args import add_generic_args, add_git_config_subcommand
 from .webapp import nbdifftool
 
@@ -93,7 +92,6 @@ def main(args=None):
     )
 
     opts = parser.parse_args(args)
-    nbdime.log.init_logging(level=opts.log_level)
     if opts.subcommand == 'diff':
         return show_diff(opts.local, opts.remote, opts)
     elif opts.subcommand == 'config':

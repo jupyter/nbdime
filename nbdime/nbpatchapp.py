@@ -10,12 +10,11 @@ import os
 import sys
 import argparse
 import json
-import nbformat
 import io
+import nbformat
 
-import nbdime
 from nbdime.patching import patch_notebook
-from nbdime.diff_format import to_diffentry_dicts
+from nbdime.diff_utils import to_diffentry_dicts
 from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook, setup_std_streams
 from nbdime.prettyprint import pretty_print_notebook
 
@@ -77,7 +76,6 @@ def main(args=None):
         args = sys.argv[1:]
     setup_std_streams()
     arguments = _build_arg_parser().parse_args(args)
-    nbdime.log.init_logging(level=arguments.log_level)
     return main_patch(arguments)
 
 

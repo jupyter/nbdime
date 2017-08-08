@@ -15,7 +15,6 @@ from ..args import (
     args_for_server, args_for_browse, process_diff_flags,
     resolve_diff_args)
 from ..gitfiles import changed_notebooks, is_gitref
-import nbdime.log
 
 
 def build_arg_parser():

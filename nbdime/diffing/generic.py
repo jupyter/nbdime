@@ -11,8 +11,8 @@ import operator
 from collections import defaultdict
 import difflib
 
-from ..diff_format import validate_diff, count_consumed_symbols
-from ..diff_format import SequenceDiffBuilder, MappingDiffBuilder
+from ..diff_format import SequenceDiffBuilder, MappingDiffBuilder, validate_diff
+from ..diff_utils import count_consumed_symbols
 
 from .sequences import diff_strings_linewise, diff_sequence
 from .snakes import compute_snakes_multilevel, compute_diff_from_snakes

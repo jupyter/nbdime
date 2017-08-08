@@ -12,7 +12,6 @@ from ..args import (
     args_for_server, args_for_browse, process_diff_flags)
 from .nbdimeserver import main_server as run_server
 from .webutil import browse
-import nbdime.log
 
 
 # TODO: Tool server is passed a (mandatory?) single-use access token, which is
@@ -41,7 +40,6 @@ def main_parsed(opts):
 
     Called by both main here and gitdifftool
     """
-    nbdime.log.init_logging(level=opts.log_level)
     process_diff_flags(opts)
     base = opts.local
     remote = opts.remote

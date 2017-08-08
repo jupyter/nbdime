@@ -6,7 +6,6 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
-import io
 import os
 import sys
 import argparse
@@ -14,7 +13,6 @@ import json
 
 from six import string_types
 
-import nbdime
 from nbdime.diffing.notebooks import diff_notebooks
 from nbdime.prettyprint import pretty_print_notebook_diff
 from nbdime.args import (
@@ -37,7 +35,7 @@ def main_diff(args):
         # We are asked to do a diff of git revisions:
         status = 0
         for fbase, fremote in changed_notebooks(base, remote, paths):
-            status = _handle_diff(fbase, fremote)
+            status = _handle_diff(fbase, fremote, output)
             if status != 0:
                 # Short-circuit on error in diff handling
                 return status
@@ -90,7 +88,6 @@ def _build_arg_parser():
     """Creates an argument parser for the nbdiff command."""
     parser = argparse.ArgumentParser(
         description=_description,
-        add_help=True,
         )
     add_generic_args(parser)
     add_diff_args(parser)
@@ -121,7 +118,6 @@ def main(args=None):
         args = sys.argv[1:]
     setup_std_streams()
     arguments = _build_arg_parser().parse_args(args)
-    nbdime.log.init_logging(level=arguments.log_level)
     return main_diff(arguments)
 
 

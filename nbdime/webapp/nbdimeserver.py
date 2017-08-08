@@ -313,13 +313,13 @@ def init_app(on_port=None, closable=False, **params):
     app = make_app(**params)
     if port != 0 or on_port is None:
         app.listen(port, address=ip)
-        _logger.info('Listening on %s, port %d' % (ip, port))
+        _logger.info('Listening on %s, port %d', ip, port)
     else:
         sockets = netutil.bind_sockets(0, ip)
         server = httpserver.HTTPServer(app)
         server.add_sockets(sockets)
         for s in sockets:
-            _logger.info('Listening on %s, port %d' % s.getsockname()[:2])
+            _logger.info('Listening on %s, port %d', *s.getsockname()[:2])
             port = s.getsockname()[1]
     if on_port is not None:
         on_port(port)
@@ -348,12 +348,11 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
     arguments = _build_arg_parser().parse_args(args)
-    nbdime.log.init_logging(level=arguments.log_level)
     return main_server(port=arguments.port,
                        ip=arguments.ip,
                        cwd=arguments.workdirectory,
                        base_url=arguments.base_url,
-                       )
+                      )
 
 
 if __name__ == "__main__":

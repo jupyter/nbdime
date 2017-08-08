@@ -12,7 +12,6 @@ from ..args import (add_generic_args, add_diff_args, add_merge_args,
     process_diff_flags)
 from .nbdimeserver import main_server as run_server
 from .webutil import browse
-import nbdime.log
 
 
 def build_arg_parser():
@@ -42,7 +41,6 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
     arguments = build_arg_parser().parse_args(args)
-    nbdime.log.init_logging(level=arguments.log_level)
     process_diff_flags(arguments)
     base = arguments.base
     local = arguments.local

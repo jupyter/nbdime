@@ -24,7 +24,6 @@ import os
 import sys
 from subprocess import check_call, CalledProcessError
 
-import nbdime.log
 from . import nbmergeapp
 from .args import (
     add_generic_args, add_diff_args, add_merge_args, add_filename_args, add_git_config_subcommand)
@@ -103,7 +102,6 @@ def main(args=None):
         disable_help="disable nbdime merge driver via git config")
 
     opts = parser.parse_args(args)
-    nbdime.log.init_logging(level=opts.log_level)
     if opts.subcommand == 'merge':
         # "The merge driver is expected to leave the result of the merge in the
         # file named with %A by overwriting it, and exit with zero status if it
