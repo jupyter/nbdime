@@ -23,7 +23,7 @@ install:
   # Install node:
   - ps: Install-Product node $env:nodejs_version
   # Ensure python scripts are from right version:
-  - 'SET "PATH=%PYTHON%\Scripts;%PATH%"'
+  - 'SET "PATH=%PYTHON%\Scripts;%PYTHON%;%PATH%"'
   # Install coverage utilities:
   - 'pip install codecov'
   # Install our package:
