@@ -59,7 +59,7 @@ class ReorderableOutputModel extends OutputAreaModel {
     this.list.move(fromIndex, toIndex);
   }
 
-  remove(index: number): IOutputModel | null {
+  remove(index: number): IOutputModel | undefined {
     return this.list.remove(index);
   }
 }
