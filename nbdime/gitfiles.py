@@ -7,6 +7,7 @@ from collections import deque
 
 from six import string_types
 
+os.environ['GIT_PYTHON_REFRESH'] = 'quiet'
 from git import Repo, InvalidGitRepositoryError, BadName
 
 from .utils import EXPLICIT_MISSING_FILE

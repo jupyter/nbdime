@@ -105,7 +105,7 @@ install_requires = setuptools_args['install_requires'] = [
     'colorama',
     'tornado',
     'requests',
-    'GitPython<=2.1.3',  # For difftool taking git refs
+    'GitPython!=2.1.4, !=2.1.5, !=2.1.6',  # For difftool taking git refs
 ]
 
 extras_require = setuptools_args['extras_require'] = {
