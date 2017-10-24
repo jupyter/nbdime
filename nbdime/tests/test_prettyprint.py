@@ -33,6 +33,10 @@ def b64text(nbytes):
     return encodebytes(os.urandom(nbytes)).decode('ascii')
 
 
+def TestConfig():
+    return pp.PrettyPrintConfig(out=StringIO())
+
+
 def test_pretty_print_dict_complex():
     d = {
         'a': 5,
@@ -46,9 +50,9 @@ def test_pretty_print_dict_complex():
     }
     prefix = '-'
 
-    io = StringIO()
-    pp.pretty_print_dict(d, {'d'}, prefix, io)
-    text = io.getvalue()
+    config = TestConfig()
+    pp.pretty_print_dict(d, {'d'}, prefix, config)
+    text = config.out.getvalue()
 
     print(text)
     for key in d:
@@ -63,9 +67,9 @@ def test_pretty_print_dict_complex():
 def test_pretty_print_multiline_string_b64():
     ins = b64text(1024)
     prefix = '+'
-    io = StringIO()
-    pp.pretty_print_value(ins, prefix, io)
-    text = io.getvalue()
+    config = TestConfig()
+    pp.pretty_print_value(ins, prefix, config)
+    text = config.out.getvalue()
     lines = text.splitlines(True)
     assert len(lines) == 1
     line = lines[0]
@@ -78,9 +82,9 @@ def test_pretty_print_multiline_string_short():
     ins = 'short string'
     prefix = '+'
 
-    io = StringIO()
-    pp.pretty_print_value_at(ins, "no/addr", prefix, io)
-    text = io.getvalue()
+    config = TestConfig()
+    pp.pretty_print_value_at(ins, "no/addr", prefix, config)
+    text = config.out.getvalue()
     lines = text.splitlines(False)
 
     assert lines == [prefix + ins]
@@ -89,9 +93,9 @@ def test_pretty_print_multiline_string_short():
 def test_pretty_print_multiline_string_long():
     ins = '\n'.join('line %i' % i for i in range(64))
     prefix = '+'
-    io = StringIO()
-    pp.pretty_print_value(ins, prefix, io)
-    text = io.getvalue()
+    config = TestConfig()
+    pp.pretty_print_value(ins, prefix, config)
+    text = config.out.getvalue()
     lines = text.splitlines(False)
     assert len(lines) == 64
     assert (prefix + 'line 32') in lines
@@ -100,9 +104,9 @@ def test_pretty_print_multiline_string_long():
 def test_pretty_print_value_int():
     v = 5
     assert pp.format_value(v) == '5'
-    io = StringIO()
-    pp.pretty_print_value(v, "+", io)
-    text = io.getvalue()
+    config = TestConfig()
+    pp.pretty_print_value(v, "+", config)
+    text = config.out.getvalue()
     print("'%s'" % text)
     assert "+5" in text
     # path is only used for dispatching to special formatters
@@ -118,9 +122,9 @@ def test_format_value_str():
 
 
 def _pretty_print(value, prefix="+", path="/dummypath"):
-    io = StringIO()
-    pp.pretty_print_value_at(value, path, prefix, io)
-    text = io.getvalue()
+    config = TestConfig()
+    pp.pretty_print_value_at(value, path, prefix, config)
+    text = config.out.getvalue()
     return text
 
 
@@ -155,9 +159,9 @@ def test_pretty_print_list_longstrings():
 def test_pretty_print_stream_output():
     output = v4.new_output('stream', name='stdout', text='some\ntext')
 
-    io = StringIO()
-    pp.pretty_print_value_at(output, "/cells/2/outputs/3", "+", io)
-    text = io.getvalue()
+    config = TestConfig()
+    pp.pretty_print_value_at(output, "/cells/2/outputs/3", "+", config)
+    text = config.out.getvalue()
     lines = text.splitlines()
 
     assert lines == [
@@ -176,9 +180,9 @@ def test_pretty_print_display_data():
         'image/png': b64text(1024),
     })
 
-    io = StringIO()
-    pp.pretty_print_value_at(output, "/cells/1/outputs/2", "+", io)
-    text = io.getvalue()
+    config = TestConfig()
+    pp.pretty_print_value_at(output, "/cells/1/outputs/2", "+", config)
+    text = config.out.getvalue()
     lines = text.splitlines()
 
     assert 'output_type: display_data' in text
@@ -192,9 +196,9 @@ def test_pretty_print_display_data():
 def test_pretty_print_markdown_cell():
     cell = v4.new_markdown_cell(source='# Heading\n\n*some markdown*')
 
-    io = StringIO()
-    pp.pretty_print_value_at(cell, "/cells/0", "+", io)
-    text = io.getvalue()
+    config = TestConfig()
+    pp.pretty_print_value_at(cell, "/cells/0", "+", config)
+    text = config.out.getvalue()
     lines = text.splitlines()
 
     assert lines[0] == '+markdown cell:'
@@ -214,9 +218,9 @@ def test_pretty_print_code_cell():
         ]
     )
 
-    io = StringIO()
-    pp.pretty_print_value_at(cell, "/cells/0", "+", io)
-    text = io.getvalue()
+    config = TestConfig()
+    pp.pretty_print_value_at(cell, "/cells/0", "+", config)
+    text = config.out.getvalue()
     lines = text.splitlines()
 
     assert lines == [
@@ -244,9 +248,9 @@ def test_pretty_print_dict_diff(nocolor):
     b = {'a': 2}
     di = diff(a, b, path='x/y')
 
-    io = StringIO()
-    pp.pretty_print_diff(a, di, 'x/y', io)
-    text = io.getvalue()
+    config = TestConfig()
+    pp.pretty_print_diff(a, di, 'x/y', config)
+    text = config.out.getvalue()
     lines = text.splitlines()
 
     assert lines == [
@@ -263,9 +267,9 @@ def test_pretty_print_list_diff(nocolor):
     path = '/a/b'
     di = diff(a, b, path=path)
 
-    io = StringIO()
-    pp.pretty_print_diff(a, di, path, io)
-    text = io.getvalue()
+    config = TestConfig()
+    pp.pretty_print_diff(a, di, path, config)
+    text = config.out.getvalue()
     lines = text.splitlines()
 
     assert lines == [
@@ -284,9 +288,9 @@ def test_pretty_print_list_multilinestrings(nocolor):
     path = '/a/b'
     di = diff(a, b, path=path)
 
-    io = StringIO()
-    pp.pretty_print_diff(a, di, path, io)
-    text = io.getvalue()
+    config = TestConfig()
+    pp.pretty_print_diff(a, di, path, config)
+    text = config.out.getvalue()
     lines = text.splitlines()
 
     assert lines == [
@@ -322,9 +326,9 @@ def test_pretty_print_string_diff(nocolor):
     di = diff(a, b, path=path)
 
     with mock.patch('nbdime.prettyprint.which', lambda cmd: None):
-        io = StringIO()
-        pp.pretty_print_diff(a, di, path, io)
-        text = io.getvalue()
+        config = TestConfig()
+        pp.pretty_print_diff(a, di, path, config)
+        text = config.out.getvalue()
         lines = text.splitlines()
 
     text = '\n'.join(lines)
@@ -338,9 +342,9 @@ def test_pretty_print_string_diff_b64(nocolor):
     path = '/a/b'
     di = diff(a, b, path=path)
 
-    io = StringIO()
-    pp.pretty_print_diff(a, di, path, io)
-    text = io.getvalue()
+    config = TestConfig()
+    pp.pretty_print_diff(a, di, path, config)
+    text = config.out.getvalue()
     lines = text.splitlines()
 
     ha = pp.hash_string(a)

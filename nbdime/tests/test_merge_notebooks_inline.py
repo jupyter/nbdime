@@ -11,7 +11,6 @@ from collections import defaultdict
 from nbdime import merge_notebooks, diff
 from nbdime.diff_format import op_patch
 from nbdime.utils import Strategies
-from nbdime.prettyprint import pretty_print_merge_decisions
 from nbdime.merging.generic import decide_merge, decide_merge_with_diff
 from nbdime.merging.decisions import apply_decisions
 

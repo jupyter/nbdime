@@ -11,7 +11,7 @@ import sys
 import argparse
 import nbformat
 
-from nbdime.prettyprint import pretty_print_notebook
+from nbdime.prettyprint import pretty_print_notebook, PrettyPrintConfig
 from nbdime.args import add_generic_args, IgnorableAction, process_exclusive_ignorables
 from nbdime.utils import setup_std_streams
 
@@ -45,17 +45,16 @@ def main_show(args):
         class Printer:
             def write(self, text):
                 print(text, end="")
-        if not any((args.sources, args.outputs, args.attachments, args.metadata, args.details)):
-            ppargs = None
-        else:
-            ppargs = args
+
+        # This configures which parts to include/ignore
+        config = PrettyPrintConfig(out=Printer(), include=args)
 
         if len(args.notebook) > 1:
             # 'more' prints filenames with colons, should be good enough for us as well
             print(":"*14)
             print(fn)
             print(":"*14)
-        pretty_print_notebook(nb, ppargs, Printer())
+        pretty_print_notebook(nb, config)
 
     return 0
 
