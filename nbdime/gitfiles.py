@@ -74,7 +74,7 @@ def is_valid_gitref(ref, path=None):
         return False
 
 
-def _get_diff_entry_stream(path, blob, ref_name):
+def _get_diff_entry_stream(path, blob, ref_name, repo_dir):
     """Get a stream to the notebook, for a given diff entry's path and blob
 
     Returns None if path is not a Notebook file, and EXPLICIT_MISSING_FILE
@@ -85,6 +85,7 @@ def _get_diff_entry_stream(path, blob, ref_name):
         if blob is None:
             # Diffing against working copy, use file on disk!
             try:
+                path = os.path.normpath(os.path.join(repo_dir, path))
                 return io.open(path)
             except IOError:
                 return EXPLICIT_MISSING_FILE
@@ -108,6 +109,7 @@ def changed_notebooks(ref_base, ref_remote, paths=None):
     (or possibly EXPLICIT_MISSING_FILE for added/removed files).
     """
     repo, popped = get_repo(os.curdir)
+    repo_dir = repo.working_tree_dir
     if isinstance(paths, string_types):
         paths = (paths,)
     if paths and popped:
@@ -123,10 +125,12 @@ def changed_notebooks(ref_base, ref_remote, paths=None):
         tree_remote = repo.commit(ref_remote).tree
         diff = tree_base.diff(tree_remote, paths)
     for entry in diff:
-        fa = _get_diff_entry_stream(entry.a_path, entry.a_blob, ref_base)
+        fa = _get_diff_entry_stream(
+            entry.a_path, entry.a_blob, ref_base, repo_dir)
         if fa is None:
             continue
-        fb = _get_diff_entry_stream(entry.b_path, entry.b_blob, ref_remote)
+        fb = _get_diff_entry_stream(
+            entry.b_path, entry.b_blob, ref_remote, repo_dir)
         if fb is None:
             continue
         yield (fa, fb)
