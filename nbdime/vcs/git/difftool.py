@@ -16,8 +16,8 @@ import os
 import sys
 from subprocess import check_call, check_output, CalledProcessError
 
-from .args import add_generic_args, add_git_config_subcommand
-from .webapp import nbdifftool
+from nbdime.args import add_generic_args, add_git_config_subcommand
+from nbdime.webapp import nbdifftool
 
 
 def enable(scope=None, set_default=False):

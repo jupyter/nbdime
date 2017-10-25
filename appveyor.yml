@@ -35,6 +35,9 @@ build: off
 before_test:
   - git config --global user.email appveyor@fake.com
   - git config --global user.name "AppVeyor CI"
+  # Mercurial config:
+  - ps: '$hgconfig = "[ui]`r`nusername = AppVeyor CI <appveyor@fake.com>"'
+  - ps: '$hgconfig | Set-Content ($HOME + "\mercurial.ini")'
   - set "tmptestdir=%tmp%\nbdime-%RANDOM%"
   - mkdir "%tmptestdir%"
   - cd "%tmptestdir%"

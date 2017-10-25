@@ -24,10 +24,10 @@ import os
 import sys
 from subprocess import check_call, CalledProcessError
 
-from . import nbmergeapp
-from .args import (
+from nbdime import nbmergeapp
+from nbdime.args import (
     add_generic_args, add_diff_args, add_merge_args, add_filename_args, add_git_config_subcommand)
-from .utils import locate_gitattributes, ensure_dir_exists
+from nbdime.utils import locate_gitattributes, ensure_dir_exists
 
 
 def enable(scope=None):

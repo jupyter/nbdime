@@ -23,10 +23,10 @@ import os
 import sys
 from subprocess import check_call, CalledProcessError
 
-from .args import (
+from nbdime.args import (
     add_git_config_subcommand, add_generic_args, add_diff_args, add_web_args,
     add_git_diff_driver_args)
-from .utils import locate_gitattributes, ensure_dir_exists, setup_std_streams
+from nbdime.utils import locate_gitattributes, ensure_dir_exists, setup_std_streams
 
 def enable(scope=None):
     """Enable nbdime git diff driver"""
@@ -107,10 +107,10 @@ def main(args=None):
     opts = parser.parse_args(args)
 
     if opts.subcommand == 'diff':
-        from . import nbdiffapp
+        from nbdime import nbdiffapp
         return nbdiffapp.main_diff(opts)
     elif opts.subcommand == 'webdiff':
-        from .webapp import nbdiffweb
+        from nbdime.webapp import nbdiffweb
         return nbdiffweb.main_diff(opts)
     elif opts.subcommand == 'config':
         opts.config_func(opts.scope)

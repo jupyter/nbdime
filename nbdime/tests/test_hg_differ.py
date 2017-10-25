@@ -12,7 +12,8 @@ import mock
 import pytest
 from tornado import ioloop
 
-from nbdime.vcs.git.diffdriver import main as gdd_main
+from nbdime.vcs.hg.diff import main as hgd_main
+from nbdime.vcs.hg.diffweb import main as hgd_web_main
 from nbdime.prettyprint import file_timestamp
 
 from .utils import WEB_TEST_TIMEOUT
@@ -66,8 +67,8 @@ expected_source_only = """nbdiff {0} {1}
 """
 
 
-def test_git_diff_driver(filespath, capsys, nocolor, needs_git):
-    # Simulate a call from `git diff` to check basic driver functionality
+def test_hg_diff_driver(filespath, capsys, nocolor, needs_hg):
+    # Simulate a call from `hg diff` to check basic driver functionality
 
     fn1 = pjoin(filespath, 'foo--1.ipynb')
     fn2 = pjoin(filespath, 'foo--2.ipynb')
@@ -75,20 +76,18 @@ def test_git_diff_driver(filespath, capsys, nocolor, needs_git):
     t2 = file_timestamp(fn2)
 
     mock_argv = [
-        '/mock/path/git-nbdiffdriver', 'diff',
-        fn1,
-        fn1, 'invalid_mock_checksum', '100644',
-        fn2, 'invalid_mock_checksum', '100644']
+        '/mock/path/hg-nbdiffdriver',
+        fn1, fn2]
 
     with mock.patch('sys.argv', mock_argv):
-        r = gdd_main()
+        r = hgd_main()
         assert r == 0
         cap_out = capsys.readouterr()[0]
         assert cap_out == expected_output.format(fn1, fn2, t1, t2)
 
 
-def test_git_diff_driver_flags(filespath, capsys, nocolor, needs_git, reset_diff_targets):
-    # Simulate a call from `git diff` to check basic driver functionality
+def test_hg_diff_driver_flags(filespath, capsys, nocolor, needs_hg, reset_diff_targets):
+    # Simulate a call from `hg diff` to check basic driver functionality
 
     fn1 = pjoin(filespath, 'foo--1.ipynb')
     fn2 = pjoin(filespath, 'foo--2.ipynb')
@@ -96,20 +95,18 @@ def test_git_diff_driver_flags(filespath, capsys, nocolor, needs_git, reset_diff
     t2 = file_timestamp(fn2)
 
     mock_argv = [
-        '/mock/path/git-nbdiffdriver', 'diff', '-s',
-        fn1,
-        fn1, 'invalid_mock_checksum', '100644',
-        fn2, 'invalid_mock_checksum', '100644']
+        '/mock/path/hg-nbdiffdriver', '-s',
+        fn1, fn2]
 
     with mock.patch('sys.argv', mock_argv):
-        r = gdd_main()
+        r = hgd_main()
         assert r == 0
         cap_out = capsys.readouterr()[0]
         assert cap_out == expected_source_only.format(fn1, fn2, t1, t2)
 
 
-def test_git_diff_driver_ignore_flags(filespath, capsys, nocolor, needs_git, reset_diff_targets):
-    # Simulate a call from `git diff` to check basic driver functionality
+def test_hg_diff_driver_ignore_flags(filespath, capsys, nocolor, needs_hg, reset_diff_targets):
+    # Simulate a call from `hg diff` to check basic driver functionality
 
     fn1 = pjoin(filespath, 'foo--1.ipynb')
     fn2 = pjoin(filespath, 'foo--2.ipynb')
@@ -117,21 +114,19 @@ def test_git_diff_driver_ignore_flags(filespath, capsys, nocolor, needs_git, res
     t2 = file_timestamp(fn2)
 
     mock_argv = [
-        '/mock/path/git-nbdiffdriver', 'diff', '-O',
-        fn1,
-        fn1, 'invalid_mock_checksum', '100644',
-        fn2, 'invalid_mock_checksum', '100644']
+        '/mock/path/hg-nbdiffdriver', '-O',
+        fn1, fn2]
 
     with mock.patch('sys.argv', mock_argv):
-        r = gdd_main()
+        r = hgd_main()
         assert r == 0
         cap_out = capsys.readouterr()[0]
         assert cap_out == expected_source_only.format(fn1, fn2, t1, t2)
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
-def test_git_web_diff_driver(filespath, unique_port):
-    # Simulate a call from `git diff` to check basic driver functionality
+def test_hg_web_diff_driver(filespath, unique_port):
+    # Simulate a call from `hg diff` to check basic driver functionality
 
     fn1 = os.path.join(filespath, 'foo--1.ipynb')
     fn2 = os.path.join(filespath, 'foo--2.ipynb')
@@ -140,15 +135,13 @@ def test_git_web_diff_driver(filespath, unique_port):
     loop.call_later(0, loop.stop)
 
     mock_argv = [
-        'git-nbdiffdriver', 'webdiff',
-        fn1,
-        fn1, 'invalid_mock_checksum', '100644',
-        fn2, 'invalid_mock_checksum', '100644',
+        'hg-nbdiffdriver',
+        fn1, fn2,
         '--browser=disabled', '--port=%i' % unique_port]
 
     with mock.patch('sys.argv', mock_argv):
         # This simply checks that the function returns 0,
         # but assumes that the function is routed to the web
         # diff entrypoint
-        r = gdd_main()
+        r = hgd_web_main()
         assert r == 0

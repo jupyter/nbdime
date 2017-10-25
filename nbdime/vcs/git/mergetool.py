@@ -14,8 +14,8 @@ Use with:
 import sys
 from subprocess import check_call, CalledProcessError
 
-from .webapp import nbmergetool
-from .args import add_generic_args, add_git_config_subcommand
+from nbdime.webapp import nbmergetool
+from nbdime.args import add_generic_args, add_git_config_subcommand
 
 
 def enable(scope=None, set_default=False):

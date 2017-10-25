@@ -9,9 +9,10 @@ from __future__ import print_function
 from six import string_types
 
 from contextlib import contextmanager
+import os
 import shlex
 import sys
-from subprocess import check_output, check_call, STDOUT
+from subprocess import check_output, check_call, STDOUT, CalledProcessError
 
 import pytest
 import nbformat
@@ -25,7 +26,10 @@ try:
 except ImportError:
     from backports.shutil_which import which
 
+pjoin = os.path.join
+
 have_git = which('git')
+have_hg = which('hg')
 
 WEB_TEST_TIMEOUT = 15
 
@@ -113,9 +117,50 @@ def call(cmd):
     return check_call(cmd, stdout=sys.stdout, stderr=sys.stderr)
 
 
-def get_output(cmd, err=False):
+def get_output(cmd, err=False, returncode=0):
     """Run a command and get its output (as text)"""
     if isinstance(cmd, string_types):
         cmd = shlex.split(cmd)
     stderr = STDOUT if err else sys.stderr
-    return check_output(cmd, stderr=stderr).decode('utf8', 'replace')
+    try:
+        output = check_output(cmd, stderr=stderr).decode('utf8', 'replace')
+    except CalledProcessError as e:
+        if e.returncode != returncode:
+            raise
+        return e.output.decode('utf8', 'replace')
+    else:
+        if returncode != 0:
+            raise CalledProcessError(0, cmd, output.encode('utf8'), stderr)
+    return output
+
+
+
+MERCURIAL_TEST_CONFIG = """
+[extensions]
+extdiff =
+
+[extdiff]
+cmd.nbdiff = hg-nbdiff
+cmd.nbdiffweb = hg-nbdiffweb
+opts.nbdiffweb = --log-level DEBUG --browser=disabled
+
+[merge-tools]
+nbdime.priority = 2
+nbdime.premerge = False
+nbdime.executable = hg-nbmerge
+nbdime.args = $base $local $other $output
+nbdimeweb.priority = 1
+nbdimeweb.premerge = False
+nbdimeweb.executable = hg-nbmergeweb
+nbdimeweb.args = --log-level DEBUG --browser=disabled $base $local $other $output
+nbdimeweb.gui = True
+
+[merge-patterns]
+**.ipynb = nbdime
+"""
+
+
+def write_local_hg_config(repo_path):
+    fn = pjoin(repo_path, ".hg", "hgrc")
+    with open(fn, 'w') as f:
+        f.write(MERCURIAL_TEST_CONFIG)

@@ -312,7 +312,7 @@ def init_app(on_port=None, closable=False, **params):
     ip = params.pop("ip", "127.0.0.1")
     app = make_app(**params)
     if port != 0 or on_port is None:
-        app.listen(port, address=ip)
+        server = app.listen(port, address=ip)
         _logger.info('Listening on %s, port %d', ip, port)
     else:
         sockets = netutil.bind_sockets(0, ip)
@@ -323,12 +323,14 @@ def init_app(on_port=None, closable=False, **params):
             port = s.getsockname()[1]
     if on_port is not None:
         on_port(port)
-    return app
+    return app, server
 
 
 def main_server(on_port=None, closable=False, **params):
-    app = init_app(on_port, closable, **params)
+    app, server = init_app(on_port, closable, **params)
     ioloop.IOLoop.current().start()
+    # Clean up after server:
+    server.stop()
     return app.exit_code
 
 

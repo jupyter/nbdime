@@ -264,3 +264,80 @@ with the following steps:
 
     [merge]
     tool = nbdime
+
+
+
+
+
+.. _hg-integration:
+
+Mercurial integration
+---------------------
+
+Integration of mercurial is similar to that for manual git
+registration, but it uses a separate set of entry points since
+amongst others, mercurial requires the diff extension to handle
+directories.
+
+Differs
+*******
+
+To tell mercurial about nbdimes differs, open the appropriate
+config file (``hg config --edit`` for the default user level one),
+and add the following entries::
+
+    [extensions]
+    extdiff =
+
+    [extdiff]
+    cmd.nbdiff = hg-nbdiff
+    cmd.nbdiffweb = hg-nbdiffweb
+    opts.nbdiffweb = --log-level ERROR
+
+This will:
+ - enable the external diff extension
+ - register both the command line diff and web diff
+ - set the default log level of the webdiff
+
+``opts.<cmdname>`` allows you to customize which
+flags nbdime are called with.
+
+To use nbdime from mercurial, you can then call it like this::
+
+    hg nbdiff <same arguments as for 'hg diff'>
+
+    hg nbdiffweb <same arguments as for 'hg diff'>
+
+
+Mergetools
+**********
+
+Add the following entries to the appropriate mercurial config
+file::
+
+    [merge-tools]
+    nbdime.priority = 2
+    nbdime.premerge = False
+    nbdime.executable = hg-nbmerge
+    nbdime.args = $base $local $other $output
+    nbdimeweb.priority = 1
+    nbdimeweb.premerge = False
+    nbdimeweb.executable = hg-nbmergeweb
+    nbdimeweb.args = --log-level ERROR $base $local $other $output
+    nbdimeweb.gui = True
+
+    [merge-patterns]
+    **.ipynb = nbdime
+
+This will:
+ - use the merge driver by default for notebook files
+ - register the web tool
+
+The typical usage pattern for the webtool is like this::
+
+    > hg merge <other branch>
+    merging ***.ipynb
+    0 files updated, 0 files merged, 0 files removed, 1 files unresolved
+    use 'hg resolve' to retry unresolved file merges or 'hg update -C .' to abandon
+
+    > hg resolve --tool nbdimeweb
