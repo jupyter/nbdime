@@ -16,7 +16,7 @@ import nbformat
 import nbdime
 import nbdime.log
 from nbdime.merging import merge_notebooks
-from nbdime.prettyprint import pretty_print_merge_decisions
+from nbdime.prettyprint import pretty_print_merge_decisions, PrettyPrintConfig
 from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook, setup_std_streams
 
 _description = ('Merge two Jupyter notebooks "local" and "remote" with a '
@@ -60,9 +60,9 @@ def main_merge(args):
 
     if args.decisions:
         # Print merge decisions (including unconflicted)
-        out = io.StringIO()
-        pretty_print_merge_decisions(b, decisions, out=out)
-        nbdime.log.warning("Decisions:\n%s", out.getvalue())
+        config = PrettyPrintConfig(out=io.StringIO())
+        pretty_print_merge_decisions(b, decisions, config=config)
+        nbdime.log.warning("Decisions:\n%s", config.out.getvalue())
     elif mfn:
         # Write partial or fully completed merge to given foo.ipynb filename
         with io.open(mfn, "w", encoding="utf8"):
@@ -89,8 +89,8 @@ def handle_agreed_deletion(base_fn, output_fn, print_decisions=False):
         bld.agreement([], local_diff=diff, remote_diff=diff)
         decisions = bld.validated(b)
         # Print decition
-        out = io.StringIO()
-        pretty_print_merge_decisions(b, decisions, out=out)
+        config = PrettyPrintConfig(out=io.StringIO())
+        pretty_print_merge_decisions(b, decisions, config=config)
         nbdime.log.warning("Decisions:\n%s", out.getvalue())
 
     elif output_fn:
@@ -119,7 +119,7 @@ def _build_arg_parser():
              "to this file. Otherwise it is printed to the "
              "terminal.")
     parser.add_argument(
-        '-d', '--decisions',
+        '--decisions',
         action="store_true",
         help="print a human-readable summary of conflicted "
              "merge decisions instead of merging the notebook.")

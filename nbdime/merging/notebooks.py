@@ -13,7 +13,12 @@ from .generic import decide_merge_with_diff
 from .decisions import apply_decisions
 from ..diffing.notebooks import diff_notebooks
 from ..utils import Strategies
-from ..prettyprint import pretty_print_notebook_diff, pretty_print_merge_decisions, pretty_print_notebook
+from ..prettyprint import (
+    pretty_print_notebook_diff,
+    pretty_print_merge_decisions,
+    pretty_print_notebook,
+    PrettyPrintConfig
+)
 
 import nbdime.log
 
@@ -130,15 +135,18 @@ def decide_notebook_merge(base, local, remote, args=None):
 
     # Debug outputs
     if args and args.log_level == "DEBUG":
+        # log pretty-print config object:
+        config = PrettyPrintConfig()
+
         nbdime.log.debug("In merge, base-local diff:")
-        buf = StringIO()
-        pretty_print_notebook_diff("<base>", "<local>", base, local_diffs, buf)
-        nbdime.log.debug(buf.getvalue())
+        config.out = StringIO()
+        pretty_print_notebook_diff("<base>", "<local>", base, local_diffs, config)
+        nbdime.log.debug(config.out.getvalue())
 
         nbdime.log.debug("In merge, base-remote diff:")
-        buf = StringIO()
-        pretty_print_notebook_diff("<base>", "<remote>", base, remote_diffs, buf)
-        nbdime.log.debug(buf.getvalue())
+        config.out = StringIO()
+        pretty_print_notebook_diff("<base>", "<remote>", base, remote_diffs, config)
+        nbdime.log.debug(config.out.getvalue())
 
     # Execute a generic merge operation
     decisions = decide_merge_with_diff(
@@ -149,9 +157,9 @@ def decide_notebook_merge(base, local, remote, args=None):
     # Debug outputs
     if args and args.log_level == "DEBUG":
         nbdime.log.debug("In merge, decisions:")
-        buf = StringIO()
-        pretty_print_merge_decisions(base, decisions, buf)
-        nbdime.log.debug(buf.getvalue())
+        config.out = StringIO()
+        pretty_print_merge_decisions(base, decisions, config)
+        nbdime.log.debug(config.out.getvalue())
 
     return decisions
 
@@ -162,11 +170,13 @@ def merge_notebooks(base, local, remote, args=None):
     Return new (partially) merged notebook and unapplied diffs from the local and remote side.
     """
     if args and args.log_level == "DEBUG":
+        # log pretty-print config object:
+        config = PrettyPrintConfig()
         for (name, nb) in [("base", base), ("local", local), ("remote", remote)]:
             nbdime.log.debug("In merge, input %s notebook:", name)
-            buf = StringIO()
-            pretty_print_notebook(nb, None, buf)
-            nbdime.log.debug(buf.getvalue())
+            config.out = StringIO()
+            pretty_print_notebook(nb, config)
+            nbdime.log.debug(config.out.getvalue())
 
     decisions = decide_notebook_merge(base, local, remote, args)
 
@@ -174,9 +184,9 @@ def merge_notebooks(base, local, remote, args=None):
 
     if args and args.log_level == "DEBUG":
         nbdime.log.debug("In merge, merged notebook:")
-        buf = StringIO()
-        pretty_print_notebook(merged, None, buf)
-        nbdime.log.debug(buf.getvalue())
+        config.out = StringIO()
+        pretty_print_notebook(merged, config)
+        nbdime.log.debug(config.out.getvalue())
         nbdime.log.debug("End merge")
 
     return merged, decisions

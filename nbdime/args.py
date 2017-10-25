@@ -190,7 +190,7 @@ def add_diff_args(parser):
         the merge, so these arguments should also be included there.
     """
     # TODO: Define sensible strategy variables and implement
-    #parser.add_argument('-d', '--diff-strategy',
+    #parser.add_argument('-X', '--diff-strategy',
     #                    default="default", choices=("foo", "bar"),
     #                    help="specify the diff strategy to use.")
 
@@ -214,9 +214,13 @@ def add_diff_args(parser):
         '-m', '--metadata',
         action=IgnorableAction,
         help="process/ignore metadata.")
+    ignorables.add_argument(
+        '-d', '--details',
+        action=IgnorableAction,
+        help="process/ignore details not covered by other options.")
 
 
-diff_exclusives = ('sources', 'outputs', 'attachments', 'metadata')
+diff_exclusives = ('sources', 'outputs', 'attachments', 'metadata', 'details')
 
 
 def add_git_diff_driver_args(diff_parser):

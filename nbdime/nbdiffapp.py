@@ -14,7 +14,7 @@ import json
 from six import string_types
 
 from nbdime.diffing.notebooks import diff_notebooks
-from nbdime.prettyprint import pretty_print_notebook_diff
+from nbdime.prettyprint import pretty_print_notebook_diff, PrettyPrintConfig
 from nbdime.args import (
     add_generic_args, add_diff_args, process_diff_flags, resolve_diff_args)
 from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook, setup_std_streams
@@ -35,16 +35,16 @@ def main_diff(args):
         # We are asked to do a diff of git revisions:
         status = 0
         for fbase, fremote in changed_notebooks(base, remote, paths):
-            status = _handle_diff(fbase, fremote, output)
+            status = _handle_diff(fbase, fremote, output, args)
             if status != 0:
                 # Short-circuit on error in diff handling
                 return status
         return status
     else:  # Not gitrefs:
-        return _handle_diff(base, remote, output)
+        return _handle_diff(base, remote, output, args)
 
 
-def _handle_diff(base, remote, output=None):
+def _handle_diff(base, remote, output, args):
     """Handles diffs of files, either as filenames or file-like objects"""
     # Check that if args are filenames they either exist, or are
     # explicitly marked as missing (added/removed):
@@ -76,10 +76,12 @@ def _handle_diff(base, remote, output=None):
         class Printer:
             def write(self, text):
                 print(text, end="")
+        # This sets up what to ignore:
+        config = PrettyPrintConfig(out=Printer(), include=args)
         # Separate out filenames:
         base_name = base if isinstance(base, string_types) else base.name
         remote_name = remote if isinstance(remote, string_types) else remote.name
-        pretty_print_notebook_diff(base_name, remote_name, a, d, Printer())
+        pretty_print_notebook_diff(base_name, remote_name, a, d, config)
 
     return 0
 
