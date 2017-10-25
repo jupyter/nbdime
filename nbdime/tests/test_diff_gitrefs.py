@@ -1,5 +1,6 @@
 
 import os
+import shutil
 from six import string_types
 try:
     from itertools import zip_longest
@@ -83,6 +84,33 @@ def test_ref_vs_ref_subdir(git_repo2):
     for expected, actual in zip_longest(expected, changed_notebooks('base', 'local'), fillvalue=None):
         assert _nb_name(actual[0]) == expected[0]
         assert _nb_name(actual[1]) == expected[1]
+
+
+# Test one/two args executed in subdir, with subdir relative path:
+
+def test_head_vs_workdir_subdir_with_path(git_repo2, filespath):
+    # Ensure diff for subfile:
+    full_subfile_path = os.path.join(git_repo2, _subdir_name, 'subfile.ipynb')
+    shutil.copy(os.path.join(filespath, 'foo--1.ipynb'),
+                full_subfile_path)
+    os.chdir(os.path.join(git_repo2, _subdir_name))
+    expected = [
+        ('sub/subfile.ipynb (HEAD)', os.path.abspath(full_subfile_path)),
+    ]
+    for expected, actual in zip_longest(expected, changed_notebooks('HEAD', None, _subdir_filename), fillvalue=None):
+        assert _nb_name(actual[0]) == expected[0]
+        assert _nb_name(actual[1]) == expected[1]
+
+
+def test_ref_vs_ref_subdir_with_path(git_repo2):
+    os.chdir(os.path.join(git_repo2, _subdir_name))
+    expected = [
+        ('sub/subfile.ipynb (base)', 'sub/subfile.ipynb (local)'),
+    ]
+    for expected, actual in zip_longest(expected, changed_notebooks('base', 'local', _subdir_filename), fillvalue=None):
+        assert _nb_name(actual[0]) == expected[0]
+        assert _nb_name(actual[1]) == expected[1]
+
 
 
 # Test one/two args with subdir path:
