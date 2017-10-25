@@ -130,7 +130,7 @@ class MainDifftoolHandler(NbdimeApiHandler):
                 args["base"] = base
             else:
                 args["base"] = base.name
-            if isinstance(base, string_types):
+            if isinstance(remote, string_types):
                 args["remote"] = remote
             else:
                 args["remote"] = remote.name
