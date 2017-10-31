@@ -76,7 +76,8 @@ def main_merge(args):
 
 def handle_agreed_deletion(base_fn, output_fn, print_decisions=False):
     """Handle merge when file has been deleted both locally and remotely"""
-    assert base_fn != EXPLICIT_MISSING_FILE
+    assert base_fn != EXPLICIT_MISSING_FILE, (
+        'sanity check failed: cannot have agreed decision on base %r' % base_fn)
     b = read_notebook(base_fn, on_null='minimal')
     if print_decisions:
         # Print merge decision (delete all)

@@ -44,7 +44,7 @@ def diff_sequence_difflib(a, b):
     compared for full equality. Therefore this function does not take
     a custom compare function like the other diff_sequence_* variants.
     """
-    assert not any(isinstance(x, (list, dict)) for x in a)
-    assert not any(isinstance(x, (list, dict)) for x in b)
+    assert not any(isinstance(x, (list, dict)) for x in a), 'element in sequence not hashable'
+    assert not any(isinstance(x, (list, dict)) for x in b), 'element in sequence not hashable'
     s = SequenceMatcher(None, a, b, autojunk=False)
     return opcodes_to_diff(a, b, s.get_opcodes())

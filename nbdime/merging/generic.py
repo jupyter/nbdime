@@ -79,7 +79,7 @@ def will_diff_counter_parent_deletion(diff, path, strategies):
 
 
 def create_parent_deletion_counter_diff(diff, path, strategies):
-    ""
+    """Create diff for when a parent deletion is countered by strategy"""
     newdiff = []
     # Resolve diff paths and check them vs transients list
     for d in diff:
@@ -258,6 +258,18 @@ def collect_unresolved_diffs(base_path, unresolved_conflicts):
 
 
 def chunkname(diffs):
+    """For the diffs of a chunk, return string representations of its type.
+
+    Returns a two-tuple of strings.
+     - The first string contains zero or more characters 'a' and/or 'A', where
+       'a' signifies a dict 'add' operation, and 'A' signifies a sequence
+       'addrange' operation.
+    - The second string contains zero or more characters 'P', 'R', 'r',
+      and/or 'c': 'P': patch, 'R': removerange, 'r': remove, 'c': replace
+
+    For a proper chunk, each string should have either 0 or 1 character each,
+    but this function will not perform any checks.
+    """
     aname = ""
     pname = ""
     for e in diffs:
@@ -1076,7 +1088,7 @@ def _merge_lists(base, local_diff, remote_diff, path, parent_decisions, strategi
                     item_path, decisions, strategies)
                 decisions.extend(subdecisions)
             else:  # P/R or R/P
-                # Recurse into patches but with ParentDeleted sentinel passed instead of the diff
+                # Recurse into patches
                 if p0[0].op == DiffOp.PATCH:
                     thediff = p0[0].diff
                 elif p1[0].op == DiffOp.PATCH:

@@ -111,7 +111,8 @@ def external_merge_render(cmd, b, l, r):
             f.write(b)
         with io.open(os.path.join(td, 'remote'), 'w', encoding="utf8") as f:
             f.write(r)
-        assert all(fn in cmd for fn in ['local', 'base', 'remote'])
+        assert all(fn in cmd for fn in ['local', 'base', 'remote']), (
+            'invalid cmd argument for external merge renderer')
         p = Popen(cmd, cwd=td, stdout=PIPE)
         output, errors = p.communicate()
         status = p.returncode
@@ -132,14 +133,15 @@ def external_diff_render(cmd, a, b):
             f.write(a)
         with io.open(os.path.join(td, 'after'), 'w', encoding="utf8") as f:
             f.write(b)
-        assert all(fn in cmd for fn in ['before', 'after'])
+        assert all(fn in cmd for fn in ['before', 'after']), (
+            'invalid cmd argument for external diff renderer')
         p = Popen(cmd, cwd=td, stdout=PIPE)
         output, errors = p.communicate()
         status = p.returncode
         output = output.decode('utf8')
         r = re.compile(r"^\\ No newline at end of file\n?", flags=re.M)
         output, n = r.subn("", output)
-        assert n <= 2
+        assert n <= 2, 'unexpected output from external diff renderer'
     finally:
         shutil.rmtree(td)
     return output, status
@@ -464,7 +466,7 @@ def pretty_print_item(k, v, prefix="", config=DefaultConfig):
 
 
 def pretty_print_multiline(text, prefix="", config=DefaultConfig):
-    assert isinstance(text, string_types)
+    assert isinstance(text, string_types), 'expected string argument'
 
     # Preprend prefix to lines, letting lines keep their own newlines
     lines = text.splitlines(True)
@@ -828,7 +830,9 @@ def pretty_print_merge_decision(base, decision, config=DefaultConfig):
                     #   value = nb.cells[0].source
                     #   k = line number 3
                     #   k is last item in common_path
-                    assert i == len(decision.common_path) - 1
+                    assert i == len(decision.common_path) - 1, (
+                        'invalid discision common path, tries to subindex string: %r' %
+                        decision.common_path)
 
                     # Diffs on strings are usually line-based, _except_
                     # when common_path points to a line within a string.

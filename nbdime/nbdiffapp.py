@@ -54,7 +54,8 @@ def _handle_diff(base, remote, output, args):
             print("Missing file {}".format(fn))
             return 1
     # Both files cannot be missing
-    assert not (base == EXPLICIT_MISSING_FILE and remote == EXPLICIT_MISSING_FILE)
+    assert not (base == EXPLICIT_MISSING_FILE and remote == EXPLICIT_MISSING_FILE), (
+        'cannot diff %r against %r' % (base, remote))
 
     # Perform actual work:
     a = read_notebook(base, on_null='empty')

@@ -299,6 +299,7 @@ def compare_cell_approximate(x, y):
 
 
 def compare_outputs_approximate(xoutputs, youtputs):
+    """Compare sequences of outputs with approximate heuristics."""
     dd = diff_item_at_path(xoutputs, youtputs, "/cells/*/outputs")
     if any(e.op != DiffOp.PATCH for e in dd):
         # Something added or removed
@@ -366,9 +367,9 @@ def compare_cell_strict(x, y):
 
 def diff_single_outputs(a, b, path="/cells/*/outputs/*",
                         predicates=None, differs=None):
-    "DiffOp a pair of output cells."
-    assert path == "/cells/*/outputs/*"
-    assert a.output_type == b.output_type
+    """DiffOp a pair of output cells."""
+    assert path == "/cells/*/outputs/*", 'Invalid path for ouput: %r' % path
+    assert a.output_type == b.output_type, 'cannot diff outputs of different types'
 
     if a.output_type in ("execute_result", "display_data"):
         di = MappingDiffBuilder()
@@ -412,7 +413,7 @@ def add_mime_diff(key, avalue, bvalue, diffbuilder):
 def diff_attachments(a, b, path="/cells/*/attachments",
                      predicates=None, differs=None):
     """Diff a pair of attachment collections"""
-    assert path == "/cells/*/attachments"
+    assert path == "/cells/*/attachments", 'Invalid path for attachment: %r' % path
 
     # Two events can happen:
     #  1: An attachment is added/removed/patched
@@ -420,7 +421,8 @@ def diff_attachments(a, b, path="/cells/*/attachments",
     # Currently, #2 is handled as two ops (an add and a remove)
 
     # keys here are 'filenames' of the attachments
-    assert isinstance(a, dict) and isinstance(b, dict)
+    if not isinstance(a, dict) or not isinstance(b, dict):
+        raise TypeError('Attachments stores should be dictionaries. Got %r and %r' % (a, b))
     akeys = set(a.keys())
     bkeys = set(b.keys())
 
@@ -446,8 +448,17 @@ def diff_attachments(a, b, path="/cells/*/attachments",
 
 def diff_mime_bundle(a, b, path=None,
                      predicates=None, differs=None):
+    """Diff a MIME bundle.
+
+    A MIME bundle has MIME types as keys, with values that are
+    of the corresponding MIME type.
+
+    Very similar to the generic dict differ, except it passes
+    the diff builder to the sub-differ.
+    """
     # keys here are mime/types
-    assert isinstance(a, dict) and isinstance(b, dict)
+    if not isinstance(a, dict) or not isinstance(b, dict):
+        raise TypeError('MIME bundles should be dictionaries. Got %r and %r' % (a, b))
     akeys = set(a.keys())
     bkeys = set(b.keys())
 
@@ -469,6 +480,7 @@ def diff_mime_bundle(a, b, path=None,
 
 
 def diff_ignore(*args, **kwargs):
+    """Always returns an empty diff"""
     return []
 
 
@@ -500,6 +512,7 @@ notebook_differs = defaultdict(lambda: diff, {
 
 
 def set_notebook_diff_targets(sources=True, outputs=True, attachments=True, metadata=True):
+    """Configure the notebook differs to include/ignore various changes."""
     if sources:
         if "/cells/*/source" in notebook_differs:
             del notebook_differs["/cells/*/source"]
@@ -533,6 +546,7 @@ def diff_cells(a, b):
 
 
 def diff_item_at_path(a, b, path):
+    """Calculate the diff using the configured notebook differ for path."""
     return notebook_differs[path](a, b, path=path, predicates=notebook_predicates, differs=notebook_differs)
 
 
