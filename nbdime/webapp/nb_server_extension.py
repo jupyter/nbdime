@@ -16,9 +16,10 @@ from .nbdimeserver import (
     NbdimeHandler,
     MainDifftoolHandler,
     ApiDiffHandler,
+    APIHandler,
 )
 
-from ..gitfiles import changed_notebooks, InvalidGitRepositoryError, BadName
+from ..gitfiles import changed_notebooks, is_path_in_repo, InvalidGitRepositoryError, BadName
 
 
 class GitMainDifftoolHandler(NbdimeHandler):
@@ -74,6 +75,18 @@ class GitApiDiffHandler(ApiDiffHandler):
         self.finish(data)
 
 
+class IsGitHandler(NbdimeHandler, APIHandler):
+    """API handler for querying if path is in git repo"""
+
+    def post(self):
+        # Assuming a request on the form "{'argname':arg}"
+        body = json.loads(escape.to_unicode(self.request.body))
+        nb = body['path']
+
+        data = {'is_git': is_path_in_repo(nb)}
+        self.finish(data)
+
+
 def _load_jupyter_server_extension(nb_server_app):
     """
     Called when the extension is loaded.
@@ -97,6 +110,7 @@ def _load_jupyter_server_extension(nb_server_app):
         (r'/nbdime/difftool', MainDifftoolHandler, params),
         (r'/nbdime/git-difftool', GitMainDifftoolHandler, params),
         (r'/nbdime/api/diff', GitApiDiffHandler, params),
+        (r'/nbdime/api/isgit', IsGitHandler, params),
     ]
 
     # Prefix routes with base_url:

@@ -74,6 +74,15 @@ def is_valid_gitref(ref, path=None):
         return False
 
 
+def is_path_in_repo(path):
+    """Checks whether path is part of a git repository"""
+    try:
+        get_repo(path)
+        return True
+    except InvalidGitRepositoryError:
+        return False
+
+
 def _get_diff_entry_stream(path, blob, ref_name, repo_dir):
     """Get a stream to the notebook, for a given diff entry's path and blob
 
