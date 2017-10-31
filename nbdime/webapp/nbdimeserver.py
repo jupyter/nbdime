@@ -23,6 +23,7 @@ from nbdime.utils import EXPLICIT_MISSING_FILE
 
 from nbdime.args import add_generic_args, add_web_args
 
+from notebook.base.handlers import IPythonHandler, APIHandler
 
 # TODO: See <notebook>/notebook/services/contents/handlers.py for possibly useful utilities:
 #@json_errors
@@ -39,10 +40,9 @@ static_path = os.path.join(here, 'static')
 template_path = os.path.join(here, 'templates')
 
 
-class NbdimeApiHandler(web.RequestHandler):
+class NbdimeApiHandler(IPythonHandler):
     def initialize(self, **params):
         self.params = params
-        self.base_url = params.get("base_url", "")
 
     def base_args(self):
         fn = self.params.get('outputfilename', None)
@@ -61,10 +61,10 @@ class NbdimeApiHandler(web.RequestHandler):
         exc_info = kwargs.get('exc_info', None)
         if exc_info and not self.settings.get('serve_traceback'):
             (etype, value, traceback) = exc_info
-            self.set_header('Content-Type', 'text/plain')
             if etype == web.HTTPError:
+                self.set_header('Content-Type', 'text/plain')
                 return self.finish(str(value))
-        return super(NbdimeApiHandler, self).write_error(status_code, **kwargs)
+        return super(IPythonHandler, self).write_error(status_code, **kwargs)
 
     def read_notebook(self, arg):
         # Currently assuming arg is a filename relative to
@@ -78,7 +78,7 @@ class NbdimeApiHandler(web.RequestHandler):
             if arg == EXPLICIT_MISSING_FILE:
                 path = arg
             else:
-                path = os.path.join(self.params['cwd'], arg)
+                path = os.path.join(self.curdir, arg)
                 if not os.path.exists(path):
                     # Assume file is URI
                     r = requests.get(arg)
@@ -101,6 +101,10 @@ class NbdimeApiHandler(web.RequestHandler):
         arg = body[argname]
 
         return self.read_notebook(arg)
+
+    @property
+    def curdir(self):
+        return self.params.get('cwd', os.curdir)
 
 
 class MainHandler(NbdimeApiHandler):
@@ -164,7 +168,7 @@ class MainMergetoolHandler(NbdimeApiHandler):
         self.render('mergetool.html', config_data=args)
 
 
-class ApiDiffHandler(NbdimeApiHandler):
+class ApiDiffHandler(NbdimeApiHandler, APIHandler):
     def post(self):
         base_nb = self.get_notebook_argument('base')
         remote_nb = self.get_notebook_argument('remote')
@@ -188,11 +192,10 @@ class ApiDiffHandler(NbdimeApiHandler):
                 # Assume arg is file-like
                 return nbformat.read(arg, as_version=4)
             return self.read_notebook(arg)
-        else:
-            return super(ApiDiffHandler, self).get_notebook_argument(argname)
+        return super(ApiDiffHandler, self).get_notebook_argument(argname)
 
 
-class ApiMergeHandler(NbdimeApiHandler):
+class ApiMergeHandler(NbdimeApiHandler, APIHandler):
     def post(self):
         base_nb = self.get_notebook_argument('base')
         local_nb = self.get_notebook_argument('local')
@@ -220,11 +223,10 @@ class ApiMergeHandler(NbdimeApiHandler):
         if 'mergetool_args' in self.params:
             arg = self.params['mergetool_args'][argname]
             return self.read_notebook(arg)
-        else:
-            return super(ApiMergeHandler, self).get_notebook_argument(argname)
+        return super(ApiMergeHandler, self).get_notebook_argument(argname)
 
 
-class ApiMergeStoreHandler(NbdimeApiHandler):
+class ApiMergeStoreHandler(NbdimeApiHandler, APIHandler):
     def post(self):
         # I don't think we want to accept arbitrary filenames
         # to write to from the http request, only allowing
@@ -233,7 +235,7 @@ class ApiMergeStoreHandler(NbdimeApiHandler):
         fn = self.params.get('outputfilename', None)
         if not fn:
             raise web.HTTPError(400, 'Server does not accept storing merge result.')
-        path = os.path.join(self.params.get('cwd', os.curdir), fn)
+        path = os.path.join(self.curdir, fn)
         nbdime.log.info('Saving merge result in %s', path)
 
         body = json.loads(escape.to_unicode(self.request.body))
@@ -248,7 +250,7 @@ class ApiMergeStoreHandler(NbdimeApiHandler):
         self.finish()
 
 
-class ApiCloseHandler(NbdimeApiHandler):
+class ApiCloseHandler(NbdimeApiHandler, APIHandler):
     def post(self):
         # Only allow closing, if started as tool
         if self.params.get('closable', False) is not True:
@@ -264,6 +266,7 @@ class ApiCloseHandler(NbdimeApiHandler):
 
 
 def make_app(**params):
+    base_url = params.pop('base_url', '/')
     handlers = [
         (r'/', MainHandler, params),
         (r'/diff', MainDiffHandler, params),
@@ -276,7 +279,6 @@ def make_app(**params):
         (r'/api/closetool', ApiCloseHandler, params),
         # Static handler will be added automatically
     ]
-    base_url = params.get('base_url', '/')
     if base_url != '/':
         prefix = base_url.rstrip('/')
         handlers = [
@@ -290,6 +292,7 @@ def make_app(**params):
         'static_path': static_path,
         'static_url_prefix': prefix + '/static/',
         'template_path': template_path,
+        'base_url': base_url,
         }
 
     if nbdime.utils.is_in_repo(nbdime.__file__):
