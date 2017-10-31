@@ -45,6 +45,7 @@
     "@jupyterlab/codemirror": "^0.7.0",
     "@jupyterlab/coreutils": "^0.7.1",
     "@jupyterlab/outputarea": "^0.7.0",
+    "@jupyterlab/services": "^0.46.0",
     "@jupyterlab/rendermime": "^0.7.0",
     "@phosphor/algorithm": "^1.1.2",
     "@phosphor/coreutils": "^1.2.0",

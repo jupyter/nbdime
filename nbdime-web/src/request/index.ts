@@ -6,6 +6,10 @@ import {
   URLExt
 } from '@jupyterlab/coreutils/lib/url';
 
+import {
+  ServerConnection
+} from '@jupyterlab/services';
+
 function urlRStrip(target: string): string {
   if (target.slice(-1) === '/') {
     return target.slice(0, -1);
@@ -18,23 +22,19 @@ function urlRStrip(target: string): string {
  */
 export
 function requestJson(url: string, argument: any, callback: (result: any) => void, onError: (result: any) => void) {
-  let xhttp = new XMLHttpRequest();
-  xhttp.onreadystatechange = function() {
-    if (xhttp.readyState === 4) {
-      if (xhttp.status === 200) {
-        let result: string = '';
-        if (xhttp.responseText.length > 0) {
-          result = JSON.parse(xhttp.responseText);
-        }
-        callback(result);
-      } else {
-        onError(xhttp.responseText);
-      }
-    }
-  };
-  xhttp.open('POST', url, true);
-  xhttp.setRequestHeader('Content-type', 'application/json');
-  xhttp.send(JSON.stringify(argument));
+  let request = {
+      url: url,
+      method: 'POST',
+      data: JSON.stringify(argument),
+    };
+  let settings = ServerConnection.makeSettings({});
+  let promise = ServerConnection.makeRequest(request, settings);
+
+  promise.then((response) => {
+    callback(response.data);
+  }, (error: ServerConnection.IError) => {
+    onError(error.xhr.responseText);
+  });
 }
 
 /**
