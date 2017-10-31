@@ -73,15 +73,15 @@ def _overlaps(existing, new):
             # Found a match, combine ops
             return True
         elif (existing.op == DiffOp.REMOVERANGE and
-                existing.key + existing.length >= new.key):
+              existing.key + existing.length >= new.key):
             # Overlapping deletes
             # Above check is open ended to allow sanity check here:
             if existing.key + existing.length != new.key:
                 raise RuntimeError('Unexpected diff keys/lengths')
             return True
     elif (existing.op in _addops and
-            new.op in _addops and
-            existing.key == new.key):
+          new.op in _addops and
+          existing.key == new.key):
         # Addrange and single add can both point to same key
         return True
     return False

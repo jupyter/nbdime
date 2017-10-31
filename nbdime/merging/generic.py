@@ -715,10 +715,6 @@ def _merge_dicts(base, local_diff, remote_diff, path, parent_decisions, strategi
 
     decisions = MergeDecisionBuilder()
 
-    # Intermediate list of conflicts recorded during first pass over diffs,
-    # resolution will be attempted at the end here
-    conflicts = []
-
     local_diff = as_dict_based_diff(local_diff)
     remote_diff = as_dict_based_diff(remote_diff)
 
@@ -904,7 +900,8 @@ def _split_addrange(key, local, remote, path, item_strategy):
 
         elif d.op == DiffOp.PATCH:
             # Predicates indicate that local and remote items are similar!
-            decisions.conflict(path,
+            decisions.conflict(
+                path,
                 [op_addrange(key, [local[d.key]])],
                 [op_addrange(key, [remote[d.key + offset]])],
                 item_strategy)
@@ -948,9 +945,12 @@ def _merge_concurrent_inserts(base, ldiff, rdiff, path, decisions, item_strategy
     assert len(ldiff) == 1 or ldiff[1].op == DiffOp.REMOVERANGE
     assert len(rdiff) == 1 or rdiff[1].op == DiffOp.REMOVERANGE
 
-    subdecisions = _split_addrange(ldiff[0].key,
-        ldiff[0].valuelist, rdiff[0].valuelist,
-        path, item_strategy)
+    subdecisions = _split_addrange(
+        ldiff[0].key,
+        ldiff[0].valuelist,
+        rdiff[0].valuelist,
+        path,
+        item_strategy)
 
     # If there are any conflicts in the merging, and removals following...
     if subdecisions.has_conflicted() and (len(ldiff) == 2 or len(rdiff) == 2):
@@ -1092,7 +1092,6 @@ def _merge_lists(base, local_diff, remote_diff, path, parent_decisions, strategi
                 if p0[0].op == DiffOp.PATCH:
                     thediff = p0[0].diff
                 elif p1[0].op == DiffOp.PATCH:
-                    ldiff = ParentDeleted
                     thediff = p1[0].diff
                 else:
                     nbdime.log.error("Unexpected op combination at this point.")
@@ -1128,7 +1127,8 @@ def _merge_lists(base, local_diff, remote_diff, path, parent_decisions, strategi
                 elif will_diff_counter_parent_deletion(thediff, item_path, strategies):
                     # Keep the deleted item and instead let strategies for
                     # subobjects record that there has been a conflict
-                    counterdiff = create_parent_deletion_counter_diff(thediff, item_path, strategies)
+                    counterdiff = create_parent_deletion_counter_diff(
+                        thediff, item_path, strategies)
                     if p0[0].op == DiffOp.REMOVERANGE:
                         ld, rd = counterdiff, thediff
                     else:
@@ -1172,7 +1172,7 @@ def _merge_lists(base, local_diff, remote_diff, path, parent_decisions, strategi
                 base, d0, d1, path, decisions, item_strategy)
             decisions.extend(subdecisions)
         else:
-            assert nbdime.log.error("Unhandled chunk conflict type %s" % (chunktype,))
+            assert nbdime.log.error("Unhandled chunk conflict type %s", chunktype)
 
     # Resolve remaining conflicts with strategy at this level if any
     #resolve_transients(path, base, decisions, transients)
@@ -1202,7 +1202,8 @@ def _merge_strings(base, local_diff, remote_diff,
 
         # Mark as a conflict on parent (line):
         linenumber = path[-1]
-        decisions.conflict(path[:-1],
+        decisions.conflict(
+            path[:-1],
             [op_patch(linenumber, local_diff)],
             [op_patch(linenumber, remote_diff)],
             strategy)
@@ -1238,9 +1239,9 @@ def _merge_strings(base, local_diff, remote_diff,
         resolve_conflicted_decisions_strings(path, decisions, strategy)
 
     if any([decisions.decisions[i] == decisions.decisions[j]
-           for i in range(len(decisions.decisions))
-           for j in range(len(decisions.decisions))
-           if i != j]):
+            for i in range(len(decisions.decisions))
+            for j in range(len(decisions.decisions))
+            if i != j]):
         nbdime.log.error("Found duplicated decisions, most likely a bug!")
 
     return decisions
@@ -1275,8 +1276,8 @@ def decide_merge_with_diff(base, local, remote, local_diff, remote_diff, strateg
 
     parent_decisions = MergeDecisionBuilder()
 
-    decisions = _merge(base,
-        local_diff, remote_diff,
+    decisions = _merge(
+        base, local_diff, remote_diff,
         path, parent_decisions, strategies)
 
     # This is a remnant of the previous design, I think we

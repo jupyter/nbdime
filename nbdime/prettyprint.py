@@ -156,9 +156,6 @@ def format_merge_render_lines(
     sep2 = "="*marker_size
     sep3 = ">"*marker_size
 
-    orig_local = local
-    orig_remote = remote
-
     if local and local[-1].endswith('\n'):
         local[-1] = local[-1] + '\n'
     if remote and remote[-1].endswith('\n'):
@@ -179,8 +176,8 @@ def format_merge_render_lines(
     i = len(local) - 1
     j = len(remote) - 1
     while (i >= 0 and i < len(local) and
-            j >= 0 and j < len(remote) and
-            local[i] == remote[j]):
+           j >= 0 and j < len(remote) and
+           local[i] == remote[j]):
         postlines.append(local[i])
         i += 1
         j += 1
