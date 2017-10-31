@@ -157,8 +157,8 @@ def diff_lists(a, b, path="", predicates=None, differs=None, shallow_diff=None):
             e = None
             n = len(a) - i
             askip, bskip = 0, 0
-            assert n >= 0
-            assert len(b) - j == n
+            assert n >= 0, "Sanity check failed: Cannot have negative remaining entries"
+            assert len(b) - j == n, "Sanity check failed: Base/remote indexing mismatch"
 
         # Recursively diff the n items that have been deemed similar
         for k in range(n):
@@ -179,8 +179,8 @@ def diff_lists(a, b, path="", predicates=None, differs=None, shallow_diff=None):
             di.append(e)
 
     # Sanity check
-    assert i == len(a)
-    assert j == len(b)
+    assert i == len(a), "Sanity check failed: Did not process all entries in a"
+    assert j == len(b), "Sanity check failed: Did not process all entries in b"
 
     return di.validated()
 
@@ -201,7 +201,8 @@ def diff_dicts(a, b, path="", predicates=None, differs=None):
     if differs is None:
         differs = default_differs()
 
-    assert isinstance(a, dict) and isinstance(b, dict)
+    if not isinstance(a, dict) or not isinstance(b, dict):
+        raise TypeError('Arguments to diff_dicts need to be dicts, got %r and %r' % (a, b))
     akeys = set(a.keys())
     bkeys = set(b.keys())
 

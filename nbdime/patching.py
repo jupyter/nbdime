@@ -26,7 +26,7 @@ def patch_list(obj, diff):
     for e in diff:
         op = e.op
         index = e.key
-        assert isinstance(index, int)
+        assert isinstance(index, int), 'list key must be integer'
 
         # Take values from obj not mentioned in diff, up to not including index
         newobj.extend(copy.deepcopy(value) for value in obj[take:index])
@@ -92,19 +92,19 @@ def patch_dict(obj, diff):
     for e in diff:
         op = e.op
         key = e.key
-        assert isinstance(key, string_types)
-        assert key not in newobj
+        assert isinstance(key, string_types), 'dict key must be string'
+        assert key not in newobj, 'multiple diff entries target same key: %r' % key
 
         if op == DiffOp.ADD:
-            assert key not in obj
+            assert key not in obj, 'patch add value not found for key: %r' % key
             newobj[key] = e.value
         elif op == DiffOp.REMOVE:
             deleted_keys.add(key)
         elif op == DiffOp.REPLACE:
-            assert key not in deleted_keys
+            assert key not in deleted_keys, 'cannot replace deleted key: %r' % key
             newobj[key] = e.value
         elif op == DiffOp.PATCH:
-            assert key not in deleted_keys
+            assert key not in deleted_keys, 'cannot patch deleted key: %r' % key
             newobj[key] = patch(obj[key], e.diff)
         else:
             raise NBDiffFormatError("Invalid op {}.".format(op))

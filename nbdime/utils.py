@@ -57,8 +57,9 @@ def as_text_lines(text):
         text = text.splitlines(True)
     if isinstance(text, tuple):
         text = list(text)
-    assert isinstance(text, list)
-    assert all(isinstance(t, string_types) for t in text)
+    assert isinstance(text, list), 'text argument should be string or string sequence'
+    assert all(isinstance(t, string_types) for t in text), (
+        'text argument should be string or string sequence')
     return text
 
 

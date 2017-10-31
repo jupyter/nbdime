@@ -102,7 +102,7 @@ class MergeDecisionBuilder(object):
         if isinstance(path, list):
             path = tuple(path)
         else:
-            assert isinstance(path, tuple)
+            assert isinstance(path, tuple), 'decision paths should be tuples'
         custom_diff = kwargs.pop("custom_diff", None)
         # Ensure diffs are lists or None
         local_diff = as_list(local_diff)
@@ -138,8 +138,9 @@ class MergeDecisionBuilder(object):
             )
 
     def onesided(self, path, local_diff, remote_diff, conflict=False):
-        assert local_diff or remote_diff
-        assert not (local_diff and remote_diff)
+        assert local_diff or remote_diff, 'one diff needed in onesided merge decisions'
+        assert not (local_diff and remote_diff), (
+            'one diff should be empty in onesided merge decisions')
         if local_diff:
             action = "local"
         elif remote_diff:
@@ -152,8 +153,7 @@ class MergeDecisionBuilder(object):
             )
 
     def local_then_remote(self, path, local_diff, remote_diff, conflict=False, strategy=None):
-        assert local_diff and remote_diff
-        assert local_diff != remote_diff
+        assert local_diff and remote_diff, 'should have two diffs for sequential merge decisions'
         action = "local_then_remote"
         self.add_decision(
             path=path,
@@ -165,8 +165,7 @@ class MergeDecisionBuilder(object):
             )
 
     def remote_then_local(self, path, local_diff, remote_diff, conflict=False, strategy=None):
-        assert local_diff and remote_diff
-        assert local_diff != remote_diff
+        assert local_diff and remote_diff, 'should have two diffs for sequential merge decisions'
         action = "remote_then_local"
         self.add_decision(
             path=path,
@@ -178,8 +177,8 @@ class MergeDecisionBuilder(object):
             )
 
     def agreement(self, path, local_diff, remote_diff, conflict=False):
-        assert local_diff and remote_diff
-        assert local_diff == remote_diff
+        assert local_diff and remote_diff, 'should have two diffs for agreed merge decisions'
+        assert local_diff == remote_diff, 'should have identical diffs for agreed merged decisions'
         self.add_decision(
             path=path,
             action="either",
@@ -199,8 +198,8 @@ class MergeDecisionBuilder(object):
         if not strategy:
             return None
 
-        assert local_diff and remote_diff
-        assert local_diff != remote_diff
+        assert local_diff and remote_diff, 'onesided merges should not be conflicted'
+        assert local_diff != remote_diff, 'agreed merges should not be conflicted'
 
         # Allow strategies to defuse situation first
         action = None
@@ -244,8 +243,8 @@ class MergeDecisionBuilder(object):
         Complex strategies not handled by tryresolve need to be handled at
         an earlier stage and will result in a regular conflict here.
         """
-        assert local_diff and remote_diff
-        assert local_diff != remote_diff
+        assert local_diff and remote_diff, 'onesided merges should not be conflicted'
+        assert local_diff != remote_diff, 'agreed merges should not be conflicted'
 
         # Try to defuse situation with given strategy
         action = self.tryresolve(path, local_diff, remote_diff, strategy)
@@ -263,7 +262,7 @@ class MergeDecisionBuilder(object):
                 )
 
     def local(self, path, local_diff, remote_diff, conflict=False, strategy=None):
-        assert local_diff
+        assert local_diff, 'needs non-empty local diff'
         action = "local"
         self.add_decision(
             path=path,
@@ -275,7 +274,7 @@ class MergeDecisionBuilder(object):
             )
 
     def remote(self, path, local_diff, remote_diff, conflict=False, strategy=None):
-        assert remote_diff
+        assert remote_diff, 'needs non-empty remote diff'
         action = "remote"
         self.add_decision(
             path=path,
@@ -306,7 +305,7 @@ def ensure_common_path(path, diffs):
     common path ("a",), and the inner diffs of the patch operations. Works
     recursively, so a common chain of patches will be resolved as well.
     """
-    assert isinstance(path, (tuple, list))
+    assert isinstance(path, (tuple, list)), 'incorrect path type'
     popped = _pop_path(diffs)
     while popped:
         path = path + (popped["key"],)
@@ -408,9 +407,9 @@ def push_patch_decision(decision, prefix):
     for key in reversed(prefix):
         if len(dec.common_path) == 0:
             raise ValueError(
-                "Cannot remove key from empty decision path: %s, %s" %
+                "Cannot remove key from empty decision path: %r, %r" %
                 (key, dec))
-        assert dec.common_path[-1] == key, "Key %s not at end of %s" % (
+        assert dec.common_path[-1] == key, "Key %r not at end of %r" % (
             key, dec.common_path)
         dec.common_path = dec.common_path[:-1]  # pop key
         dec.local_diff = [op_patch(key, dec.local_diff)] if dec.local_diff else []
@@ -583,8 +582,8 @@ def resolve_action(base, decision):
 def apply_decisions(base, decisions):
     """Apply a list of merge decisions to base.
     """
-    from .generic import combine_patches
-    
+    from .strategies import combine_patches
+
     merged = copy.deepcopy(base)
     prev_path = None
     parent = None
@@ -693,14 +692,21 @@ def build_diffs(base, decisions, which):
     Builds a diff for direct application on base. The `which` argument either
     selects the 'local', 'remote' or 'merged' diffs.
     """
+    # First, we translate the decisions to a dict tree of the format
+    # path (string): {diff: diff entries, path: path (tuple)}:
     tree = {}
+    # The paths of the tree in sorted order (order of first appearance in decisions).
+    # Will be sorted in order deeper paths first for decisions that share a common
+    # path prefix.
     sorted_paths = []
-    assert which in ('local', 'remote', 'merged')
+    assert which in ('local', 'remote', 'merged'), 'invalid argument %r' % which
     local = which == 'local'
     merged = which == 'merged'
 
     for md in decisions:
+        # The path might include string line number, split those off:
         path, line = split_string_path(base, md.local_path())
+        # Get the diff for the current decision:
         if merged:
             subdiffs = resolve_action(base[path], md)
         else:
@@ -717,8 +723,8 @@ def build_diffs(base, decisions, which):
             if line:
                 match_diff = [d for d in tree[str_path]['diff'] if d.key == line[0]]
                 if match_diff:
-                    assert len(match_diff) == 1
-                    assert match_diff[0].diff
+                    assert len(match_diff) == 1, 'multiple mathing diffs found in tree'
+                    assert match_diff[0].diff, 'empty diff found in tree'
                     match_diff[0].diff.extend(subdiffs)
                 else:
                     subdiffs = push_path(line, subdiffs)

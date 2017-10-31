@@ -32,14 +32,14 @@ else:
 
 
 def offset_op(e, n):
-    "Recreate sequence diff entry with offset added to key."
+    """Recreate sequence diff entry with offset added to key."""
     e = DiffEntry(e)
     e.key += n
     return e
 
 
 def count_consumed_symbols(e):
-    "Count how many symbols are consumed from each sequence by a single sequence diff entry."
+    """Count how many symbols are consumed from each sequence by a single sequence diff entry."""
     op = e.op
     if op == DiffOp.ADDRANGE:
         return (0, len(e.valuelist))
@@ -52,10 +52,12 @@ def count_consumed_symbols(e):
 
 
 def source_as_string(source):
-    "Return source as a single string, joined as lines if it's a list."
+    """Return source as a single string, joined as lines if it's a list."""
     if isinstance(source, list):
         source = "\n".join(line.strip("\n") for line in source)
-    assert isinstance(source, string_types)
+    if not isinstance(source, string_types):
+        raise TypeError("Invalid argument type. Should be string or sequence of strings."
+                        "Got %r" % source)
     return source
 
 
@@ -71,14 +73,15 @@ def _overlaps(existing, new):
             # Found a match, combine ops
             return True
         elif (existing.op == DiffOp.REMOVERANGE and
-                existing.key + existing.length >= new.key):
+              existing.key + existing.length >= new.key):
             # Overlapping deletes
             # Above check is open ended to allow sanity check here:
-            assert existing.key + existing.length == new.key
+            if existing.key + existing.length != new.key:
+                raise RuntimeError('Unexpected diff keys/lengths')
             return True
     elif (existing.op in _addops and
-            new.op in _addops and
-            existing.key == new.key):
+          new.op in _addops and
+          existing.key == new.key):
         # Addrange and single add can both point to same key
         return True
     return False
@@ -102,7 +105,7 @@ def _combine_ops(existing, new):
                 d.valuelist.append(new.value)
         return d
     elif new.op == DiffOp.REMOVERANGE:
-        assert existing.op == DiffOp.REMOVERANGE
+        assert existing.op == DiffOp.REMOVERANGE, "Unexpect diff op. Invalid use of _combine_ops"
         return op_removerange(existing.key, existing.length + new.length)
 
 
@@ -198,27 +201,27 @@ def to_json_patch(d, path=""):
     for e in d:
         op = e.op
         if op == DiffOp.ADD:
-            assert isinstance(e.key, string_types)
+            assert isinstance(e.key, string_types), "'add' diff op needs string key"
             p = "/".join([path, e.key])
             jp.append({"op": "add", "path": p, "value": e.value})
         elif op == DiffOp.REPLACE:
-            assert isinstance(e.key, string_types)
+            assert isinstance(e.key, string_types), "'replace' diff op needs string key"
             p = "/".join([path, e.key])
             jp.append({"op": "replace", "path": p, "value": e.value})
         elif op == DiffOp.REMOVE:
-            assert isinstance(e.key, string_types)
+            assert isinstance(e.key, string_types), "'remove' diff op needs string key"
             p = "/".join([path, e.key])
             jp.append({"op": "remove", "path": p})
         elif op == DiffOp.ADDRANGE:
             # JSONPatch only has single value add, no addrange,
             # repeat addition after increasing index instead
-            assert isinstance(e.key, int)
+            assert isinstance(e.key, int), "'addrange' diff op needs integer key"
             for value in e.valuelist:
                 p = "/".join([path, str(e.key + offset)])
                 jp.append({"op": "add", "path": p, "value": value})
                 offset += 1
         elif op == DiffOp.REMOVERANGE:
-            assert isinstance(e.key, int)
+            assert isinstance(e.key, int), "'removerange' diff op needs integer key"
             # JSONPatch only has single value remove, no removerange,
             # repeat removal at same index instead
             p = "/".join((path, str(e.key + offset)))

@@ -42,7 +42,8 @@ def diff_sequence(a, b, compare=operator.__eq__):
 
 def diff_strings_by_char(a, b, path="", predicates=None, differs=None):
     "Compute char-based diff of two strings."
-    assert isinstance(a, string_types) and isinstance(b, string_types)
+    assert isinstance(a, string_types) and isinstance(b, string_types), (
+        'Arguments need to be string types. Got %r and %r' % (a, b))
     if a == b:
         return []
     else:
@@ -52,7 +53,8 @@ def diff_strings_by_char(a, b, path="", predicates=None, differs=None):
 def diff_strings_linewise(a, b):
     """Do a line-wise diff of two strings
     """
-    assert isinstance(a, string_types) and isinstance(b, string_types)
+    assert isinstance(a, string_types) and isinstance(b, string_types), (
+        'Arguments need to be string types. Got %r and %r' % (a, b))
     lines_a = a.splitlines(True)
     lines_b = b.splitlines(True)
 

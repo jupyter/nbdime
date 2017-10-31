@@ -27,7 +27,8 @@ def compute_snakes(A, B, compare, rect=None):
     snakes = bruteforce_compute_snakes(A[i0:i1], B[j0:j1], compare)
     snakes = [(i+i0, j+j0, n) for (i, j, n) in snakes]
 
-    assert all(compare(A[i+k], B[j+k]) for (i, j, n) in snakes for k in range(n))
+    assert all(compare(A[i+k], B[j+k]) for (i, j, n) in snakes for k in range(n)), (
+        'Sanity check of multilevel comparison algorithm failed.')
     return snakes
 
 

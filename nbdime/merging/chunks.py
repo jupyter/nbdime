@@ -12,7 +12,6 @@ from ..diff_format import DiffOp, SequenceDiffBuilder
 
 def __unused__get_diff_range(diffs, i):
     "Returns diff entry and range j..k which this diff affects, i.e. base[j:k] is affected."
-    assert i < len(diffs)
     e = diffs[i]
     j = e.key
     if e.op == DiffOp.PATCH:
@@ -44,7 +43,7 @@ def get_section_boundaries(diffs):
 
 def split_diffs_on_boundaries(diffs, boundaries):
     newdiffs = SequenceDiffBuilder()
-    assert isinstance(boundaries, list)
+    assert isinstance(boundaries, list), 'boundaries argument should be a list'
 
     # Next relevant boundary index
     b = 0
@@ -59,7 +58,7 @@ def split_diffs_on_boundaries(diffs, boundaries):
                 b += 1
 
             # key should be included in the boundaries
-            assert boundaries[b] == e.key
+            assert boundaries[b] == e.key, 'key not found in boundaries'
 
             # Add diff entries for each interval between boundaries up to k
             while b < len(boundaries)-1 and boundaries[b + 1] <= e.key + e.length:
@@ -139,8 +138,8 @@ def make_merge_chunks(base, *diffs, **kwargs):
 
     # Some sanity checking
     if base or split_diffs:
-        assert chunks
-        assert chunks[0][0] == 0
-        assert chunks[-1][1] == len(base)
+        assert chunks, 'no merge chunks produced'
+        assert chunks[0][0] == 0, 'invalid range start of first merge chunk'
+        assert chunks[-1][1] == len(base), 'invalid range end of final merge chunk'
 
     return chunks
