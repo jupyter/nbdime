@@ -148,8 +148,7 @@ def __unused__tryresolve_conflicts(conflicts, decisions):
     return unresolved_conflicts
 
 
-
-def chunkname(diffs):
+def chunk_typename(diffs):
     """For the diffs of a chunk, return string representations of its type.
 
     Returns a two-tuple of strings.
@@ -496,8 +495,8 @@ def _merge_lists(base, local_diff, remote_diff, path, parent_decisions, strategi
 
         # Build chunk names, easier to compare these strings
         # below than inspecting the diffs again and again
-        laname, lpname = chunkname(d0)
-        raname, rpname = chunkname(d1)
+        laname, lpname = chunk_typename(d0)
+        raname, rpname = chunk_typename(d1)
         lname = laname + lpname
         rname = raname + rpname
         # /, A/, /A, A/A depending on addrange local and/or remote:
