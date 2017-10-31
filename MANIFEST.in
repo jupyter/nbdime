@@ -19,14 +19,17 @@ prune docs/gh-pages
 prune docs/dist
 
 # Webapp files
+include lerna.json
+include package.json
 graft nbdime/webapp
 prune nbdime/webapp/node_modules
 prune nbdime/webapp/build
-graft nbdime-web
-prune nbdime-web/coverage
-prune nbdime-web/lib
-prune nbdime-web/node_modules
-prune nbdime-web/test/build
+graft packages
+prune packages/*/coverage
+prune packages/*/lib
+prune packages/*/node_modules
+prune packages/*/test/build
+prune node_modules
 
 # Patterns to exclude from any directory
 global-exclude *~

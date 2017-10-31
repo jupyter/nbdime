@@ -13,7 +13,6 @@
   "scripts": {
     "build": "tsc --project src && node scripts/copy-files.js",
     "clean": "rimraf test/build && rimraf lib && rimraf node_modules",
-    "postinstall": "npm dedupe",
     "test": "npm run test:firefox",
     "test:chrome": "karma start --browsers=Chrome test/karma.conf.js",
     "test:debug": "karma start --browsers=Chrome --singleRun=false --debug=true test/karma-nocov.conf.js",
