@@ -582,7 +582,7 @@ def resolve_action(base, decision):
 def apply_decisions(base, decisions):
     """Apply a list of merge decisions to base.
     """
-    from .generic import combine_patches
+    from .strategies import combine_patches
 
     merged = copy.deepcopy(base)
     prev_path = None
