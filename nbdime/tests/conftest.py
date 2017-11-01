@@ -22,7 +22,6 @@ import nbformat
 
 from .utils import call, have_git, have_hg
 
-from nbdime.webapp.nbdimeserver import init_app
 from nbdime.diffing.notebooks import set_notebook_diff_targets
 
 pjoin = os.path.join
@@ -218,6 +217,7 @@ def app(nbdime_base_url, filespath):
     It is indirectly called by all tests that use the `gen_test`
     test mark.
     """
+    from nbdime.webapp.nbdimeserver import init_app
     return init_app(
         base_url=nbdime_base_url,
         port=0,
