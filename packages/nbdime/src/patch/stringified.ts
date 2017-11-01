@@ -3,7 +3,7 @@
 'use strict';
 
 import {
-  JSONValue, JSONArray, JSONObject
+  ReadonlyJSONValue, ReadonlyJSONArray, ReadonlyJSONObject
 } from '@phosphor/coreutils';
 
 import {
@@ -33,6 +33,15 @@ import {
 
 
 import stableStringify = require('json-stable-stringify');
+
+
+// Workaround for TS issue #17002
+declare global {
+  interface ArrayConstructor {
+    isArray(arg: ReadonlyArray<any> | any): arg is ReadonlyArray<any>;
+  }
+}
+
 
 
 /**
@@ -67,7 +76,7 @@ type StringifiedPatchResult = {
  * defaults to true.
  */
 export
-function stringify(values: JSONValue | null,
+function stringify(values: ReadonlyJSONValue | null,
                    level?: number,
                    indentFirst: boolean = true) : string {
   let ret = stableStringify(values, {space: JSON_INDENT});
@@ -81,7 +90,7 @@ function stringify(values: JSONValue | null,
  * Ensure value is string, if not stringify.
  */
 export
-function stringifyAndBlankNull(value: JSONValue | null): string {
+function stringifyAndBlankNull(value: ReadonlyJSONValue | null): string {
   if (typeof value === 'string') {
     return value;
   } else if (value === null) {
@@ -103,7 +112,7 @@ function stringifyAndBlankNull(value: JSONValue | null): string {
  * can therefore differ from a straigh string-based diff of stringified JSON
  * objects.
  */
-export function patchStringified(base: JSONValue, diff: IDiffEntry[] | null, level?: number) : StringifiedPatchResult {
+export function patchStringified(base: ReadonlyJSONValue, diff: IDiffEntry[] | null, level?: number) : StringifiedPatchResult {
   if (level === undefined) {
     level = 0;
   }
@@ -111,7 +120,7 @@ export function patchStringified(base: JSONValue, diff: IDiffEntry[] | null, lev
     // Only stringify if level > 0
     let stringifyPatch = level > 0;
     return patchString(base, diff as IDiffArrayEntry[] | null, level, stringifyPatch);
-  } else if (base instanceof Array) {
+  } else if (Array.isArray(base)) {
     return patchStringifiedList(base, diff as IDiffArrayEntry[] | null, level);
   } else if (typeof base === 'number' || typeof base === 'boolean') {
     throw new TypeError('Cannot patch an atomic type: ' + typeof base);
@@ -183,7 +192,7 @@ function patchString(base: string, diff: IDiffArrayEntry[] | null, level: number
 /**
  * Patch a stringified object according to the object diff
  */
-function patchStringifiedObject(base: JSONObject, diff: IDiffObjectEntry[] | null, level: number) : StringifiedPatchResult {
+function patchStringifiedObject(base: ReadonlyJSONObject, diff: IDiffObjectEntry[] | null, level: number) : StringifiedPatchResult {
   let remote = '';
   let additions: DiffRangeRaw[] = [];
   let deletions: DiffRangeRaw[] = [];
@@ -293,7 +302,7 @@ function patchStringifiedObject(base: JSONObject, diff: IDiffObjectEntry[] | nul
 /**
  * Patch a stringified list according to the list diff
  */
-function patchStringifiedList(base: JSONArray, diff: IDiffArrayEntry[] | null, level: number) : StringifiedPatchResult {
+function patchStringifiedList(base: ReadonlyJSONArray, diff: IDiffArrayEntry[] | null, level: number) : StringifiedPatchResult {
   let remote = '';
   let additions: DiffRangeRaw[] = [];
   let deletions: DiffRangeRaw[] = [];

@@ -251,3 +251,22 @@ function stableSort<T>(arr: T[], compare: (a: T, b: T) => number): T[] {
   }
   return out;
 }
+
+
+/**
+ * Copy an object, possibly extending it in the process
+ */
+export function copyObj<T extends {[key: string]: any}>(obj: T): T;
+export function copyObj<T extends {[key: string]: any}, U extends {[key: string]: any}>
+(obj: T, target?: U): T & U;
+export function copyObj(obj: {[key: string]: any}, target?: {[key: string]: any}): any {
+  if (!target) {
+    target = {};
+  }
+  for (let prop in obj) {
+    if (obj.hasOwnProperty(prop)) {
+      target[prop] = obj[prop];
+    }
+  }
+  return target;
+}

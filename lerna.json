@@ -1,0 +1,8 @@
+{
+  "lerna": "2.0.0",
+  "packages": [
+    "packages/*",
+    "nbdime/webapp"
+  ],
+  "version": "independent"
+}

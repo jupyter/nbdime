@@ -30,7 +30,6 @@ options.
 
 To run javascript/typescript tests, enter::
 
-    cd nbdime-web/
     npm test
 
 Submitting test cases

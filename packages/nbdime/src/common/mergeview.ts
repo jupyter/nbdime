@@ -38,7 +38,7 @@ import {
 } from './editor';
 
 import {
-  valueIn, hasEntries, splitLines
+  valueIn, hasEntries, splitLines, copyObj
 } from './util';
 
 import {
@@ -170,8 +170,7 @@ class DiffView {
     this.classes = type === 'left' ?
       leftClasses : type === 'right' ? rightClasses : null;
     let ownValue = this.model.remote || '';
-    this.ownWidget = new EditorWidget(copyObj(
-      {value: ownValue}, copyObj(options)));
+    this.ownWidget = new EditorWidget(ownValue, copyObj({readOnly: !!options.readOnly}, options));
     this.showDifferences = options.showDifferences !== false;
   }
 
@@ -879,9 +878,13 @@ class MergeView extends Panel {
 
     if (merged) {
       options.gutters = [GUTTER_CONFLICT_CLASS, GUTTER_PICKER_CLASS];
+      if (options.lineWrapping === undefined) {
+        // Turn off linewrapping for merge view by default, keep for diff
+        options.lineWrapping = false;
+      }
     }
 
-    this.base = new EditorWidget(copyObj(options));
+    this.base = new EditorWidget(options.value, copyObj({readOnly: !!options.readOnly}, options));
     this.base.addClass('CodeMirror-merge-pane');
     this.base.addClass('CodeMirror-merge-pane-base');
 
@@ -1215,21 +1218,6 @@ function elt(tag: string, content?: string | HTMLElement[] | null, className?: s
     }
   }
   return e;
-}
-
-function copyObj<T extends {[key: string]: any}>(obj: T): T;
-function copyObj<T extends {[key: string]: any}, U extends {[key: string]: any}>
-(obj: T, target?: U): T & U;
-function copyObj(obj: {[key: string]: any}, target?: {[key: string]: any}): any {
-  if (!target) {
-    target = {};
-  }
-  for (let prop in obj) {
-    if (obj.hasOwnProperty(prop)) {
-      target[prop] = obj[prop];
-    }
-  }
-  return target;
 }
 
 function findPrevDiff(chunks: Chunk[], start: number, isOrig: boolean): number | null {

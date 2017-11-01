@@ -7,7 +7,7 @@ import {
 } from '@jupyterlab/coreutils';
 
 import {
-  IRenderMime, IOutputModel
+  RenderMime, IOutputModel
 } from '@jupyterlab/rendermime';
 
 import {
@@ -59,7 +59,7 @@ class ReorderableOutputModel extends OutputAreaModel {
     this.list.move(fromIndex, toIndex);
   }
 
-  remove(index: number): IOutputModel | null {
+  remove(index: number): IOutputModel | undefined {
     return this.list.remove(index);
   }
 }
@@ -147,7 +147,7 @@ class RenderableOutputsMergeView extends DragDropPanel {
    *
    */
   constructor(merged: nbformat.IOutput[],
-              classes: string[], rendermime: IRenderMime,
+              classes: string[], rendermime: RenderMime,
               base: nbformat.IOutput[] | null, remote: nbformat.IOutput[] | null,
               local: nbformat.IOutput[] | null) {
     super();
@@ -343,7 +343,7 @@ class RenderableOutputsMergeView extends DragDropPanel {
     if (target) {
       let image = target.cloneNode(true) as HTMLElement;
       image.style.width = target.offsetWidth.toString() + 'px';
-      image.classList.add(REORDERABLE_OUTPUT_DRAGIMAGE_CLASS)
+      image.classList.add(REORDERABLE_OUTPUT_DRAGIMAGE_CLASS);
       return image;
     }
     return null;
@@ -386,5 +386,5 @@ class RenderableOutputsMergeView extends DragDropPanel {
 
   panes: OutputArea[];
 
-  rendermime: IRenderMime;
+  rendermime: RenderMime;
 }

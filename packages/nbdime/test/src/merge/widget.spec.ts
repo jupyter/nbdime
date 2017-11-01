@@ -12,7 +12,7 @@ import {
 } from '@phosphor/widgets';
 
 import {
-  RenderMime
+  RenderMime, defaultRendererFactories
 } from '@jupyterlab/rendermime';
 
 import {
@@ -40,7 +40,7 @@ describe('merge', () => {
   describe('widget', () => {
 
     let rendermime = new RenderMime({
-      items: RenderMime.getDefaultItems(), sanitizer: defaultSanitizer});
+      initialFactories: defaultRendererFactories, sanitizer: defaultSanitizer});
 
     // End rendermime setup
 

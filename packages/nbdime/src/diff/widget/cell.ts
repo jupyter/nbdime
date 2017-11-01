@@ -11,7 +11,7 @@ import {
 } from '@phosphor/widgets';
 
 import {
-  IRenderMime, MimeModel
+  RenderMime, MimeModel
 } from '@jupyterlab/rendermime';
 
 import {
@@ -76,7 +76,7 @@ class CellDiffWidget extends Panel {
   /**
    *
    */
-  constructor(model: CellDiffModel, rendermime: IRenderMime,
+  constructor(model: CellDiffModel, rendermime: RenderMime,
               mimetype: string) {
     super();
     this.addClass(CELLDIFF_CLASS);
@@ -179,11 +179,18 @@ class CellDiffWidget extends Panel {
    */
   static
   createView(model: IDiffModel, parent: CellDiffModel,
-             editorClasses: string[], rendermime: IRenderMime): Panel {
+             editorClasses: string[], rendermime: RenderMime): Panel {
     let view: Widget | null = null;
     if (model instanceof StringDiffModel) {
       if (model.unchanged && parent.cellType === 'markdown') {
-        view = rendermime.render(new MimeModel({data: {'text/markdown': model.base!}, trusted: false}));
+        let mimeModel = new MimeModel({ data: {'text/markdown': model.base!} });
+        let mimeType = rendermime.preferredMimeType(mimeModel.data, true);
+        if (!mimeType) {
+          throw new Error('No renderer for output');
+        }
+        let renderer = rendermime.createRenderer(mimeType);
+        renderer.renderModel(mimeModel);
+        view = renderer;
       } else {
         view = createNbdimeMergeView(model);
       }
@@ -194,7 +201,7 @@ class CellDiffWidget extends Panel {
       // 3) Unknown types: Stringified JSON diff.
       // If the model is one-sided or unchanged, option 2) is preferred to 1)
       let renderable = RenderableOutputView.canRenderUntrusted(model);
-      every(rendermime.mimeTypes(), (mt) => {
+      every(rendermime.mimeTypes, (mt) => {
         let key = model.hasMimeType(mt);
         if (key) {
           if (!renderable ||
@@ -265,5 +272,5 @@ class CellDiffWidget extends Panel {
   }
 
   protected _model: CellDiffModel;
-  protected _rendermime: IRenderMime;
+  protected _rendermime: RenderMime;
 }

@@ -62,8 +62,7 @@ with io.open(pjoin(here, name, '_version.py'), encoding="utf8") as f:
 
 cmdclass = create_cmdclass(('jsdeps',))
 cmdclass['jsdeps'] = combine_commands(
-    install_npm(pjoin(here, 'nbdime-web')),
-    install_npm(pjoin(here, name, 'webapp'), force=True),
+    install_npm(here),
     ensure_targets(jstargets),
 )
 

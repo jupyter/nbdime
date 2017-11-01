@@ -23,9 +23,9 @@ class EditorWidget extends CodeEditorWrapper {
    * Store all editor instances for operations that
    * need to loop over all instances.
    */
-  constructor(options?: CodeMirror.EditorConfiguration | undefined) {
+  constructor(value?: string, options?: Partial<CodeMirrorEditor.IConfig>) {
     super({
-      model: new CodeEditor.Model({value: options!.value}),
+      model: new CodeEditor.Model({value}),
       factory: function() {
         let factory = new CodeMirrorEditorFactory(options);
         return factory.newInlineEditor.bind(factory);
@@ -54,7 +54,7 @@ class EditorWidget extends CodeEditorWrapper {
       } else {
         super.onResize(msg);
       }
-      if (this.editor.readOnly && document.contains(this.node)) {
+      if (this.editor.getOption('readOnly') && document.contains(this.node)) {
         this.staticLoaded = true;
       }
     }

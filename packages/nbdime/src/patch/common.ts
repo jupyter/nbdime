@@ -3,7 +3,7 @@
 'use strict';
 
 import {
-  JSONObject
+  ReadonlyJSONObject
 } from '@phosphor/coreutils';
 
 import {
@@ -21,7 +21,7 @@ import {
 
 export
 class PatchObjectHelper implements IIterator<string> {
-  constructor(base: JSONObject, diff: IDiffObjectEntry[] | null) {
+  constructor(base: ReadonlyJSONObject, diff: IDiffObjectEntry[] | null) {
       this._diffLUT = {};
       let diffKeys : string[] = [];
       if (diff) {
