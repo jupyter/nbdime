@@ -25,6 +25,7 @@ from nbdime.utils import EXPLICIT_MISSING_FILE
 from nbdime.args import add_generic_args, add_web_args
 
 from notebook.base.handlers import IPythonHandler, APIHandler
+from notebook import DEFAULT_STATIC_FILES_PATH
 
 # TODO: See <notebook>/notebook/services/contents/handlers.py for possibly useful utilities:
 #@json_errors
@@ -298,6 +299,9 @@ def make_app(**params):
         (r'/api/merge', ApiMergeHandler, params),
         (r'/api/store', ApiMergeStoreHandler, params),
         (r'/api/closetool', ApiCloseHandler, params),
+        (r'/nb-static/mathjax/(.*)', web.StaticFileHandler, {
+            'path': os.path.join(DEFAULT_STATIC_FILES_PATH, 'components', 'MathJax')
+        })
         # Static handler will be added automatically
     ]
     if base_url != '/':
@@ -316,7 +320,7 @@ def make_app(**params):
         'template_path': [template_path],
         'base_url': base_url,
         'jinja2_env': env,
-        'mathjax_url': 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js',
+        'mathjax_url': prefix + '/nb-static/mathjax/MathJax.js',
         }
 
     if nbdime.utils.is_in_repo(nbdime.__file__):
