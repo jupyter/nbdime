@@ -82,18 +82,23 @@ class PrettyPrintConfig:
 
     def should_ignore_path(self, path):
         starred = star_path(split_path(path))
-        if not self.sources and starred.startswith('/cells/*/source'):
-            return True
-        if not self.outputs and starred.startswith('/cells/*/outputs'):
-            return True
-        if not self.attachments and starred.startswith('/cells/*/attachments'):
-            return True
-        if not self.metadata and starred.startswith('/cells/*/metadata'):
-            return True
-        if not self.details and (starred.startswith('/cells/*/') or
-                                 starred.startswith('/nbformat') or
-                                 starred == '/cells/*/outputs/*/execution_count'):
-            return True
+        if starred.startswith('/cells/*/source'):
+            return not self.sources
+        if starred.startswith('/cells/*/attachments'):
+            return not self.attachments
+        if starred.startswith('/cells/*/metadata') or starred.startswith('/metadata'):
+            return not self.metadata
+        if starred.startswith('/cells/*/outputs'):
+            return (
+                not self.outputs or
+                (starred == '/cells/*/outputs/*/execution_count' and
+                 not self.details))
+        # Can check against '/cells/*/' since we've processed all other
+        # sub-keys that we know about above.
+        if starred.startswith('/cells/*/'):
+            return not self.details
+        if starred.startswith('/nbformat'):
+            return not self.details
         return False
 
 DefaultConfig = PrettyPrintConfig()

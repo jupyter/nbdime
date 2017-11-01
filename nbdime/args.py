@@ -243,7 +243,7 @@ def add_git_diff_driver_args(diff_parser):
 def process_diff_flags(args):
     process_exclusive_ignorables(args, diff_exclusives)
     set_notebook_diff_targets(args.sources, args.outputs,
-                              args.attachments, args.metadata)
+                              args.attachments, args.metadata, args.details)
 
 
 def resolve_diff_args(args):

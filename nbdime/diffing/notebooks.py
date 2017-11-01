@@ -484,6 +484,22 @@ def diff_ignore(*args, **kwargs):
     return []
 
 
+def diff_ignore_keys(inner_differ, ignore_keys):
+    """Call inner_differ, but filter the resulting diff.
+
+    Will ignore all direct diff values that has a key in
+    ignore_keys. I.e. this will not recurse into patch ops.abs
+    """
+    def ignored_diff(*args, **kwargs):
+        d = inner_differ(*args, **kwargs)
+        ret = []
+        for e in d:
+            if e.key not in ignore_keys:
+                ret.append(e)
+        return ret
+    return ignored_diff
+
+
 # Sequence diffs should be applied with multilevel
 # algorithm for paths with more than one predicate,
 # and using operator.__eq__ if no match in there.
@@ -511,7 +527,7 @@ notebook_differs = defaultdict(lambda: diff, {
     })
 
 
-def set_notebook_diff_targets(sources=True, outputs=True, attachments=True, metadata=True):
+def set_notebook_diff_targets(sources=True, outputs=True, attachments=True, metadata=True, details=True):
     """Configure the notebook differs to include/ignore various changes."""
     if sources:
         if "/cells/*/source" in notebook_differs:
@@ -537,6 +553,15 @@ def set_notebook_diff_targets(sources=True, outputs=True, attachments=True, meta
     else:
         for key in metadata_keys:
             notebook_differs[key] = diff_ignore
+
+    if details:
+        notebook_differs['/cells/*'] = diff
+        notebook_differs["/cells/*/outputs/*"] = diff_single_outputs
+    else:
+        notebook_differs['/cells/*'] = diff_ignore_keys(
+            inner_differ=diff, ignore_keys=['execution_count'])
+        notebook_differs['/cells/*/outputs/*'] = diff_ignore_keys(
+            inner_differ=diff_single_outputs, ignore_keys=['execution_count'])
 
 
 def diff_cells(a, b):
