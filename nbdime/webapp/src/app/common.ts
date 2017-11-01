@@ -35,11 +35,6 @@ const HIDE_UNCHANGED_CLASS = 'jp-mod-hideUnchanged';
  */
 let configData: any = null;
 
-/**
- * Global  config data for jupyter.
- */
-let jupyterConfigData: any = null;
-
 // Ensure error messages stay open until dismissed.
 alertify.delay(0).closeLogOnClick(true);
 
@@ -95,19 +90,7 @@ function getConfigOption(name: string, defaultValue?: any): any {
  */
 export
 function getBaseUrl(): string {
-  if (jupyterConfigData) {
-    return jupyterConfigData['baseUrl'];
-  }
-  if (typeof document !== 'undefined') {
-    let el = document.getElementById('jupyter-config-data');
-    if (el && el.textContent) {
-      jupyterConfigData = JSON.parse(el.textContent);
-    } else {
-      jupyterConfigData = {};
-    }
-  }
-  jupyterConfigData = deepFreeze(jupyterConfigData);
-  return jupyterConfigData['baseUrl'];
+  return getConfigOption('baseUrl');
 }
 
 const spinner = document.createElement('div');

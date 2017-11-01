@@ -2,20 +2,20 @@
 
     {% block nbdimeheader %}
 
-    <div id="nbdime-header" class="nbdime-Merge">
-      <h3>Notebook Merge</h3>
-      Enter notebook filenames or URLs in the form below to get started.
+    <div id="nbdime-header">
+      <h3>Notebook Diff/Merge</h3>
+      Enter two or more notebook filenames/URLs in the form below to get started.
 
-      <form id="nbdime-merge-form" class="nbdime-forms">
+      <form id="nbdime-compare-form" class="nbdime-forms">
         <fieldset>
-          <legend>Please input filenames/URLs of notebooks to merge:</legend>
+          <legend>Please input filenames of notebooks to compare:</legend>
           <label>Local:</label>
-          <input id="merge-local" type="text" name="local" value="{{ config_data['local']|e }}" />
+          <input id="compare-local" type="text" name="local" value="{{ config_data['local']|e }}" />
           <label>Base:</label>
-          <input id="merge-base" type="text" name="base" value="{{ config_data['base']|e }}" />
+          <input id="compare-base" type="text" name="base" value="{{ config_data['base']|e }}" />
           <label>Remote:</label>
-          <input id="merge-remote" type="text" name="remote" value="{{ config_data['remote']|e }}" />
-          <input id="nbdime-run-merge" type="submit" name="merge" value="Merge files" />
+          <input id="compare-remote" type="text" name="remote" value="{{ config_data['remote']|e }}" />
+          <input id="nbdime-run-compare" type="submit" name="auto" value="Compare files" />
           <button id="nbdime-download" style="display: none" type="button">Download</button>
         </fieldset>
       </form> <!-- nbdime-forms -->
@@ -24,6 +24,7 @@
         <button id="nbdime-save" style="display: none">Save</button>
         <button id="nbdime-download" style="display: none">Download</button>
         <button id="nbdime-close" style="display: none">Close tool</button>
+        <button id="nbdime-export" style="display: none">Export diff</button>
       </div>
       <div id=nbdime-header-banner>
         <span id="nbdime-header-local">Local</span>

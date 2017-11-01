@@ -483,7 +483,7 @@ def test_git_difftool(git_repo, request, unique_port):
     assert process.poll() == 0
 
 
-@pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
+@pytest.mark.timeout(timeout=3*WEB_TEST_TIMEOUT)
 def test_git_mergetool(git_repo, request, unique_port):
     gitmergetool.main(['config', '--enable'])
     cmd = get_output('git config --get --local mergetool.nbdime.cmd').strip()
@@ -505,6 +505,7 @@ def test_git_mergetool(git_repo, request, unique_port):
             pass
     request.addfinalizer(_term)
 
+    # 3 total web calls: mergetool, api/store, api/closetool
     url = 'http://127.0.0.1:%i' % port
     _wait_up(url, check=lambda: process.poll() is None)
     # server started
