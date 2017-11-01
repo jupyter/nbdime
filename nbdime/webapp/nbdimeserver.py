@@ -41,7 +41,7 @@ static_path = os.path.join(here, 'static')
 template_path = os.path.join(here, 'templates')
 
 
-class NbdimeApiHandler(IPythonHandler):
+class NbdimeHandler(IPythonHandler):
     def initialize(self, **params):
         self.params = params
 
@@ -108,7 +108,7 @@ class NbdimeApiHandler(IPythonHandler):
         return self.params.get('cwd', os.curdir)
 
 
-class MainHandler(NbdimeApiHandler):
+class MainHandler(NbdimeHandler):
     def get(self):
         args = self.base_args()
         args['base'] = self.get_argument('base', '')
@@ -121,7 +121,7 @@ class MainHandler(NbdimeApiHandler):
                    ))
 
 
-class MainDiffHandler(NbdimeApiHandler):
+class MainDiffHandler(NbdimeHandler):
     def get(self):
         args = self.base_args()
         args['base'] = self.get_argument('base', '')
@@ -134,7 +134,7 @@ class MainDiffHandler(NbdimeApiHandler):
                    ))
 
 
-class MainDifftoolHandler(NbdimeApiHandler):
+class MainDifftoolHandler(NbdimeHandler):
     def get(self):
         args = self.base_args()
         if 'difftool_args' in self.params:
@@ -158,7 +158,7 @@ class MainDifftoolHandler(NbdimeApiHandler):
                    ))
 
 
-class MainMergeHandler(NbdimeApiHandler):
+class MainMergeHandler(NbdimeHandler):
     def get(self):
         args = self.base_args()
         args['base'] = self.get_argument('base', '')
@@ -171,7 +171,7 @@ class MainMergeHandler(NbdimeApiHandler):
                    ))
 
 
-class MainMergetoolHandler(NbdimeApiHandler):
+class MainMergetoolHandler(NbdimeHandler):
     def get(self):
         args = self.base_args()
         if 'mergetool_args' in self.params:
@@ -189,7 +189,7 @@ class MainMergetoolHandler(NbdimeApiHandler):
                    ))
 
 
-class ApiDiffHandler(NbdimeApiHandler, APIHandler):
+class ApiDiffHandler(NbdimeHandler, APIHandler):
     def post(self):
         base_nb = self.get_notebook_argument('base')
         remote_nb = self.get_notebook_argument('remote')
@@ -216,7 +216,7 @@ class ApiDiffHandler(NbdimeApiHandler, APIHandler):
         return super(ApiDiffHandler, self).get_notebook_argument(argname)
 
 
-class ApiMergeHandler(NbdimeApiHandler, APIHandler):
+class ApiMergeHandler(NbdimeHandler, APIHandler):
     def post(self):
         base_nb = self.get_notebook_argument('base')
         local_nb = self.get_notebook_argument('local')
@@ -247,7 +247,7 @@ class ApiMergeHandler(NbdimeApiHandler, APIHandler):
         return super(ApiMergeHandler, self).get_notebook_argument(argname)
 
 
-class ApiMergeStoreHandler(NbdimeApiHandler, APIHandler):
+class ApiMergeStoreHandler(NbdimeHandler, APIHandler):
     def post(self):
         # I don't think we want to accept arbitrary filenames
         # to write to from the http request, only allowing
@@ -271,7 +271,7 @@ class ApiMergeStoreHandler(NbdimeApiHandler, APIHandler):
         self.finish()
 
 
-class ApiCloseHandler(NbdimeApiHandler, APIHandler):
+class ApiCloseHandler(NbdimeHandler, APIHandler):
     def post(self):
         # Only allow closing, if started as tool
         if self.params.get('closable', False) is not True:
