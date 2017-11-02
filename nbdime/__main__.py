@@ -87,6 +87,7 @@ def main_dispatch(args=None):
         call('jupyter serverextension enable --py nbdime'.split() + args)
         call('jupyter nbextension install --py nbdime'.split() + args)
         call('jupyter nbextension enable --py nbdime'.split() + args)
+        return 0
     else:
         if cmd == '--version':
             sys.exit(__version__)
