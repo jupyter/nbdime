@@ -21,7 +21,7 @@ from .nbdimeserver import (
 )
 
 from ..gitfiles import changed_notebooks, is_path_in_repo, InvalidGitRepositoryError, BadName
-from ..utils import split_os_path
+from ..utils import split_os_path, EXPLICIT_MISSING_FILE, read_notebook
 
 
 class GitMainDifftoolHandler(NbdimeHandler):
@@ -63,13 +63,13 @@ class GitApiDiffHandler(ApiDiffHandler):
             base = os.path.relpath(base, root_dir)
         try:
             for fbase, fremote in changed_notebooks('HEAD', None, base, root_dir):
-                base_nb = nbformat.read(fbase, as_version=4)
-                remote_nb = nbformat.read(fremote, as_version=4)
+                base_nb = read_notebook(fbase, on_null='minimal')
+                remote_nb = read_notebook(fremote, on_null='minimal')
                 break  # there should only ever be one set of files
             else:
                 # The filename was either invalid or unchanged
                 # Assume unchanged, and let api handler deal with it if not
-                base_nb = self.read_notebook(base)
+                base_nb = self.read_notebook(os.path.join(root_dir, base))
                 remote_nb = base_nb
         except (InvalidGitRepositoryError, BadName):
             raise HTTPError(422, 'Invalid notebook: %s' % base)
