@@ -11,6 +11,7 @@ import glob
 import io
 import re
 from subprocess import Popen
+import sys
 
 try:
     from unittest import mock
@@ -22,9 +23,27 @@ from jsonschema import RefResolver
 from pytest import fixture, skip
 import nbformat
 
-from .utils import call, have_git, have_hg
+from .utils import call, have_git, have_hg, wait_up, TEST_TOKEN
 
 from nbdime.diffing.notebooks import set_notebook_diff_targets
+
+try:
+    # Python >= 3.3
+    from subprocess import TimeoutExpired
+    def popen_wait(p, timeout):
+        return p.wait(timeout)
+except ImportError:
+    import time
+    class TimeoutExpired(Exception):
+        pass
+    def popen_wait(p, timeout):
+        """backport of Popen.wait from Python 3"""
+        for i in range(int(10 * timeout)):
+            if p.poll() is not None:
+                return
+            time.sleep(0.1)
+        if p.poll() is None:
+            raise TimeoutExpired
 
 pjoin = os.path.join
 
@@ -403,3 +422,54 @@ def popen_with_terminator(request):
 
     return run_process
 
+
+
+def create_server_extension_config(tmpdir_factory):
+    path = tmpdir_factory.mktemp('server-extension-config')
+    config = {
+        "NotebookApp": {
+            "nbserver_extensions": {
+                "nbdime": True
+            }
+        }
+    }
+    config_str = json.dumps(config)
+    if isinstance(config_str, bytes):
+        config_str = unicode(config_str)
+    path.join('jupyter_notebook_config.json').write_text(config_str, 'utf-8')
+    return str(path)
+
+
+
+@fixture(scope='module')
+def server_extension_app(tmpdir_factory, request):
+
+    def _kill_nb_app():
+        try:
+            process.terminate()
+        except OSError:
+            # already dead
+            pass
+        popen_wait(process, 10)
+
+    config_dir = create_server_extension_config(tmpdir_factory)
+    env = os.environ.copy()
+    env.update({'JUPYTER_CONFIG_DIR': config_dir})
+
+    port = unique_port()
+    root_dir = str(tmpdir_factory.getbasetemp())
+
+    os.chdir(root_dir)
+    process = Popen([
+        sys.executable, '-m', 'notebook',
+         '--port=%i' % port,
+        '--ip=127.0.0.1',
+        '--no-browser', '--NotebookApp.token=%s' % TEST_TOKEN],
+        env=env)
+
+    request.addfinalizer(_kill_nb_app)
+
+    url = 'http://127.0.0.1:%i' % port
+    wait_up(url, check=lambda: process.poll() is None)
+
+    return dict(process=process, port=port, path=root_dir)

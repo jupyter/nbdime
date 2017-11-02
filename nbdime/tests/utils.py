@@ -35,6 +35,8 @@ have_hg = which('hg')
 
 WEB_TEST_TIMEOUT = 15
 
+TEST_TOKEN = 'nbdime-test-token'
+
 
 def assert_is_valid_notebook(nb):
     """These are the current assumptions on notebooks in these tests. Loosen on demand."""
