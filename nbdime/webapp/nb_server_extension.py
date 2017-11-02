@@ -56,8 +56,10 @@ class GitApiDiffHandler(ApiDiffHandler):
         body = json.loads(escape.to_unicode(self.request.body))
         base = body['base']
         if not base.startswith('git:'):
+            # Not a git diff, call super
             return super(GitApiDiffHandler, self).post()
 
+        # Ensure path/root_dir that can be sent to git:
         base = base[len('git:'):]
         root_dir = os.curdir
         if not is_path_in_repo(root_dir):
@@ -69,20 +71,24 @@ class GitApiDiffHandler(ApiDiffHandler):
             else:
                 raise HTTPError(422, 'Invalid notebook: %s' % base)
             base = os.path.relpath(base, root_dir)
+
+        # Get the base/remote notebooks:
         try:
             for fbase, fremote in changed_notebooks('HEAD', None, base, root_dir):
                 base_nb = read_notebook(fbase, on_null='minimal')
                 remote_nb = read_notebook(fremote, on_null='minimal')
                 break  # there should only ever be one set of files
             else:
-                # The filename was either invalid or unchanged
-                # Assume unchanged, and let api handler deal with it if not
+                # The filename was either invalid or the file is unchanged
+                # Assume unchanged, and let read_notebook handle error
+                # reporting if invalid
                 base_nb = self.read_notebook(os.path.join(root_dir, base))
                 remote_nb = base_nb
         except (InvalidGitRepositoryError, BadName) as e:
             self.log.exception(e)
             raise HTTPError(422, 'Invalid notebook: %s' % base)
 
+        # Perform actual diff and return data:
         try:
             thediff = nbdime.diff_notebooks(base_nb, remote_nb)
         except Exception:
