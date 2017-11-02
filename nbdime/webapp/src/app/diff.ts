@@ -45,6 +45,26 @@ import {
 } from './staticdiff';
 
 
+const prefixes = ['git:', 'checkpoint:'];
+
+function hasPrefix(candidate: string): boolean {
+  for (let p of prefixes) {
+    if (candidate.slice(0, p.length) === p) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function stripPrefix(s: string): string {
+  for (let p of prefixes) {
+    if (s.slice(0, p.length) === p) {
+      return s.slice(p.length);
+    }
+  }
+  return s;
+}
+
 
 /**
  * Show the diff as represented by the base notebook and a list of diff entries
@@ -92,9 +112,7 @@ function compare(base: string, remote: string | undefined, pushHistory: boolean 
   getDiff(base, remote);
   if (pushHistory) {
     let uri = window.location.pathname;
-    if (base.slice(0, 4) === 'git:') {
-      base = base.slice(4);
-    }
+    base = stripPrefix(base);
     uri = '?base=' + encodeURIComponent(base);
     if (remote) {
       uri += '&remote=' + encodeURIComponent(remote);
@@ -187,7 +205,7 @@ function initializeDiff() {
   // If arguments supplied in config, run diff directly:
   let base = getConfigOption('base');
   let remote = getConfigOption('remote');
-  if (base && (remote || base.slice(0, 4) === 'git:')) {
+  if (base && (remote || hasPrefix(base))) {
     compare(base, remote, 'replace');
   }
 

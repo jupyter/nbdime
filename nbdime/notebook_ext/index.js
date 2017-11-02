@@ -38,10 +38,9 @@ define([
     var nbCheckpointDiffView = function () {
         var nb_dir = utils.url_path_split(Jupyter.notebook.notebook_path)[0];
         var name = Jupyter.notebook.notebook_name;
-        var base = path_join(nb_dir, '.ipynb_checkpoints', utils.splitext(name)[0] + '-checkpoint.ipynb');
-        var remote = path_join(nb_dir, name);
+        var base = path_join(nb_dir, name);
 
-        nbDiffView('difftool', base, remote);
+        nbDiffView('checkpoint-difftool', base, '');
     };
 
     /**

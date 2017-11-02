@@ -7,7 +7,7 @@ import json
 import os
 
 from notebook.utils import url_path_join
-from tornado.web import HTTPError, escape, authenticated
+from tornado.web import HTTPError, escape, authenticated, gen
 import nbformat
 
 import nbdime
@@ -37,6 +37,23 @@ class GitDifftoolHandler(NbdimeHandler):
     def get(self):
         args = self.base_args()
         args['base'] = 'git:' + self.get_argument('base', '')
+        args['remote'] = ''
+
+        self.write(self.render_template(
+            'difftool.html',
+            config_data=args,
+            mathjax_url=self.mathjax_url,
+            mathjax_config=self.mathjax_config,
+            ))
+
+
+class CheckpointDifftoolHandler(NbdimeHandler):
+    """Diff tool handler that also handles showing diff to git HEAD"""
+
+    @authenticated
+    def get(self):
+        args = self.base_args()
+        args['base'] = 'checkpoint:' + self.get_argument('base', '')
         args['remote'] = ''
 
         self.write(self.render_template(
@@ -80,6 +97,15 @@ class ExtensionApiDiffHandler(ApiDiffHandler):
             raise HTTPError(422, 'Invalid notebook: %s' % base)
         return base_nb, remote_nb
 
+    def _get_checkpoint_notebooks(self, base):
+        # Get the model for the current notebook:
+        cm = self.contents_manager
+        model = yield gen.maybe_future(cm.get(base, content=True, type='notebook'))
+        # Get the model for the checkpoint notebook:
+        checkpoints = yield gen.maybe_future(cm.list_checkpoints(base))
+        checkpoint_model = yield gen.maybe_future(cm.get_notebook_checkpoint(checkpoints[0], base))
+        return checkpoint_model['content'], model['content']
+
     @authenticated
     def post(self):
         # Assuming a request on the form "{'argname':arg}"
@@ -87,6 +113,8 @@ class ExtensionApiDiffHandler(ApiDiffHandler):
         base = body['base']
         if base.startswith('git:'):
             base_nb, remote_nb = self._get_git_notebooks(base[len('git:'):])
+        elif base.startswith('checkpoint:'):
+            base_nb, remote_nb = self._get_checkpoint_notebooks(base[len('checkpoint:'):])
         else:
             # Regular files, call super
             return super(ExtensionApiDiffHandler, self).post()
@@ -151,6 +179,7 @@ def _load_jupyter_server_extension(nb_server_app):
     }
     handlers = [
         (r'/nbdime/difftool', AuthMainDifftoolHandler, params),
+        (r'/nbdime/checkpoint-difftool', CheckpointDifftoolHandler, params),
         (r'/nbdime/git-difftool', GitDifftoolHandler, params),
         (r'/nbdime/api/diff', ExtensionApiDiffHandler, params),
         (r'/nbdime/api/isgit', IsGitHandler, params),
