@@ -30,7 +30,7 @@ class AuthMainDifftoolHandler(MainDifftoolHandler):
         return super(AuthMainDifftoolHandler, self).get()
 
 
-class GitMainDifftoolHandler(NbdimeHandler):
+class GitDifftoolHandler(NbdimeHandler):
     """Diff tool handler that also handles showing diff to git HEAD"""
 
     @authenticated
@@ -47,21 +47,12 @@ class GitMainDifftoolHandler(NbdimeHandler):
             ))
 
 
-class GitApiDiffHandler(ApiDiffHandler):
+class ExtensionApiDiffHandler(ApiDiffHandler):
     """Diff API handler that also handles diff to git HEAD"""
 
-    @authenticated
-    def post(self):
-        # Assuming a request on the form "{'argname':arg}"
-        body = json.loads(escape.to_unicode(self.request.body))
-        base = body['base']
-        if not base.startswith('git:'):
-            # Not a git diff, call super
-            return super(GitApiDiffHandler, self).post()
-
-        # Ensure path/root_dir that can be sent to git:
-        base = base[len('git:'):]
-        root_dir = os.curdir
+    def _get_git_notebooks(self, base):
+         # Ensure path/root_dir that can be sent to git:
+        root_dir = getattr(self.contents_manager, 'root_dir', None)
         if not is_path_in_repo(root_dir):
             # We need to traverse down 'base' until we find a repo
             for part in split_os_path(os.path.dirname(base)):
@@ -87,6 +78,18 @@ class GitApiDiffHandler(ApiDiffHandler):
         except (InvalidGitRepositoryError, BadName) as e:
             self.log.exception(e)
             raise HTTPError(422, 'Invalid notebook: %s' % base)
+        return base_nb, remote_nb
+
+    @authenticated
+    def post(self):
+        # Assuming a request on the form "{'argname':arg}"
+        body = json.loads(escape.to_unicode(self.request.body))
+        base = body['base']
+        if base.startswith('git:'):
+            base_nb, remote_nb = self._get_git_notebooks(base[len('git:'):])
+        else:
+            # Regular files, call super
+            return super(ExtensionApiDiffHandler, self).post()
 
         # Perform actual diff and return data:
         try:
@@ -101,15 +104,27 @@ class GitApiDiffHandler(ApiDiffHandler):
             }
         self.finish(data)
 
+    @property
+    def curdir(self):
+        root_dir = getattr(self.contents_manager, 'root_dir', None)
+        if root_dir is None:
+            return super(ExtensionApiDiffHandler, self).curdir
+        return root_dir
+
 
 class IsGitHandler(NbdimeHandler, APIHandler):
     """API handler for querying if path is in git repo"""
 
     @authenticated
     def post(self):
+        root_dir = getattr(self.contents_manager, 'root_dir', None)
+        # Ensure notebooks are file-system based
+        if root_dir is None:
+            self.finish({'is_git': False})
+
         # Assuming a request on the form "{'argname':arg}"
         body = json.loads(escape.to_unicode(self.request.body))
-        nb = body['path']
+        nb = os.path.join(root_dir, body['path'])
 
         data = {'is_git': is_path_in_repo(nb)}
         self.finish(data)
@@ -136,8 +151,8 @@ def _load_jupyter_server_extension(nb_server_app):
     }
     handlers = [
         (r'/nbdime/difftool', AuthMainDifftoolHandler, params),
-        (r'/nbdime/git-difftool', GitMainDifftoolHandler, params),
-        (r'/nbdime/api/diff', GitApiDiffHandler, params),
+        (r'/nbdime/git-difftool', GitDifftoolHandler, params),
+        (r'/nbdime/api/diff', ExtensionApiDiffHandler, params),
         (r'/nbdime/api/isgit', IsGitHandler, params),
     ]
 
