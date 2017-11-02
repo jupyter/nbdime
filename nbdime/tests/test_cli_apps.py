@@ -7,7 +7,7 @@ import io
 import json
 import logging
 import os
-from subprocess import CalledProcessError, Popen, check_call
+from subprocess import CalledProcessError, check_call
 import sys
 import time
 
@@ -17,7 +17,10 @@ from tornado.httputil import url_concat
 
 import nbformat
 
-from .utils import assert_clean_exit, get_output, call, WEB_TEST_TIMEOUT, write_local_hg_config
+from .utils import (
+    assert_clean_exit, get_output, call, WEB_TEST_TIMEOUT,
+    write_local_hg_config, wait_up
+)
 
 import nbdime
 from nbdime.nbshowapp import main_show
@@ -431,21 +434,8 @@ def test_git_mergedriver(git_repo, filespath):
     nbformat.validate(nb)
 
 
-def _wait_up(url, interval=0.1, check=None):
-    while True:
-        try:
-            r = requests.get(url)
-        except Exception as e:
-            if check:
-                assert check()
-            print("waiting for %s" % url)
-            time.sleep(interval)
-        else:
-            break
-
-
 @pytest.mark.timeout(timeout=3*WEB_TEST_TIMEOUT)
-def test_git_difftool(git_repo, request, unique_port):
+def test_git_difftool(git_repo, unique_port, popen_with_terminator):
     gitdifftool.main(['config', '--enable'])
     cmd = get_output('git config --get --local difftool.nbdime.cmd').strip()
 
@@ -458,19 +448,12 @@ def test_git_difftool(git_repo, request, unique_port):
     with open('.gitattributes', 'w') as f:
         f.write('*.ipynb\tdiff=notnbdime')
 
-    process = Popen(['git', 'difftool', '--tool=nbdime', 'base'])
-
-    def _term():
-        try:
-            process.terminate()
-        except OSError:
-            pass
-    request.addfinalizer(_term)
+    process = popen_with_terminator(['git', 'difftool', '--tool=nbdime', 'base'])
 
     # 3 is the number of notebooks in this diff
     url = 'http://127.0.0.1:%i' % port
     for i in range(3):
-        _wait_up(url, check=lambda: process.poll() is None)
+        wait_up(url, check=lambda: process.poll() is None)
         # server started
         r = requests.get(url + '/difftool')
         r.raise_for_status()
@@ -484,7 +467,7 @@ def test_git_difftool(git_repo, request, unique_port):
 
 
 @pytest.mark.timeout(timeout=3*WEB_TEST_TIMEOUT)
-def test_git_mergetool(git_repo, request, unique_port):
+def test_git_mergetool(git_repo, unique_port, popen_with_terminator):
     gitmergetool.main(['config', '--enable'])
     cmd = get_output('git config --get --local mergetool.nbdime.cmd').strip()
 
@@ -496,18 +479,12 @@ def test_git_mergetool(git_repo, request, unique_port):
 
     with pytest.raises(CalledProcessError):
         call('git merge remote-conflict')
-    process = Popen(['git', 'mergetool', '--no-prompt', '--tool=nbdime', 'merge-conflict.ipynb'])
-
-    def _term():
-        try:
-            process.terminate()
-        except OSError:
-            pass
-    request.addfinalizer(_term)
+    process = popen_with_terminator([
+        'git', 'mergetool', '--no-prompt', '--tool=nbdime', 'merge-conflict.ipynb'])
 
     # 3 total web calls: mergetool, api/store, api/closetool
     url = 'http://127.0.0.1:%i' % port
-    _wait_up(url, check=lambda: process.poll() is None)
+    wait_up(url, check=lambda: process.poll() is None)
     # server started
     r = requests.get(url + '/mergetool')
     r.raise_for_status()
@@ -566,22 +543,16 @@ def test_hg_mergedriver(hg_repo, filespath):
 
 
 @pytest.mark.timeout(timeout=3*WEB_TEST_TIMEOUT)
-def test_hg_diffweb(hg_repo, request, unique_port):
+def test_hg_diffweb(hg_repo, unique_port, popen_with_terminator):
     # enable diff/merge drivers
     write_local_hg_config(hg_repo)
 
-    process = Popen(['hg', 'nbdiffweb', '-r', 'base', '-o', '--port=%i' % unique_port])
-
-    def _term():
-        try:
-            process.terminate()
-        except OSError:
-            pass
-    request.addfinalizer(_term)
+    process = popen_with_terminator([
+        'hg', 'nbdiffweb', '-r', 'base', '-o', '--port=%i' % unique_port])
 
     # 3 is the number of notebooks in this diff
     url = 'http://127.0.0.1:%i' % unique_port
-    _wait_up(url, check=lambda: process.poll() is None)
+    wait_up(url, check=lambda: process.poll() is None)
     for i in range(3):
         # server started
         r = requests.get(url + '/difftool')
@@ -596,27 +567,20 @@ def test_hg_diffweb(hg_repo, request, unique_port):
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
-def test_hg_mergetool(hg_repo, request, unique_port):
+def test_hg_mergetool(hg_repo, unique_port, popen_with_terminator):
     # enable diff/merge drivers
     write_local_hg_config(hg_repo)
 
     with pytest.raises(CalledProcessError):
         call('hg merge remote-conflict')
     config_override = '--log-level DEBUG --browser=disabled --port=%d $base $local $other $output' % unique_port
-    process = Popen([
+    process = popen_with_terminator([
         'hg', 'resolve', '--tool', 'nbdimeweb',
         '--config', 'merge-tools.nbdimeweb.args=%s' % config_override,
         'merge-conflict.ipynb'])
 
-    def _term():
-        try:
-            process.terminate()
-        except OSError:
-            pass
-    request.addfinalizer(_term)
-
     url = 'http://127.0.0.1:%i' % unique_port
-    _wait_up(url, check=lambda: process.poll() is None)
+    wait_up(url, check=lambda: process.poll() is None)
     # server started
     r = requests.get(url + '/mergetool')
     r.raise_for_status()

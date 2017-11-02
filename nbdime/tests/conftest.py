@@ -10,6 +10,8 @@ import json
 import glob
 import io
 import re
+from subprocess import Popen
+
 try:
     from unittest import mock
 except ImportError:
@@ -33,7 +35,7 @@ def testspath():
     return os.path.abspath(os.path.dirname(__file__))
 
 
-@fixture
+@fixture(scope='session')
 def filespath():
     return os.path.join(testspath(), "files")
 
@@ -62,13 +64,13 @@ def nocolor(request):
     request.addfinalizer(patch.stop)
 
 
-@fixture
+@fixture(scope='session')
 def needs_git():
     if not have_git:
         skip("requires git")
 
 
-@fixture
+@fixture(scope='session')
 def needs_hg():
     if not have_hg:
         skip("requires mercurial")
@@ -385,3 +387,19 @@ def reset_diff_targets():
     finally:
         # Reset diff targets (global variable)
         set_notebook_diff_targets()
+
+@fixture()
+def popen_with_terminator(request):
+
+    def run_process(*args, **kwargs):
+        process = Popen(*args, **kwargs)
+        def _term():
+            try:
+                process.terminate()
+            except OSError:
+                pass
+        request.addfinalizer(_term)
+        return process
+
+    return run_process
+
