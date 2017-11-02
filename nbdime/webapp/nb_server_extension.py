@@ -7,7 +7,7 @@ import json
 import os
 
 from notebook.utils import url_path_join
-from tornado.web import HTTPError, escape
+from tornado.web import HTTPError, escape, authenticated
 import nbformat
 
 import nbdime
@@ -24,9 +24,16 @@ from ..gitfiles import changed_notebooks, is_path_in_repo, InvalidGitRepositoryE
 from ..utils import split_os_path, EXPLICIT_MISSING_FILE, read_notebook
 
 
+class AuthMainDifftoolHandler(MainDifftoolHandler):
+    @authenticated
+    def get(self):
+        return super(AuthMainDifftoolHandler, self).get()
+
+
 class GitMainDifftoolHandler(NbdimeHandler):
     """Diff tool handler that also handles showing diff to git HEAD"""
 
+    @authenticated
     def get(self):
         args = self.base_args()
         args['base'] = 'git:' + self.get_argument('base', '')
@@ -43,6 +50,7 @@ class GitMainDifftoolHandler(NbdimeHandler):
 class GitApiDiffHandler(ApiDiffHandler):
     """Diff API handler that also handles diff to git HEAD"""
 
+    @authenticated
     def post(self):
         # Assuming a request on the form "{'argname':arg}"
         body = json.loads(escape.to_unicode(self.request.body))
@@ -71,7 +79,8 @@ class GitApiDiffHandler(ApiDiffHandler):
                 # Assume unchanged, and let api handler deal with it if not
                 base_nb = self.read_notebook(os.path.join(root_dir, base))
                 remote_nb = base_nb
-        except (InvalidGitRepositoryError, BadName):
+        except (InvalidGitRepositoryError, BadName) as e:
+            self.log.exception(e)
             raise HTTPError(422, 'Invalid notebook: %s' % base)
 
         try:
@@ -90,6 +99,7 @@ class GitApiDiffHandler(ApiDiffHandler):
 class IsGitHandler(NbdimeHandler, APIHandler):
     """API handler for querying if path is in git repo"""
 
+    @authenticated
     def post(self):
         # Assuming a request on the form "{'argname':arg}"
         body = json.loads(escape.to_unicode(self.request.body))
@@ -119,7 +129,7 @@ def _load_jupyter_server_extension(nb_server_app):
         'closable': False,
     }
     handlers = [
-        (r'/nbdime/difftool', MainDifftoolHandler, params),
+        (r'/nbdime/difftool', AuthMainDifftoolHandler, params),
         (r'/nbdime/git-difftool', GitMainDifftoolHandler, params),
         (r'/nbdime/api/diff', GitApiDiffHandler, params),
         (r'/nbdime/api/isgit', IsGitHandler, params),
