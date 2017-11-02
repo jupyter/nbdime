@@ -83,6 +83,8 @@ class NbdimeHandler(IPythonHandler):
             else:
                 path = os.path.join(self.curdir, arg)
                 if not os.path.exists(path):
+                    if '://' not in arg:
+                        raise ValueError('Supplied argument cannot be read: %r' % arg)
                     # Assume file is URI
                     r = requests.get(arg)
 
