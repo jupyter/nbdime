@@ -118,7 +118,6 @@ def test_diff_api_symlink(git_repo2, server_extension_app, needs_symlink):
     os.symlink(git_repo2, symlink)
 
     local_path = os.path.relpath(symlink, server_extension_app['path'])
-    assert local_path == 'x'
     url = 'http://127.0.0.1:%i/nbdime/api/diff' % server_extension_app['port']
     r = requests.post(
         url,
