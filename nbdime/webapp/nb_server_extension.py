@@ -7,6 +7,8 @@ import json
 import os
 
 from notebook.utils import url_path_join
+from notebook.services.contents.checkpoints import GenericCheckpointsMixin
+from notebook.services.contents.filecheckpoints import FileCheckpoints
 from tornado.web import HTTPError, escape, authenticated, gen
 import nbformat
 
@@ -100,11 +102,24 @@ class ExtensionApiDiffHandler(ApiDiffHandler):
     def _get_checkpoint_notebooks(self, base):
         # Get the model for the current notebook:
         cm = self.contents_manager
-        model = yield gen.maybe_future(cm.get(base, content=True, type='notebook'))
+        model = cm.get(base, content=True, type='notebook')
+        remote_nb = model['content']
         # Get the model for the checkpoint notebook:
-        checkpoints = yield gen.maybe_future(cm.list_checkpoints(base))
-        checkpoint_model = yield gen.maybe_future(cm.get_notebook_checkpoint(checkpoints[0], base))
-        return checkpoint_model['content'], model['content']
+        checkpoints = cm.list_checkpoints(base)
+        if not checkpoints:
+            # No checkpoints, indicate unchanged:
+            return remote_nb, remote_nb
+        self.log.debug('Checkpoints: %r', checkpoints)
+        checkpoint = checkpoints[0]
+        if isinstance(cm.checkpoints, GenericCheckpointsMixin):
+            checkpoint_model = cm.checkpoints.get_notebook_checkpoint(checkpoint, base)
+            base_nb = checkpoint_model['content']
+        elif isinstance(cm.checkpoints, FileCheckpoints):
+            path = cm.checkpoints.checkpoint_path(checkpoint['id'], base)
+            base_nb = read_notebook(path, on_null='minimal')
+        else:
+            raise RuntimeError('Unknown checkpoint handler interface')
+        return base_nb, remote_nb
 
     @authenticated
     def post(self):
