@@ -19,7 +19,7 @@ class BlobWrapper(io.StringIO):
 
 
 def get_repo(path):
-    """Gets a Repo for path, also if path is a subidrectory of a repository
+    """Gets a Repo for path, also if path is a subdirectory of a repository
 
     Returns a tuple with the Repo object, and a list of subdirectories
     between path and the parent repository"""

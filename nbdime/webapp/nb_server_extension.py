@@ -6,7 +6,7 @@ from __future__ import print_function
 import json
 import os
 
-from notebook.utils import url_path_join
+from notebook.utils import url_path_join, to_os_path
 from notebook.services.contents.checkpoints import GenericCheckpointsMixin
 from notebook.services.contents.filecheckpoints import FileCheckpoints
 from tornado.web import HTTPError, escape, authenticated, gen
@@ -71,11 +71,15 @@ class CheckpointDifftoolHandler(NbdimeHandler):
 class ExtensionApiDiffHandler(ApiDiffHandler):
     """Diff API handler that also handles diff to git HEAD"""
 
-    def _get_git_notebooks(self, base):
-         # Ensure path/root_dir that can be sent to git:
+    def _get_git_notebooks(self, base_arg):
+        # Sometimes the root dir of the files is not cwd
         nb_root = getattr(self.contents_manager, 'root_dir', None)
+        # Resolve base argument to a file system path
+        base = os.path.realpath(to_os_path(base_arg, nb_root))
+
+        # Ensure path/root_dir that can be sent to git:
         try:
-            git_root = find_repo_root(os.path.join(nb_root, base))
+            git_root = find_repo_root(base)
         except InvalidGitRepositoryError as e:
             self.log.exception(e)
             raise HTTPError(422, 'Invalid notebook: %s' % base)
@@ -95,7 +99,7 @@ class ExtensionApiDiffHandler(ApiDiffHandler):
                 remote_nb = base_nb
         except (InvalidGitRepositoryError, BadName) as e:
             self.log.exception(e)
-            raise HTTPError(422, 'Invalid notebook: %s' % base)
+            raise HTTPError(422, 'Invalid notebook: %s' % base_arg)
         return base_nb, remote_nb
 
     @gen.coroutine
