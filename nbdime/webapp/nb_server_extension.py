@@ -22,7 +22,9 @@ from .nbdimeserver import (
     APIHandler,
 )
 
-from ..gitfiles import changed_notebooks, is_path_in_repo, InvalidGitRepositoryError, BadName
+from ..gitfiles import (
+    changed_notebooks, is_path_in_repo, find_repo_root,
+    InvalidGitRepositoryError, BadName)
 from ..utils import split_os_path, EXPLICIT_MISSING_FILE, read_notebook
 
 
@@ -71,20 +73,17 @@ class ExtensionApiDiffHandler(ApiDiffHandler):
 
     def _get_git_notebooks(self, base):
          # Ensure path/root_dir that can be sent to git:
-        root_dir = getattr(self.contents_manager, 'root_dir', None)
-        if not is_path_in_repo(root_dir):
-            # We need to traverse down 'base' until we find a repo
-            for part in split_os_path(os.path.dirname(base)):
-                root_dir = os.path.join(root_dir, part)
-                if is_path_in_repo(root_dir):
-                    break
-            else:
-                raise HTTPError(422, 'Invalid notebook: %s' % base)
-            base = os.path.relpath(base, root_dir)
+        nb_root = getattr(self.contents_manager, 'root_dir', None)
+        try:
+            git_root = find_repo_root(os.path.join(nb_root, base))
+        except InvalidGitRepositoryError as e:
+            self.log.exception(e)
+            raise HTTPError(422, 'Invalid notebook: %s' % base)
+        base = os.path.relpath(base, git_root)
 
         # Get the base/remote notebooks:
         try:
-            for fbase, fremote in changed_notebooks('HEAD', None, base, root_dir):
+            for fbase, fremote in changed_notebooks('HEAD', None, base, git_root):
                 base_nb = read_notebook(fbase, on_null='minimal')
                 remote_nb = read_notebook(fremote, on_null='minimal')
                 break  # there should only ever be one set of files
@@ -92,7 +91,7 @@ class ExtensionApiDiffHandler(ApiDiffHandler):
                 # The filename was either invalid or the file is unchanged
                 # Assume unchanged, and let read_notebook handle error
                 # reporting if invalid
-                base_nb = self.read_notebook(os.path.join(root_dir, base))
+                base_nb = self.read_notebook(os.path.join(git_root, base))
                 remote_nb = base_nb
         except (InvalidGitRepositoryError, BadName) as e:
             self.log.exception(e)

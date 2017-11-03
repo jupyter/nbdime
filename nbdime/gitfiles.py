@@ -8,7 +8,7 @@ from collections import deque
 from six import string_types
 
 os.environ['GIT_PYTHON_REFRESH'] = 'quiet'
-from git import Repo, InvalidGitRepositoryError, BadName
+from git import Repo, InvalidGitRepositoryError, BadName, NoSuchPathError
 
 from .utils import EXPLICIT_MISSING_FILE, pushd
 
@@ -23,17 +23,23 @@ def get_repo(path):
 
     Returns a tuple with the Repo object, and a list of subdirectories
     between path and the parent repository"""
-    path = os.path.abspath(path)
+    path = os.path.realpath(os.path.abspath(path))
     popped = deque()
     while True:
         try:
             repo = Repo(path)
             return (repo, tuple(popped))
-        except InvalidGitRepositoryError:
+        except (InvalidGitRepositoryError, NoSuchPathError):
             path, pop = os.path.split(path)
             if not pop:
                 raise
             popped.appendleft(pop)
+
+
+def find_repo_root(path):
+    """Gets the directory containing the working tree"""
+    repo = get_repo(path)[0]
+    return repo.working_tree_dir
 
 
 def traverse_tree(tree, subdirs):
