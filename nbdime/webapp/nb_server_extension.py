@@ -112,19 +112,21 @@ class ExtensionApiDiffHandler(ApiDiffHandler):
         checkpoints = yield gen.maybe_future(cm.list_checkpoints(base))
         if not checkpoints:
             # No checkpoints, indicate unchanged:
-            yield remote_nb, remote_nb
-            return
+            self.log.info('No checkpoints for file: %r, %r', base, checkpoints)
+            raise gen.Return((remote_nb, remote_nb))
         self.log.debug('Checkpoints: %r', checkpoints)
         checkpoint = checkpoints[0]
         if isinstance(cm.checkpoints, GenericCheckpointsMixin):
-            checkpoint_model = yield gen.maybe_future(cm.checkpoints.get_notebook_checkpoint(checkpoint, base))
+            checkpoint_model = yield gen.maybe_future(
+                cm.checkpoints.get_notebook_checkpoint(checkpoint, base))
             base_nb = checkpoint_model['content']
         elif isinstance(cm.checkpoints, FileCheckpoints):
-            path = yield gen.maybe_future(cm.checkpoints.checkpoint_path(checkpoint['id'], base))
+            path = yield gen.maybe_future(
+                cm.checkpoints.checkpoint_path(checkpoint['id'], base))
             base_nb = read_notebook(path, on_null='minimal')
         else:
             raise RuntimeError('Unknown checkpoint handler interface')
-        yield base_nb, remote_nb
+        raise gen.Return((base_nb, remote_nb))
 
     @authenticated
     @gen.coroutine
