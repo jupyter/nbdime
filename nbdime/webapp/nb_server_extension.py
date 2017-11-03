@@ -99,29 +99,31 @@ class ExtensionApiDiffHandler(ApiDiffHandler):
             raise HTTPError(422, 'Invalid notebook: %s' % base)
         return base_nb, remote_nb
 
+    @gen.coroutine
     def _get_checkpoint_notebooks(self, base):
         # Get the model for the current notebook:
         cm = self.contents_manager
-        model = cm.get(base, content=True, type='notebook')
+        model = yield gen.maybe_future(cm.get(base, content=True, type='notebook'))
         remote_nb = model['content']
         # Get the model for the checkpoint notebook:
-        checkpoints = cm.list_checkpoints(base)
+        checkpoints = yield gen.maybe_future(cm.list_checkpoints(base))
         if not checkpoints:
             # No checkpoints, indicate unchanged:
             return remote_nb, remote_nb
         self.log.debug('Checkpoints: %r', checkpoints)
         checkpoint = checkpoints[0]
         if isinstance(cm.checkpoints, GenericCheckpointsMixin):
-            checkpoint_model = cm.checkpoints.get_notebook_checkpoint(checkpoint, base)
+            checkpoint_model = yield gen.maybe_future(cm.checkpoints.get_notebook_checkpoint(checkpoint, base))
             base_nb = checkpoint_model['content']
         elif isinstance(cm.checkpoints, FileCheckpoints):
-            path = cm.checkpoints.checkpoint_path(checkpoint['id'], base)
+            path = yield gen.maybe_future(cm.checkpoints.checkpoint_path(checkpoint['id'], base))
             base_nb = read_notebook(path, on_null='minimal')
         else:
             raise RuntimeError('Unknown checkpoint handler interface')
         return base_nb, remote_nb
 
     @authenticated
+    @gen.coroutine
     def post(self):
         # Assuming a request on the form "{'argname':arg}"
         body = json.loads(escape.to_unicode(self.request.body))
@@ -129,7 +131,7 @@ class ExtensionApiDiffHandler(ApiDiffHandler):
         if base.startswith('git:'):
             base_nb, remote_nb = self._get_git_notebooks(base[len('git:'):])
         elif base.startswith('checkpoint:'):
-            base_nb, remote_nb = self._get_checkpoint_notebooks(base[len('checkpoint:'):])
+            base_nb, remote_nb = yield self._get_checkpoint_notebooks(base[len('checkpoint:'):])
         else:
             # Regular files, call super
             return super(ExtensionApiDiffHandler, self).post()
