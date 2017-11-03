@@ -7,6 +7,7 @@ import json
 import os
 import re
 import requests
+import shutil
 
 import pytest
 
@@ -16,22 +17,25 @@ from ..utils import pushd
 from .utils import WEB_TEST_TIMEOUT, TEST_TOKEN, call
 
 
+pjoin = os.path.join
+
 _re_config = re.compile(
     """<script id='nbdime-config-data' type="application/json">(.*?)</script>"""
 )
+
+auth_header = {
+    'Authorization': 'token %s' % TEST_TOKEN
+}
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
 def test_isgit(git_repo2, server_extension_app):
     url = 'http://127.0.0.1:%i/nbdime/api/isgit' % server_extension_app['port']
     r = requests.post(
-        url,
+        url, headers=auth_header,
         data=json.dumps({
             'path': git_repo2,
-        }),
-        headers={
-            'Authorization': 'token %s' % TEST_TOKEN
-        })
+        }))
     r.raise_for_status()
     assert r.json() == {'is_git': True}
 
@@ -40,13 +44,10 @@ def test_isgit(git_repo2, server_extension_app):
 def test_isgit_nonrepo(git_repo2, server_extension_app):
     url = 'http://127.0.0.1:%i/nbdime/api/isgit' % server_extension_app['port']
     r = requests.post(
-        url,
+        url, headers=auth_header,
         data=json.dumps({
             'path': server_extension_app['path'],
-        }),
-        headers={
-            'Authorization': 'token %s' % TEST_TOKEN
-        })
+        }))
     r.raise_for_status()
     assert r.json() == {'is_git': False}
 
@@ -54,11 +55,7 @@ def test_isgit_nonrepo(git_repo2, server_extension_app):
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
 def test_difftool(git_repo2, server_extension_app):
     url = 'http://127.0.0.1:%i/nbdime/difftool' % server_extension_app['port']
-    r = requests.get(
-        url,
-        headers={
-            'Authorization': 'token %s' % TEST_TOKEN
-        })
+    r = requests.get(url, headers=auth_header)
     r.raise_for_status()
 
 
@@ -66,10 +63,7 @@ def test_difftool(git_repo2, server_extension_app):
 def test_git_difftool(git_repo2, server_extension_app):
     url = 'http://127.0.0.1:%i/nbdime/git-difftool' % server_extension_app['port']
     r = requests.get(
-        url,
-        headers={
-            'Authorization': 'token %s' % TEST_TOKEN
-        })
+        url, headers=auth_header)
     r.raise_for_status()
     assert r.text.startswith('<!DOCTYPE html')
     # Extract config data
@@ -89,13 +83,10 @@ def test_diff_api(git_repo2, server_extension_app):
     local_path = os.path.relpath(git_repo2, server_extension_app['path'])
     url = 'http://127.0.0.1:%i/nbdime/api/diff' % server_extension_app['port']
     r = requests.post(
-        url,
+        url, headers=auth_header,
         data=json.dumps({
-            'base': 'git:' + os.path.join(local_path, 'diff.ipynb'),
-        }),
-        headers={
-            'Authorization': 'token %s' % TEST_TOKEN
-        })
+            'base': 'git:' + pjoin(local_path, 'diff.ipynb'),
+        }))
     r.raise_for_status()
     data = r.json()
     nbformat.validate(data['base'])
@@ -106,9 +97,9 @@ def test_diff_api(git_repo2, server_extension_app):
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
 def test_diff_api_symlink(git_repo2, server_extension_app, needs_symlink):
     root = server_extension_app['path']
-    subdir = os.path.join(root, 'has space', 'subdir')
+    subdir = pjoin(root, 'has space', 'subdir')
     os.makedirs(subdir)
-    symlink = os.path.join(subdir, 'link')
+    symlink = pjoin(subdir, 'link')
     with pushd(subdir):
         call(['git', 'init'])
         with open('f', 'w') as f:
@@ -120,13 +111,10 @@ def test_diff_api_symlink(git_repo2, server_extension_app, needs_symlink):
     local_path = os.path.relpath(symlink, server_extension_app['path'])
     url = 'http://127.0.0.1:%i/nbdime/api/diff' % server_extension_app['port']
     r = requests.post(
-        url,
+        url, headers=auth_header,
         data=json.dumps({
-            'base': 'git:' + os.path.join(local_path, 'diff.ipynb'),
-        }),
-        headers={
-            'Authorization': 'token %s' % TEST_TOKEN
-        })
+            'base': 'git:' + pjoin(local_path, 'diff.ipynb'),
+        }))
     r.raise_for_status()
     data = r.json()
     nbformat.validate(data['base'])
