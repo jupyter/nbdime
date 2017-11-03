@@ -124,7 +124,7 @@ class ExtensionApiDiffHandler(ApiDiffHandler):
             base_nb = read_notebook(path, on_null='minimal')
         else:
             raise RuntimeError('Unknown checkpoint handler interface')
-        yield remote_nb, remote_nb
+        yield base_nb, remote_nb
 
     @authenticated
     @gen.coroutine
