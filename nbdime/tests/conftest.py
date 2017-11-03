@@ -94,6 +94,20 @@ def needs_hg():
     if not have_hg:
         skip("requires mercurial")
 
+
+@fixture(scope='session')
+def needs_symlink(tmpdir_factory):
+    if not hasattr(os, 'symlink'):
+        skip('requires symlink creation')
+    tdir = tmpdir_factory.mktemp('check-symlinks')
+    source = tdir.mkdir('source')
+    try:
+        with tdir.as_cwd():
+            os.symlink(str(source), 'link')
+    except OSError:
+        skip('requires symlink creation')
+
+
 @fixture
 def git_repo(tmpdir, request, filespath, needs_git):
     repo = str(tmpdir.join('repo'))

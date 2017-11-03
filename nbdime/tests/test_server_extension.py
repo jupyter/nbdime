@@ -104,7 +104,7 @@ def test_diff_api(git_repo2, server_extension_app):
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
-def test_diff_api_symlink(git_repo2, server_extension_app):
+def test_diff_api_symlink(git_repo2, server_extension_app, needs_symlink):
     root = server_extension_app['path']
     subdir = os.path.join(root, 'has space', 'subdir')
     os.makedirs(subdir)
