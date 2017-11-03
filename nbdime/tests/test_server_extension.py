@@ -12,7 +12,8 @@ import pytest
 
 import nbformat
 
-from .utils import WEB_TEST_TIMEOUT, wait_up, TEST_TOKEN
+from ..utils import pushd
+from .utils import WEB_TEST_TIMEOUT, TEST_TOKEN, call
 
 
 _re_config = re.compile(
@@ -86,6 +87,38 @@ def test_git_difftool(git_repo2, server_extension_app):
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
 def test_diff_api(git_repo2, server_extension_app):
     local_path = os.path.relpath(git_repo2, server_extension_app['path'])
+    url = 'http://127.0.0.1:%i/nbdime/api/diff' % server_extension_app['port']
+    r = requests.post(
+        url,
+        data=json.dumps({
+            'base': 'git:' + os.path.join(local_path, 'diff.ipynb'),
+        }),
+        headers={
+            'Authorization': 'token %s' % TEST_TOKEN
+        })
+    r.raise_for_status()
+    data = r.json()
+    nbformat.validate(data['base'])
+    assert data['diff']
+    assert len(data.keys()) == 2
+
+
+@pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
+def test_diff_api_symlink(git_repo2, server_extension_app):
+    root = server_extension_app['path']
+    subdir = os.path.join(root, 'has space', 'subdir')
+    os.makedirs(subdir)
+    symlink = os.path.join(subdir, 'link')
+    with pushd(subdir):
+        call(['git', 'init'])
+        with open('f', 'w') as f:
+            f.write('stuff')
+        call(['git', 'add', 'f'])
+        call(['git', 'commit', '-m', 'initial commit'])
+    os.symlink(git_repo2, symlink)
+
+    local_path = os.path.relpath(symlink, server_extension_app['path'])
+    assert local_path == 'x'
     url = 'http://127.0.0.1:%i/nbdime/api/diff' % server_extension_app['port']
     r = requests.post(
         url,
