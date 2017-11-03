@@ -108,7 +108,8 @@ class ExtensionApiDiffHandler(ApiDiffHandler):
         checkpoints = yield gen.maybe_future(cm.list_checkpoints(base))
         if not checkpoints:
             # No checkpoints, indicate unchanged:
-            return remote_nb, remote_nb
+            yield remote_nb, remote_nb
+            return
         self.log.debug('Checkpoints: %r', checkpoints)
         checkpoint = checkpoints[0]
         if isinstance(cm.checkpoints, GenericCheckpointsMixin):
@@ -119,7 +120,7 @@ class ExtensionApiDiffHandler(ApiDiffHandler):
             base_nb = read_notebook(path, on_null='minimal')
         else:
             raise RuntimeError('Unknown checkpoint handler interface')
-        return base_nb, remote_nb
+        yield remote_nb, remote_nb
 
     @authenticated
     @gen.coroutine
@@ -133,7 +134,8 @@ class ExtensionApiDiffHandler(ApiDiffHandler):
             base_nb, remote_nb = yield self._get_checkpoint_notebooks(base[len('checkpoint:'):])
         else:
             # Regular files, call super
-            return super(ExtensionApiDiffHandler, self).post()
+            super(ExtensionApiDiffHandler, self).post()
+            return
 
         # Perform actual diff and return data:
         try:
