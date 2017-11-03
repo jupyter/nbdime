@@ -17,7 +17,8 @@ try:
 except ImportError:
     from backports.shutil_which import which
 
-COMMANDS = ["show", "diff", "merge", "diff-web", "merge-web", "mergetool", "config-git"]
+COMMANDS = ["show", "diff", "merge", "diff-web", "merge-web", "mergetool",
+            "config-git", "reg-extensions"]
 HELP_MESSAGE_VERBOSE = ("Usage: nbdime [OPTIONS]\n\n"
                        "OPTIONS: -h, --version, COMMANDS{%s}\n\n"
                        "Examples: nbdime --version\n"
