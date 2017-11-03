@@ -64,15 +64,45 @@ define([
         return utils.promising_ajax(url, request);
     };
 
+    // The action for checkpoint diffing
+    var checkpointAction;
+
+    var setActionEnabledState = function (action, enabled) {
+        $("button[data-jupyter-action='" + action + "']").
+            attr("disabled", !enabled);
+    };
+
+    var triggerCheckpointTest = function () {
+        Jupyter.notebook.list_checkpoints();
+    };
+
+    var onCheckpointsList = function (event, data) {
+        // If there are any checkpoints, enable button, if not disable
+        setActionEnabledState(checkpointAction, !!data.length);
+    };
+
+    var onCheckpointAdded = function (event, data) {
+        // Enable button if previously disabled
+        setActionEnabledState(checkpointAction, true);
+    };
+
     var register = function (isGit) {
         var prefix = 'nbdime';
 
         // Register checkpoint action
-        var checkpointAction = Jupyter.actions.register({
+        checkpointAction = Jupyter.actions.register({
             icon: 'fa-clock-o',
             help: 'Display nbdiff from checkpoint to currently saved version',
             handler : nbCheckpointDiffView
         }, 'diff-notebook-checkpoint', prefix);
+
+        // Register for checkpoint events
+        Jupyter.notebook.events.on('checkpoints_listed.Notebook', onCheckpointsList);
+        Jupyter.notebook.events.on('checkpoint_created.Notebook', onCheckpointAdded);
+        Jupyter.notebook.events.on('checkpoint_deleted.Notebook', triggerCheckpointTest);
+
+        // Check whether to enable button or not
+        triggerCheckpointTest();
 
         if (isGit) {
             // Register git action
