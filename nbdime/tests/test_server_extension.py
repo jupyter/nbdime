@@ -95,6 +95,45 @@ def test_diff_api(git_repo2, server_extension_app):
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
+def test_diff_api_checkpoint(tmpdir, filespath, server_extension_app):
+
+    local_path = os.path.relpath(str(tmpdir), server_extension_app['path'])
+
+    # Create base
+    src = filespath
+    shutil.copy(pjoin(src, 'src-and-output--1.ipynb'), pjoin(str(tmpdir), 'diff.ipynb'))
+
+    url_path = pjoin(local_path, 'diff.ipynb')
+    if os.sep == '\\':
+        url_path = url_path.replace('\\', '/')
+
+
+    # Create checkpoint
+    url = 'http://127.0.0.1:%i/api/contents/%s/checkpoints' % (
+        server_extension_app['port'],
+        url_path,
+    )
+    r = requests.post(url, headers=auth_header)
+    r.raise_for_status()
+
+    # Overwrite:
+    shutil.copy(pjoin(src, 'src-and-output--2.ipynb'), pjoin(str(tmpdir), 'diff.ipynb'))
+
+
+    url = 'http://127.0.0.1:%i/nbdime/api/diff' % server_extension_app['port']
+    r = requests.post(
+        url, headers=auth_header,
+        data=json.dumps({
+            'base': 'checkpoint:' + url_path,
+        }))
+    r.raise_for_status()
+    data = r.json()
+    nbformat.validate(data['base'])
+    assert data['diff']
+    assert len(data.keys()) == 2
+
+
+@pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
 def test_diff_api_symlink(git_repo2, server_extension_app, needs_symlink):
     root = server_extension_app['path']
     subdir = pjoin(root, 'has space', 'subdir')
