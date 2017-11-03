@@ -58,7 +58,7 @@ define([
     var isGit = function (path) {
         var url = window.location.origin + '/' + path_join(Jupyter.notebook.base_url, 'nbdime', 'api', 'isgit');
         var request = {
-            data: JSON.stringify({ 'path': Jupyter.notebook.notebook_path }),
+            data: JSON.stringify({ 'path': path }),
             method: 'POST',
         };
         return utils.promising_ajax(url, request);
@@ -106,10 +106,9 @@ define([
 
     var load_ipython_extension = function() {
 
-        var promise = isGit(Jupyter.notebook.path);
+        var promise = isGit(Jupyter.notebook.notebook_path);
         promise.then((data) => {
-            var isGit = data['is_git'];
-            register(isGit);
+            register(data['is_git']);
         }, (error) => {
             // Assume that we don't have git
             register(false);
