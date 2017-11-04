@@ -84,7 +84,7 @@ you should see a nice diff view, like this:
 
 To use the web-based GUI viewers of notebook diffs, call::
 
-    nbdime-web [ref [ref]]
+    nbdiff-web [ref [ref]]
 
 .. versionadded:: 0.3
 
