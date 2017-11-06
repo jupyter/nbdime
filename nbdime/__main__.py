@@ -17,7 +17,8 @@ try:
 except ImportError:
     from backports.shutil_which import which
 
-COMMANDS = ["show", "diff", "merge", "diff-web", "merge-web", "mergetool", "config-git"]
+COMMANDS = ["show", "diff", "merge", "diff-web", "merge-web", "mergetool",
+            "config-git", "reg-extensions"]
 HELP_MESSAGE_VERBOSE = ("Usage: nbdime [OPTIONS]\n\n"
                        "OPTIONS: -h, --version, COMMANDS{%s}\n\n"
                        "Examples: nbdime --version\n"
@@ -82,6 +83,12 @@ def main_dispatch(args=None):
             diff_tool(args) or
             merge_tool(args)
         )
+    elif cmd == 'reg-extensions':
+        # Register nbdime extensions
+        call('jupyter serverextension enable --py nbdime'.split() + args)
+        call('jupyter nbextension install --py nbdime'.split() + args)
+        call('jupyter nbextension enable --py nbdime'.split() + args)
+        return 0
     else:
         if cmd == '--version':
             sys.exit(__version__)

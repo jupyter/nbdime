@@ -9,6 +9,17 @@ To install the latest stable release using :command:`pip`::
 
     pip install --upgrade nbdime
 
+To install and enable the nbdime notebook extensions, run::
+
+    nbdime reg-extensions [--sys-prefix/--user/--system]
+
+The ``--system`` (default) and ``--user`` flags determine which users
+the extensions will be installed and enabled for. Note that you should
+use ``--sys-prefix`` to only enable it for the currently active
+virtual environment (e.g. with conda or virtualenv). For manual registration
+see :doc:`extensions`.
+
+
 Dependencies
 ------------
 

@@ -10,6 +10,7 @@ import os
 import re
 from subprocess import check_output, CalledProcessError
 import sys
+from contextlib import contextmanager
 
 import nbformat
 from six import string_types, text_type, PY2
@@ -288,3 +289,17 @@ def setup_std_streams():
         import colorama
         colorama.init()
 
+
+def split_os_path(path):
+    return os.path.normpath(path).lstrip(os.path.sep).split(os.path.sep)
+
+
+@contextmanager
+def pushd(path):
+    """Change current directory with context manager (changes back)"""
+    old = os.curdir
+    try:
+        os.chdir(path)
+        yield
+    finally:
+        os.chdir(old)

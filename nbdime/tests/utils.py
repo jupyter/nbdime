@@ -10,8 +10,10 @@ from six import string_types
 
 from contextlib import contextmanager
 import os
+import requests
 import shlex
 import sys
+import time
 from subprocess import check_output, check_call, STDOUT, CalledProcessError
 
 import pytest
@@ -32,6 +34,8 @@ have_git = which('git')
 have_hg = which('hg')
 
 WEB_TEST_TIMEOUT = 15
+
+TEST_TOKEN = 'nbdime-test-token'
 
 
 def assert_is_valid_notebook(nb):
@@ -132,6 +136,19 @@ def get_output(cmd, err=False, returncode=0):
         if returncode != 0:
             raise CalledProcessError(0, cmd, output.encode('utf8'), stderr)
     return output
+
+
+def wait_up(url, interval=0.1, check=None):
+    while True:
+        try:
+            r = requests.get(url)
+        except Exception as e:
+            if check:
+                assert check()
+            print("waiting for %s" % url)
+            time.sleep(interval)
+        else:
+            break
 
 
 
