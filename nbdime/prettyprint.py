@@ -287,7 +287,8 @@ def diff_render_with_git(a, b):
 
 def diff_render_with_diff(a, b):
     cmd = diff_print_cmd
-    return external_diff_render(cmd.split(), a, b)
+    diff, status = external_diff_render(cmd.split(), a, b)
+    return diff
 
 
 def diff_render_with_difflib(a, b):
