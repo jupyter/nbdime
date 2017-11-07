@@ -16,7 +16,10 @@ import sys
 
 from nbdime import nbdiffapp
 from nbdime.diffing.directorydiff import diff_directories
-from nbdime.args import add_diff_args, add_filename_args, diff_exclusives, process_exclusive_ignorables
+from nbdime.args import (
+    add_diff_args, add_filename_args, diff_exclusives, process_exclusive_ignorables,
+    add_diff_cli_args,
+)
 
 
 def main(args=None):
@@ -28,6 +31,7 @@ def main(args=None):
     )
 
     add_diff_args(parser)
+    add_diff_cli_args(parser)
     add_filename_args(parser, ('base', 'remote'))
 
     opts = parser.parse_args(args)

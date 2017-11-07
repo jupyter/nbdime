@@ -16,7 +16,9 @@ from six import string_types
 from nbdime.diffing.notebooks import diff_notebooks
 from nbdime.prettyprint import pretty_print_notebook_diff, PrettyPrintConfig
 from nbdime.args import (
-    add_generic_args, add_diff_args, process_diff_flags, resolve_diff_args)
+    add_generic_args, add_diff_args, process_diff_flags, resolve_diff_args,
+    add_diff_cli_args,
+    )
 from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook, setup_std_streams
 from .gitfiles import changed_notebooks, is_gitref
 
@@ -78,7 +80,7 @@ def _handle_diff(base, remote, output, args):
             def write(self, text):
                 print(text, end="")
         # This sets up what to ignore:
-        config = PrettyPrintConfig(out=Printer(), include=args)
+        config = PrettyPrintConfig(out=Printer(), include=args, color_words=args.color_words)
         # Separate out filenames:
         base_name = base if isinstance(base, string_types) else base.name
         remote_name = remote if isinstance(remote, string_types) else remote.name
@@ -94,6 +96,8 @@ def _build_arg_parser():
         )
     add_generic_args(parser)
     add_diff_args(parser)
+    add_diff_cli_args(parser)
+
     parser.add_argument(
         "base", help="The base notebook filename OR base git-revision.",
         nargs='?', default='HEAD',

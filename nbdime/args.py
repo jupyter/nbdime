@@ -223,6 +223,17 @@ def add_diff_args(parser):
 diff_exclusives = ('sources', 'outputs', 'attachments', 'metadata', 'details')
 
 
+def add_diff_cli_args(parser):
+    """Adds a set of arguments for CLI diff commands (i.e. not web).
+    """
+    parser.add_argument(
+        '--color-words',
+        action='store_true', default=False,
+        help=("whether to pass the --color-words flag to any internal calls "
+              "to git diff")
+    )
+
+
 def add_git_diff_driver_args(diff_parser):
     """Adds a set of 7 stanard git diff driver arguments:
         path old-file old-hex old-mode new-file new-hex new-mode [ rename-to ]
