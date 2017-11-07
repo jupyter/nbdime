@@ -149,6 +149,15 @@ def test_nbdiff_app_ignore_source(filespath, tmpdir, reset_diff_targets):
         diff = diff[0]['diff']
 
 
+def test_nbdiff_app_color_words(filespath):
+    # Simply check that the --color-words argument is accepted, not behavior
+    afn = os.path.join(filespath, "multilevel-test-base.ipynb")
+    bfn = os.path.join(filespath, "multilevel-test-local.ipynb")
+
+    args = nbdiffapp._build_arg_parser().parse_args([afn, bfn, '--color-words'])
+    assert 0 == main_diff(args)
+
+
 def test_nbmerge_app(tempfiles, capsys):
     bfn = os.path.join(tempfiles, "multilevel-test-base.ipynb")
     lfn = os.path.join(tempfiles, "multilevel-test-local.ipynb")

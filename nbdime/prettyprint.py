@@ -61,7 +61,7 @@ else:
     BLUE = ''
     YELLOW = ''
     RESET = ''
-    git_diff_print_cmd = git_diff_print_cmd.replace(" --color-words ", "")
+    git_diff_print_cmd = git_diff_print_cmd.replace(" --color-words", "")
 
 
 KEEP     = '{color}   '.format(color='')
@@ -72,13 +72,14 @@ DIFF_ENTRY_END = '\n'
 
 
 class PrettyPrintConfig:
-    def __init__(self, out=sys.stdout, include=None):
+    def __init__(self, out=sys.stdout, include=None, color_words=False):
         self.out = out
         self.sources = include is None or include.sources
         self.outputs = include is None or include.outputs
         self.metadata = include is None or include.metadata
         self.attachments = include is None or include.attachments
         self.details = include is None or include.details
+        self.color_words = color_words
 
     def should_ignore_path(self, path):
         starred = star_path(split_path(path))
@@ -139,7 +140,8 @@ def external_diff_render(cmd, a, b):
         with io.open(os.path.join(td, 'after'), 'w', encoding="utf8") as f:
             f.write(b)
         assert all(fn in cmd for fn in ['before', 'after']), (
-            'invalid cmd argument for external diff renderer')
+            'invalid cmd argument for external diff renderer: %r' %
+            cmd)
         p = Popen(cmd, cwd=td, stdout=PIPE)
         output, errors = p.communicate()
         status = p.returncode
@@ -279,8 +281,11 @@ def builtin_diff_render(a, b):
     return '\n'.join(uni)
 
 
-def diff_render_with_git(a, b):
+def diff_render_with_git(a, b, config):
     cmd = git_diff_print_cmd
+    if not config.color_words:
+        # Will do nothing if use_colors is not True:
+        cmd = cmd.replace("--color-words", "--color")
     diff, status = external_diff_render(cmd.split(), a, b)
     return "".join(diff.splitlines(True)[4:])
 
@@ -296,9 +301,9 @@ def diff_render_with_difflib(a, b):
     return "".join(diff.splitlines(True)[2:])
 
 
-def diff_render(a, b):
+def diff_render(a, b, config=DefaultConfig):
     if use_git and which('git'):
-        return diff_render_with_git(a, b)
+        return diff_render_with_git(a, b, config)
     elif use_diff and which('diff'):
         return diff_render_with_diff(a, b)
     else:
@@ -744,7 +749,7 @@ def pretty_print_string_diff(a, di, path, config=DefaultConfig):
             pretty_print_value_at(b, path, ADD, config)
     elif "\n" in a or "\n" in b:
         # Delegate multiline diff formatting
-        diff = diff_render(a, b)
+        diff = diff_render(a, b, config)
         config.out.write(diff)
     else:
         # Just show simple -+ single line (usually metadata values etc)

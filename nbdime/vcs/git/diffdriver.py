@@ -25,7 +25,8 @@ from subprocess import check_call, CalledProcessError
 
 from nbdime.args import (
     add_git_config_subcommand, add_generic_args, add_diff_args, add_web_args,
-    add_git_diff_driver_args)
+    add_git_diff_driver_args, add_diff_cli_args,
+    )
 from nbdime.utils import locate_gitattributes, ensure_dir_exists, setup_std_streams
 
 def enable(scope=None):
@@ -80,6 +81,7 @@ def _build_arg_parser():
     )
     add_git_diff_driver_args(diff_parser)
     add_diff_args(diff_parser)
+    add_diff_cli_args(diff_parser)
 
     webdiff_parser = subparsers.add_parser('webdiff',
         description="The actual entrypoint for the webdiff tool. Git will call this."
