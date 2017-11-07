@@ -9,3 +9,7 @@ export const DELETED_DIFF_CLASS = 'jp-Diff-deleted';
 export const UNCHANGED_DIFF_CLASS = 'jp-Diff-unchanged';
 
 export const DIFF_CLASSES = ['jp-Diff-base', 'jp-Diff-remote'];
+
+export const CHUNK_PANEL_CLASS = 'jp-Diff-addremchunk';
+export const ADDED_CHUNK_PANEL_CLASS = 'jp-Diff-addedchunk';
+export const REMOVED_CHUNK_PANEL_CLASS = 'jp-Diff-removedchunk';

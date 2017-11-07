@@ -32,7 +32,8 @@ import {
 
 import {
   DIFF_CLASSES, ADDED_DIFF_CLASS, DELETED_DIFF_CLASS,
-  TWOWAY_DIFF_CLASS, UNCHANGED_DIFF_CLASS
+  TWOWAY_DIFF_CLASS, UNCHANGED_DIFF_CLASS, CHUNK_PANEL_CLASS,
+  ADDED_CHUNK_PANEL_CLASS, REMOVED_CHUNK_PANEL_CLASS
 } from './common';
 
 import {
@@ -48,7 +49,7 @@ import {
 /**
  * The class name added to the prompt area of cell.
  */
-const PROMPT_CLASS = 'jp-Cell-prompt';
+const PROMPT_CLASS = 'jp-InputPrompt';
 
 
 export
@@ -58,8 +59,6 @@ const EXECUTIONCOUNT_ROW_CLASS = 'jp-Cellrow-executionCount';
 const SOURCE_ROW_CLASS = 'jp-Cellrow-source';
 const METADATA_ROW_CLASS = 'jp-Cellrow-metadata';
 const OUTPUTS_ROW_CLASS = 'jp-Cellrow-outputs';
-
-const ADD_DEL_LABEL_CLASS = 'jp-Diff-label';
 
 /**
  * A list of MIME types that can be shown as string diff.
@@ -93,17 +92,9 @@ class CellDiffWidget extends Panel {
     // Add 'cell added/deleted' notifiers, as appropriate
     let CURR_DIFF_CLASSES = DIFF_CLASSES.slice();  // copy
     if (model.added) {
-      let widget = new Widget();
-      widget.node.textContent = 'Cell added';
-      widget.addClass(ADD_DEL_LABEL_CLASS);
-      this.addWidget(widget);
       this.addClass(ADDED_DIFF_CLASS);
       CURR_DIFF_CLASSES = DIFF_CLASSES.slice(1, 2);
     } else if (model.deleted) {
-      let widget = new Widget();
-      widget.node.textContent = 'Cell deleted';
-      widget.addClass(ADD_DEL_LABEL_CLASS);
-      this.addWidget(widget);
       this.addClass(DELETED_DIFF_CLASS);
       CURR_DIFF_CLASSES = DIFF_CLASSES.slice(0, 1);
     } else if (model.unchanged) {
@@ -128,14 +119,36 @@ class CellDiffWidget extends Panel {
       metadataView.addClass(METADATA_ROW_CLASS);
       this.addWidget(metadataView);
     }
-    if (hasEntries(model.outputs)) {
+    const chunks = model.getChunkedOutputs();
+    if (hasEntries(chunks)) {
       let container = new Panel();
       let changed = false;
-      for (let o of model.outputs) {
-        let outputsWidget = CellDiffWidget.createView(
-          o, model, CURR_DIFF_CLASSES, this._rendermime);
-        container.addWidget(outputsWidget);
-        changed = changed || !o.unchanged || o.added || o.deleted;
+      for (let chunk of chunks) {
+        if (chunk.length === 1) {
+          let o = chunk[0];
+          let outputsWidget = CellDiffWidget.createView(
+            o, model, CURR_DIFF_CLASSES, this._rendermime);
+          container.addWidget(outputsWidget);
+          changed = changed || !o.unchanged || o.added || o.deleted;
+        } else {
+          // Create add/remove chunk wrappers
+          let chunkPanel = new Panel();
+          chunkPanel.addClass(CHUNK_PANEL_CLASS);
+          let addedPanel = new Panel();
+          addedPanel.addClass(ADDED_CHUNK_PANEL_CLASS);
+          let removedPanel = new Panel();
+          removedPanel.addClass(REMOVED_CHUNK_PANEL_CLASS);
+          for (let o of chunk) {
+            let target = o.deleted ? removedPanel : addedPanel;
+            let outputsWidget = CellDiffWidget.createView(
+              o, model, CURR_DIFF_CLASSES, this._rendermime);
+            target.addWidget(outputsWidget);
+            changed = changed || !o.unchanged || o.added || o.deleted;
+          }
+          chunkPanel.addWidget(addedPanel);
+          chunkPanel.addWidget(removedPanel);
+          container.addWidget(chunkPanel);
+        }
       }
       if (model.added || model.deleted) {
         container.addClass(OUTPUTS_ROW_CLASS);
@@ -231,22 +244,8 @@ class CellDiffWidget extends Panel {
     let container = new Panel();
     if (model instanceof OutputDiffModel) {
       if (model.added) {
-        if (!parent.added) {
-          // Implies this is added output
-          let addSpacer = new Widget();
-          addSpacer.node.textContent = 'Output added';
-          addSpacer.addClass(ADD_DEL_LABEL_CLASS);
-          container.addWidget(addSpacer);
-        }
         container.addClass(ADDED_DIFF_CLASS);
       } else if (model.deleted) {
-        if (!parent.deleted) {
-          // Implies this is deleted output
-          let delSpacer = new Widget();
-          delSpacer.node.textContent = 'Output deleted';
-          delSpacer.addClass(ADD_DEL_LABEL_CLASS);
-          container.addWidget(delSpacer);
-        }
         container.addClass(DELETED_DIFF_CLASS);
       } else if (model.unchanged) {
         container.addClass(UNCHANGED_DIFF_CLASS);

@@ -29,6 +29,7 @@ import '@jupyterlab/application/style/materialcolors.css';
 import '@jupyterlab/theme-light-extension/style/variables.css';
 import '@jupyterlab/markdownwidget/style/index.css';
 import '@jupyterlab/notebook/style/index.css';
+import '@jupyterlab/cells/style/index.css';
 import '@jupyterlab/rendermime/style/index.css';
 import '@jupyterlab/codemirror/style/index.css';
 

@@ -976,7 +976,7 @@ class MergeView extends Panel {
       }
     }
 
-    if (options.collapseIdentical) {
+    if (options.collapseIdentical && panes > 1) {
       this.base.cm.operation(function() {
           collapseIdenticalStretches(self, options.collapseIdentical);
       });

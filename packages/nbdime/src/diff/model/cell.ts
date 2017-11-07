@@ -123,6 +123,40 @@ export class CellDiffModel {
   get deleted(): boolean {
     return this.source.deleted;
   }
+
+  /**
+   * Chunked outputs
+   */
+  getChunkedOutputs(): OutputDiffModel[][] | null {
+    if (this.outputs === null) {
+      return null;
+    }
+    const chunks: OutputDiffModel[][] = [];
+    if (this.added || this.deleted) {
+      // Should not chunk outputs for added/deleted cells
+      // simply make one element chunks:
+      for (let o of this.outputs) {
+        chunks.push([o]);
+      }
+    } else {
+      let currentChunk: OutputDiffModel[] = [];
+      for (let o of this.outputs) {
+        if (o.added || o.deleted) {
+          currentChunk.push(o);
+        } else {
+          if (currentChunk.length) {
+            chunks.push(currentChunk);
+          }
+          chunks.push([o]);
+          currentChunk = [];
+        }
+      }
+      if (currentChunk.length) {
+        chunks.push(currentChunk);
+      }
+    }
+    return chunks;
+  }
 }
 
 export
