@@ -49,7 +49,7 @@ import {
 /**
  * The class name added to the prompt area of cell.
  */
-const PROMPT_CLASS = 'jp-Cell-prompt';
+const PROMPT_CLASS = 'jp-InputPrompt';
 
 
 export
