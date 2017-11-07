@@ -25,6 +25,10 @@ import {
 
 const NBDIFF_CLASS = 'jp-Notebook-diff';
 
+const CHUNK_PANEL_CLASS = 'jp-Diff-cellchunk';
+const ADDED_CHUNK_PANEL_CLASS = 'jp-Diff-cellchunk_added';
+const REMOVED_CHUNK_PANEL_CLASS = 'jp-Diff-cellchunk_removed';
+
 
 /**
  * NotebookDiffWidget
@@ -53,11 +57,28 @@ class NotebookDiffWidget extends Panel {
         this.addWidget(new MetadataDiffWidget(model.metadata));
       }
     });
-    for (let c of model.cells) {
+    for (let chunk of model.chunkedCells) {
       work = work.then(() => {
         return new Promise<void>(resolve => {
-          this.addWidget(new CellDiffWidget(c, rendermime, model.mimetype));
-          // This limits us to drawing 60 cells per second, which shoudln't
+          if (chunk.length === 1) {
+            this.addWidget(new CellDiffWidget(
+              chunk[0], rendermime, model.mimetype));
+          } else {
+            let chunkPanel = new Panel();
+            chunkPanel.addClass(CHUNK_PANEL_CLASS);
+            let addedPanel = new Panel();
+            addedPanel.addClass(ADDED_CHUNK_PANEL_CLASS);
+            let removedPanel = new Panel();
+            removedPanel.addClass(REMOVED_CHUNK_PANEL_CLASS);
+            for (let cell of chunk) {
+              let target = cell.deleted ? removedPanel : addedPanel;
+              target.addWidget(new CellDiffWidget(cell, rendermime, model.mimetype));
+            }
+            chunkPanel.addWidget(addedPanel);
+            chunkPanel.addWidget(removedPanel);
+            this.addWidget(chunkPanel);
+          }
+          // This limits us to drawing 60 cells per second, which shouldn't
           // be a problem...
           requestAnimationFrame(() => {
             resolve();
