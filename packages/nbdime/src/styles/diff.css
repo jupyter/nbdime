@@ -43,19 +43,6 @@
   border-top: solid #ccc 1px;
 }
 
-.jp-Notebook-diff .jp-Diff-added > .jp-Diff-label {
-  left: 0;
-  position: absolute;
-  width: 25%;
-  text-align: center;
-}
-
-.jp-Notebook-diff .jp-Diff-deleted > .jp-Diff-label {
-  right: 0;
-  position: absolute;
-  width: 25%;
-  text-align: center;
-}
 
 .jp-Notebook-diff .jp-Diff-added .jp-Cellrow-source,
 .jp-Notebook-diff .jp-Diff-added .jp-Cellrow-outputs {
@@ -68,25 +55,25 @@
 }
 
 /* Add/delete chunks for small width devices (added before delete) */
-.jp-Notebook-diff .jp-Diff-cellchunk {
+.jp-Notebook-diff .jp-Diff-addremchunk {
   display: flex;
   flex-direction: column-reverse;
   justify-content: space-between;
 }
 
-.jp-Notebook-diff .jp-Diff-cellchunk .jp-Diff-cellchunk_added,
-.jp-Notebook-diff .jp-Diff-cellchunk .jp-Diff-cellchunk_removed {
+.jp-Notebook-diff .jp-Diff-addremchunk .jp-Diff-addedchunk,
+.jp-Notebook-diff .jp-Diff-addremchunk .jp-Diff-removedchunk {
   width: 100%;
 }
 
 /* Add/delete chunks should show side-by-side for larger screens */
 @media (min-width: 1000px) {
-  .jp-Notebook-diff .jp-Diff-cellchunk {
+  .jp-Notebook-diff .jp-Diff-addremchunk {
     flex-direction: row-reverse;
   }
 
-  .jp-Notebook-diff .jp-Diff-cellchunk .jp-Diff-cellchunk_added,
-  .jp-Notebook-diff .jp-Diff-cellchunk .jp-Diff-cellchunk_removed {
+  .jp-Notebook-diff .jp-Diff-addremchunk .jp-Diff-addedchunk,
+  .jp-Notebook-diff .jp-Diff-addremchunk .jp-Diff-removedchunk {
     width: 49%;
   }
 }
@@ -149,14 +136,6 @@
 }
 .jp-Notebook-diff .jp-Diff-twoway .jp-Cellrow-outputs .jp-Diff-unchanged {
   text-align: center;
-}
-
-.jp-Notebook-diff .jp-Diff-twoway .jp-Cellrow-outputs .jp-Diff-added > :not(.jp-Diff-label) {
-  margin-left: 25%;
-}
-
-.jp-Notebook-diff .jp-Diff-twoway .jp-Cellrow-outputs .jp-Diff-deleted > :not(.jp-Diff-label) {
-  margin-right: 25%;
 }
 
 .jp-Notebook-diff .CodeMirror-merge-r-chunk { background-color: var(--jp-diff-deleted-color2); }

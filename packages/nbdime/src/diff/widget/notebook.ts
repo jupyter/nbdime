@@ -15,6 +15,10 @@ import {
 } from './cell';
 
 import {
+  CHUNK_PANEL_CLASS, ADDED_CHUNK_PANEL_CLASS, REMOVED_CHUNK_PANEL_CLASS
+} from './common';
+
+import {
   MetadataDiffWidget
 } from './metadata';
 
@@ -24,10 +28,6 @@ import {
 
 
 const NBDIFF_CLASS = 'jp-Notebook-diff';
-
-const CHUNK_PANEL_CLASS = 'jp-Diff-cellchunk';
-const ADDED_CHUNK_PANEL_CLASS = 'jp-Diff-cellchunk_added';
-const REMOVED_CHUNK_PANEL_CLASS = 'jp-Diff-cellchunk_removed';
 
 
 /**

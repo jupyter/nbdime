@@ -32,7 +32,8 @@ import {
 
 import {
   DIFF_CLASSES, ADDED_DIFF_CLASS, DELETED_DIFF_CLASS,
-  TWOWAY_DIFF_CLASS, UNCHANGED_DIFF_CLASS
+  TWOWAY_DIFF_CLASS, UNCHANGED_DIFF_CLASS, CHUNK_PANEL_CLASS,
+  ADDED_CHUNK_PANEL_CLASS, REMOVED_CHUNK_PANEL_CLASS
 } from './common';
 
 import {
@@ -118,14 +119,36 @@ class CellDiffWidget extends Panel {
       metadataView.addClass(METADATA_ROW_CLASS);
       this.addWidget(metadataView);
     }
-    if (hasEntries(model.outputs)) {
+    const chunks = model.getChunkedOutputs();
+    if (hasEntries(chunks)) {
       let container = new Panel();
       let changed = false;
-      for (let o of model.outputs) {
-        let outputsWidget = CellDiffWidget.createView(
-          o, model, CURR_DIFF_CLASSES, this._rendermime);
-        container.addWidget(outputsWidget);
-        changed = changed || !o.unchanged || o.added || o.deleted;
+      for (let chunk of chunks) {
+        if (chunk.length === 1) {
+          let o = chunk[0];
+          let outputsWidget = CellDiffWidget.createView(
+            o, model, CURR_DIFF_CLASSES, this._rendermime);
+          container.addWidget(outputsWidget);
+          changed = changed || !o.unchanged || o.added || o.deleted;
+        } else {
+          // Create add/remove chunk wrappers
+          let chunkPanel = new Panel();
+          chunkPanel.addClass(CHUNK_PANEL_CLASS);
+          let addedPanel = new Panel();
+          addedPanel.addClass(ADDED_CHUNK_PANEL_CLASS);
+          let removedPanel = new Panel();
+          removedPanel.addClass(REMOVED_CHUNK_PANEL_CLASS);
+          for (let o of chunk) {
+            let target = o.deleted ? removedPanel : addedPanel;
+            let outputsWidget = CellDiffWidget.createView(
+              o, model, CURR_DIFF_CLASSES, this._rendermime);
+            target.addWidget(outputsWidget);
+            changed = changed || !o.unchanged || o.added || o.deleted;
+          }
+          chunkPanel.addWidget(addedPanel);
+          chunkPanel.addWidget(removedPanel);
+          container.addWidget(chunkPanel);
+        }
       }
       if (model.added || model.deleted) {
         container.addClass(OUTPUTS_ROW_CLASS);
