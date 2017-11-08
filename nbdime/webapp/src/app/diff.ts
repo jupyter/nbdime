@@ -12,7 +12,7 @@ import {
 } from '@phosphor/widgets';
 
 import {
-  RenderMime, defaultRendererFactories
+  RenderMime
 } from '@jupyterlab/rendermime';
 
 import {
@@ -44,6 +44,10 @@ import {
   exportDiff
 } from './staticdiff';
 
+import {
+  rendererFactories
+} from './rendermime';
+
 
 const prefixes = ['git:', 'checkpoint:'];
 
@@ -73,7 +77,9 @@ function showDiff(data: {base: nbformat.INotebookContent, diff: IDiffEntry[]}): 
 
 
   let rendermime = new RenderMime({
-    initialFactories: defaultRendererFactories, sanitizer: defaultSanitizer});
+    initialFactories: rendererFactories,
+    sanitizer: defaultSanitizer,
+  });
 
   let nbdModel = new NotebookDiffModel(data.base, data.diff);
   let nbdWidget = new NotebookDiffWidget(nbdModel, rendermime);
