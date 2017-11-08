@@ -23,6 +23,9 @@ import {
 } from './string';
 
 
+const TEXT_MIMETYPES = ['text/plain', 'application/vnd.jupyter.stdout',
+                        'application/vnd.jupyter.stderr'];
+
 
 /**
  * Diff model for single cell output entries.
@@ -44,7 +47,7 @@ class OutputDiffModel extends RenderableDiffModel<nbformat.IOutput> {
   hasMimeType(mimetype: string): string | null {
     let outputs = this.base || this.remote!;
     if (nbformat.isStream(outputs) &&
-          mimetype === 'application/vnd.jupyter.console-text') {
+        TEXT_MIMETYPES.indexOf(mimetype) !== -1) {
       return 'text';
     } else if (nbformat.isError(outputs)) {
       return 'traceback';
