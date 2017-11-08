@@ -135,7 +135,7 @@
   max-width: 100%;
 }
 /* Ensure unchanged images are centered */
-.jp-Notebook-diff .jp-Diff-twoway .jp-Cellrow-outputs .jp-Diff-unchanged .jp-Rendered-Image {
+.jp-Notebook-diff .jp-Diff-twoway .jp-Cellrow-outputs .jp-Diff-unchanged .jp-RenderedImage {
   text-align: center;
 }
 
