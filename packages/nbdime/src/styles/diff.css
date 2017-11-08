@@ -134,10 +134,12 @@
   width: initial;
   max-width: 100%;
 }
-.jp-Notebook-diff .jp-Diff-twoway .jp-Cellrow-outputs .jp-Diff-unchanged {
+/* Ensure unchanged images are centered */
+.jp-Notebook-diff .jp-Diff-twoway .jp-Cellrow-outputs .jp-Diff-unchanged .jp-Rendered-Image {
   text-align: center;
 }
 
+/* Color diff highlighting according to style vars */
 .jp-Notebook-diff .CodeMirror-merge-r-chunk { background-color: var(--jp-diff-deleted-color2); }
 .jp-Notebook-diff .CodeMirror-merge-r-chunk-start { border-top: 1px solid var(--jp-diff-deleted-color1); }
 .jp-Notebook-diff .CodeMirror-merge-r-chunk-end { border-bottom: 1px solid var(--jp-diff-deleted-color1); }
