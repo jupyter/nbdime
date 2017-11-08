@@ -120,6 +120,7 @@ Contents
    :caption: Installation and usage
 
    installing
+   extensions
    cli
    vcs
    glossary

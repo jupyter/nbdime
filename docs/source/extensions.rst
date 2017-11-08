@@ -1,6 +1,6 @@
-==========
-Extensions
-==========
+===================
+Notebook Extensions
+===================
 
 Installation
 ============
