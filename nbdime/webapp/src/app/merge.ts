@@ -14,7 +14,7 @@ import {
 } from '@phosphor/widgets';
 
 import {
-  RenderMime, defaultRendererFactories
+  RenderMime
 } from '@jupyterlab/rendermime';
 
 import {
@@ -47,6 +47,10 @@ import {
 } from './common';
 
 import {
+  rendererFactories
+} from './rendermime';
+
+import {
   extractMergedNotebook
 } from './save';
 
@@ -63,7 +67,9 @@ function showMerge(data: {
     }): Promise<void> {
 
   let rendermime = new RenderMime({
-    initialFactories: defaultRendererFactories, sanitizer: defaultSanitizer});
+    initialFactories: rendererFactories,
+    sanitizer: defaultSanitizer,
+  });
 
   let nbmModel = new NotebookMergeModel(data.base,
       data.merge_decisions);
