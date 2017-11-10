@@ -1,5 +1,16 @@
 # Changes in nbdime
 
+## 0.4
+
+- Fixed issues with the diff filtering options.
+- Added git diffdriver using web-diff.
+- Added mercurial integration code and entry points.
+- Added notebook extentions for integration into its web interface.
+- Changed layout for web diff such that chunks of added/removed cells or outputs are shown side-by-side. For small monitors, they will still be shown below each other.
+- In the web-diff, relative images in rendered markdown will now show a placeholder image instead of broken images.
+- Various fixes and performance improvements.
+
+
 ## 0.3
 
 - Handle git refs directly in nbdime, so you can `nbdiff HEAD notebook.ipynb`, etc. in git repos. This replaces the never-quite-working git difftool
