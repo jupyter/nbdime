@@ -135,6 +135,8 @@ def external_diff_render(cmd, a, b):
     b = as_text(b)
     td = tempfile.mkdtemp()
     try:
+        # TODO: Pass in language information so that an appropriate file
+        # extension can be used. This should provide a hint to the differ.
         with io.open(os.path.join(td, 'before'), 'w', encoding="utf8") as f:
             f.write(a)
         with io.open(os.path.join(td, 'after'), 'w', encoding="utf8") as f:
