@@ -354,7 +354,7 @@ def init_app(on_port=None, closable=False, **params):
     port = params.pop('port', 0)
     ip = params.pop('ip', '127.0.0.1')
     app = make_app(**params)
-    if port != 0 or on_port is None:
+    if port != 0:
         server = app.listen(port, address=ip)
         _logger.info('Listening on %s, port %d', ip, port)
     else:
