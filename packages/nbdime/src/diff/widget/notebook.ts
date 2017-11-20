@@ -60,7 +60,7 @@ class NotebookDiffWidget extends Panel {
     for (let chunk of model.chunkedCells) {
       work = work.then(() => {
         return new Promise<void>(resolve => {
-          if (chunk.length === 1) {
+          if (chunk.length === 1 && !(chunk[0].added || chunk[0].deleted)) {
             this.addWidget(new CellDiffWidget(
               chunk[0], rendermime, model.mimetype));
           } else {

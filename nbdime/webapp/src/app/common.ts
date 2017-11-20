@@ -9,7 +9,7 @@ import {
 } from 'nbdime/lib/common/exceptions';
 
 import {
-  UNCHANGED_DIFF_CLASS
+  UNCHANGED_DIFF_CLASS, CHUNK_PANEL_CLASS
 } from 'nbdime/lib/diff/widget/common';
 
 import {
@@ -141,6 +141,22 @@ function toggleShowUnchanged(show?: boolean) {
 
 
 /**
+ * Gets the chunk element of an added/removed cell, or the cell element for others
+ * @param cellElement
+ */
+function getChunkElement(cellElement: Element): Element {
+  if (!cellElement.parentElement || !cellElement.parentElement.parentElement) {
+    return cellElement;
+  }
+  let chunkCandidate = cellElement.parentElement.parentElement;
+  if (chunkCandidate.classList.contains(CHUNK_PANEL_CLASS)) {
+    return chunkCandidate;
+  }
+  return cellElement;
+}
+
+
+/**
  * Marks certain cells with
  */
 export
@@ -156,7 +172,8 @@ function markUnchangedRanges() {
       if (rangeStart !== -1) {
         // Previous was hidden
         let N = i - rangeStart;
-        child.setAttribute('data-nbdime-NCellsHiddenBefore', N.toString());
+        // Set attribute on element / chunk element as appropriate
+        getChunkElement(child).setAttribute('data-nbdime-NCellsHiddenBefore', N.toString());
         rangeStart = -1;
       }
     } else if (rangeStart === -1) {
@@ -172,7 +189,8 @@ function markUnchangedRanges() {
     }
     let N = children.length - rangeStart;
     let lastVisible = children[rangeStart - 1];
-    lastVisible.setAttribute('data-nbdime-NCellsHiddenAfter', N.toString());
+    // Set attribute on element / chunk element as appropriate
+    getChunkElement(lastVisible).setAttribute('data-nbdime-NCellsHiddenAfter', N.toString());
   }
 }
 
