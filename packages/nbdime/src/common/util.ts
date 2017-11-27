@@ -231,6 +231,22 @@ function unique<T>(value: T, index: number, self: T[]): boolean {
   return self.indexOf(value) === index;
 }
 
+/**
+ * Return the intersection of two arrays (with no duplicates)
+ */
+export
+function intersection<T>(a: T[], b: T[]): T[] {
+  let ret: T[] = [];
+  // Loop over longest, so that indexOf works on shortest
+  [a, b] = a.length > b.length ? [a, b] : [b, a];
+  for (let ia of a) {
+    if (b.indexOf(ia) !== -1) {
+      ret.push(ia);
+    }
+  }
+  return ret;
+}
+
 
 /**
  * Similar to Array.sort, but guaranteed to keep order stable
