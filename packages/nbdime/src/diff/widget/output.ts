@@ -19,7 +19,7 @@ import {
 } from './renderable';
 
 import {
-  valueIn
+  valueIn, intersection
 } from '../../common/util';
 
 import {
@@ -45,10 +45,9 @@ class RenderableOutputView extends RenderableDiffView<nbformat.IOutput> {
   }
 
   /**
-   * Checks if a cell output can be rendered as untrusted (either safe or
-   * sanitizable)
+   * Whether trust can affect the output rendering.
    */
-  static canRenderUntrusted(model: OutputDiffModel): boolean {
+  static isTrustSignificant(model: OutputDiffModel, rendermime: RenderMime): boolean {
     let toTest: nbformat.IOutput[] = [];
     if (model.base) {
       toTest.push(model.base);
@@ -57,17 +56,19 @@ class RenderableOutputView extends RenderableDiffView<nbformat.IOutput> {
       toTest.push(model.remote);
     }
     for (let o of toTest) {
-      if (nbformat.isExecuteResult(o) || nbformat.isDisplayData(o)) {
-        let bundle = o.data;
-        if (!RenderableDiffView.safeOrSanitizable(bundle)) {
-          return false;
+      let untrustedModel = new OutputModel({value: o, trusted: model.trusted});
+      let modelMimeTypes = untrustedModel.data.keys();
+      let rendererMimeTypes = toArray(rendermime.mimeTypes());
+      let candidates = intersection(modelMimeTypes, rendererMimeTypes);
+      for (let mimeType of candidates) {
+        let renderer = rendermime.getRenderer(mimeType);
+        let options = {mimeType, model: untrustedModel, sanitizer: rendermime.sanitizer}
+        if (!renderer.canRender(options) || renderer.wouldSanitize(options)) {
+          return true;
         }
-      } else if (valueIn(o.output_type, ['stream', 'error'])) {
-        // We "render" the text output, in terms of converting ANSI codes
-        return true;
       }
     }
-    return true;
+    return false;
   }
 
   protected createRawView(output: OutputModel): Widget {
