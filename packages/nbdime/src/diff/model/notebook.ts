@@ -100,6 +100,11 @@ export class NotebookDiffModel {
           currentChunk.push(cell);
         }
       } else if (e.op === 'patch') {
+        // Ensure patches gets their own chunk, even if they share index:
+        if (currentChunk.length > 0) {
+          currentChunk = [];
+          this.chunkedCells.push(currentChunk);
+        }
         // A cell has changed:
         let cell = createPatchedCellDiffModel(base.cells[index], e.diff, this.mimetype);
         this.cells.push(cell);
