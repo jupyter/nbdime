@@ -7,6 +7,10 @@ import {
 } from '@phosphor/coreutils';
 
 import {
+  Signal
+} from '@phosphor/signaling';
+
+import {
   IDiffEntry
 } from '../diffentries';
 
@@ -116,6 +120,17 @@ abstract class RenderableDiffModel<T extends JSONValue> implements IDiffModel {
     return model;
   }
 
+  get trusted(): boolean {
+    return this._trusted;
+  }
+
+  set trusted(value: boolean) {
+    if (this._trusted !== value) {
+      this._trusted = value;
+      this.trustedChanged.emit(value);
+    }
+  }
+
   /**
    * Base value
    */
@@ -131,8 +146,15 @@ abstract class RenderableDiffModel<T extends JSONValue> implements IDiffModel {
    */
   diff: IDiffEntry[] | null;
 
+  /**
+   *
+   */
+  trustedChanged = new Signal<RenderableDiffModel<T>, boolean>(this);
+
   // ICollapsibleModel:
   collapsible: boolean;
   collapsibleHeader: string;
   startCollapsed: boolean;
+
+  private _trusted: boolean;
 }
