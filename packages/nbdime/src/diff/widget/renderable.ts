@@ -47,19 +47,20 @@ abstract class RenderableDiffView<T extends JSONValue> extends Widget {
   constructor(model: RenderableDiffModel<T>, editorClass: string[],
               rendermime: IRenderMimeRegistry) {
     super();
-    this._rendermime = rendermime;
+    this.rendermime = rendermime;
+    this.model = model;
     let bdata = model.base;
     let rdata = model.remote;
     this.layout = new PanelLayout();
 
     let ci = 0;
     if (bdata) {
-      let widget = this.createSubView(bdata, false);
+      let widget = this.createSubView(bdata, model.trusted);
       this.layout.addWidget(widget);
       widget.addClass(editorClass[ci++]);
     }
     if (rdata && rdata !== bdata) {
-      let widget = this.createSubView(rdata, false);
+      let widget = this.createSubView(rdata, model.trusted);
       this.layout.addWidget(widget);
       widget.addClass(editorClass[ci++]);
     }
@@ -90,6 +91,7 @@ abstract class RenderableDiffView<T extends JSONValue> extends Widget {
    */
   protected abstract createSubView(data: T, trusted: boolean): Widget;
 
-  _sanitized: boolean;
-  _rendermime: IRenderMimeRegistry;
+  protected rendermime: IRenderMimeRegistry;
+
+  protected model: RenderableDiffModel<T>;
 }
