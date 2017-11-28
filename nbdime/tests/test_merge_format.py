@@ -26,7 +26,7 @@ def test_validate_array_merge(merge_validator):
     merge_validator.validate(decisions)
 
 
-def test_validate_matching_notebook_merge(matching_nb_triplets, merge_validator):
+def test_validate_matching_notebook_merge(matching_nb_triplets, merge_validator, reset_log):
     base, local, remote = matching_nb_triplets
     decisions = decide_notebook_merge(base, local, remote)
 

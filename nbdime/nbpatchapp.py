@@ -16,7 +16,7 @@ import nbformat
 from nbdime.patching import patch_notebook
 from nbdime.diff_utils import to_diffentry_dicts
 from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook, setup_std_streams
-from nbdime.prettyprint import pretty_print_notebook
+from nbdime.prettyprint import pretty_print_notebook, PrettyPrintConfig
 
 
 _description = "Apply patch from nbdiff to a Jupyter notebook."
@@ -48,7 +48,16 @@ def main_patch(args):
             print("Patch result is not a valid notebook, printing as JSON:")
             json.dump(after, sys.stdout)
         else:
-            pretty_print_notebook(after)
+            # This printer is to keep the unit tests passing,
+            # some tests capture output with capsys which doesn't
+            # pick up on sys.stdout.write()
+            class Printer:
+                def write(self, text):
+                    print(text, end="")
+
+            config = PrettyPrintConfig(out=Printer())
+
+            pretty_print_notebook(after, config=config)
 
     return 0
 

@@ -27,7 +27,7 @@ merge_c = 'multilevel-test-remote.ipynb'
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
-def test_diff_web(filespath, unique_port):
+def test_diff_web(filespath, unique_port, reset_log):
     a = os.path.join(filespath, diff_a)
     b = os.path.join(filespath, diff_b)
     loop = ioloop.IOLoop.current()
@@ -36,7 +36,7 @@ def test_diff_web(filespath, unique_port):
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
-def test_diff_web_gitrefs(git_repo2, unique_port):
+def test_diff_web_gitrefs(git_repo2, unique_port, reset_log):
     a = 'local'
     b = 'remote'
     c = 'diff.ipynb'
@@ -47,7 +47,7 @@ def test_diff_web_gitrefs(git_repo2, unique_port):
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
-def test_merge_web(filespath, unique_port):
+def test_merge_web(filespath, unique_port, reset_log):
     a = os.path.join(filespath, merge_a)
     b = os.path.join(filespath, merge_b)
     c = os.path.join(filespath, merge_c)

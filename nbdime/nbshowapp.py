@@ -69,26 +69,29 @@ def _build_arg_parser():
     parser.add_argument("notebook", nargs="*", help="notebook filename(s) or - to read from stdin")
 
     # Things we can choose to show or not
-    parser.add_argument(
+    ignorables = parser.add_argument_group(
+        title='ignorables',
+        description='Set which parts of the notebook (not) to show.')
+    ignorables.add_argument(
         '-s', '--sources',
         action=IgnorableAction,
-        help="show sources.")
-    parser.add_argument(
+        help="show/ignore sources.")
+    ignorables.add_argument(
         '-o', '--outputs',
         action=IgnorableAction,
-        help="show outputs.")
-    parser.add_argument(
+        help="show/ignore outputs.")
+    ignorables.add_argument(
         '-a', '--attachments',
         action=IgnorableAction,
-        help="show attachments.")
-    parser.add_argument(
+        help="show/ignore attachments.")
+    ignorables.add_argument(
         '-m', '--metadata',
         action=IgnorableAction,
-        help="show metadata.")
-    parser.add_argument(
+        help="show/ignore metadata.")
+    ignorables.add_argument(
         '-d', '--details',
         action=IgnorableAction,
-        help="show details not covered by other options.")
+        help="show/ignore details not covered by other options.")
 
     return parser
 
