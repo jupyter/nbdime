@@ -119,6 +119,14 @@ class NbdimeHandler(IPythonHandler):
     def curdir(self):
         return self.params.get('cwd', os.curdir)
 
+    # Polyfill in until we can rely on Notebook 5.0 being present
+    @property
+    def mathjax_config(self):
+        try:
+            return super(NbdimeHandler, self).mathjax_config
+        except AttributeError:
+            return 'TeX-AMS_HTML-full,Safe'
+
 
 class MainHandler(NbdimeHandler):
     def get(self):
