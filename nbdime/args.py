@@ -17,18 +17,16 @@ from .diffing.notebooks import set_notebook_diff_targets
 
 class LogLevelAction(argparse.Action):
     def __init__(self, option_strings, dest, default=None, **kwargs):
-        if PY2:
-            # __call__ is not called in py2 if option not given:
-            level = getattr(logging, default or 'INFO')
-            init_logging(level=level)
-            set_nbdime_log_level(level)
+        # __call__ is not called if option not given:
+        level = getattr(logging, default or 'INFO')
+        init_logging(level=level)
+        set_nbdime_log_level(level)
         super(LogLevelAction, self).__init__(option_strings, dest, default=default, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
         setattr(namespace, self.dest, values)
         level = getattr(logging, values)
-        init_logging(level=level)
-        set_nbdime_log_level(level)
+        set_nbdime_log_level(level, True)
 
 
 class SkipAction(argparse.Action):
