@@ -242,18 +242,22 @@ def test_nbmerge_app_conflict(tempfiles, capsys):
     assert nb_stdout == nb_file
 
 
-def test_nbmerge_app_decisions(tempfiles, capsys, reset_log):
+def test_nbmerge_app_decisions(tempfiles, capsys, caplog, reset_log):
     bfn = os.path.join(tempfiles, "inline-conflict--1.ipynb")
     lfn = os.path.join(tempfiles, "inline-conflict--2.ipynb")
     rfn = os.path.join(tempfiles, "inline-conflict--3.ipynb")
     ofn = os.path.join(tempfiles, "inline-conflict-out.ipynb")
 
     assert 1 == nbmergeapp.main([bfn, lfn, rfn, '--decisions', '--out', ofn])
-    out, err = capsys.readouterr()
-    # decisions are logged to stderr:
-    assert 'conflicted decisions' in err
+
+    # ensure decisions are logged with warning:
+    assert len(caplog.records) == 2
+    assert caplog.records[0].levelno == logging.WARNING
+    assert caplog.records[1].levelno == logging.WARNING
+    assert 'conflicted decisions' in caplog.text
 
     # Don't write output if decisions are requested
+    out = capsys.readouterr()[0]
     assert out == ''
     assert not os.path.exists(ofn)
 
