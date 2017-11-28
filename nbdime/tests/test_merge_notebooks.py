@@ -25,7 +25,7 @@ builder = _build_arg_parser()
 args = builder.parse_args(["", "", ""])
 
 
-def test_merge_matching_notebooks(matching_nb_triplets):
+def test_merge_matching_notebooks(matching_nb_triplets, reset_log):
     "Test merge on pairs of notebooks with the same basename in the test suite."
     base, local, remote = matching_nb_triplets
     merged, decisions = merge_notebooks(base, local, remote)
@@ -891,7 +891,7 @@ def test_autoresolve_empty_strategies():
     _check(partial, expected_partial, decisions, expected_conflicts)
 
 
-def test_only_sources(db, reset_diff_targets):
+def test_only_sources(db, reset_diff_targets, reset_log):
     base = db["mixed-conflicts--1"]
     local = db["mixed-conflicts--2"]
     remote = db["mixed-conflicts--3"]

@@ -16,8 +16,8 @@ name = 'nbdime'
 import sys
 
 v = sys.version_info
-if v[:2] < (2, 7) or (v[0] >= 3 and v[:2] < (3, 3)):
-    error = "ERROR: %s requires Python version 2.7 or 3.3 or above." % name
+if v[:2] < (2, 7) or (v[0] >= 3 and v[:2] < (3, 4)):
+    error = "ERROR: %s requires Python version 2.7 or 3.4 or above." % name
     print(error, file=sys.stderr)
     sys.exit(1)
 
@@ -112,7 +112,7 @@ install_requires = setuptools_args['install_requires'] = [
 
 extras_require = setuptools_args['extras_require'] = {
     'test': [
-        'pytest',
+        'pytest>=3.3',
         'pytest-cov',
         'pytest-timeout',
         'pytest-tornado',
@@ -132,6 +132,8 @@ extras_require = setuptools_args['extras_require'] = {
         'backports.functools_lru_cache',
     ],
 }
+
+setuptools_args['python_requires'] = '>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*'
 
 if 'setuptools' in sys.modules:
     setup_args.update(setuptools_args)

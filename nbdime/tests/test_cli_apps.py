@@ -23,6 +23,7 @@ from .utils import (
 )
 
 import nbdime
+from nbdime.args import process_exclusive_ignorables
 from nbdime.nbshowapp import main_show
 from nbdime.nbdiffapp import main_diff
 from nbdime.nbmergeapp import main_merge
@@ -48,10 +49,13 @@ from nbdime.vcs.hg import (
 from nbdime.utils import EXPLICIT_MISSING_FILE
 
 
-def test_nbshow_app(filespath):
+def test_nbshow_app(filespath, capsys):
     afn = os.path.join(filespath, "multilevel-test-base.ipynb")
 
     args = nbshowapp._build_arg_parser().parse_args([afn, '--log-level=CRITICAL'])
+    process_exclusive_ignorables(
+        args,
+        ('sources', 'outputs', 'attachments', 'metadata', 'details'))
     assert 0 == main_show(args)
     assert args.log_level == 'CRITICAL'
     assert nbdime.log.logger.level == logging.CRITICAL
@@ -158,7 +162,7 @@ def test_nbdiff_app_color_words(filespath):
     assert 0 == main_diff(args)
 
 
-def test_nbmerge_app(tempfiles, capsys):
+def test_nbmerge_app(tempfiles, capsys, reset_log):
     bfn = os.path.join(tempfiles, "multilevel-test-base.ipynb")
     lfn = os.path.join(tempfiles, "multilevel-test-local.ipynb")
     rfn = os.path.join(tempfiles, "multilevel-test-remote.ipynb")
@@ -185,7 +189,7 @@ def test_nbmerge_app(tempfiles, capsys):
     assert nb_stdout == nb_file
 
 
-def test_nbmerge_app_null_base(filespath):
+def test_nbmerge_app_null_base(filespath, reset_log):
     afn = os.path.join(filespath, "multilevel-test-base.ipynb")
     bfn = os.path.join(filespath, "multilevel-test-local.ipynb")
 
@@ -200,7 +204,7 @@ def test_nbmerge_app_null_base(filespath):
     assert 1 == main_merge(args)
 
 
-def test_nbmerge_app_null_side(filespath):
+def test_nbmerge_app_null_side(filespath, reset_log):
     afn = os.path.join(filespath, "multilevel-test-base.ipynb")
     bfn = os.path.join(filespath, "multilevel-test-local.ipynb")
 
@@ -220,7 +224,7 @@ def test_nbmerge_app_null_side(filespath):
     assert 0 == main_merge(args)
 
 
-def test_nbmerge_app_conflict(tempfiles, capsys):
+def test_nbmerge_app_conflict(tempfiles, capsys, reset_log):
     bfn = os.path.join(tempfiles, "inline-conflict--1.ipynb")
     lfn = os.path.join(tempfiles, "inline-conflict--2.ipynb")
     rfn = os.path.join(tempfiles, "inline-conflict--3.ipynb")
@@ -242,18 +246,22 @@ def test_nbmerge_app_conflict(tempfiles, capsys):
     assert nb_stdout == nb_file
 
 
-def test_nbmerge_app_decisions(tempfiles, capsys, reset_log):
+def test_nbmerge_app_decisions(tempfiles, capsys, caplog, reset_log):
     bfn = os.path.join(tempfiles, "inline-conflict--1.ipynb")
     lfn = os.path.join(tempfiles, "inline-conflict--2.ipynb")
     rfn = os.path.join(tempfiles, "inline-conflict--3.ipynb")
     ofn = os.path.join(tempfiles, "inline-conflict-out.ipynb")
 
     assert 1 == nbmergeapp.main([bfn, lfn, rfn, '--decisions', '--out', ofn])
-    out, err = capsys.readouterr()
-    # decisions are logged to stderr:
-    assert 'conflicted decisions' in err
+
+    # ensure decisions are logged with warning:
+    assert len(caplog.records) == 2
+    assert caplog.records[0].levelno == logging.WARNING
+    assert caplog.records[1].levelno == logging.WARNING
+    assert 'conflicted decisions' in caplog.text
 
     # Don't write output if decisions are requested
+    out = capsys.readouterr()[0]
     assert out == ''
     assert not os.path.exists(ofn)
 
@@ -519,7 +527,7 @@ def test_hg_diff(hg_repo):
     assert 'nbdiff' in out
 
 
-def test_hg_mergedriver(hg_repo, filespath):
+def test_hg_mergedriver(hg_repo, filespath, reset_log):
     # enable diff/merge drivers
     write_local_hg_config(hg_repo)
     # run merge with no conflicts

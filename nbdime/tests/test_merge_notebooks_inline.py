@@ -15,7 +15,7 @@ from nbdime.merging.generic import decide_merge, decide_merge_with_diff
 from nbdime.merging.decisions import apply_decisions
 
 
-def test_decide_merge_strategy_fail():
+def test_decide_merge_strategy_fail(reset_log):
     """Check that "fail" strategy results in proper exception raised."""
     # One level dict
     base = {"foo": 1}
@@ -455,7 +455,7 @@ def test_inline_merge_notebook_version():
     assert expected == merged
 
 
-def test_inline_merge_notebook_metadata():
+def test_inline_merge_notebook_metadata(reset_log):
     """Merging a wide range of different value types
     and conflict types in the root /metadata dicts.
     The goal is to exercise a decent part of the
@@ -682,7 +682,7 @@ def test_inline_merge_notebook_metadata():
                     merged, decisions = merge_notebooks(base, local, remote)
 
 
-def test_inline_merge_notebook_metadata_reproduce_bug():
+def test_inline_merge_notebook_metadata_reproduce_bug(reset_log):
     md_in = {
         1: {
             "unconflicted": {
