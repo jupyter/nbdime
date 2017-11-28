@@ -371,7 +371,14 @@ def init_app(on_port=None, closable=False, **params):
 
 def main_server(on_port=None, closable=False, **params):
     app, server = init_app(on_port, closable, **params)
-    ioloop.IOLoop.current().start()
+    io_loop = ioloop.IOLoop.current()
+    if sys.platform.startswith('win'):
+        # workaround for tornado on Windows:
+        # add no-op to wake every 5s
+        # to handle signals that may be ignored by the inner loop
+        pc = ioloop.PeriodicCallback(lambda : None, 5000)
+        pc.start()
+    io_loop.start()
     # Clean up after server:
     server.stop()
     return app.exit_code
