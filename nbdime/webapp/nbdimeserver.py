@@ -231,6 +231,7 @@ class ApiDiffHandler(NbdimeHandler, APIHandler):
             arg = self.params['difftool_args'][argname]
             if not isinstance(arg, string_types):
                 # Assume arg is file-like
+                arg.seek(0)
                 return nbformat.read(arg, as_version=4)
             return self.read_notebook(arg)
         return super(ApiDiffHandler, self).get_notebook_argument(argname)
