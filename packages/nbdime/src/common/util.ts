@@ -286,3 +286,20 @@ export function copyObj(obj: {[key: string]: any}, target?: {[key: string]: any}
   }
   return target;
 }
+
+
+/**
+ * Create or populate a select element with string options
+ */
+export
+function buildSelect(options: string[], select?: HTMLSelectElement): HTMLSelectElement {
+  if (select === undefined) {
+    select = document.createElement('select');
+  }
+  for (let option of options) {
+    let opt = document.createElement('option');
+    opt.value = opt.innerHTML = option;
+    select.appendChild(opt);
+  }
+  return select;
+}

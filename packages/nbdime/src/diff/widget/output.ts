@@ -7,42 +7,327 @@ import {
 } from '@jupyterlab/coreutils';
 
 import {
-  Widget
+  Panel, Widget
 } from '@phosphor/widgets';
 
 import {
-  IRenderMimeRegistry, OutputModel
+  each, find, toArray
+} from '@phosphor/algorithm';
+
+import {
+  IRenderMimeRegistry, OutputModel, MimeModel
 } from '@jupyterlab/rendermime';
+
+import {
+  CollapsiblePanel
+} from '../../common/collapsiblepanel';
+
+import {
+  createNbdimeMergeView
+} from '../../common/mergeview';
+
+import {
+  buildSelect, unique, intersection
+} from '../../common/util';
+
+import {
+  FlexPanel
+} from '../../upstreaming/flexpanel';
+
+import {
+  ADDED_DIFF_CLASS, DELETED_DIFF_CLASS,
+  TWOWAY_DIFF_CLASS, UNCHANGED_DIFF_CLASS,
+  ADD_DEL_LABEL_CLASS
+} from './common';
 
 import {
   RenderableDiffView
 } from './renderable';
 
 import {
-  valueIn, intersection
-} from '../../common/util';
-
-import {
-  OutputDiffModel
+  CellDiffModel, OutputDiffModel
 } from '../model';
 
-import {
-  stringify
-} from '../../patch/stringified';
 
-
+/**
+ * Class for a signle rendered output view
+ */
 const RENDERED_OUTPUT_CLASS = 'jp-Diff-renderedOuput';
 
 /**
- * Widget for outputs with renderable MIME data.
+ * Output is untrusted, and can benefit from being trusted
  */
+const UNTRUSTED_CLASS = 'jp-Diff-trustCandidate';
+
+/**
+ * Menu with actions for outputs
+ */
+const HOVER_MENU_CLASS = 'jp-Diff-outputMenu';
+
+/**
+ * Menu button to trust output content
+ */
+const TRUST_BUTTON_CLASS = 'jp-Diff-trustOutputButton';
+
+/**
+ * Menu button for showing output as text instead of rendered
+ */
+const SOURCE_BUTTON_CLASS = 'jp-Diff-showOutputSourceButton';
+
+/**
+ * Class of dropdown for selecting mimetype to show
+ */
+
+const MIMETYPE_SELECT_CLASS = 'jp-Diff-outputMimetypeSelect';
+
+
+let _base64 = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
+function isBase64(data: string, minLength=64): boolean {
+  return data.length > minLength && _base64.test(data.replace('\n', ''));
+}
+
+
 export
-class RenderableOutputView extends RenderableDiffView<nbformat.IOutput> {
-  constructor(model: OutputDiffModel,
-              editorClass: string[],
-              rendermime: IRenderMimeRegistry) {
-    super(model, editorClass, rendermime);
+class OutputPanel extends Panel {
+  /**
+   *
+   */
+  constructor(model: OutputDiffModel, parentModel: CellDiffModel,
+              editorClasses: string[], rendermime: IRenderMimeRegistry) {
+    super();
+    this.model = model;
+    this.rendermime = rendermime;
+    this.editorClasses = editorClasses;
+
+    model.trustedChanged.connect(
+      (sender: OutputDiffModel, trusted: boolean) => {
+      this.trustedChanged(trusted);
+    });
+    if (OutputPanel.isTrustSignificant(model, this.rendermime)) {
+      this.addClass(UNTRUSTED_CLASS);
+    }
+
+    if (model.added) {
+      if (!parentModel.added) {
+        // Implies this is added output
+        let addSpacer = new Widget();
+        addSpacer.node.textContent = 'Output added';
+        addSpacer.addClass(ADD_DEL_LABEL_CLASS);
+        this.addWidget(addSpacer);
+      }
+      this.addClass(ADDED_DIFF_CLASS);
+    } else if (model.deleted) {
+      if (!parentModel.deleted) {
+        // Implies this is deleted output
+        let delSpacer = new Widget();
+        delSpacer.node.textContent = 'Output deleted';
+        delSpacer.addClass(ADD_DEL_LABEL_CLASS);
+        this.addWidget(delSpacer);
+      }
+      this.addClass(DELETED_DIFF_CLASS);
+    } else if (model.unchanged) {
+      this.addClass(UNCHANGED_DIFF_CLASS);
+    } else {
+      this.addClass(TWOWAY_DIFF_CLASS);
+    }
+
+    let view = this.createView();
+    this.initContainer(view);
+
+    this.createHoverMenu();
   }
+
+  /**
+   * Add view to panel, possibly wrapped
+   */
+  protected initContainer(view: Widget) {
+    if (this.model.collapsible) {
+      this.container = new CollapsiblePanel(
+          view, this.model.collapsibleHeader, this.model.startCollapsed);
+    } else {
+      this.container = this;
+      this.container.addWidget(view);
+    }
+    this.view = view;
+  }
+
+  /**
+   * Replace a view with a new one
+   */
+  protected replaceView(view: Widget) {
+    let old = this.view;
+    let i = this.container.widgets.indexOf(old);
+    this.container.insertWidget(i, view);
+    old.parent = null!;
+    this.view = view;
+  }
+
+  /**
+   * Create a text or rendered view of the output diff model
+   */
+  protected createView(forceText=false): Widget {
+    let view: Widget | null = null;
+    let model = this.model;
+    let rendermime = this.rendermime;
+    // Take one of three actions, depending on output types
+    // 1) Renderable types: Side-by-side comparison.
+    // 2) Text-type output: Show a MergeView with text diff.
+    // 3) Unknown types: Stringified JSON diff.
+    let renderable = RenderableOutputView.canRender(model, rendermime);
+    if (renderable && !forceText) {
+      // 1.
+      let rov = new RenderableOutputView(
+        model, this.editorClasses, rendermime, this.selectedMimetype);
+      view = rov;
+    } else {
+      // 2. or 3.
+      view = this.createOutputTextView();
+    }
+    return view;
+  }
+
+  /**
+   * Create text view of output
+   */
+  protected createOutputTextView(): Widget {
+    // Take one of three actions, depending on output types
+    // 1) N/A here, see method createView above
+    // 2) Known, non-binary MIME: Show a MergeView with text diff.
+    // 3) Unknown types: Stringified JSON diff.
+    let view: Widget | undefined;
+    let model = this.model as OutputDiffModel;
+    // Find highest order MIME-type supported by rendermime
+    let key: string | null = null;
+    if (this.selectedMimetype === null) {
+      find(this.rendermime.mimeTypes(), (mt) => {
+        key = model.hasMimeType(mt);
+        return key !== null;
+      });
+    } else {
+      key = model.hasMimeType(this.selectedMimetype);
+    }
+    if (key) {
+      let stringModel = model.stringify(key);
+      let aValue = stringModel.base || stringModel.remote!;
+      if (!isBase64(aValue)) {
+        // 2.
+        view = createNbdimeMergeView(stringModel);
+      }
+    }
+    if (!view) {
+      // 3.
+      view = createNbdimeMergeView(model.stringify());
+    }
+    return view;
+  }
+
+  protected createHoverMenu() {
+    this.menu = new FlexPanel({direction: 'left-to-right', evenSizes: true});
+    this.menu.addClass(HOVER_MENU_CLASS);
+    this.container.addWidget(this.menu);
+
+    // Add rendered/source toggle:
+    let btnSource = document.createElement('button');
+    let sourceText = ['Show source', 'Show Rendered'];
+    btnSource.innerText = sourceText[0];
+    btnSource.onclick = (ev: MouseEvent) => {
+      this.forceText = !this.forceText;
+      btnSource.innerText = sourceText[this.forceText ? 1 : 0];
+      this.updateView();
+    };
+    let w = new Widget({node: btnSource});
+    w.addClass(SOURCE_BUTTON_CLASS);
+    this.menu.addWidget(w);
+
+    // Add trust button:
+    let btnTrust = document.createElement('button');
+    btnTrust.innerText = 'Trust';
+    btnTrust.onclick = (ev: MouseEvent) => {
+      // No reason to un-trust
+      this.model.trusted = true;
+    };
+    w = new Widget({node: btnTrust});
+    w.addClass(TRUST_BUTTON_CLASS);
+    this.menu.addWidget(w);
+
+    // Add mimetype select:
+    let mimetypes: string[] = [];
+    for (let output of this.model.contents) {
+      let bundle = OutputModel.getData(output);
+      mimetypes = mimetypes.concat(Object.keys(bundle));
+    }
+    mimetypes = mimetypes.filter(unique);
+    let cboMimetype = buildSelect(mimetypes);
+    cboMimetype.selectedIndex = mimetypes.indexOf(this.selectedMimetype);
+    cboMimetype.onchange = (ev: Event) => {
+      this.selectedMimetype = mimetypes[cboMimetype.selectedIndex];
+    };
+    w = new Widget({node: cboMimetype});
+    w.addClass(MIMETYPE_SELECT_CLASS);
+    this.menu.addWidget(w);
+  }
+
+  /**
+   * Update trusted status
+   */
+  protected trustedChanged(trusted: boolean) {
+    this.updateView();
+    if (trusted) {
+      this.removeClass(UNTRUSTED_CLASS);
+    } else if (OutputPanel.isTrustSignificant(this.model, this.rendermime)) {
+      this.addClass(UNTRUSTED_CLASS);
+    }
+  }
+
+  /**
+   * Update view
+   */
+  protected updateView(): void {
+    let model = this.model;
+    if (this.view instanceof RenderableOutputView) {
+      // Previosuly rendered
+      if (!this.forceText && RenderableOutputView.canRender(model, this.rendermime)) {
+        // Can still render
+        this.view.updateView(this.selectedMimetype, model.trusted);
+      } else {
+        // Can no longer render
+        let view = this.createView(this.forceText);
+        this.replaceView(view);
+      }
+    } else {
+      // Previously text output
+      // Here, we repalce the view irregardles of old vs new type
+      let view = this.createView(this.forceText);
+      this.replaceView(view);
+    }
+  }
+
+  protected get selectedMimetype(): string {
+    if (this._mimetype !== null) {
+      return this._mimetype;
+    }
+    let data = OutputModel.getData(this.model.base || this.model.remote!);
+    let model = new MimeModel({data, trusted: this.model.trusted})
+    return this.rendermime.preferredMimeType(model);
+  }
+
+  protected set selectedMimetype(value: string) {
+    if (this._mimetype !== value) {
+      this._mimetype = value;
+      this.updateView();
+    }
+  }
+
+  protected model: OutputDiffModel;
+  protected rendermime: IRenderMimeRegistry;
+  protected editorClasses: string[];
+  protected container: Panel;
+
+  protected view: Widget;
+
+  protected menu: FlexPanel;
+  protected _mimetype: string | null = null;
+  protected forceText = false;
 
   /**
    * Whether trust can affect the output rendering.
@@ -70,28 +355,111 @@ class RenderableOutputView extends RenderableDiffView<nbformat.IOutput> {
     }
     return false;
   }
+}
 
-  protected createRawView(output: OutputModel): Widget {
-    let widget = new Widget();
-    widget.node.innerText = stringify(output.data);
-    return widget;
+/**
+ * Widget for outputs with renderable MIME data.
+ */
+export
+class RenderableOutputView extends RenderableDiffView<nbformat.IOutput> {
+  constructor(model: OutputDiffModel,
+              editorClass: string[],
+              rendermime: RenderMime,
+              mimetype: string) {
+    super(model, editorClass, rendermime, mimetype);
   }
 
   /**
    * Create a widget which renders the given cell output
    */
   protected createSubView(output: nbformat.IOutput, trusted: boolean): Widget {
-    let model = new OutputModel({value: output, trusted});
-    let mimeType = this._rendermime.preferredMimeType(model.data, !trusted);
-    if (!mimeType) {
-      return this.createRawView(model);
-    }
-    let widget = this._rendermime.createRenderer(mimeType);
-    widget.renderModel(model);
+    let widget = new OutputWidget();
+    let widget = this.rendermime.render(new OutputModel({value: output, trusted}));
     widget.addClass(RENDERED_OUTPUT_CLASS);
     return widget;
   }
 
-  _sanitized: boolean;
+  /**
+   * Update trusted status
+   */
+  updateView(mimeType: string, trusted: boolean): void {
+    let i = 0;
+    let model = this.model;
+    this.mimetype = mimeType;
+    each(this.layout.widgets, (w: Widget) => {
+      if (w instanceof OutputWidget) {
+        let output: nbformat.IOutput | null = null;
+        if (i === 0 && model.base) {
+          // Use base data
+          output = model.base;
+        } else if (model.remote) {
+          output = model.remote;
+        }
+        if (output) {
+          let index = this.layout.widgets.indexOf(w);
+          w.dispose();
+          let outModel = new OutputModel({value: output, trusted});
+          let wNew = this.rendermime.getRenderer(mimeType).render({
+            mimeType, model: outModel, sanitizer: this.rendermime.sanitizer
+          })
+          this.layout.insertWidget(index, wNew);
+        }
+        ++i;
+      }
+    });
+  }
+
+  protected model: OutputDiffModel;
+
+  /**
+   * Checks if a cell output can be rendered (either safe/trusted or
+   * sanitizable)
+   */
+  static canRender(model: OutputDiffModel, rendermime: RenderMime): boolean {
+    let toTest: nbformat.IOutput[] = [];
+    if (model.base) {
+      toTest.push(model.base);
+    }
+    if (model.remote && model.remote !== model.base) {
+      toTest.push(model.remote);
+    }
+    for (let o of toTest) {
+      let mimetype = rendermime.preferredMimeType(
+        new OutputModel({value: o, trusted: model.trusted}));
+      if (!mimetype) {
+        return false;
+      }
+    }
+    return true;
+  }
   _rendermime: IRenderMimeRegistry;
+}
+
+
+class OutputWidget extends Panel {
+  /**
+   *
+   */
+  constructor(options?: Panel.IOptions) {
+    super(options);
+    //this.addWidget(gutter)
+  }
+
+  get rendered(): Widget | null {
+    return this._rendered;
+  }
+
+  set rendered(widget: Widget | null) {
+    if (this._rendered !== null) {
+      let old = this._rendered;
+      this._rendered = null;
+      old.dispose();
+    }
+    this._rendered = widget;
+    if (widget !== null) {
+      this.addWidget(widget);
+    }
+  }
+
+  _rendered: Widget | null;
 }

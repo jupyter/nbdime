@@ -45,10 +45,11 @@ const sanitizable = ['text/html'];
 export
 abstract class RenderableDiffView<T extends JSONValue> extends Widget {
   constructor(model: RenderableDiffModel<T>, editorClass: string[],
-              rendermime: IRenderMimeRegistry) {
+              rendermime: IRenderMimeRegistry, mimetype: string) {
     super();
     this.rendermime = rendermime;
     this.model = model;
+    this.mimetype = mimetype;
     let bdata = model.base;
     let rdata = model.remote;
     this.layout = new PanelLayout();
@@ -85,6 +86,8 @@ abstract class RenderableDiffView<T extends JSONValue> extends Widget {
   }
 
   layout: PanelLayout;
+
+  mimetype: string;
 
   /**
    * Create a widget which renders the given cell output
