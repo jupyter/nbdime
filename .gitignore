@@ -21,4 +21,5 @@ packages/**/lib/
 packages/**/coverage/
 packages/**/test/build/
 
-nbdime/webapp/static/
+nbdime/webapp/static/**
+!nbdime/webapp/static/favicon.ico

@@ -29,7 +29,6 @@ def main(args=None):
 
     nbdifftool.build_arg_parser(parser)
     opts = parser.parse_args(args)
-    nbdime.log.init_logging(level=opts.log_level)
 
     # TODO: If a/b are files that are not notebooks, ensure a decent error is printed.
     if not os.path.isfile(opts.local) or not os.path.isfile(opts.remote):

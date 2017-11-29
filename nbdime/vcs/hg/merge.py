@@ -36,7 +36,6 @@ def main(args=None):
     add_filename_args(parser, ["base", "local", "remote", "merged"])
 
     opts = parser.parse_args(args)
-    nbdime.log.init_logging(level=opts.log_level)
     # mergeapp expects an additional decisions arg:
     opts.decisions = False
     opts.out = opts.merged

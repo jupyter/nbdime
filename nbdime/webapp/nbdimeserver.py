@@ -27,6 +27,7 @@ from nbdime.args import add_generic_args, add_web_args
 from notebook.base.handlers import IPythonHandler, APIHandler
 from notebook import DEFAULT_STATIC_FILES_PATH
 from notebook.utils import url_path_join
+from notebook.log import log_request
 
 # TODO: See <notebook>/notebook/services/contents/handlers.py for possibly useful utilities:
 #@json_errors
@@ -335,6 +336,7 @@ def make_app(**params):
 
     env = Environment(loader=FileSystemLoader([template_path]), autoescape=False)
     settings = {
+        'log_function': log_request,
         'static_path': static_path,
         'static_url_prefix': prefix + '/static/',
         'template_path': [template_path],
