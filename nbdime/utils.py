@@ -4,6 +4,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 import codecs
+from collections import defaultdict
 import errno
 import locale
 import os
@@ -303,3 +304,29 @@ def pushd(path):
         yield
     finally:
         os.chdir(old)
+
+
+class defaultdict2(defaultdict):
+    """A defaultdict variant that retains a dictionary of default values.
+
+    When a key in the dictionary is missing, it will first consult the
+    default_values instance attribute. If that does not have the key,
+    the default_factory will be used as standard defaultdict behavior.
+    """
+
+    def __init__(self, default_factory, default_values, *args, **kwargs):
+        super(defaultdict2, self).__init__(default_factory, *args, **kwargs)
+        self.default_values = default_values
+
+    def copy(self):
+        c = super(defaultdict2, self).copy()
+        c.default_values = self.default_values.copy()
+        return c
+
+    def __missing__(self, key):
+        try:
+            v = self.default_values[key]
+            self[key] = v
+            return v
+        except KeyError:
+            return super(defaultdict2, self).__missing__(key)
