@@ -135,13 +135,13 @@ def _compare_mimedata(mimetype, x, y, comp_text, comp_base64):
 
 
 def compare_mimedata_approximate(mimetype, x, y):
-    return _compare_mimedata(mimetype, x, y,
-        compare_text_approximate, compare_base64_strict)
+    return _compare_mimedata(
+        mimetype, x, y, compare_text_approximate, compare_base64_strict)
 
 
 def compare_mimedata_strict(mimetype, x, y):
-    return _compare_mimedata(mimetype, x, y,
-        compare_text_strict, compare_base64_strict)
+    return _compare_mimedata(
+        mimetype, x, y, compare_text_strict, compare_base64_strict)
 
 
 def compare_mimebundle_approximate(x, y):
@@ -576,12 +576,14 @@ def set_notebook_diff_targets(sources=True, outputs=True, attachments=True,
 def diff_cells(a, b):
     "This is currently just used by some tests."
     path = "/cells"
-    return notebook_differs[path](a, b, path=path, predicates=notebook_predicates, differs=notebook_differs)
+    return notebook_differs[path](
+        a, b, path=path, predicates=notebook_predicates, differs=notebook_differs)
 
 
 def diff_item_at_path(a, b, path):
     """Calculate the diff using the configured notebook differ for path."""
-    return notebook_differs[path](a, b, path=path, predicates=notebook_predicates, differs=notebook_differs)
+    return notebook_differs[path](
+        a, b, path=path, predicates=notebook_predicates, differs=notebook_differs)
 
 
 def diff_notebooks(a, b):
