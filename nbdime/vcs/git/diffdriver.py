@@ -28,6 +28,7 @@ from nbdime.args import (
     add_git_diff_driver_args, add_diff_cli_args,
     )
 from nbdime.utils import locate_gitattributes, ensure_dir_exists, setup_std_streams
+from .filter_integration import apply_possible_filter
 
 def enable(scope=None):
     """Enable nbdime git diff driver"""
@@ -35,7 +36,10 @@ def enable(scope=None):
     if scope:
         cmd.append('--%s' % scope)
 
-    check_call(cmd + ['diff.jupyternotebook.command', 'git-nbdiffdriver diff'])
+    try:
+        check_call(cmd + ['diff.jupyternotebook.command', 'git-nbdiffdriver diff'])
+    except CalledProcessError as e:
+        return   # Not in git repository
     gitattributes = locate_gitattributes(scope)
     if gitattributes is None:
         assert scope is None, "No gitattributes found for scope: %s" % scope
@@ -110,9 +114,13 @@ def main(args=None):
 
     if opts.subcommand == 'diff':
         from nbdime import nbdiffapp
+        if opts.use_filter and opts.remote:
+            opts.remote = apply_possible_filter(opts.path, opts.remote)
         return nbdiffapp.main_diff(opts)
     elif opts.subcommand == 'webdiff':
         from nbdime.webapp import nbdiffweb
+        if opts.use_filter and opts.remote:
+            opts.remote = apply_possible_filter(opts.path, opts.remote)
         return nbdiffweb.main_diff(opts)
     elif opts.subcommand == 'config':
         opts.config_func(opts.scope)

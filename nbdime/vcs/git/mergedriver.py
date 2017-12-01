@@ -95,7 +95,8 @@ def main(args=None):
     # - NOTE: This is not where the driver should store its output, see below!
 
 
-    config = add_git_config_subcommand(subparsers,
+    add_git_config_subcommand(
+        subparsers,
         enable, disable,
         subparser_help="Configure git to use nbdime for notebooks in `git merge`",
         enable_help="enable nbdime merge driver via git config",

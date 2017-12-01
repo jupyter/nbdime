@@ -16,8 +16,11 @@ import os
 import sys
 from subprocess import check_call, check_output, CalledProcessError
 
-from nbdime.args import add_generic_args, add_git_config_subcommand
+from nbdime.args import (
+    add_generic_args, add_git_config_subcommand, add_filter_args
+)
 from nbdime.webapp import nbdifftool
+from .filter_integration import apply_possible_filter
 
 
 def enable(scope=None, set_default=False):
@@ -27,7 +30,7 @@ def enable(scope=None, set_default=False):
         assert scope in ('global', 'system'), 'invalid scope value'
         cmd.append('--' + scope)
 
-    check_call(cmd + ['difftool.nbdime.cmd', 'git-nbdifftool diff "$LOCAL" "$REMOTE"'])
+    check_call(cmd + ['difftool.nbdime.cmd', 'git-nbdifftool diff "$LOCAL" "$REMOTE" "$BASE"'])
     if set_default:
         check_call(cmd + ['diff.guitool', 'nbdime'])
 
@@ -80,7 +83,9 @@ def main(args=None):
     diff_parser = subparsers.add_parser('diff',
         description="The actual entrypoint for the diff tool. Git will call this."
     )
+    add_filter_args(diff_parser)
     nbdifftool.build_arg_parser(diff_parser)
+    diff_parser.add_argument('path')
 
     config = add_git_config_subcommand(subparsers,
         enable, disable,
@@ -93,7 +98,10 @@ def main(args=None):
 
     opts = parser.parse_args(args)
     if opts.subcommand == 'diff':
-        return show_diff(opts.local, opts.remote, opts)
+        remote = opts.remote
+        if opts.use_filter and remote:
+            remote = apply_possible_filter(opts.path, remote)
+        return show_diff(opts.local, remote, opts)
     elif opts.subcommand == 'config':
         opts.config_func(opts.scope, opts.set_default)
         return 0

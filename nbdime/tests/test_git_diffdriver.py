@@ -5,6 +5,7 @@
 
 from __future__ import unicode_literals
 
+import io
 import os
 from os.path import join as pjoin
 
@@ -14,8 +15,9 @@ from tornado import ioloop
 
 from nbdime.vcs.git.diffdriver import main as gdd_main
 from nbdime.prettyprint import file_timestamp
+from nbdime.utils import locate_gitattributes
 
-from .utils import WEB_TEST_TIMEOUT
+from .utils import WEB_TEST_TIMEOUT, call
 
 
 # Expected output includes coloring characters
@@ -127,6 +129,30 @@ def test_git_diff_driver_ignore_flags(filespath, capsys, nocolor, needs_git, res
         assert r == 0
         cap_out = capsys.readouterr()[0]
         assert cap_out == expected_source_only.format(fn1, fn2, t1, t2)
+
+
+def test_git_diff_driver_filter(git_repo, capsys, nocolor):
+    # Setup no-op filter
+    gitattr = locate_gitattributes()
+    with io.open(gitattr, 'a', encoding="utf8") as f:
+        f.write(u'\n*.ipynb\tfilter=myfilter\n')
+    with capsys.disabled():
+        call('git config --local --add filter.myfilter.clean "cat"')
+
+    fn1 = pjoin(git_repo, 'merge-conflict.ipynb')
+    fn2 = pjoin(git_repo, 'diff.ipynb')
+
+    mock_argv = [
+        '/mock/path/git-nbdiffdriver', 'diff', '-O',
+        fn1,
+        fn1, 'invalid_mock_checksum', '100644',
+        fn2, 'invalid_mock_checksum', '100644']
+
+    with mock.patch('sys.argv', mock_argv):
+        r = gdd_main()
+        assert r == 0
+        cap_out = capsys.readouterr()[0]
+        assert cap_out
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
