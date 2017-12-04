@@ -15,10 +15,6 @@ import {
 } from '@jupyterlab/outputarea';
 
 import {
-  IObservableList
-} from '@jupyterlab/coreutils/lib/observablelist';
-
-import {
   DropAction, IDragEvent
 } from '@phosphor/dragdrop';
 
@@ -76,7 +72,7 @@ class ReorderableOutputWidget extends OutputArea {
   /**
    * Follow changes on the model state.
    */
-  protected onModelChanged(sender: IOutputAreaModel, args: IObservableList.IChangedArgs<IOutputModel>) {
+  protected onModelChanged(sender: IOutputAreaModel, args: IOutputAreaModel.ChangedArgs) {
     let layout = this.layout as PanelLayout;
     switch (args.type) {
     case 'move':
