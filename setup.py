@@ -48,6 +48,7 @@ jstargets = [
 package_data = {
     name: [
         'tests/files/*.*',
+        'tests/filters/*.py',
         '*.schema.json',
         'webapp/static/*.*',
         'webapp/templates/*.*',
