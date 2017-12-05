@@ -30,10 +30,8 @@ from notebook.utils import url_path_join
 from notebook.log import log_request
 
 # TODO: See <notebook>/notebook/services/contents/handlers.py for possibly useful utilities:
-#@json_errors
 #contents_manager
 #ContentsHandler
-#APIHandler
 
 
 _logger = logging.getLogger(__name__)
