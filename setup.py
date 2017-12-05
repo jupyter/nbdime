@@ -34,7 +34,7 @@ from glob import glob
 from setuptools import setup, find_packages
 
 from setupbase import (create_cmdclass, install_npm, ensure_targets,
-    combine_commands, BaseCommand, skip_npm)
+    combine_commands)
 
 pjoin = os.path.join
 here = os.path.abspath(os.path.dirname(__file__))
@@ -93,6 +93,7 @@ setup_args = dict(
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         'Framework :: Jupyter',
     ],
 )
