@@ -2,6 +2,16 @@
 
 ## 0.4
 
+###  0.4.1 - 2017-12
+
+- Fixed layout issue in web diff for cells added/removed/patched in the same location.
+- Dropped support for Python 3.3.
+- Ensure Ctrl+C will shut down the nbdime web server on Windows.
+- Ensure server extension works with 4.x version of notebook server.
+- Various fixes and adjustments.
+
+###  0.4.0 - 2017-11
+
 - Fixed issues with the diff filtering options.
 - Added git diffdriver using web-diff.
 - Added mercurial integration code and entry points.
