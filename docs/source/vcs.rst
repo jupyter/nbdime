@@ -153,6 +153,7 @@ with the following steps:
     command = git-nbdiffdriver diff
 
   or if you prefer to use webdiff::
+  
     [diff "jupyternotebook"]
     command = git-nbdiffdriver webdiff [--ip IP]
 
