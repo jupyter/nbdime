@@ -6,6 +6,8 @@ from __future__ import print_function
 import json
 import os
 
+from jinja2 import ChoiceLoader, FileSystemLoader
+
 from notebook.utils import url_path_join, to_os_path
 from notebook.services.contents.checkpoints import GenericCheckpointsMixin
 from notebook.services.contents.filecheckpoints import FileCheckpoints
@@ -192,8 +194,11 @@ def _load_jupyter_server_extension(nb_server_app):
     web_app = nb_server_app.web_app
 
     env = web_app.settings['jinja2_env']
-    env.loader.searchpath.append(template_path)
-    web_app.settings['template_path'].append(template_path)
+
+    env.loader = ChoiceLoader([
+        env.loader,
+        FileSystemLoader(template_path),
+    ])
 
     web_app.settings['static_path'].append(static_path)
 
