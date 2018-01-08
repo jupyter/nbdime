@@ -26,7 +26,8 @@ from .nbdimeserver import (
 
 from ..gitfiles import (
     changed_notebooks, is_path_in_repo, find_repo_root,
-    InvalidGitRepositoryError, BadName)
+    InvalidGitRepositoryError, BadName, GitCommandNotFound,
+    )
 from ..utils import split_os_path, EXPLICIT_MISSING_FILE, read_notebook
 
 
@@ -102,6 +103,12 @@ class ExtensionApiDiffHandler(ApiDiffHandler):
         except (InvalidGitRepositoryError, BadName) as e:
             self.log.exception(e)
             raise HTTPError(422, 'Invalid notebook: %s' % base_arg)
+        except GitCommandNotFound as e:
+            self.log.exception(e)
+            raise HTTPError(
+                500, 'Could not find git executable. '
+                     'Please ensure git is available to the server process.')
+
         return base_nb, remote_nb
 
     @gen.coroutine

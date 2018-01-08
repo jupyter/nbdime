@@ -72,6 +72,11 @@ define([
             attr("disabled", !enabled);
     };
 
+    var setActionTooltip = function (action, tooltip) {
+        $("button[data-jupyter-action='" + action + "']").
+            attr("title", tooltip);
+    };
+
     var triggerCheckpointTest = function () {
         Jupyter.notebook.list_checkpoints();
     };
@@ -86,8 +91,10 @@ define([
         setActionEnabledState(checkpointAction, true);
     };
 
-    var register = function (isGit) {
+    var register = function (isGit, error) {
         var prefix = 'nbdime';
+        var serverMissing = error !== undefined && error.xhr.status === 404;
+        var serverMissingMsg = 'Unable to query nbdime API. Is the server extension enabled?';
 
         // Register checkpoint action
         checkpointAction = Jupyter.actions.register({
@@ -97,9 +104,11 @@ define([
         }, 'diff-notebook-checkpoint', prefix);
 
         // Register for checkpoint events
-        Jupyter.notebook.events.on('checkpoints_listed.Notebook', onCheckpointsList);
-        Jupyter.notebook.events.on('checkpoint_created.Notebook', onCheckpointAdded);
-        Jupyter.notebook.events.on('checkpoint_deleted.Notebook', triggerCheckpointTest);
+        if (!serverMissing) {
+            Jupyter.notebook.events.on('checkpoints_listed.Notebook', onCheckpointsList);
+            Jupyter.notebook.events.on('checkpoint_created.Notebook', onCheckpointAdded);
+            Jupyter.notebook.events.on('checkpoint_deleted.Notebook', triggerCheckpointTest);
+        }
 
         // Check whether to enable button or not
         triggerCheckpointTest();
@@ -128,10 +137,17 @@ define([
                 action: checkpointAction,
                 label: 'nbdiff',
             }]);
+
+            if (serverMissing) {
+                setActionEnabledState(checkpointAction, false);
+                console.error(serverMissingMsg);
+            }
         }
 
         // Tooltip for checkpoint button:
-        btn_group.children(':first-child').attr('title', Jupyter.actions.get(checkpointAction).help);
+        setActionTooltip(checkpointAction,
+            serverMissing ? serverMissingMsg : Jupyter.actions.get(checkpointAction).help
+        );
     };
 
     var load_ipython_extension = function() {
@@ -141,7 +157,7 @@ define([
             register(data['is_git']);
         }, (error) => {
             // Assume that we don't have git
-            register(false);
+            register(false, error);
         });
     };
 
