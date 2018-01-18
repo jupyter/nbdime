@@ -222,7 +222,7 @@ def _load_jupyter_server_extension(nb_server_app):
     ]
 
     # Prefix routes with base_url:
-    base_url = web_app.settings.get('base_url', '/')
+    base_url = web_app.settings['base_url']
     handlers = [(url_path_join(base_url, h[0]), h[1], h[2]) for h in handlers]
 
     host_pattern = '.*$'
