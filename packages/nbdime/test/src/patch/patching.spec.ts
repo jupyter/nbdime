@@ -15,6 +15,7 @@ import {
 import {
   JSON_INDENT
 } from '../../../src/diff/util';
+import { JSONObject, JSONValue } from '@phosphor/coreutils';
 
 
 function makeAddRange(key: number, values: string | any[]) : IDiffAddRange {
@@ -545,7 +546,7 @@ describe('patch', () => {
     });
 
     it('should patch a nested patch', () => {
-      let base = [
+      let base: JSONValue = [
         {a: 1, c: true},
         {b: 42, c: 'this\nis\na\nvalid\nstring'}
       ];

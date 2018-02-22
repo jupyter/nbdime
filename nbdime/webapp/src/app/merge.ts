@@ -14,7 +14,7 @@ import {
 } from '@phosphor/widgets';
 
 import {
-  RenderMime
+  RenderMimeRegistry
 } from '@jupyterlab/rendermime';
 
 import {
@@ -66,7 +66,7 @@ function showMerge(data: {
     merge_decisions: IMergeDecision[]
     }): Promise<void> {
 
-  let rendermime = new RenderMime({
+  let rendermime = new RenderMimeRegistry({
     initialFactories: rendererFactories,
     sanitizer: defaultSanitizer,
   });

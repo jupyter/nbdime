@@ -27,13 +27,12 @@ function urlRStrip(target: string): string {
 export
 function requestJsonPromise(url: string, argument: any): Promise<JSONObject> {
   let request = {
-      url: url,
       method: 'POST',
-      data: JSON.stringify(argument),
+      body: JSON.stringify(argument),
     };
   let settings = ServerConnection.makeSettings();
-  return ServerConnection.makeRequest(request, settings).then((response) => {
-      return response.data;
+  return ServerConnection.makeRequest(url, request, settings).then((response) => {
+      return response.json();
     });
 }
 
@@ -45,8 +44,8 @@ function requestJson(url: string, argument: any, callback: (result: any) => void
   let promise = requestJsonPromise(url, argument);
   promise.then((data) => {
     callback(data);
-  }, (error: ServerConnection.IError) => {
-    onError(error.xhr.responseText);
+  }, (error: ServerConnection.NetworkError | ServerConnection.ResponseError) => {
+    onError(error.message);
   });
 }
 

@@ -7,7 +7,7 @@ import {
 } from '@phosphor/widgets';
 
 import {
-  RenderMime
+  IRenderMimeRegistry
 } from '@jupyterlab/rendermime';
 
 import {
@@ -35,7 +35,7 @@ const NBDIFF_CLASS = 'jp-Notebook-diff';
  */
 export
 class NotebookDiffWidget extends Panel {
-  constructor(model: NotebookDiffModel, rendermime: RenderMime) {
+  constructor(model: NotebookDiffModel, rendermime: IRenderMimeRegistry) {
     super();
     this._model = model;
     this._rendermime = rendermime;
@@ -100,5 +100,5 @@ class NotebookDiffWidget extends Panel {
   }
 
   private _model: NotebookDiffModel;
-  private _rendermime: RenderMime;
+  private _rendermime: IRenderMimeRegistry;
 }
