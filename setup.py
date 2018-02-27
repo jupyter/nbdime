@@ -108,7 +108,7 @@ install_requires = setuptools_args['install_requires'] = [
     'requests',
     'GitPython!=2.1.4, !=2.1.5, !=2.1.6',  # For difftool taking git refs
     'notebook',
-    'jinja2',
+    'jinja2>=2.9',
 ]
 
 extras_require = setuptools_args['extras_require'] = {
