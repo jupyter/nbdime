@@ -47,8 +47,12 @@ package_data = {
 
 
 
-cmdclass = create_cmdclass(('jsdeps',))
-cmdclass['jsdeps'] = combine_commands(
+cmdclass = create_cmdclass(
+    'js',
+    data_files_spec=[
+        ('share/jupyter/nbextensions/nbdime', name + '/notebook_ext', '*.js'),
+    ])
+cmdclass['js'] = combine_commands(
     install_npm(here),
     ensure_targets(jstargets),
 )
