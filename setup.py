@@ -6,38 +6,27 @@
 
 from __future__ import print_function
 
-# the name of the project
-name = 'nbdime'
-
-#-----------------------------------------------------------------------------
-# Minimal Python version sanity check
-#-----------------------------------------------------------------------------
-
-import sys
-
-v = sys.version_info
-if v[:2] < (2, 7) or (v[0] >= 3 and v[:2] < (3, 4)):
-    error = "ERROR: %s requires Python version 2.7 or 3.4 or above." % name
-    print(error, file=sys.stderr)
-    sys.exit(1)
-
-PY3 = (sys.version_info[0] >= 3)
-
-#-----------------------------------------------------------------------------
-# get on with it
-#-----------------------------------------------------------------------------
-
 import io
 import os
+import sys
 from glob import glob
 
 from setuptools import setup, find_packages
 
 from setupbase import (create_cmdclass, install_npm, ensure_targets,
-    combine_commands)
+    combine_commands, ensure_python, get_version)
 
 pjoin = os.path.join
 here = os.path.abspath(os.path.dirname(__file__))
+
+
+# Minimal Python version sanity check
+ensure_python(('>=2.7', '>=3.4'))
+
+# the name of the project
+name = 'nbdime'
+version = get_version(pjoin(name, '_version.py'))
+
 
 # Representative files that should exist after a successful build
 jstargets = [
@@ -56,9 +45,6 @@ package_data = {
     ]
 }
 
-version_ns = {}
-with io.open(pjoin(here, name, '_version.py'), encoding="utf8") as f:
-    exec(f.read(), {}, version_ns)
 
 
 cmdclass = create_cmdclass(('jsdeps',))
@@ -71,7 +57,7 @@ cmdclass['jsdeps'] = combine_commands(
 setup_args = dict(
     name            = name,
     description     = "Diff and merge of Jupyter Notebooks",
-    version         = version_ns['__version__'],
+    version         = version,
     scripts         = glob(pjoin('scripts', '*')),
     cmdclass        = cmdclass,
     packages        = find_packages(here),
