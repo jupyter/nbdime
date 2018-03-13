@@ -162,6 +162,13 @@ def add_web_args(parser, default_port=8888):
         type=str,
         help="specify the browser to use, to override the system default.")
     parser.add_argument(
+        '--persist',
+        action="store_true",
+        default=False,
+        help="prevent server shutting down on remote close request (when these"
+             " would normally supported)."
+    )
+    parser.add_argument(
         '--ip',
         default='127.0.0.1',
         help="specify the interface to listen to for the web server. "
@@ -348,7 +355,10 @@ def args_for_server(arguments):
                 workdirectory='cwd',
                 base_url='base_url',
                 )
-    return {kmap[k]: v for k, v in vars(arguments).items() if k in kmap}
+    ret = {kmap[k]: v for k, v in vars(arguments).items() if k in kmap}
+    if 'persist' in arguments:
+        ret['closable'] = not arguments.persist
+    return ret
 
 
 def args_for_browse(arguments):
