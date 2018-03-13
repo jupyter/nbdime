@@ -355,10 +355,11 @@ def _split_addrange(key, local, remote, path, item_strategy):
 
         elif d.op == DiffOp.PATCH:
             # Predicates indicate that local and remote items are similar!
-            decisions.conflict(
+            decisions.similar_insert(
                 path,
                 [op_addrange(key, [local[d.key]])],
                 [op_addrange(key, [remote[d.key + offset]])],
+                [d],
                 item_strategy)
             taken += 1
 

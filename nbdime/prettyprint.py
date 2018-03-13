@@ -811,7 +811,7 @@ def pretty_print_merge_decision(base, decision, config=DefaultConfig):
     confnote = "conflicted " if decision.conflict else ""
     config.out.write("%s%sdecision at %s:%s\n" % (INFO.replace("##", "===="), confnote, path, RESET))
 
-    diff_keys = ("diff", "local_diff", "remote_diff", "custom_diff")
+    diff_keys = ("diff", "local_diff", "remote_diff", "custom_diff", "similar_insert")
     exclude_keys = set(diff_keys) | {"common_path", "action", "conflict"}
     pretty_print_dict(decision, exclude_keys, prefix, config)
 
