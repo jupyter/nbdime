@@ -166,7 +166,7 @@ def add_web_args(parser, default_port=8888):
         action="store_true",
         default=False,
         help="prevent server shutting down on remote close request (when these"
-             " would normally supported)."
+             " would normally be supported)."
     )
     parser.add_argument(
         '--ip',
