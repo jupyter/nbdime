@@ -10,7 +10,7 @@ from collections import defaultdict
 
 import nbdime.log
 from .decisions import MergeDecisionBuilder
-from .chunks import make_merge_chunks
+from .chunks import make_merge_chunks, chunk_typename
 from .strategies import (
     resolve_strategy_generic,
      resolve_conflicted_decisions_dict,
@@ -146,37 +146,6 @@ def __unused__tryresolve_conflicts(conflicts, decisions):
         if not action_taken:
             unresolved_conflicts.append(conf)
     return unresolved_conflicts
-
-
-def chunk_typename(diffs):
-    """For the diffs of a chunk, return string representations of its type.
-
-    Returns a two-tuple of strings.
-     - The first string contains zero or more characters 'a' and/or 'A', where
-       'a' signifies a dict 'add' operation, and 'A' signifies a sequence
-       'addrange' operation.
-    - The second string contains zero or more characters 'P', 'R', 'r',
-      and/or 'c': 'P': patch, 'R': removerange, 'r': remove, 'c': replace
-
-    For a proper chunk, each string should have either 0 or 1 character each,
-    but this function will not perform any checks.
-    """
-    aname = ""
-    pname = ""
-    for e in diffs:
-        if e.op == DiffOp.ADDRANGE:
-            aname += "A"
-        elif e.op == DiffOp.ADD:
-            aname += "a"
-        elif e.op == DiffOp.PATCH:
-            pname += "P"
-        elif e.op == DiffOp.REMOVERANGE:
-            pname += "R"
-        elif e.op == DiffOp.REMOVE:
-            pname += "r"
-        elif e.op == DiffOp.REPLACE:
-            pname += "c"
-    return aname, pname
 
 
 
