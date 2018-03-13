@@ -60,14 +60,16 @@ def check_symmetric_diff_and_patch(a, b):
     check_diff_and_patch(b, a)
 
 
-def sources_to_notebook(sources):
+def sources_to_notebook(sources, cell_type='code'):
     assert isinstance(sources, list)
-    assert len(sources) == 0 or isinstance(sources[0], list)
     nb = nbformat.v4.new_notebook()
     for source in sources:
         if isinstance(source, list):
             source = "".join(source)
-        nb.cells.append(nbformat.v4.new_code_cell(source))
+        if cell_type == 'code':
+            nb.cells.append(nbformat.v4.new_code_cell(source))
+        elif cell_type == 'markdown':
+            nb.cells.append(nbformat.v4.new_markdown_cell(source))
     return nb
 
 

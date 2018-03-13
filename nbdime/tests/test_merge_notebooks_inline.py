@@ -13,6 +13,9 @@ from nbdime.diff_format import op_patch
 from nbdime.utils import Strategies
 from nbdime.merging.generic import decide_merge, decide_merge_with_diff
 from nbdime.merging.decisions import apply_decisions
+from nbdime.merging.strategies import _cell_marker_format
+
+from .utils import outputs_to_notebook, sources_to_notebook
 
 
 def test_decide_merge_strategy_fail(reset_log):
@@ -988,11 +991,91 @@ def test_inline_merge_attachments():
 
 
 def test_inline_merge_outputs():
-    # FIXME: Use output creation utils Vidar wrote in another test file
-    base = new_notebook()
-    local = new_notebook()
-    remote = new_notebook()
-    expected = new_notebook()
+    # One cell with two outputs:
+    base = outputs_to_notebook([['unmodified', 'base']])
+    local = outputs_to_notebook([['unmodified', 'local']])
+    remote = outputs_to_notebook([['unmodified', 'remote']])
+    expected = outputs_to_notebook([[
+        'unmodified',
+        nbformat.v4.new_output(
+            output_type='stream', name='stderr',
+            text='<<<<<<< local <modified: text/plain>\n'),
+        'local',
+        nbformat.v4.new_output(
+            output_type='stream', name='stderr',
+            text='=======\n'),
+        'remote',
+        nbformat.v4.new_output(
+            output_type='stream', name='stderr',
+            text='>>>>>>> remote <modified: text/plain>\n'),
+    ]])
     merged, decisions = merge_notebooks(base, local, remote)
     assert merged == expected
 
+
+def test_inline_merge_cells_insertion_similar():
+    base = sources_to_notebook([['unmodified']], cell_type='markdown')
+    local = sources_to_notebook([['unmodified'], ['local']], cell_type='markdown')
+    remote = sources_to_notebook([['unmodified'], ['remote']], cell_type='markdown')
+    expected = sources_to_notebook([
+        'unmodified',
+        [
+            ("<"*7) + ' local\n',
+            'local\n',
+            ("="*7) + '\n',
+            'remote\n',
+            (">"*7) + ' remote'
+        ]
+    ], cell_type='markdown')
+    merged, decisions = merge_notebooks(base, local, remote)
+    assert merged == expected
+
+
+def test_inline_merge_cells_insertion_unsimilar():
+    base = sources_to_notebook([['unmodified']], cell_type='markdown')
+    local = sources_to_notebook([['unmodified'], ['local\n', 'friendly faces\n', '3.14']], cell_type='markdown')
+    remote = sources_to_notebook([['unmodified'], ['remote\n', 'foo bar baz\n']], cell_type='markdown')
+    expected = sources_to_notebook([
+        ['unmodified'],
+        [_cell_marker_format(("<"*7) + ' local')],
+        ['local\n', 'friendly faces\n', '3.14'],
+        [_cell_marker_format("="*7)],
+        ['remote\n', 'foo bar baz\n'],
+        [_cell_marker_format((">"*7) + ' remote')],
+    ], cell_type='markdown')
+    merged, decisions = merge_notebooks(base, local, remote)
+    assert merged == expected
+
+
+def test_inline_merge_cells_replacement_similar():
+    base = sources_to_notebook([['unmodified'], ['base']], cell_type='markdown')
+    local = sources_to_notebook([['unmodified'], ['local']], cell_type='markdown')
+    remote = sources_to_notebook([['unmodified'], ['remote']], cell_type='markdown')
+    expected = sources_to_notebook([
+        ['unmodified'],
+        [
+            ("<"*7) + ' local\n',
+            'local\n',
+            ("="*7) + '\n',
+            'remote\n',
+            (">"*7) + ' remote'
+        ]
+    ], cell_type='markdown')
+    merged, decisions = merge_notebooks(base, local, remote)
+    assert merged == expected
+
+
+def test_inline_merge_cells_replacement_unsimilar():
+    base = sources_to_notebook([['unmodified'], ['base']], cell_type='markdown')
+    local = sources_to_notebook([['unmodified'], ['local\n', 'friendly faces\n', '3.14']], cell_type='markdown')
+    remote = sources_to_notebook([['unmodified'], ['remote\n', 'foo bar baz\n']], cell_type='markdown')
+    expected = sources_to_notebook([
+        ['unmodified'],
+        [_cell_marker_format(("<"*7) + ' local')],
+        ['local\n', 'friendly faces\n', '3.14'],
+        [_cell_marker_format("="*7)],
+        ['remote\n', 'foo bar baz\n'],
+        [_cell_marker_format((">"*7) + ' remote')],
+    ], cell_type='markdown')
+    merged, decisions = merge_notebooks(base, local, remote)
+    assert merged == expected
