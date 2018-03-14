@@ -13,6 +13,8 @@ class NotifyUserError extends Error {
       message: string,
       severity: NotifyUserError.Severity = 'error') {
     super(message);
+    // Set the prototype explicitly.
+    (Object as any).setPrototypeOf(this, NotifyUserError.prototype);
     this.message = message;
     this.stack = new Error().stack;
     this.severity = severity;

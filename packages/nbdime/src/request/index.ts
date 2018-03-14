@@ -56,7 +56,7 @@ export
 function requestDiffPromise(
     base: string, remote: string | undefined,
     baseUrl: string): Promise<JSONObject> {
-  return requestJsonPromise(URLExt.join(urlRStrip(baseUrl), 'api/diff'),
+  return requestJsonPromise(URLExt.join(window.location.origin, urlRStrip(baseUrl), 'api/diff'),
                             {base, remote});
 }
 
@@ -69,7 +69,7 @@ function requestDiff(
     baseUrl: string,
     onComplete: (result: any) => void,
     onFail: (result: any) => void): void {
-  requestJson(URLExt.join(urlRStrip(baseUrl), 'api/diff'),
+  requestJson(URLExt.join(window.location.origin, urlRStrip(baseUrl), 'api/diff'),
               {base, remote},
               onComplete,
               onFail);
@@ -80,10 +80,10 @@ function requestDiff(
  * Make a diff request for the given base/remote specifiers (filenames)
  */
 export
-function requestMergePrmise(
+function requestMergePromise(
     base: string, local: string, remote: string,
     baseUrl: string): Promise<JSONObject> {
-  return requestJsonPromise(URLExt.join(urlRStrip(baseUrl), 'api/merge'),
+  return requestJsonPromise(URLExt.join(window.location.origin, urlRStrip(baseUrl), 'api/merge'),
               {base, local, remote});
 }
 
@@ -97,7 +97,7 @@ function requestMerge(
     baseUrl: string,
     onComplete: (result: any) => void,
     onFail: (result: any) => void): void {
-  requestJson(URLExt.join(urlRStrip(baseUrl), 'api/merge'),
+  requestJson(URLExt.join(window.location.origin, urlRStrip(baseUrl), 'api/merge'),
               {base, local, remote},
               onComplete,
               onFail);
