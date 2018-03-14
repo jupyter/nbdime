@@ -47,7 +47,6 @@ def main_parsed(opts):
     remote = opts.remote
     merged = opts.merged
     return run_server(
-        closable=True,
         mergetool_args=dict(base=base, local=local, remote=remote),
         outputfilename=merged,
         on_port=lambda port: browse(

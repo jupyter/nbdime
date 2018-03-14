@@ -47,7 +47,6 @@ def main(args=None):
     remote = arguments.remote
     output = arguments.out
     return run_server(
-        closable=True,
         outputfilename=output,
         on_port=lambda port: browse(
             port=port,

@@ -61,7 +61,6 @@ def handle_gitrefs(base, remote, path, arguments):
     status = 0
     for fbase, fremote in changed_notebooks(base, remote, path):
         status = run_server(
-            closable=True,
             difftool_args=dict(base=fbase, remote=fremote),
             on_port=lambda port: browse_util(
                 port=port,
@@ -81,7 +80,6 @@ def main_diff(opts):
         # We are asked to do a gui for git diff
         return handle_gitrefs(base, remote, path, opts)
     return run_server(
-        closable=True,
         on_port=lambda port: browse_util(
             port=port,
             rel_url='diff',

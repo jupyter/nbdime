@@ -44,7 +44,6 @@ def main_parsed(opts):
     base = opts.local
     remote = opts.remote
     return run_server(
-        closable=True,
         difftool_args=dict(base=base, remote=remote),
         on_port=lambda port: browse(
             port=port,
