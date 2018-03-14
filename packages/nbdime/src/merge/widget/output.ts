@@ -235,17 +235,6 @@ class RenderableOutputsMergeView extends DragDropPanel {
     return null;
   }
 
-  /**
-   * Overrided version to allow identifying source pane and source output
-   */
-  protected targetFromKey(key: any): Widget {
-    let indices = key as number[];
-    let paneIndex = indices[0];
-    let outputIndex = indices[1];
-    let pane = this.panes[paneIndex];
-    return (pane.layout as PanelLayout).widgets[outputIndex];
-  }
-
   protected getIndexOfChildNode(node: HTMLElement, parent?: PanelLayout): any {
     for (let pane of this.panes) {
       let child = findChild(pane.node, node);
