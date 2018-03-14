@@ -11,7 +11,7 @@ import {
 } from '@phosphor/widgets';
 
 import {
-  RenderMime, MimeModel
+  IRenderMimeRegistry, MimeModel
 } from '@jupyterlab/rendermime';
 
 import {
@@ -75,7 +75,7 @@ class CellDiffWidget extends Panel {
   /**
    *
    */
-  constructor(model: CellDiffModel, rendermime: RenderMime,
+  constructor(model: CellDiffModel, rendermime: IRenderMimeRegistry,
               mimetype: string) {
     super();
     this.addClass(CELLDIFF_CLASS);
@@ -192,7 +192,7 @@ class CellDiffWidget extends Panel {
    */
   static
   createView(model: IDiffModel, parent: CellDiffModel,
-             editorClasses: string[], rendermime: RenderMime): Panel {
+             editorClasses: string[], rendermime: IRenderMimeRegistry): Panel {
     let view: Widget | null = null;
     if (model instanceof StringDiffModel) {
       if (model.unchanged && parent.cellType === 'markdown') {
@@ -271,5 +271,5 @@ class CellDiffWidget extends Panel {
   }
 
   protected _model: CellDiffModel;
-  protected _rendermime: RenderMime;
+  protected _rendermime: IRenderMimeRegistry;
 }

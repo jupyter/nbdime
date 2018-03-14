@@ -15,7 +15,7 @@ import {
 } from '@phosphor/widgets';
 
 import {
-  RenderMime
+  IRenderMimeRegistry
 } from '@jupyterlab/rendermime';
 
 import {
@@ -45,7 +45,7 @@ const sanitizable = ['text/html'];
 export
 abstract class RenderableDiffView<T extends JSONValue> extends Widget {
   constructor(model: RenderableDiffModel<T>, editorClass: string[],
-              rendermime: RenderMime) {
+              rendermime: IRenderMimeRegistry) {
     super();
     this._rendermime = rendermime;
     let bdata = model.base;
@@ -91,5 +91,5 @@ abstract class RenderableDiffView<T extends JSONValue> extends Widget {
   protected abstract createSubView(data: T, trusted: boolean): Widget;
 
   _sanitized: boolean;
-  _rendermime: RenderMime;
+  _rendermime: IRenderMimeRegistry;
 }

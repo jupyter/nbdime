@@ -7,7 +7,7 @@ import {
 } from '@jupyterlab/coreutils';
 
 import {
-  RenderMime
+  IRenderMimeRegistry
 } from '@jupyterlab/rendermime';
 
 import {
@@ -49,7 +49,7 @@ const NB_MERGE_CONTROLS_CLASS = 'jp-Merge-notebook-controls';
 export
 class NotebookMergeWidget extends DragDropPanel {
   constructor(model: NotebookMergeModel,
-              rendermime: RenderMime) {
+              rendermime: IRenderMimeRegistry) {
     super();
     this._model = model;
     this._rendermime = rendermime;
@@ -130,7 +130,7 @@ class NotebookMergeWidget extends DragDropPanel {
   protected cellWidgets: CellMergeWidget[];
 
   private _model: NotebookMergeModel;
-  private _rendermime: RenderMime;
+  private _rendermime: IRenderMimeRegistry;
 }
 
 

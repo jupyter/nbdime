@@ -11,7 +11,7 @@ import {
 } from '@phosphor/widgets';
 
 import {
-  RenderMime
+  IRenderMimeRegistry
 } from '@jupyterlab/rendermime';
 
 import {
@@ -115,7 +115,7 @@ class CellMergeWidget extends Panel {
   /**
    *
    */
-  constructor(model: CellMergeModel, rendermime: RenderMime,
+  constructor(model: CellMergeModel, rendermime: IRenderMimeRegistry,
               mimetype: string) {
     super();
     this.addClass(CELLMERGE_CLASS);
@@ -431,6 +431,6 @@ class CellMergeWidget extends Panel {
   }
 
   private _model: CellMergeModel;
-  private _rendermime: RenderMime;
+  private _rendermime: IRenderMimeRegistry;
 
 }

@@ -11,7 +11,7 @@ import {
 } from '@phosphor/widgets';
 
 import {
-  RenderMime, OutputModel
+  IRenderMimeRegistry, OutputModel
 } from '@jupyterlab/rendermime';
 
 import {
@@ -40,7 +40,7 @@ export
 class RenderableOutputView extends RenderableDiffView<nbformat.IOutput> {
   constructor(model: OutputDiffModel,
               editorClass: string[],
-              rendermime: RenderMime) {
+              rendermime: IRenderMimeRegistry) {
     super(model, editorClass, rendermime);
   }
 
@@ -92,5 +92,5 @@ class RenderableOutputView extends RenderableDiffView<nbformat.IOutput> {
   }
 
   _sanitized: boolean;
-  _rendermime: RenderMime;
+  _rendermime: IRenderMimeRegistry;
 }

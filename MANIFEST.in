@@ -4,14 +4,10 @@ include README.md
 
 include setupbase.py
 include pytest.ini
-include requirements.txt
 
 # Documentation
 graft docs
 exclude docs/\#*
-
-# Examples
-graft examples
 
 # docs subdirs we want to skip
 prune docs/build

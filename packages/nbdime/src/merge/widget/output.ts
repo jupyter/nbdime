@@ -7,16 +7,12 @@ import {
 } from '@jupyterlab/coreutils';
 
 import {
-  RenderMime, IOutputModel
+  IRenderMimeRegistry, IOutputModel
 } from '@jupyterlab/rendermime';
 
 import {
   OutputArea, OutputAreaModel, IOutputAreaModel
 } from '@jupyterlab/outputarea';
-
-import {
-  IObservableList
-} from '@jupyterlab/coreutils/lib/observablelist';
 
 import {
   DropAction, IDragEvent
@@ -76,7 +72,7 @@ class ReorderableOutputWidget extends OutputArea {
   /**
    * Follow changes on the model state.
    */
-  protected onModelChanged(sender: IOutputAreaModel, args: IObservableList.IChangedArgs<IOutputModel>) {
+  protected onModelChanged(sender: IOutputAreaModel, args: IOutputAreaModel.ChangedArgs) {
     let layout = this.layout as PanelLayout;
     switch (args.type) {
     case 'move':
@@ -147,7 +143,7 @@ class RenderableOutputsMergeView extends DragDropPanel {
    *
    */
   constructor(merged: nbformat.IOutput[],
-              classes: string[], rendermime: RenderMime,
+              classes: string[], rendermime: IRenderMimeRegistry,
               base: nbformat.IOutput[] | null, remote: nbformat.IOutput[] | null,
               local: nbformat.IOutput[] | null) {
     super();
@@ -386,5 +382,5 @@ class RenderableOutputsMergeView extends DragDropPanel {
 
   panes: OutputArea[];
 
-  rendermime: RenderMime;
+  rendermime: IRenderMimeRegistry;
 }

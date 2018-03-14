@@ -11,7 +11,7 @@ import {
 } from '@jupyterlab/coreutils';
 
 import {
-  IRenderMime, defaultRendererFactories, markdownRendererFactory,
+  IRenderMime, standardRendererFactories, markdownRendererFactory,
 } from '@jupyterlab/rendermime';
 
 import {
@@ -62,7 +62,7 @@ class NbdimeMarkdownFactory implements IRenderMime.IRendererFactory {
 
 
 let factories: IRenderMime.IRendererFactory[] = [];
-for (let f of defaultRendererFactories) {
+for (let f of standardRendererFactories) {
   if (f === markdownRendererFactory) {
     factories.push(new NbdimeMarkdownFactory());
   } else {

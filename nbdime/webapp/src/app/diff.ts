@@ -12,7 +12,7 @@ import {
 } from '@phosphor/widgets';
 
 import {
-  RenderMime
+  RenderMimeRegistry
 } from '@jupyterlab/rendermime';
 
 import {
@@ -76,7 +76,7 @@ function stripPrefix(s: string): string {
 function showDiff(data: {base: nbformat.INotebookContent, diff: IDiffEntry[]}): Promise<void> {
 
 
-  let rendermime = new RenderMime({
+  let rendermime = new RenderMimeRegistry({
     initialFactories: rendererFactories,
     sanitizer: defaultSanitizer,
   });
