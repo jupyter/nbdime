@@ -297,6 +297,27 @@ class MergeDecisionBuilder(object):
             strategy=strategy
             )
 
+    def similar_insert(self, path, local_diff, remote_diff, insert_diff, strategy=None):
+        """Same as `conflict`, but with marker `similar_insert``"""
+        assert local_diff and remote_diff, 'onesided merges should not be conflicted'
+        assert local_diff != remote_diff, 'agreed merges should not be conflicted'
+
+        # Try to defuse situation with given strategy
+        action = self.tryresolve(path, local_diff, remote_diff, strategy)
+
+        # If none of them applied, use base and mark as conflict
+        if action is None:
+            # If a strategy was provided but failed to apply, mark as conflict.
+            # NB! Not passing strategy argument on to decision because it hasn't been applied.
+            self.add_decision(
+                path=path,
+                conflict=True,
+                action="base",
+                local_diff=local_diff,
+                remote_diff=remote_diff,
+                similar_insert=insert_diff
+                )
+
 
 def ensure_common_path(path, diffs):
     """Resolves common paths in a list of diffs.

@@ -40,6 +40,8 @@ interface IMergeDecision {
   common_path?: DecisionPath;
 
   custom_diff?: IDiffEntry[] | null;
+
+  similar_insert?: IDiffEntry[] | null;
 }
 
 export
@@ -79,7 +81,8 @@ class MergeDecision {
               remoteDiff?: IDiffEntry[] | null,
               action?: Action,
               conflict?: boolean,
-              customDiff?: IDiffEntry[] | null);
+              customDiff?: IDiffEntry[] | null,
+              similarInsert?: IDiffEntry[] | null);
   /**
    * Create a MergeDecision from values.
    *
@@ -90,7 +93,8 @@ class MergeDecision {
               remoteDiff?: IDiffEntry[] | null,
               action?: Action,
               conflict?: boolean,
-              customDiff?: IDiffEntry[] | null);
+              customDiff?: IDiffEntry[] | null,
+              similarInsert?: IDiffEntry[] | null);
   /**
    * MergeDecision copy constructor.
    */
@@ -100,7 +104,8 @@ class MergeDecision {
               remoteDiff: IDiffEntry[] | null = null,
               action: Action = 'base',
               conflict = false,
-              customDiff: IDiffEntry[] | null = null) {
+              customDiff: IDiffEntry[] | null = null,
+              similarInsert: IDiffEntry[] | null = null) {
     this.level = 0;
     if (obj instanceof Array) {
       this._path = obj;
@@ -111,6 +116,7 @@ class MergeDecision {
       action = obj.action;
       conflict = obj.conflict;
       customDiff = obj.customDiff;
+      similarInsert = obj.similarInsert;
       this.level = obj.level;
     } else {
       this._path = valueOrDefault(obj.common_path, []);
@@ -120,12 +126,14 @@ class MergeDecision {
         valueOrDefault(obj.action, action));
       conflict = valueOrDefault(obj.conflict, conflict);
       customDiff = valueOrDefault(obj.custom_diff, customDiff);
+      similarInsert = valueOrDefault(obj.similar_insert, similarInsert);
     }
     this.localDiff = localDiff;
     this.remoteDiff = remoteDiff;
     this.action = action;
     this.conflict = conflict;
     this.customDiff = customDiff;
+    this.similarInsert = similarInsert;
   }
 
   setValuesFrom(other: MergeDecision): void {
@@ -135,6 +143,7 @@ class MergeDecision {
     this.action = other.action;
     this.conflict = other.conflict;
     this.customDiff = other.customDiff;
+    this.similarInsert = other.similarInsert;
     this.level = other.level;
   }
 
@@ -157,6 +166,8 @@ class MergeDecision {
   remoteDiff: IDiffEntry[] | null;
 
   customDiff: IDiffEntry[] | null;
+
+  similarInsert: IDiffEntry[] | null;
 
   conflict: boolean;
 

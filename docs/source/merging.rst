@@ -38,6 +38,7 @@ represented as a dict with the following entries::
         "action": <action taken/suggested>,
         "common_path": <JSON path>,
         "custom_diff": <diff object>
+        "similar_insert: <diff object>
     }
 
 Merge conflicts

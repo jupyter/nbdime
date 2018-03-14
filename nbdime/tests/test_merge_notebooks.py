@@ -107,7 +107,10 @@ def test_merge_cell_sources_neighbouring_inserts():
             ])
         expected_conflicts = []
 
-    _check_sources(base, local, remote, expected_partial, expected_conflicts)
+    merge_args = copy.deepcopy(args)
+    merge_args.merge_strategy = "mergetool"
+
+    _check_sources(base, local, remote, expected_partial, expected_conflicts, merge_args)
 
 
 def test_merge_cell_sources_separate_inserts():
@@ -299,7 +302,11 @@ def test_merge_simple_cell_source_conflicting_insert():
     else:  # Treat as non-conflict (insert both)
         expected_partial = [["base"], ["local"], ["remote"]]
         expected_conflicts = []
-    _check_sources(base, local, remote, expected_partial, expected_conflicts)
+
+    merge_args = copy.deepcopy(args)
+    merge_args.merge_strategy = "mergetool"
+
+    _check_sources(base, local, remote, expected_partial, expected_conflicts, merge_args)
 
 
 @pytest.mark.xfail

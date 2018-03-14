@@ -44,6 +44,12 @@
           "description": "A common path of local_diff and remote_diff. Optional, as both can alternatively just contain single patch entries down to this path, but should help with opimization",
           "type": "array",
           "items": { "type": ["integer", "string"] }
+        },
+
+        "similar_insert": {
+          "description": "If not-null, indicates that the decision is an insertion of similar items. This field then holds the relative diff from local to remote.",
+          "type": ["array", "null"],
+          "items": { "$ref": "diff_format.schema.json#/definitions/diff" }
         }
       }
     }

@@ -11,6 +11,7 @@ from itertools import chain
 import nbformat
 
 import nbdime.log
+from .chunks import chunk_typename
 from .decisions import MergeDecisionBuilder, push_patch_decision
 from ..diff_format import (
     DiffOp, ParentDeleted,
@@ -233,6 +234,14 @@ def output_marker(text):
     return nbformat.v4.new_output("stream", name="stderr", text=text)
 
 
+def _cell_marker_format(text):
+    return '<span style="color:red">**{0}**</span>'.format(text)
+
+
+def cell_marker(text):
+    return nbformat.v4.new_markdown_cell(source=_cell_marker_format(text))
+
+
 def get_outputs_and_note(base, removes, patches):
     if removes:
         note = " <removed>"
@@ -341,6 +350,50 @@ def make_inline_output_conflict(base_output, local_diff, remote_diff):
 
     # Return marked up output
     return outputs, keep_base
+
+
+
+def make_inline_cell_conflict(base_cells, local_diff, remote_diff):
+    """Make a list of outputs with conflict markers from conflicting
+    local and remote diffs.
+
+    base_cells should be the entire cells array of the base notebook.
+    """
+    # Note: This is currently only used for conflicting, *non-similar*
+    # insertions/replacements.
+    assert 1 <= len(local_diff) <= 2
+    assert 1 <= len(remote_diff) <= 2
+    assert local_diff[0].op == DiffOp.ADDRANGE and remote_diff[0].op == DiffOp.ADDRANGE
+    assert len(local_diff) == 1 or local_diff[1].op == DiffOp.REMOVERANGE
+    assert len(remote_diff) == 1 or remote_diff[1].op == DiffOp.REMOVERANGE
+
+    # Styling details
+    local_title = "local"
+    remote_title = "remote"
+    marker_size = 7  # default in git
+    m0 = "<"*marker_size
+    m1 = "="*marker_size
+    m2 = ">"*marker_size
+
+    lremove = local_diff[1].length if len(local_diff) > 1 else 0
+    rremove = remote_diff[1].length if len(remote_diff) > 1 else 0
+
+    start = local_diff[0].key
+    lkeep = max(0, lremove - rremove)
+    rkeep = max(0, rremove - lremove)
+
+    lcells = local_diff[0].valuelist + base_cells[start : start + lkeep]
+    rcells = remote_diff[0].valuelist + base_cells[start : start + rkeep]
+
+    cells = []
+    cells.append(cell_marker("%s %s" % (m0, local_title)))
+    cells.extend(lcells)
+    cells.append(cell_marker("%s" % (m1,)))
+    cells.extend(rcells)
+    cells.append(cell_marker("%s %s" % (m2, remote_title)))
+
+    # Return marked up cells
+    return cells
 
 
 def resolve_strategy_remove_outputs(base_path, outputs, decisions):
@@ -464,6 +517,100 @@ def resolve_strategy_inline_source(path, base, local_diff, remote_diff):
     return decisions
 
 
+def resolve_strategy_inline_recurse(path, base, decisions):
+    strategy = "inline-cells"
+
+    old_decisions = decisions.decisions
+    decisions.decisions = []
+
+    for d in old_decisions:
+        if not d.conflict:
+            decisions.decisions.append(d)
+            continue
+        assert d.local_diff and d.remote_diff
+        laname, lpname = chunk_typename(d.local_diff)
+        raname, rpname = chunk_typename(d.remote_diff)
+        chunktype = laname + lpname + "/" + raname + rpname
+        if chunktype not in ('AR/A', 'A/AR', 'A/A', 'AR/AR'):
+            decisions.decisions.append(d)
+            continue
+        if d.get('similar_insert', None) is None:
+            # Inserts not similar, cannot recurse. Markup block
+            cells = make_inline_cell_conflict(base, d.local_diff, d.remote_diff)
+            rdiff = []
+            if len(d.local_diff) > 1:
+                rdiff.append(d.local_diff[1])
+            elif len(d.remote_diff) > 1:
+                rdiff.append(d.remote_diff[1])
+
+            decisions.custom(path,
+                d.local_diff,
+                d.remote_diff,
+                [op_addrange(d.local_diff[0].key, cells)] + rdiff,
+                conflict=True,
+                strategy=strategy)
+            continue
+        # Should only be insert range vs insertion range here now:
+        # FIXME: Remove asserts when sure there are no missed corner cases:
+        assert chunktype == 'A/A', 'Unexpected chunk type: %r' % chunktype
+
+        # We have conflicting, similar inserts, should only be one cell per decision
+        if not (len(d.local_diff[0].valuelist) == len(d.remote_diff[0].valuelist) == 1):
+            raise AssertionError('Unexpected diff length. Expected both local and remote '
+                                 'inserts to have length 1, as they are assumed similar.')
+
+        custom_diff = []
+        # Diff of local to remote:
+        lr_diff = d.similar_insert
+        assert lr_diff[0].op == 'patch'
+        lcell = d.local_diff[0].valuelist[0]
+        rcell = d.remote_diff[0].valuelist[0]
+
+        assert lcell['cell_type'] == rcell['cell_type'], 'cell types cannot differ'
+
+        cell = {}
+        keys = [e.key for e in lr_diff[0].diff]
+
+        for k in lcell.keys():
+            if k not in keys:
+                # either identical, or one-way from local
+                cell[k] = lcell[k]
+        for k in rcell.keys():
+            if k not in keys and k not in lcell:
+                # one-way from remote
+                cell[k] = rcell[k]
+
+        for k in keys:
+            if k == 'source':
+                cell[k] = merge_render('', lcell[k], rcell[k], None)[0]
+
+            elif k == 'metadata':
+                cell[k] = {
+                    "local_metadata": lcell[k],
+                    "remote_metadata": rcell[k],
+                }
+
+            elif k == 'execution_count':
+                cell[k] = None  # Clear
+
+            elif k == 'outputs':
+                cell[k] = []
+                # TODO: Do inline merge
+                pass
+
+            else:
+                raise ValueError('Conflict on unrecognized key: %r', (k,))
+
+        custom_diff = [op_addrange(d.local_diff[0].key, [cell])]
+
+        decisions.custom(path,
+            d.local_diff,
+            d.remote_diff,
+            custom_diff,
+            conflict=True,
+            strategy=strategy)
+
+
 def resolve_strategy_generic(path, decisions, strategy):
     if not (strategy and strategy != "mergetool" and decisions.has_conflicted()):
         return
@@ -493,6 +640,10 @@ def resolve_conflicted_decisions_list(path, base, decisions, strategy):
     if strategy == "inline-outputs":
         # Affects conflicts on output dicts at /cells/*/outputs
         resolve_strategy_inline_outputs(path, base, decisions)
+
+    elif strategy == "inline-cells":
+        # Affects conflicts on cell dicts at /cells/*
+        resolve_strategy_inline_recurse(path, base, decisions)
 
     elif strategy == "remove":
         # Affects conflicts on output dicts at /cells/*/outputs

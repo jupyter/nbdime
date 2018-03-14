@@ -10,6 +10,7 @@ build
 MANIFEST
 .coverage
 .cache
+.pytest_cache
 
 
 .spyderproject

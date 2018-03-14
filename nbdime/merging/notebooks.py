@@ -29,6 +29,7 @@ generic_conflict_strategies = (
     "remove",           # Discard value in case of conflict
     "clear-all",        # Discard all values on conflict
     "fail",             # Unexpected: crash and burn in case of conflict (only implemented for leaf nodes)
+    "inline-cells",     # Valid for cell only: use markdown cells as diff markers for conflicting inserts/replace
     "inline-source",    # Valid for source only: produce new source with inline diff markers
     "inline-outputs",   # Valid for outputs only: produce new outputs with inline diff markers
     "mergetool",        # Do not modify decision (but prevent processing at deeper path)
@@ -42,7 +43,7 @@ generic_conflict_strategies = (
 
 # Strategies that can be applied to an entire notebook
 cli_conflict_strategies = (
-    "inline",           # Inline source and outputs, and record metadata conflicts
+    "inline",           # Inline cells or source and outputs, and record metadata conflicts
     "use-base",         # Keep base value in case of conflict
     "use-local",        # Use local value in case of conflict
     "use-remote",       # Use remote value in case of conflict
@@ -93,7 +94,9 @@ def notebook_merge_strategies(args):
     metadata_strategy = merge_strategy
 
     # Set root strategy
-    if merge_strategy != 'inline':
+    if merge_strategy == 'inline':
+        strategies['/cells'] = "inline-cells"
+    else:
         strategies["/"] = merge_strategy
 
     # Translate 'inline' to specific strategies for different fields
