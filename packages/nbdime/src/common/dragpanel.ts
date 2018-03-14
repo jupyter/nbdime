@@ -166,6 +166,10 @@ abstract class DropPanel extends Panel {
     }
   }
 
+  protected validateSource(event: IDragEvent) {
+    return this.acceptDropsFromExternalSource || event.source === this;
+  }
+
   /**
    * Processes a drop event.
    *
@@ -214,7 +218,7 @@ abstract class DropPanel extends Panel {
     }
 
     // If configured to, only accept internal moves:
-    if (!this.acceptDropsFromExternalSource && event.source !== this) {
+    if (!this.validateSource(event)) {
       event.dropAction = 'none';
       event.preventDefault();
       event.stopPropagation();
@@ -251,7 +255,7 @@ abstract class DropPanel extends Panel {
    * Handle the `'p-dragenter'` event for the widget.
    */
   private _evtDragEnter(event: IDragEvent): void {
-    if (!this.acceptDropsFromExternalSource && event.source !== this) {
+    if (!this.validateSource(event)) {
       return;
     }
     let target = this.findDropTarget(event.target as HTMLElement, event.mimeData);
@@ -277,7 +281,7 @@ abstract class DropPanel extends Panel {
    * Handle the `'p-dragover'` event for the widget.
    */
   private _evtDragOver(event: IDragEvent): void {
-    if (!this.acceptDropsFromExternalSource && event.source !== this) {
+    if (!this.validateSource(event)) {
       return;
     }
     this._clearDropTarget();
@@ -427,7 +431,7 @@ abstract class DragDropPanelBase extends DropPanel {
    *
    * Called when dragginging and DRAG_THRESHOLD is met.
    *
-   * Should normally only be overriden if you cannot achive your goal by
+   * Should normally only be overriden if you cannot achieve your goal by
    * other overrides.
    */
   protected startDrag(handle: HTMLElement, clientX: number, clientY: number): void {
@@ -657,7 +661,6 @@ class DragDropPanel extends DragDropPanelBase {
    * The default implementation assumes the keys `from` and `to` are numbers
    * indexing the drag panel's direct children. It then moves the child at the
    * `to` key to the location of the `from` key.
-   * Finally, it emits the `moved` signal with the same keys.
    */
   protected move(from: any, to: any): void {
     if (to !== from) {
@@ -734,7 +737,7 @@ class DragDropPanel extends DragDropPanelBase {
       event.stopPropagation();
       return;
     }
-    if (event.source !== this) {
+    if (!this.validateSource(event)) {
       // Source indicates external drop, incorrect use in subclass
       throw new Error('Invalid source!');
     }
@@ -853,5 +856,59 @@ export
 namespace DragDropPanel {
   export
   interface IOptions extends DragPanel.IOptions, DropPanel.IOptions {
+  }
+}
+
+
+
+export
+class FriendlyDragDrop extends DragDropPanel {
+  private static _counter = 0;
+  private static _groups: {[key: number]: FriendlyDragDrop[]} = {};
+
+  static makeGroup() {
+    const id = this._counter++;
+    FriendlyDragDrop._groups[id] = [];
+    return id;
+  }
+
+  setFriendlyGroup(id: number) {
+    this._groupId = id;
+    FriendlyDragDrop._groups[id].push(this);
+  }
+
+  addToFriendlyGroup(other: FriendlyDragDrop) {
+    other.setFriendlyGroup(this._groupId);
+  }
+
+  get friends(): FriendlyDragDrop[] {
+    if (this._groupId === undefined) {
+      throw new Error('Uninitialized drag-drop group');
+    }
+    return FriendlyDragDrop._groups[this._groupId];
+  }
+
+  protected getIndexOfChildNode(node: HTMLElement, parent?: PanelLayout): any {
+    const friends = this.friends;
+    for (let panel of friends) {
+      if (!belongsToUs(node, DROP_WIDGET_CLASS, panel.node)) {
+        continue;
+      }
+      let child = findChild(panel.node, node);
+      if (child !== null) {
+        return [panel.friends.indexOf(panel),
+                super.getIndexOfChildNode(child, panel.layout as PanelLayout)];
+      }
+    }
+    return null;
+  }
+
+  private _groupId: number;
+
+  protected validateSource(event: IDragEvent) {
+    if (this.acceptDropsFromExternalSource) {
+      return this.friends.indexOf(event.source) !== -1;
+    }
+    return super.validateSource(event);
   }
 }
