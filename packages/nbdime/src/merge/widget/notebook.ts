@@ -11,8 +11,8 @@ import {
 } from '@jupyterlab/rendermime';
 
 import {
-  DragDropPanel
-} from '../../common/dragpanel';
+  Panel
+} from '@phosphor/widgets';
 
 import {
   hasEntries, deepCopy
@@ -38,6 +38,10 @@ import {
   createCheckbox
 } from './common';
 
+import {
+  CellsDragDrop, ChunkedCellsWidget
+} from './dragdrop';
+
 
 const NBMERGE_CLASS = 'jp-Notebook-merge';
 const NB_MERGE_CONTROLS_CLASS = 'jp-Merge-notebook-controls';
@@ -47,7 +51,7 @@ const NB_MERGE_CONTROLS_CLASS = 'jp-Merge-notebook-controls';
  * NotebookMergeWidget
  */
 export
-class NotebookMergeWidget extends DragDropPanel {
+class NotebookMergeWidget extends Panel {
   constructor(model: NotebookMergeModel,
               rendermime: IRenderMimeRegistry) {
     super();
@@ -74,14 +78,35 @@ class NotebookMergeWidget extends DragDropPanel {
         this.addWidget(this.metadataWidget);
       }
     });
+    work = work.then(() => {
+      this.cellContainer = new CellsDragDrop({acceptDropsFromExternalSource: true});
+      this.cellContainer.setFriendlyGroup(CellsDragDrop.makeGroup());
+      this.cellContainer.moved.connect(this.onDragDropMove, this);
+      this.addWidget(this.cellContainer);
+    });
     this.cellWidgets = [];
+    let chunk: ChunkedCellsWidget | null = null;
     for (let c of model.cells) {
       work = work.then(() => {
         return new Promise<void>((resolve) => {
           let w = new CellMergeWidget(c, rendermime, model.mimetype);
           this.cellWidgets.push(w);
-          this.addWidget(w);
-          // This limits us to drawing 60 cells per second, which shoudln't
+          if (c.onesided && c.conflicted) {
+            if (chunk === null) {
+              chunk = new ChunkedCellsWidget();
+              chunk.cells.moved.connect(this.onDragDropMove, this);
+              chunk.resolved.connect(this.onChunkResolved, this);
+              this.cellContainer.addToFriendlyGroup(chunk.cells);
+            }
+            chunk.cells.addWidget(w);
+          } else {
+            if (chunk !== null) {
+              this.cellContainer.addWidget(chunk);
+              chunk = null;
+            }
+            this.cellContainer.addWidget(w);
+          }
+          // This limits us to drawing 60 cells per second, which shouldn't
           // be a problem...
           requestAnimationFrame(() => {
             resolve();
@@ -89,6 +114,11 @@ class NotebookMergeWidget extends DragDropPanel {
         });
       });
     }
+    work = work.then(() => {
+      if (chunk !== null) {
+        this.cellContainer.addWidget(chunk);
+      }
+    });
     return work;
   }
 
@@ -120,14 +150,46 @@ class NotebookMergeWidget extends DragDropPanel {
     return this._model;
   }
 
-  protected move(from: number, to: number): void {
+  protected onDragDropMove(sender: CellsDragDrop, args: CellsDragDrop.IMovedArgs): void {
     // Move cell in model list
+    let {widget, oldParent, before, after} = args;
+    let from = this._model.cells.indexOf(widget.model);
+    let to: number;
+    if (after) {
+      to = this._model.cells.indexOf(after.model);
+    } else if (before) {
+      to = this._model.cells.indexOf(before.model) + 1;
+    } else {
+      throw new Error('Need either before or after');
+    }
+    if (to > from) {
+      to -= 1;
+    }
     this._model.cells.splice(to, 0, this._model.cells.splice(from, 1)[0]);
-    super.move(from, to);
+    if (oldParent.widgets.length === 0) {
+      let chunk = oldParent.parent! as ChunkedCellsWidget;
+      chunk.onResolve();
+    }
+    // Mark any conflict on a cell moved from chunk as resolved
+    if (oldParent !== this.cellContainer && widget.parent === this.cellContainer) {
+      for (let d of widget.model.decisions) {
+        d.conflict = false;
+      }
+    }
+  }
+
+  protected onChunkResolved(sender: ChunkedCellsWidget, args: void): void {
+    let index = this.cellContainer.widgets.indexOf(sender);
+    while (sender.cells.widgets.length > 0) {
+      this.cellContainer.insertWidget(index++, sender.cells.widgets[0]);
+    }
+    sender.parent = null;
+    sender.dispose();
   }
 
   protected metadataWidget: MetadataMergeWidget | null = null;
   protected cellWidgets: CellMergeWidget[];
+  protected cellContainer: CellsDragDrop;
 
   private _model: NotebookMergeModel;
   private _rendermime: IRenderMimeRegistry;
