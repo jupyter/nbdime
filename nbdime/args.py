@@ -239,13 +239,42 @@ def add_diff_cli_args(parser):
     )
 
 
+def add_filter_args(diff_parser):
+    """Adds configuration for git commands where filter use is flagged"""
+    # Ideally, we would want to apply the filter only if we knew
+    # the file was not from a blob. However, this is not possible:
+    # If remote file path is equal to repo file path, it implies
+    # that the hex of remote equals the hex of the file on disk.
+    # Two possible cases can cause this:
+    # 1) Diffing against working dir (or stage when entire file is staged)
+    # 2) Diffing against a blob (clean) that happens to have the same hex as
+    #    the (smudged) file in working tree.
+    # Condition 1 should have filter applied, 2 should not.
+    # We can learn something by comparing the remote hash to the hash of the
+    # file in HEAD.
+    # - If they are equal, we know that is cannot come from a diff
+    #   agains working tree (git would not see it as changed),
+    #   so it must be from a blob (clean). No filter.
+    # - If they differ, consider the setup:
+    #   git co A; git co B -- file.path; git reset A
+    #   + remote could be from a working-tree diff: git diff (smudged, apply filter).
+    #   + remote could be from a blob: git diff A B (clean, no filter).
+    #
+    # These are undistinguishable to us. Therefore, we will always
+    # apply the filter to the remote file if flag use_filter is set.
+    diff_parser.add_argument(
+        '--use-filter',
+        action='store_true', default=False,
+        help='apply any configured git filters on remote')
+
+
 def add_git_diff_driver_args(diff_parser):
     """Adds a set of 7 stanard git diff driver arguments:
         path old-file old-hex old-mode new-file new-hex new-mode [ rename-to ]
 
     Note: Only path, base and remote are added to parsed namespace
     """
-
+    add_filter_args(diff_parser)
     diff_parser.add_argument('path')
     diff_parser.add_argument('base', nargs='?', default=None)
     diff_parser.add_argument('base_sha1', nargs='?', default=None, action=SkipAction)

@@ -180,7 +180,7 @@ def ensure_dir_exists(path):
 def locate_gitattributes(scope=None):
     """Locate the .gitattributes file
 
-    returns None if not in a git repo and global=False
+    returns None if not in a git repo and scope=None
     """
     if scope == 'global':
         try:

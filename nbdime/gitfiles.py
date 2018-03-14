@@ -13,6 +13,7 @@ from git import (
     GitCommandNotFound,
 )
 
+from nbdime.vcs.git.filter_integration import apply_possible_filter
 from .utils import EXPLICIT_MISSING_FILE, pushd
 
 
@@ -103,6 +104,13 @@ def _get_diff_entry_stream(path, blob, ref_name, repo_dir):
         if blob is None:
             # Diffing against working copy, use file on disk!
             with pushd(repo_dir):
+                # Ensure we filter if appropriate:
+                if ref_name is None:
+                    # We are diffing against working dir, so remote is candidate
+                    ret = apply_possible_filter(path)
+                    # ret == path means no filter was applied
+                    if ret != path:
+                        return ret
                 try:
                     return io.open(path)
                 except IOError:

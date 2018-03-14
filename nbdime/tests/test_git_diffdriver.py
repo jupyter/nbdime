@@ -5,8 +5,10 @@
 
 from __future__ import unicode_literals
 
+import io
 import os
 from os.path import join as pjoin
+import sys
 
 import mock
 import pytest
@@ -14,8 +16,9 @@ from tornado import ioloop
 
 from nbdime.vcs.git.diffdriver import main as gdd_main
 from nbdime.prettyprint import file_timestamp
+from nbdime.utils import locate_gitattributes
 
-from .utils import WEB_TEST_TIMEOUT
+from .utils import WEB_TEST_TIMEOUT, call
 
 
 # Expected output includes coloring characters
@@ -65,6 +68,122 @@ expected_source_only = """nbdiff {0} {1}
 
 """
 
+expected_no_filter = """nbdiff {0} {1}
+--- {0}  {2}
++++ {1}  {3}
+## inserted before /cells/2:
++  code cell:
++    execution_count: 2
++    metadata (known keys):
++      collapsed: False
++    source:
++      x
+
+## deleted /cells/3:
+-  code cell:
+-    execution_count: 2
+-    metadata (known keys):
+-      collapsed: False
+-    source:
+-      x
+
+## inserted before /cells/5:
++  code cell:
++    metadata (known keys):
++      collapsed: False
++    source:
++      x
+
+## deleted /cells/6:
+-  code cell:
+-    metadata (known keys):
+-      collapsed: False
+-    source:
+-      x
+
+"""
+
+expected_strip_output_filter = """nbdiff {0} {1}
+--- {0}  {2}
++++ {1}  {3}
+## inserted before /cells/2:
++  code cell:
++    execution_count: 2
++    metadata (known keys):
++      collapsed: False
++    source:
++      x
+
+## deleted /cells/3:
+-  code cell:
+-    execution_count: 2
+-    metadata (known keys):
+-      collapsed: False
+-    source:
+-      x
+-    outputs:
+-      output 0:
+-        output_type: execute_result
+-        execution_count: 2
+-        data:
+-          text/plain: 3
+
+## replaced (type changed from int to NoneType) /cells/5/execution_count:
+-  4
++  None
+
+## deleted /cells/5/outputs/0:
+-  output:
+-    output_type: execute_result
+-    execution_count: 4
+-    data:
+-      text/plain: 5
+
+## replaced (type changed from NoneType to int) /cells/6/execution_count:
+-  None
++  4
+
+"""
+
+expected_helper_filter = """nbdiff {0} {1}
+--- {0}  {2}
++++ {1}  {3}
+## inserted before /cells/2:
++  code cell:
++    execution_count: 2
++    metadata (known keys):
++      collapsed: False
++    source:
++      x
+
+## deleted /cells/3:
+-  code cell:
+-    execution_count: 2
+-    metadata (known keys):
+-      collapsed: False
+-    source:
+-      x
+
+## inserted before /cells/5:
++  code cell:
++    metadata (known keys):
++      collapsed: False
++    source:
++      x
+
+## inserted before /cells/6:
++  raw cell:
++    source:
++      nbdime test filter marker
+
+## deleted /cells/6:
+-  code cell:
+-    metadata (known keys):
+-      collapsed: False
+-    source:
+-      x
+
+"""
 
 def test_git_diff_driver(filespath, capsys, nocolor, needs_git):
     # Simulate a call from `git diff` to check basic driver functionality
@@ -127,6 +246,104 @@ def test_git_diff_driver_ignore_flags(filespath, capsys, nocolor, needs_git, res
         assert r == 0
         cap_out = capsys.readouterr()[0]
         assert cap_out == expected_source_only.format(fn1, fn2, t1, t2)
+
+
+
+def _config_filter_driver(name, capsys):
+    path = os.path.abspath(pjoin(os.path.dirname(__file__), 'filters', '%s.py' % name))
+    base_cmd = '%s %s' % (sys.executable, path)
+    gitattr = locate_gitattributes()
+    with io.open(gitattr, 'a', encoding="utf8") as f:
+        f.write(u'\n*.ipynb\tfilter=%s\n' % (name,))
+    with capsys.disabled():
+        call('git config --local --add filter.%s.clean "%s clean"' % (name, base_cmd))
+        call('git config --local --add filter.%s.smudge "%s smudge"' % (name, base_cmd))
+
+
+def test_git_diff_driver_noop_filter(git_repo, filespath, capsys, nocolor):
+    _config_filter_driver('noop', capsys)
+    fn1 = pjoin(git_repo, 'diff.ipynb')
+    fn2 = pjoin(filespath, 'src-and-output--1.ipynb')
+    t1 = file_timestamp(fn1)
+    t2 = file_timestamp(fn2)
+
+    mock_argv = [
+        '/mock/path/git-nbdiffdriver', 'diff',
+        '--use-filter',
+        '-O',
+        fn1,
+        fn1, 'invalid_mock_checksum', '100644',
+        fn2, 'invalid_mock_checksum', '100644']
+
+    with mock.patch('sys.argv', mock_argv):
+        r = gdd_main()
+        assert r == 0
+        cap_out = capsys.readouterr()[0]
+        assert cap_out == expected_no_filter.format(fn1, fn2, t1, t2)
+
+
+def test_git_diff_driver_strip_outputs_filter(git_repo, filespath, capsys, nocolor):
+    _config_filter_driver('strip_outputs', capsys)
+    fn1 = pjoin(git_repo, 'diff.ipynb')
+    fn2 = pjoin(filespath, 'src-and-output--1.ipynb')
+    t1 = file_timestamp(fn1)
+    t2 = file_timestamp(fn2)
+
+    mock_argv = [
+        '/mock/path/git-nbdiffdriver', 'diff',
+        '--use-filter',
+        fn1,
+        fn1, 'invalid_mock_checksum', '100644',
+        fn2, 'invalid_mock_checksum', '100644']
+
+    with mock.patch('sys.argv', mock_argv):
+        r = gdd_main()
+        assert r == 0
+        cap_out = capsys.readouterr()[0]
+        assert cap_out == expected_strip_output_filter.format(fn1, fn2, t1, t2)
+
+
+def test_git_diff_driver_add_helper_filter(git_repo, filespath, capsys, nocolor):
+    _config_filter_driver('add_helper', capsys)
+    fn1 = pjoin(git_repo, 'diff.ipynb')
+    fn2 = pjoin(filespath, 'src-and-output--1.ipynb')
+    t1 = file_timestamp(fn1)
+    t2 = file_timestamp(fn2)
+
+    mock_argv = [
+        '/mock/path/git-nbdiffdriver', 'diff',
+        '--use-filter',
+        '-O',
+        fn1,
+        fn1, 'invalid_mock_checksum', '100644',
+        fn2, 'invalid_mock_checksum', '100644']
+
+    with mock.patch('sys.argv', mock_argv):
+        r = gdd_main()
+        assert r == 0
+        cap_out = capsys.readouterr()[0]
+        assert cap_out == expected_helper_filter.format(fn1, fn2, t1, t2)
+
+
+def test_git_diff_driver_no_filter_without_flag(git_repo, filespath, capsys, nocolor):
+    _config_filter_driver('add_helper', capsys)
+    fn1 = pjoin(git_repo, 'diff.ipynb')
+    fn2 = pjoin(filespath, 'src-and-output--1.ipynb')
+    t1 = file_timestamp(fn1)
+    t2 = file_timestamp(fn2)
+
+    mock_argv = [
+        '/mock/path/git-nbdiffdriver', 'diff',
+        '-O',
+        fn1,
+        fn1, 'invalid_mock_checksum', '100644',
+        fn2, 'invalid_mock_checksum', '100644']
+
+    with mock.patch('sys.argv', mock_argv):
+        r = gdd_main()
+        assert r == 0
+        cap_out = capsys.readouterr()[0]
+        assert cap_out == expected_no_filter.format(fn1, fn2, t1, t2)
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
