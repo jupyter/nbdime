@@ -17,14 +17,16 @@ import sys
 import nbdime.log
 from nbdime import nbmergeapp
 from nbdime.args import (
-    add_generic_args, add_diff_args, add_merge_args, add_filename_args)
+    add_generic_args, add_diff_args, add_merge_args, add_filename_args,
+    ConfigBackedParser,
+)
 
 
 
 def main(args=None):
     if args is None:
         args = sys.argv[1:]
-    parser = argparse.ArgumentParser('hg-nbmerge', description=__doc__,
+    parser = ConfigBackedParser('hg-nbmerge', description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 

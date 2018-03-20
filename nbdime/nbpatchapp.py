@@ -13,6 +13,7 @@ import json
 import io
 import nbformat
 
+from nbdime.args import ConfigBackedParser
 from nbdime.patching import patch_notebook
 from nbdime.diff_utils import to_diffentry_dicts
 from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook, setup_std_streams
@@ -64,7 +65,7 @@ def main_patch(args):
 
 def _build_arg_parser():
     """Creates an argument parser for the nbpatch command."""
-    parser = argparse.ArgumentParser(
+    parser = ConfigBackedParser(
         description=_description,
         add_help=True,
         )

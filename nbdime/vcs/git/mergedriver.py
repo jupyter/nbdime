@@ -26,7 +26,9 @@ from subprocess import check_call, CalledProcessError
 
 from nbdime import nbmergeapp
 from nbdime.args import (
-    add_generic_args, add_diff_args, add_merge_args, add_filename_args, add_git_config_subcommand)
+    add_generic_args, add_diff_args, add_merge_args, add_filename_args,
+    add_git_config_subcommand, ConfigBackedParser,
+)
 from nbdime.utils import locate_gitattributes, ensure_dir_exists
 
 
@@ -72,7 +74,7 @@ def disable(scope=None):
 def main(args=None):
     if args is None:
         args = sys.argv[1:]
-    parser = argparse.ArgumentParser('git-nbmergedriver', description=__doc__,
+    parser = ConfigBackedParser('git-nbmergedriver', description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     subparsers = parser.add_subparsers(dest='subcommand')

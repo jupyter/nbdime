@@ -17,10 +17,11 @@ from nbdime.diffing.notebooks import diff_notebooks
 from nbdime.prettyprint import pretty_print_notebook_diff, PrettyPrintConfig
 from nbdime.args import (
     add_generic_args, add_diff_args, process_diff_flags, resolve_diff_args,
-    add_diff_cli_args,
+    add_diff_cli_args, ConfigBackedParser,
     )
 from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook, setup_std_streams
 from .gitfiles import changed_notebooks, is_gitref
+from .config import get_defaults_for_argparse
 
 
 _description = "Compute the difference between two Jupyter notebooks."
@@ -91,7 +92,7 @@ def _handle_diff(base, remote, output, args):
 
 def _build_arg_parser():
     """Creates an argument parser for the nbdiff command."""
-    parser = argparse.ArgumentParser(
+    parser = ConfigBackedParser(
         description=_description,
         )
     add_generic_args(parser)

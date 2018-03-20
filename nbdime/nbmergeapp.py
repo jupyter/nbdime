@@ -9,12 +9,12 @@ from __future__ import print_function
 import io
 import os
 import sys
-import argparse
 
 import nbformat
 
 import nbdime
 import nbdime.log
+from nbdime.args import ConfigBackedParser
 from nbdime.merging import merge_notebooks
 from nbdime.prettyprint import pretty_print_merge_decisions, PrettyPrintConfig
 from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook, setup_std_streams
@@ -103,7 +103,7 @@ def handle_agreed_deletion(base_fn, output_fn, print_decisions=False):
 
 def _build_arg_parser():
     """Creates an argument parser for the nbdiff command."""
-    parser = argparse.ArgumentParser(
+    parser = ConfigBackedParser(
         description=_description,
         add_help=True,
         )

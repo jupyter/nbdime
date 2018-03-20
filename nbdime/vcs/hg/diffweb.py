@@ -15,6 +15,7 @@ import os
 import sys
 
 import nbdime
+from nbdime.args import ConfigBackedParser
 from nbdime.webapp import nbdifftool
 from nbdime.diffing.directorydiff import diff_directories
 
@@ -23,7 +24,7 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
     import argparse
-    parser = argparse.ArgumentParser('hg-nbdiffweb', description=__doc__,
+    parser = ConfigBackedParser('hg-nbdiffweb', description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 

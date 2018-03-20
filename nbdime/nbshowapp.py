@@ -12,7 +12,10 @@ import argparse
 import nbformat
 
 from nbdime.prettyprint import pretty_print_notebook, PrettyPrintConfig
-from nbdime.args import add_generic_args, IgnorableAction, process_exclusive_ignorables
+from nbdime.args import (
+    add_generic_args, IgnorableAction, process_exclusive_ignorables,
+    ConfigBackedParser,
+)
 from nbdime.utils import setup_std_streams
 
 
@@ -61,7 +64,7 @@ def main_show(args):
 
 def _build_arg_parser():
     """Creates an argument parser for the nbshow command."""
-    parser = argparse.ArgumentParser(
+    parser = ConfigBackedParser(
         description=_description,
         add_help=True,
         )
