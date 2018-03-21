@@ -6,6 +6,7 @@
 import argparse
 import logging
 import os
+import sys
 
 from six import PY2
 
@@ -13,10 +14,12 @@ from ._version import __version__
 from .log import init_logging, set_nbdime_log_level
 from .gitfiles import is_gitref
 from .diffing.notebooks import set_notebook_diff_targets
-from .config import get_defaults_for_argparse
+from .config import get_defaults_for_argparse, entrypoint_configurables
+from .prettyprint import pretty_print_dict, PrettyPrintConfig
 
 
 class ConfigBackedParser(argparse.ArgumentParser):
+
     def parse_args(self, args=None, namespace=None, entrypoint=None):
         if entrypoint is None:
             entrypoint = self.prog
@@ -48,6 +51,22 @@ class SkipAction(argparse.Action):
 
     def __call__(self, parser, ns, values, opttion_string=None):
         pass
+
+
+class ConfigHelpAction(argparse.Action):
+    def __init__(self, option_strings, dest, help=None):
+        super(ConfigHelpAction, self).__init__(
+            option_strings, dest, nargs=0, help=help)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        header = entrypoint_configurables[parser.prog].__name__
+        pretty_print_dict(
+            {
+                header: get_defaults_for_argparse(parser.prog),
+            },
+            config=PrettyPrintConfig(out=sys.stderr)
+        )
+        sys.exit(1)
 
 
 class IgnorableAction(argparse.Action):
@@ -118,6 +137,11 @@ def add_generic_args(parser):
         '--version',
         action="version",
         version="%(prog)s " + __version__)
+    parser.add_argument(
+        '--config',
+        help="list the valid config keys and their current effective values",
+        action=ConfigHelpAction,
+    )
     parser.add_argument(
         '--log-level',
         default='INFO',
