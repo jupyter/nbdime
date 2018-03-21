@@ -123,6 +123,7 @@ Contents
    extensions
    cli
    vcs
+   config
    glossary
    changelog
 
