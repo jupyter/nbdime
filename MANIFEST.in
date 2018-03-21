@@ -4,6 +4,7 @@ include README.md
 
 include setupbase.py
 include pytest.ini
+include conftest.py
 
 # Documentation
 graft docs
