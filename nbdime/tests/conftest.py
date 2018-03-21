@@ -20,7 +20,7 @@ except ImportError:
 
 from jsonschema import Draft4Validator as Validator
 from jsonschema import RefResolver
-from pytest import fixture, skip
+from pytest import fixture, skip, mark
 import nbformat
 
 from .utils import call, have_git, have_hg, wait_up, TEST_TOKEN
@@ -52,6 +52,12 @@ schema_dir = os.path.abspath(pjoin(os.path.dirname(__file__), ".."))
 
 def testspath():
     return os.path.abspath(os.path.dirname(__file__))
+
+
+@fixture
+def slow(request):
+    if request.config.getoption('--quick', default=False):
+        skip('skipping slow test')
 
 
 @fixture(scope='session')
@@ -109,7 +115,7 @@ def needs_symlink(tmpdir_factory):
 
 
 @fixture
-def git_repo(tmpdir, request, filespath, needs_git):
+def git_repo(tmpdir, request, filespath, needs_git, slow):
     repo = str(tmpdir.join('repo'))
     os.mkdir(repo)
     save_cwd = os.getcwd()
@@ -151,7 +157,7 @@ def git_repo(tmpdir, request, filespath, needs_git):
 
 
 @fixture
-def git_repo2(tmpdir, request, filespath, needs_git):
+def git_repo2(tmpdir, request, filespath, needs_git, slow):
     repo = str(tmpdir.join('repo'))
     os.mkdir(repo)
     save_cwd = os.getcwd()
@@ -190,7 +196,7 @@ def git_repo2(tmpdir, request, filespath, needs_git):
 
 
 @fixture
-def hg_repo(tmpdir, request, filespath, needs_hg):
+def hg_repo(tmpdir, request, filespath, needs_hg, slow):
     repo = str(tmpdir.join('repo'))
     os.mkdir(repo)
     save_cwd = os.getcwd()
