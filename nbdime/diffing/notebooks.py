@@ -15,7 +15,6 @@ from __future__ import unicode_literals
 import operator
 import re
 import copy
-from collections import defaultdict
 from six import string_types
 from six.moves import zip
 try:
@@ -24,6 +23,7 @@ except ImportError:
     from backports.functools_lru_cache import lru_cache
 
 from ..diff_format import MappingDiffBuilder, DiffOp
+from ..utils import defaultdict2
 
 from .generic import (diff, diff_sequence_multilevel,
                       compare_strings_approximate)
@@ -135,13 +135,13 @@ def _compare_mimedata(mimetype, x, y, comp_text, comp_base64):
 
 
 def compare_mimedata_approximate(mimetype, x, y):
-    return _compare_mimedata(mimetype, x, y,
-        compare_text_approximate, compare_base64_strict)
+    return _compare_mimedata(
+        mimetype, x, y, compare_text_approximate, compare_base64_strict)
 
 
 def compare_mimedata_strict(mimetype, x, y):
-    return _compare_mimedata(mimetype, x, y,
-        compare_text_strict, compare_base64_strict)
+    return _compare_mimedata(
+        mimetype, x, y, compare_text_strict, compare_base64_strict)
 
 
 def compare_mimebundle_approximate(x, y):
@@ -503,7 +503,7 @@ def diff_ignore_keys(inner_differ, ignore_keys):
 # Sequence diffs should be applied with multilevel
 # algorithm for paths with more than one predicate,
 # and using operator.__eq__ if no match in there.
-notebook_predicates = defaultdict(lambda: [operator.__eq__], {
+notebook_predicates = defaultdict2(lambda: [operator.__eq__], {
     # Predicates to compare cells in order of low-to-high precedence
     "/cells": [
         compare_cell_approximate,
@@ -518,7 +518,7 @@ notebook_predicates = defaultdict(lambda: [operator.__eq__], {
     })
 
 # Recursive diffing of substructures should pick a rule from here, with diff as fallback
-notebook_differs = defaultdict(lambda: diff, {
+notebook_differs = defaultdict2(lambda: diff, {
     "/cells": diff_sequence_multilevel,
     "/cells/*": diff,
     "/cells/*/outputs": diff_sequence_multilevel,
@@ -527,52 +527,63 @@ notebook_differs = defaultdict(lambda: diff, {
     })
 
 
-def set_notebook_diff_targets(sources=True, outputs=True, attachments=True, metadata=True, details=True):
+def reset_notebook_differ():
+    """Reset the notebook_differs dictionary to default values."""
+    # As it is a defaultdict2, simply clear all set keys to reset:
+    for key in tuple(notebook_differs.keys()):
+        del notebook_differs[key]
+
+
+def set_notebook_diff_ignores(ignore_paths):
+    """Set/unset notebook differs to ignore.
+
+    Parameters:
+        ignore_paths: dict
+            Dictionary with path strings (e.g. /cells/*/outputs) as keys.
+            For each entry in the dictionary do the following:
+            - if value is True, set path to `diff_ignore`.
+            - if value False, reset the differ of path to the default value.
+            - if value is set/tuple/list, assume the container is a collection
+              of subkeys of path to ignore with `diff_ignore_keys`.
+    """
+    for path, subkeys in ignore_paths.items():
+        if subkeys == True:
+            notebook_differs[path] = diff_ignore
+        elif subkeys == False:
+            if path in notebook_differs:
+                del notebook_differs[path]
+        elif isinstance(subkeys, (list, tuple, set)):
+            notebook_differs[path] = diff_ignore_keys(notebook_differs[path], subkeys)
+
+
+def set_notebook_diff_targets(sources=True, outputs=True, attachments=True,
+                              metadata=True, details=True):
     """Configure the notebook differs to include/ignore various changes."""
-    if sources:
-        if "/cells/*/source" in notebook_differs:
-            del notebook_differs["/cells/*/source"]
-    else:
-        notebook_differs["/cells/*/source"] = diff_ignore
 
-    if outputs:
-        notebook_differs["/cells/*/outputs"] = diff_sequence_multilevel
-    else:
-        notebook_differs["/cells/*/outputs"] = diff_ignore
-
-    if attachments:
-        notebook_differs["/cells/*/attachments"] = diff_attachments
-    else:
-        notebook_differs["/cells/*/attachments"] = diff_ignore
-
-    metadata_keys = ("/cells/*/metadata", "/metadata", "/cells/*/outputs/*/metadata")
-    if metadata:
-        for key in metadata_keys:
-            if key in notebook_differs:
-                del notebook_differs[key]
-    else:
-        for key in metadata_keys:
-            notebook_differs[key] = diff_ignore
-
-    if details:
-        notebook_differs['/cells/*'] = diff
-        notebook_differs["/cells/*/outputs/*"] = diff_single_outputs
-    else:
-        notebook_differs['/cells/*'] = diff_ignore_keys(
-            inner_differ=diff, ignore_keys=['execution_count'])
-        notebook_differs['/cells/*/outputs/*'] = diff_ignore_keys(
-            inner_differ=diff_single_outputs, ignore_keys=['execution_count'])
+    config = {
+        '/cells/*/source': not sources,
+        '/cells/*/outputs': not outputs,
+        '/cells/*/attachments': not attachments,
+        '/metadata': not metadata,
+        '/cells/*/metadata': not metadata,
+        '/cells/*/outputs/*/metadata': not metadata,
+        '/cells/*': ('execution_count') if details else False,
+        '/cells/*/outputs/*': ('execution_count') if details else False,
+    }
+    set_notebook_diff_ignores(config)
 
 
 def diff_cells(a, b):
     "This is currently just used by some tests."
     path = "/cells"
-    return notebook_differs[path](a, b, path=path, predicates=notebook_predicates, differs=notebook_differs)
+    return notebook_differs[path](
+        a, b, path=path, predicates=notebook_predicates, differs=notebook_differs)
 
 
 def diff_item_at_path(a, b, path):
     """Calculate the diff using the configured notebook differ for path."""
-    return notebook_differs[path](a, b, path=path, predicates=notebook_predicates, differs=notebook_differs)
+    return notebook_differs[path](
+        a, b, path=path, predicates=notebook_predicates, differs=notebook_differs)
 
 
 def diff_notebooks(a, b):

@@ -226,7 +226,9 @@ def diff_dicts(a, b, path="", predicates=None, differs=None):
         else:
             if (path or '/') in predicates:
                 # Could also this a warning, but I think it shouldn't be done
-                raise RuntimeError("Found predicate(s) for path {} pointing to dict entry.".format(path))
+                raise RuntimeError(
+                    "Found predicate(s) for path {} pointing to dict entry.".format(
+                        path or '/'))
             if avalue != bvalue:
                 di.replace(key, bvalue)
 
