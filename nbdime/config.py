@@ -1,10 +1,11 @@
 
 import os
+from six import string_types
 
 from ipython_genutils import py3compat
 from jupyter_core.paths import jupyter_config_path
 
-from traitlets import Unicode, Enum, Integer, Bool, HasTraits
+from traitlets import Unicode, Enum, Integer, Bool, HasTraits, Dict, TraitError
 from traitlets.config.manager import BaseJSONConfigManager
 from traitlets.config.loader import JSONFileConfigLoader, ConfigFileNotFound
 
@@ -153,6 +154,21 @@ class WebTool(Web):
 
 
 
+class IgnoreConfig(Dict):
+
+    def validate_elements(self, obj, value):
+        value = super(IgnoreConfig, self).validate_elements(obj, value)
+        for k, v in value.items():
+            if not k.startswith('/'):
+                raise TraitError('ignore config paths need to start with `/`')
+            if not (v in (True, False) or
+                    (isinstance(v, (tuple, list, set)) and
+                     all(isinstance(i, string_types) for i in v)
+                    )):
+                raise TraitError('ignore config value needs to be True, False or a list of strings')
+        return self.klass(value)
+
+
 class _Ignorables(NbdimeConfigurable):
 
     source = Bool(
@@ -178,6 +194,11 @@ class _Ignorables(NbdimeConfigurable):
     details = Bool(
         True,
         help="process/ignore details not covered by other options.",
+    ).tag(config=True)
+
+    Ignore = IgnoreConfig(
+        default_value={},
+        help="a custom ignore config"
     ).tag(config=True)
 
 

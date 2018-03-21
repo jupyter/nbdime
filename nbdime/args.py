@@ -13,7 +13,7 @@ from six import PY2
 from ._version import __version__
 from .log import init_logging, set_nbdime_log_level
 from .gitfiles import is_gitref
-from .diffing.notebooks import set_notebook_diff_targets
+from .diffing.notebooks import set_notebook_diff_targets, set_notebook_diff_ignores
 from .config import get_defaults_for_argparse, entrypoint_configurables
 from .prettyprint import pretty_print_dict, PrettyPrintConfig
 
@@ -24,7 +24,11 @@ class ConfigBackedParser(argparse.ArgumentParser):
         if entrypoint is None:
             entrypoint = self.prog
         try:
-            self.set_defaults(**get_defaults_for_argparse(entrypoint))
+            defs = get_defaults_for_argparse(entrypoint)
+            ignore = defs.pop('Ignore', None)
+            self.set_defaults(**defs)
+            if ignore:
+                set_notebook_diff_ignores(ignore)
         except ValueError:
             pass
         return super(ConfigBackedParser, self).parse_args(args=args, namespace=namespace)
