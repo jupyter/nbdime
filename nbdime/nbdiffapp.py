@@ -99,15 +99,15 @@ def _build_arg_parser():
     add_diff_cli_args(parser)
 
     parser.add_argument(
-        "base", help="The base notebook filename OR base git-revision.",
+        "base", help="the base notebook filename OR base git-revision.",
         nargs='?', default='HEAD',
     )
     parser.add_argument(
-        "remote", help="The remote modified notebook filename OR remote git-revision.",
+        "remote", help="the remote modified notebook filename OR remote git-revision.",
         nargs='?', default=None,
     )
     parser.add_argument(
-        "paths", help="Filter diffs for git-revisions based on path",
+        "paths", help="filter diffs for git-revisions based on path",
         nargs='*', default=None,
     )
 

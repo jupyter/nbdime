@@ -110,7 +110,7 @@ def add_generic_args(parser):
         '--log-level',
         default='INFO',
         choices=('DEBUG', 'INFO', 'WARN', 'ERROR', 'CRITICAL'),
-        help="Set the log level by name.",
+        help="set the log level by name.",
         action=LogLevelAction,
     )
 
@@ -337,25 +337,25 @@ def add_merge_args(parser):
         '--merge-strategy',
         default="inline",
         choices=cli_conflict_strategies,
-        help="Specify the merge strategy to use.")
+        help="the merge strategy to use.")
     parser.add_argument(
         '--input-strategy',
         default=None,
         choices=cli_conflict_strategies_input,
-        help="Specify the merge strategy to use for inputs "
+        help="the merge strategy to use for inputs "
              "(overrides 'merge-strategy' for inputs).")
     parser.add_argument(
         '--output-strategy',
         default=None,
         choices=cli_conflict_strategies_output,
-        help="Specify the merge strategy to use for outputs "
+        help="the merge strategy to use for outputs "
              "(overrides 'merge-strategy' for outputs).")
     parser.add_argument(
         '--no-ignore-transients',
         dest='ignore_transients',
         action="store_false",
         default=True,
-        help="Disallow deletion of transient data such as outputs and "
+        help="disallow deletion of transient data such as outputs and "
              "execution counts in order to resolve conflicts.")
 
 
