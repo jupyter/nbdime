@@ -2,14 +2,9 @@ Configuration
 =============
 
 Nbdime uses a config system loosely based on that of Jupyter. This means that
-it looks for config files ``nbdime_config.json`` or ``nbdime_config.py`` in all
-the directories listed by the ``jupyter --paths`` command. The syntax of the
-config files are similar to that of other Jupyter commands. For Python config::
-
-    # Sample config file
-    c.NbDiff.details = False
-
-For JSON config::
+it looks for config files ``nbdime_config.json`` in all the directories listed
+by the ``jupyter --paths`` command. The syntax of the config files are similar
+to that of other Jupyter commands::
 
     {
       "NbDiff": {
