@@ -34,7 +34,7 @@ def config_instance(cls):
 
 
 def _load_config_files(basefilename, path=None):
-        """Load config files (py,json) by filename and path.
+        """Load config files (json) by filename and path.
 
         yield each config object in turn.
         """
