@@ -1,13 +1,20 @@
 
 import argparse
 import pytest
+import json
+
+from six import text_type
 
 from traitlets import Enum
 
 from nbdime.args import (
     SkipAction, ConfigBackedParser, LogLevelAction,
 )
-from nbdime.config import entrypoint_configurables, Global
+from nbdime.config import (
+    entrypoint_configurables, Global, _Ignorables
+)
+import nbdime.diffing.notebooks
+from nbdime.diffing.notebooks import notebook_differs, diff
 
 
 class FixtureConfig(Global):
@@ -19,6 +26,18 @@ class FixtureConfig(Global):
 @pytest.fixture
 def entrypoint_config():
     entrypoint_configurables['test-prog'] = FixtureConfig
+    yield
+    del entrypoint_configurables['test-prog']
+
+class IgnorableConfig1(_Ignorables):
+    pass
+
+class IgnorableConfig2(IgnorableConfig1):
+    pass
+
+@pytest.fixture
+def entrypoint_ignore_config():
+    entrypoint_configurables['test-prog'] = IgnorableConfig2
     yield
     del entrypoint_configurables['test-prog']
 
@@ -50,3 +69,76 @@ def test_config_parser(entrypoint_config):
 
     arguments = parser.parse_args(['--log-level', 'ERROR'])
     assert arguments.log_level == 'ERROR'
+
+
+def test_ignore_config_simple(entrypoint_ignore_config, tmpdir):
+    tmpdir.join('nbdime_config.json').write_text(
+        text_type(json.dumps({
+            'IgnorableConfig1': {
+                'Ignore': {
+                    '/cells/*/metadata': ['collapsed', 'autoscroll']
+                }
+            },
+        })),
+        encoding='utf-8'
+    )
+
+    def mock_ignore_keys(inner, keys):
+        return (inner, keys)
+    parser = ConfigBackedParser('test-prog')
+    old_keys = nbdime.diffing.notebooks.diff_ignore_keys
+    nbdime.diffing.notebooks.diff_ignore_keys = mock_ignore_keys
+    try:
+        with tmpdir.as_cwd():
+            parser.parse_args([])
+    except:
+        nbdime.diffing.notebooks.reset_notebook_differ()
+        raise
+    finally:
+        nbdime.diffing.notebooks.diff_ignore_keys = old_keys
+
+    try:
+        assert notebook_differs['/cells/*/metadata'] == (diff, ['collapsed', 'autoscroll'])
+    finally:
+        nbdime.diffing.notebooks.reset_notebook_differ()
+
+
+
+def test_ignore_config_merge(entrypoint_ignore_config, tmpdir):
+    tmpdir.join('nbdime_config.json').write_text(
+        text_type(json.dumps({
+            'IgnorableConfig1': {
+                'Ignore': {
+                    '/cells/*/metadata': ['collapsed', 'autoscroll']
+                }
+            },
+            'IgnorableConfig2': {
+                'Ignore': {
+                    '/metadata': ['foo'],
+                    '/cells/*/metadata': ['tags']
+                }
+            },
+        })),
+        encoding='utf-8'
+    )
+
+    def mock_ignore_keys(inner, keys):
+        return (inner, keys)
+    parser = ConfigBackedParser('test-prog')
+    old_keys = nbdime.diffing.notebooks.diff_ignore_keys
+    nbdime.diffing.notebooks.diff_ignore_keys = mock_ignore_keys
+    try:
+        with tmpdir.as_cwd():
+            parser.parse_args([])
+    except:
+        nbdime.diffing.notebooks.reset_notebook_differ()
+        raise
+    finally:
+        nbdime.diffing.notebooks.diff_ignore_keys = old_keys
+
+    try:
+        assert notebook_differs['/metadata'] == (diff, ['foo'])
+        # Lists are not merged:
+        assert notebook_differs['/cells/*/metadata'] == (diff, ['tags'])
+    finally:
+        nbdime.diffing.notebooks.reset_notebook_differ()
