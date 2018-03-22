@@ -5,19 +5,21 @@ from ipython_genutils import py3compat
 from jupyter_core.paths import jupyter_config_path
 
 from traitlets import Unicode, Enum, Integer, Bool, HasTraits
-from traitlets.config import Config, Application
+from traitlets.config.manager import BaseJSONConfigManager
+from traitlets.config.loader import JSONFileConfigLoader, ConfigFileNotFound
 
 from .merging.notebooks import (
     cli_conflict_strategies, cli_conflict_strategies_input, cli_conflict_strategies_output)
 
 
 
-class Configurable(HasTraits):
+
+class NbdimeConfigurable(HasTraits):
 
     @property
-    def config(self):
+    def configured_traits(self):
         traits = self.traits(config=True)
-        c = Config()
+        c = {}
         for name, _ in traits.items():
             c[name] = getattr(self, name)
         return c
@@ -31,6 +33,47 @@ def config_instance(cls):
     return instance
 
 
+def _load_config_files(basefilename, path=None):
+        """Load config files (py,json) by filename and path.
+
+        yield each config object in turn.
+        """
+
+        if not isinstance(path, list):
+            path = [path]
+        for path in path[::-1]:
+            # path list is in descending priority order, so load files backwards:
+            loader = JSONFileConfigLoader(basefilename+'.json', path=path)
+            config = None
+            try:
+                config = loader.load_config()
+            except ConfigFileNotFound:
+                pass
+            if config:
+                yield config
+
+
+def recursive_update(target, new):
+    """Recursively update one dictionary using another.
+
+    None values will delete their keys.
+    """
+    for k, v in new.items():
+        if isinstance(v, dict):
+            if k not in target:
+                target[k] = {}
+            recursive_update(target[k], v)
+            if not target[k]:
+                # Prune empty subdicts
+                del target[k]
+
+        elif v is None:
+            target.pop(k, None)
+
+        else:
+            target[k] = v
+
+
 def build_config(entrypoint):
     if entrypoint not in entrypoint_configurables:
         raise ValueError('Config for entrypoint name %r is not defined! Accepted values are %r.' % (
@@ -38,20 +81,20 @@ def build_config(entrypoint):
         ))
 
     # Get config from disk:
-    disk_config = Config()
+    disk_config = {}
     path = jupyter_config_path()
     path.insert(0, py3compat.getcwd())
-    for c in Application._load_config_files(
-            'nbdime_config', path=path, log=None, raise_config_file_errors=True):
-        disk_config.merge(c)
+    for c in _load_config_files('nbdime_config', path=path):
+        recursive_update(disk_config, c)
 
-    config = Config()
+    config = {}
     configurable = entrypoint_configurables[entrypoint]
     for c in reversed(configurable.mro()):
-        if issubclass(c, Configurable):
-            config.merge(config_instance(c).config)
+        if issubclass(c, NbdimeConfigurable):
+            recursive_update(config, config_instance(c).configured_traits)
             if (c.__name__ in disk_config):
-                config.merge(disk_config[c.__name__])
+                recursive_update(config, disk_config[c.__name__])
+
     return config
 
 
@@ -59,7 +102,7 @@ def get_defaults_for_argparse(entrypoint):
     return build_config(entrypoint)
 
 
-class Global(Configurable):
+class Global(NbdimeConfigurable):
 
     log_level = Enum(
         ('DEBUG', 'INFO', 'WARN', 'ERROR', 'CRITICAL'),
@@ -68,7 +111,7 @@ class Global(Configurable):
     ).tag(config=True)
 
 
-class Web(Configurable):
+class Web(NbdimeConfigurable):
 
     port = Integer(
         0,
@@ -110,7 +153,7 @@ class WebTool(Web):
 
 
 
-class _Ignorables(Configurable):
+class _Ignorables(NbdimeConfigurable):
 
     source = Bool(
         True,
