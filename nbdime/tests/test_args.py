@@ -3,6 +3,8 @@ import argparse
 import pytest
 import json
 
+from six import text_type
+
 from traitlets import Enum
 
 from nbdime.args import (
@@ -71,13 +73,13 @@ def test_config_parser(entrypoint_config):
 
 def test_ignore_config_simple(entrypoint_ignore_config, tmpdir):
     tmpdir.join('nbdime_config.json').write_text(
-        json.dumps({
-            "IgnorableConfig1": {
-                "Ignore": {
+        text_type(json.dumps({
+            'IgnorableConfig1': {
+                'Ignore': {
                     '/cells/*/metadata': ['collapsed', 'autoscroll']
                 }
             },
-        }),
+        })),
         encoding='utf-8'
     )
 
@@ -104,19 +106,19 @@ def test_ignore_config_simple(entrypoint_ignore_config, tmpdir):
 
 def test_ignore_config_merge(entrypoint_ignore_config, tmpdir):
     tmpdir.join('nbdime_config.json').write_text(
-        json.dumps({
-            "IgnorableConfig1": {
-                "Ignore": {
+        text_type(json.dumps({
+            'IgnorableConfig1': {
+                'Ignore': {
                     '/cells/*/metadata': ['collapsed', 'autoscroll']
                 }
             },
-            "IgnorableConfig2": {
-                "Ignore": {
+            'IgnorableConfig2': {
+                'Ignore': {
                     '/metadata': ['foo'],
                     '/cells/*/metadata': ['tags']
                 }
             },
-        }),
+        })),
         encoding='utf-8'
     )
 
