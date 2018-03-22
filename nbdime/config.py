@@ -171,27 +171,32 @@ class IgnoreConfig(Dict):
 class _Ignorables(NbdimeConfigurable):
 
     source = Bool(
-        True,
+        None,
+        allow_none=True,
         help="process/ignore sources.",
     ).tag(config=True)
 
     outputs = Bool(
-        True,
+        None,
+        allow_none=True,
         help="process/ignore outputs.",
     ).tag(config=True)
 
     metadata = Bool(
-        True,
+        None,
+        allow_none=True,
         help="process/ignore metadata.",
     ).tag(config=True)
 
     attachments = Bool(
-        True,
+        None,
+        allow_none=True,
         help="process/ignore attachments.",
     ).tag(config=True)
 
     details = Bool(
-        True,
+        None,
+        allow_none=True,
         help="process/ignore details not covered by other options.",
     ).tag(config=True)
 
