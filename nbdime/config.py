@@ -6,7 +6,6 @@ from ipython_genutils import py3compat
 from jupyter_core.paths import jupyter_config_path
 
 from traitlets import Unicode, Enum, Integer, Bool, HasTraits, Dict, TraitError
-from traitlets.config.manager import BaseJSONConfigManager
 from traitlets.config.loader import JSONFileConfigLoader, ConfigFileNotFound
 
 from .merging.notebooks import (

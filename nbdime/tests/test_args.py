@@ -90,7 +90,7 @@ def test_ignore_config_simple(entrypoint_ignore_config, tmpdir):
     nbdime.diffing.notebooks.diff_ignore_keys = mock_ignore_keys
     try:
         with tmpdir.as_cwd():
-            arguments = parser.parse_args([])
+            parser.parse_args([])
     except:
         nbdime.diffing.notebooks.reset_notebook_differ()
         raise
@@ -129,7 +129,7 @@ def test_ignore_config_merge(entrypoint_ignore_config, tmpdir):
     nbdime.diffing.notebooks.diff_ignore_keys = mock_ignore_keys
     try:
         with tmpdir.as_cwd():
-            arguments = parser.parse_args([])
+            parser.parse_args([])
     except:
         nbdime.diffing.notebooks.reset_notebook_differ()
         raise
