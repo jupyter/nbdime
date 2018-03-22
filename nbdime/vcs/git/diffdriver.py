@@ -25,7 +25,7 @@ from subprocess import check_call, CalledProcessError
 
 from nbdime.args import (
     add_git_config_subcommand, add_generic_args, add_diff_args, add_web_args,
-    add_git_diff_driver_args, add_diff_cli_args,
+    add_git_diff_driver_args, add_diff_cli_args, ConfigBackedParser,
     )
 from nbdime.utils import locate_gitattributes, ensure_dir_exists, setup_std_streams
 from .filter_integration import apply_possible_filter
@@ -72,7 +72,7 @@ def disable(scope=None):
 
 def _build_arg_parser():
     import argparse
-    parser = argparse.ArgumentParser('git-nbdiffdriver',
+    parser = ConfigBackedParser('git-nbdiffdriver',
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )

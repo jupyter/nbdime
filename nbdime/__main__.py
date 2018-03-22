@@ -94,6 +94,20 @@ def main_dispatch(args=None):
             sys.exit(__version__)
         if cmd == '-h' or cmd == '--help':
             sys.exit(HELP_MESSAGE_VERBOSE)
+        if cmd == '--config':
+            # List all possible config options:
+            from .config import get_defaults_for_argparse, entrypoint_configurables
+            from .prettyprint import pretty_print_dict, PrettyPrintConfig
+            print('All available config options, and their current values:\n',
+                  file=sys.stderr)
+            for entrypoint, cls in entrypoint_configurables.items():
+                pretty_print_dict({
+                        cls.__name__: get_defaults_for_argparse(entrypoint),
+                    },
+                    config=PrettyPrintConfig(out=sys.stderr)
+                )
+                print('', file=sys.stderr)
+            sys.exit(1)
         else:
             sys.exit("Unrecognized command '%s'\n\n%s." %
                      (cmd, HELP_MESSAGE_VERBOSE))

@@ -6,6 +6,7 @@
 import argparse
 import logging
 import os
+import sys
 
 from six import PY2
 
@@ -13,6 +14,20 @@ from ._version import __version__
 from .log import init_logging, set_nbdime_log_level
 from .gitfiles import is_gitref
 from .diffing.notebooks import set_notebook_diff_targets
+from .config import get_defaults_for_argparse, entrypoint_configurables
+from .prettyprint import pretty_print_dict, PrettyPrintConfig
+
+
+class ConfigBackedParser(argparse.ArgumentParser):
+
+    def parse_args(self, args=None, namespace=None, entrypoint=None):
+        if entrypoint is None:
+            entrypoint = self.prog
+        try:
+            self.set_defaults(**get_defaults_for_argparse(entrypoint))
+        except ValueError:
+            pass
+        return super(ConfigBackedParser, self).parse_args(args=args, namespace=namespace)
 
 
 class LogLevelAction(argparse.Action):
@@ -36,6 +51,22 @@ class SkipAction(argparse.Action):
 
     def __call__(self, parser, ns, values, opttion_string=None):
         pass
+
+
+class ConfigHelpAction(argparse.Action):
+    def __init__(self, option_strings, dest, help=None):
+        super(ConfigHelpAction, self).__init__(
+            option_strings, dest, nargs=0, help=help)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        header = entrypoint_configurables[parser.prog].__name__
+        pretty_print_dict(
+            {
+                header: get_defaults_for_argparse(parser.prog),
+            },
+            config=PrettyPrintConfig(out=sys.stderr)
+        )
+        sys.exit(1)
 
 
 class IgnorableAction(argparse.Action):
@@ -107,10 +138,15 @@ def add_generic_args(parser):
         action="version",
         version="%(prog)s " + __version__)
     parser.add_argument(
+        '--config',
+        help="list the valid config keys and their current effective values",
+        action=ConfigHelpAction,
+    )
+    parser.add_argument(
         '--log-level',
         default='INFO',
         choices=('DEBUG', 'INFO', 'WARN', 'ERROR', 'CRITICAL'),
-        help="Set the log level by name.",
+        help="set the log level by name.",
         action=LogLevelAction,
     )
 
@@ -337,25 +373,25 @@ def add_merge_args(parser):
         '--merge-strategy',
         default="inline",
         choices=cli_conflict_strategies,
-        help="Specify the merge strategy to use.")
+        help="the merge strategy to use.")
     parser.add_argument(
         '--input-strategy',
         default=None,
         choices=cli_conflict_strategies_input,
-        help="Specify the merge strategy to use for inputs "
+        help="the merge strategy to use for inputs "
              "(overrides 'merge-strategy' for inputs).")
     parser.add_argument(
         '--output-strategy',
         default=None,
         choices=cli_conflict_strategies_output,
-        help="Specify the merge strategy to use for outputs "
+        help="the merge strategy to use for outputs "
              "(overrides 'merge-strategy' for outputs).")
     parser.add_argument(
         '--no-ignore-transients',
         dest='ignore_transients',
         action="store_false",
         default=True,
-        help="Disallow deletion of transient data such as outputs and "
+        help="disallow deletion of transient data such as outputs and "
              "execution counts in order to resolve conflicts.")
 
 

@@ -15,7 +15,7 @@ import sys
 from subprocess import check_call, CalledProcessError
 
 from nbdime.webapp import nbmergetool
-from nbdime.args import add_generic_args, add_git_config_subcommand
+from nbdime.args import add_generic_args, add_git_config_subcommand, ConfigBackedParser
 
 
 def enable(scope=None, set_default=False):
@@ -51,7 +51,7 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
     import argparse
-    parser = argparse.ArgumentParser('git-nbmergetool', description=__doc__,
+    parser = ConfigBackedParser('git-nbmergetool', description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     add_generic_args(parser)

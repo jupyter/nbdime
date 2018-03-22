@@ -1,0 +1,290 @@
+
+import os
+
+from ipython_genutils import py3compat
+from jupyter_core.paths import jupyter_config_path
+
+from traitlets import Unicode, Enum, Integer, Bool, HasTraits
+from traitlets.config.manager import BaseJSONConfigManager
+from traitlets.config.loader import JSONFileConfigLoader, ConfigFileNotFound
+
+from .merging.notebooks import (
+    cli_conflict_strategies, cli_conflict_strategies_input, cli_conflict_strategies_output)
+
+
+
+
+class NbdimeConfigurable(HasTraits):
+
+    @property
+    def configured_traits(self):
+        traits = self.traits(config=True)
+        c = {}
+        for name, _ in traits.items():
+            c[name] = getattr(self, name)
+        return c
+
+
+_config_cache = {}
+def config_instance(cls):
+    if cls in _config_cache:
+        return _config_cache[cls]
+    instance = _config_cache[cls] = cls()
+    return instance
+
+
+def _load_config_files(basefilename, path=None):
+        """Load config files (py,json) by filename and path.
+
+        yield each config object in turn.
+        """
+
+        if not isinstance(path, list):
+            path = [path]
+        for path in path[::-1]:
+            # path list is in descending priority order, so load files backwards:
+            loader = JSONFileConfigLoader(basefilename+'.json', path=path)
+            config = None
+            try:
+                config = loader.load_config()
+            except ConfigFileNotFound:
+                pass
+            if config:
+                yield config
+
+
+def recursive_update(target, new):
+    """Recursively update one dictionary using another.
+
+    None values will delete their keys.
+    """
+    for k, v in new.items():
+        if isinstance(v, dict):
+            if k not in target:
+                target[k] = {}
+            recursive_update(target[k], v)
+            if not target[k]:
+                # Prune empty subdicts
+                del target[k]
+
+        elif v is None:
+            target.pop(k, None)
+
+        else:
+            target[k] = v
+
+
+def build_config(entrypoint):
+    if entrypoint not in entrypoint_configurables:
+        raise ValueError('Config for entrypoint name %r is not defined! Accepted values are %r.' % (
+            entrypoint, list(entrypoint_configurables.keys())
+        ))
+
+    # Get config from disk:
+    disk_config = {}
+    path = jupyter_config_path()
+    path.insert(0, py3compat.getcwd())
+    for c in _load_config_files('nbdime_config', path=path):
+        recursive_update(disk_config, c)
+
+    config = {}
+    configurable = entrypoint_configurables[entrypoint]
+    for c in reversed(configurable.mro()):
+        if issubclass(c, NbdimeConfigurable):
+            recursive_update(config, config_instance(c).configured_traits)
+            if (c.__name__ in disk_config):
+                recursive_update(config, disk_config[c.__name__])
+
+    return config
+
+
+def get_defaults_for_argparse(entrypoint):
+    return build_config(entrypoint)
+
+
+class Global(NbdimeConfigurable):
+
+    log_level = Enum(
+        ('DEBUG', 'INFO', 'WARN', 'ERROR', 'CRITICAL'),
+        'INFO',
+        help="Set the log level by name.",
+    ).tag(config=True)
+
+
+class Web(NbdimeConfigurable):
+
+    port = Integer(
+        0,
+        help="specify the port you want the server to run on. Default is 0 (random).",
+    ).tag(config=True)
+
+    ip = Unicode(
+        '127.0.0.1',
+        help="specify the interface to listen to for the web server. "
+        "NOTE: Setting this to anything other than 127.0.0.1/localhost "
+        "might comprimise the security of your computer. Use with care!",
+    ).tag(config=True)
+
+    base_url = Unicode(
+        '/', help="The base URL prefix under which to run the web app",
+    ).tag(config=True)
+
+    browser = Unicode(
+        None,
+        allow_none=True,
+        help="specify the browser to use, to override the system default.",
+    ).tag(config=True)
+
+    persist = Bool(
+        False, help="prevent server shutting down on remote close request "
+                    "(when these would normally be supported).",
+    ).tag(config=True)
+
+    workdirectory = Unicode(
+        default=os.path.abspath(os.path.curdir),
+        help="specify the working directory you want "
+             "the server to run from. Default is the "
+             "actual cwd at program start.",
+    ).tag(config=True)
+
+
+class WebTool(Web):
+    pass
+
+
+
+class _Ignorables(NbdimeConfigurable):
+
+    source = Bool(
+        True,
+        help="process/ignore sources.",
+    ).tag(config=True)
+
+    outputs = Bool(
+        True,
+        help="process/ignore outputs.",
+    ).tag(config=True)
+
+    metadata = Bool(
+        True,
+        help="process/ignore metadata.",
+    ).tag(config=True)
+
+    attachments = Bool(
+        True,
+        help="process/ignore attachments.",
+    ).tag(config=True)
+
+    details = Bool(
+        True,
+        help="process/ignore details not covered by other options.",
+    ).tag(config=True)
+
+
+class Show(_Ignorables):
+    pass
+
+
+class _Diffing(_Ignorables):
+
+    color_words = Bool(
+        False,
+        help=("whether to pass the --color-words flag to any internal calls "
+              "to git diff"),
+    ).tag(config=True)
+
+
+class Diff(_Diffing):
+    pass
+
+
+class Merge(_Diffing):
+
+    merge_strategy = Enum(
+        cli_conflict_strategies,
+        'inline',
+        help="Specify the merge strategy to use.",
+    ).tag(config=True)
+
+    input_strategy = Enum(
+        cli_conflict_strategies_input,
+        None,
+        allow_none=True,
+        help="Specify the merge strategy to use for inputs "
+             "(overrides 'merge-strategy' for inputs).",
+    ).tag(config=True)
+
+    output_strategy = Enum(
+        cli_conflict_strategies_output,
+        None,
+        allow_none=True,
+        help="Specify the merge strategy to use for outputs "
+             "(overrides 'merge-strategy' for outputs).",
+    ).tag(config=True)
+
+    ignore_transients = Bool(
+        True,
+        help="Disallow deletion of transient data such as outputs and "
+             "execution counts in order to resolve conflicts.",
+    ).tag(config=True)
+
+
+class GitDiff(Diff):
+    use_filter = Bool(
+        False,
+        help="if enabled, will apply any configured git filter to the remote file "
+             "prior to diffing."
+    )
+
+class GitMerge(Merge):
+    pass
+
+
+class NbDiff(Diff):
+    pass
+
+class NbDiffWeb(Web, Diff):
+    pass
+
+class NbMerge(Merge):
+    pass
+
+class NbMergeWeb(Web, Merge):
+    pass
+
+class NbShow(Show):
+    pass
+
+class Server(Web):
+
+    port = Integer(
+        8888,
+        help="specify the port you want the server to run on. Default is 8888.",
+    ).tag(config=True)
+
+
+class NbDiffDriver(GitDiff):
+    pass
+
+class NbDiffTool(GitDiff, WebTool):
+    pass
+
+class NbMergeDriver(GitMerge):
+    pass
+
+class NbMergeTool(GitMerge, WebTool):
+    pass
+
+
+entrypoint_configurables = {
+    'nbdiff': NbDiff,
+    'nbdiff-web': NbDiffWeb,
+    'nbmerge': NbMerge,
+    'nbmerge-web': NbMergeWeb,
+    'nbshow': NbShow,
+    'server': Server,
+    'git-nbdiffdriver': NbDiffDriver,
+    'git-nbdifftool': NbDiffTool,
+    'git-nbmergedriver': NbMergeDriver,
+    'git-nbmergetool': NbMergeTool,
+}

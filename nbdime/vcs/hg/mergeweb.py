@@ -14,13 +14,14 @@ from __future__ import print_function
 import argparse
 import sys
 
+from nbdime.args import ConfigBackedParser
 from nbdime.webapp import nbmergetool
 
 
 def main(args=None):
     if args is None:
         args = sys.argv[1:]
-    parser = argparse.ArgumentParser('hg-nbmergeweb', description=__doc__,
+    parser = ConfigBackedParser('hg-nbmergeweb', description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
