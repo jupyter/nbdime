@@ -137,7 +137,7 @@ def diff_lists(a, b, path="", predicates=None, differs=None, shallow_diff=None):
     # Next we recurse to diff items in sequence that are considered
     # similar by compares[0] in the loop below
     subpath = "/".join((path, "*"))
-    diffit = differs.get(subpath, diff)
+    diffit = differs[subpath]
 
     # Count consumed items i,j from a,b, (i="take" in patch_list)
     i, j = 0, 0
@@ -219,7 +219,7 @@ def diff_dicts(a, b, path="", predicates=None, differs=None):
         # If types are the same and nonatomic, recurse
         if type(avalue) == type(bvalue) and not is_atomic(avalue):
             subpath = "/".join((path, key))
-            diffit = differs.get(subpath, diff)
+            diffit = differs[subpath]
             dd = diffit(avalue, bvalue, path=subpath, predicates=predicates, differs=differs)
             if dd:
                 di.patch(key, dd)
