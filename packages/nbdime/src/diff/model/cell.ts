@@ -15,7 +15,7 @@ import {
 } from '../../common/exceptions';
 
 import {
-  IDiffEntry, IDiffArrayEntry, IDiffReplace, IDiffObjectEntry
+  IDiffEntry, IDiffArrayEntry, IDiffReplace
 } from '../diffentries';
 
 import {
