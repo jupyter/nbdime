@@ -91,7 +91,7 @@ class ChunkedCellsWidget extends Panel {
     this.addClass(CONLICTED_CELL_CHUNK_CLASS);
     this.header = new Widget();
     this.header.addClass(CHUNK_HEADER_CLASS);
-    this.header.node.innerText = 'Conflicting cell inserts';
+    this.header.node.innerText = 'Conflicting cell operations';
     let button = document.createElement('button');
     button.innerText = 'Resolve Conflict';
     button.onclick = this.onResolve.bind(this);
