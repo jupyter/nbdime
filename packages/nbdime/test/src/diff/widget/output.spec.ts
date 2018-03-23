@@ -5,11 +5,11 @@ import expect = require('expect.js');
 
 import {
   nbformat
-} from '@jupyterlab/services';
+} from '@jupyterlab/coreutils';
 
 import {
-  RenderMime
-} from 'jupyterlab/lib/rendermime';
+  RenderMimeRegistry, standardRendererFactories
+} from '@jupyterlab/rendermime';
 
 import {
     OutputDiffModel
@@ -28,7 +28,7 @@ describe('diff', () => {
 
       describe('#isTrustSignificant', () => {
 
-        let rendermime = new RenderMime({items: RenderMime.getDefaultItems()});
+        let rendermime = new RenderMimeRegistry({initialFactories: standardRendererFactories});
 
         let model: OutputDiffModel;
         let base: nbformat.IExecuteResult;
@@ -50,7 +50,6 @@ describe('diff', () => {
 
         it('should say insignificant for plain text', () => {
           base.data['text/plain'] = '365.0';
-          debugger;
           let significant = OutputPanel.isTrustSignificant(model, rendermime);
           expect(significant).to.be(false);
         });
