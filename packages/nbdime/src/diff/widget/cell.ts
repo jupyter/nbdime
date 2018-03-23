@@ -52,6 +52,9 @@ const PROMPT_CLASS = 'jp-InputPrompt';
 export
 const CELLDIFF_CLASS = 'jp-Cell-diff';
 
+export
+const OUTPUTS_DIFF_CLASS = 'jp-Diff-outputsContainer';
+
 const EXECUTIONCOUNT_ROW_CLASS = 'jp-Cellrow-executionCount';
 const SOURCE_ROW_CLASS = 'jp-Cellrow-source';
 const METADATA_ROW_CLASS = 'jp-Cellrow-metadata';
@@ -114,6 +117,7 @@ class CellDiffWidget extends Panel {
     const chunks = model.getChunkedOutputs();
     if (hasEntries(chunks)) {
       let container = new Panel();
+      container.addClass(OUTPUTS_DIFF_CLASS);
       let changed = false;
       for (let chunk of chunks) {
         if (chunk.length === 1) {

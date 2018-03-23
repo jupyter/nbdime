@@ -178,10 +178,10 @@
   background-color: var(--codemirror-gutter-background);
 }
 
-.jp-Notebook-diff .jp-Diff-renderedOuputPanel .jp-Diff-outputMenu {
+.jp-Notebook-diff .jp-Diff-outputPanel .jp-Diff-outputMenu {
   display: none;
   position: absolute;
-  top: 5px;
+  top: 0;
   left: 50%;
   transform: translate(-50%, 0);
   background-color: var(--jp-layout-color1);
@@ -190,8 +190,8 @@
   z-index: 10;
 }
 
-.jp-Notebook-diff .jp-Diff-renderedOuputPanel:hover .jp-Diff-outputMenu {
-  display: flex;
+.jp-Notebook-diff .jp-Diff-outputPanel:hover .jp-Diff-outputMenu {
+  display: initial;
 }
 
 .jp-Notebook-diff .jp-Diff-trustOutputButton {
@@ -202,6 +202,16 @@
   display: initial;
 }
 
-.jp-Notebook-diff .jp-Diff-renderedOuputPanel:not(.jp-Diff-trustCandidate) .jp-diff-base64Output + .jp-Diff-outputMenu {
+.jp-Notebook-diff .jp-Diff-outputPanel:not(.jp-Diff-trustCandidate) .jp-diff-base64Output + .jp-Diff-outputMenu {
   display: none;
+}
+
+.jp-Notebook-diff .jp-Diff-outputPanel .jp-Diff-outputMenu > :not(:first-child) {
+  margin-left: 5px;
+}
+
+.jp-Diff-outputsContainer > .p-Widget:not(:last-child) {
+  padding-bottom: 6px;
+  min-height: 2em;
+  border-bottom: var(--jp-border-width) solid var(--jp-nbdime-output-color2);
 }

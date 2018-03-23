@@ -15,7 +15,7 @@ import {
 } from '@phosphor/algorithm';
 
 import {
-  IRenderMimeRegistry, OutputModel
+  IRenderMimeRegistry, OutputModel, IRenderMime
 } from '@jupyterlab/rendermime';
 
 import {
@@ -50,7 +50,12 @@ import {
 
 
 /**
- * Class for a signle rendered output view
+ * Class for output panel
+ */
+const OUTPUT_PANEL_CLASS = 'jp-Diff-outputPanel';
+
+/**
+ * Class for a single rendered output view
  */
 const RENDERED_OUTPUT_CLASS = 'jp-Diff-renderedOuput';
 
@@ -144,7 +149,7 @@ class OutputPanel extends Panel {
     this.initContainer(view);
 
     this.createHoverMenu();
-    //this.addClass(OUTPUT_VIEW_CLASS);
+    this.addClass(OUTPUT_PANEL_CLASS);
   }
 
   /**
@@ -237,13 +242,13 @@ class OutputPanel extends Panel {
    * Stored in this.menu.
    */
   protected createHoverMenu() {
-    this.menu = new FlexPanel({direction: 'left-to-right', evenSizes: true});
+    this.menu = new Panel();
     this.menu.addClass(HOVER_MENU_CLASS);
     this.container.addWidget(this.menu);
 
     // Add rendered/source toggle:
     let btnSource = document.createElement('button');
-    let sourceText = ['Show source', 'Show Rendered'];
+    let sourceText = ['Show source', 'Render'];
     btnSource.innerText = sourceText[0];
     btnSource.onclick = (ev: MouseEvent) => {
       this.forceText = !this.forceText;
@@ -272,17 +277,25 @@ class OutputPanel extends Panel {
       mimetypes = mimetypes.concat(Object.keys(bundle));
     }
     mimetypes = mimetypes.filter(unique);
-    let cboMimetype = buildSelect(mimetypes);
-    let selectedMimetype = this.selectedMimetype;
-    if (selectedMimetype) {
-      cboMimetype.selectedIndex = mimetypes.indexOf(selectedMimetype);
+    if (mimetypes.length > 1) {
+      let cboMimetype = buildSelect(mimetypes);
+      let selectedMimetype = this.selectedMimetype;
+      if (selectedMimetype) {
+        cboMimetype.selectedIndex = mimetypes.indexOf(selectedMimetype);
+      }
+      cboMimetype.onchange = (ev: Event) => {
+        this.selectedMimetype = mimetypes[cboMimetype.selectedIndex];
+      };
+      w = new Widget({node: cboMimetype});
+      w.addClass(MIMETYPE_SELECT_CLASS);
+      this.menu.addWidget(w);
+    } else if (mimetypes.length === 1) {
+      let mtLabel = document.createElement('span');
+      mtLabel.innerText = mimetypes[0];
+      w = new Widget({node: mtLabel});
+      // w.addClass(MIMETYPE_SELECT_CLASS);
+      this.menu.addWidget(w);
     }
-    cboMimetype.onchange = (ev: Event) => {
-      this.selectedMimetype = mimetypes[cboMimetype.selectedIndex];
-    };
-    w = new Widget({node: cboMimetype});
-    w.addClass(MIMETYPE_SELECT_CLASS);
-    this.menu.addWidget(w);
   }
 
   /**
@@ -343,7 +356,7 @@ class OutputPanel extends Panel {
 
   protected view: Widget;
 
-  protected menu: FlexPanel;
+  protected menu: Panel;
   protected _mimetype: string | null = null;
   protected forceText = false;
 
@@ -390,15 +403,9 @@ class RenderableOutputView extends RenderableDiffView<nbformat.IOutput> {
    * Create a widget which renders the given cell output
    */
   protected createSubView(output: nbformat.IOutput, trusted: boolean): Widget {
-    let model = new OutputModel({value: output, trusted});
-    let mt = this.mimetype;
-    let widget = this.rendermime.createRenderer(mt);
-    widget.renderModel(model);
-    widget.addClass(RENDERED_OUTPUT_CLASS);
-    if (this.isOutputBase64(output)) {
-      this.addClass(DATA_IS_BASE64_CLASS);
-    }
-    return widget;
+    let panel = new RenderedOutputWidget(this.rendermime);
+    panel.updateView(output, trusted, this.mimetype);
+    return panel;
   }
 
   /**
@@ -409,7 +416,7 @@ class RenderableOutputView extends RenderableDiffView<nbformat.IOutput> {
     let model = this.model;
     this.mimetype = mimeType;
     each(this.layout.widgets, (w: Widget) => {
-      if (w.hasClass(RENDERED_OUTPUT_CLASS)) {
+      if (w instanceof RenderedOutputWidget) {
         let output: nbformat.IOutput | null = null;
         if (i === 0 && model.base) {
           // Use base data
@@ -418,28 +425,11 @@ class RenderableOutputView extends RenderableDiffView<nbformat.IOutput> {
           output = model.remote;
         }
         if (output) {
-          let index = this.layout.widgets.indexOf(w);
-          w.dispose();
-          let outModel = new OutputModel({value: output, trusted});
-          let wNew = this.rendermime.createRenderer(mimeType);
-          wNew.renderModel(outModel);
-          this.layout.insertWidget(index, wNew);
+          w.updateView(output, trusted, mimeType);
         }
         ++i;
       }
     });
-  }
-
-  /**
-   * Whether the output's data is base64 with the view's mimetype
-   */
-  protected isOutputBase64(output: nbformat.IOutput): boolean {
-    let bundle = OutputModel.getData(output);
-    let mimetype = this.rendermime.preferredMimeType(bundle, this.model.trusted);
-    if (!mimetype) {
-      return false;
-    }
-    return isBase64(bundle[mimetype] as string);
   }
 
   protected model: OutputDiffModel;
@@ -459,5 +449,41 @@ class RenderableOutputView extends RenderableDiffView<nbformat.IOutput> {
     }
     return true;
   }
-  _rendermime: IRenderMimeRegistry;
+}
+
+
+class RenderedOutputWidget extends Panel {
+
+  /**
+   *
+   */
+  constructor(rendermime: IRenderMimeRegistry) {
+    super();
+    this.rendermime = rendermime;
+  }
+
+  updateView(output: nbformat.IOutput, trusted: boolean, mimetype: string) {
+    let old = this.renderer;
+    this.renderer = this.createRenderer(output, trusted, mimetype);
+    if (old !== undefined) {
+      old.dispose();
+    }
+    this.addWidget(this.renderer);
+  }
+
+  protected createRenderer(output: nbformat.IOutput, trusted: boolean, mimetype: string): IRenderMime.IRenderer {
+    let model = new OutputModel({value: output, trusted});
+    let widget = this.rendermime.createRenderer(mimetype);
+    widget.renderModel(model);
+    widget.addClass(RENDERED_OUTPUT_CLASS);
+    let bundle = OutputModel.getData(output);
+    if (isBase64(bundle[mimetype] as string)) {
+      widget.addClass(DATA_IS_BASE64_CLASS);
+    }
+    return widget;
+  }
+
+  protected renderer: IRenderMime.IRenderer | undefined;
+
+  protected rendermime: IRenderMimeRegistry;
 }
