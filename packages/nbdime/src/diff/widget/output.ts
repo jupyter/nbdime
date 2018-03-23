@@ -31,10 +31,6 @@ import {
 } from '../../common/util';
 
 import {
-  FlexPanel
-} from '../../upstreaming/flexpanel';
-
-import {
   ADDED_DIFF_CLASS, DELETED_DIFF_CLASS,
   TWOWAY_DIFF_CLASS, UNCHANGED_DIFF_CLASS,
   ADD_DEL_LABEL_CLASS
