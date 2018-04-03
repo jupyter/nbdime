@@ -13,3 +13,4 @@ export const DIFF_CLASSES = ['jp-Diff-base', 'jp-Diff-remote'];
 export const CHUNK_PANEL_CLASS = 'jp-Diff-addremchunk';
 export const ADDED_CHUNK_PANEL_CLASS = 'jp-Diff-addedchunk';
 export const REMOVED_CHUNK_PANEL_CLASS = 'jp-Diff-removedchunk';
+export const ADD_DEL_LABEL_CLASS = 'jp-Diff-label';

@@ -3,20 +3,12 @@
 'use strict';
 
 import {
-  every
-} from '@phosphor/algorithm';
-
-import {
   Panel, Widget
 } from '@phosphor/widgets';
 
 import {
   IRenderMimeRegistry, MimeModel
 } from '@jupyterlab/rendermime';
-
-import {
-  createNbdimeMergeView
-} from '../../common/mergeview';
 
 import {
   FlexPanel
@@ -27,23 +19,28 @@ import {
 } from '../../common/collapsiblepanel';
 
 import {
-  valueIn, hasEntries
+  createNbdimeMergeView
+} from '../../common/mergeview';
+
+import {
+  hasEntries
 } from '../../common/util';
-
-import {
-  DIFF_CLASSES, ADDED_DIFF_CLASS, DELETED_DIFF_CLASS,
-  TWOWAY_DIFF_CLASS, UNCHANGED_DIFF_CLASS, CHUNK_PANEL_CLASS,
-  ADDED_CHUNK_PANEL_CLASS, REMOVED_CHUNK_PANEL_CLASS
-} from './common';
-
-import {
-  RenderableOutputView
-} from './output';
 
 import {
   CellDiffModel, IDiffModel, StringDiffModel, OutputDiffModel,
   ImmutableDiffModel
 } from '../model';
+
+import {
+  DIFF_CLASSES, ADDED_DIFF_CLASS, DELETED_DIFF_CLASS,
+  TWOWAY_DIFF_CLASS, UNCHANGED_DIFF_CLASS, CHUNK_PANEL_CLASS,
+  ADDED_CHUNK_PANEL_CLASS, REMOVED_CHUNK_PANEL_CLASS,
+  ADD_DEL_LABEL_CLASS
+} from './common';
+
+import {
+  OutputPanel
+} from './output';
 
 
 /**
@@ -55,15 +52,13 @@ const PROMPT_CLASS = 'jp-InputPrompt';
 export
 const CELLDIFF_CLASS = 'jp-Cell-diff';
 
+export
+const OUTPUTS_DIFF_CLASS = 'jp-Diff-outputsContainer';
+
 const EXECUTIONCOUNT_ROW_CLASS = 'jp-Cellrow-executionCount';
 const SOURCE_ROW_CLASS = 'jp-Cellrow-source';
 const METADATA_ROW_CLASS = 'jp-Cellrow-metadata';
 const OUTPUTS_ROW_CLASS = 'jp-Cellrow-outputs';
-
-/**
- * A list of MIME types that can be shown as string diff.
- */
-const stringDiffMimeTypes = ['text/html', 'text/plain', 'application/json'];
 
 
 
@@ -122,6 +117,7 @@ class CellDiffWidget extends Panel {
     const chunks = model.getChunkedOutputs();
     if (hasEntries(chunks)) {
       let container = new Panel();
+      container.addClass(OUTPUTS_DIFF_CLASS);
       let changed = false;
       for (let chunk of chunks) {
         if (chunk.length === 1) {
@@ -193,8 +189,9 @@ class CellDiffWidget extends Panel {
   static
   createView(model: IDiffModel, parent: CellDiffModel,
              editorClasses: string[], rendermime: IRenderMimeRegistry): Panel {
-    let view: Widget | null = null;
+    let view: Panel;
     if (model instanceof StringDiffModel) {
+      let inner: Widget | null = null;
       if (model.unchanged && parent.cellType === 'markdown') {
         let mimeModel = new MimeModel({ data: {'text/markdown': model.base!} });
         let mimeType = rendermime.preferredMimeType(mimeModel.data, true);
@@ -203,58 +200,32 @@ class CellDiffWidget extends Panel {
         }
         let renderer = rendermime.createRenderer(mimeType);
         renderer.renderModel(mimeModel);
-        view = renderer;
+        inner = renderer;
       } else {
-        view = createNbdimeMergeView(model);
+        inner = createNbdimeMergeView(model);
+      }
+      if (model.collapsible) {
+        view = new CollapsiblePanel(
+            inner, model.collapsibleHeader, model.startCollapsed);
+      } else {
+        view = new Panel();
+        view.addWidget(inner);
       }
     } else if (model instanceof OutputDiffModel) {
-      // Take one of three actions, depending on output types
-      // 1) Text-type output: Show a MergeView with text diff.
-      // 2) Renderable types: Side-by-side comparison.
-      // 3) Unknown types: Stringified JSON diff.
-      // If the model is one-sided or unchanged, option 2) is preferred to 1)
-      let renderable = RenderableOutputView.canRenderUntrusted(model);
-      every(rendermime.mimeTypes, (mt) => {
-        let key = model.hasMimeType(mt);
-        if (key) {
-          if (!renderable ||
-              !(model.added || model.deleted || model.unchanged) &&
-              valueIn(mt, stringDiffMimeTypes)) {
-            // 1.
-            view = createNbdimeMergeView(model.stringify(key));
-          } else if (renderable) {
-            // 2.
-            view = new RenderableOutputView(model, editorClasses, rendermime);
-          }
-          return false;
-        }
-        return true;
-      });
-      if (!view) {
-        // 3.
-        view = createNbdimeMergeView(model.stringify());
+      view = new OutputPanel(model, parent, editorClasses, rendermime);
+      if (model.added) {
+        view.addClass(ADDED_DIFF_CLASS);
+      } else if (model.deleted) {
+        view.addClass(DELETED_DIFF_CLASS);
+      } else if (model.unchanged) {
+        view.addClass(UNCHANGED_DIFF_CLASS);
+      } else {
+        view.addClass(TWOWAY_DIFF_CLASS);
       }
     } else {
       throw new Error('Unrecognized model type.');
     }
-    if (model.collapsible) {
-      view = new CollapsiblePanel(
-          view, model.collapsibleHeader, model.startCollapsed);
-    }
-    let container = new Panel();
-    if (model instanceof OutputDiffModel) {
-      if (model.added) {
-        container.addClass(ADDED_DIFF_CLASS);
-      } else if (model.deleted) {
-        container.addClass(DELETED_DIFF_CLASS);
-      } else if (model.unchanged) {
-        container.addClass(UNCHANGED_DIFF_CLASS);
-      } else {
-        container.addClass(TWOWAY_DIFF_CLASS);
-      }
-    }
-    container.addWidget(view);
-    return container;
+    return view;
   }
 
 

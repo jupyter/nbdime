@@ -5,11 +5,11 @@ import expect = require('expect.js');
 
 import {
     createDirectStringDiffModel
-} from '../../../src/diff/model/string';
+} from '../../../../src/diff/model/string';
 
 import {
-    CellDiffWidget, NotebookDiffWidget, MetadataDiffWidget
-} from '../../../src/diff/widget';
+  MetadataDiffWidget
+} from '../../../../src/diff/widget';
 
 
 describe('diff', () => {

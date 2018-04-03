@@ -48,6 +48,7 @@ import {
   rendererFactories
 } from './rendermime';
 
+let diffWidget: NotebookDiffWidget | null = null;
 
 const prefixes = ['git:', 'checkpoint:'];
 
@@ -97,6 +98,7 @@ function showDiff(data: {base: nbformat.INotebookContent, diff: IDiffEntry[]}): 
   work.then(() => {
     window.onresize = () => { panel.update(); };
   });
+  diffWidget = nbdWidget;
   return work;
 }
 
@@ -170,6 +172,7 @@ function onDiffRequestFailed(response: string) {
     throw new Error('Missing root element "nbidme-root"');
   }
   root.innerHTML = '<pre>' + response + '</pre>';
+  diffWidget = null;
   toggleSpinner(false);
 }
 
@@ -184,6 +187,25 @@ function onPopState(e: PopStateEvent) {
     eb.value = e.state.base;
     er.value = e.state.remote;
     compare(e.state.base, e.state.remote, false);
+  }
+}
+
+/**
+ * Trust all outputs in diff
+ */
+function trustOutputs() {
+  let trust = true;
+  if (!diffWidget) {
+    return;
+  }
+  let model = diffWidget.model;
+  for (let cell of model.cells) {
+    if (!cell.outputs) {
+      continue;
+    }
+    for (let output of cell.outputs) {
+      output.trusted = trust;
+    }
   }
 }
 
@@ -222,4 +244,8 @@ function initializeDiff() {
   hideUnchangedChk.onchange = () => {
     toggleShowUnchanged(!hideUnchangedChk.checked);
   };
+
+  let trustBtn = document.getElementById('nbdime-trust') as HTMLButtonElement;
+  trustBtn.onclick = trustOutputs;
+  trustBtn.style.display = 'initial';
 }
