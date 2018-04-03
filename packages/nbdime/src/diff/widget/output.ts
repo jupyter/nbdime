@@ -87,6 +87,13 @@ const DATA_IS_BASE64_CLASS = 'jp-diff-base64Output';
 const MIMETYPE_SELECT_CLASS = 'jp-Diff-outputMimetypeSelect';
 
 
+/**
+ * A list of outputs that are sanitizable.
+ */
+const sanitizable = ['text/html'];
+
+
+
 let _base64 = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
 function isBase64(data: string | null, minLength=64): boolean {
   return data !== null && data.length > minLength && _base64.test(data.replace('\n', ''));
@@ -360,6 +367,9 @@ class OutputPanel extends Panel {
    * Whether trust can affect the output rendering.
    */
   static isTrustSignificant(model: OutputDiffModel, rendermime: IRenderMimeRegistry): boolean {
+    if (model.trusted) {
+      return false;
+    }
     let toTest: nbformat.IOutput[] = [];
     if (model.base) {
       toTest.push(model.base);
@@ -368,13 +378,13 @@ class OutputPanel extends Panel {
       toTest.push(model.remote);
     }
     for (let o of toTest) {
-      let untrustedModel = new OutputModel({value: o, trusted: model.trusted});
+      let untrustedModel = new OutputModel({value: o, trusted: false});
       let modelMimeTypes = Object.keys(untrustedModel.data);
       let rendererMimeTypes = toArray(rendermime.mimeTypes);
       let candidates = intersection(modelMimeTypes, rendererMimeTypes);
       for (let mimeType of candidates) {
         let factory = rendermime.getFactory(mimeType);
-        if (factory && !factory.safe) {
+        if (factory && (!factory.safe || sanitizable.indexOf(mimeType) !== -1)) {
           return true;
         }
       }
