@@ -79,7 +79,10 @@ To launch the rich, web-based tools (for diff visualization and
 merge conflict visualization/resolution), the following
 commands will need to be executed::
 
-    nbdiff-web [ref [ref]]
+    nbdiff-web [<commit> [<commit>]] [<path>]
+
+See the `git diff documentation`_ for further explanation of
+"<commit>" and "<path>" for this command.
 
 .. figure:: images/nbdiff-web.png
    :alt: example of nbdime's content-aware diff
@@ -342,3 +345,9 @@ The typical usage pattern for the webtool is like this::
     use 'hg resolve' to retry unresolved file merges or 'hg update -C .' to abandon
 
     > hg resolve --tool nbdimeweb
+    
+    
+
+.. links
+
+.. _`git diff documentation`: https://git-scm.com/docs/git-diff
