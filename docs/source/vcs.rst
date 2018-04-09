@@ -104,12 +104,12 @@ and::
 
 .. note::
 
-    If you simply call `git mergetool --tool nbdime`, it will be called
-    for all merge conflicts, even on filetypes that it cannot handle. To
-    only call on notebooks, add a filter on file paths, e.g.
-    `git mergetool --tool nbdime -- *.ipynb`. **This command has also been
-    aliased as `nbdime mergetool` for easy access**, and you can also add
-    your own git alias for this command.
+    If you simply call :command:`git mergetool --tool nbdime`, it will be 
+    alled for all merge conflicts, even on filetypes that it cannot
+    handle. To only call on notebooks, add a filter on file paths, e.g.
+    :command:`git mergetool --tool nbdime -- *.ipynb`.
+    **This command has also been aliased as `nbdime mergetool` for easy
+    access**, and you can also add your own git alias for this command.
 
 
 Diff driver
