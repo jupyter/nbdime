@@ -69,7 +69,7 @@ box. For example, the normal git diff command::
     git diff [<commit> [<commit>]] [--] [<path>…​]
 
 should give you the standard diff for any non-notebook files, but
-use nbdime's command-line diff for all `.ipynb` files. Nbdime
+use nbdime's command-line diff for all ``.ipynb`` files. Nbdime
 will also be used for all merges on notebook files (no specific
 commands needed).
 
@@ -135,7 +135,7 @@ with git::
 
 This command will register the nbdime diff driver with
 git, and associate the diff driver with the ``.ipynb``
-file extension. The `--global | --system` flags work as
+file extension. The ``--global | --system`` flags work as
 explained above.
 
 Manual registration
@@ -147,7 +147,7 @@ with the following steps:
 - To register the driver with git under the name
   ``"jupyternotebook"``, add the following entries to the
   appropriate ``.gitconfig`` file
-  (`git config [--global | --system] -e` to edit)::
+  (:command:`git config [--global | --system] -e` to edit)::
 
     [diff "jupyternotebook"]
     command = git-nbdiffdriver diff
@@ -184,7 +184,7 @@ driver with git::
 
 This command will register the nbdime merge driver with
 git, and associate the merge driver with the ``.ipynb``
-file extension. The `--global | --system` flags work as
+file extension. The ``--global | --system`` flags work as
 explained above.
 
 Manual registration
@@ -196,7 +196,7 @@ with the following steps:
 - To register the driver with git under the name
   "jupyternotebook", add the following entries to the appropriate
   ``.gitconfig`` file
-  (`git config [--global | --system] -e` to edit)::
+  (:command:`git config [--global | --system] -e` to edit)::
 
     [merge "jupyternotebook"]
     command = git-nbmergedriver merge %O %A %B %L %P
@@ -255,7 +255,7 @@ with the following steps:
 - To register both the merge tool with git under
   the name "nbdime", add the following entry
   to the appropriate ``.gitconfig`` file
-  (`git config [--global | --system] -e` to edit)::
+  (:command:`git config [--global | --system] -e` to edit)::
 
     [mergetool "nbdime"]
     cmd = git-nbmergetool "$BASE" "$LOCAL" "$REMOTE" "$MERGED"
