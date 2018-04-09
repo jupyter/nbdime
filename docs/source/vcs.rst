@@ -98,10 +98,9 @@ and::
 .. note::
 
     Using :command:`git-nbdiffdriver config` overrides the ability to call
-    :command:`git difftool` with notebooks.
-
-    You can still call :command:`nbdiff-web` to diff files directly,
-    but getting the files from git refs is still on our TODO list.
+    :command:`git difftool` with notebooks. Instead, call
+    :command:`nbdiff-web` in the same way that you call :command:`git diff`,
+    e.g. :command:`git diff [<commit> [<commit>]] [path].
 
 .. note::
 
