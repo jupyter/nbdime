@@ -4,8 +4,8 @@ Version control integration
 
 .. note::
 
-    Currently only integration with git is supported
-    out of the box.
+    Currently only integration with git and mercurial is
+    supported out of the box.
 
     Integration with other version control software
     should be possible if the version control software
