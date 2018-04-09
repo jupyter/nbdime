@@ -100,7 +100,7 @@ and::
     Using :command:`git-nbdiffdriver config` overrides the ability to call
     :command:`git difftool` with notebooks. Instead, call
     :command:`nbdiff-web` in the same way that you call :command:`git diff`,
-    e.g. :command:`git diff [<commit> [<commit>]] [path].
+    e.g. :command:`git diff [<commit> [<commit>]] [path]`.
 
 .. note::
 
