@@ -108,8 +108,9 @@ and::
     alled for all merge conflicts, even on filetypes that it cannot
     handle. To only call on notebooks, add a filter on file paths, e.g.
     :command:`git mergetool --tool nbdime -- *.ipynb`.
-    **This command has also been aliased as `nbdime mergetool` for easy
-    access**, and you can also add your own git alias for this command.
+    **This command has also been aliased as :command:`nbdime mergetool`
+    for easy access**, and you can also add your own git alias for this
+    command.
 
 
 Diff driver
