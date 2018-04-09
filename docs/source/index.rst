@@ -84,7 +84,10 @@ you should see a nice diff view, like this:
 
 To use the web-based GUI viewers of notebook diffs, call::
 
-    nbdiff-web [ref [ref]]
+    nbdiff-web [<commit> [<commit>]] [<path>]
+    
+See the `git diff documentation`_ for further explanation of "<commit>" and
+"<path>" for this command.
 
 .. versionadded:: 0.3
 
@@ -156,3 +159,5 @@ nbdime is developed with financial support from:
 .. links
 
 .. _`Jupyter notebooks`: http://jupyter-notebook.readthedocs.io/en/latest/
+
+.. _`git diff documentation`: https://git-scm.com/docs/git-diff
