@@ -8,9 +8,9 @@ module.exports = {
   bail: true,
   devtool: 'source-map',
   module: {
-    loaders: [
-      { test: /\.css$/, loader: 'style-loader!css-loader' },
-      { test: /\.(json|ipynb)$/, loader: 'json-loader' },
+    rules: [
+      { test: /\.css$/, use: ['style-loader', 'css-loader'] },
+      { test: /\.ipynb$/, type: 'json' },
       { test: /\.ts$/, loader: 'ts-loader' },
       { test: /\.js$/, loader: "source-map-loader" },
       { test: /\.html$/, loader: 'file-loader' },
