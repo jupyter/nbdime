@@ -1,0 +1,81 @@
+
+.nbdime-Widget {
+  display: flex;
+  flex-direction: column;
+}
+
+.nbdime-root {
+  padding: var(--jp-notebook-padding);
+  min-width: 50px;
+  min-height: 50px;
+  outline: none;
+  overflow: auto;
+  background: var(--jp-layout-color1);
+}
+
+
+/* Header syling */
+
+.nbdime-Diff {
+  border-bottom: var(--jp-border-width) solid var(--jp-toolbar-border-color);
+  box-shadow: var(--jp-toolbar-box-shadow);
+  background: var(--jp-toolbar-background);
+  flex: 0 0 auto;
+  padding: 2px;
+}
+
+.nbdime-Diff .nbdime-header-base {
+  display: inline-block;
+  width: 50%;
+  background-color: var(--jp-diff-deleted-color1);
+}
+
+.nbdime-Diff .nbdime-header-remote {
+  display: inline-block;
+  width: 49%;
+  background-color: var(--jp-diff-added-color1);
+}
+
+.nbdime-Diff .nbdime-header-local {
+  display: none;
+  width: 49%;
+}
+
+
+
+/* Hiding unchanged cells if told to */
+.nbdime-root.jp-mod-hideUnchanged .jp-Cell-diff.jp-Diff-unchanged {
+  display: none;
+}
+
+/* Show a marker with the number of cells hidden before */
+.nbdime-root.jp-mod-hideUnchanged .jp-Cell-diff[data-nbdime-NCellsHiddenBefore]::before {
+  content: attr(data-nbdime-NCellsHiddenBefore) " unchanged cell(s) hidden";
+  position: absolute;
+  width: 100%;
+  top: 0;
+  background-color: #eee;
+  border-top: solid #ccc 1px;
+  border-bottom: solid #ccc 1px;
+  text-align: center;
+}
+
+/* Show a marker with the number of cells hidden after (for hidden cells at end) */
+.nbdime-root.jp-mod-hideUnchanged .jp-Cell-diff[data-nbdime-NCellsHiddenAfter]::after {
+  content: attr(data-nbdime-NCellsHiddenAfter) " unchanged cell(s) hidden";
+  position: absolute;
+  width: 100%;
+  bottom: 0;
+  background-color: #eee;
+  border-top: solid #ccc 1px;
+  border-bottom: solid #ccc 1px;
+  text-align: center;
+}
+
+.nbdime-root.jp-mod-hideUnchanged .jp-Cell-diff[data-nbdime-NCellsHiddenBefore] {
+  padding-top: 40px;
+}
+
+.nbdime-root.jp-mod-hideUnchanged .jp-Cell-diff[data-nbdime-NCellsHiddenAfter] {
+  padding-bottom: 40px;
+}
