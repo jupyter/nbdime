@@ -30,7 +30,7 @@ version = get_version(pjoin(name, '_version.py'))
 
 # Representative files that should exist after a successful build
 jstargets = [
-    os.path.join(here, name, 'webapp', 'static', 'nbdime.js'),
+    pjoin(static_dir, 'nbdime.js'),
 ]
 
 

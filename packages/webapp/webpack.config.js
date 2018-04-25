@@ -1,7 +1,9 @@
+const path = require('path');
+
 module.exports = {
   entry: './src/index.ts',
   output: {
-    path: __dirname + "/static",
+    path: path.resolve(__dirname, '..', '..', 'nbdime', 'webapp', 'static'),
     filename: "nbdime.js",
     publicPath: "./static/"
   },
