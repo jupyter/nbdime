@@ -21,6 +21,11 @@ import subprocess
 import sys
 
 
+try:
+    basestring
+except NameError:
+    basestring = str
+
 # BEFORE importing distutils, remove MANIFEST. distutils doesn't properly
 # update it when the contents of directories change.
 if os.path.exists('MANIFEST'): os.remove('MANIFEST')
@@ -46,7 +51,7 @@ else:
         return ' '.join(map(pipes.quote, cmd_list))
 
 
-__version__ = '0.2.0'
+__version__ = '0.3.0'
 
 # ---------------------------------------------------------------------------
 # Top Level Variables
@@ -225,10 +230,20 @@ def is_stale(target, source):
     """Test whether the target file/directory is stale based on the source
        file/directory.
     """
-    if not os.path.exists(target):
-        return True
-    target_mtime = recursive_mtime(target) or 0
-    return compare_recursive_mtime(source, cutoff=target_mtime)
+    if isinstance(target, basestring):
+        target = [target]
+    if isinstance(source, basestring):
+        source = [source]
+    for t in target:
+        if not os.path.exists(t):
+            return True
+    target_mtime = 0
+    for t in target:
+        target_mtime = max(target_mtime, recursive_mtime(t))
+    for s in source:
+        if compare_recursive_mtime(s, cutoff=target_mtime):
+            return True
+    return False
 
 
 class BaseCommand(Command):
@@ -318,7 +333,7 @@ def mtime(path):
     return os.stat(path).st_mtime
 
 
-def install_npm(path=None, build_dir=None, source_dir=None, build_cmd='build', force=False, npm=None):
+def install_npm(path=None, build_targets=None, sources=None, build_cmd='build', force=False, npm=None):
     """Return a Command for managing an npm installation.
 
     Note: The command is skipped if the `--skip-npm` flag is used.
@@ -327,26 +342,31 @@ def install_npm(path=None, build_dir=None, source_dir=None, build_cmd='build', f
     ----------
     path: str, optional
         The base path of the node package.  Defaults to the repo root.
-    build_dir: str, optional
-        The target build directory.  If this and source_dir are given,
-        the JavaScript will only be build if necessary.
-    source_dir: str, optional
-        The source code directory.
+    build_targets: str or list, optional
+        One or more build targets (files or directories).
+        If this and source_dir are given, the JavaScript will only be
+        build if necessary.
+    sources: str or list, optional
+        One or more source code files and directories.
     build_cmd: str, optional
         The npm command to build assets to the build_dir.
     npm: str or list, optional.
         The npm executable name, or a tuple of ['node', executable].
     """
 
+    if isinstance(build_targets, basestring):
+        build_targets = [build_targets]
+    if isinstance(sources, basestring):
+        sources = [sources]
+
     class NPM(BaseCommand):
         description = 'install package.json dependencies using npm'
 
         def run(self):
             if skip_npm:
-                log.info('Skipping npm-installation')
+                log.info('Skipping npm installation')
                 return
             node_package = path or HERE
-            node_modules = pjoin(node_package, 'node_modules')
             is_yarn = os.path.exists(pjoin(node_package, 'yarn.lock'))
 
             npm_cmd = npm
@@ -357,22 +377,30 @@ def install_npm(path=None, build_dir=None, source_dir=None, build_cmd='build', f
                 else:
                     npm_cmd = ['npm']
 
+            missing = any(not os.path.exists(t) for t in build_targets)
+            ok_sdist = not is_repo and not missing
+
+            if ok_sdist and not force:
+                log.info('Skipping npm build; build targets found')
+                return
+
+            should_build = force or is_stale(build_targets, sources)
+
+            if not should_build:
+                log.info('Skipping npm build; up to date')
+                return
+
             if not which(npm_cmd[0]):
                 log.error("`{0}` unavailable.  If you're running this command "
                           "using sudo, make sure `{0}` is availble to sudo"
                           .format(npm_cmd[0]))
                 return
 
-            if force or is_stale(node_modules, pjoin(node_package, 'package.json')):
-                log.info('Installing build dependencies with npm.  This may '
-                         'take a while...')
-                run(npm_cmd + ['install'], cwd=node_package)
-            if build_dir and source_dir and not force:
-                should_build = is_stale(build_dir, source_dir)
-            else:
-                should_build = True
-            if should_build:
-                run(npm_cmd + ['run', build_cmd], cwd=node_package)
+            log.info('Installing build dependencies with npm.  This may '
+                     'take a while...')
+            run(npm_cmd + ['install'], cwd=node_package)
+
+            run(npm_cmd + ['run', build_cmd], cwd=node_package)
 
     return NPM
 
