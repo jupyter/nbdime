@@ -31,7 +31,7 @@ notebook toolbar, as shown in the figure below.
 
    Figure: nbdime's buttons in the notebook extension.
 
-Clicking the git button will open a new tab showing the diff between the
+Clicking the git button will open a new tab showing the diff between
 the last commit and the *currently saved* version of the notebook. Note that
 this button will only be visible if the notebook is currently in a git
 repository.
