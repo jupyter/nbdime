@@ -2,6 +2,14 @@
 .CodeMirror-merge {
   position: relative;
   white-space: pre;
+  /* style as jp-InputArea-editor: */
+  border: var(--codemirror-border);
+  border-radius: 0px;
+  background: var(--jp-cell-editor-background);
+}
+
+.nbdime-root .CodeMirror.cm-s-jupyter {
+  background: transparent;
 }
 
 .CodeMirror-merge, .CodeMirror-merge .CodeMirror {
@@ -45,7 +53,8 @@
   border-left: var(--codemirror-border);
   border-right: var(--codemirror-border);
   position: absolute;
-  background: var(--codemirror-gutter-background);
+  color: var(--jp-ui-font-color2);
+  background: var(--jp-layout-color2);
 }
 
 .CodeMirror-merge-scrolllock-wrap {
@@ -56,7 +65,6 @@
   position: relative;
   left: -50%;
   cursor: pointer;
-  color: #555;
   line-height: 1;
 }
 

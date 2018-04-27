@@ -10,7 +10,7 @@
   min-height: 50px;
   outline: none;
   overflow: auto;
-  background: var(--jp-layout-color1);
+  background: var(--jp-layout-color0);
 }
 
 
@@ -20,6 +20,7 @@
   border-bottom: var(--jp-border-width) solid var(--jp-toolbar-border-color);
   box-shadow: var(--jp-toolbar-box-shadow);
   background: var(--jp-toolbar-background);
+  color: var(--jp-ui-font-color1);
   flex: 0 0 auto;
   padding: 2px;
 }
@@ -27,13 +28,13 @@
 .nbdime-Diff .nbdime-header-base {
   display: inline-block;
   width: 50%;
-  background-color: var(--jp-diff-deleted-color1);
+  background-color: var(--jp-diff-deleted-color0);
 }
 
 .nbdime-Diff .nbdime-header-remote {
   display: inline-block;
   width: 49%;
-  background-color: var(--jp-diff-added-color1);
+  background-color: var(--jp-diff-added-color0);
 }
 
 .nbdime-Diff .nbdime-header-local {

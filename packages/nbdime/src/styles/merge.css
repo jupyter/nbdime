@@ -31,7 +31,7 @@
 
 .jp-Notebook-merge .jp-Merge-cellHeader {
   display: flex;
-  background-color: var(--codemirror-gutter-background);
+  background-color: var(--jp-layout-color2);
   border-top: solid #ccc 1px;
 }
 
