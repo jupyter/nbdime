@@ -26,8 +26,11 @@ install:
   - 'SET "PATH=%PYTHON%\Scripts;%PYTHON%;%PATH%"'
   # Install coverage utilities:
   - 'pip install codecov'
+  # Package up sdist for our package:
+  - 'python setup.py sdist'
+  - 'for /f %%i in (''dir .\dist\nbdime-*.tar.gz /B'') do set fname=%%i'
   # Install our package:
-  - 'pip install --upgrade ".[test]" -v'
+  - 'pip install --upgrade ".\dist\%fname%[test]"'
 
 build: off
 

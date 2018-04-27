@@ -27,10 +27,13 @@ ensure_python(('>=2.7', '>=3.4'))
 name = 'nbdime'
 version = get_version(pjoin(name, '_version.py'))
 
+# Some paths
+static_dir = pjoin(here, name, 'webapp', 'static')
+packages_dir = pjoin(here, 'packages')
 
 # Representative files that should exist after a successful build
 jstargets = [
-    os.path.join(here, name, 'webapp', 'static', 'nbdime.js'),
+    pjoin(static_dir, 'nbdime.js'),
 ]
 
 
@@ -51,9 +54,10 @@ data_spec = [
     ('share/jupyter/nbextensions/nbdime', name + '/notebook_ext', '*.js'),
 ]
 
+
 cmdclass = create_cmdclass('js', data_files_spec=data_spec)
 cmdclass['js'] = combine_commands(
-    install_npm(here),
+    install_npm(here, build_targets=jstargets, sources=packages_dir),
     ensure_targets(jstargets),
 )
 

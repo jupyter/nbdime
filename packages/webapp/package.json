@@ -6,14 +6,14 @@
   "private": true,
   "scripts": {
     "build": "webpack -p",
-    "clean": "rimraf build && rimraf node_modules && rimraf static",
+    "clean": "rimraf build && rimraf node_modules && rimraf ../../nbdime/webapp/static",
     "watch": "webpack --watch"
   },
   "devDependencies": {
     "@types/json-stable-stringify": "^1.0.32",
     "@types/node": "^9.4.6",
     "@types/sanitizer": "^0.0.28",
-    "@types/filesaver": "^0.0.30",
+    "@types/file-saver": "^1.3.0",
     "css-loader": "^0.28.7",
     "file-loader": "^1.1.5",
     "rimraf": "^2.6.2",

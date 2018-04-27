@@ -40,7 +40,7 @@
   },
   "dependencies": {
     "@jupyterlab/apputils": "^0.16.0",
-    "@jupyterlab/codeeditor": "^0.15.4",
+    "@jupyterlab/codeeditor": "^0.16.0",
     "@jupyterlab/codemirror": "^0.16.0",
     "@jupyterlab/coreutils": "^1.0.9",
     "@jupyterlab/outputarea": "^0.16.0",
