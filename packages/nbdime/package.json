@@ -20,6 +20,8 @@
     "test:ie": "karma start --browsers=IE test/karma.conf.js"
   },
   "devDependencies": {
+    "@jupyterlab/apputils": "^0.16.0",
+    "@phosphor/messaging": "^1.2.2",
     "@types/expect.js": "^0.3.29",
     "@types/json-stable-stringify": "^1.0.32",
     "@types/mocha": "^5.0.0",
@@ -39,17 +41,16 @@
     "typescript": "~2.8.1"
   },
   "dependencies": {
-    "@jupyterlab/apputils": "^0.16.0",
     "@jupyterlab/codeeditor": "^0.16.0",
     "@jupyterlab/codemirror": "^0.16.0",
-    "@jupyterlab/coreutils": "^1.0.9",
+    "@jupyterlab/coreutils": "^1.1.2",
     "@jupyterlab/outputarea": "^0.16.0",
     "@jupyterlab/rendermime": "^0.16.0",
-    "@jupyterlab/rendermime-interfaces": "^1.0.6",
     "@jupyterlab/services": "^2.0.0",
     "@phosphor/algorithm": "^1.1.2",
     "@phosphor/coreutils": "^1.3.0",
     "@phosphor/dragdrop": "^1.3.0",
+    "@phosphor/signaling": "^1.2.2",
     "@phosphor/widgets": "^1.5.0",
     "codemirror": "~5.35.0",
     "json-stable-stringify": "^1.0.1"

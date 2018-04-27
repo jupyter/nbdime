@@ -3,10 +3,6 @@
 'use strict';
 
 import {
-  ISanitizer
-} from '@jupyterlab/apputils';
-
-import {
   URLExt
 } from '@jupyterlab/coreutils';
 
