@@ -39,6 +39,6 @@
     "alertify.js": "^1.0.12",
     "codemirror": "~5.35.0",
     "file-saver": "^1.3.3",
-    "nbdime": "^0.4.0"
+    "nbdime": "^1.0.1"
   }
 }

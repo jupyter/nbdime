@@ -1,6 +1,6 @@
 {
   "name": "nbdime",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "license": "BSD-3-Clause",
   "repository": {
     "type": "git",
@@ -17,7 +17,8 @@
     "test:chrome": "karma start --browsers=Chrome test/karma.conf.js",
     "test:debug": "karma start --browsers=Chrome --singleRun=false --debug=true test/karma-nocov.conf.js",
     "test:firefox": "karma start --browsers=Firefox test/karma.conf.js",
-    "test:ie": "karma start --browsers=IE test/karma.conf.js"
+    "test:ie": "karma start --browsers=IE test/karma.conf.js",
+    "prepublishOnly": "npm run build"
   },
   "devDependencies": {
     "@jupyterlab/apputils": "^0.16.0",
