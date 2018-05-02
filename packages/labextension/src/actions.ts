@@ -37,6 +37,7 @@ function diffNotebook(args: {readonly base: string, readonly remote: string, rea
   let {base, remote} = args;
   let widget = new NbdimeWidget(args);
   widget.title.label = `Diff: ${base} ↔ ${remote}`;
+  widget.title.caption = `Local: ${base}\nRemote: '${remote}'`;
   return widget;
 }
 
@@ -49,6 +50,8 @@ function diffNotebookCheckpoint(args: {readonly path: string, readonly rendermim
   let base = PathExt.join(nb_dir, name + '.ipynb');
   let widget = new NbdimeWidget({base, rendermime, baseLabel: 'Checkpoint'});
   widget.title.label = `Diff checkpoint: ${name}`;
+  widget.title.caption = `Local: latest checkpoint\nRemote: '${path}'`;
+  widget.title.iconClass = 'fa fa-clock-o jp-fa-tabIcon';
   return widget;
 }
 
@@ -59,6 +62,8 @@ function diffNotebookGit(args: {readonly path: string, readonly rendermime: IRen
   let name = PathExt.basename(path, '.ipynb');
   let widget = new NbdimeWidget({base: path, rendermime});
   widget.title.label = `Diff git: ${name}`;
+  widget.title.caption = `Local: git HEAD\nRemote: '${path}'`;
+  widget.title.iconClass = 'fa fa-git jp-fa-tabIcon';
   return widget;
 }
 

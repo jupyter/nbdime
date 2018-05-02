@@ -16,6 +16,10 @@
 
 /* Header syling */
 
+.jp-fa-tabIcon {
+  padding-top: 6px;
+}
+
 .nbdime-Diff {
   border-bottom: var(--jp-border-width) solid var(--jp-toolbar-border-color);
   box-shadow: var(--jp-toolbar-box-shadow);
@@ -23,6 +27,12 @@
   color: var(--jp-ui-font-color1);
   flex: 0 0 auto;
   padding: 2px;
+  z-index: 1;
+}
+
+.nbdime-header-buttonrow > * {
+  padding-left: 8px;
+  padding-right: 8px;
 }
 
 .nbdime-Diff .nbdime-header-base {

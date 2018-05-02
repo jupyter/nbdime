@@ -96,7 +96,7 @@ class NbdimeWidget extends Panel {
     } else {
       args = {base: `git:${this.base}`}
     }
-    
+
     let url = URLExt.join(urlRStrip(ServerConnection.defaultSettings.baseUrl), 'nbdime/api/diff');
     let promise = requestJsonPromise(url, args);
     promise.then(this.onData.bind(this)).catch(this.onError.bind(this));
@@ -214,7 +214,7 @@ namespace Private {
     node.className = 'nbdime-Diff';
     node.innerHTML = `
       <div class="nbdime-header-buttonrow">
-        <input class="nbdime-hide-unchanged" type="checkbox"><label for="cbox1">Hide unchanged cells</label></input>
+        <label><input class="nbdime-hide-unchanged" type="checkbox">Hide unchanged cells</label>
         <button class="nbdime-export" style="display: none">Export diff</button>
       </div>
       <div class=nbdime-header-banner>
