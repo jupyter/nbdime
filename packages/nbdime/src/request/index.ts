@@ -14,12 +14,28 @@ import {
   ServerConnection
 } from '@jupyterlab/services';
 
+
 function urlRStrip(target: string): string {
   if (target.slice(-1) === '/') {
     return target.slice(0, -1);
   }
   return target;
 }
+
+
+export
+function handleError(response: Response): Promise<Response> | Response {
+  if (!response.ok) {
+    if (response.status === 500 && response.body) {
+      return response.text().then((body) => {
+        throw new Error(body);
+      });
+    }
+    throw new Error(`${response.status} ${response.statusText}`);
+  }
+  return response;
+}
+
 
 /**
  * Make a POST request passing a JSON argument and receiving a JSON result.
@@ -31,7 +47,9 @@ function requestJsonPromise(url: string, argument: any): Promise<JSONObject> {
       body: JSON.stringify(argument),
     };
   let settings = ServerConnection.makeSettings();
-  return ServerConnection.makeRequest(url, request, settings).then((response) => {
+  return ServerConnection.makeRequest(url, request, settings)
+    .then(handleError)
+    .then((response) => {
       return response.json();
     });
 }

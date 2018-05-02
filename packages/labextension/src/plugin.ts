@@ -68,6 +68,11 @@ const INBDiffExtension = new Token<INBDiffExtension>('jupyter.extensions.nbdime'
 export
 type INBDiffExtension = DocumentRegistry.IWidgetExtension<NotebookPanel, INotebookModel>;
 
+/**
+ * Error message if the nbdime API is unavailable.
+ */
+const serverMissingMsg = 'Unable to query nbdime API. Is the server extension enabled?';
+
 
 
 export
@@ -141,11 +146,21 @@ namespace CommandIDs {
 function addCommands(app: JupyterLab, tracker: INotebookTracker, rendermime: IRenderMimeRegistry): void {
   const { commands, shell } = app;
 
+  // Whether we have our server extension available
+  let hasAPI = true;
+
   /**
    * Whether there is an active notebook.
    */
   function hasWidget(): boolean {
     return tracker.currentWidget !== null;
+  }
+
+  /**
+   * Whether there is an active notebook.
+   */
+  function baseEnabled(): boolean {
+    return hasAPI && tracker.currentWidget !== null;
   }
 
   // This allows quicker checking, but if someone creates/removes
@@ -156,7 +171,7 @@ function addCommands(app: JupyterLab, tracker: INotebookTracker, rendermime: IRe
    * Whether the notebook is in a git repository.
    */
   function hasGitNotebook(): boolean {
-    if (!hasWidget()) {
+    if (!baseEnabled()) {
       return false;
     }
 
@@ -164,18 +179,35 @@ function addCommands(app: JupyterLab, tracker: INotebookTracker, rendermime: IRe
     let dir = PathExt.dirname(path);
     let known_git = lut_known_git[dir];
     if (known_git === undefined) {
-      isNbInGit({path: dir}).then(inGit => {
+      const inGitPromise = isNbInGit({path: dir});
+      inGitPromise.then(inGit => {
         lut_known_git[dir] = inGit;
         // Only update if false, since it is left enabled while waiting
         if (!inGit) {
           commands.notifyCommandChanged(CommandIDs.diffNotebookGit);
         }
       });
+      inGitPromise.catch((reason) => {
+        hasAPI = reason.status !== undefined && reason.status !== 404;
+        commands.notifyCommandChanged(CommandIDs.diffNotebook);
+        commands.notifyCommandChanged(CommandIDs.diffNotebookCheckpoint);
+        commands.notifyCommandChanged(CommandIDs.diffNotebookGit);
+      });
       // Leave button enabled while unsure
       return true;
     }
 
     return known_git;
+  }
+
+
+  function erroredGen(text: string) {
+    return () => {
+      if (hasAPI) {
+        return text;
+      }
+      return serverMissingMsg;
+    };
   }
 
 
@@ -186,9 +218,9 @@ function addCommands(app: JupyterLab, tracker: INotebookTracker, rendermime: IRe
       //let content = current.notebook;
       //diffNotebook({base, remote});
     },
-    label: 'Notebook diff',
-    caption: 'Display nbdiff between two notebooks',
-    isEnabled: hasWidget,
+    label: erroredGen('Notebook diff'),
+    caption: erroredGen('Display nbdiff between two notebooks'),
+    isEnabled: baseEnabled,
     icon: 'action-notebook-diff action-notebook-diff-notebooks',
     iconLabel: 'nbdiff',
   });
@@ -205,9 +237,9 @@ function addCommands(app: JupyterLab, tracker: INotebookTracker, rendermime: IRe
         shell.activateById(widget.id);
       }
     },
-    label: 'Notebook checkpoint diff',
-    caption: 'Display nbdiff from checkpoint to currently saved version',
-    isEnabled: hasWidget,
+    label: erroredGen('Notebook checkpoint diff'),
+    caption: erroredGen('Display nbdiff from checkpoint to currently saved version'),
+    isEnabled: baseEnabled,
     iconClass: 'fa fa-clock-o action-notebook-diff action-notebook-diff-checkpoint',
   });
 
@@ -223,8 +255,8 @@ function addCommands(app: JupyterLab, tracker: INotebookTracker, rendermime: IRe
         shell.activateById(widget.id);
       }
     },
-    label: 'Notebook Git diff',
-    caption: 'Display nbdiff from git HEAD to currently saved version',
+    label: erroredGen('Notebook Git diff'),
+    caption: erroredGen('Display nbdiff from git HEAD to currently saved version'),
     isEnabled: hasGitNotebook,
     iconClass: 'fa fa-git action-notebook-diff action-notebook-diff-git',
   });

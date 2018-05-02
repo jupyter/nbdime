@@ -73,6 +73,9 @@ function isNbInGit(args: {readonly path: string}): Promise<boolean> {
   return ServerConnection.makeRequest(
     URLExt.join(urlRStrip(settings.baseUrl), '/nbdime/api/isgit'),
     request, settings).then((response) => {
+      if (!response.ok) {
+        return Promise.reject(response);
+      }
       return response.json() as Promise<IApiResponse>;
     }).then((data) => {
       return data['is_git'];
