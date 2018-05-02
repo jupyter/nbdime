@@ -1,20 +1,18 @@
 
 :root {
-  --codemirror-border-color: #ddd;
-  --codemirror-border: 1px solid var(--codemirror-border-color);
-  --codemirror-gutter-background: #f8f8f8;
+  --codemirror-border: var(--jp-border-width) solid var(--jp-cell-editor-border-color);
 
   --jp-nbdime-output-color1: #39f;
   --jp-nbdime-output-color2: #7bf;
   --jp-nbdime-output-color3: #adf;
 
-  --jp-diff-added-color0: #3d3;
-  --jp-diff-added-color1: #a6f3a6;
-  --jp-diff-added-color2: #dbffdb;
+  --jp-diff-added-color0: rgba(0, 200, 20, 0.6);
+  --jp-diff-added-color1: rgba(0, 200, 20, 0.3);
+  --jp-diff-added-color2: rgba(0, 200, 20, 0.3);
 
-  --jp-diff-deleted-color0: #f55;
-  --jp-diff-deleted-color1: #f8cbcb;
-  --jp-diff-deleted-color2: #ffecec;
+  --jp-diff-deleted-color0: rgba(240, 20, 0, 0.55);
+  --jp-diff-deleted-color1: rgba(255, 20, 0, 0.3);
+  --jp-diff-deleted-color2: rgba(255, 20, 0, 0.3);
 
   --jp-merge-local-color1: #cbcbf8;
   --jp-merge-local-color2: #ececff;
