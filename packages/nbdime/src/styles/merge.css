@@ -232,11 +232,11 @@
   margin-left: 20px;
 }
 
-.jp-Notebook-merge .jp-Diff-renderedOuput .jp-Merge-local {
+.jp-Notebook-merge .jp-Diff-renderedOutput .jp-Merge-local {
   background-color: var(--jp-merge-local-color2);
 }
 
-.jp-Notebook-merge .jp-Diff-renderedOuput .jp-Merge-remote {
+.jp-Notebook-merge .jp-Diff-renderedOutput .jp-Merge-remote {
   background-color: var(--jp-merge-remote-color2);
 }
 
