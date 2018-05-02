@@ -53,7 +53,7 @@ const OUTPUT_PANEL_CLASS = 'jp-Diff-outputPanel';
 /**
  * Class for a single rendered output view
  */
-const RENDERED_OUTPUT_CLASS = 'jp-Diff-renderedOuput';
+const RENDERED_OUTPUT_CLASS = 'jp-Diff-renderedOutput';
 
 /**
  * Output is untrusted, and can benefit from being trusted
