@@ -206,7 +206,9 @@ namespace Private {
         remoteLabel = remote;
       }
     } else {
-      baseLabel = 'git HEAD';
+      if (!baseLabel) {
+        baseLabel = 'git HEAD';
+      }
       remoteLabel = base;
     }
 
