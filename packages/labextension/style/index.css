@@ -39,17 +39,20 @@
   display: inline-block;
   width: 50%;
   background-color: var(--jp-diff-deleted-color0);
+  padding: 0px 4px;
 }
 
 .nbdime-Diff .nbdime-header-remote {
   display: inline-block;
   width: 49%;
   background-color: var(--jp-diff-added-color0);
+  padding: 0px 4px;
 }
 
 .nbdime-Diff .nbdime-header-local {
   display: none;
   width: 49%;
+  padding: 0px 4px;
 }
 
 
