@@ -37,21 +37,21 @@
 
 .nbdime-Diff .nbdime-header-base {
   display: inline-block;
-  width: 50%;
+  width: calc(50% - 8px);
   background-color: var(--jp-diff-deleted-color0);
   padding: 0px 4px;
 }
 
 .nbdime-Diff .nbdime-header-remote {
   display: inline-block;
-  width: 49%;
+  width: calc(49% - 8px);
   background-color: var(--jp-diff-added-color0);
   padding: 0px 4px;
 }
 
 .nbdime-Diff .nbdime-header-local {
   display: none;
-  width: 49%;
+  width: calc(49% - 8px);
   padding: 0px 4px;
 }
 
