@@ -9,15 +9,23 @@ To install the latest stable release using :command:`pip`::
 
     pip install --upgrade nbdime
 
-To install and enable the nbdime notebook extensions, run::
+This will also install and enable the nbdime extensions
+(server, notebook and jupyterlab). To disable these extensions, run::
 
-    nbdime reg-extensions [--sys-prefix/--user/--system]
+    nbdime extensions --disable [--sys-prefix/--user/--system]
 
 The ``--system`` (default) and ``--user`` flags determine which users
-the extensions will be installed and enabled for. Note that you should
+the extensions will be configured for. Note that you should
 use ``--sys-prefix`` to only enable it for the currently active
-virtual environment (e.g. with conda or virtualenv). For manual registration
-see :doc:`extensions`.
+virtual environment (e.g. with conda or virtualenv).
+
+If the extensions did not install/enable on install, you can run::
+
+    nbdime extensions --enable [--sys-prefix/--user/--system]
+
+where the flags are the same as described above.
+
+For manual registration see :doc:`extensions`.
 
 
 Dependencies

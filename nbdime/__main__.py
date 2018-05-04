@@ -18,13 +18,14 @@ except ImportError:
     from backports.shutil_which import which
 
 COMMANDS = ["show", "diff", "merge", "diff-web", "merge-web", "mergetool",
-            "config-git", "reg-extensions"]
+            "config-git", "extensions"]
 HELP_MESSAGE_VERBOSE = ("Usage: nbdime [OPTIONS]\n\n"
                        "OPTIONS: -h, --version, COMMANDS{%s}\n\n"
                        "Examples: nbdime --version\n"
                        "          nbdime show -h\n"
                        "          nbdime merge-web\n\n"
-                       "          nbdime config-git (--enable | --disable)"
+                       "          nbdime config-git (--enable | --disable)\n"
+                       "          nbdime extensions (--enable | --disable)\n\n"
                        "Documentation: https://nbdime.readthedocs.io" % ", ".join(COMMANDS))
 
 
@@ -44,6 +45,19 @@ def main_mergetool(args):
     nbdime.log.info("Calling 'git mergetool --tool=nbdime' on files {}".format(paths))
 
     return call(to_call)
+
+
+def toggle_extensions(enable, args):
+    if enable:
+        call('jupyter serverextension enable --py nbdime'.split() + args)
+        call('jupyter nbextension install --py nbdime'.split() + args)
+        call('jupyter nbextension enable --py nbdime'.split() + args)
+        call('jupyter labextension install nbdime-jupyterlab'.split() + args)
+    else:
+        call('jupyter serverextension disable --py nbdime'.split() + args)
+        call('jupyter nbextension disable --py nbdime'.split() + args)
+        call('jupyter nbextension uninstall --py nbdime'.split() + args)
+        call('jupyter labextension uninstall nbdime-jupyterlab'.split() + args)
 
 
 def main_dispatch(args=None):
@@ -85,9 +99,20 @@ def main_dispatch(args=None):
         )
     elif cmd == 'reg-extensions':
         # Register nbdime extensions
-        call('jupyter serverextension enable --py nbdime'.split() + args)
-        call('jupyter nbextension install --py nbdime'.split() + args)
-        call('jupyter nbextension enable --py nbdime'.split() + args)
+        toggle_extensions(True, args)
+        return 0
+    elif cmd == 'extensions':
+        subcmd = args.pop(0)
+        if subcmd == '--enable':
+            # Register nbdime extensions
+            toggle_extensions(True, args)
+        elif subcmd == '--disable':
+            # Unregister nbdime extensions
+            toggle_extensions(False, args)
+        else:
+            sys.exit(
+                'Unknown command: use either "--enable" or "--disable" '
+                'with "nbdime extensions", not %r' % subcmd)
         return 0
     else:
         if cmd == '--version':

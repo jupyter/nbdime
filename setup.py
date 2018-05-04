@@ -51,10 +51,15 @@ package_data = {
 
 
 data_spec = [
-    ('share/jupyter/nbextensions/nbdime', name + '/notebook_ext', '*.js'),
+    ('share/jupyter/nbextensions/nbdime',
+     name + '/notebook_ext',
+     '*.js'),
     ('share/jupyter/lab/extensions',
      'packages/labextension/dist',
      'nbdime-jupyterlab-*.tgz'),
+    ('etc/jupyter',
+     'jupyter-config',
+     '**/*.json'),
 ]
 
 
