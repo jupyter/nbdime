@@ -7,7 +7,7 @@ import {
 } from './app/diff';
 
 import {
-  initializeMerge, closeMerge
+  initializeMerge, closeMerge, forceCloseMerge
 } from './app/merge';
 
 import {
@@ -82,7 +82,11 @@ function initialize() {
 
     window.onunload = (ev: Event) => {
       if (!toolClosed) {
-        closeTool();
+        if (type === 'merge') {
+          forceCloseMerge();
+        } else {
+          closeTool();
+        }
       }
     };
 
