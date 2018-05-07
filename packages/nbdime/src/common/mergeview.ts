@@ -327,8 +327,10 @@ class DiffView {
       debounceChange = window.setTimeout(update, fast === true ? 20 : 250);
     }
     function change(_cm: CodeMirror.Editor, change: CodeMirror.EditorChange) {
-      if (self.model instanceof DecisionStringDiffModel) {
-        self.model.invalidate();
+      if (!(self.model instanceof DecisionStringDiffModel)) {
+        // TODO: Throttle?
+        self.lineChunks = self.model.getLineChunks();
+        self.chunks = lineToNormalChunks(self.lineChunks);
       }
       // Update faster when a line was added/removed
       setDealign(change.text.length - 1 !== change.to.line - change.from.line);
