@@ -16,7 +16,7 @@ import {
 } from '../merge/decisions';
 
 import {
-  valueIn, shallowCopy
+  valueIn, shallowCopy, unique
 } from '../common/util';
 
 
@@ -167,6 +167,7 @@ class Chunker {
       }
       this.chunks.push(current);
     }
+    current.sources = current.sources.filter(unique);
     this.editOffset += isAddition ? -linediff : linediff;
   }
 
@@ -223,6 +224,7 @@ class Chunker {
       this.chunks.push(current);
     }
     this._currentGhost = current;
+    current.sources = current.sources.filter(unique);
     // this._doAdd(range, isAddition);
   }
 
@@ -281,6 +283,7 @@ function lineToNormalChunks(lineChunks: Chunk[]): Chunk[] {
         current = shallowCopy(c);
       }
     }
+    current.sources = current.sources.filter(unique);
   }
   if (current !== null) {
     ret.push(current);
