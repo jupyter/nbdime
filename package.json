@@ -4,6 +4,7 @@
     "install": "lerna bootstrap --hoist",
     "clean": "rimraf node_modules && lerna run clean",
     "build": "lerna run build",
+    "build:debug": "lerna run build:debug",
     "updated": "lerna updated",
     "test": "lerna run test",
     "publish": "npm run clean && npm run build && lerna publish -m \"Publish npm packages\""
