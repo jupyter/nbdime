@@ -199,7 +199,7 @@ describe('diff', () => {
           let remote = 'Single updated line text';
           let added: DiffRangeRaw[] = [];
           added.push(new DiffRangeRaw('Single '.length, 'update '.length));
-          let m = new StringDiffModel(base, remote, added, []);
+          let m = new StringDiffModel(null!, base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).to.have.length(1);
           expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
@@ -214,7 +214,7 @@ describe('diff', () => {
           let added: DiffRangeRaw[] = [];
           added.push(new DiffRangeRaw(
             'Line 1\nLine 2 is '.length, 'now '.length));
-          let m = new StringDiffModel(base, remote, added, []);
+          let m = new StringDiffModel(null!, base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).to.have.length(1);
           expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
@@ -229,7 +229,7 @@ describe('diff', () => {
           let added: DiffRangeRaw[] = [];
           added.push(new DiffRangeRaw(
             'Line 1\n'.length, 'Now '.length));
-          let m = new StringDiffModel(base, remote, added, []);
+          let m = new StringDiffModel(null!, base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).to.have.length(1);
           expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
@@ -244,7 +244,7 @@ describe('diff', () => {
           let added: DiffRangeRaw[] = [];
           added.push(new DiffRangeRaw(
             'Line 1\nLine 2 is like this'.length, ' now'.length));
-          let m = new StringDiffModel(base, remote, added, []);
+          let m = new StringDiffModel(null!, base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).to.have.length(1);
           expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
@@ -259,7 +259,7 @@ describe('diff', () => {
           let added: DiffRangeRaw[] = [];
           added.push(new DiffRangeRaw(
             'Line 1'.length, '\nLine 1.1'.length));
-          let m = new StringDiffModel(base, remote, added, []);
+          let m = new StringDiffModel(null!, base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).to.have.length(1);
           expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
@@ -274,7 +274,7 @@ describe('diff', () => {
           let added: DiffRangeRaw[] = [];
           added.push(new DiffRangeRaw(
             'Line 1\n'.length, 'Line 1.1\n'.length));
-          let m = new StringDiffModel(base, remote, added, []);
+          let m = new StringDiffModel(null!, base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).to.have.length(1);
           expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
@@ -292,7 +292,7 @@ describe('diff', () => {
           let added: DiffRangeRaw[] = [];
           added.push(new DiffRangeRaw(
             'Line 1'.length, '\n'.length));
-          let m = new StringDiffModel(base, remote, added, []);
+          let m = new StringDiffModel(null!, base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).to.have.length(1);
           expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
@@ -310,7 +310,7 @@ describe('diff', () => {
           let added: DiffRangeRaw[] = [];
           added.push(new DiffRangeRaw(
             'Line 1'.length, '\n\n\n'.length));
-          let m = new StringDiffModel(base, remote, added, []);
+          let m = new StringDiffModel(null!, base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).to.have.length(1);
           expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
@@ -328,7 +328,7 @@ describe('diff', () => {
           let added: DiffRangeRaw[] = [];
           added.push(new DiffRangeRaw(
             'Line 1'.length, '\nLine 1.1\n'.length));
-          let m = new StringDiffModel(base, remote, added, []);
+          let m = new StringDiffModel(null!, base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).to.have.length(1);
           expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
@@ -343,7 +343,7 @@ describe('diff', () => {
           let added: DiffRangeRaw[] = [];
           added.push(new DiffRangeRaw(
             0, 'Line 0\n'.length));
-          let m = new StringDiffModel(base, remote, added, []);
+          let m = new StringDiffModel(null!, base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).to.have.length(1);
           expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);

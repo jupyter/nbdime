@@ -3,7 +3,7 @@
 'use strict';
 
 import {
-  valueIn
+  valueIn, deepCopy
 } from '../common/util';
 
 import {
@@ -249,4 +249,33 @@ function validateObjectOp(base: any, entry: IDiffEntry, keys: string[]): void {
   } else {
     throw new Error('Invalid op: ' + op);
   }
+}
+
+/**
+ * Deep copy of diff, but with same source references
+ */
+export function deepCopyDiff(diff: null): null;
+export function deepCopyDiff<T extends IDiffEntry>(diff: T[]): T[];
+export function deepCopyDiff<T extends IDiffEntry>(diff: T[] | null): T[] | null;
+export function deepCopyDiff(diff: IDiffEntry[] | null): IDiffEntry[] | null {
+  if (!diff) {
+    return diff;
+  }
+  let copy: IDiffEntry[] = [];
+  for (let e of diff) {
+    let cp: any = {};
+    cp.key = e.key;
+    cp.op = e.op;
+    cp.source = e.source;
+    for (let sub of ['valuelist', 'value', 'length']) {
+      if (e.hasOwnProperty(sub)) {
+        cp[sub] = deepCopy((e as any)[sub]);
+      }
+    }
+    if (e.op === 'patch') {
+      cp.diff = deepCopyDiff(e.diff);
+    }
+    copy.push(cp);
+  }
+  return copy;
 }

@@ -11,7 +11,7 @@ import {
 } from '../../diff/range';
 
 import {
-  StringDiffModel, IStringDiffModel
+  StringDiffModel, IStringDiffModel, IModel
 } from '../../diff/model';
 
 import {
@@ -37,12 +37,12 @@ import {
  */
 export
 class DecisionStringDiffModel extends StringDiffModel {
-  constructor(base: any, decisions: MergeDecision[],
+  constructor(parent: IModel, base: any, decisions: MergeDecision[],
               sourceModels: (IStringDiffModel | null)[],
               collapsible?: boolean, header?: string, collapsed?: boolean) {
     // Set up initial parameters for super call
     let baseStr = stringifyAndBlankNull(base);
-    super(baseStr, '', [], [],
+    super(parent, baseStr, '', [], [],
       collapsible, header, collapsed);
     this.rawBase = base;
     this.decisions = decisions;
@@ -144,7 +144,7 @@ class DecisionStringDiffModel extends StringDiffModel {
  * createMergedDiffModel.
  */
 export
-abstract class ObjectMergeModel<ObjectType extends DeepCopyableObject, DiffModelType> {
+abstract class ObjectMergeModel<ObjectType extends DeepCopyableObject, DiffModelType> implements IModel {
 
   /**
    * Create a diff model of the correct type given the diff (which might be
@@ -160,9 +160,13 @@ abstract class ObjectMergeModel<ObjectType extends DeepCopyableObject, DiffModel
   /**
    *
    */
-  constructor(base: ObjectType | null, decisions: MergeDecision[], mimetype: string,
+  constructor(parent: IModel,
+              base: ObjectType | null,
+              decisions: MergeDecision[],
+              mimetype: string,
               whitelist?: string[]) {
     this.base = base;
+    this.parent = parent;
     this.mimetype = mimetype;
     this._whitelist = whitelist || null;
 
@@ -183,6 +187,11 @@ abstract class ObjectMergeModel<ObjectType extends DeepCopyableObject, DiffModel
    * The merge decisions that apply to this object
    */
   readonly decisions: MergeDecision[];
+
+  /**
+   * The model's parent
+   */
+  readonly parent: IModel;
 
   /**
    * Apply merge decisions to create the merged cell

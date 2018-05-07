@@ -4,12 +4,12 @@
 
 export
 interface DeepCopyableObject {
-  [key: string]: DeepCopyableValue | undefined;
+  [key: string]: any | undefined;
   prototype?: DeepCopyableObject;
 }
 
 export
-type DeepCopyableValue = DeepCopyableObject | any[] | string | number | boolean | null;
+type DeepCopyableValue = DeepCopyableObject | DeepCopyableObject[] | string | number | boolean | null;
 
 /**
  * Check whether a value is in an array.
@@ -302,4 +302,25 @@ function buildSelect(options: string[], select?: HTMLSelectElement): HTMLSelectE
     select.appendChild(opt);
   }
   return select;
+}
+
+
+/**
+ * Extend one array with another
+ */
+export
+function extendArray(a: any[], b: any[] | null): void {
+  if (!b || b.length === 0) {
+    return;
+  }
+  a.splice.apply(a, [a.length, 0].concat(b));
+}
+
+/**
+ * Remove first matching element from an array
+ */
+export
+function removeElement(array: any[], element: any): void {
+  let i = array.indexOf(element);
+  array.splice(i, 1);
 }

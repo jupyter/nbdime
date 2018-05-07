@@ -380,10 +380,11 @@ function resolveCommonPaths(decisions: MergeDecision[]) {
   for (let md of decisions) {
     let diffs = md.diffs;
     let path = md.absolutePath || [];
-    let popped: {diffs: DiffCollection, key: string | number} | null = null;
-    while (popped = popPath(diffs, true)) {
+    let popped = popPath(diffs, true);
+    while (popped) {
       path.push(popped.key);
       diffs = popped.diffs;
+      popped = popPath(diffs, true);
     }
     md.absolutePath = path;
     md.diffs = diffs;
@@ -500,6 +501,7 @@ function resolveAction(base: any, decision: MergeDecision): IDiffEntry[] {
  *
  * Returns a tuple of path and any line key.
  */
+export
 function splitDiffStringPath(base: any, path: DecisionPath):
     [DecisionPath, DecisionPath | null] {
   for (let i = 0; i < path.length; ++i) {
@@ -710,6 +712,19 @@ function buildDiffs(base: any, decisions: MergeDecision[], which: 'local' | 'rem
 export
 function pushPatchDecision(decision: MergeDecision, prefix: DecisionPath): MergeDecision {
   let dec = new MergeDecision(decision);
+  pushPatchDecisionInPlace(dec, prefix);
+  return dec;
+}
+
+
+/**
+ * Move a path prefix in a merge decision from `common_path` to the diffs.
+ *
+ * This is done by wrapping the diffs in nested patch ops.
+ */
+export
+function pushPatchDecisionInPlace(decision: MergeDecision, prefix: DecisionPath): void {
+  let dec = decision;
   // We need to start with inner most key to nest correctly, so reverse:
   for (let key of prefix.slice().reverse()) {
     if (dec.absolutePath.length === 0) {
@@ -728,7 +743,6 @@ function pushPatchDecision(decision: MergeDecision, prefix: DecisionPath): Merge
     dec.remoteDiff = rd ? [opPatch(key, dec.remoteDiff)] : null;
     dec.customDiff = cd ? [opPatch(key, dec.customDiff)] : null;
   }
-  return dec;
 }
 
 

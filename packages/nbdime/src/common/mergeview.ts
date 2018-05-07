@@ -22,7 +22,7 @@ import {
 } from '../diff/model';
 
 import {
-  DecisionStringDiffModel
+  DecisionStringDiffModel, CellMergeModel
 } from '../merge/model';
 
 import {
@@ -38,12 +38,16 @@ import {
 } from './editor';
 
 import {
-  valueIn, hasEntries, splitLines, copyObj
+  valueIn, hasEntries, splitLines, copyObj, removeElement
 } from './util';
 
 import {
   NotifyUserError
 } from './exceptions';
+
+import {
+  updateModel, shiftAddRemoveLines
+} from '../merge/manualedit';
 
 
 const PICKER_SYMBOL = '\u27ad';
@@ -156,6 +160,33 @@ function createNbdimeMergeView(
 
 
 /**
+ * Replace a range in an array of lines, with another
+ *
+ * Note: `lines` is assumed to have newlines at the ends, while
+ * newVal not.
+ */
+function replaceCodeMirrorRange(lines: string[], from: CodeMirror.Position, to: CodeMirror.Position, newVal: string[]): void {
+  // Add preceding and trailing characters to newVal, as well as newlines
+  let firstLine = lines[from.line];
+  let lastLine = lines[to.line];
+
+  newVal = newVal.slice();  // copy
+  for (let i=0; i < newVal.length; ++i) {
+    if (i === 0) {
+      newVal[i] = firstLine.slice(0, from.ch) + newVal[i];
+    }
+    if (i >= newVal.length - 1) {
+      newVal[i] = newVal[i] + lastLine.slice(to.ch);
+    } else {
+      newVal[i] = newVal[i] + '\n';
+    }
+  }
+
+  lines.splice(from.line, to.line - from.line + 1, ...newVal);
+}
+
+
+/**
  * Used by MergeView to show diff in a string diff model
  */
 export
@@ -203,25 +234,48 @@ class DiffView {
   syncModel() {
     if (this.modelInvalid()) {
       let edit = this.ownEditor;
+      let updatedLineChunks = this.model.getLineChunks();
+      let updatedChunks = lineToNormalChunks(updatedLineChunks);
+      if (this.model.remote === edit.getValue()) {
+        // Nothing to do except update chunks
+        this.lineChunks = updatedLineChunks;
+        this.chunks = updatedChunks;
+        return;
+      }
       let cursor = edit.getDoc().getCursor();
       let newLines = splitLines(this.model.remote!);
       let start = edit.getDoc().firstLine();
       let last = edit.getDoc().lastLine();
       let end = last;
+      let updatedEnd = last;
+      let cumulativeOffset = 0;
       for (let range of this.collapsedRanges) {
         let baseLine = range.line;
         end = getMatchingEditLine(baseLine, this.chunks);
-        if (end !== start) {
-          edit.getDoc().replaceRange(newLines.slice(start, end - 1).join(''), CodeMirror.Pos(start, 0), CodeMirror.Pos(end - 1, 0));
+        updatedEnd = getMatchingEditLine(baseLine, updatedChunks);
+        let offset = updatedEnd - end;
+        if (end !== start || offset !== 0) {
+          edit.getDoc().replaceRange(
+            newLines.slice(start + cumulativeOffset, updatedEnd + cumulativeOffset - 1).join(''),
+            CodeMirror.Pos(start, 0),
+            CodeMirror.Pos(end - 1, 0),
+            'syncModel'
+          );
         }
+        cumulativeOffset += offset;
         start = end + range.size;
       }
       if (start < last) {
-        edit.getDoc().replaceRange(newLines.slice(start, end).join(''), CodeMirror.Pos(start, 0), CodeMirror.Pos(end, 0));
+        edit.getDoc().replaceRange(
+          newLines.slice(start, last).join(''),
+          CodeMirror.Pos(start, 0),
+          CodeMirror.Pos(last, 0),
+          'syncModel'
+        );
       }
       this.ownEditor.getDoc().setCursor(cursor);
-      this.lineChunks = this.model.getLineChunks();
-      this.chunks = lineToNormalChunks(this.lineChunks);
+      this.lineChunks = updatedLineChunks;
+      this.chunks = updatedChunks;
     }
   }
 
@@ -279,7 +333,7 @@ class DiffView {
       checkSync(self.ownEditor);
       self.updating = false;
     }
-    function setDealign(fast: boolean | CodeMirror.Editor) {
+    function setDealign(fast: boolean | CodeMirror.Editor, mode?: 'full') {
         let upd = false;
         for (let dv of self.baseEditor.state.diffViews) {
           upd = upd || dv.updating;
@@ -288,9 +342,9 @@ class DiffView {
           return;
         }
         self.dealigned = true;
-        set(fast === true);
+        set(fast === true, mode);
     }
-    function set(fast: boolean) {
+    function set(fast: boolean, mode?: 'full') {
       let upd = false;
       for (let dv of self.baseEditor.state.diffViews) {
         upd = upd || dv.updating || dv.updatingFast;
@@ -302,14 +356,36 @@ class DiffView {
       if (fast === true) {
         self.updatingFast = true;
       }
-      debounceChange = window.setTimeout(update, fast === true ? 20 : 250);
+      debounceChange = window.setTimeout(
+        update.bind(self, mode), fast === true ? 20 : 250);
     }
-    function change(_cm: CodeMirror.Editor, change: CodeMirror.EditorChangeLinkedList) {
-      if (self.model instanceof DecisionStringDiffModel) {
-        self.model.invalidate();
+    function change(_cm: CodeMirror.Editor, change: CodeMirror.EditorChange) {
+      let userEdit = !valueIn(change.origin, ['setValue', 'syncModel']);
+      if (userEdit) {
+        // Edited by hand!
+        let fullLines = splitLines(self.model.remote!);
+        shiftAddRemoveLines(fullLines, change);
+        let baseLine = getMatchingBaseLine(change.from.line, self.lineChunks);
+        // Update lines with changes
+        replaceCodeMirrorRange(fullLines, change.from, change.to, change.text);
+        updateModel({
+          model: self.model,
+          baseLine,
+          fullLines,
+          editCh: change.from.ch,
+          editLine: change.from.line,
+          oldval: change.removed,
+          newval: change.text
+        });
+      }
+      if (!(self.model instanceof DecisionStringDiffModel)) {
+        // TODO: Throttle?
+        self.lineChunks = self.model.getLineChunks();
+        self.chunks = lineToNormalChunks(self.lineChunks);
       }
       // Update faster when a line was added/removed
-      setDealign(change.text.length - 1 !== change.to.line - change.from.line);
+      setDealign(change.text.length - 1 !== change.to.line - change.from.line,
+        userEdit ? 'full' : undefined);
     }
     function checkSync(cm: CodeMirror.Editor) {
       if (self.model.remote !== cm.getValue()) {
@@ -328,6 +404,11 @@ class DiffView {
     this.ownEditor.on('viewportChange', function() { set(false); });
     update();
     return update;
+  }
+
+  validate(): boolean {
+    return this.model instanceof DecisionStringDiffModel &&
+            this.model.invalid;
   }
 
   protected modelInvalid(): boolean {
@@ -352,13 +433,35 @@ class DiffView {
           for (let s of ss) {
             s.decision.action = s.action;
           }
-        } else if (instance === this.baseEditor) {
+        } else if (this.type === 'merge' && instance === this.baseEditor) {
           for (let s of ss) {
             s.decision.action = 'base';
-            if (hasEntries(s.decision.customDiff)) {
-              s.decision.customDiff = [];
+          }
+        }
+        for (let i=ss.length - 1; i >= 0; --i) {
+          let s = ss[i];
+          if (this.type === 'merge' && hasEntries(s.decision.customDiff)) {
+            // Custom diffs are cleared on pick,
+            // as there is no way to re-pick them
+            s.decision.customDiff = [];
+            // If decision is now empty, remove decision:
+            if (!hasEntries(s.decision.localDiff) &&
+                !hasEntries(s.decision.remoteDiff)) {
+              // Remove decision:
+              let model = this.model as DecisionStringDiffModel;
+              let cell = model.parent as CellMergeModel;
+              removeElement(model.decisions, s.decision);
+              removeElement(cell.decisions, s.decision);
+              // Remove source
+              ss.splice(i, 1);
             }
           }
+        }
+        if (ss.length === 0) {
+          // All decisions empty, remove picker
+          // In these cases, there should only be one picker, on base
+          // so simply remove the one we have here
+          instance.setGutterMarker(line, GUTTER_PICKER_CLASS, null);
         }
       } else if (gutter === GUTTER_CONFLICT_CLASS) {
         for (let s of ss) {
@@ -492,6 +595,18 @@ class DiffView {
             (picker as any).sources = sources;
             picker.classList.add(GUTTER_PICKER_CLASS);
             editor.setGutterMarker(line, GUTTER_PICKER_CLASS, picker);
+          } else if (editor === self.baseEditor) {
+            for (let s of sources) {
+              if (s.decision.action === 'custom' &&
+                  !hasEntries(s.decision.localDiff) &&
+                  !hasEntries(s.decision.remoteDiff)) {
+                // We have a custom decision, add picker on base only!
+                let picker = elt('div', PICKER_SYMBOL, classes.gutter);
+                (picker as any).sources = sources;
+                picker.classList.add(GUTTER_PICKER_CLASS);
+                editor.setGutterMarker(line, GUTTER_PICKER_CLASS, picker);
+              }
+            }
           } else if (conflict && editor === self.ownEditor) {
             // Add conflict markers on editor, if conflicted
             let conflictMarker = elt('div', CONFLICT_MARKER, '');
@@ -668,9 +783,34 @@ function getMatchingEditLineLC(toMatch: Chunk, chunks: Chunk[]): number {
   return toMatch.baseTo;
 }
 
+/**
+ * From a line in edit, find the matching line in base by chunks.
+ */
+function getMatchingBaseLine(editLine: number, chunks: Chunk[]): number {
+  let offset = 0;
+  // Start values correspond to either the start of the chunk,
+  // or the start of a preceding unmodified part before the chunk.
+  // It is the difference between these two that is interesting.
+  for (let i = 0; i < chunks.length; i++) {
+    let chunk = chunks[i];
+    if (chunk.remoteTo > editLine && chunk.remoteFrom <= editLine) {
+      // If remote range is larger than base range, clip
+      if (editLine + offset > chunk.baseTo) {
+        return chunk.baseTo;
+      }
+      break;
+    }
+    if (chunk.remoteFrom > editLine) {
+      break;
+    }
+    offset = chunk.baseTo - chunk.remoteTo;
+  }
+  return editLine + offset;
+}
+
 
 /**
- * Find which line numbers align which each other, in the
+ * Find which line numbers align with each other, in the
  * set of DiffViews. The returned array is of the format:
  *
  * [ aligned line #1:[Edit line number, (DiffView#1 line number, DiffView#2 line number,) ...],

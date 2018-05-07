@@ -18,7 +18,7 @@ describe('common', () => {
 
     it('should be initialized for unchanged diff', () => {
       let orig = 'Value';
-      let remote = createDirectStringDiffModel(orig, orig);
+      let remote = createDirectStringDiffModel(null!, orig, orig);
       let p = new MergeView({
         orig,
         remote

@@ -46,7 +46,7 @@ describe('diff', () => {
     describe('createDirectStringDiffModel', () => {
 
       it('should create an added model', () => {
-          let model = createDirectStringDiffModel(null, 'foobar!');
+          let model = createDirectStringDiffModel(null!, null, 'foobar!');
           expect(model.added).to.be(true);
           expect(model.deleted).to.be(false);
           expect(model.unchanged).to.be(false);
@@ -55,7 +55,7 @@ describe('diff', () => {
       });
 
       it('should create a deleted model', () => {
-          let model = createDirectStringDiffModel('foobar!', null);
+          let model = createDirectStringDiffModel(null!, 'foobar!', null);
           expect(model.added).to.be(false);
           expect(model.deleted).to.be(true);
           expect(model.unchanged).to.be(false);
@@ -64,7 +64,7 @@ describe('diff', () => {
       });
 
       it('should create an unchanged model', () => {
-          let model = createDirectStringDiffModel('foobar!', 'foobar!');
+          let model = createDirectStringDiffModel(null!, 'foobar!', 'foobar!');
           expect(model.added).to.be(false);
           expect(model.deleted).to.be(false);
           expect(model.unchanged).to.be(true);
@@ -81,7 +81,7 @@ describe('diff', () => {
 
       it('should fail for all null inputs', () => {
           expect(createDirectStringDiffModel).withArgs(
-              null, null).to.throwException(
+              null, null, null).to.throwException(
                   /Invalid arguments to createDirectStringDiffModel\(\)/
               );
       });
@@ -95,7 +95,7 @@ describe('diff', () => {
       it('should create a patched model', () => {
           let base = [0, 1, 'foo'];
           let diff = [opAddRange(2, 'bar')];
-          let model = createPatchStringDiffModel(base, diff);
+          let model = createPatchStringDiffModel(null!, base, diff);
           expect(model.added).to.be(false);
           expect(model.deleted).to.be(false);
           expect(model.unchanged).to.be(false);
@@ -106,7 +106,7 @@ describe('diff', () => {
       it('should create an unchanged model by empty diff', () => {
           let base = 'foobar!';
           let diff: IDiffEntry[] = [];
-          let model = createPatchStringDiffModel(base, diff);
+          let model = createPatchStringDiffModel(null!, base, diff);
           expect(model.added).to.be(false);
           expect(model.deleted).to.be(false);
           expect(model.unchanged).to.be(true);
@@ -117,7 +117,7 @@ describe('diff', () => {
       it('should create an unchanged model by empty diff for non-string input', () => {
           let base = [0, 1, 'foo'];
           let diff: IDiffEntry[] = [];
-          let model = createPatchStringDiffModel(base, diff);
+          let model = createPatchStringDiffModel(null!, base, diff);
           expect(model.added).to.be(false);
           expect(model.deleted).to.be(false);
           expect(model.unchanged).to.be(true);
@@ -137,7 +137,7 @@ describe('diff', () => {
 
       it('should create an added model', () => {
         let model = new OutputDiffModel(
-          null, dummyOutput
+          null!, null, dummyOutput
         );
         expect(model.added).to.be(true);
         expect(model.deleted).to.be(false);
@@ -146,7 +146,7 @@ describe('diff', () => {
 
       it('should create a deleted model', () => {
         let model = new OutputDiffModel(
-          dummyOutput, null
+          null!, dummyOutput, null
         );
         expect(model.added).to.be(false);
         expect(model.deleted).to.be(true);
@@ -155,7 +155,7 @@ describe('diff', () => {
 
       it('should create an unchanged model', () => {
         let model = new OutputDiffModel(
-            dummyOutput, dummyOutput
+            null!, dummyOutput, dummyOutput
         );
         expect(model.added).to.be(false);
         expect(model.deleted).to.be(false);
@@ -164,7 +164,7 @@ describe('diff', () => {
 
       it('should patch output if given diff and no remote', () => {
         let diff = [opPatch('text', [opPatch(0, [opAddRange(3, ' bar')])])];
-        let model = new OutputDiffModel(dummyOutput, null, diff);
+        let model = new OutputDiffModel(null!, dummyOutput, null, diff);
         expect(model.added).to.be(false);
         expect(model.deleted).to.be(false);
         expect(model.unchanged).to.be(false);
@@ -178,7 +178,7 @@ describe('diff', () => {
 
       it('should fail for all null input', () => {
         expect(() => {
-          new OutputDiffModel(null, null );
+          new OutputDiffModel(null!, null, null );
         }).to.throwException(
           /Either remote or base value need to be given/);
       });
@@ -202,7 +202,7 @@ describe('diff', () => {
       let mimetype = 'text/python';
 
       it('should be creatable by createAddedCellDiffModel', () => {
-        let model = createAddedCellDiffModel(codeCellA, mimetype);
+        let model = createAddedCellDiffModel(null!, codeCellA, mimetype);
         expect(model.added).to.be(true);
         expect(model.deleted).to.be(false);
         expect(model.unchanged).to.be(false);
@@ -214,7 +214,7 @@ describe('diff', () => {
       });
 
       it('should be creatable by createDeletedCellDiffModel', () => {
-        let model = createDeletedCellDiffModel(codeCellA, mimetype);
+        let model = createDeletedCellDiffModel(null!, codeCellA, mimetype);
         expect(model.added).to.be(false);
         expect(model.deleted).to.be(true);
         expect(model.unchanged).to.be(false);
@@ -226,7 +226,7 @@ describe('diff', () => {
       });
 
       it('should be creatable by createUnchangedCellDiffModel', () => {
-        let model = createUnchangedCellDiffModel(codeCellA, mimetype);
+        let model = createUnchangedCellDiffModel(null!, codeCellA, mimetype);
         expect(model.added).to.be(false);
         expect(model.deleted).to.be(false);
         expect(model.unchanged).to.be(true);
@@ -240,7 +240,7 @@ describe('diff', () => {
       describe('createPatchedCellDiffModel', () => {
 
         it('should create an unchanged model for null diff', () => {
-          let model = createPatchedCellDiffModel(codeCellA, null, mimetype);
+          let model = createPatchedCellDiffModel(null!, codeCellA, null, mimetype);
           expect(model.added).to.be(false);
           expect(model.deleted).to.be(false);
           expect(model.unchanged).to.be(true);
@@ -252,7 +252,7 @@ describe('diff', () => {
         });
 
         it('should create an unchanged model for an empty diff', () => {
-          let model = createPatchedCellDiffModel(codeCellA, [], mimetype);
+          let model = createPatchedCellDiffModel(null!, codeCellA, [], mimetype);
           expect(model.added).to.be(false);
           expect(model.deleted).to.be(false);
           expect(model.unchanged).to.be(true);
@@ -267,7 +267,7 @@ describe('diff', () => {
           let diff = [
             opPatch('source', [opAddRange(1, ['l += 2\n'])])
           ];
-          let model = createPatchedCellDiffModel(codeCellA, diff, mimetype);
+          let model = createPatchedCellDiffModel(null!, codeCellA, diff, mimetype);
           expect(model.added).to.be(false);
           expect(model.deleted).to.be(false);
           expect(model.unchanged).to.be(false);
