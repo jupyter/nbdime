@@ -352,6 +352,81 @@ describe('diff', () => {
           expect(chunks[0].remoteTo).to.equal(1);
         });
 
+        it('should chunk an inserted empty line at unterminated end', () => {
+          let base = 'Line 1\nLine 2\nLine 3';
+          let remote = 'Line 1\nLine 2\nLine 3\n';
+          let added: DiffRangeRaw[] = [];
+          added.push(new DiffRangeRaw(
+            'Line 1\nLine 2\nLine 3'.length, '\n'.length));
+          let m = new StringDiffModel(base, remote, added, []);
+          let chunks = m.getLineChunks();
+          expect(chunks).to.have.length(1);
+          expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
+          expect(chunks[0].baseFrom).to.equal(2);
+          expect(chunks[0].baseTo).to.equal(3);
+          expect(chunks[0].remoteTo).to.equal(4);
+        });
+
+        it('should chunk an inserted line at unterminated end', () => {
+          let base = 'Line 1\nLine 2\nLine 3';
+          let remote = 'Line 1\nLine 2\nLine 3\nLine 4';
+          let added: DiffRangeRaw[] = [];
+          added.push(new DiffRangeRaw(
+            'Line 1\nLine 2\nLine 3'.length, '\nLine 4'.length));
+          let m = new StringDiffModel(base, remote, added, []);
+          let chunks = m.getLineChunks();
+          expect(chunks).to.have.length(1);
+          expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
+          expect(chunks[0].baseFrom).to.equal(2);
+          expect(chunks[0].baseTo).to.equal(3);
+          expect(chunks[0].remoteTo).to.equal(4);
+        });
+
+        it('should chunk an inserted line + termination at unterminated end', () => {
+          let base = 'Line 1\nLine 2\nLine 3';
+          let remote = 'Line 1\nLine 2\nLine 3\nLine 4\n';
+          let added: DiffRangeRaw[] = [];
+          added.push(new DiffRangeRaw(
+            'Line 1\nLine 2\nLine 3'.length, '\nLine 4\n'.length));
+          let m = new StringDiffModel(base, remote, added, []);
+          let chunks = m.getLineChunks();
+          expect(chunks).to.have.length(1);
+          expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
+          expect(chunks[0].baseFrom).to.equal(2);
+          expect(chunks[0].baseTo).to.equal(3);
+          expect(chunks[0].remoteTo).to.equal(5);
+        });
+
+        it('should chunk an inserted unterminated line at terminated end', () => {
+          let base = 'Line 1\nLine 2\nLine 3\n';
+          let remote = 'Line 1\nLine 2\nLine 3\nLine 4';
+          let added: DiffRangeRaw[] = [];
+          added.push(new DiffRangeRaw(
+            'Line 1\nLine 2\nLine 3\n'.length, 'Line 4'.length));
+          let m = new StringDiffModel(base, remote, added, []);
+          let chunks = m.getLineChunks();
+          expect(chunks).to.have.length(1);
+          expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
+          expect(chunks[0].baseFrom).to.equal(3);
+          expect(chunks[0].baseTo).to.equal(4);
+          expect(chunks[0].remoteTo).to.equal(4);
+        });
+
+        it('should chunk an inserted terminated line at terminated end', () => {
+          let base = 'Line 1\nLine 2\nLine 3\n';
+          let remote = 'Line 1\nLine 2\nLine 3\nLine 4\n';
+          let added: DiffRangeRaw[] = [];
+          added.push(new DiffRangeRaw(
+            'Line 1\nLine 2\nLine 3\n'.length, 'Line 4\n'.length));
+          let m = new StringDiffModel(base, remote, added, []);
+          let chunks = m.getLineChunks();
+          expect(chunks).to.have.length(1);
+          expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
+          expect(chunks[0].baseFrom).to.equal(3);
+          expect(chunks[0].baseTo).to.equal(3);
+          expect(chunks[0].remoteTo).to.equal(4);
+        });
+
       });
     });
 
