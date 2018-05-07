@@ -112,7 +112,7 @@ def _get_diff_entry_stream(path, blob, ref_name, repo_dir):
                     if ret != path:
                         return ret
                 try:
-                    return io.open(path)
+                    return io.open(path, encoding='utf-8')
                 except IOError:
                     return EXPLICIT_MISSING_FILE
         else:
