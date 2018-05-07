@@ -199,25 +199,51 @@ class DiffView {
   syncModel() {
     if (this.modelInvalid()) {
       let edit = this.ownEditor;
+      let updatedLineChunks = this.model.getLineChunks();
+      let updatedChunks = lineToNormalChunks(updatedLineChunks);
+      if (this.model.remote === edit.getValue()) {
+        // Nothing to do except update chunks
+        this.lineChunks = updatedLineChunks;
+        this.chunks = updatedChunks;
+        return;
+      }
       let cursor = edit.getDoc().getCursor();
       let newLines = splitLines(this.model.remote!);
       let start = edit.getDoc().firstLine();
-      let last = edit.getDoc().lastLine();
-      let end = last;
+      let last = edit.getDoc().lastLine() + 1;
+      let cumulativeOffset = 0;
+      let end: number;
+      let updatedEnd: number;
+      // We want to replace contents of editor, but if we have collapsed regions
+      // some lines have been optimized away. Carefully replace the relevant bits:
       for (let range of this.collapsedRanges) {
         let baseLine = range.line;
         end = getMatchingEditLine(baseLine, this.chunks);
-        if (end !== start) {
-          edit.getDoc().replaceRange(newLines.slice(start, end - 1).join(''), CodeMirror.Pos(start, 0), CodeMirror.Pos(end - 1, 0));
+        updatedEnd = getMatchingEditLine(baseLine, updatedChunks);
+        let offset = updatedEnd - end;
+        if (end !== start || offset !== 0) {
+          edit.getDoc().replaceRange(
+            newLines.slice(start + cumulativeOffset, updatedEnd + cumulativeOffset - 1).join(''),
+            CodeMirror.Pos(start, 0),
+            CodeMirror.Pos(end - 1, 0),
+            'syncModel'
+          );
         }
+        cumulativeOffset += offset;
         start = end + range.size;
       }
       if (start < last) {
-        edit.getDoc().replaceRange(newLines.slice(start, end).join(''), CodeMirror.Pos(start, 0), CodeMirror.Pos(end, 0));
+        // Only here if no collapsed ranges, replace full contents
+        edit.getDoc().replaceRange(
+          newLines.slice(start, newLines.length).join(''),
+          CodeMirror.Pos(start, 0),
+          CodeMirror.Pos(last, 0),
+          'syncModel'
+        );
       }
       this.ownEditor.getDoc().setCursor(cursor);
-      this.lineChunks = this.model.getLineChunks();
-      this.chunks = lineToNormalChunks(this.lineChunks);
+      this.lineChunks = updatedLineChunks;
+      this.chunks = updatedChunks;
     }
   }
 
