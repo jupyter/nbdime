@@ -4,7 +4,7 @@
 
 
 import {
-  IDiffEntry, IDiffPatch
+  IDiffEntry,
 } from '../diff/diffentries';
 
 import {
@@ -102,10 +102,11 @@ class Chunker {
     if (range.endsOnNewline) {
       linediff += 1;
     }
-    let firstLineNew = range.from.ch === 0 && linediff > 0;
+    const firstLineNew = range.from.ch === 0 && linediff > 0;
 
-    let startOffset = range.chunkStartLine ? 0 : 1;
-    let endOffset =
+
+    const startOffset = range.chunkStartLine ? 0 : 1;
+    const endOffset =
       range.chunkStartLine && range.endsOnNewline && firstLineNew ?
       0 : 1;
 
@@ -242,11 +243,6 @@ class Chunker {
 export
 class LineChunker extends Chunker {
   protected _overlapChunk(chunk: Chunk, range: DiffRangePos, isAddition: boolean): boolean {
-    let linediff = range.to.line - range.from.line;
-    if (range.endsOnNewline) {
-      linediff += 1;
-    }
-    let firstLineNew = range.from.ch === 0 && linediff > 0;
     if (isAddition) {
       return chunk.inOrig(range.from.line + 1);
     } else {

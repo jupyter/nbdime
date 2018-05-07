@@ -139,7 +139,7 @@ function raw2Pos(raws: DiffRangeRaw[], text: string): DiffRangePos[] {
     lineStartIdx = line > 0 ? adIdx[line - 1] + 1 : 0;
     let to = CodeMirror.Pos(line, r.to - lineStartIdx);
 
-    // Finally chunking hints:
+    // Finally, add some chunking hints:
     let startsOnNewLine = valueIn(r.from, adIdx);
     let endsOnNewline = valueIn(r.to - 1, adIdx);  // non-inclusive
     let firstLineNew = from.ch === 0 && (

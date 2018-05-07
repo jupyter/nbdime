@@ -14,10 +14,6 @@ import {
 } from '@phosphor/widgets';
 
 import {
-  Mode
-} from '@jupyterlab/codemirror';
-
-import {
   IStringDiffModel
 } from '../diff/model';
 
@@ -670,7 +666,7 @@ function getMatchingEditLineLC(toMatch: Chunk, chunks: Chunk[]): number {
 
 
 /**
- * Find which line numbers align which each other, in the
+ * Find which line numbers align with each other, in the
  * set of DiffViews. The returned array is of the format:
  *
  * [ aligned line #1:[Edit line number, (DiffView#1 line number, DiffView#2 line number,) ...],
