@@ -282,7 +282,7 @@ function onSubmissionFailed(response: string) {
 
 
 /**
- *
+ * Called when the merge tool is closing, but it can be prevented.
  */
 export
 function closeMerge(ev: Event, unloading=false): string | void | null {
@@ -343,6 +343,25 @@ function closeMerge(ev: Event, unloading=false): string | void | null {
   }
   closeTool(0);
   return null;
+}
+
+
+/**
+ * Called when merge tool is closing, and it shouldn't be prevented.
+ *
+ * Will only try to set the correct exit code for the tool.
+ */
+export
+function forceCloseMerge(): void {
+  if (!mergeWidget) {
+    return closeTool(1);
+  }
+  for (let md of mergeWidget.model.conflicts) {
+    if (md.conflict) {
+      closeTool(1);
+    }
+  }
+  closeTool(0);
 }
 
 

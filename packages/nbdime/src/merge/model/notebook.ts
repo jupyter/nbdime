@@ -249,10 +249,11 @@ function isChunk(diff: IDiffEntry[] | null): diff is IDiffArrayEntry[] {
 }
 
 /**
- * The merge format allows for chunking of sequence diffs such that one entry
- * in the diff lists have 2 entries, where the first is always an insertion
- * (addrange). For cells, we split these decisions in two, for easier
- * visualization.
+ * The merge format allows for chunking of sequence diffs such that one or more
+ * entries in the diff lists have 2 entries, where the first is always an
+ * insertion (addrange). For cells, we split these decisions in two, for easier
+ * visualization. Note: When several diff entries have 2 entries, the second
+ * entries are identical.
  */
 function splitCellChunks(mergeDecisions: MergeDecision[]): MergeDecision[] {
   let output: MergeDecision[] = [];
@@ -272,29 +273,46 @@ function splitCellChunks(mergeDecisions: MergeDecision[]): MergeDecision[] {
           output.push(nmd);
         }
       } else if (isChunk(md.localDiff)) {
-        // Split off local
-        output.push(new MergeDecision(
-          md.absolutePath.slice(),
-          md.localDiff.slice(0, 1),
-          [],
-          'local', // Check for custom action first?
-          md.conflict
-        ));
-        let nmd = new MergeDecision(md);
-        nmd.localDiff = md.localDiff.slice(1);
-        output.push(nmd);
+        if (isChunk(md.remoteDiff)) {
+          // Both diffs are chunks, split adds vs agreed removes
+          let nmd = new MergeDecision(md);
+          nmd.localDiff = md.localDiff.slice(0, 1);
+          nmd.remoteDiff = md.remoteDiff.slice(0, 1);
+          output.push(nmd);
+
+          output.push(new MergeDecision(
+            md.absolutePath.slice(),
+            md.localDiff.slice(1),
+            md.remoteDiff.slice(1),
+            'either', // Check for custom action first?
+          ));
+        } else {
+          // Split off local
+          let nmd = new MergeDecision(md);
+          nmd.localDiff = md.localDiff.slice(0, 1);
+          output.push(nmd);
+
+          output.push(new MergeDecision(
+            md.absolutePath.slice(),
+            md.localDiff.slice(1),
+            [],
+            'local', // Check for custom action first?
+            md.conflict,
+          ));
+        }
       } else if (isChunk(md.remoteDiff)) {
         // Split off remote
+        let nmd = new MergeDecision(md);
+        nmd.remoteDiff = md.remoteDiff.slice(0, 1);
+        output.push(nmd);
+
         output.push(new MergeDecision(
           md.absolutePath.slice(),
           [],
-          md.remoteDiff.slice(0, 1),
+          md.remoteDiff.slice(1),
           'remote', // Check for custom action first?
-          md.conflict
+          md.conflict,
         ));
-        let nmd = new MergeDecision(md);
-        nmd.remoteDiff = md.remoteDiff.slice(1);
-        output.push(nmd);
       } else {
         output.push(md);  // deepCopy?
       }

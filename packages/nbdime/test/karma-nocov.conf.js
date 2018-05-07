@@ -21,7 +21,10 @@ module.exports = function (config) {
     reporters: ['mocha', 'karma-typescript'],
 
     karmaTypescriptConfig: {
-      tsconfig: 'test/src/tsconfig.json'
+      tsconfig: 'test/src/tsconfig.json',
+      coverageOptions: {
+        instrumentation: false
+      },
     }
   });
 };

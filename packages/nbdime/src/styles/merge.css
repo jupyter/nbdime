@@ -10,8 +10,11 @@
 }
 
 .jp-Notebook-merge .jp-Cell-merge {
-  margin-bottom: 20px;
   background-color: var(--jp-layout-color1);
+}
+
+.jp-Notebook-merge .jp-merge-celldragdrop > .p-Panel:not(:first-child) {
+  margin-top: 20px;
 }
 
 .jp-Notebook-merge .CodeMirror-merge-pane-local,
@@ -306,5 +309,4 @@
 
 .jp-Notebook-merge .jp-conflicted-cells > .jp-DragPanel {
   padding: 4px;
-  padding-bottom: 0;
 }

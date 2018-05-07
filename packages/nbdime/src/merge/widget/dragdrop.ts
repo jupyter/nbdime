@@ -11,13 +11,15 @@ import {
 } from '@phosphor/signaling';
 
 import {
-  FriendlyDragDrop
+  FriendlyDragDrop, DragDropPanel
 } from '../../common/dragpanel';
 
 import {
   CellMergeWidget
 } from './cell';
 
+
+const CELL_DRAG_DROP_CLASS = 'jp-merge-celldragdrop';
 
 const MARK_CHUNK_RESOLVED_CLASS = 'jp-conflicted-cells-button';
 const CHUNK_HEADER_CLASS = 'jp-conflicted-cells-header';
@@ -27,6 +29,14 @@ const CONLICTED_CELL_CHUNK_CLASS = 'jp-conflicted-cells';
 
 export
 class CellsDragDrop extends FriendlyDragDrop {
+
+  /**
+   *
+   */
+  constructor(options?: DragDropPanel.IOptions) {
+    super(options);
+    this.addClass(CELL_DRAG_DROP_CLASS);
+  }
 
   /**
    * Called when something has been dropped in the panel.

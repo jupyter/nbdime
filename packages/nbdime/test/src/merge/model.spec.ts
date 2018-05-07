@@ -235,10 +235,26 @@ describe('merge', () => {
       });
 
       describe('decision splitting', () => {
-        let diff: IDiffEntry[] = [
+        const diff: IDiffEntry[] = [
           opPatch(0, [opPatch('metadata', [opReplace('collapsed', true)])]),
           opPatch(2, [opPatch('source', [opAddRange(1, ['    z += 2\n'])])]),
         ];
+
+        const cell1: nbformat.ICell = {
+          cell_type: 'markdown',
+          source: 'This is cell 1\n',
+          metadata: {},
+        };
+        const cell2: nbformat.ICell = {
+          cell_type: 'markdown',
+          source: 'This is cell 2\n',
+          metadata: {},
+        };
+        const cell3: nbformat.ICell = {
+          cell_type: 'markdown',
+          source: 'This is cell 3\n',
+          metadata: {},
+        };
 
         it('should split a local patch of cells', () => {
           let cdecs: MergeDecision[] = [new MergeDecision(
@@ -297,6 +313,216 @@ describe('merge', () => {
           expect(d.absolutePath).to.eql(['cells', 2, 'source']);
           expect(stripSource(d.localDiff)).to.eql([opAddRange(1, ['    z += 2\n'])]);
           expect(stripSource(d.remoteDiff)).to.eql([opAddRange(1, ['    z += 2\n'])]);
+        });
+
+        it('should split an AR/A cell chunk', () => {
+          let cdecs: MergeDecision[] = [new MergeDecision(
+            ['cells'],
+            [opAddRange(0, [cell1]), opRemoveRange(0, 2)],
+            [opAddRange(0, [cell2])],
+            'base',
+            true
+          )];
+          let model = new NotebookMergeModel(notebook, cdecs);
+
+          expect(model.decisions.length).to.be(4);
+
+          let d = model.decisions[0];
+          expect(d.action).to.be('local');
+          expect(d.conflict).to.be(true);
+          expect(stripSource(d.localDiff)).to.eql([opAddRange(0, [cell1])]);
+          expect(d.remoteDiff).to.be(null);
+
+          d = model.decisions[1];
+          expect(d.action).to.be('remote');
+          expect(d.conflict).to.be(true);
+          expect(d.localDiff).to.be(null);
+          expect(stripSource(d.remoteDiff)).to.eql([opAddRange(0, [cell2])]);
+
+          d = model.decisions[2];
+          expect(d.action).to.be('local');
+          expect(d.conflict).to.be(true);
+          expect(stripSource(d.localDiff)).to.eql([opRemoveRange(0, 1)]);
+          expect(d.remoteDiff).to.be(null);
+
+          d = model.decisions[3];
+          expect(d.action).to.be('local');
+          expect(d.conflict).to.be(true);
+          expect(stripSource(d.localDiff)).to.eql([opRemoveRange(1, 1)]);
+          expect(d.remoteDiff).to.be(null);
+        });
+
+        it('should split an A/AR cell chunk', () => {
+          let cdecs: MergeDecision[] = [new MergeDecision(
+            ['cells'],
+            [opAddRange(0, [cell1])],
+            [opAddRange(0, [cell2]), opRemoveRange(0, 2)],
+            'base',
+            true
+          )];
+          let model = new NotebookMergeModel(notebook, cdecs);
+
+          expect(model.decisions.length).to.be(4);
+
+          let d = model.decisions[0];
+          expect(d.action).to.be('local');
+          expect(d.conflict).to.be(true);
+          expect(stripSource(d.localDiff)).to.eql([opAddRange(0, [cell1])]);
+          expect(d.remoteDiff).to.be(null);
+
+          d = model.decisions[1];
+          expect(d.action).to.be('remote');
+          expect(d.conflict).to.be(true);
+          expect(d.localDiff).to.be(null);
+          expect(stripSource(d.remoteDiff)).to.eql([opAddRange(0, [cell2])]);
+
+          d = model.decisions[2];
+          expect(d.action).to.be('remote');
+          expect(d.conflict).to.be(true);
+          expect(d.localDiff).to.be(null);
+          expect(stripSource(d.remoteDiff)).to.eql([opRemoveRange(0, 1)]);
+
+          d = model.decisions[3];
+          expect(d.action).to.be('remote');
+          expect(d.conflict).to.be(true);
+          expect(d.localDiff).to.be(null);
+          expect(stripSource(d.remoteDiff)).to.eql([opRemoveRange(1, 1)]);
+        });
+
+        it('should split an AR/AR cell chunk', () => {
+          let cdecs: MergeDecision[] = [new MergeDecision(
+            ['cells'],
+            [opAddRange(0, [cell1]), opRemoveRange(0, 2)],
+            [opAddRange(0, [cell2]), opRemoveRange(0, 2)],
+            'base',
+            true
+          )];
+          let model = new NotebookMergeModel(notebook, cdecs);
+
+          expect(model.decisions.length).to.be(4);
+
+          let d = model.decisions[0];
+          expect(d.action).to.be('local');
+          expect(d.conflict).to.be(true);
+          expect(stripSource(d.localDiff)).to.eql([opAddRange(0, [cell1])]);
+          expect(d.remoteDiff).to.be(null);
+
+          d = model.decisions[1];
+          expect(d.action).to.be('remote');
+          expect(d.conflict).to.be(true);
+          expect(d.localDiff).to.be(null);
+          expect(stripSource(d.remoteDiff)).to.eql([opAddRange(0, [cell2])]);
+
+          d = model.decisions[2];
+          expect(d.action).to.be('either');
+          expect(d.conflict).to.be(false);
+          expect(stripSource(d.localDiff)).to.eql([opRemoveRange(0, 1)]);
+          expect(stripSource(d.remoteDiff)).to.eql([opRemoveRange(0, 1)]);
+
+          d = model.decisions[3];
+          expect(d.action).to.be('either');
+          expect(d.conflict).to.be(false);
+          expect(stripSource(d.localDiff)).to.eql([opRemoveRange(1, 1)]);
+          expect(stripSource(d.remoteDiff)).to.eql([opRemoveRange(1, 1)]);
+        });
+
+        it('should split an AP/A cell chunk', () => {
+          const lineAdd = opPatch('source', [opAddRange(1, 'line #2\n')]);
+          let cdecs: MergeDecision[] = [new MergeDecision(
+            ['cells'],
+            [opAddRange(0, [cell1]), opPatch(0, [lineAdd])],
+            [opAddRange(0, [cell2])],
+            'base',
+            true
+          )];
+          let model = new NotebookMergeModel(notebook, cdecs);
+
+          expect(model.decisions.length).to.be(3);
+
+          let d = model.decisions[0];
+          expect(d.action).to.be('local');
+          expect(d.conflict).to.be(true);
+          expect(stripSource(d.localDiff)).to.eql([opAddRange(0, [cell1])]);
+          expect(d.remoteDiff).to.be(null);
+
+          d = model.decisions[1];
+          expect(d.action).to.be('remote');
+          expect(d.conflict).to.be(true);
+          expect(d.localDiff).to.be(null);
+          expect(stripSource(d.remoteDiff)).to.eql([opAddRange(0, [cell2])]);
+
+          d = model.decisions[2];
+          expect(d.action).to.be('local');
+          expect(d.conflict).to.be(true);
+          expect(d.absolutePath).to.eql(['cells', 0, 'source']);
+          expect(stripSource(d.localDiff)).to.eql([opAddRange(1, 'line #2\n')]);
+          expect(d.remoteDiff).to.be(null);
+        });
+
+        it('should split an A/AP cell chunk', () => {
+          const lineAdd = opPatch('source', [opAddRange(1, 'line #2\n')]);
+          let cdecs: MergeDecision[] = [new MergeDecision(
+            ['cells'],
+            [opAddRange(0, [cell1])],
+            [opAddRange(0, [cell2]), opPatch(0, [lineAdd])],
+            'base',
+            true
+          )];
+          let model = new NotebookMergeModel(notebook, cdecs);
+
+          expect(model.decisions.length).to.be(3);
+
+          let d = model.decisions[0];
+          expect(d.action).to.be('local');
+          expect(d.conflict).to.be(true);
+          expect(stripSource(d.localDiff)).to.eql([opAddRange(0, [cell1])]);
+          expect(d.remoteDiff).to.be(null);
+
+          d = model.decisions[1];
+          expect(d.action).to.be('remote');
+          expect(d.conflict).to.be(true);
+          expect(d.localDiff).to.be(null);
+          expect(stripSource(d.remoteDiff)).to.eql([opAddRange(0, [cell2])]);
+
+          d = model.decisions[2];
+          expect(d.action).to.be('remote');
+          expect(d.conflict).to.be(true);
+          expect(d.absolutePath).to.eql(['cells', 0, 'source']);
+          expect(d.localDiff).to.be(null);
+          expect(stripSource(d.remoteDiff)).to.eql([opAddRange(1, 'line #2\n')]);
+        });
+
+        it('should split an AP/AP cell chunk', () => {
+          const lineAdd = opPatch('source', [opAddRange(1, 'line #2\n')]);
+          let cdecs: MergeDecision[] = [new MergeDecision(
+            ['cells'],
+            [opAddRange(0, [cell1]), opPatch(0, [lineAdd])],
+            [opAddRange(0, [cell2]), opPatch(0, [lineAdd])],
+            'base',
+            true
+          )];
+          let model = new NotebookMergeModel(notebook, cdecs);
+
+          expect(model.decisions.length).to.be(3);
+
+          let d = model.decisions[0];
+          expect(d.action).to.be('local');
+          expect(d.conflict).to.be(true);
+          expect(stripSource(d.localDiff)).to.eql([opAddRange(0, [cell1])]);
+          expect(d.remoteDiff).to.be(null);
+
+          d = model.decisions[1];
+          expect(d.action).to.be('remote');
+          expect(d.conflict).to.be(true);
+          expect(d.localDiff).to.be(null);
+          expect(stripSource(d.remoteDiff)).to.eql([opAddRange(0, [cell2])]);
+
+          d = model.decisions[2];
+          expect(d.action).to.be('either');
+          expect(d.conflict).to.be(false);
+          expect(d.absolutePath).to.eql(['cells', 0, 'source']);
+          expect(stripSource(d.localDiff)).to.eql([opAddRange(1, 'line #2\n')]);
+          expect(stripSource(d.remoteDiff)).to.eql([opAddRange(1, 'line #2\n')]);
         });
 
       });
