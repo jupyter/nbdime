@@ -376,13 +376,24 @@ class DiffView {
           for (let s of ss) {
             s.decision.action = s.action;
           }
-        } else if (instance === this.baseEditor) {
+        } else if (this.type === 'merge' && instance === this.baseEditor) {
           for (let s of ss) {
             s.decision.action = 'base';
-            if (hasEntries(s.decision.customDiff)) {
-              s.decision.customDiff = [];
-            }
           }
+        }
+        for (let i=ss.length - 1; i >= 0; --i) {
+          let s = ss[i];
+          if (this.type === 'merge' && hasEntries(s.decision.customDiff)) {
+            // Custom diffs are cleared on pick,
+            // as there is no way to re-pick them
+            s.decision.customDiff = [];
+          }
+        }
+        if (ss.length === 0) {
+          // All decisions empty, remove picker
+          // In these cases, there should only be one picker, on base
+          // so simply remove the one we have here
+          instance.setGutterMarker(line, GUTTER_PICKER_CLASS, null);
         }
       } else if (gutter === GUTTER_CONFLICT_CLASS) {
         for (let s of ss) {
@@ -516,6 +527,18 @@ class DiffView {
             (picker as any).sources = sources;
             picker.classList.add(GUTTER_PICKER_CLASS);
             editor.setGutterMarker(line, GUTTER_PICKER_CLASS, picker);
+          } else if (editor === self.baseEditor) {
+            for (let s of sources) {
+              if (s.decision.action === 'custom' &&
+                  !hasEntries(s.decision.localDiff) &&
+                  !hasEntries(s.decision.remoteDiff)) {
+                // We have a custom decision, add picker on base only!
+                let picker = elt('div', PICKER_SYMBOL, classes.gutter);
+                (picker as any).sources = sources;
+                picker.classList.add(GUTTER_PICKER_CLASS);
+                editor.setGutterMarker(line, GUTTER_PICKER_CLASS, picker);
+              }
+            }
           } else if (conflict && editor === self.ownEditor) {
             // Add conflict markers on editor, if conflicted
             let conflictMarker = elt('div', CONFLICT_MARKER, '');
