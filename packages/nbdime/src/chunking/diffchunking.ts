@@ -245,16 +245,16 @@ class Chunker {
 export
 class LineChunker extends Chunker {
   protected _overlapChunk(chunk: Chunk, range: DiffRangePos, isAddition: boolean): boolean {
-    if (isAddition) {
-      return chunk.inOrig(range.from.line + 1);
-    } else {
+    let fromLine = range.from.line;
+    if (chunk.baseFrom !== chunk.baseTo || chunk.remoteFrom >= chunk.remoteTo) {
       // Ensure aligned addition/removal on same line
       // still chunk together
-      if (chunk.baseFrom === chunk.baseTo && chunk.remoteFrom < chunk.remoteTo) {
-        return chunk.inEdit(range.from.line);
-      } else {
-        return chunk.inEdit(range.from.line + 1);
-      }
+      fromLine += 1;
+    }
+    if (isAddition) {
+      return chunk.inOrig(fromLine);
+    } else {
+      return chunk.inEdit(fromLine);
     }
   }
 }
