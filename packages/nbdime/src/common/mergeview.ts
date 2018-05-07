@@ -300,7 +300,7 @@ class DiffView {
       }
       debounceChange = window.setTimeout(update, fast === true ? 20 : 250);
     }
-    function change(_cm: CodeMirror.Editor, change: CodeMirror.EditorChangeLinkedList) {
+    function change(_cm: CodeMirror.Editor, change: CodeMirror.EditorChange) {
       if (self.model instanceof DecisionStringDiffModel) {
         self.model.invalidate();
       }
