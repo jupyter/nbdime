@@ -85,17 +85,6 @@ describe('diff', () => {
         expect(util.stripSource(diff)).to.eql(expected);
       });
 
-      it('should combine subsequent line additions', () => {
-        let source = ['test\n', 'foo\n', 'bar\n'];
-        let sourceDiff = [
-          opAddRange(1, ['wee\n']),
-          opAddRange(1, ['ooh\n'])
-        ]
-        let diff = util.flattenStringDiff(source, sourceDiff);
-        let expected = [opAddRange(source[0].length, 'wee\nooh\n')];
-        expect(util.stripSource(diff)).to.eql(expected);
-      });
-
       it('should be robust against different line endings', () => {
         let sourceA = 'test\nfoo\n\nbar\n';
         let sourceB = sourceA.replace(/\n/gm, '\r\n');
@@ -112,15 +101,24 @@ describe('diff', () => {
         (sourceDiffC[1].valuelist as string[])[0] = sourceDiffA[1].valuelist[0].replace(/\n/gm, '\r');
 
         let diff = util.flattenStringDiff(sourceA, sourceDiffA);
-        let expected = [opAddRange('test\nfoo\n\n'.length, 'wee\nooh\n')];
+        let expected = [
+          opAddRange('test\nfoo\n\n'.length, 'wee\n'),
+          opAddRange('test\nfoo\n\n'.length, 'ooh\n')
+          ];
         expect(util.stripSource(diff)).to.eql(expected);
 
         diff = util.flattenStringDiff(sourceB, sourceDiffB);
-        expected = [opAddRange('test\r\nfoo\r\n\r\n'.length, 'wee\r\nooh\r\n')];
+        expected = [
+          opAddRange('test\r\nfoo\r\n\r\n'.length, 'wee\r\n'),
+          opAddRange('test\r\nfoo\r\n\r\n'.length, 'ooh\r\n')
+          ];
         expect(util.stripSource(diff)).to.eql(expected);
 
         diff = util.flattenStringDiff(sourceC, sourceDiffC);
-        expected = [opAddRange('test\rfoo\r\r'.length, 'wee\rooh\r')];
+        expected = [
+          opAddRange('test\rfoo\r\r'.length, 'wee\r'),
+          opAddRange('test\rfoo\r\r'.length, 'ooh\r')
+          ];
         expect(util.stripSource(diff)).to.eql(expected);
       });
 
@@ -131,17 +129,6 @@ describe('diff', () => {
         ]
         let diff = util.flattenStringDiff(source, sourceDiff);
         let expected = [opRemoveRange(source[0].length, 'wee\n'.length)];
-        expect(util.stripSource(diff)).to.eql(expected);
-      });
-
-      it('should combine subsequent line deletions', () => {
-        let source = ['test\n', 'foo\n', 'bar\n'];
-        let sourceDiff = [
-          opRemoveRange(1, 1),
-          opRemoveRange(2, 1)
-        ];
-        let diff = util.flattenStringDiff(source, sourceDiff);
-        let expected = [opRemoveRange(source[0].length, 'foo\nbar\n'.length)];
         expect(util.stripSource(diff)).to.eql(expected);
       });
 
