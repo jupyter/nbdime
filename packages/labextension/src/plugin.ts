@@ -74,6 +74,8 @@ type INBDiffExtension = DocumentRegistry.IWidgetExtension<NotebookPanel, INotebo
 const serverMissingMsg = 'Unable to query nbdime API. Is the server extension enabled?';
 
 
+const INITIAL_NETWORK_RETRY = 2; // ms
+
 
 export
 class NBDiffExtension implements INBDiffExtension {
@@ -142,7 +144,6 @@ namespace CommandIDs {
 }
 
 
-
 function addCommands(app: JupyterLab, tracker: INotebookTracker, rendermime: IRenderMimeRegistry): void {
   const { commands, shell } = app;
 
@@ -167,6 +168,8 @@ function addCommands(app: JupyterLab, tracker: INotebookTracker, rendermime: IRe
   // a repo during the session, this will become incorrect
   let lut_known_git: { [key: string]: boolean} = {}
 
+  let networkRetry = INITIAL_NETWORK_RETRY;
+
   /**
    * Whether the notebook is in a git repository.
    */
@@ -181,6 +184,7 @@ function addCommands(app: JupyterLab, tracker: INotebookTracker, rendermime: IRe
     if (known_git === undefined) {
       const inGitPromise = isNbInGit({path: dir});
       inGitPromise.then(inGit => {
+        networkRetry = INITIAL_NETWORK_RETRY;
         lut_known_git[dir] = inGit;
         // Only update if false, since it is left enabled while waiting
         if (!inGit) {
@@ -189,9 +193,12 @@ function addCommands(app: JupyterLab, tracker: INotebookTracker, rendermime: IRe
       });
       inGitPromise.catch((reason) => {
         hasAPI = reason.status !== undefined && reason.status !== 404;
-        commands.notifyCommandChanged(CommandIDs.diffNotebook);
-        commands.notifyCommandChanged(CommandIDs.diffNotebookCheckpoint);
-        commands.notifyCommandChanged(CommandIDs.diffNotebookGit);
+        setTimeout(() => {
+          networkRetry *= 2;
+          commands.notifyCommandChanged(CommandIDs.diffNotebook);
+          commands.notifyCommandChanged(CommandIDs.diffNotebookCheckpoint);
+          commands.notifyCommandChanged(CommandIDs.diffNotebookGit);
+        }, networkRetry);
       });
       // Leave button enabled while unsure
       return true;
