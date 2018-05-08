@@ -4,7 +4,7 @@
 
 
 import {
-  IDiffEntry, IDiffPatch
+  IDiffEntry,
 } from '../diff/diffentries';
 
 import {
@@ -16,7 +16,7 @@ import {
 } from '../merge/decisions';
 
 import {
-  valueIn, shallowCopy
+  valueIn, shallowCopy, unique
 } from '../common/util';
 
 
@@ -102,10 +102,11 @@ class Chunker {
     if (range.endsOnNewline) {
       linediff += 1;
     }
-    let firstLineNew = range.from.ch === 0 && linediff > 0;
+    const firstLineNew = range.from.ch === 0 && linediff > 0;
 
-    let startOffset = range.chunkStartLine ? 0 : 1;
-    let endOffset =
+
+    const startOffset = range.chunkStartLine ? 0 : 1;
+    const endOffset =
       range.chunkStartLine && range.endsOnNewline && firstLineNew ?
       0 : 1;
 
@@ -166,6 +167,7 @@ class Chunker {
       }
       this.chunks.push(current);
     }
+    current.sources = current.sources.filter(unique);
     this.editOffset += isAddition ? -linediff : linediff;
   }
 
@@ -222,6 +224,7 @@ class Chunker {
       this.chunks.push(current);
     }
     this._currentGhost = current;
+    current.sources = current.sources.filter(unique);
     // this._doAdd(range, isAddition);
   }
 
@@ -242,21 +245,16 @@ class Chunker {
 export
 class LineChunker extends Chunker {
   protected _overlapChunk(chunk: Chunk, range: DiffRangePos, isAddition: boolean): boolean {
-    let linediff = range.to.line - range.from.line;
-    if (range.endsOnNewline) {
-      linediff += 1;
-    }
-    let firstLineNew = range.from.ch === 0 && linediff > 0;
-    if (isAddition) {
-      return chunk.inOrig(range.from.line + 1);
-    } else {
+    let fromLine = range.from.line;
+    if (chunk.baseFrom !== chunk.baseTo || chunk.remoteFrom >= chunk.remoteTo) {
       // Ensure aligned addition/removal on same line
       // still chunk together
-      if (chunk.baseFrom === chunk.baseTo && chunk.remoteFrom < chunk.remoteTo) {
-        return chunk.inEdit(range.from.line);
-      } else {
-        return chunk.inEdit(range.from.line + 1);
-      }
+      fromLine += 1;
+    }
+    if (isAddition) {
+      return chunk.inOrig(fromLine);
+    } else {
+      return chunk.inEdit(fromLine);
     }
   }
 }
@@ -285,6 +283,7 @@ function lineToNormalChunks(lineChunks: Chunk[]): Chunk[] {
         current = shallowCopy(c);
       }
     }
+    current.sources = current.sources.filter(unique);
   }
   if (current !== null) {
     ret.push(current);

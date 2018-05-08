@@ -14,10 +14,6 @@ import {
 } from '@phosphor/widgets';
 
 import {
-  Mode
-} from '@jupyterlab/codemirror';
-
-import {
   IStringDiffModel
 } from '../diff/model';
 
@@ -203,25 +199,51 @@ class DiffView {
   syncModel() {
     if (this.modelInvalid()) {
       let edit = this.ownEditor;
+      let updatedLineChunks = this.model.getLineChunks();
+      let updatedChunks = lineToNormalChunks(updatedLineChunks);
+      if (this.model.remote === edit.getValue()) {
+        // Nothing to do except update chunks
+        this.lineChunks = updatedLineChunks;
+        this.chunks = updatedChunks;
+        return;
+      }
       let cursor = edit.getDoc().getCursor();
       let newLines = splitLines(this.model.remote!);
       let start = edit.getDoc().firstLine();
-      let last = edit.getDoc().lastLine();
-      let end = last;
+      let last = edit.getDoc().lastLine() + 1;
+      let cumulativeOffset = 0;
+      let end: number;
+      let updatedEnd: number;
+      // We want to replace contents of editor, but if we have collapsed regions
+      // some lines have been optimized away. Carefully replace the relevant bits:
       for (let range of this.collapsedRanges) {
         let baseLine = range.line;
         end = getMatchingEditLine(baseLine, this.chunks);
-        if (end !== start) {
-          edit.getDoc().replaceRange(newLines.slice(start, end - 1).join(''), CodeMirror.Pos(start, 0), CodeMirror.Pos(end - 1, 0));
+        updatedEnd = getMatchingEditLine(baseLine, updatedChunks);
+        let offset = updatedEnd - end;
+        if (end !== start || offset !== 0) {
+          edit.getDoc().replaceRange(
+            newLines.slice(start + cumulativeOffset, updatedEnd + cumulativeOffset - 1).join(''),
+            CodeMirror.Pos(start, 0),
+            CodeMirror.Pos(end - 1, 0),
+            'syncModel'
+          );
         }
+        cumulativeOffset += offset;
         start = end + range.size;
       }
       if (start < last) {
-        edit.getDoc().replaceRange(newLines.slice(start, end).join(''), CodeMirror.Pos(start, 0), CodeMirror.Pos(end, 0));
+        // Only here if no collapsed ranges, replace full contents
+        edit.getDoc().replaceRange(
+          newLines.slice(start, newLines.length).join(''),
+          CodeMirror.Pos(start, 0),
+          CodeMirror.Pos(last, 0),
+          'syncModel'
+        );
       }
       this.ownEditor.getDoc().setCursor(cursor);
-      this.lineChunks = this.model.getLineChunks();
-      this.chunks = lineToNormalChunks(this.lineChunks);
+      this.lineChunks = updatedLineChunks;
+      this.chunks = updatedChunks;
     }
   }
 
@@ -304,9 +326,11 @@ class DiffView {
       }
       debounceChange = window.setTimeout(update, fast === true ? 20 : 250);
     }
-    function change(_cm: CodeMirror.Editor, change: CodeMirror.EditorChangeLinkedList) {
-      if (self.model instanceof DecisionStringDiffModel) {
-        self.model.invalidate();
+    function change(_cm: CodeMirror.Editor, change: CodeMirror.EditorChange) {
+      if (!(self.model instanceof DecisionStringDiffModel)) {
+        // TODO: Throttle?
+        self.lineChunks = self.model.getLineChunks();
+        self.chunks = lineToNormalChunks(self.lineChunks);
       }
       // Update faster when a line was added/removed
       setDealign(change.text.length - 1 !== change.to.line - change.from.line);
@@ -352,13 +376,24 @@ class DiffView {
           for (let s of ss) {
             s.decision.action = s.action;
           }
-        } else if (instance === this.baseEditor) {
+        } else if (this.type === 'merge' && instance === this.baseEditor) {
           for (let s of ss) {
             s.decision.action = 'base';
-            if (hasEntries(s.decision.customDiff)) {
-              s.decision.customDiff = [];
-            }
           }
+        }
+        for (let i=ss.length - 1; i >= 0; --i) {
+          let s = ss[i];
+          if (this.type === 'merge' && hasEntries(s.decision.customDiff)) {
+            // Custom diffs are cleared on pick,
+            // as there is no way to re-pick them
+            s.decision.customDiff = [];
+          }
+        }
+        if (ss.length === 0) {
+          // All decisions empty, remove picker
+          // In these cases, there should only be one picker, on base
+          // so simply remove the one we have here
+          instance.setGutterMarker(line, GUTTER_PICKER_CLASS, null);
         }
       } else if (gutter === GUTTER_CONFLICT_CLASS) {
         for (let s of ss) {
@@ -492,6 +527,18 @@ class DiffView {
             (picker as any).sources = sources;
             picker.classList.add(GUTTER_PICKER_CLASS);
             editor.setGutterMarker(line, GUTTER_PICKER_CLASS, picker);
+          } else if (editor === self.baseEditor) {
+            for (let s of sources) {
+              if (s.decision.action === 'custom' &&
+                  !hasEntries(s.decision.localDiff) &&
+                  !hasEntries(s.decision.remoteDiff)) {
+                // We have a custom decision, add picker on base only!
+                let picker = elt('div', PICKER_SYMBOL, classes.gutter);
+                (picker as any).sources = sources;
+                picker.classList.add(GUTTER_PICKER_CLASS);
+                editor.setGutterMarker(line, GUTTER_PICKER_CLASS, picker);
+              }
+            }
           } else if (conflict && editor === self.ownEditor) {
             // Add conflict markers on editor, if conflicted
             let conflictMarker = elt('div', CONFLICT_MARKER, '');
@@ -670,7 +717,7 @@ function getMatchingEditLineLC(toMatch: Chunk, chunks: Chunk[]): number {
 
 
 /**
- * Find which line numbers align which each other, in the
+ * Find which line numbers align with each other, in the
  * set of DiffViews. The returned array is of the format:
  *
  * [ aligned line #1:[Edit line number, (DiffView#1 line number, DiffView#2 line number,) ...],

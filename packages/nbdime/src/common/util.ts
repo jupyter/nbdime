@@ -4,12 +4,12 @@
 
 export
 interface DeepCopyableObject {
-  [key: string]: DeepCopyableValue | undefined;
+  [key: string]: any | undefined;
   prototype?: DeepCopyableObject;
 }
 
 export
-type DeepCopyableValue = DeepCopyableObject | any[] | string | number | boolean | null;
+type DeepCopyableValue = DeepCopyableObject | DeepCopyableObject[] | string | number | boolean | null;
 
 /**
  * Check whether a value is in an array.
