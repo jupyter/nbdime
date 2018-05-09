@@ -29,7 +29,7 @@ class CollapsiblePanel extends Panel {
       header.node.innerText = headerTitle;
       // header.appendChild(title);
     }
-    let button = document.createElement('span');
+    let button = document.createElement('button');
     button.className = COLLAPSIBLE_HEADER_ICON;
     header.node.appendChild(button);
 
