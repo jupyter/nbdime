@@ -2,9 +2,9 @@
 :root {
   --codemirror-border: var(--jp-border-width) solid var(--jp-cell-editor-border-color);
 
-  --jp-nbdime-output-color1: #39f;
-  --jp-nbdime-output-color2: #7bf;
-  --jp-nbdime-output-color3: #adf;
+  --jp-nbdime-output-color1: rgba(0, 141, 255, 0.7);
+  --jp-nbdime-output-color2: rgba(0, 141, 255, 0.5);
+  --jp-nbdime-output-color3: rgba(0, 141, 255, 0.3);
 
   --jp-diff-added-color0: rgba(0, 200, 20, 0.6);
   --jp-diff-added-color1: rgba(0, 200, 20, 0.3);
