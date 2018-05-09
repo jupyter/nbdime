@@ -57,18 +57,6 @@ import {
 
 
 /**
- * The token identifying the JupyterLab plugin.
- */
-export
-const INBDiffExtension = new Token<INBDiffExtension>('jupyter.extensions.nbdime');
-
-/**
- * The type of the provided value of the plugin in JupyterLab.
- */
-export
-type INBDiffExtension = DocumentRegistry.IWidgetExtension<NotebookPanel, INotebookModel>;
-
-/**
  * Error message if the nbdime API is unavailable.
  */
 const serverMissingMsg = 'Unable to query nbdime API. Is the server extension enabled?';
@@ -78,7 +66,7 @@ const INITIAL_NETWORK_RETRY = 2; // ms
 
 
 export
-class NBDiffExtension implements INBDiffExtension {
+class NBDiffExtension implements DocumentRegistry.IWidgetExtension<NotebookPanel, INotebookModel> {
   /**
    *
    */
@@ -274,9 +262,8 @@ function addCommands(app: JupyterLab, tracker: INotebookTracker, rendermime: IRe
 /**
  * The notebook diff provider.
  */
-const nbDiffProvider: JupyterLabPlugin<INBDiffExtension> = {
+const nbDiffProvider: JupyterLabPlugin<void> = {
   id: 'jupyter.extensions.nbdime',
-  provides: INBDiffExtension,
   requires: [INotebookTracker, IRenderMimeRegistry],
   activate: activateWidgetExtension,
   autoStart: true
@@ -288,7 +275,7 @@ export default nbDiffProvider;
 /**
  * Activate the widget extension.
  */
-function activateWidgetExtension(app: JupyterLab, tracker: INotebookTracker, rendermime: IRenderMimeRegistry): INBDiffExtension {
+function activateWidgetExtension(app: JupyterLab, tracker: INotebookTracker, rendermime: IRenderMimeRegistry): void {
   let {commands, docRegistry} = app;
   let extension = new NBDiffExtension(commands);
   docRegistry.addWidgetExtension('Notebook', extension);
@@ -302,5 +289,4 @@ function activateWidgetExtension(app: JupyterLab, tracker: INotebookTracker, ren
       commands.notifyCommandChanged(CommandIDs.diffNotebookCheckpoint);
     }
   });
-  return extension;
 }

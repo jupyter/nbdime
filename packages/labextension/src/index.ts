@@ -15,6 +15,3 @@ import '../style/index.css'
 
 export default NBDiffProvider;
 
-export {
-  INBDiffExtension
-} from './plugin';
