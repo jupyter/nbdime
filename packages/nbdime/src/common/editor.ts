@@ -24,6 +24,10 @@ class EditorWidget extends CodeEditorWrapper {
    * need to loop over all instances.
    */
   constructor(value?: string, options?: Partial<CodeMirrorEditor.IConfig>) {
+    if (options && options.readOnly) {
+      // Don't focus readonly editors:
+      options.readOnly = 'nocursor' as any;
+    }
     super({
       model: new CodeEditor.Model({value}),
       factory: function() {
@@ -31,6 +35,7 @@ class EditorWidget extends CodeEditorWrapper {
         return factory.newInlineEditor.bind(factory);
       }()
     });
+    this.staticLoaded = false;
     EditorWidget.editors.push(this.cm);
   }
 
@@ -60,5 +65,5 @@ class EditorWidget extends CodeEditorWrapper {
     }
   }
 
-  staticLoaded = false;
+  staticLoaded: boolean;
 }
