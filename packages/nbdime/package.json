@@ -19,7 +19,8 @@
     "test:debug": "karma start --browsers=Chrome --singleRun=false --debug=true test/karma-nocov.conf.js",
     "test:firefox": "karma start --browsers=Firefox test/karma.conf.js",
     "test:ie": "karma start --browsers=IE test/karma.conf.js",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "watch": "tsc --project src --watch"
   },
   "devDependencies": {
     "@jupyterlab/apputils": "^0.16.0",
