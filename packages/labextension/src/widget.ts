@@ -17,6 +17,10 @@ import {
 } from '@phosphor/coreutils';
 
 import {
+  Message
+} from '@phosphor/messaging';
+
+import {
   Widget, Panel
 } from '@phosphor/widgets';
 
@@ -81,6 +85,7 @@ class NbdimeWidget extends Panel {
 
     this.scroller = new Panel();
     this.scroller.addClass(ROOT_CLASS);
+    this.scroller.node.tabIndex = -1;
     this.addWidget(this.scroller);
 
     let hideUnchangedChk = header.node.getElementsByClassName('nbdime-hide-unchanged')[0] as HTMLInputElement;
@@ -110,6 +115,13 @@ class NbdimeWidget extends Panel {
     this.rendermime = null!;
     this.header = null!;
     this.scroller = null!;
+  }
+
+  /**
+   * Handle `'activate-request'` messages.
+   */
+  protected onActivateRequest(msg: Message): void {
+    this.scroller.node.focus();
   }
 
 
