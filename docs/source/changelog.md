@@ -1,5 +1,16 @@
 # Changes in nbdime
 
+## 1.0
+
+##  1.0.0 - 2018-05
+
+- Added ability for git diff driver to integrate with git filters.
+- Improved/fixed merge resolution for similar cell insertions.
+- Added config system to allow for configuring the various entrypoints. Especially useful for customizing which keys to ignore when diffing.
+- Added control to web view of outputs to select which MIME type to render, and to enable trusting of outputs for full rendering.
+- Added jupyterlab extension. Frontend/server extensions are now enabled by default on installation.
+- Various fixes and adjustments.
+
 ## 0.4
 
 ###  0.4.1 - 2017-12
