@@ -19,14 +19,12 @@ prune docs/dist
 include lerna.json
 include package.json
 graft nbdime/webapp
-prune nbdime/webapp/node_modules
-prune nbdime/webapp/build
 graft packages
 prune packages/*/coverage
 prune packages/*/lib
+prune packages/*/build
 prune packages/*/node_modules
 prune packages/*/test/build
-prune node_modules
 
 # Extension files
 graft nbdime/notebook_ext
