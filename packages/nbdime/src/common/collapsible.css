@@ -54,6 +54,7 @@ button.jp-CollapsiblePanel-header-icon:active {
     padding-left: 2em;
     padding-right: 2em;
     border-top: var(--jp-nbdime-output-color1) solid 1pt;
+    color: var(--jp-ui-font-color1);
 }
 
 .jp-CollapsiblePanel-container {

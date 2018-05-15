@@ -11,6 +11,8 @@
   outline: none;
   overflow: auto;
   background: var(--jp-layout-color0);
+  color: var(--jp-ui-font-color0);
+  flex: 1 1 auto;
 }
 
 
@@ -40,6 +42,7 @@
   width: calc(50% - 8px);
   background-color: var(--jp-diff-deleted-color0);
   padding: 0px 4px;
+  vertical-align: top;
 }
 
 .nbdime-Diff .nbdime-header-remote {
@@ -47,12 +50,14 @@
   width: calc(49% - 8px);
   background-color: var(--jp-diff-added-color0);
   padding: 0px 4px;
+  vertical-align: top;
 }
 
 .nbdime-Diff .nbdime-header-local {
   display: none;
   width: calc(49% - 8px);
   padding: 0px 4px;
+  vertical-align: top;
 }
 
 
@@ -68,9 +73,9 @@
   position: absolute;
   width: 100%;
   top: 0;
-  background-color: #eee;
-  border-top: solid #ccc 1px;
-  border-bottom: solid #ccc 1px;
+  background-color: var(--jp-layout-color2);
+  border-top: solid var(--jp-layout-color3) 1px;
+  border-bottom: solid var(--jp-layout-color3) 1px;
   text-align: center;
 }
 
@@ -80,9 +85,9 @@
   position: absolute;
   width: 100%;
   bottom: 0;
-  background-color: #eee;
-  border-top: solid #ccc 1px;
-  border-bottom: solid #ccc 1px;
+  background-color: var(--jp-layout-color2);
+  border-top: solid var(--jp-layout-color3) 1px;
+  border-bottom: solid var(--jp-layout-color3) 1px;
   text-align: center;
 }
 
