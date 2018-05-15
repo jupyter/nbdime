@@ -2,7 +2,7 @@
 
 ## 1.0
 
-##  1.0.0 - 2018-05
+###  1.0.0 - 2018-05
 
 - Added ability for git diff driver to integrate with git filters.
 - Improved/fixed merge resolution for similar cell insertions.
