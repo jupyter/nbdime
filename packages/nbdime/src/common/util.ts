@@ -73,7 +73,7 @@ export function deepCopy<T extends DeepCopyableValue>(obj: T | null): T | null {
       r.prototype = a.prototype;
     }
     for (let k in obj) {
-      r[k] = deepCopy(a[k] as any);
+      r[k] = deepCopy(a[k]);
     }
     return r as T;
   }
@@ -90,7 +90,7 @@ function shallowCopy< T extends { [key: string]: any } >(original: T): T {
 
   for (let k in original) {
     // Don't copy function
-    let ok = original[k] as any;
+    let ok = original[k];
     if (ok !== null && ok !== undefined &&
         ok.hasOwnProperty('constructor') &&
         ok.constructor === Function) {

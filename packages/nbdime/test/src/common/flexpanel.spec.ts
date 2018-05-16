@@ -135,7 +135,6 @@ describe('upstreaming', () => {
     it('should set and get direction', () => {
       let p = new FlexPanel();
       // Check that it has a valid initial value
-      let initial = p.direction;
       p.direction = 'bottom-to-top';
       expect(p.direction).to.be('bottom-to-top');
     });
@@ -171,7 +170,6 @@ describe('upstreaming', () => {
     it('should set and get minimumSpacing', () => {
       let p = new FlexPanel();
       // Check that it has a valid initial value
-      let initial = p.minimumSpacing;
       p.minimumSpacing = 10;
       expect(p.minimumSpacing).to.be(10);
     });
@@ -206,7 +204,6 @@ describe('upstreaming', () => {
     it('should set and get wrap', () => {
       let p = new FlexPanel();
       // Check that it has a valid initial value
-      let initial = p.wrap;
       p.wrap = true;
       expect(p.wrap).to.be(true);
     });
