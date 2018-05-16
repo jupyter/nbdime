@@ -44,7 +44,7 @@ class OutputDiffModel extends RenderableDiffModel<nbformat.IOutput> {
    *
    * See also: innerMimeType
    */
-  hasMimeType(mimetype: string): string | null {
+  hasMimeType(mimetype: string): string | string[] | null {
     let outputs = this.base || this.remote!;
     if (nbformat.isStream(outputs) &&
         TEXT_MIMETYPES.indexOf(mimetype) !== -1) {
@@ -54,7 +54,7 @@ class OutputDiffModel extends RenderableDiffModel<nbformat.IOutput> {
     } else if (nbformat.isExecuteResult(outputs) || nbformat.isDisplayData(outputs)) {
       let data = outputs.data;
       if (mimetype in data) {
-        return 'data.' + mimetype;
+        return ['data', mimetype];
       }
     }
     return null;
@@ -68,24 +68,24 @@ class OutputDiffModel extends RenderableDiffModel<nbformat.IOutput> {
    *
    * See also: hasMimeType
    */
-  protected innerMimeType(key: string) : string {
+  innerMimeType(key: string | string[]) : string {
     let t = (this.base || this.remote!).output_type;
     if (t === 'stream' && key === 'text' || t === 'error' && key === 'traceback') {
       // TODO: 'application/vnd.jupyter.console-text'?
       return 'text/plain';
     } else if ((t === 'execute_result' || t === 'display_data') &&
-          key.indexOf('data.') === 0) {
-      return key.slice('data.'.length);
+          Array.isArray(key)) {
+      return key[1];
     }
     throw new NotifyUserError('Unknown MIME type for key: ' + key);
   }
 
   /**
-   * Can converted to a StringDiffModel via the method `stringify()`, which also
+   * Can be converted to a StringDiffModel via the method `stringify()`, which also
    * takes an optional argument `key` which specifies a subpath of the IOutput to
    * make the model from.
    */
-  stringify(key?: string) : IStringDiffModel {
+  stringify(key?: string | string[]) : IStringDiffModel {
     let model = super.stringify(key);
     if (key) {
        model.mimetype = this.innerMimeType(key);
