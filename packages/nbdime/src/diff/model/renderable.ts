@@ -3,7 +3,7 @@
 'use strict';
 
 import {
-  JSONValue
+  JSONValue, JSONObject, JSONArray
 } from '@phosphor/coreutils';
 
 import {
@@ -75,7 +75,12 @@ abstract class RenderableDiffModel<T extends JSONValue> implements IDiffModel {
    * If so, it returns the path/key to that mimetype's data. If not present,
    * it returns null.
    */
-  abstract hasMimeType(mimetype: string): string | null;
+  abstract hasMimeType(mimetype: string): string | string[] | null;
+
+  /**
+   * Get the mimetype for a given key from hasMimeType.
+   */
+  abstract innerMimeType(key: string | string[]) : string;
 
   /**
    * Convert to a StringDiffModel.
@@ -83,37 +88,36 @@ abstract class RenderableDiffModel<T extends JSONValue> implements IDiffModel {
    * Takes an optional argument `key` which specifies a subpath of the MimeBundle to
    * make the model from.
    */
-  stringify(key?: string) : IStringDiffModel {
-    let getMemberByPath = function(obj: any, key: string, f?: (obj: any, key: string) => any): any {
+  stringify(key?: string | string[]) : IStringDiffModel {
+    let getMemberByPath = function(obj: JSONValue | null, key: string | string[], f?: (obj: any, key: string) => any): JSONValue | null {
       if (!obj) {
         return obj;
       }
-      let i = key.indexOf('.');
-      if (i >= 0) {
-        console.assert(i < key.length);
+      if (Array.isArray(key)) {
+        const tail = key.length > 2 ? key.slice(1) : key[1];
         if (f) {
           return getMemberByPath(
-            f(obj, key.slice(0, i)), key.slice(i + 1), f);
+            f(obj, key[0]), tail, f);
         }
         return getMemberByPath(
-          obj[key.slice(0, i)], key.slice(i + 1), f);
+          (obj as JSONObject)[key[0]], tail, f);
       } else if (f) {
         return f(obj, key);
       }
-      return obj[key];
+      return (obj as JSONObject)[key];
     };
-    let base = key ? getMemberByPath(this.base, key) as any : this.base;
-    let remote = key ? getMemberByPath(this.remote, key) as any : this.remote;
+    let base = key ? getMemberByPath(this.base, key) : this.base;
+    let remote = key ? getMemberByPath(this.remote, key) : this.remote;
     let diff = (this.diff && key) ?
-      getMemberByPath(this.diff, key, getSubDiffByKey) as IDiffEntry[] | null :
+      getMemberByPath(this.diff as any, key, getSubDiffByKey) as IDiffEntry[] | null :
       this.diff;
     let model: IStringDiffModel | null = null;
     if (this.unchanged || this.added || this.deleted || !diff) {
       model = createDirectStringDiffModel(base, remote);
     } else {
-      model = createPatchStringDiffModel(base, diff);
+      model = createPatchStringDiffModel(base as (string | JSONObject | JSONArray), diff);
     }
-    model.mimetype = key || 'application/json';
+    model.mimetype = key ? this.innerMimeType(key) : 'application/json';
     model.collapsible = this.collapsible;
     model.collapsibleHeader = this.collapsibleHeader;
     model.startCollapsed = this.startCollapsed;

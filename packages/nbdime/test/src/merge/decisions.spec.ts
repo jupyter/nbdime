@@ -342,7 +342,7 @@ describe('merge', () => {
         expect(decs.length).to.be(2);
         expect(decs[0].absolutePath).to.eql(['a', 0]);
         expect(decs[1].absolutePath).to.eql([33, 0, 'foo']);
-      })
+      });
 
     });
 
@@ -584,7 +584,6 @@ describe('merge', () => {
           secret: 'foo!'
         }
       };
-      let baseArray = [1, 2, 3];
 
       let simpleObjectDecision : decisions.IMergeDecision = {
           local_diff: [opAddRange(3, ['line 4\n'])],

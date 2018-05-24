@@ -551,23 +551,23 @@ function splitCellInsertions(mergeDecisions: MergeDecision[]): MergeDecision[] {
         console.assert(start === dr.key);
         if (md.action === 'remote_then_local') {
           // Only case where we need to switch order!
-          for (let c of dr.valuelist as any[]) {
+          for (let c of dr.valuelist) {
             const part = makeSplitPart(md, c, false, true);
             part.action = 'remote';
             output.push(part);
           }
-          for (let c of dl.valuelist as any[]) {
+          for (let c of dl.valuelist) {
             const part = makeSplitPart(md, c, true, false);
             part.action = 'local';
             output.push(part);
           }
         } else {
-          for (let c of dl.valuelist as any[]) {
+          for (let c of dl.valuelist) {
             const part = makeSplitPart(md, c, true, false);
             part.action = 'local';
             output.push(part);
           }
-          for (let c of dr.valuelist as any[]) {
+          for (let c of dr.valuelist) {
             const part = makeSplitPart(md, c, false, true);
             part.action = 'remote';
             output.push(part);

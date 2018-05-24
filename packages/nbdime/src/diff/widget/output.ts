@@ -215,7 +215,7 @@ class OutputPanel extends Panel {
     let view: Widget | undefined;
     let model = this.model as OutputDiffModel;
     // Find highest order MIME-type supported by rendermime
-    let key: string | null = null;
+    let key: string | string[] | null = null;
     if (this.selectedMimetype === null) {
       find(this.rendermime.mimeTypes, (mt) => {
         key = model.hasMimeType(mt);
