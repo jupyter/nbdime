@@ -21,7 +21,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 
 
 # Minimal Python version sanity check
-ensure_python(('>=2.7', '>=3.4'))
+ensure_python(('2.7', '>=3.4'))
 
 # the name of the project
 name = 'nbdime'
