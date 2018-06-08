@@ -846,7 +846,7 @@ def test_inline_merge_source_onesided_only():
     assert merged == changed
 
 
-def test_inline_merge_source_patches():
+def test_inline_merge_source_replace_line():
     "More elaborate test of cell deletions on both sides, onesided and agreed."
     # Note: Merge rendering of conflicted sources here will depend on git/diff/builtin params and availability
     base = code_nb([
@@ -885,6 +885,52 @@ def test_inline_merge_source_patches():
         "other text?",
         #'<<<<<<< local\nthis cell will be deleted and modified\n=======\n>>>>>>> remote <CELL DELETED>'
         '<<<<<<< REMOTE CELL DELETED >>>>>>>\nthis cell will be deleted and modified',
+        "some more content",
+        '<<<<<<< local\nand The final Line\n=======\nAnd a Final line\n>>>>>>> remote'
+        ])
+    merged, decisions = merge_notebooks(base, remote, local)
+    assert merged == expected
+
+
+def test_inline_merge_source_add_to_line():
+    "More elaborate test of cell deletions on both sides, onesided and agreed."
+    # Note: Merge rendering of conflicted sources here will depend on git/diff/builtin params and availability
+    base = code_nb([
+        "first source",
+        "other text",
+        "this cell will be deleted and patched\nhere we add",
+        "yet more content",
+        "and a final line",
+        ])
+    local = code_nb([
+        "1st source",  # onesided change
+        "other text",
+        #"this cell will be deleted and patched",
+        "some more content",  # twosided equal change
+        "And a Final line",  # twosided conflicted change
+        ])
+    remote = code_nb([
+        "first source",
+        "other text?",  # onesided change
+        "this cell will be deleted and patched\nhere we add text to a line",
+        "some more content",   # equal
+        "and The final Line",  # conflicted
+        ])
+    expected = code_nb([
+        "1st source",
+        "other text?",
+        #'<<<<<<< local <CELL DELETED>\n\n=======\nthis cell will be deleted and modified\n>>>>>>> remote'
+        '<<<<<<< LOCAL CELL DELETED >>>>>>>\nthis cell will be deleted and patched\nhere we add text to a line',
+        "some more content",  # equal
+        '<<<<<<< local\nAnd a Final line\n=======\nand The final Line\n>>>>>>> remote'
+        ])
+    merged, decisions = merge_notebooks(base, local, remote)
+    assert merged == expected
+    expected = code_nb([
+        "1st source",
+        "other text?",
+        #'<<<<<<< local\nthis cell will be deleted and modified\n=======\n>>>>>>> remote <CELL DELETED>'
+        '<<<<<<< REMOTE CELL DELETED >>>>>>>\nthis cell will be deleted and patched\nhere we add text to a line',
         "some more content",
         '<<<<<<< local\nand The final Line\n=======\nAnd a Final line\n>>>>>>> remote'
         ])
