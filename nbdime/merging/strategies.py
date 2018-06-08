@@ -531,7 +531,8 @@ def resolve_strategy_inline_recurse(path, base, decisions):
         laname, lpname = chunk_typename(d.local_diff)
         raname, rpname = chunk_typename(d.remote_diff)
         chunktype = laname + lpname + "/" + raname + rpname
-        if chunktype not in ('AR/A', 'A/AR', 'A/A', 'AR/AR'):
+        if (chunktype not in ('AR/A', 'A/AR', 'A/A', 'AR/AR') or 
+                d.common_path != ('cells',)):
             decisions.decisions.append(d)
             continue
         if d.get('similar_insert', None) is None:
