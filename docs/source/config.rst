@@ -45,14 +45,15 @@ WebTool
 
 Diff
     Options to diffing commands (NbDiff, NbDiffWeb, NbDiffDriver,
-    NbDiffTool).
+    NbDiffTool, Extension).
 
 Merge
     Options to merge commands (NbMerge, NbMergeWeb, NbMergeDriver,
     NbMergeTool).
 
 GitDiff
-    Options to git diff commands (NbDiffDriver, NbDiffTool)
+    Options to git diff commands (NbDiff, NbDiffWeb, NbDiffDriver,
+    NbDiffTool, Extension)
 
 GitMerge
     Options to git diff commands (NbMergeDriver, NbMergeTool)
@@ -110,3 +111,14 @@ Here, the final config for a git diff entry point will be::
 
 This means that the "tags" entry from the "Diff" section is not automatically
 included in the merge.
+
+
+
+Front end extensions
+-------------------
+
+The configuration of the diffing for the front end extensions (notebook and lab)
+is controlled by the section key "Extension". For extensions, nbdime is not
+launched as a separate process, but is called as a server extension. For this
+reason, any of config options that conflict with those of the lab/notebook
+process are ignored.
