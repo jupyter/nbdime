@@ -181,6 +181,10 @@
   color: var(--jp-ui-font-color1);
 }
 
+/*
+Output mimetype selection:
+*/
+
 .jp-Notebook-diff .jp-Diff-outputPanel .jp-Diff-outputMenu {
   display: none;
   position: absolute;
@@ -218,4 +222,9 @@
   padding-bottom: 6px;
   min-height: 2em;
   border-bottom: var(--jp-border-width) solid var(--jp-nbdime-output-color2);
+}
+
+.jp-Notebook-diff .jp-Diff-renderedOutput {
+  /* Ensure output is always large enough to show menu */
+  min-height: 2em;
 }
