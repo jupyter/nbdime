@@ -2,6 +2,13 @@
 
 ## 1.0
 
+###  1.0.1 - 2018-06
+
+- Web: Fix output rendering of outputs with a period in MIME type name.
+- Config: Add configuration option for front end extensions.
+- Merging: Fix handling of corner case for inline merge strategy.
+- Various other fixes and adjustments.
+
 ###  1.0.0 - 2018-05
 
 - Added ability for git diff driver to integrate with git filters.
@@ -10,6 +17,7 @@
 - Added control to web view of outputs to select which MIME type to render, and to enable trusting of outputs for full rendering.
 - Added jupyterlab extension. Frontend/server extensions are now enabled by default on installation.
 - Various fixes and adjustments.
+
 
 ## 0.4
 
