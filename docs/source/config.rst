@@ -67,8 +67,8 @@ via the "Ignore" key. It takes a dictionary in the following format::
 
 
     "Ignore": {
-      "/cells/*/outputs": True,
-      "/cells/*/attachments": False,
+      "/cells/*/outputs": true,
+      "/cells/*/attachments": false,
       "/cells/*/metadata": ["collapsed", "autoscroll", "deletable", "editable"]
     }
 
@@ -92,7 +92,7 @@ config::
       },
       "GitDiff": {
         "Ignore": {
-          "/cells/*/outputs": True,
+          "/cells/*/outputs": true,
           "/cells/*/metadata": ["collapsed", "autoscroll", "deletable", "editable"]
         }
       }
@@ -103,7 +103,7 @@ Here, the final config for a git diff entry point will be::
     {
       "Ignore": {
         "/metadata": ["foo"],
-        "/cells/*/outputs": True,
+        "/cells/*/outputs": true,
         "/cells/*/metadata": ["collapsed", "autoscroll", "deletable", "editable"]
       }
     }
