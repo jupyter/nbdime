@@ -265,10 +265,10 @@ class GitMerge(Merge):
     pass
 
 
-class NbDiff(Diff):
+class NbDiff(GitDiff):
     pass
 
-class NbDiffWeb(Web, Diff):
+class NbDiffWeb(Web, GitDiff):
     pass
 
 class NbMerge(Merge):
@@ -300,6 +300,9 @@ class NbMergeDriver(GitMerge):
 class NbMergeTool(GitMerge, WebTool):
     pass
 
+class Extension(GitDiff):
+    pass
+
 
 entrypoint_configurables = {
     'nbdiff': NbDiff,
@@ -308,6 +311,7 @@ entrypoint_configurables = {
     'nbmerge-web': NbMergeWeb,
     'nbshow': NbShow,
     'server': Server,
+    'extension': Extension,
     'git-nbdiffdriver': NbDiffDriver,
     'git-nbdifftool': NbDiffTool,
     'git-nbmergedriver': NbMergeDriver,
