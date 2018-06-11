@@ -1,6 +1,6 @@
 {
   "name": "nbdime-jupyterlab",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A JupyterLab extension for showing Notebook diffs.",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
