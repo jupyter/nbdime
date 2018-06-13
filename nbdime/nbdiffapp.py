@@ -21,7 +21,6 @@ from nbdime.args import (
     )
 from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook, setup_std_streams
 from .gitfiles import changed_notebooks, is_gitref
-from .config import get_defaults_for_argparse
 
 
 _description = "Compute the difference between two Jupyter notebooks."

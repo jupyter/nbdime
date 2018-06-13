@@ -14,7 +14,7 @@ from ._version import __version__
 from .log import init_logging, set_nbdime_log_level
 from .gitfiles import is_gitref
 from .diffing.notebooks import set_notebook_diff_targets, set_notebook_diff_ignores
-from .config import get_defaults_for_argparse, entrypoint_configurables
+from .config import get_defaults_for_argparse, build_config, entrypoint_configurables
 from .prettyprint import pretty_print_dict, PrettyPrintConfig
 
 
@@ -57,6 +57,19 @@ class SkipAction(argparse.Action):
         pass
 
 
+def modify_config_for_print(config):
+    output = {}
+    for k, v in config.items():
+        if isinstance(v, dict):
+            output[k] = modify_config_for_print(v)
+            if not output[k]:
+                output[k] = '{}'
+
+        else:
+            output[k] = repr(v)
+    return output
+
+
 class ConfigHelpAction(argparse.Action):
     def __init__(self, option_strings, dest, help=None):
         super(ConfigHelpAction, self).__init__(
@@ -64,9 +77,10 @@ class ConfigHelpAction(argparse.Action):
 
     def __call__(self, parser, namespace, values, option_string=None):
         header = entrypoint_configurables[parser.prog].__name__
+        config = build_config(parser.prog, True)
         pretty_print_dict(
             {
-                header: get_defaults_for_argparse(parser.prog),
+                header: modify_config_for_print(config),
             },
             config=PrettyPrintConfig(out=sys.stderr)
         )

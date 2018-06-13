@@ -3,8 +3,8 @@ Configuration
 
 Nbdime uses a config system loosely based on that of Jupyter. This means that
 it looks for config files ``nbdime_config.json`` in all the directories listed
-by the ``jupyter --paths`` command. The syntax of the config files are similar
-to that of other Jupyter commands::
+by the ``jupyter --paths`` command, as well as the current working directory.
+The syntax of the config files are similar to that of other Jupyter commands::
 
     {
       "NbDiff": {
@@ -23,6 +23,150 @@ Alternatively, you can use the ``--config`` flag for any CLI entry point::
     nbmerge --config
 
 Any flags passed on the CLI will override the config value.
+
+The current output of `nbdime --config` is:
+
+.. code-block:: none
+
+    All available config options, and their current values:
+
+    NbDiff:
+      Ignore: {}
+      attachments: None
+      color_words: False
+      details: None
+      metadata: False
+      outputs: None
+      source: None
+
+    NbDiffWeb:
+      Ignore: {}
+      attachments: None
+      base_url: '/'
+      browser: None
+      color_words: False
+      details: None
+      ip: '127.0.0.1'
+      metadata: False
+      outputs: None
+      persist: False
+      port: 0
+      source: None
+      workdirectory: ''
+
+    NbMerge:
+      Ignore: {}
+      attachments: None
+      color_words: False
+      details: None
+      ignore_transients: True
+      input_strategy: None
+      merge_strategy: 'inline'
+      metadata: None
+      output_strategy: None
+      outputs: None
+      source: None
+
+    NbMergeWeb:
+      Ignore: {}
+      attachments: None
+      base_url: '/'
+      browser: None
+      color_words: False
+      details: None
+      ignore_transients: True
+      input_strategy: None
+      ip: '127.0.0.1'
+      merge_strategy: 'inline'
+      metadata: None
+      output_strategy: None
+      outputs: None
+      persist: False
+      port: 0
+      source: None
+      workdirectory: ''
+
+    NbShow:
+      Ignore: {}
+      attachments: None
+      details: None
+      metadata: None
+      outputs: None
+      source: None
+
+    Server:
+      base_url: '/'
+      browser: None
+      ip: '127.0.0.1'
+      persist: False
+      port: 8888
+      workdirectory: ''
+
+    Extension:
+      Ignore: {}
+      attachments: None
+      color_words: False
+      details: None
+      metadata: False
+      outputs: None
+      source: None
+
+    NbDiffDriver:
+      Ignore: {}
+      attachments: None
+      color_words: False
+      details: None
+      metadata: False
+      outputs: None
+      source: None
+
+    NbDiffTool:
+      Ignore: {}
+      attachments: None
+      base_url: '/'
+      browser: None
+      color_words: False
+      details: None
+      ip: '127.0.0.1'
+      metadata: False
+      outputs: None
+      persist: False
+      port: 0
+      source: None
+      workdirectory: ''
+
+    NbMergeDriver:
+      Ignore: {}
+      attachments: None
+      color_words: False
+      details: None
+      ignore_transients: True
+      input_strategy: None
+      merge_strategy: 'inline'
+      metadata: None
+      output_strategy: None
+      outputs: None
+      source: None
+
+    NbMergeTool:
+      Ignore: {}
+      attachments: None
+      base_url: '/'
+      browser: None
+      color_words: False
+      details: None
+      ignore_transients: True
+      input_strategy: None
+      ip: '127.0.0.1'
+      merge_strategy: 'inline'
+      metadata: None
+      output_strategy: None
+      outputs: None
+      persist: False
+      port: 0
+      source: None
+      workdirectory: ''
+
 
 
 
@@ -57,6 +201,14 @@ GitDiff
 
 GitMerge
     Options to git diff commands (NbMergeDriver, NbMergeTool)
+
+
+.. note::
+
+    These sections are ways to configure several commands / entrypoints
+    at once. The individual command names are the once listed in
+    parantheses at the end of the sections, or can be seen by running
+    ``nbdime --config``.
 
 
 

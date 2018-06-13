@@ -121,13 +121,15 @@ def main_dispatch(args=None):
             sys.exit(HELP_MESSAGE_VERBOSE)
         if cmd == '--config':
             # List all possible config options:
-            from .config import get_defaults_for_argparse, entrypoint_configurables
+            from .args import modify_config_for_print
+            from .config import build_config, entrypoint_configurables
             from .prettyprint import pretty_print_dict, PrettyPrintConfig
             print('All available config options, and their current values:\n',
                   file=sys.stderr)
             for entrypoint, cls in entrypoint_configurables.items():
+                config = build_config(entrypoint, True)
                 pretty_print_dict({
-                        cls.__name__: get_defaults_for_argparse(entrypoint),
+                        cls.__name__: modify_config_for_print(config),
                     },
                     config=PrettyPrintConfig(out=sys.stderr)
                 )
