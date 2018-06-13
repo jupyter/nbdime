@@ -1,5 +1,5 @@
 {
   "load_extensions": {
-    "nbdime/extension": true
+    "nbdime/index": true
   }
 }
