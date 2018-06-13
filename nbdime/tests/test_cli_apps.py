@@ -153,6 +153,50 @@ def test_nbdiff_app_ignore_source(filespath, tmpdir, reset_diff_targets):
         diff = diff[0]['diff']
 
 
+def test_nbdiff_app_only_details(filespath, tmpdir, reset_diff_targets):
+    afn = os.path.join(filespath, "single_cell_nb.ipynb")
+    bfn = os.path.join(filespath, "single_cell_nb--changed_source_output_ec.ipynb")
+    dfn = os.path.join(tmpdir.dirname, "diff_output.json")
+
+    args = nbdiffapp._build_arg_parser().parse_args([afn, bfn, '--out', dfn, '-d'])
+    assert 0 == main_diff(args)
+    with io.open(dfn) as df:
+        diff = json.load(df)
+    print(diff)
+    for key in ('cells', 0):
+        assert len(diff) == 1
+        assert diff[0]['key'] == key
+        assert diff[0]['op'] == 'patch'
+        diff = diff[0]['diff']
+    assert len(diff) == 1
+    assert diff[0]['key'] == 'execution_count'
+    assert diff[0]['op'] == 'replace'
+    assert diff[0]['value'] == 2
+
+
+def test_nbdiff_app_ignore_details(filespath, tmpdir, reset_diff_targets):
+    afn = os.path.join(filespath, "single_cell_nb.ipynb")
+    bfn = os.path.join(filespath, "single_cell_nb--changed_source_output_ec.ipynb")
+    dfn = os.path.join(tmpdir.dirname, "diff_output.json")
+
+    args = nbdiffapp._build_arg_parser().parse_args([afn, bfn, '--out', dfn, '-D'])
+    assert 0 == main_diff(args)
+    with io.open(dfn) as df:
+        diff = json.load(df)
+    print(diff)
+    for key in ('cells', 0):
+        assert len(diff) == 1
+        assert diff[0]['key'] == key
+        assert diff[0]['op'] == 'patch'
+        diff = diff[0]['diff']
+    assert len(diff) == 2
+    assert diff[0]['key'] == 'outputs'
+    for subdiff in diff[0]['diff']:
+        assert subdiff['op'] != 'patch'
+
+    assert diff[1]['key'] == 'source'
+
+
 def test_nbdiff_app_color_words(filespath):
     # Simply check that the --color-words argument is accepted, not behavior
     afn = os.path.join(filespath, "multilevel-test-base.ipynb")
