@@ -3,8 +3,8 @@ Configuration
 
 Nbdime uses a config system loosely based on that of Jupyter. This means that
 it looks for config files ``nbdime_config.json`` in all the directories listed
-by the ``jupyter --paths`` command. The syntax of the config files are similar
-to that of other Jupyter commands::
+by the ``jupyter --paths`` command, as well as the current working directory.
+The syntax of the config files are similar to that of other Jupyter commands::
 
     {
       "NbDiff": {
@@ -23,6 +23,150 @@ Alternatively, you can use the ``--config`` flag for any CLI entry point::
     nbmerge --config
 
 Any flags passed on the CLI will override the config value.
+
+The current output of `nbdime --config` is:
+
+.. code-block:: none
+
+    All available config options, and their current values:
+
+    NbDiff:
+      Ignore: {}
+      attachments: null
+      color_words: false
+      details: null
+      metadata: null
+      outputs: null
+      source: null
+
+    NbDiffWeb:
+      Ignore: {}
+      attachments: null
+      base_url: "/"
+      browser: null
+      color_words: false
+      details: null
+      ip: "127.0.0.1"
+      metadata: null
+      outputs: null
+      persist: false
+      port: 0
+      source: null
+      workdirectory: ""
+
+    NbMerge:
+      Ignore: {}
+      attachments: null
+      color_words: false
+      details: null
+      ignore_transients: true
+      input_strategy: null
+      merge_strategy: "inline"
+      metadata: null
+      output_strategy: null
+      outputs: null
+      source: null
+
+    NbMergeWeb:
+      Ignore: {}
+      attachments: null
+      base_url: "/"
+      browser: null
+      color_words: false
+      details: null
+      ignore_transients: true
+      input_strategy: null
+      ip: "127.0.0.1"
+      merge_strategy: "inline"
+      metadata: null
+      output_strategy: null
+      outputs: null
+      persist: false
+      port: 0
+      source: null
+      workdirectory: ""
+
+    NbShow:
+      Ignore: {}
+      attachments: null
+      details: null
+      metadata: null
+      outputs: null
+      source: null
+
+    Server:
+      base_url: "/"
+      browser: null
+      ip: "127.0.0.1"
+      persist: false
+      port: 8888
+      workdirectory: ""
+
+    Extension:
+      Ignore: {}
+      attachments: null
+      color_words: false
+      details: null
+      metadata: null
+      outputs: null
+      source: null
+
+    NbDiffDriver:
+      Ignore: {}
+      attachments: null
+      color_words: false
+      details: null
+      metadata: null
+      outputs: null
+      source: null
+
+    NbDiffTool:
+      Ignore: {}
+      attachments: null
+      base_url: "/"
+      browser: null
+      color_words: false
+      details: null
+      ip: "127.0.0.1"
+      metadata: null
+      outputs: null
+      persist: false
+      port: 0
+      source: null
+      workdirectory: ""
+
+    NbMergeDriver:
+      Ignore: {}
+      attachments: null
+      color_words: false
+      details: null
+      ignore_transients: true
+      input_strategy: null
+      merge_strategy: "inline"
+      metadata: null
+      output_strategy: null
+      outputs: null
+      source: null
+
+    NbMergeTool:
+      Ignore: {}
+      attachments: null
+      base_url: "/"
+      browser: null
+      color_words: false
+      details: null
+      ignore_transients: true
+      input_strategy: null
+      ip: "127.0.0.1"
+      merge_strategy: "inline"
+      metadata: null
+      output_strategy: null
+      outputs: null
+      persist: false
+      port: 0
+      source: null
+      workdirectory: ""
+
 
 
 
@@ -57,6 +201,14 @@ GitDiff
 
 GitMerge
     Options to git diff commands (NbMergeDriver, NbMergeTool)
+
+
+.. note::
+
+    These sections are ways to configure several commands / entrypoints
+    at once. The individual command names are the once listed in
+    parantheses at the end of the sections, or can be seen by running
+    ``nbdime --config``.
 
 
 
@@ -114,10 +266,10 @@ included in the merge.
 
 
 
-Front end extensions
--------------------
+Front-end extensions
+--------------------
 
-The configuration of the diffing for the front end extensions (notebook and lab)
+The configuration of the diffing for the front-end extensions (notebook and lab)
 is controlled by the section key "Extension". For extensions, nbdime is not
 launched as a separate process, but is called as a server extension. For this
 reason, any of config options that conflict with those of the lab/notebook

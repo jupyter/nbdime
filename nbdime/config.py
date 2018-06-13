@@ -16,9 +16,8 @@ from .merging.notebooks import (
 
 class NbdimeConfigurable(HasTraits):
 
-    @property
-    def configured_traits(self):
-        traits = self.traits(config=True)
+    def configured_traits(self, cls):
+        traits = cls.class_own_traits(config=True)
         c = {}
         for name, _ in traits.items():
             c[name] = getattr(self, name)
@@ -53,7 +52,7 @@ def _load_config_files(basefilename, path=None):
                 yield config
 
 
-def recursive_update(target, new):
+def recursive_update(target, new, include_none):
     """Recursively update one dictionary using another.
 
     None values will delete their keys.
@@ -62,19 +61,19 @@ def recursive_update(target, new):
         if isinstance(v, dict):
             if k not in target:
                 target[k] = {}
-            recursive_update(target[k], v)
-            if not target[k]:
+            recursive_update(target[k], v, include_none)
+            if not include_none and not target[k]:
                 # Prune empty subdicts
                 del target[k]
 
-        elif v is None:
+        elif not include_none and v is None:
             target.pop(k, None)
 
         else:
             target[k] = v
 
 
-def build_config(entrypoint):
+def build_config(entrypoint, include_none=False):
     if entrypoint not in entrypoint_configurables:
         raise ValueError('Config for entrypoint name %r is not defined! Accepted values are %r.' % (
             entrypoint, list(entrypoint_configurables.keys())
@@ -85,15 +84,15 @@ def build_config(entrypoint):
     path = jupyter_config_path()
     path.insert(0, py3compat.getcwd())
     for c in _load_config_files('nbdime_config', path=path):
-        recursive_update(disk_config, c)
+        recursive_update(disk_config, c, include_none)
 
     config = {}
     configurable = entrypoint_configurables[entrypoint]
     for c in reversed(configurable.mro()):
         if issubclass(c, NbdimeConfigurable):
-            recursive_update(config, config_instance(c).configured_traits)
+            recursive_update(config, config_instance(c).configured_traits(c), include_none)
             if (c.__name__ in disk_config):
-                recursive_update(config, disk_config[c.__name__])
+                recursive_update(config, disk_config[c.__name__], include_none)
 
     return config
 

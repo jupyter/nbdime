@@ -554,6 +554,8 @@ def set_notebook_diff_ignores(ignore_paths):
                 del notebook_differs[path]
         elif isinstance(subkeys, (list, tuple, set)):
             notebook_differs[path] = diff_ignore_keys(notebook_differs[path], subkeys)
+        else:
+            raise ValueError('Invalid ignore config entry: %r: %r' % (path, subkeys))
 
 
 def set_notebook_diff_targets(sources=True, outputs=True, attachments=True,
@@ -567,8 +569,8 @@ def set_notebook_diff_targets(sources=True, outputs=True, attachments=True,
         '/metadata': not metadata,
         '/cells/*/metadata': not metadata,
         '/cells/*/outputs/*/metadata': not metadata,
-        '/cells/*': ('execution_count') if details else False,
-        '/cells/*/outputs/*': ('execution_count') if details else False,
+        '/cells/*': False if details else ('execution_count',),
+        '/cells/*/outputs/*': False if details else ('execution_count',),
     }
     set_notebook_diff_ignores(config)
 
