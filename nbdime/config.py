@@ -16,9 +16,8 @@ from .merging.notebooks import (
 
 class NbdimeConfigurable(HasTraits):
 
-    @property
-    def configured_traits(self):
-        traits = self.traits(config=True)
+    def configured_traits(self, cls):
+        traits = cls.class_own_traits(config=True)
         c = {}
         for name, _ in traits.items():
             c[name] = getattr(self, name)
@@ -91,7 +90,7 @@ def build_config(entrypoint):
     configurable = entrypoint_configurables[entrypoint]
     for c in reversed(configurable.mro()):
         if issubclass(c, NbdimeConfigurable):
-            recursive_update(config, config_instance(c).configured_traits)
+            recursive_update(config, config_instance(c).configured_traits(c))
             if (c.__name__ in disk_config):
                 recursive_update(config, disk_config[c.__name__])
 
