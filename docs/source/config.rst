@@ -266,10 +266,10 @@ included in the merge.
 
 
 
-Front end extensions
--------------------
+Front-end extensions
+--------------------
 
-The configuration of the diffing for the front end extensions (notebook and lab)
+The configuration of the diffing for the front-end extensions (notebook and lab)
 is controlled by the section key "Extension". For extensions, nbdime is not
 launched as a separate process, but is called as a server extension. For this
 reason, any of config options that conflict with those of the lab/notebook
