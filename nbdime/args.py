@@ -4,6 +4,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 import argparse
+import json
 import logging
 import os
 import sys
@@ -66,7 +67,7 @@ def modify_config_for_print(config):
                 output[k] = '{}'
 
         else:
-            output[k] = repr(v)
+            output[k] = json.dumps(v)
     return output
 
 

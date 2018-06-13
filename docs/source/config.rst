@@ -32,140 +32,140 @@ The current output of `nbdime --config` is:
 
     NbDiff:
       Ignore: {}
-      attachments: None
-      color_words: False
-      details: None
-      metadata: False
-      outputs: None
-      source: None
+      attachments: null
+      color_words: false
+      details: null
+      metadata: null
+      outputs: null
+      source: null
 
     NbDiffWeb:
       Ignore: {}
-      attachments: None
-      base_url: '/'
-      browser: None
-      color_words: False
-      details: None
-      ip: '127.0.0.1'
-      metadata: False
-      outputs: None
-      persist: False
+      attachments: null
+      base_url: "/"
+      browser: null
+      color_words: false
+      details: null
+      ip: "127.0.0.1"
+      metadata: null
+      outputs: null
+      persist: false
       port: 0
-      source: None
-      workdirectory: ''
+      source: null
+      workdirectory: ""
 
     NbMerge:
       Ignore: {}
-      attachments: None
-      color_words: False
-      details: None
-      ignore_transients: True
-      input_strategy: None
-      merge_strategy: 'inline'
-      metadata: None
-      output_strategy: None
-      outputs: None
-      source: None
+      attachments: null
+      color_words: false
+      details: null
+      ignore_transients: true
+      input_strategy: null
+      merge_strategy: "inline"
+      metadata: null
+      output_strategy: null
+      outputs: null
+      source: null
 
     NbMergeWeb:
       Ignore: {}
-      attachments: None
-      base_url: '/'
-      browser: None
-      color_words: False
-      details: None
-      ignore_transients: True
-      input_strategy: None
-      ip: '127.0.0.1'
-      merge_strategy: 'inline'
-      metadata: None
-      output_strategy: None
-      outputs: None
-      persist: False
+      attachments: null
+      base_url: "/"
+      browser: null
+      color_words: false
+      details: null
+      ignore_transients: true
+      input_strategy: null
+      ip: "127.0.0.1"
+      merge_strategy: "inline"
+      metadata: null
+      output_strategy: null
+      outputs: null
+      persist: false
       port: 0
-      source: None
-      workdirectory: ''
+      source: null
+      workdirectory: ""
 
     NbShow:
       Ignore: {}
-      attachments: None
-      details: None
-      metadata: None
-      outputs: None
-      source: None
+      attachments: null
+      details: null
+      metadata: null
+      outputs: null
+      source: null
 
     Server:
-      base_url: '/'
-      browser: None
-      ip: '127.0.0.1'
-      persist: False
+      base_url: "/"
+      browser: null
+      ip: "127.0.0.1"
+      persist: false
       port: 8888
-      workdirectory: ''
+      workdirectory: ""
 
     Extension:
       Ignore: {}
-      attachments: None
-      color_words: False
-      details: None
-      metadata: False
-      outputs: None
-      source: None
+      attachments: null
+      color_words: false
+      details: null
+      metadata: null
+      outputs: null
+      source: null
 
     NbDiffDriver:
       Ignore: {}
-      attachments: None
-      color_words: False
-      details: None
-      metadata: False
-      outputs: None
-      source: None
+      attachments: null
+      color_words: false
+      details: null
+      metadata: null
+      outputs: null
+      source: null
 
     NbDiffTool:
       Ignore: {}
-      attachments: None
-      base_url: '/'
-      browser: None
-      color_words: False
-      details: None
-      ip: '127.0.0.1'
-      metadata: False
-      outputs: None
-      persist: False
+      attachments: null
+      base_url: "/"
+      browser: null
+      color_words: false
+      details: null
+      ip: "127.0.0.1"
+      metadata: null
+      outputs: null
+      persist: false
       port: 0
-      source: None
-      workdirectory: ''
+      source: null
+      workdirectory: ""
 
     NbMergeDriver:
       Ignore: {}
-      attachments: None
-      color_words: False
-      details: None
-      ignore_transients: True
-      input_strategy: None
-      merge_strategy: 'inline'
-      metadata: None
-      output_strategy: None
-      outputs: None
-      source: None
+      attachments: null
+      color_words: false
+      details: null
+      ignore_transients: true
+      input_strategy: null
+      merge_strategy: "inline"
+      metadata: null
+      output_strategy: null
+      outputs: null
+      source: null
 
     NbMergeTool:
       Ignore: {}
-      attachments: None
-      base_url: '/'
-      browser: None
-      color_words: False
-      details: None
-      ignore_transients: True
-      input_strategy: None
-      ip: '127.0.0.1'
-      merge_strategy: 'inline'
-      metadata: None
-      output_strategy: None
-      outputs: None
-      persist: False
+      attachments: null
+      base_url: "/"
+      browser: null
+      color_words: false
+      details: null
+      ignore_transients: true
+      input_strategy: null
+      ip: "127.0.0.1"
+      merge_strategy: "inline"
+      metadata: null
+      output_strategy: null
+      outputs: null
+      persist: false
       port: 0
-      source: None
-      workdirectory: ''
+      source: null
+      workdirectory: ""
 
 
 
