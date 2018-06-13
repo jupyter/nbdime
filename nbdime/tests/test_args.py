@@ -14,7 +14,7 @@ from nbdime.config import (
     entrypoint_configurables, Global, _Ignorables
 )
 import nbdime.diffing.notebooks
-from nbdime.diffing.notebooks import notebook_differs, diff
+from nbdime.diffing.notebooks import notebook_differs, diff, diff_ignore
 
 
 class FixtureConfig(Global):
@@ -140,5 +140,25 @@ def test_ignore_config_merge(entrypoint_ignore_config, tmpdir):
         assert notebook_differs['/metadata'] == (diff, ['foo'])
         # Lists are not merged:
         assert notebook_differs['/cells/*/metadata'] == (diff, ['tags'])
+    finally:
+        nbdime.diffing.notebooks.reset_notebook_differ()
+
+
+def test_config_inherit(entrypoint_ignore_config, tmpdir):
+    tmpdir.join('nbdime_config.json').write_text(
+        text_type(json.dumps({
+            'IgnorableConfig1': {
+                'metadata': False
+            },
+        })),
+        encoding='utf-8'
+    )
+
+    parser = ConfigBackedParser('test-prog')
+    with tmpdir.as_cwd():
+        parsed = parser.parse_args([])
+
+    try:
+        assert parsed.metadata == False
     finally:
         nbdime.diffing.notebooks.reset_notebook_differ()
