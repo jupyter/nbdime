@@ -85,7 +85,7 @@ you should see a nice diff view, like this:
 To use the web-based GUI viewers of notebook diffs, call::
 
     nbdiff-web [<commit> [<commit>]] [<path>]
-    
+
 See the `git diff documentation`_ for further explanation of "<commit>" and
 "<path>" for this command.
 
