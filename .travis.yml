@@ -30,9 +30,9 @@ before_install:
 install:
   - |
     if [[ $GROUP == python ]]; then
-      pip install --upgrade ".[test]" -v
+      pip install --upgrade --upgrade-strategy=eager ".[test]" -v
     elif [[ $GROUP == js ]]; then
-      pip install --upgrade -e ".[test]" -v
+      pip install --upgrade --upgrade-strategy=eager -e ".[test]" -v
     fi
 before_script:
   # Set up a virtual screen for Firefox browser testing:

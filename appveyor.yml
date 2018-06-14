@@ -30,7 +30,7 @@ install:
   - 'python setup.py sdist'
   - 'for /f %%i in (''dir .\dist\nbdime-*.tar.gz /B'') do set fname=%%i'
   # Install our package:
-  - 'pip install --upgrade ".\dist\%fname%[test]"'
+  - 'pip install --upgrade --upgrade-strategy=eager ".\dist\%fname%[test]"'
 
 build: off
 
