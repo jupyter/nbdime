@@ -25,8 +25,8 @@ class EditorWidget extends CodeEditorWrapper {
    */
   constructor(value?: string, options?: Partial<CodeMirrorEditor.IConfig>) {
     if (options && options.readOnly) {
-      // Don't focus readonly editors:
-      options.readOnly = 'nocursor' as any;
+      // Prevent readonly editor from trapping tabs
+      options.extraKeys = {Tab: false, 'Shift-Tab': false};
     }
     super({
       model: new CodeEditor.Model({value}),
