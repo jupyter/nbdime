@@ -30,8 +30,9 @@ from ..gitfiles import (
     apply_possible_filter
     )
 from ..utils import split_os_path, EXPLICIT_MISSING_FILE, read_notebook
-from ..config import build_config
+from ..config import build_config, Namespace
 from ..diffing.notebooks import set_notebook_diff_ignores
+from ..args import process_diff_flags, diff_exclusives
 
 
 class AuthMainDifftoolHandler(MainDifftoolHandler):
@@ -212,6 +213,10 @@ def _load_jupyter_server_extension(nb_server_app):
 
     config = build_config('extension')
     ignore = config.pop('Ignore', None)
+    for k in diff_exclusives:
+        config[k] = config.get(k, None)
+    ns = Namespace(config)
+    process_diff_flags(ns)
     if ignore:
         set_notebook_diff_ignores(ignore)
 
