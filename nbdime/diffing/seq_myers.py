@@ -7,6 +7,8 @@ from __future__ import unicode_literals
 
 import operator
 
+from ..diff_format import SequenceDiffBuilder
+
 __all__ = ["diff_sequence_myers"]
 
 
@@ -239,16 +241,18 @@ def myers_ses(A, B, compare=operator.__eq__):
                 print('Recursing lower-right:', x + n, y + n, len(A), len(B))
             for s in myers_ses(A[x + n:], B[y + n:]):
                 yield s
-        elif N < M:
-            # A is shortest.
-            # If only 0 or 1 edit operation is needed,
-            # the shortest of A and B is the lcs.
-            for s in A:
-                yield 1
         else:
-            # B is shortest.
-            for s in B:
+            # If only 0 or 1 edit operation is needed,
+            # we do not need to recurse
+            for i in range(min(x, y)):
+                yield 0
+            if x > y:
                 yield -1
+            elif y > x:
+                yield 1
+            # Yield the middle snake
+            for i in range(n):
+                yield 0
     elif N:
         for s in A:
             yield -1
@@ -270,23 +274,24 @@ def diff_from_es(A, B, edit_gen):
         if op != prev_op:
             # Finish previous op
             if prev_op == -1:
-                di.addrange(x, prev_len)
+                di.removerange(x, prev_len)
+                x += prev_len
             elif prev_op == 1:
-                di.removerange(y, prev_len)
+                di.addrange(x, B[y : y + prev_len])
+                y += prev_len
             prev_op = op
             prev_len = 1
         else:
             prev_len += 1
 
-        if op <= 0:
+        if op == 0:
             x += 1
-        if op >= 0:
             y += 1
 
-    if y < M:
-        di.addrange(x, B[y:M])
-    if x < N:
-        di.removerange(x, N-x)
+    if prev_op == -1:
+        di.removerange(x, prev_len)
+    elif prev_op == 1:
+        di.addrange(x, B[y : y + prev_len])
     return di.validated()
 
 def diff_sequence_myers(A, B, compare=operator.__eq__):
