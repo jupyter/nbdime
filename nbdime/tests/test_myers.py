@@ -20,7 +20,7 @@ def assert_resulting_patch(base, remote):
 
 
 def test_myers_ses_with_paper_case():
-    # Case from neil.fraser.name/writing/diff/
+    # Case from Myers paper
     assert list(myers_ses(list("abcabba"), list("cbabac"))) == [-1, 1, 0, -1, 0, 0, -1, 0, 1]
 
 
@@ -40,5 +40,11 @@ def test_myers_diff_neil_fraser_case():
     assert_resulting_patch(list("abcab"), list("ayb"))
     assert_resulting_patch(list("abyb"), list("ayb"))
     assert_resulting_patch(list("ayb"), list("ayb"))
-
     assert_resulting_patch(list("abcb"), list("ayb"))
+
+    assert_resulting_patch(list("xaxcxabc"), list("abcy"))
+
+
+def test_myers_diff_paper_case():
+    # Case from Myers paper
+    assert_resulting_patch(list("abcabba"), list("cbabac"))

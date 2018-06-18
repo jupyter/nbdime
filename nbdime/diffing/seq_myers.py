@@ -14,7 +14,7 @@ __all__ = ["diff_sequence_myers"]
 
 
 # Set to true to enable additional assertions, array access checking, and printouts
-DEBUGGING = True
+DEBUGGING = False
 #import pdb
 
 
@@ -264,7 +264,6 @@ def myers_ses(A, B, compare=operator.__eq__):
 def diff_from_es(A, B, edit_gen):
     """Compute the diff of A and B, given an edit string."""
     di = SequenceDiffBuilder()
-    N, M = len(A), len(B)
     # x,y = how many symbols we have consumed from A and B
     x = 0
     y = 0

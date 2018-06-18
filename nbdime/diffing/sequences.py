@@ -18,7 +18,7 @@ __all__ = ["diff_strings_by_char", "diff_sequence", "diff_strings_linewise"]
 
 # TODO: Configuration framework?
 # legal_diff_sequence_algorithms = ["bruteforce", "difflib", "myers"]
-diff_sequence_algorithm = "bruteforce"
+diff_sequence_algorithm = "myers"
 
 
 def diff_sequence(a, b, compare=operator.__eq__):
