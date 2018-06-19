@@ -15,7 +15,10 @@ from ._version import __version__
 from .log import init_logging, set_nbdime_log_level
 from .gitfiles import is_gitref
 from .diffing.notebooks import set_notebook_diff_targets, set_notebook_diff_ignores
-from .config import get_defaults_for_argparse, build_config, entrypoint_configurables
+from .config import (
+    get_defaults_for_argparse, build_config, entrypoint_configurables,
+    Namespace
+)
 from .prettyprint import pretty_print_dict, PrettyPrintConfig
 
 
@@ -60,12 +63,20 @@ class SkipAction(argparse.Action):
 
 def modify_config_for_print(config):
     output = {}
+    ns = None
     for k, v in config.items():
         if isinstance(v, dict):
             output[k] = modify_config_for_print(v)
             if not output[k]:
                 output[k] = '{}'
-
+        elif k in diff_exclusives and v is None:
+            if ns is None:
+                ns = Namespace(config)
+                for k in diff_exclusives:
+                    setattr(ns, k, config.get(k, None))
+                process_exclusive_ignorables(ns, diff_exclusives)
+            output[k] = '<unset, resolves to {0}>'.format(
+                json.dumps(getattr(ns, k, v)))
         else:
             output[k] = json.dumps(v)
     return output
