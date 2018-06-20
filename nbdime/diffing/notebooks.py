@@ -502,7 +502,7 @@ def diff_ignore_keys(inner_differ, ignore_keys):
     """Call inner_differ, but filter the resulting diff.
 
     Will ignore all direct diff values that has a key in
-    ignore_keys. I.e. this will not recurse into patch ops.abs
+    ignore_keys. I.e. this will not recurse into patch ops.
     """
     def ignored_diff(*args, **kwargs):
         d = inner_differ(*args, **kwargs)
