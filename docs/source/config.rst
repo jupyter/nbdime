@@ -226,9 +226,14 @@ via the "Ignore" key. It takes a dictionary in the following format::
     }
 
 Which will ignore outputs, specify that attachments should not be ignored, and
-ignore the cell metadata keys as specified in the list. In general, the list
-syntax for keys are used for ignoring leaf-nodes, that is, things that are not
-a sequence or map (`[]` or `{}`).
+ignore the cell metadata keys as specified in the list. In general, ``true``
+and ``false`` are used to configure diffing an entire list or map (e.g.
+``"/cells/*/outputs"`` is a list of output, and ``"/cells/*/metadata"`` is a
+map of key-value pairs). For maps, you can additionally specify a list of keys
+to ignore. This is meant to enable ignoring of leaf-nodes like
+``execution_count`` on cells and outputs, or specific metadata keys. If the key
+is not a leaf-node, it is recommended to instead include the key in the path,
+and use ``true`` or ``false``.
 
 
 Configurations of "Ignore" in different sections will be merged, such that
