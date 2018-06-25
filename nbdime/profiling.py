@@ -112,10 +112,12 @@ timer = TimePaths(enabled=False)
 def profile_diff_paths(args=None):
     import nbdime.nbdiffapp
     import nbdime.profiling
-    with nbdime.profiling.timer.enable():
-        nbdime.nbdiffapp.main(args)
-    data = str(nbdime.profiling.timer)
-    print(data)
+    try:
+        with nbdime.profiling.timer.enable():
+            nbdime.nbdiffapp.main(args)
+    finally:
+        data = str(nbdime.profiling.timer)
+        print(data)
 
 
 if __name__ == "__main__":

@@ -33,7 +33,7 @@ def default_differs():
     return defaultdict(lambda: diff)
 
 
-def compare_strings_approximate(x, y, threshold=0.7):
+def compare_strings_approximate(x, y, threshold=0.7, maxlen=None):
     "Compare to strings with approximate heuristics."
     # TODO: Add configuration framework
     # TODO: Tune threshold with realistic sources
@@ -70,6 +70,11 @@ def compare_strings_approximate(x, y, threshold=0.7):
         return False
     if s.quick_ratio() < threshold:
         return False
+
+    if maxlen is not None and len(x) > maxlen and len(y) > maxlen:
+        # We know from above that there is not an exact similarity
+        return False
+
     return s.ratio() > threshold
 
 
