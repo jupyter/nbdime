@@ -24,9 +24,8 @@ from .prettyprint import pretty_print_dict, PrettyPrintConfig
 
 class ConfigBackedParser(argparse.ArgumentParser):
 
-    def parse_args(self, args=None, namespace=None, entrypoint=None):
-        if entrypoint is None:
-            entrypoint = self.prog
+    def parse_known_args(self, args=None, namespace=None):
+        entrypoint = self.prog.split(' ')[0]
         try:
             defs = get_defaults_for_argparse(entrypoint)
             ignore = defs.pop('Ignore', None)
@@ -35,7 +34,7 @@ class ConfigBackedParser(argparse.ArgumentParser):
                 set_notebook_diff_ignores(ignore)
         except ValueError:
             pass
-        return super(ConfigBackedParser, self).parse_args(args=args, namespace=namespace)
+        return super(ConfigBackedParser, self).parse_known_args(args=args, namespace=namespace)
 
 
 class LogLevelAction(argparse.Action):
