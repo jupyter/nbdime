@@ -169,7 +169,7 @@ class IgnoreConfig(Dict):
 
 class _Ignorables(NbdimeConfigurable):
 
-    source = Bool(
+    sources = Bool(
         None,
         allow_none=True,
         help="process/ignore sources.",

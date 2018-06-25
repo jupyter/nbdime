@@ -37,7 +37,7 @@ The current output of `nbdime --config` is:
       details: null
       metadata: null
       outputs: null
-      source: null
+      sources: null
 
     NbDiffWeb:
       Ignore: {}
@@ -51,7 +51,7 @@ The current output of `nbdime --config` is:
       outputs: null
       persist: false
       port: 0
-      source: null
+      sources: null
       workdirectory: ""
 
     NbMerge:
@@ -65,7 +65,7 @@ The current output of `nbdime --config` is:
       metadata: null
       output_strategy: null
       outputs: null
-      source: null
+      sources: null
 
     NbMergeWeb:
       Ignore: {}
@@ -83,7 +83,7 @@ The current output of `nbdime --config` is:
       outputs: null
       persist: false
       port: 0
-      source: null
+      sources: null
       workdirectory: ""
 
     NbShow:
@@ -92,7 +92,7 @@ The current output of `nbdime --config` is:
       details: null
       metadata: null
       outputs: null
-      source: null
+      sources: null
 
     Server:
       base_url: "/"
@@ -109,7 +109,7 @@ The current output of `nbdime --config` is:
       details: null
       metadata: null
       outputs: null
-      source: null
+      sources: null
 
     NbDiffDriver:
       Ignore: {}
@@ -118,7 +118,7 @@ The current output of `nbdime --config` is:
       details: null
       metadata: null
       outputs: null
-      source: null
+      sources: null
 
     NbDiffTool:
       Ignore: {}
@@ -132,7 +132,7 @@ The current output of `nbdime --config` is:
       outputs: null
       persist: false
       port: 0
-      source: null
+      sources: null
       workdirectory: ""
 
     NbMergeDriver:
@@ -146,7 +146,7 @@ The current output of `nbdime --config` is:
       metadata: null
       output_strategy: null
       outputs: null
-      source: null
+      sources: null
 
     NbMergeTool:
       Ignore: {}
@@ -164,7 +164,7 @@ The current output of `nbdime --config` is:
       outputs: null
       persist: false
       port: 0
-      source: null
+      sources: null
       workdirectory: ""
 
 
