@@ -33,23 +33,23 @@ def config_instance(cls):
 
 
 def _load_config_files(basefilename, path=None):
-        """Load config files (json) by filename and path.
+    """Load config files (json) by filename and path.
 
-        yield each config object in turn.
-        """
+    yield each config object in turn.
+    """
 
-        if not isinstance(path, list):
-            path = [path]
-        for path in path[::-1]:
-            # path list is in descending priority order, so load files backwards:
-            loader = JSONFileConfigLoader(basefilename+'.json', path=path)
-            config = None
-            try:
-                config = loader.load_config()
-            except ConfigFileNotFound:
-                pass
-            if config:
-                yield config
+    if not isinstance(path, list):
+        path = [path]
+    for path in path[::-1]:
+        # path list is in descending priority order, so load files backwards:
+        loader = JSONFileConfigLoader(basefilename+'.json', path=path)
+        config = None
+        try:
+            config = loader.load_config()
+        except ConfigFileNotFound:
+            pass
+        if config:
+            yield config
 
 
 def recursive_update(target, new, include_none):
@@ -169,7 +169,7 @@ class IgnoreConfig(Dict):
 
 class _Ignorables(NbdimeConfigurable):
 
-    source = Bool(
+    sources = Bool(
         None,
         allow_none=True,
         help="process/ignore sources.",
