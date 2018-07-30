@@ -1,11 +1,11 @@
 {
   "compilerOptions": {
     "declaration": true,
-    "target": "es5",
+    "target": "es6",
     "module": "commonjs",
     "moduleResolution": "node",
     "sourceMap": true,
-    "lib": ["dom", "es5", "es2015.promise"],
+    "lib": ["dom", "es6"],
     "outDir": "../lib",
     "noImplicitAny": true,
     "noEmitOnError": true,

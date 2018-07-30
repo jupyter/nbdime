@@ -194,7 +194,7 @@ class CellDiffWidget extends Panel {
       let inner: Widget | null = null;
       if (model.unchanged && parent.cellType === 'markdown') {
         let mimeModel = new MimeModel({ data: {'text/markdown': model.base!} });
-        let mimeType = rendermime.preferredMimeType(mimeModel.data, true);
+        let mimeType = rendermime.preferredMimeType(mimeModel.data, 'ensure');
         if (!mimeType) {
           throw new Error('No renderer for output');
         }
