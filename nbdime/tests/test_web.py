@@ -36,6 +36,21 @@ def test_diff_web(filespath, unique_port, reset_log):
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
+def test_diff_web_localhost(filespath, unique_port, reset_log):
+    a = os.path.join(filespath, diff_a)
+    b = os.path.join(filespath, diff_b)
+    loop = ioloop.IOLoop.current()
+    loop.call_later(0, loop.stop)
+    nbdime.webapp.nbdiffweb.main([
+        '--port=%i' % unique_port,
+        '--browser=disabled',
+        '--ip=localhost',
+        a,
+        b
+    ])
+
+
+@pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
 def test_diff_web_gitrefs(git_repo2, unique_port, reset_log):
     a = 'local'
     b = 'remote'
