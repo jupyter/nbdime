@@ -341,7 +341,10 @@ class OutputPanel extends Panel {
       return this._mimetype;
     }
     let data = OutputModel.getData(this.model.base || this.model.remote!);
-    let mt = this.rendermime.preferredMimeType(data, this.model.trusted);
+    let mt = this.rendermime.preferredMimeType(
+      data,
+      this.model.trusted ? 'any' : 'ensure'
+    );
     return mt === undefined ? null : mt;
   }
 
@@ -448,7 +451,10 @@ class RenderableOutputView extends RenderableDiffView<nbformat.IOutput> {
     let toTest = model.contents;
     for (let o of toTest) {
       let bundle = OutputModel.getData(o);
-      let mimetype = rendermime.preferredMimeType(bundle, model.trusted);
+      let mimetype = rendermime.preferredMimeType(
+        bundle,
+        model.trusted ? 'any' : 'ensure'
+      );
       if (!mimetype) {
         return false;
       }
