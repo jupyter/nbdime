@@ -2,6 +2,13 @@
 
 ## 1.0
 
+###  1.0.2 - 2018-08
+
+- Diff: Optimized diffing of large texts (e.g. big cells).
+- Config: Fixed several issues with the config system.
+- Lab extension: Updated to latest jupyterlab. All npm packages are now using ES6 features.
+- Web: Fixed keyboard tabbing / focusing issues.
+
 ###  1.0.1 - 2018-06
 
 - Web: Fix output rendering of outputs with a period in MIME type name.
