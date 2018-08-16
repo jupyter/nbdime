@@ -12,7 +12,6 @@ from notebook.utils import url_path_join, to_os_path
 from notebook.services.contents.checkpoints import GenericCheckpointsMixin
 from notebook.services.contents.filecheckpoints import FileCheckpoints
 from tornado.web import HTTPError, escape, authenticated, gen
-import nbformat
 
 import nbdime
 from .nbdimeserver import (
@@ -27,9 +26,8 @@ from .nbdimeserver import (
 from ..gitfiles import (
     changed_notebooks, is_path_in_repo, find_repo_root,
     InvalidGitRepositoryError, BadName, GitCommandNotFound,
-    apply_possible_filter
     )
-from ..utils import split_os_path, EXPLICIT_MISSING_FILE, read_notebook
+from ..utils import read_notebook
 from ..config import build_config, Namespace
 from ..diffing.notebooks import set_notebook_diff_ignores
 from ..args import process_diff_flags, diff_exclusives
