@@ -1,6 +1,5 @@
 
 import io
-import os
 from subprocess import check_output, STDOUT, CalledProcessError
 import sys
 
@@ -8,8 +7,6 @@ from six import StringIO
 
 from nbdime.utils import EXPLICIT_MISSING_FILE
 
-
-USE_SHELL = os.name == 'nt'
 
 class NamedStringIO(StringIO):
     name = ''
@@ -20,7 +17,7 @@ def interrogate_filter(path):
 
     Returns None if no valid filter attribute could be found.
     """
-    # Ask for the fit attributes of file on path (-z = null-terminated fields)
+    # Ask for the filter attributes of file on path (-z = null-terminated fields)
     try:
         spec = check_output(['git', 'check-attr', '-z', 'filter', path])
     except CalledProcessError:
@@ -75,9 +72,9 @@ def apply_possible_filter(git_path, path=None):
     # Apply filter and pipe to a string buffer
     with io.open(path, 'r', encoding="utf8") as f:
         output = check_output(
-            filter_cmd.split(),
+            filter_cmd,
             stdin=f,
-            stderr=STDOUT, shell=USE_SHELL
+            stderr=STDOUT, shell=True
         ).decode('utf8', 'replace')
     buffer = NamedStringIO()
     buffer.name = path
