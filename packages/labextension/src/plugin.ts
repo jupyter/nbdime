@@ -7,7 +7,7 @@ import {
 } from '@jupyterlab/application';
 
 import {
-  Toolbar, ToolbarButton
+  ToolbarButton, CommandToolbarButton
 } from '@jupyterlab/apputils';
 
 import {
@@ -92,10 +92,10 @@ class NBDiffExtension implements DocumentRegistry.IWidgetExtension<NotebookPanel
     });
     let i = 1;
     for (let id of [CommandIDs.diffNotebookCheckpoint, CommandIDs.diffNotebookGit]) {
-      let button = Toolbar.createFromCommand(this.commands, id);
-      if (button === null) {
-        throw new Error('Cannot create button, command not registered!');
-      }
+      let button = new CommandToolbarButton({
+        commands: this.commands,
+        id
+      });
       if (insertionPoint >= 0) {
         nb.toolbar.insertItem(insertionPoint + i++, this.commands.label(id), button);
       } else {
@@ -216,7 +216,7 @@ function addCommands(app: JupyterLab, tracker: INotebookTracker, rendermime: IRe
     label: erroredGen('Notebook diff'),
     caption: erroredGen('Display nbdiff between two notebooks'),
     isEnabled: baseEnabled,
-    icon: 'action-notebook-diff action-notebook-diff-notebooks',
+    icon: 'jp-Icon jp-Icon-16 action-notebook-diff action-notebook-diff-notebooks',
     iconLabel: 'nbdiff',
   });
 
@@ -235,7 +235,7 @@ function addCommands(app: JupyterLab, tracker: INotebookTracker, rendermime: IRe
     label: erroredGen('Notebook checkpoint diff'),
     caption: erroredGen('Display nbdiff from checkpoint to currently saved version'),
     isEnabled: baseEnabled,
-    iconClass: 'fa fa-clock-o action-notebook-diff action-notebook-diff-checkpoint',
+    iconClass: 'jp-Icon jp-Icon-16 fa fa-clock-o action-notebook-diff action-notebook-diff-checkpoint',
   });
 
   commands.addCommand(CommandIDs.diffNotebookGit, {
@@ -253,7 +253,7 @@ function addCommands(app: JupyterLab, tracker: INotebookTracker, rendermime: IRe
     label: erroredGen('Notebook Git diff'),
     caption: erroredGen('Display nbdiff from git HEAD to currently saved version'),
     isEnabled: hasGitNotebook,
-    iconClass: 'fa fa-git action-notebook-diff action-notebook-diff-git',
+    iconClass: 'jp-Icon jp-Icon-16 fa fa-git action-notebook-diff action-notebook-diff-git',
   });
 }
 
