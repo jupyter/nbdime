@@ -38,7 +38,7 @@ import {
 } from 'nbdime/lib/patch';
 
 import {
-  requestMerge, requestJson
+  requestMerge, requestApi
 } from 'nbdime/lib/request';
 
 import {
@@ -258,11 +258,15 @@ function downloadMerged() {
  */
 function submitMerge(mergedNotebook: nbformat.INotebookContent,
                      conflicts: IMergeDecision[]) {
-  requestJson('/api/store',
-              {merged: mergedNotebook,
-               conflicts: conflicts},
-               onSubmissionCompleted,
-               onSubmissionFailed);
+  requestApi(
+    getBaseUrl(),
+    '/api/store',
+    {
+      merged: mergedNotebook,
+      conflicts: conflicts
+    },
+    onSubmissionCompleted,
+    onSubmissionFailed);
 }
 
 /**

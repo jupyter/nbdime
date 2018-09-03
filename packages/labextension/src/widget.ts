@@ -41,7 +41,7 @@ import {
 } from 'nbdime/lib/diff/widget/common';
 
 import {
-  requestJsonPromise
+  requestApiJson
 } from 'nbdime/lib/request';
 
 import {
@@ -102,9 +102,12 @@ class NbdimeWidget extends Panel {
       args = {base: `git:${this.base}`}
     }
 
-    let url = URLExt.join(urlRStrip(ServerConnection.defaultSettings.baseUrl), 'nbdime/api/diff');
-    let promise = requestJsonPromise(url, args);
-    promise.then(this.onData.bind(this)).catch(this.onError.bind(this));
+    requestApiJson(
+      ServerConnection.defaultSettings.baseUrl,
+      'nbdime/api/diff',
+      args,
+      this.onData.bind(this),
+      this.onError.bind(this));
     this.id = `nbdime-${JSON.stringify(args)}`;
     this.title.closable = true;
     return this;
