@@ -13,6 +13,12 @@
   background-color: var(--jp-layout-color1);
 }
 
+/* Alternative for showing single cell when cells are equal */
+.jp-Notebook-merge .jp-Merge-unchanged {
+  margin-left: 10%;
+  width: 80%;
+}
+
 .jp-Notebook-merge .jp-merge-celldragdrop > .p-Panel:not(:first-child) {
   margin-top: 20px;
 }
@@ -320,4 +326,54 @@
 
 .jp-Notebook-merge .jp-conflicted-cells > .jp-DragPanel {
   padding: 4px;
+}
+
+
+
+/*
+Output mimetype selection:
+*/
+
+.jp-Notebook-merge .jp-Diff-outputPanel .jp-Diff-outputMenu {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, 0);
+  background-color: var(--jp-layout-color1);
+  color: var(--jp-ui-font-color1);
+  padding: 3px 5px;
+  border: var(--jp-border-width) solid var(--jp-cell-editor-border-color);
+  z-index: 10;
+}
+
+.jp-Notebook-merge .jp-Diff-outputPanel:hover .jp-Diff-outputMenu {
+  display: initial;
+}
+
+.jp-Notebook-merge .jp-Diff-trustOutputButton {
+  display: none;
+}
+
+.jp-Notebook-merge .jp-Diff-trustCandidate .jp-Diff-trustOutputButton {
+  display: initial;
+}
+
+.jp-Notebook-merge .jp-Diff-outputPanel:not(.jp-Diff-trustCandidate) .jp-diff-base64Output + .jp-Diff-outputMenu {
+  display: none;
+}
+
+.jp-Notebook-merge .jp-Diff-outputPanel .jp-Diff-outputMenu > :not(:first-child) {
+  margin-left: 5px;
+}
+
+.jp-Diff-outputsContainer > .p-Widget:not(:last-child) {
+  padding-bottom: 6px;
+  min-height: 2em;
+  border-bottom: var(--jp-border-width) solid var(--jp-nbdime-output-color2);
+}
+
+.jp-Notebook-merge .jp-Diff-renderedOutput {
+  /* Ensure output is always large enough to show menu */
+  min-height: 2em;
 }

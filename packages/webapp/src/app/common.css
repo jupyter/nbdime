@@ -12,12 +12,6 @@ body {
   background-color: var(--jp-layout-color1);
 }
 
-/* Alternative for showing single cell when cells are equal */
-.jp-Diff-unchanged {
-  margin-left: 10%;
-  width: 80%;
-}
-
 #nbdime-header {
   margin: auto;
   width: 90%;
