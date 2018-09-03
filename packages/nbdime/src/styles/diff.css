@@ -8,6 +8,12 @@
   margin-right: auto;
 }
 
+/* Alternative for showing single cell when cells are equal */
+.jp-Notebook-diff .jp-Diff-unchanged {
+  margin-left: 10%;
+  width: 80%;
+}
+
 .jp-Notebook-diff .jp-Diff-unchanged .jp-Diff-unchanged {
   margin-left: 0;
   width: 100%;

@@ -13,6 +13,12 @@
   background-color: var(--jp-layout-color1);
 }
 
+/* Alternative for showing single cell when cells are equal */
+.jp-Notebook-merge .jp-Merge-unchanged {
+  margin-left: 10%;
+  width: 80%;
+}
+
 .jp-Notebook-merge .jp-merge-celldragdrop > .p-Panel:not(:first-child) {
   margin-top: 20px;
 }
