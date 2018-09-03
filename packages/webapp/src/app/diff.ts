@@ -20,6 +20,14 @@ import {
 } from '@jupyterlab/apputils';
 
 import {
+  PageConfig
+} from '@jupyterlab/coreutils';
+
+import {
+  MathJaxTypesetter
+} from '@jupyterlab/mathjax2';
+
+import {
   IDiffEntry
 } from 'nbdime/lib/diff/diffentries';
 
@@ -80,6 +88,10 @@ function showDiff(data: {base: nbformat.INotebookContent, diff: IDiffEntry[]}): 
   let rendermime = new RenderMimeRegistry({
     initialFactories: rendererFactories,
     sanitizer: defaultSanitizer,
+    latexTypesetter: new MathJaxTypesetter({
+      url: getConfigOption('mathjaxUrl'),
+      config: getConfigOption('mathjaxConfig'),
+    }),
   });
 
   let nbdModel = new NotebookDiffModel(data.base, data.diff);
