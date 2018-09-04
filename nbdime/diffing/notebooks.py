@@ -603,5 +603,10 @@ def diff_item_at_path(a, b, path):
 
 
 def diff_notebooks(a, b):
-    """Compute the diff of two notebooks using customized heuristics and diff rules."""
+    """Compute the diff of two notebooks using customized heuristics and diff rules.
+
+    The notebooks are expected in the format of nbformat's version 4.
+    """
+    if not (isinstance(a, dict) and isinstance(b, dict)):
+        raise TypeError("Expected inputs to be dicts, got %r and %r" % (a, b))
     return diff(a, b, path="", predicates=notebook_predicates, differs=notebook_differs)
