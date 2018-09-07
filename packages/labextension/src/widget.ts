@@ -312,11 +312,14 @@ namespace Private {
     if (rangeStart !== -1) {
       // Last element was part of a hidden range, need to mark
       // the last cell that will be visible.
+      let N = children.length - rangeStart;
       if (rangeStart === 0) {
         // All elements were hidden, nothing to mark
+        // Add info on root instead
+        let tag = root.querySelector('.jp-Notebook-diff') || root;
+        tag.setAttribute('data-nbdime-AllCellsHidden', N.toString());
         return;
       }
-      let N = children.length - rangeStart;
       let lastVisible = children[rangeStart - 1];
       getChunkElement(lastVisible).setAttribute('data-nbdime-NCellsHiddenAfter', N.toString());
     }
