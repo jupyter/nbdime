@@ -89,9 +89,14 @@ class NbdimeWidget extends Panel {
     this.addWidget(this.scroller);
 
     let hideUnchangedChk = header.node.getElementsByClassName('nbdime-hide-unchanged')[0] as HTMLInputElement;
+    hideUnchangedChk.checked = options.hideUnchanged === undefined
+      ? true : options.hideUnchanged;
     hideUnchangedChk.onchange = () => {
       Private.toggleShowUnchanged(this.scroller.node, !hideUnchangedChk.checked);
     };
+    if (options.hideUnchanged) {
+      Private.toggleShowUnchanged(this.scroller, false);
+    }
 
     let args: JSONObject;
     if (this.remote) {
@@ -201,6 +206,11 @@ namespace NbdimeWidget {
      * Note: The labels will be ignored for git diffs.
      */
     remoteLabel?: string,
+
+    /**
+     * Whether to hide unchanged cells by default.
+     */
+    hideUnchanged?: boolean,
   }
 }
 

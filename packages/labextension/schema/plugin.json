@@ -1,0 +1,17 @@
+{
+  "jupyter.lab.setting-icon-class": "jp-Icon-16 nbdime-icon fa fa-clock-o",
+  "jupyter.lab.setting-icon-label": "Nbdime",
+  "title": "Nbdime",
+  "description": "Settings for the nbdime extension.",
+  "properties": {
+    "hideUnchanged": {
+      "title": "Hide Unchanged Cells",
+      "description":
+        "Whether unchanged cells should be hidden by default.",
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "additionalProperties": false,
+  "type": "object"
+}

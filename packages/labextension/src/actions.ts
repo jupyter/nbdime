@@ -33,7 +33,12 @@ interface IApiResponse {
 
 
 export
-function diffNotebook(args: {readonly base: string, readonly remote: string, readonly rendermime: IRenderMimeRegistry}): Widget {
+function diffNotebook(args: {
+  readonly base: string,
+  readonly remote: string,
+  readonly rendermime: IRenderMimeRegistry,
+  hideUnchanged?: boolean
+}): Widget {
   let {base, remote} = args;
   let widget = new NbdimeWidget(args);
   widget.title.label = `Diff: ${base} ↔ ${remote}`;
@@ -43,12 +48,21 @@ function diffNotebook(args: {readonly base: string, readonly remote: string, rea
 
 
 export
-function diffNotebookCheckpoint(args: {readonly path: string, readonly rendermime: IRenderMimeRegistry}): Widget {
-  const {path, rendermime} = args;
+function diffNotebookCheckpoint(args: {
+  readonly path: string,
+  readonly rendermime: IRenderMimeRegistry,
+  hideUnchanged?: boolean
+}): Widget {
+  const {path, rendermime, hideUnchanged} = args;
   let nb_dir = PathExt.dirname(path);
   let name = PathExt.basename(path, '.ipynb');
   let base = PathExt.join(nb_dir, name + '.ipynb');
-  let widget = new NbdimeWidget({base, rendermime, baseLabel: 'Checkpoint'});
+  let widget = new NbdimeWidget({
+    base,
+    rendermime,
+    baseLabel: 'Checkpoint',
+    hideUnchanged,
+  });
   widget.title.label = `Diff checkpoint: ${name}`;
   widget.title.caption = `Local: latest checkpoint\nRemote: '${path}'`;
   widget.title.iconClass = 'fa fa-clock-o jp-fa-tabIcon';
@@ -57,10 +71,14 @@ function diffNotebookCheckpoint(args: {readonly path: string, readonly rendermim
 
 
 export
-function diffNotebookGit(args: {readonly path: string, readonly rendermime: IRenderMimeRegistry}): Widget {
-  const {path, rendermime} = args;
+function diffNotebookGit(args: {
+  readonly path: string,
+  readonly rendermime: IRenderMimeRegistry,
+  hideUnchanged?: boolean
+}): Widget {
+  const {path, rendermime, hideUnchanged} = args;
   let name = PathExt.basename(path, '.ipynb');
-  let widget = new NbdimeWidget({base: path, rendermime});
+  let widget = new NbdimeWidget({base: path, rendermime, hideUnchanged});
   widget.title.label = `Diff git: ${name}`;
   widget.title.caption = `Local: git HEAD\nRemote: '${path}'`;
   widget.title.iconClass = 'fa fa-git jp-fa-tabIcon';
