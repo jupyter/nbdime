@@ -37,7 +37,7 @@ import {
 } from 'nbdime/lib/diff/widget';
 
 import {
-  UNCHANGED_DIFF_CLASS
+  UNCHANGED_DIFF_CLASS, CHUNK_PANEL_CLASS
 } from 'nbdime/lib/diff/widget/common';
 
 import {
@@ -88,7 +88,7 @@ class NbdimeWidget extends Panel {
     hideUnchangedChk.checked = options.hideUnchanged === undefined
       ? true : options.hideUnchanged;
     hideUnchangedChk.onchange = () => {
-      Private.toggleShowUnchanged(this.scroller.node, !hideUnchangedChk.checked);
+      Private.toggleShowUnchanged(this.scroller, !hideUnchangedChk.checked);
     };
     if (options.hideUnchanged) {
       Private.toggleShowUnchanged(this.scroller, false);
@@ -254,8 +254,8 @@ namespace Private {
    * This simply marks with a class, real work is done by CSS.
    */
   export
-  function toggleShowUnchanged(root: HTMLElement, show?: boolean) {
-    let hiding = root.classList.contains(HIDE_UNCHANGED_CLASS);
+  function toggleShowUnchanged(root: Widget, show?: boolean) {
+    let hiding = root.hasClass(HIDE_UNCHANGED_CLASS);
     if (show === undefined) {
       show = hiding;
     } else if (hiding !== show) {
@@ -263,11 +263,28 @@ namespace Private {
       return;
     }
     if (show) {
-      root.classList.remove(HIDE_UNCHANGED_CLASS);
+      root.removeClass(HIDE_UNCHANGED_CLASS);
     } else {
-      markUnchangedRanges(root);
-      root.classList.add(HIDE_UNCHANGED_CLASS);
+      markUnchangedRanges(root.node);
+      root.addClass(HIDE_UNCHANGED_CLASS);
     }
+    root.update();
+  }
+
+
+  /**
+   * Gets the chunk element of an added/removed cell, or the cell element for others
+   * @param cellElement
+   */
+  function getChunkElement(cellElement: Element): Element {
+    if (!cellElement.parentElement || !cellElement.parentElement.parentElement) {
+      return cellElement;
+    }
+    let chunkCandidate = cellElement.parentElement.parentElement;
+    if (chunkCandidate.classList.contains(CHUNK_PANEL_CLASS)) {
+      return chunkCandidate;
+    }
+    return cellElement;
   }
 
 
@@ -285,7 +302,7 @@ namespace Private {
         if (rangeStart !== -1) {
           // Previous was hidden
           let N = i - rangeStart;
-          child.setAttribute('data-nbdime-NCellsHiddenBefore', N.toString());
+          getChunkElement(child).setAttribute('data-nbdime-NCellsHiddenBefore', N.toString());
           rangeStart = -1;
         }
       } else if (rangeStart === -1) {
@@ -301,7 +318,7 @@ namespace Private {
       }
       let N = children.length - rangeStart;
       let lastVisible = children[rangeStart - 1];
-      lastVisible.setAttribute('data-nbdime-NCellsHiddenAfter', N.toString());
+      getChunkElement(lastVisible).setAttribute('data-nbdime-NCellsHiddenAfter', N.toString());
     }
   }
 }
