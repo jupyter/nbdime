@@ -1,7 +1,7 @@
 
 
 import {
-  nbformat, URLExt
+  nbformat
 } from '@jupyterlab/coreutils';
 
 import {
@@ -43,10 +43,6 @@ import {
 import {
   requestApiJson
 } from 'nbdime/lib/request';
-
-import {
-  urlRStrip
-} from './utils';
 
 
 

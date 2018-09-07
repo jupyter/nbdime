@@ -44,7 +44,7 @@ function requestApiPromise(
     baseUrl: string,
     apiPath: string,
     argument: any): Promise<Response> {
-  const url = URLExt.join(window.location.origin, urlRStrip(baseUrl), apiPath);
+  const url = URLExt.join(urlRStrip(baseUrl), apiPath);
   let request = {
     method: 'POST',
     body: JSON.stringify(argument),

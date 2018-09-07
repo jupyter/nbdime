@@ -5,6 +5,10 @@
 import * as alertify from 'alertify.js';
 
 import {
+  URLExt
+} from '@jupyterlab/coreutils/lib/url';
+
+import {
   NotifyUserError
 } from 'nbdime/lib/common/exceptions';
 
@@ -90,7 +94,7 @@ function getConfigOption(name: string, defaultValue?: any): any {
  */
 export
 function getBaseUrl(): string {
-  return getConfigOption('baseUrl');
+  return URLExt.join(window.location.origin, getConfigOption('baseUrl'));
 }
 
 const spinner = document.createElement('div');
