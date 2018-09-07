@@ -80,6 +80,9 @@ function showMerge(data: {
     throw new Error('Missing root element "nbidme-root"');
   }
   root.innerHTML = '';
+  // Hide unchanged cells by default:
+  toggleShowUnchanged(!getConfigOption('hideUnchanged', true));
+
   let panel = new Panel();
   panel.id = 'main';
   Widget.attach(panel, root);
@@ -405,6 +408,7 @@ function initializeMerge() {
   downloadBtn.style.display = 'initial';
 
   let hideUnchangedChk = document.getElementById('nbdime-hide-unchanged') as HTMLInputElement;
+  hideUnchangedChk.checked = getConfigOption('hideUnchanged', true);
   hideUnchangedChk.onchange = () => {
     toggleShowUnchanged(!hideUnchangedChk.checked);
   };

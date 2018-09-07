@@ -180,6 +180,7 @@ function initializeCompare() {
   exportBtn.onclick = exportDiff;
 
   let hideUnchangedChk = document.getElementById('nbdime-hide-unchanged') as HTMLInputElement;
+  hideUnchangedChk.checked = getConfigOption('hideUnchanged', true);
   hideUnchangedChk.onchange = () => {
     toggleShowUnchanged(!hideUnchangedChk.checked);
   };
