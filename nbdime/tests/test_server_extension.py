@@ -74,7 +74,8 @@ def test_git_difftool(git_repo2, server_extension_app):
         "baseUrl": "/nbdime",
         "closable": False,
         "remote": "",
-        "savable": False
+        "savable": False,
+        "hideUnchanged": True,
     }
 
 
