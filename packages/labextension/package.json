@@ -32,6 +32,7 @@
   ],
   "jupyterlab": {
     "extension": true,
+    "schemaDir": "schema",
     "discovery": {
       "server": {
         "base": {
@@ -59,7 +60,10 @@
   },
   "files": [
     "lib/*.js",
-    "style/*.css"
+    "lib/*.js.map",
+    "lib/*.d.ts",
+    "style/*.css",
+    "schema/*.json"
   ],
   "author": "Project Jupyter",
   "license": "BSD-3-Clause",

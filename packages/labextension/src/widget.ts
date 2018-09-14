@@ -1,7 +1,7 @@
 
 
 import {
-  nbformat, URLExt
+  nbformat
 } from '@jupyterlab/coreutils';
 
 import {
@@ -37,16 +37,12 @@ import {
 } from 'nbdime/lib/diff/widget';
 
 import {
-  UNCHANGED_DIFF_CLASS
+  UNCHANGED_DIFF_CLASS, CHUNK_PANEL_CLASS
 } from 'nbdime/lib/diff/widget/common';
 
 import {
   requestApiJson
 } from 'nbdime/lib/request';
-
-import {
-  urlRStrip
-} from './utils';
 
 
 
@@ -89,9 +85,14 @@ class NbdimeWidget extends Panel {
     this.addWidget(this.scroller);
 
     let hideUnchangedChk = header.node.getElementsByClassName('nbdime-hide-unchanged')[0] as HTMLInputElement;
+    hideUnchangedChk.checked = options.hideUnchanged === undefined
+      ? true : options.hideUnchanged;
     hideUnchangedChk.onchange = () => {
-      Private.toggleShowUnchanged(this.scroller.node, !hideUnchangedChk.checked);
+      Private.toggleShowUnchanged(this.scroller, !hideUnchangedChk.checked);
     };
+    if (options.hideUnchanged) {
+      Private.toggleShowUnchanged(this.scroller, false);
+    }
 
     let args: JSONObject;
     if (this.remote) {
@@ -201,6 +202,11 @@ namespace NbdimeWidget {
      * Note: The labels will be ignored for git diffs.
      */
     remoteLabel?: string,
+
+    /**
+     * Whether to hide unchanged cells by default.
+     */
+    hideUnchanged?: boolean,
   }
 }
 
@@ -248,8 +254,8 @@ namespace Private {
    * This simply marks with a class, real work is done by CSS.
    */
   export
-  function toggleShowUnchanged(root: HTMLElement, show?: boolean) {
-    let hiding = root.classList.contains(HIDE_UNCHANGED_CLASS);
+  function toggleShowUnchanged(root: Widget, show?: boolean) {
+    let hiding = root.hasClass(HIDE_UNCHANGED_CLASS);
     if (show === undefined) {
       show = hiding;
     } else if (hiding !== show) {
@@ -257,11 +263,28 @@ namespace Private {
       return;
     }
     if (show) {
-      root.classList.remove(HIDE_UNCHANGED_CLASS);
+      root.removeClass(HIDE_UNCHANGED_CLASS);
     } else {
-      markUnchangedRanges(root);
-      root.classList.add(HIDE_UNCHANGED_CLASS);
+      markUnchangedRanges(root.node);
+      root.addClass(HIDE_UNCHANGED_CLASS);
     }
+    root.update();
+  }
+
+
+  /**
+   * Gets the chunk element of an added/removed cell, or the cell element for others
+   * @param cellElement
+   */
+  function getChunkElement(cellElement: Element): Element {
+    if (!cellElement.parentElement || !cellElement.parentElement.parentElement) {
+      return cellElement;
+    }
+    let chunkCandidate = cellElement.parentElement.parentElement;
+    if (chunkCandidate.classList.contains(CHUNK_PANEL_CLASS)) {
+      return chunkCandidate;
+    }
+    return cellElement;
   }
 
 
@@ -279,7 +302,7 @@ namespace Private {
         if (rangeStart !== -1) {
           // Previous was hidden
           let N = i - rangeStart;
-          child.setAttribute('data-nbdime-NCellsHiddenBefore', N.toString());
+          getChunkElement(child).setAttribute('data-nbdime-NCellsHiddenBefore', N.toString());
           rangeStart = -1;
         }
       } else if (rangeStart === -1) {
@@ -289,13 +312,16 @@ namespace Private {
     if (rangeStart !== -1) {
       // Last element was part of a hidden range, need to mark
       // the last cell that will be visible.
+      let N = children.length - rangeStart;
       if (rangeStart === 0) {
         // All elements were hidden, nothing to mark
+        // Add info on root instead
+        let tag = root.querySelector('.jp-Notebook-diff') || root;
+        tag.setAttribute('data-nbdime-AllCellsHidden', N.toString());
         return;
       }
-      let N = children.length - rangeStart;
       let lastVisible = children[rangeStart - 1];
-      lastVisible.setAttribute('data-nbdime-NCellsHiddenAfter', N.toString());
+      getChunkElement(lastVisible).setAttribute('data-nbdime-NCellsHiddenAfter', N.toString());
     }
   }
 }

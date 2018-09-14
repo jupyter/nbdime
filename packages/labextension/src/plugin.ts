@@ -11,7 +11,7 @@ import {
 } from '@jupyterlab/apputils';
 
 import {
-  PathExt
+  PathExt, ISettingRegistry
 } from '@jupyterlab/coreutils';
 
 import {
@@ -55,6 +55,7 @@ import {
 } from './actions';
 
 
+const pluginId = 'nbdime-jupyterlab:plugin';
 
 /**
  * Error message if the nbdime API is unavailable.
@@ -132,7 +133,12 @@ namespace CommandIDs {
 }
 
 
-function addCommands(app: JupyterLab, tracker: INotebookTracker, rendermime: IRenderMimeRegistry): void {
+function addCommands(
+  app: JupyterLab,
+  tracker: INotebookTracker,
+  rendermime: IRenderMimeRegistry,
+  settings: ISettingRegistry.ISettings
+): void {
   const { commands, shell } = app;
 
   // Whether we have our server extension available
@@ -206,6 +212,12 @@ function addCommands(app: JupyterLab, tracker: INotebookTracker, rendermime: IRe
   }
 
 
+  let hideUnchanged = settings.get('hideUnchanged').composite !== false;
+  settings.changed.connect(() => {
+    hideUnchanged = settings.get('hideUnchanged').composite !== false;
+  });
+
+
   commands.addCommand(CommandIDs.diffNotebook, {
     execute: args => {
       // TODO: Check args for base/remote
@@ -226,7 +238,11 @@ function addCommands(app: JupyterLab, tracker: INotebookTracker, rendermime: IRe
       if (!current) {
         return;
       }
-      let widget = diffNotebookCheckpoint({path: current.context.path, rendermime});
+      let widget = diffNotebookCheckpoint({
+        path: current.context.path,
+        rendermime,
+        hideUnchanged,
+      });
       shell.addToMainArea(widget);
       if (args['activate'] !== false) {
         shell.activateById(widget.id);
@@ -244,7 +260,11 @@ function addCommands(app: JupyterLab, tracker: INotebookTracker, rendermime: IRe
       if (!current) {
         return;
       }
-      let widget = diffNotebookGit({path: current.context.path, rendermime});
+      let widget = diffNotebookGit({
+        path: current.context.path,
+        rendermime,
+        hideUnchanged,
+      });
       shell.addToMainArea(widget);
       if (args['activate'] !== false) {
         shell.activateById(widget.id);
@@ -263,8 +283,8 @@ function addCommands(app: JupyterLab, tracker: INotebookTracker, rendermime: IRe
  * The notebook diff provider.
  */
 const nbDiffProvider: JupyterLabPlugin<void> = {
-  id: 'jupyter.extensions.nbdime',
-  requires: [INotebookTracker, IRenderMimeRegistry],
+  id: pluginId,
+  requires: [INotebookTracker, IRenderMimeRegistry, ISettingRegistry],
   activate: activateWidgetExtension,
   autoStart: true
 };
@@ -275,12 +295,18 @@ export default nbDiffProvider;
 /**
  * Activate the widget extension.
  */
-function activateWidgetExtension(app: JupyterLab, tracker: INotebookTracker, rendermime: IRenderMimeRegistry): void {
+async function activateWidgetExtension(
+  app: JupyterLab,
+  tracker: INotebookTracker,
+  rendermime: IRenderMimeRegistry,
+  settingsRegistry: ISettingRegistry,
+): Promise<void> {
   let {commands, docRegistry} = app;
   let extension = new NBDiffExtension(commands);
   docRegistry.addWidgetExtension('Notebook', extension);
 
-  addCommands(app, tracker, rendermime);
+  const settings = await settingsRegistry.load(pluginId);
+  addCommands(app, tracker, rendermime, settings);
   // Update the command registry when the notebook state changes.
   tracker.currentChanged.connect(() => {
     commands.notifyCommandChanged(CommandIDs.diffNotebookGit);

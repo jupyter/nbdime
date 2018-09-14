@@ -5,6 +5,10 @@
 import * as alertify from 'alertify.js';
 
 import {
+  URLExt
+} from '@jupyterlab/coreutils/lib/url';
+
+import {
   NotifyUserError
 } from 'nbdime/lib/common/exceptions';
 
@@ -90,7 +94,7 @@ function getConfigOption(name: string, defaultValue?: any): any {
  */
 export
 function getBaseUrl(): string {
-  return getConfigOption('baseUrl');
+  return URLExt.join(window.location.origin, getConfigOption('baseUrl'));
 }
 
 const spinner = document.createElement('div');
@@ -183,11 +187,14 @@ function markUnchangedRanges() {
   if (rangeStart !== -1) {
     // Last element was part of a hidden range, need to mark
     // the last cell that will be visible.
+    let N = children.length - rangeStart;
     if (rangeStart === 0) {
       // All elements were hidden, nothing to mark
+      // Add info on root instead
+      let tag = root.querySelector('.jp-Notebook-diff, .jp-Notebook-merge') || root;
+      tag.setAttribute('data-nbdime-AllCellsHidden', N.toString());
       return;
     }
-    let N = children.length - rangeStart;
     let lastVisible = children[rangeStart - 1];
     // Set attribute on element / chunk element as appropriate
     getChunkElement(lastVisible).setAttribute('data-nbdime-NCellsHiddenAfter', N.toString());

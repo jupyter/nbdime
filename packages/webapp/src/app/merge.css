@@ -63,3 +63,14 @@
 #nbdime-root.jp-mod-hideUnchanged .jp-Cell-merge[data-nbdime-NCellsHiddenAfter] {
   padding-bottom: 40px;
 }
+
+/* Marker for when all cells are unchanged and hidden */
+#nbdime-root.jp-mod-hideUnchanged .jp-Notebook-merge[data-nbdime-AllCellsHidden]::after {
+  content: "No changes, " attr(data-nbdime-AllCellsHidden) " unchanged cell(s) hidden";
+  display: block;
+  width: 100%;
+  background-color: #eee;
+  border-top: solid #ccc 1px;
+  border-bottom: solid #ccc 1px;
+  text-align: center;
+}

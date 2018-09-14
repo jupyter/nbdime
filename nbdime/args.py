@@ -250,6 +250,13 @@ def add_web_args(parser, default_port=8888):
         '--base-url',
         default='/',
         help="The base URL prefix under which to run the web app")
+    parser.add_argument(
+        '--show-unchanged',
+        dest='hide_unchanged',
+        action="store_false",
+        default=True,
+        help="show unchanged cells by default"
+    )
 
 
 def add_diff_args(parser):
@@ -448,6 +455,7 @@ def args_for_server(arguments):
                 port='port',
                 workdirectory='cwd',
                 base_url='base_url',
+                hide_unchanged='hide_unchanged',
                 )
     ret = {kmap[k]: v for k, v in vars(arguments).items() if k in kmap}
     if 'persist' in arguments:

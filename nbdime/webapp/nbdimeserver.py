@@ -52,6 +52,7 @@ class NbdimeHandler(IPythonHandler):
             'closable': self.params.get('closable', False),
             'savable': fn is not None,
             'baseUrl': self.nbdime_base_url,
+            'hideUnchanged': self.params.get('hide_unchanged', True)
         }
         if fn:
             # For reference, e.g. if user wants to download file
