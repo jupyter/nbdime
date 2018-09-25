@@ -5,25 +5,10 @@
 
 from __future__ import print_function, unicode_literals
 
-from six import string_types
-import copy
-import logging
-from itertools import chain
-
-import nbformat
-from nbformat import NotebookNode
-
-from ..diff_format import DiffOp, DiffEntry, Deleted, op_replace, op_removerange, op_addrange, op_patch, op_add, op_remove
-from ..patching import patch, patch_singleline_string
-from .chunks import make_merge_chunks
-from ..utils import join_path, split_path, star_path, is_prefix_array, resolve_path
-from .decisions import (pop_patch_decision, push_patch_decision, MergeDecision,
-                        pop_all_patch_decisions, _sort_key,
-                        filter_decisions, build_diffs)
-from ..prettyprint import merge_render
-from .generic import is_diff_all_transients
-
-import nbdime.log
+from ..diff_format import DiffOp, Deleted
+from ..patching import patch
+from ..utils import split_path, resolve_path
+from .decisions import filter_decisions, build_diffs
 
 
 def patch_item(value, diffentry):
@@ -75,7 +60,8 @@ def make_bundled_decisions(base, prefix, decisions, callback):
     """
     if not any(dec.conflict for dec in decisions):
         # no conflicts, nothing to do
-        [dec.pop('_level') for dec in decisions]
+        for dec in decisions:
+            dec.pop('_level')
         return decisions
 
     resolved_base = resolve_path(base, prefix)

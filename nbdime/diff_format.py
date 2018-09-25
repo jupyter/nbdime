@@ -6,7 +6,6 @@
 from __future__ import unicode_literals
 
 from six import string_types
-from six.moves import xrange as range
 
 from .log import NBDiffFormatError
 

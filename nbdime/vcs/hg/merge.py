@@ -14,7 +14,6 @@ from __future__ import print_function
 import argparse
 import sys
 
-import nbdime.log
 from nbdime import nbmergeapp
 from nbdime.args import (
     add_generic_args, add_diff_args, add_merge_args, add_filename_args,

@@ -4,30 +4,31 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from argparse import ArgumentParser
 import io
 import json
 import logging
 import os
 import sys
-from argparse import ArgumentParser
 
-import requests
-from six import string_types
-from tornado import ioloop, web, escape, netutil, httpserver
-import nbformat
 from jinja2 import FileSystemLoader, Environment
-
-import nbdime
-from nbdime.merging.notebooks import decide_notebook_merge
-from nbdime.nbmergeapp import _build_arg_parser as build_merge_parser
-from nbdime.utils import EXPLICIT_MISSING_FILE
-
-from nbdime.args import add_generic_args, add_web_args
-
+import nbformat
 from notebook.base.handlers import IPythonHandler, APIHandler
 from notebook import DEFAULT_STATIC_FILES_PATH
 from notebook.utils import url_path_join
 from notebook.log import log_request
+import requests
+from six import string_types
+from tornado import ioloop, web, escape, netutil, httpserver
+
+from .. import __file__ as nbdime_root
+from ..args import add_generic_args, add_web_args
+from ..diffing.notebooks import diff_notebooks
+from ..log import logger
+from ..merging.notebooks import decide_notebook_merge
+from ..nbmergeapp import _build_arg_parser as build_merge_parser
+from ..utils import EXPLICIT_MISSING_FILE, is_in_repo
+
 
 # TODO: See <notebook>/notebook/services/contents/handlers.py for possibly useful utilities:
 #contents_manager
@@ -216,9 +217,9 @@ class ApiDiffHandler(NbdimeHandler, APIHandler):
         remote_nb = self.get_notebook_argument('remote')
 
         try:
-            thediff = nbdime.diff_notebooks(base_nb, remote_nb)
+            thediff = diff_notebooks(base_nb, remote_nb)
         except Exception:
-            nbdime.log.exception('Error diffing documents:')
+            logger.exception('Error diffing documents:')
             raise web.HTTPError(500, 'Error while attempting to diff documents')
 
         data = {
@@ -253,7 +254,7 @@ class ApiMergeHandler(NbdimeHandler, APIHandler):
             decisions = decide_notebook_merge(base_nb, local_nb, remote_nb,
                                               args=merge_args)
         except Exception:
-            nbdime.log.exception('Error merging documents:')
+            logger.exception('Error merging documents:')
             raise web.HTTPError(500, 'Error while attempting to merge documents')
 
         data = {
@@ -279,7 +280,7 @@ class ApiMergeStoreHandler(NbdimeHandler, APIHandler):
         if not fn:
             raise web.HTTPError(400, 'Server does not accept storing merge result.')
         path = os.path.join(self.curdir, fn)
-        nbdime.log.info('Saving merge result in %s', path)
+        logger.info('Saving merge result in %s', path)
 
         body = json.loads(escape.to_unicode(self.request.body))
         merged = body['merged']
@@ -346,7 +347,7 @@ def make_app(**params):
         'local_hostnames': ['localhost', '127.0.0.1']
         }
 
-    if nbdime.utils.is_in_repo(nbdime.__file__):
+    if is_in_repo(nbdime_root):
         # don't cache when working from repo
         settings.update({
             # 'autoreload': True,

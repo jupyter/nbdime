@@ -144,7 +144,7 @@ def wait_up(url, interval=0.1, check=None):
     while True:
         try:
             r = requests.get(url)
-        except Exception as e:
+        except Exception:
             if check:
                 assert check()
             print("waiting for %s" % url)

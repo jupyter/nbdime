@@ -286,14 +286,12 @@ def make_inline_output_conflict(base_output, local_diff, remote_diff):
     """Make a list of outputs with conflict markers from conflicting
     local and remote diffs applying to a single base_output"""
     # Styling details
-    base_title = "base"
     local_title = "local"
     remote_title = "remote"
     marker_size = 7  # default in git
     m0 = "<"*marker_size
-    m1 = "|"*marker_size
-    m2 = "="*marker_size
-    m3 = ">"*marker_size
+    m1 = "="*marker_size
+    m2 = ">"*marker_size
 
     # Split diffs by type
     d0 = local_diff
@@ -323,9 +321,9 @@ def make_inline_output_conflict(base_output, local_diff, remote_diff):
 
         outputs.append(output_marker("%s %s%s\n" % (m0, local_title, lnote)))
         outputs.extend(loutputs)
-        outputs.append(output_marker("%s\n" % (m2,)))
+        outputs.append(output_marker("%s\n" % (m1,)))
         outputs.extend(routputs)
-        outputs.append(output_marker("%s %s%s\n" % (m3, remote_title, rnote)))
+        outputs.append(output_marker("%s %s%s\n" % (m2, remote_title, rnote)))
 
     # Keep base output if untouched (only inserts)
     keep_base = not (lremoves or rremoves or lpatches or rpatches)
@@ -344,9 +342,9 @@ def make_inline_output_conflict(base_output, local_diff, remote_diff):
 
         outputs.append(output_marker("%s %s%s\n" % (m0, local_title, lnote)))
         outputs.extend(loutputs)
-        outputs.append(output_marker("%s\n" % (m2,)))
+        outputs.append(output_marker("%s\n" % (m1,)))
         outputs.extend(routputs)
-        outputs.append(output_marker("%s %s%s\n" % (m3, remote_title, rnote)))
+        outputs.append(output_marker("%s %s%s\n" % (m2, remote_title, rnote)))
 
     # Return marked up output
     return outputs, keep_base

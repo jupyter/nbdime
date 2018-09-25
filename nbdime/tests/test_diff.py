@@ -12,7 +12,7 @@ import operator
 
 from nbdime import diff
 from nbdime.diff_format import op_patch, op_add, op_replace, op_remove
-from nbdime.diffing.snakes import compute_snakes, compute_snakes_multilevel
+from nbdime.diffing.snakes import compute_snakes_multilevel
 
 from .utils import check_symmetric_diff_and_patch
 

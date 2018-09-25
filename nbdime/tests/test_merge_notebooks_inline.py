@@ -5,7 +5,7 @@
 
 import pytest
 import nbformat
-from nbformat.v4 import new_notebook, new_code_cell, new_markdown_cell, new_output
+from nbformat.v4 import new_notebook, new_code_cell
 from collections import defaultdict
 
 from nbdime import merge_notebooks, diff
@@ -26,6 +26,7 @@ def test_decide_merge_strategy_fail(reset_log):
     remote = {"foo": 3}
     strategies = Strategies({"/foo": "fail"})
     with pytest.raises(RuntimeError):
+        # pylint: disable=unused-variable
         conflicted_decisions = decide_merge(base, local, remote, strategies)
 
     # Nested dicts
@@ -34,6 +35,7 @@ def test_decide_merge_strategy_fail(reset_log):
     remote = {"foo": {"bar": 3}}
     strategies = Strategies({"/foo/bar": "fail"})
     with pytest.raises(RuntimeError):
+        # pylint: disable=unused-variable
         decisions = decide_merge(base, local, remote, strategies)
 
     # We don't need this for non-leaf nodes and it's currently not implemented
@@ -712,12 +714,6 @@ def test_inline_merge_notebook_metadata_reproduce_bug(reset_log):
         }
     }
 
-    def join_dicts(dicta, dictb):
-        d = {}
-        d.update(dicta)
-        d.update(dictb)
-        return d
-
     shared_unconflicted = {
         "list_deleteitem": [7, 3, "notme", 5],
     }
@@ -811,7 +807,6 @@ def test_inline_merge_source_cell_deletions():
         #"and a final line",
         ])
     empty = code_nb([])
-    expected = code_nb([])
     for a in [base, local, remote, empty]:
         for b in [base, local, remote, empty]:
             merged, decisions = merge_notebooks(base, a, b)

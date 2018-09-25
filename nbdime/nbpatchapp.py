@@ -8,16 +8,16 @@ from __future__ import print_function
 
 import os
 import sys
-import argparse
 import json
 import io
+
 import nbformat
 
-from nbdime.args import ConfigBackedParser
-from nbdime.patching import patch_notebook
-from nbdime.diff_utils import to_diffentry_dicts
-from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook, setup_std_streams
-from nbdime.prettyprint import pretty_print_notebook, PrettyPrintConfig
+from .args import ConfigBackedParser
+from .patching import patch_notebook
+from .diff_utils import to_diffentry_dicts
+from .utils import EXPLICIT_MISSING_FILE, read_notebook, setup_std_streams
+from .prettyprint import pretty_print_notebook, PrettyPrintConfig
 
 
 _description = "Apply patch from nbdiff to a Jupyter notebook."

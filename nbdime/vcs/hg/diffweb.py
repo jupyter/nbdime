@@ -14,7 +14,6 @@ from __future__ import print_function
 import os
 import sys
 
-import nbdime
 from nbdime.args import ConfigBackedParser
 from nbdime.webapp import nbdifftool
 from nbdime.diffing.directorydiff import diff_directories

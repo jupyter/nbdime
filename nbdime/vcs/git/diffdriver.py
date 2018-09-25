@@ -39,7 +39,7 @@ def enable(scope=None):
 
     try:
         check_call(cmd + ['diff.jupyternotebook.command', 'git-nbdiffdriver diff'])
-    except CalledProcessError as e:
+    except CalledProcessError:
         return   # Not in git repository
     gitattributes = locate_gitattributes(scope)
     if gitattributes is None:
@@ -97,7 +97,7 @@ def _build_arg_parser():
     add_web_args(webdiff_parser, 0)
 
     # TODO: From git docs: "For a path that is unmerged, GIT_EXTERNAL_DIFF is called with 1 parameter, <path>."
-    config = add_git_config_subcommand(subparsers,
+    add_git_config_subcommand(subparsers,
         enable, disable,
         subparser_help="Configure git to use nbdime for notebooks in `git diff`",
         enable_help="enable nbdime diff driver via git config",

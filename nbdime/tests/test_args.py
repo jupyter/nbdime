@@ -14,7 +14,7 @@ from nbdime.config import (
     entrypoint_configurables, Global, _Ignorables
 )
 import nbdime.diffing.notebooks
-from nbdime.diffing.notebooks import notebook_differs, diff, diff_ignore
+from nbdime.diffing.notebooks import notebook_differs, diff
 
 
 class FixtureConfig(Global):

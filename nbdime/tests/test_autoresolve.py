@@ -123,33 +123,7 @@ def test_autoresolve_inline_source_conflict(db, needs_git):
 
     source = merged.cells[0].source
 
-    git_expected = """\
-x = 1
-<<<<<<< local
-y = 3
-print(x * y)
-=======
-q = 3.1
-print(x + q)
->>>>>>> remote"""
-
-    builtin_expected_course = """\
-<<<<<<< local
-x = 1
-y = 3
-z = 4
-print(x * y / z)
-=======
-x = 1
-q = 3.1
-print(x + q)
->>>>>>> remote"""
-    # ||||||| base
-    # x = 1
-    # y = 3
-    # print(x * y)
-
-    builtin_expected_finegrained = """\
+    expected = """\
 x = 1
 <<<<<<< local
 y = 3
@@ -159,7 +133,5 @@ print(x * y / z)
 q = 3.1
 print(x + q)
 >>>>>>> remote"""
-
-    expected = builtin_expected_finegrained
 
     assert source == expected
