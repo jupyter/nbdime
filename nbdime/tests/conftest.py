@@ -73,22 +73,6 @@ def tempfiles(tmpdir, filespath):
     return str(dest)
 
 
-@fixture
-def nocolor(request):
-    """Disable color printing for test"""
-    import nbdime.prettyprint as pp
-    patch = mock.patch.multiple(
-        pp,
-        ADD=pp.ADD.replace(pp.GREEN, ''),
-        REMOVE=pp.REMOVE.replace(pp.RED, ''),
-        INFO=pp.INFO.replace(pp.BLUE, ''),
-        RESET='',
-        git_diff_print_cmd=pp.git_diff_print_cmd.replace(' --color-words', ''),
-    )
-    patch.start()
-    request.addfinalizer(patch.stop)
-
-
 @fixture(scope='session')
 def needs_git():
     if not have_git:

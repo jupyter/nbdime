@@ -33,8 +33,8 @@ def b64text(nbytes):
     return encodebytes(os.urandom(nbytes)).decode('ascii')
 
 
-def TestConfig():
-    return pp.PrettyPrintConfig(out=StringIO())
+def TestConfig(use_color=True):
+    return pp.PrettyPrintConfig(out=StringIO(), use_color=use_color)
 
 
 def test_pretty_print_dict_complex():
@@ -243,12 +243,12 @@ def test_pretty_print_code_cell():
     ]
 
 
-def test_pretty_print_dict_diff(nocolor):
+def test_pretty_print_dict_diff():
     a = {'a': 1}
     b = {'a': 2}
     di = diff(a, b, path='x/y')
 
-    config = TestConfig()
+    config = TestConfig(use_color=False)
     pp.pretty_print_diff(a, di, 'x/y', config)
     text = config.out.getvalue()
     lines = text.splitlines()
@@ -261,13 +261,13 @@ def test_pretty_print_dict_diff(nocolor):
     ]
 
 
-def test_pretty_print_list_diff(nocolor):
+def test_pretty_print_list_diff():
     a = [1]
     b = [2]
     path = '/a/b'
     di = diff(a, b, path=path)
 
-    config = TestConfig()
+    config = TestConfig(use_color=False)
     pp.pretty_print_diff(a, di, path, config)
     text = config.out.getvalue()
     lines = text.splitlines()
@@ -282,13 +282,13 @@ def test_pretty_print_list_diff(nocolor):
     ]
 
 
-def test_pretty_print_list_multilinestrings(nocolor):
+def test_pretty_print_list_multilinestrings():
     a = ["ac\ndf", "qe\nry", 2]
     b = [2, "abc\ndef", "qwe\nrty"]
     path = '/a/b'
     di = diff(a, b, path=path)
 
-    config = TestConfig()
+    config = TestConfig(use_color=False)
     pp.pretty_print_diff(a, di, path, config)
     text = config.out.getvalue()
     lines = text.splitlines()
@@ -319,30 +319,30 @@ def test_pretty_print_list_multilinestrings(nocolor):
     ]
 
 
-def test_pretty_print_string_diff(nocolor):
+def test_pretty_print_string_diff():
     a = '\n'.join(['line 1', 'line 2', 'line 3', ''])
     b = '\n'.join(['line 1', 'line 3', 'line 4', ''])
     path = '/a/b'
     di = diff(a, b, path=path)
 
     with mock.patch('nbdime.prettyprint.which', lambda cmd: None):
-        config = TestConfig()
+        config = TestConfig(use_color=False)
         pp.pretty_print_diff(a, di, path, config)
         text = config.out.getvalue()
         lines = text.splitlines()
 
     text = '\n'.join(lines)
-    assert ('< line 2' in text) or ((pp.REMOVE + 'line 2' + pp.RESET) in text)
-    assert ('> line 4' in text) or ((pp.ADD + 'line 4' + pp.RESET) in text)
+    assert ('< line 2' in text) or ((config.REMOVE + 'line 2' + config.RESET) in text)
+    assert ('> line 4' in text) or ((config.ADD + 'line 4' + config.RESET) in text)
 
 
-def test_pretty_print_string_diff_b64(nocolor):
+def test_pretty_print_string_diff_b64():
     a = b64text(1024)
     b = b64text( 800)
     path = '/a/b'
     di = diff(a, b, path=path)
 
-    config = TestConfig()
+    config = TestConfig(use_color=False)
     pp.pretty_print_diff(a, di, path, config)
     text = config.out.getvalue()
     lines = text.splitlines()

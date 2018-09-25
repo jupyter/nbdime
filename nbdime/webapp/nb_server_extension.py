@@ -13,7 +13,16 @@ from notebook.services.contents.checkpoints import GenericCheckpointsMixin
 from notebook.services.contents.filecheckpoints import FileCheckpoints
 from tornado.web import HTTPError, escape, authenticated, gen
 
-import nbdime
+from ..args import process_diff_flags
+from ..config import build_config, Namespace
+from ..diffing.notebooks import set_notebook_diff_ignores, diff_notebooks
+from ..gitfiles import (
+    changed_notebooks, is_path_in_repo, find_repo_root,
+    InvalidGitRepositoryError, BadName, GitCommandNotFound,
+    )
+from ..ignorables import diff_ignorables
+from ..utils import read_notebook
+
 from .nbdimeserver import (
     template_path,
     static_path,
@@ -22,15 +31,6 @@ from .nbdimeserver import (
     ApiDiffHandler,
     APIHandler,
 )
-
-from ..gitfiles import (
-    changed_notebooks, is_path_in_repo, find_repo_root,
-    InvalidGitRepositoryError, BadName, GitCommandNotFound,
-    )
-from ..utils import read_notebook
-from ..config import build_config, Namespace
-from ..diffing.notebooks import set_notebook_diff_ignores
-from ..args import process_diff_flags, diff_exclusives
 
 
 class AuthMainDifftoolHandler(MainDifftoolHandler):
@@ -156,7 +156,7 @@ class ExtensionApiDiffHandler(ApiDiffHandler):
 
         # Perform actual diff and return data:
         try:
-            thediff = nbdime.diff_notebooks(base_nb, remote_nb)
+            thediff = diff_notebooks(base_nb, remote_nb)
         except Exception:
             self.log.exception('Error diffing documents:')
             raise HTTPError(500, 'Error while attempting to diff documents')
@@ -211,7 +211,7 @@ def _load_jupyter_server_extension(nb_server_app):
 
     config = build_config('extension')
     ignore = config.pop('Ignore', None)
-    for k in diff_exclusives:
+    for k in diff_ignorables:
         config[k] = config.get(k, None)
     ns = Namespace(config)
     process_diff_flags(ns)

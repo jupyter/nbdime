@@ -67,7 +67,7 @@ expected_source_only = """nbdiff {0} {1}
 """
 
 
-def test_hg_diff_driver(filespath, capsys, nocolor, needs_hg):
+def test_hg_diff_driver(filespath, capsys, needs_hg):
     # Simulate a call from `hg diff` to check basic driver functionality
 
     fn1 = pjoin(filespath, 'foo--1.ipynb')
@@ -77,6 +77,7 @@ def test_hg_diff_driver(filespath, capsys, nocolor, needs_hg):
 
     mock_argv = [
         '/mock/path/hg-nbdiffdriver',
+        '--no-color',
         fn1, fn2]
 
     with mock.patch('sys.argv', mock_argv):
@@ -86,7 +87,7 @@ def test_hg_diff_driver(filespath, capsys, nocolor, needs_hg):
         assert cap_out == expected_output.format(fn1, fn2, t1, t2)
 
 
-def test_hg_diff_driver_flags(filespath, capsys, nocolor, needs_hg, reset_diff_targets):
+def test_hg_diff_driver_flags(filespath, capsys, needs_hg, reset_diff_targets):
     # Simulate a call from `hg diff` to check basic driver functionality
 
     fn1 = pjoin(filespath, 'foo--1.ipynb')
@@ -96,6 +97,7 @@ def test_hg_diff_driver_flags(filespath, capsys, nocolor, needs_hg, reset_diff_t
 
     mock_argv = [
         '/mock/path/hg-nbdiffdriver', '-s',
+        '--no-color',
         fn1, fn2]
 
     with mock.patch('sys.argv', mock_argv):
@@ -105,7 +107,7 @@ def test_hg_diff_driver_flags(filespath, capsys, nocolor, needs_hg, reset_diff_t
         assert cap_out == expected_source_only.format(fn1, fn2, t1, t2)
 
 
-def test_hg_diff_driver_ignore_flags(filespath, capsys, nocolor, needs_hg, reset_diff_targets):
+def test_hg_diff_driver_ignore_flags(filespath, capsys, needs_hg, reset_diff_targets):
     # Simulate a call from `hg diff` to check basic driver functionality
 
     fn1 = pjoin(filespath, 'foo--1.ipynb')
@@ -114,7 +116,9 @@ def test_hg_diff_driver_ignore_flags(filespath, capsys, nocolor, needs_hg, reset
     t2 = file_timestamp(fn2)
 
     mock_argv = [
-        '/mock/path/hg-nbdiffdriver', '-O',
+        '/mock/path/hg-nbdiffdriver',
+        '--no-color',
+        '-O',
         fn1, fn2]
 
     with mock.patch('sys.argv', mock_argv):

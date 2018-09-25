@@ -12,12 +12,11 @@ import sys
 
 import nbformat
 
-import nbdime
-import nbdime.log
-from nbdime.args import ConfigBackedParser
-from nbdime.merging import merge_notebooks
-from nbdime.prettyprint import pretty_print_merge_decisions, PrettyPrintConfig
-from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook, setup_std_streams
+from .args import ConfigBackedParser, prettyprint_config_from_args
+from .log import logger
+from .merging import merge_notebooks
+from .prettyprint import pretty_print_merge_decisions
+from .utils import EXPLICIT_MISSING_FILE, read_notebook, setup_std_streams
 
 _description = ('Merge two Jupyter notebooks "local" and "remote" with a '
                 'common ancestor "base".')
@@ -34,13 +33,13 @@ def main_merge(args):
 
     for fn in (bfn, lfn, rfn):
         if not os.path.exists(fn) and fn != EXPLICIT_MISSING_FILE:
-            nbdime.log.error("Cannot find file '%s'", fn)
+            logger.error("Cannot find file '%s'", fn)
             return 1
 
     if lfn == rfn == EXPLICIT_MISSING_FILE:
         # Deleted both locally and remotely
         # Special case not well solved by routines below
-        handle_agreed_deletion(bfn, mfn, args.decisions)
+        _handle_agreed_deletion(bfn, mfn, args)
         # Agreed on deletion = no conflics = return 0
         return 0
 
@@ -54,35 +53,35 @@ def main_merge(args):
     returncode = 1 if conflicted else 0
 
     if conflicted:
-        nbdime.log.warning("Conflicts occured during merge operation.")
+        logger.warning("Conflicts occured during merge operation.")
     else:
-        nbdime.log.debug("Merge completed successfully with no unresolvable conflicts.")
+        logger.debug("Merge completed successfully with no unresolvable conflicts.")
 
     if args.decisions:
         # Print merge decisions (including unconflicted)
-        config = PrettyPrintConfig(out=io.StringIO())
+        config = prettyprint_config_from_args(args, out=io.StringIO())
         pretty_print_merge_decisions(b, decisions, config=config)
-        nbdime.log.warning("Decisions:\n%s", config.out.getvalue())
+        logger.warning("Decisions:\n%s", config.out.getvalue())
     elif mfn:
         # Write partial or fully completed merge to given foo.ipynb filename
         with io.open(mfn, "w", encoding="utf8"):
             nbformat.write(merged, mfn)
-        nbdime.log.info("Merge result written to %s", mfn)
+        logger.info("Merge result written to %s", mfn)
     else:
         # Write merged notebook to terminal
         nbformat.write(merged, sys.stdout)
     return returncode
 
 
-def handle_agreed_deletion(base_fn, output_fn, print_decisions=False):
+def _handle_agreed_deletion(base_fn, output_fn, args=None):
     """Handle merge when file has been deleted both locally and remotely"""
     assert base_fn != EXPLICIT_MISSING_FILE, (
         'sanity check failed: cannot have agreed decision on base %r' % base_fn)
     b = read_notebook(base_fn, on_null='minimal')
-    if print_decisions:
+    if args and args.decisions:
         # Print merge decision (delete all)
-        from nbdime.diffing.notebooks import diff_notebooks
-        from nbdime.merging.decisions import MergeDecisionBuilder
+        from .diffing.notebooks import diff_notebooks
+        from .merging.decisions import MergeDecisionBuilder
         # Build diff for deleting all content:
         diff = diff_notebooks(b, {})
         # Make agreed decision from diff:
@@ -90,15 +89,15 @@ def handle_agreed_deletion(base_fn, output_fn, print_decisions=False):
         bld.agreement([], local_diff=diff, remote_diff=diff)
         decisions = bld.validated(b)
         # Print decition
-        config = PrettyPrintConfig(out=io.StringIO())
+        config = prettyprint_config_from_args(args, out=io.StringIO())
         pretty_print_merge_decisions(b, decisions, config=config)
-        nbdime.log.warning("Decisions:\n%s", out.getvalue())
+        logger.warning("Decisions:\n%s", config.out.getvalue())
 
     elif output_fn:
         # Delete file if existing, if not do nothing
         if os.path.exists(output_fn):
             os.remove(output_fn)
-            nbdime.log.info("Output file deleted: %s", output_fn)
+            logger.info("Output file deleted: %s", output_fn)
 
 
 def _build_arg_parser():
@@ -107,10 +106,14 @@ def _build_arg_parser():
         description=_description,
         add_help=True,
         )
-    from .args import add_generic_args, add_diff_args, add_merge_args, add_filename_args
+    from .args import (
+        add_generic_args, add_diff_args, add_merge_args, add_filename_args,
+        add_prettyprint_args
+    )
     add_generic_args(parser)
     add_diff_args(parser)
     add_merge_args(parser)
+    add_prettyprint_args(parser)
     add_filename_args(parser, ["base", "local", "remote"])
 
     parser.add_argument(
