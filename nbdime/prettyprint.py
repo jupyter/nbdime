@@ -758,7 +758,7 @@ def pretty_print_diff_entry(a, e, path, config=DefaultConfig):
             return
         aval = a[key]
         bval = e.value
-        if type(aval) != type(bval):
+        if type(aval) is not type(bval):
             typechange = " (type changed from %s to %s)" % (
                 aval.__class__.__name__, bval.__class__.__name__)
         else:

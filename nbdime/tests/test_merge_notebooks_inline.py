@@ -751,18 +751,17 @@ def test_inline_merge_notebook_metadata_reproduce_bug(reset_log):
 
     # Check handcrafted merge results
     triplet = (1,2,3)
-    if 1:
-        i, j, k = triplet
-        base = new_notebook(metadata=md_in[i])
-        local = new_notebook(metadata=md_in[j])
-        remote = new_notebook(metadata=md_in[k])
-        expected = new_notebook(metadata=md_out[triplet])
-        merged, decisions = merge_notebooks(base, local, remote)
-        if "nbdime-conflicts" in merged["metadata"]:
-            assert any([d.conflict for d in decisions])
-        else:
-            assert not any([d.conflict for d in decisions])
-        assert expected == merged
+    i, j, k = triplet
+    base = new_notebook(metadata=md_in[i])
+    local = new_notebook(metadata=md_in[j])
+    remote = new_notebook(metadata=md_in[k])
+    expected = new_notebook(metadata=md_out[triplet])
+    merged, decisions = merge_notebooks(base, local, remote)
+    if "nbdime-conflicts" in merged["metadata"]:
+        assert any([d.conflict for d in decisions])
+    else:
+        assert not any([d.conflict for d in decisions])
+    assert expected == merged
 
 
 def test_inline_merge_source_empty():

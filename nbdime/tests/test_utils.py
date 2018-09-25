@@ -23,20 +23,20 @@ def test_is_repo():
         subfile = tempfile.NamedTemporaryFile(dir=tmpdir)
         subsubfile = tempfile.NamedTemporaryFile(dir=subdir)
         with subfile, subsubfile:
-            assert False == is_in_repo(tmpdir)
-            assert False == is_in_repo(subdir)
-            assert False == is_in_repo(subfile.name)
-            assert False == is_in_repo(subsubfile.name)
+            assert is_in_repo(tmpdir) is False
+            assert is_in_repo(subdir) is False
+            assert is_in_repo(subfile.name) is False
+            assert is_in_repo(subsubfile.name) is False
             os.makedirs(os.path.join(subdir, '.git'))
-            assert False == is_in_repo(tmpdir)
-            assert True == is_in_repo(subdir)
-            assert False == is_in_repo(subfile.name)
-            assert True == is_in_repo(subsubfile.name)
+            assert is_in_repo(tmpdir) is False
+            assert is_in_repo(subdir) is True
+            assert is_in_repo(subfile.name) is False
+            assert is_in_repo(subsubfile.name) is True
             os.makedirs(os.path.join(tmpdir, '.git'))
-            assert True == is_in_repo(tmpdir)
-            assert True == is_in_repo(subdir)
-            assert True == is_in_repo(subfile.name)
-            assert True == is_in_repo(subsubfile.name)
+            assert is_in_repo(tmpdir) is True
+            assert is_in_repo(subdir) is True
+            assert is_in_repo(subfile.name) is True
+            assert is_in_repo(subsubfile.name) is True
 
     finally:
         shutil.rmtree(tmpdir)
@@ -55,4 +55,3 @@ def test_locate_gitattributes_global(needs_git):
 def test_locate_gitattributes_system(needs_git):
     gitattr = locate_gitattributes(scope='system')
     assert gitattr is not None
-

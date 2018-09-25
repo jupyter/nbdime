@@ -600,7 +600,7 @@ def resolve_strategy_inline_recurse(path, base, decisions):
                 pass
 
             else:
-                raise ValueError('Conflict on unrecognized key: %r', (k,))
+                raise ValueError('Conflict on unrecognized key: %r' % (k,))
 
         custom_diff = [op_addrange(d.local_diff[0].key, [cell])]
 

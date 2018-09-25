@@ -33,7 +33,7 @@ def test_diff_to_json_patch():
 
     try:
         import jsonpatch
-    except:
+    except ImportError:
         jsonpatch = None
         pytest.xfail("Not comparing to jsonpatch")
 

@@ -159,6 +159,6 @@ def test_config_inherit(entrypoint_ignore_config, tmpdir):
         parsed = parser.parse_args([])
 
     try:
-        assert parsed.metadata == False
+        assert parsed.metadata is False
     finally:
         nbdime.diffing.notebooks.reset_notebook_differ()

@@ -38,7 +38,7 @@ def enable(scope=None, set_default=False):
     check_call(cmd + ['difftool.prompt', 'false'])
 
 
-def disable(scope=None, *args):
+def disable(scope=None, _=None):
     """Disable nbdime git difftool"""
     cmd = ['git', 'config']
     if scope:

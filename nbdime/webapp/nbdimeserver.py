@@ -34,6 +34,7 @@ from notebook.log import log_request
 #ContentsHandler
 
 
+# Separate logger for server entrypoint (?)
 _logger = logging.getLogger(__name__)
 
 
@@ -67,7 +68,7 @@ class NbdimeHandler(IPythonHandler):
             if etype == web.HTTPError:
                 self.set_header('Content-Type', 'text/plain')
                 return self.finish(str(value))
-        return super(IPythonHandler, self).write_error(status_code, **kwargs)
+        return super(NbdimeHandler, self).write_error(status_code, **kwargs)
 
     def read_notebook(self, arg):
         # Currently assuming arg is a filename relative to
@@ -360,7 +361,7 @@ def make_app(**params):
 
 
 def init_app(on_port=None, closable=False, **params):
-    _logger.debug('Using params: %s' % params)
+    _logger.debug('Using params: %s', params)
     params.update({'closable': closable})
     port = params.pop('port', 0)
     ip = params.pop('ip', '127.0.0.1')
