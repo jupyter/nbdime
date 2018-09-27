@@ -37,12 +37,12 @@ def main_mergetool(args):
     if args:
         paths = [a for a in args if a.endswith(".ipynb")]
         if len(paths) != len(args):
-            nbdime.log.warning("Skipping given filenames without .ipynb extension: {}".format([a for a in args if a not in paths]))
+            nbdime.log.warning("Skipping given filenames without .ipynb extension: %r", [a for a in args if a not in paths])
     else:
         paths = ["*.ipynb"]
     to_call.extend(paths)
 
-    nbdime.log.info("Calling 'git mergetool --tool=nbdime' on files {}".format(paths))
+    nbdime.log.info("Calling 'git mergetool --tool=nbdime' on files %r", paths)
 
     return call(to_call)
 

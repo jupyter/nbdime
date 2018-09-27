@@ -8,15 +8,15 @@ from __future__ import print_function
 
 import os
 import sys
-import argparse
+
 import nbformat
 
-from nbdime.prettyprint import pretty_print_notebook, PrettyPrintConfig
-from nbdime.args import (
+from .prettyprint import pretty_print_notebook, PrettyPrintConfig
+from .args import (
     add_generic_args, IgnorableAction, process_exclusive_ignorables,
     ConfigBackedParser,
 )
-from nbdime.utils import setup_std_streams
+from .utils import setup_std_streams
 
 
 _description = """Show a Jupyter notebook in terminal.

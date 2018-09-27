@@ -14,7 +14,7 @@ from nbdime.config import (
     entrypoint_configurables, Global, _Ignorables
 )
 import nbdime.diffing.notebooks
-from nbdime.diffing.notebooks import notebook_differs, diff, diff_ignore
+from nbdime.diffing.notebooks import notebook_differs, diff
 
 
 class FixtureConfig(Global):
@@ -159,6 +159,6 @@ def test_config_inherit(entrypoint_ignore_config, tmpdir):
         parsed = parser.parse_args([])
 
     try:
-        assert parsed.metadata == False
+        assert parsed.metadata is False
     finally:
         nbdime.diffing.notebooks.reset_notebook_differ()

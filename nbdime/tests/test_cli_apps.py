@@ -533,7 +533,7 @@ def test_git_difftool(git_repo, unique_port, popen_with_terminator):
 
     # 3 is the number of notebooks in this diff
     url = 'http://127.0.0.1:%i' % port
-    for i in range(3):
+    for _ in range(3):
         wait_up(url, check=lambda: process.poll() is None)
         # server started
         r = requests.get(url + '/difftool')
@@ -634,7 +634,7 @@ def test_hg_diffweb(hg_repo, unique_port, popen_with_terminator):
     # 3 is the number of notebooks in this diff
     url = 'http://127.0.0.1:%i' % unique_port
     wait_up(url, check=lambda: process.poll() is None)
-    for i in range(3):
+    for _ in range(3):
         # server started
         r = requests.get(url + '/difftool')
         r.raise_for_status()

@@ -222,7 +222,7 @@ def diff_dicts(a, b, path="", predicates=None, differs=None):
         avalue = a[key]
         bvalue = b[key]
         # If types are the same and nonatomic, recurse
-        if type(avalue) == type(bvalue) and not is_atomic(avalue):
+        if type(avalue) is type(bvalue) and not is_atomic(avalue):
             subpath = "/".join((path, key))
             diffit = differs[subpath]
             dd = diffit(avalue, bvalue, path=subpath, predicates=predicates, differs=differs)

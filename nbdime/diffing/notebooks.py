@@ -556,14 +556,14 @@ def set_notebook_diff_ignores(ignore_paths):
             Dictionary with path strings (e.g. /cells/*/outputs) as keys.
             For each entry in the dictionary do the following:
             - if value is True, set path to `diff_ignore`.
-            - if value False, reset the differ of path to the default value.
+            - if value is False, reset the differ of path to the default value.
             - if value is set/tuple/list, assume the container is a collection
               of subkeys of path to ignore with `diff_ignore_keys`.
     """
     for path, subkeys in ignore_paths.items():
-        if subkeys == True:
+        if subkeys is True:
             notebook_differs[path] = diff_ignore
-        elif subkeys == False:
+        elif subkeys is False:
             if path in notebook_differs:
                 del notebook_differs[path]
         elif isinstance(subkeys, (list, tuple, set)):

@@ -5,8 +5,6 @@
 
 from __future__ import unicode_literals
 
-import sys
-import logging
 from six import StringIO
 
 from .generic import decide_merge_with_diff

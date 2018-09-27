@@ -9,9 +9,9 @@ import pytest
 
 from nbdime.diff_format import op_remove, op_patch
 from nbdime.merging.decisions import (
-    ensure_common_path, resolve_action, MergeDecisionBuilder,
-    MergeDecision, pop_patch_decision, push_patch_decision,
-    build_diffs)
+    ensure_common_path, MergeDecisionBuilder, MergeDecision,
+    pop_patch_decision, build_diffs,
+)
 
 
 # `ensure_common_path` tests:

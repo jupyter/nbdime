@@ -22,11 +22,11 @@ def browse(port, browsername=None, base_url='/', rel_url='', ip='127.0.0.1', **u
         ip = '127.0.0.1'
     elif ip in ('::', '0:0:0:0:0:0:0:0'):
         ip = '::1'
-    
+
     base_url = base_url.rstrip('/')
 
     url = url_concat("http://%s:%s%s/%s" % (ip, port, base_url, rel_url), url_args)
-    _logger.info("URL: " + url)
+    _logger.info("URL: %s", url)
     if browser:
         def launch_browser():
             browser.open(url, new=2)

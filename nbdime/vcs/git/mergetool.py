@@ -35,7 +35,7 @@ def enable(scope=None, set_default=False):
         check_call(cmd + ['merge.tool', 'nbdime'])
 
 
-def disable(scope=None, *args):
+def disable(scope=None, _=None):
     """Disable nbdime git mergetool"""
     cmd = ['git', 'config']
     if scope:

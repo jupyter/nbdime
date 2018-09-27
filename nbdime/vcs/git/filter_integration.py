@@ -1,7 +1,6 @@
 
 import io
 from subprocess import check_output, STDOUT, CalledProcessError
-import sys
 
 from six import StringIO
 

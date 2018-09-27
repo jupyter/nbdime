@@ -149,7 +149,8 @@ class MergeDecisionBuilder(object):
             path=path,
             action=action,
             local_diff=local_diff,
-            remote_diff=remote_diff
+            remote_diff=remote_diff,
+            conflict=conflict,
             )
 
     def local_then_remote(self, path, local_diff, remote_diff, conflict=False, strategy=None):
@@ -184,6 +185,7 @@ class MergeDecisionBuilder(object):
             action="either",
             local_diff=local_diff,
             remote_diff=remote_diff,
+            conflict=conflict,
             )
 
     def tryresolve(self, path, local_diff, remote_diff, strategy):

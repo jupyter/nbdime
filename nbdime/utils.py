@@ -40,8 +40,8 @@ def read_notebook(f, on_null):
             return nbformat.v4.new_notebook()
         else:
             raise ValueError(
-                'Not valid value for `on_null`: "%s". Valid values '
-                'are "empty" or "minimal"', on_null)
+                'Not valid value for `on_null`: %r. Valid values '
+                'are "empty" or "minimal"' % (on_null,))
     else:
         return nbformat.read(f, as_version=4)
 

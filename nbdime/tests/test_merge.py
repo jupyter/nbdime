@@ -12,7 +12,7 @@ import pytest
 
 from nbdime import decide_merge, apply_decisions, diff
 from nbdime.diff_format import (
-    op_patch, op_add, op_remove, op_replace, op_addrange, op_removerange)
+    op_add, op_remove, op_replace, op_addrange, op_removerange)
 
 
 def cut(li, *indices):

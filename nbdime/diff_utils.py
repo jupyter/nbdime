@@ -5,17 +5,12 @@
 
 import itertools
 import copy
-from collections import defaultdict
 
 from six import string_types
 from six.moves import xrange as range
 
-from .diff_format import (
-    DiffOp, SequenceDiffBuilder, MappingDiffBuilder, DiffEntry,
-    op_addrange, op_removerange)
+from .diff_format import DiffOp, DiffEntry, op_addrange, op_removerange
 from .log import NBDiffFormatError
-
-from .utils import split_path
 
 
 _addops = (DiffOp.ADD, DiffOp.ADDRANGE)
@@ -225,7 +220,7 @@ def to_json_patch(d, path=""):
             # JSONPatch only has single value remove, no removerange,
             # repeat removal at same index instead
             p = "/".join((path, str(e.key + offset)))
-            for i in range(e.length):
+            for _ in range(e.length):
                 jp.append({"op": "remove", "path": p})
                 offset -= 1
         elif op == DiffOp.PATCH:

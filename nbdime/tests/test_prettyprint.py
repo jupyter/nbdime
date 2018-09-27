@@ -14,13 +14,11 @@ except ImportError:
     from base64 import encodestring as encodebytes
 import os
 from six import StringIO
-from pprint import pformat
+
 try:
     from unittest import mock
 except ImportError:
     import mock
-
-import hashlib
 
 from nbformat import v4
 

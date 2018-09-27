@@ -13,14 +13,9 @@ import re
 from subprocess import Popen
 import sys
 
-try:
-    from unittest import mock
-except ImportError:
-    import mock
-
 from jsonschema import Draft4Validator as Validator
 from jsonschema import RefResolver
-from pytest import fixture, skip, mark
+from pytest import fixture, skip
 import nbformat
 
 from .utils import call, have_git, have_hg, wait_up, TEST_TOKEN
@@ -38,7 +33,7 @@ except ImportError:
         pass
     def popen_wait(p, timeout):
         """backport of Popen.wait from Python 3"""
-        for i in range(int(10 * timeout)):
+        for _ in range(int(10 * timeout)):
             if p.poll() is not None:
                 return
             time.sleep(0.1)

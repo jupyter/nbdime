@@ -3,11 +3,11 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-from __future__ import unicode_literals
-
 """
 Utilities for computing 'snakes', or contiguous sequences of equal elements of two sequences.
 """
+
+from __future__ import unicode_literals
 
 from ..diff_format import SequenceDiffBuilder
 from .seq_bruteforce import bruteforce_compute_snakes
