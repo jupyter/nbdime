@@ -6,21 +6,21 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
+import json
 import os
 import sys
-import argparse
-import json
 
 from six import string_types
 
-from nbdime.diffing.notebooks import diff_notebooks
-from nbdime.prettyprint import pretty_print_notebook_diff, PrettyPrintConfig
-from nbdime.args import (
+from .args import (
     add_generic_args, add_diff_args, process_diff_flags, resolve_diff_args,
-    add_diff_cli_args, ConfigBackedParser,
+    add_diff_cli_args, add_prettyprint_args, ConfigBackedParser,
+    prettyprint_config_from_args,
     )
-from nbdime.utils import EXPLICIT_MISSING_FILE, read_notebook, setup_std_streams
+from .diffing.notebooks import diff_notebooks
 from .gitfiles import changed_notebooks, is_gitref
+from .prettyprint import pretty_print_notebook_diff
+from .utils import EXPLICIT_MISSING_FILE, read_notebook, setup_std_streams
 
 
 _description = "Compute the difference between two Jupyter notebooks."
@@ -80,7 +80,7 @@ def _handle_diff(base, remote, output, args):
             def write(self, text):
                 print(text, end="")
         # This sets up what to ignore:
-        config = PrettyPrintConfig(out=Printer(), include=args, color_words=args.color_words)
+        config = prettyprint_config_from_args(args, out=Printer())
         # Separate out filenames:
         base_name = base if isinstance(base, string_types) else base.name
         remote_name = remote if isinstance(remote, string_types) else remote.name
@@ -97,6 +97,7 @@ def _build_arg_parser():
     add_generic_args(parser)
     add_diff_args(parser)
     add_diff_cli_args(parser)
+    add_prettyprint_args(parser)
 
     parser.add_argument(
         "base", help="the base notebook filename OR base git-revision.",

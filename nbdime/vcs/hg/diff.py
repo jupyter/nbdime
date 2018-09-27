@@ -15,11 +15,11 @@ import os
 import sys
 
 from nbdime import nbdiffapp
-from nbdime.diffing.directorydiff import diff_directories
 from nbdime.args import (
-    add_diff_args, add_filename_args, diff_exclusives, process_exclusive_ignorables,
-    add_diff_cli_args, ConfigBackedParser,
+    add_diff_args, add_filename_args, add_diff_cli_args, add_prettyprint_args,
+    ConfigBackedParser,
 )
+from nbdime.diffing.directorydiff import diff_directories
 
 
 def main(args=None):
@@ -32,6 +32,7 @@ def main(args=None):
 
     add_diff_args(parser)
     add_diff_cli_args(parser)
+    add_prettyprint_args(parser)
     add_filename_args(parser, ('base', 'remote'))
 
     opts = parser.parse_args(args)

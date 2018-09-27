@@ -206,6 +206,16 @@ def test_nbdiff_app_color_words(filespath):
     assert 0 == main_diff(args)
 
 
+def test_nbdiff_app_no_colors(filespath, capsys):
+    # Simply check that the --color-words argument is accepted, not behavior
+    # Behavior is covered elsewhere
+    afn = os.path.join(filespath, "multilevel-test-base.ipynb")
+    bfn = os.path.join(filespath, "multilevel-test-local.ipynb")
+
+    args = nbdiffapp._build_arg_parser().parse_args([afn, bfn, '--no-color'])
+    assert 0 == main_diff(args)
+
+
 def test_nbmerge_app(tempfiles, capsys, reset_log):
     bfn = os.path.join(tempfiles, "multilevel-test-base.ipynb")
     lfn = os.path.join(tempfiles, "multilevel-test-local.ipynb")
@@ -308,6 +318,16 @@ def test_nbmerge_app_decisions(tempfiles, capsys, caplog, reset_log):
     out = capsys.readouterr()[0]
     assert out == ''
     assert not os.path.exists(ofn)
+
+
+def test_nbmerge_app_no_colors(filespath):
+    # Simply check that the --color-words argument is accepted, not behavior
+    bfn = os.path.join(filespath, "multilevel-test-base.ipynb")
+    lfn = os.path.join(filespath, "multilevel-test-local.ipynb")
+    rfn = os.path.join(filespath, "multilevel-test-remote.ipynb")
+
+    args = nbmergeapp._build_arg_parser().parse_args([bfn, lfn, rfn, '--no-color'])
+    assert 0 == main_merge(args)
 
 
 def test_diffdriver_config(git_repo):

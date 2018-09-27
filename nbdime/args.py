@@ -9,17 +9,15 @@ import logging
 import os
 import sys
 
-from six import PY2
-
 from ._version import __version__
-from .log import init_logging, set_nbdime_log_level
-from .gitfiles import is_gitref
-from .diffing.notebooks import set_notebook_diff_targets, set_notebook_diff_ignores
 from .config import (
     get_defaults_for_argparse, build_config, entrypoint_configurables,
     Namespace
 )
-from .prettyprint import pretty_print_dict, PrettyPrintConfig
+from .diffing.notebooks import set_notebook_diff_targets, set_notebook_diff_ignores
+from .gitfiles import is_gitref
+from .ignorables import diff_ignorables
+from .log import init_logging, set_nbdime_log_level
 
 
 class ConfigBackedParser(argparse.ArgumentParser):
@@ -68,12 +66,12 @@ def modify_config_for_print(config):
             output[k] = modify_config_for_print(v)
             if not output[k]:
                 output[k] = '{}'
-        elif k in diff_exclusives and v is None:
+        elif k in diff_ignorables and v is None:
             if ns is None:
                 ns = Namespace(config)
-                for k in diff_exclusives:
-                    setattr(ns, k, config.get(k, None))
-                process_exclusive_ignorables(ns, diff_exclusives)
+                for k2 in diff_ignorables:
+                    setattr(ns, k2, config.get(k2, None))
+                process_exclusive_ignorables(ns, diff_ignorables)
             output[k] = '<unset, resolves to {0}>'.format(
                 json.dumps(getattr(ns, k, v)))
         else:
@@ -87,6 +85,8 @@ class ConfigHelpAction(argparse.Action):
             option_strings, dest, nargs=0, help=help)
 
     def __call__(self, parser, namespace, values, option_string=None):
+        from .prettyprint import pretty_print_dict, PrettyPrintConfig
+
         header = entrypoint_configurables[parser.prog].__name__
         config = build_config(parser.prog, True)
         pretty_print_dict(
@@ -297,9 +297,6 @@ def add_diff_args(parser):
         help="process/ignore details not covered by other options.")
 
 
-diff_exclusives = ('sources', 'outputs', 'attachments', 'metadata', 'details')
-
-
 def add_diff_cli_args(parser):
     """Adds a set of arguments for CLI diff commands (i.e. not web).
     """
@@ -358,7 +355,7 @@ def add_git_diff_driver_args(diff_parser):
 
 
 def process_diff_flags(args):
-    process_exclusive_ignorables(args, diff_exclusives)
+    process_exclusive_ignorables(args, diff_ignorables)
     set_notebook_diff_targets(args.sources, args.outputs,
                               args.attachments, args.metadata, args.details)
 
@@ -446,6 +443,44 @@ def add_filename_args(parser, names):
         }
     for name in names:
         parser.add_argument(name, help=helps[name])
+
+
+def add_prettyprint_args(parser):
+    """Adds optional arguments for controlling pretty print behavior.
+    """
+    parser.add_argument(
+        '--no-color',
+        dest='use_color',
+        action="store_false",
+        default=True,
+        help=("prevent use of ANSI color code escapes for text output")
+    )
+    parser.add_argument(
+        '--no-git',
+        dest='use_git',
+        action="store_false",
+        default=True,
+        help=("prevent use of git for formatting diff/merge text output")
+    )
+    parser.add_argument(
+        '--no-use-diff',
+        dest='use_diff',
+        action="store_false",
+        default=True,
+        help=("prevent use of diff/diff3 for formatting diff/merge text output")
+    )
+
+
+def prettyprint_config_from_args(arguments, **kwargs):
+    from .prettyprint import PrettyPrintConfig
+    return PrettyPrintConfig(
+        include=arguments,
+        color_words=getattr(arguments, 'color_words', False),
+        use_color=getattr(arguments, 'use_color', True),
+        use_git=getattr(arguments, 'use_git', True),
+        use_diff=getattr(arguments, 'use_diff', True),
+        **kwargs
+    )
 
 
 def args_for_server(arguments):

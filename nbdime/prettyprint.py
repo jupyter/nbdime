@@ -6,34 +6,34 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
-import sys
+from collections import namedtuple
+import datetime
+from difflib import unified_diff
+import hashlib
 import io
 import os
-import datetime
 import pprint
 import re
 import shutil
 from subprocess import Popen, PIPE
+import sys
 import tempfile
-from difflib import unified_diff
-from six import string_types
-import hashlib
 
 try:
     from shutil import which
 except ImportError:
     from backports.shutil_which import which
 
+import colorama
+from six import string_types
+
 from .diff_format import NBDiffFormatError, DiffOp, op_patch
-from .patching import patch, patch_string
+from .ignorables import diff_ignorables
+from .patching import patch
 from .utils import star_path, split_path, join_path
 from .utils import as_text, as_text_lines
 from .log import warning
 
-# TODO: Make this configurable
-use_git = True
-use_diff = True
-use_colors = True
 
 # Indentation offset in pretty-print
 IND = "  "
@@ -47,39 +47,60 @@ diff_print_cmd = 'diff before after'
 git_mergefile_print_cmd = 'git merge-file -p local base remote'
 diff3_print_cmd = 'diff3 -m local base remote'
 
-if use_colors:
-    import colorama
-    RED = colorama.Fore.RED
-    GREEN = colorama.Fore.GREEN
-    BLUE = colorama.Fore.BLUE
-    YELLOW = colorama.Fore.YELLOW
-    RESET = colorama.Style.RESET_ALL
 
-else:
-    RED = ''
-    GREEN = ''
-    BLUE = ''
-    YELLOW = ''
-    RESET = ''
-    git_diff_print_cmd = git_diff_print_cmd.replace(" --color-words", "")
-
-
-KEEP     = '{color}   '.format(color='')
-REMOVE   = '{color}-  '.format(color=RED)
-ADD      = '{color}+  '.format(color=GREEN)
-INFO     = '{color}## '.format(color=BLUE)
 DIFF_ENTRY_END = '\n'
+
+ColoredConstants = namedtuple('ColoredConstants', (
+    'KEEP',
+    'REMOVE',
+    'ADD',
+    'INFO',
+    'RESET',
+))
+
+
+col_const = {
+    True: ColoredConstants(
+        KEEP   = '{color}   '.format(color=''),
+        REMOVE = '{color}-  '.format(color=colorama.Fore.RED),
+        ADD    = '{color}+  '.format(color=colorama.Fore.GREEN),
+        INFO   = '{color}## '.format(color=colorama.Fore.BLUE),
+        RESET  = colorama.Style.RESET_ALL,
+    ),
+
+    False: ColoredConstants(
+        KEEP   = '   ',
+        REMOVE = '-  ',
+        ADD    = '+  ',
+        INFO   = '## ',
+        RESET  = '',
+    )
+}
 
 
 class PrettyPrintConfig:
-    def __init__(self, out=sys.stdout, include=None, color_words=False):
+    def __init__(
+            self,
+            out=sys.stdout,
+            include=None,
+            color_words=False,
+            use_git = True,
+            use_diff = True,
+            use_color = True,
+            ):
         self.out = out
-        self.sources = include is None or include.sources
-        self.outputs = include is None or include.outputs
-        self.metadata = include is None or include.metadata
-        self.attachments = include is None or include.attachments
-        self.details = include is None or include.details
+        if include is None:
+            for key in diff_ignorables:
+                setattr(self, key, True)
+        else:
+            for key in diff_ignorables:
+                setattr(self, key, getattr(include, key, True))
+
         self.color_words = color_words
+
+        self.use_git = use_git
+        self.use_diff = use_diff
+        self.use_color = use_color
 
     def should_ignore_path(self, path):
         starred = star_path(split_path(path))
@@ -101,6 +122,26 @@ class PrettyPrintConfig:
         if starred.startswith('/nbformat'):
             return not self.details
         return False
+
+    @property
+    def KEEP(self):
+        return col_const[self.use_color].KEEP
+
+    @property
+    def REMOVE(self):
+        return col_const[self.use_color].REMOVE
+
+    @property
+    def ADD(self):
+        return col_const[self.use_color].ADD
+
+    @property
+    def INFO(self):
+        return col_const[self.use_color].INFO
+
+    @property
+    def RESET(self):
+        return col_const[self.use_color].RESET
 
 DefaultConfig = PrettyPrintConfig()
 
@@ -238,7 +279,7 @@ def builtin_merge_render(base, local, remote, strategy=None):
     elif strategy == "use-remote":
         return remote, 0
     elif strategy is not None:
-        warning("Using builtin merge render but ignoring strategy %s" % (strategy,))
+        warning("Using builtin merge render but ignoring strategy %s", strategy)
 
     # Styling
     local_title = "local"
@@ -262,7 +303,7 @@ def builtin_merge_render(base, local, remote, strategy=None):
     return merged, 1
 
 
-def builtin_diff_render(a, b):
+def builtin_diff_render(a, b, config):
     gen = unified_diff(
         a.splitlines(False),
         b.splitlines(False),
@@ -270,23 +311,25 @@ def builtin_diff_render(a, b):
     uni = []
     for line in gen:
         if line.startswith('+'):
-            uni.append("%s%s%s" % (ADD, line[1:], RESET))
+            uni.append("%s%s%s" % (config.ADD, line[1:], config.RESET))
         elif line.startswith('-'):
-            uni.append("%s%s%s" % (REMOVE, line[1:], RESET))
+            uni.append("%s%s%s" % (config.REMOVE, line[1:], config.RESET))
         elif line.startswith(' '):
-            uni.append("%s%s%s" % (KEEP, line[1:], RESET))
+            uni.append("%s%s%s" % (config.KEEP, line[1:], config.RESET))
         elif line.startswith('@'):
             uni.append(line)
         else:
             # Don't think this will happen?
-            uni.append("%s%s%s" % (KEEP, line[1:], RESET))
+            uni.append("%s%s%s" % (config.KEEP, line[1:], config.RESET))
     return '\n'.join(uni)
 
 
 def diff_render_with_git(a, b, config):
     cmd = git_diff_print_cmd
-    if not config.color_words:
-        # Will do nothing if use_colors is not True:
+    if not config.use_color:
+        cmd = cmd.replace(" --color-words", "")
+    elif not config.color_words:
+        # Will do nothing if use_color is not True:
         cmd = cmd.replace("--color-words", "--color")
     diff, status = external_diff_render(cmd.split(), a, b)
     return "".join(diff.splitlines(True)[4:])
@@ -298,18 +341,18 @@ def diff_render_with_diff(a, b):
     return diff
 
 
-def diff_render_with_difflib(a, b):
-    diff = builtin_diff_render(a, b)
+def diff_render_with_difflib(a, b, config):
+    diff = builtin_diff_render(a, b, config)
     return "".join(diff.splitlines(True)[2:])
 
 
 def diff_render(a, b, config=DefaultConfig):
-    if use_git and which('git'):
+    if config.use_git and which('git'):
         return diff_render_with_git(a, b, config)
-    elif use_diff and which('diff'):
+    elif config.use_diff and which('diff'):
         return diff_render_with_diff(a, b)
     else:
-        return diff_render_with_difflib(a, b)
+        return diff_render_with_difflib(a, b, config)
 
 
 def merge_render_with_git(b, l, r, strategy=None):
@@ -345,12 +388,12 @@ def merge_render_with_diff3(b, l, r, strategy=None):
     return merged, status
 
 
-def merge_render(b, l, r, strategy=None):
+def merge_render(b, l, r, strategy=None, config=DefaultConfig):
     if strategy == "use-base":
         return b, 0
-    if use_git and which('git'):
+    if config.use_git and which('git'):
         return merge_render_with_git(b, l, r, strategy)
-    elif use_diff and which('diff3'):
+    elif config.use_diff and which('diff3'):
         return merge_render_with_diff3(b, l, r, strategy)
     else:
         return builtin_merge_render(b, l, r, strategy)
@@ -369,7 +412,9 @@ def file_timestamp(filename):
 def hash_string(s):
     return hashlib.md5(s.encode("utf8")).hexdigest()
 
-_base64 = re.compile(r'^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$', re.MULTILINE | re.UNICODE)
+_base64 = re.compile(
+    r'^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$',
+    re.MULTILINE | re.UNICODE)
 
 def _trim_base64(s):
     """Trim and hash base64 strings"""
@@ -453,7 +498,7 @@ def pretty_print_key_value(k, v, prefix, config):
 
 
 def pretty_print_diff_action(msg, path, config):
-    config.out.write("%s%s %s:%s\n" % (INFO, msg, path, RESET))
+    config.out.write("%s%s %s:%s\n" % (config.INFO, msg, path, config.RESET))
 
 
 def pretty_print_item(k, v, prefix="", config=DefaultConfig):
@@ -597,8 +642,14 @@ def pretty_print_cell(i, cell, prefix="", force_header=False, config=DefaultConf
     if metadata and config.metadata:
         # Write cell metadata
         c()
-        known_cell_metadata_keys = {"collapsed", "autoscroll", "deletable", "format", "name", "tags"}
-        pretty_print_metadata(cell.metadata, known_cell_metadata_keys, key_prefix, config)
+        known_cell_metadata_keys = {
+            "collapsed", "autoscroll", "deletable", "format", "name", "tags",
+        }
+        pretty_print_metadata(
+            cell.metadata,
+            known_cell_metadata_keys,
+            key_prefix,
+            config)
 
     source = cell.get("source")
     if source and config.sources:
@@ -618,7 +669,10 @@ def pretty_print_cell(i, cell, prefix="", force_header=False, config=DefaultConf
         c()
         pretty_print_outputs(outputs, key_prefix, config)
 
-    exclude_keys = {'cell_type', 'source', 'execution_count', 'outputs', 'metadata', 'attachment'}
+    exclude_keys = {
+        'cell_type', 'source', 'execution_count', 'outputs', 'metadata',
+        'attachment',
+    }
     if (set(cell) - exclude_keys) and config.details:
         # present anything we haven't special-cased yet (future-proofing)
         c()
@@ -677,7 +731,7 @@ def pretty_print_diff_entry(a, e, path, config=DefaultConfig):
 
     if op == DiffOp.ADDRANGE:
         pretty_print_diff_action("inserted before", nextpath, config)
-        pretty_print_value_at(e.valuelist, path, ADD, config)
+        pretty_print_value_at(e.valuelist, path, config.ADD, config)
 
     elif op == DiffOp.REMOVERANGE:
         if e.length > 1:
@@ -685,19 +739,19 @@ def pretty_print_diff_entry(a, e, path, config=DefaultConfig):
         else:
             keyrange = nextpath
         pretty_print_diff_action("deleted", keyrange, config)
-        pretty_print_value_at(a[key: key + e.length], path, REMOVE, config)
+        pretty_print_value_at(a[key: key + e.length], path, config.REMOVE, config)
 
     elif op == DiffOp.REMOVE:
         if config.should_ignore_path(nextpath):
             return
         pretty_print_diff_action("deleted", nextpath, config)
-        pretty_print_value_at(a[key], nextpath, REMOVE, config)
+        pretty_print_value_at(a[key], nextpath, config.REMOVE, config)
 
     elif op == DiffOp.ADD:
         if config.should_ignore_path(nextpath):
             return
         pretty_print_diff_action("added", nextpath, config)
-        pretty_print_value_at(e.value, nextpath, ADD, config)
+        pretty_print_value_at(e.value, nextpath, config.ADD, config)
 
     elif op == DiffOp.REPLACE:
         if config.should_ignore_path(nextpath):
@@ -710,13 +764,13 @@ def pretty_print_diff_entry(a, e, path, config=DefaultConfig):
         else:
             typechange = ""
         pretty_print_diff_action("replaced" + typechange, nextpath, config)
-        pretty_print_value_at(aval, nextpath, REMOVE, config)
-        pretty_print_value_at(bval, nextpath, ADD, config)
+        pretty_print_value_at(aval, nextpath, config.REMOVE, config)
+        pretty_print_value_at(bval, nextpath, config.ADD, config)
 
     else:
         raise NBDiffFormatError("Unknown list diff op {}".format(op))
 
-    config.out.write(DIFF_ENTRY_END + RESET)
+    config.out.write(DIFF_ENTRY_END + config.RESET)
 
 
 def pretty_print_dict_diff(a, di, path, config=DefaultConfig):
@@ -742,23 +796,23 @@ def pretty_print_string_diff(a, di, path, config=DefaultConfig):
 
     if ta != a or tb != b:
         if ta != a:
-            config.out.write('%s%s\n' % (REMOVE, ta))
+            config.out.write('%s%s\n' % (config.REMOVE, ta))
         else:
-            pretty_print_value_at(a, path, REMOVE, config)
+            pretty_print_value_at(a, path, config.REMOVE, config)
         if tb != b:
-            config.out.write('%s%s\n' % (ADD, tb))
+            config.out.write('%s%s\n' % (config.ADD, tb))
         else:
-            pretty_print_value_at(b, path, ADD, config)
+            pretty_print_value_at(b, path, config.ADD, config)
     elif "\n" in a or "\n" in b:
         # Delegate multiline diff formatting
         diff = diff_render(a, b, config)
         config.out.write(diff)
     else:
         # Just show simple -+ single line (usually metadata values etc)
-        config.out.write("%s%s\n" % (REMOVE, a))
-        config.out.write("%s%s\n" % (ADD, b))
+        config.out.write("%s%s\n" % (config.REMOVE, a))
+        config.out.write("%s%s\n" % (config.ADD, b))
 
-    config.out.write(DIFF_ENTRY_END + RESET)
+    config.out.write(DIFF_ENTRY_END + config.RESET)
 
 
 def pretty_print_diff(a, di, path, config=DefaultConfig):
@@ -770,7 +824,9 @@ def pretty_print_diff(a, di, path, config=DefaultConfig):
     elif isinstance(a, string_types):
         pretty_print_string_diff(a, di, path, config)
     else:
-        raise NBDiffFormatError("Invalid type {} for diff presentation.".format(type(a)))
+        raise NBDiffFormatError(
+            "Invalid type {} for diff presentation.".format(type(a))
+        )
 
 
 notebook_diff_header = """\
@@ -800,7 +856,8 @@ def pretty_print_notebook_diff(afn, bfn, a, di, config=DefaultConfig):
         path = ""
         atime = "  " + file_timestamp(afn)
         btime = "  " + file_timestamp(bfn)
-        config.out.write(notebook_diff_header.format(afn=afn, bfn=bfn, atime=atime, btime=btime))
+        config.out.write(notebook_diff_header.format(
+            afn=afn, bfn=bfn, atime=atime, btime=btime))
         pretty_print_diff(a, di, path, config)
 
 
@@ -809,7 +866,8 @@ def pretty_print_merge_decision(base, decision, config=DefaultConfig):
 
     path = join_path(decision.common_path)
     confnote = "conflicted " if decision.conflict else ""
-    config.out.write("%s%sdecision at %s:%s\n" % (INFO.replace("##", "===="), confnote, path, RESET))
+    config.out.write("%s%sdecision at %s:%s\n" % (
+        config.INFO.replace("##", "===="), confnote, path, config.RESET))
 
     diff_keys = ("diff", "local_diff", "remote_diff", "custom_diff", "similar_insert")
     exclude_keys = set(diff_keys) | {"common_path", "action", "conflict"}
@@ -831,7 +889,8 @@ def pretty_print_merge_decision(base, decision, config=DefaultConfig):
             note = ""
 
         if diff:
-            config.out.write("%s%s%s:%s\n" % (INFO.replace("##", "---"), dkey, note, RESET))
+            config.out.write("%s%s%s:%s\n" % (
+                config.INFO.replace("##", "---"), dkey, note, config.RESET))
             value = base
             for i, k in enumerate(decision.common_path):
                 if isinstance(value, string_types):
