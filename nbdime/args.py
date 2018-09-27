@@ -479,7 +479,7 @@ def prettyprint_config_from_args(arguments, **kwargs):
         use_color=getattr(arguments, 'use_color', True),
         use_git=getattr(arguments, 'use_git', True),
         use_diff=getattr(arguments, 'use_diff', True),
-        **kwargs,
+        **kwargs
     )
 
 
