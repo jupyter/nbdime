@@ -140,7 +140,7 @@ class Web(NbdimeConfigurable):
     ).tag(config=True)
 
     workdirectory = Unicode(
-        default=os.path.abspath(os.path.curdir),
+        default_value=os.path.abspath(os.path.curdir),
         help="specify the working directory you want "
              "the server to run from. Default is the "
              "actual cwd at program start.",
