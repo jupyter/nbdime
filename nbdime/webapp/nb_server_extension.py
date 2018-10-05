@@ -51,8 +51,6 @@ class GitDifftoolHandler(NbdimeHandler):
         self.write(self.render_template(
             'difftool.html',
             config_data=args,
-            mathjax_url=self.mathjax_url,
-            mathjax_config=self.mathjax_config,
             ))
 
 
@@ -68,8 +66,6 @@ class CheckpointDifftoolHandler(NbdimeHandler):
         self.write(self.render_template(
             'difftool.html',
             config_data=args,
-            mathjax_url=self.mathjax_url,
-            mathjax_config=self.mathjax_config,
             ))
 
 

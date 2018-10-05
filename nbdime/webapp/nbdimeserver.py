@@ -54,7 +54,9 @@ class NbdimeHandler(IPythonHandler):
             'closable': self.params.get('closable', False),
             'savable': fn is not None,
             'baseUrl': self.nbdime_base_url,
-            'hideUnchanged': self.params.get('hide_unchanged', True)
+            'hideUnchanged': self.params.get('hide_unchanged', True),
+            'mathjaxUrl': self.mathjax_url,
+            'mathjaxConfig': self.mathjax_config,
         }
         if fn:
             # For reference, e.g. if user wants to download file
@@ -138,8 +140,6 @@ class MainHandler(NbdimeHandler):
         args['remote'] = self.get_argument('remote', '')
         self.write(self.render_template('compare.html',
                     config_data=args,
-                    mathjax_url=self.mathjax_url,
-                    mathjax_config=self.mathjax_config,
                    ))
 
 
@@ -151,8 +151,6 @@ class MainDiffHandler(NbdimeHandler):
 
         self.write(self.render_template('diff.html',
                     config_data=args,
-                    mathjax_url=self.mathjax_url,
-                    mathjax_config=self.mathjax_config,
                    ))
 
 
@@ -175,8 +173,6 @@ class MainDifftoolHandler(NbdimeHandler):
             args['remote'] = self.get_argument('remote', '')
         self.write(self.render_template('difftool.html',
                     config_data=args,
-                    mathjax_url=self.mathjax_url,
-                    mathjax_config=self.mathjax_config,
                    ))
 
 
@@ -188,8 +184,6 @@ class MainMergeHandler(NbdimeHandler):
         args['remote'] = self.get_argument('remote', '')
         self.write(self.render_template('merge.html',
                     config_data=args,
-                    mathjax_url=self.mathjax_url,
-                    mathjax_config=self.mathjax_config,
                    ))
 
 
@@ -206,8 +200,6 @@ class MainMergetoolHandler(NbdimeHandler):
             args['remote'] = self.get_argument('remote', '')
         self.write(self.render_template('mergetool.html',
                     config_data=args,
-                    mathjax_url=self.mathjax_url,
-                    mathjax_config=self.mathjax_config,
                    ))
 
 

@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@jupyterlab/application": "^0.18.4",
+    "@jupyterlab/mathjax2": "^0.7.1",
     "@jupyterlab/apputils": "^0.18.4",
     "@jupyterlab/cells": "^0.18.4",
     "@jupyterlab/codemirror": "^0.18.4",
