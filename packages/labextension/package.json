@@ -48,11 +48,12 @@
   "scripts": {
     "clean": "rimraf lib && rimraf dist",
     "build": "npm run build:lib && npm run build:labextension",
-    "build:debug": "npm run build:lib",
-    "build:lib": "tsc --project src",
+    "build:dev": "npm run build:lib",
+    "build:lib": "tsc --build",
     "build:labextension": "rimraf dist && mkdirp dist && cd dist && npm pack ..",
     "update": "rimraf node_modules/nbdime && npm install && npm run build",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "watch": "tsc --build --watch"
   },
   "repository": {
     "type": "git",

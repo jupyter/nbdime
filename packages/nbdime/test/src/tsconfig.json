@@ -1,15 +1,8 @@
 {
+  "extends": "../../../../tsconfig_base",
   "compilerOptions": {
-    "target": "ES6",
-    "module": "commonjs",
-    "moduleResolution": "node",
-    "lib": ["dom", "es6"],
-    "outDir": "../build",
-    "noImplicitAny": true,
-    "noEmitOnError": true,
-    "sourceMap": true,
-    "strictNullChecks": true,
-    "skipLibCheck": true
+    "composite": false,
+    "outDir": "../build"
   },
   "include": [
     "**/*.ts",

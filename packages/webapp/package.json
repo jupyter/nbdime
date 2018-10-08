@@ -6,7 +6,7 @@
   "private": true,
   "scripts": {
     "build": "webpack -p",
-    "build:debug": "webpack -d",
+    "build:dev": "webpack -d",
     "clean": "rimraf build && rimraf node_modules && rimraf ../../nbdime/webapp/static",
     "watch": "webpack --watch"
   },

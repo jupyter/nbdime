@@ -11,8 +11,8 @@
     "lib": "lib/"
   },
   "scripts": {
-    "build": "tsc --project src && node scripts/copy-files.js",
-    "build:debug": "tsc --project src",
+    "build": "tsc --project . && node scripts/copy-files.js",
+    "build:dev": "tsc --project .",
     "clean": "rimraf test/build && rimraf lib && rimraf node_modules",
     "test": "npm run test:firefox",
     "test:chrome": "karma start --browsers=Chrome test/karma.conf.js",
@@ -20,7 +20,7 @@
     "test:firefox": "karma start --browsers=Firefox test/karma.conf.js",
     "test:ie": "karma start --browsers=IE test/karma.conf.js",
     "prepublishOnly": "npm run build",
-    "watch": "tsc --project src --watch"
+    "watch": "tsc --build --watch"
   },
   "devDependencies": {
     "@jupyterlab/apputils": "^0.19.1",
