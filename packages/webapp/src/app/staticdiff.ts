@@ -77,13 +77,13 @@ function ensureRendered(callback: () => void): void {
 export
 function exportDiff(): void {
   let prefix = '<!DOCTYPE html>\n<html>\n<head>';
-  prefix += document.head.innerHTML;
+  prefix += document.head ? document.head.innerHTML : '';
   prefix += codeMirrorEllipsisExportStyle + '\n</head><body>';
   let postfix = collapsiblePanelExportJS + '\n</body></html>';
 
   ensureRendered(() => {
     let rootNode = document.getElementById('nbdime-root')!;
-    let content = rootNode.outerHTML;
+    let content = rootNode!.outerHTML;
     // Strip hover text of CM ellipses
     content = content.replace(/title="Identical text collapsed. Click to expand."/g, '');
     let blob = new Blob([prefix + content + postfix], {type: 'text/html;charset=utf-8'});
