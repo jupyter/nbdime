@@ -3,7 +3,7 @@
   "compilerOptions": {
     "noImplicitAny": false,
     "rootDir": "src",
-    "outDir": "build"
+    "outDir": "lib"
   },
   "references": [
     { "path": "../nbdime" }

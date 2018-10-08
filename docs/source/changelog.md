@@ -2,6 +2,13 @@
 
 ## 1.0
 
+###  1.0.3 - 2018-10
+
+- Web: Fix issues with hiding unchanged cells. Make hiding unchanged cells configurable and on by default.
+- Options of the console printing can now be configured. Mainly the `--no-color` flag disables ANSI color escapes.
+- Web: Fixed MathJax math rendering.
+- Various other fixes and adjustments.
+
 ###  1.0.2 - 2018-08
 
 - Diff: Optimized diffing of large texts (e.g. big cells).

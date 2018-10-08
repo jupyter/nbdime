@@ -18,6 +18,8 @@ prune docs/dist
 # Webapp files
 include lerna.json
 include package.json
+include tsconfig.json
+include tsconfig_base.json
 graft nbdime/webapp
 graft packages
 prune packages/*/coverage
