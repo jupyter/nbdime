@@ -111,7 +111,7 @@ conflicts.
 
 :command:`nbmerge` writes the output to ``stdout`` by default,
 so you can use pipes to send the result to a file,
-or the ``-o, --output`` argument to specify a file in which to save the merged notebook.
+or the ``--out`` argument to specify a file in which to save the merged notebook.
 
 Because there are several categories of data in a notebook (such as input, output, and metadata),
 nbmerge has several ways to deal with conflicts,
@@ -178,7 +178,7 @@ nbmerge-web
 but instead of automatically resolving or failing on conflicts,
 a webapp for manually resolving conflicts is displayed::
 
-    nbmerge-web base.ipynb local.ipynb remote.ipynb -o merged.ipynb
+    nbmerge-web base.ipynb local.ipynb remote.ipynb --out merged.ipynb
 
 .. image:: images/nbmerge-web.png
 
