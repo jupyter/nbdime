@@ -70,7 +70,7 @@ The quickest way to get set up for git integration is to call::
 
 .. versionadded:: 0.3
 
-    ``nbdime config-git``. Prior to 0.3, each nbdime entrypoint had to enable git integration separately.
+    :command:`nbdime config-git`. Prior to 0.3, each nbdime entrypoint had to enable git integration separately.
 
 This will enable the both the drivers and the tools for both diff and merge.
 

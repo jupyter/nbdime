@@ -53,7 +53,7 @@ the ``--global`` or ``--system`` options.
 
 .. versionadded:: 0.3
 
-    ``nbdime config-git``. Prior to 0.3, each nbdime entrypoint had to enable git integration separately.
+    :command:`nbdime config-git`. Prior to 0.3, each nbdime entrypoint had to enable git integration separately.
 
 .. note::
     When neither the global or system flag is given, the configuration
@@ -108,11 +108,11 @@ and::
 .. note::
 
     If you simply call :command:`git mergetool --tool nbdime`, it will be 
-    alled for all merge conflicts, even on filetypes that it cannot
+    called for all merge conflicts, even on filetypes that it cannot
     handle. To only call on notebooks, add a filter on file paths, e.g.
     :command:`git mergetool --tool nbdime -- *.ipynb`.
-    **This command has also been aliased as :command:`nbdime mergetool`
-    for easy access**, and you can also add your own git alias for this
+    *This command has also been aliased as* :command:`nbdime mergetool`
+    *for easy access*, and you can also add your own git alias for this
     command.
 
 
@@ -287,7 +287,7 @@ Differs
 *******
 
 To tell mercurial about nbdimes differs, open the appropriate
-config file (``hg config --edit`` for the default user level one),
+config file (:command:`hg config --edit` for the default user level one),
 and add the following entries::
 
     [extensions]

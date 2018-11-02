@@ -60,11 +60,11 @@ Installing a development version of nbdime requires
 
 Installing nbdime using :command:`pip` will install the Python package
 dependencies and
-will automatically run ``npm`` to install the required Node.js packages.
+will automatically run :command:`npm` to install the required Node.js packages.
 
 To install Node.js, either follow the instructions on its webpage or install it
-from conda (``conda install nodejs``). Alternatively, if you use ``venv`` to
-manage your environment, you can install ``nodeenv`` to have node managed by
+from conda (:command:`conda install nodejs`). Alternatively, if you use :command:`venv` to
+manage your environment, you can install :command:`nodeenv` to have node managed by
 venv. See :doc:`this page <nodevenv>` for details.
 
 
@@ -76,7 +76,7 @@ Download and install directly from source::
     pip install -e git+https://github.com/jupyter/nbdime#egg=nbdime
 
 Or clone the `nbdime repository <https://github.com/jupyter/nbdime>`_
-and use ``pip`` to install::
+and use :command:`pip` to install::
 
     git clone https://github.com/jupyter/nbdime
     cd nbdime
@@ -98,14 +98,14 @@ you will also have to run the following commands after the pip dev install::
     jupyter labextension install ./packages/labextension
 
 
-If you do any changes to the front-end code, run ``npm run build`` from the
+If you do any changes to the front-end code, run :command:`npm run build` from the
 repoistory root to rebuild the extensions. If you make any changes to the
 server extension, you will have to restart the server to pick up the changes!
 
 
 .. note::
 
-    The optional ``--sym-link`` flag for ``jupyter nbextension install`` allows
+    The optional ``--sym-link`` flag for :command:`jupyter nbextension install` allows
     the notebook frontend to pick up a newly built version of the extension on
     a page refresh. For details on the other flags, see
     :doc:`extensions`.

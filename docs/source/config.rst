@@ -3,7 +3,7 @@ Configuration
 
 Nbdime uses a config system loosely based on that of Jupyter. This means that
 it looks for config files ``nbdime_config.json`` in all the directories listed
-by the ``jupyter --paths`` command, as well as the current working directory.
+by the :command:`jupyter --paths` command, as well as the current working directory.
 The syntax of the config files are similar to that of other Jupyter commands::
 
     {
@@ -208,7 +208,7 @@ GitMerge
     These sections are ways to configure several commands / entrypoints
     at once. The individual command names are the once listed in
     parantheses at the end of the sections, or can be seen by running
-    ``nbdime --config``.
+    :command:`nbdime --config`.
 
 
 
