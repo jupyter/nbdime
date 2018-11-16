@@ -19,7 +19,8 @@ from .prettyprint import pretty_print_merge_decisions
 from .utils import EXPLICIT_MISSING_FILE, read_notebook, setup_std_streams
 
 _description = ('Merge two Jupyter notebooks "local" and "remote" with a '
-                'common ancestor "base".')
+                'common ancestor "base". If base is left out, it uses an '
+                'empty notebook as the base.')
 
 
 def main_merge(args):
@@ -107,14 +108,17 @@ def _build_arg_parser():
         add_help=True,
         )
     from .args import (
-        add_generic_args, add_diff_args, add_merge_args, add_filename_args,
-        add_prettyprint_args
+        add_generic_args, add_diff_args, add_merge_args, filename_help,
+        add_filename_args, add_prettyprint_args
     )
     add_generic_args(parser)
     add_diff_args(parser)
     add_merge_args(parser)
     add_prettyprint_args(parser)
-    add_filename_args(parser, ["base", "local", "remote"])
+
+    parser.add_argument("base", help=filename_help['base'],
+        nargs='?', default=EXPLICIT_MISSING_FILE)
+    add_filename_args(parser, ['local', 'remote'])
 
     parser.add_argument(
         '--out',
