@@ -280,7 +280,7 @@ def merge_validator(request, json_schema_merge):
 
 class NBTestDataBase(object):
     def __init__(self):
-        self.filespath = filespath()
+        self.filespath = os.path.join(testspath(), "files")
         self.cache = {}
         filenames = glob.glob(os.path.join(self.filespath, "*.ipynb"))
         names = [os.path.basename(fn).replace(".ipynb", "") for fn in filenames]
