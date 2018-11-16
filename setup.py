@@ -115,10 +115,10 @@ install_requires = setuptools_args['install_requires'] = [
 
 extras_require = setuptools_args['extras_require'] = {
     'test': [
-        'pytest>=3.3',
+        'pytest>=3.6',
         'pytest-cov',
         'pytest-timeout',
-        'pytest-tornado5',
+        'pytest-tornado5>=2',
         'jsonschema',
         'mock',
         'requests',

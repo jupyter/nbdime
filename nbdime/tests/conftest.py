@@ -390,12 +390,15 @@ def matching_nb_triplets(request):
 
 _port = 62019
 
-
-@fixture()
-def unique_port():
+def make_unique_port():
     global _port
     _port += 1
     return _port
+
+
+@fixture()
+def unique_port():
+    return make_unique_port()
 
 
 @fixture()
@@ -455,7 +458,7 @@ def server_extension_app(tmpdir_factory, request):
     env = os.environ.copy()
     env.update({'JUPYTER_CONFIG_DIR': config_dir})
 
-    port = unique_port()
+    port = make_unique_port()
     root_dir = str(tmpdir_factory.getbasetemp())
 
     os.chdir(root_dir)
