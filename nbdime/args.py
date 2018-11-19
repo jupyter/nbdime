@@ -428,21 +428,23 @@ def add_merge_args(parser):
              "execution counts in order to resolve conflicts.")
 
 
+filename_help = {
+    "notebook": "The notebook filename.",
+    "base":   "The base notebook filename.",
+    "local":  "The local modified notebook filename.",
+    "remote": "The remote modified notebook filename.",
+    "merged": "The merge result notebook filename.",
+    "patch":  "The patch filename, output from nbdiff.",
+    }
+
+
 def add_filename_args(parser, names):
     """Add the base, local, remote, and merged positional arguments.
 
     Helps getting consistent doc strings.
     """
-    helps = {
-        "notebook": "The notebook filename.",
-        "base":   "The base notebook filename.",
-        "local":  "The local modified notebook filename.",
-        "remote": "The remote modified notebook filename.",
-        "merged": "The merge result notebook filename.",
-        "patch":  "The patch filename, output from nbdiff.",
-        }
     for name in names:
-        parser.add_argument(name, help=helps[name])
+        parser.add_argument(name, help=filename_help[name])
 
 
 def add_prettyprint_args(parser):
