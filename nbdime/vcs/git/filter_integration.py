@@ -21,7 +21,12 @@ def interrogate_filter(path):
         spec = check_output(['git', 'check-attr', '-z', 'filter', path])
     except CalledProcessError:
         return None
-    path_list, attr, info = [s.decode('utf8', 'replace') for s in spec.split(b'\x00')[:3]]
+    try:
+        path_list, attr, info = [s.decode('utf8', 'replace') for s in spec.split(b'\x00')[:3]]
+    except ValueError:
+        # For older versions of git, the `-z` flag is unsupported
+        # This will then raise a ValueError when trying to unpack
+        return None
     if attr != 'filter' or path != path_list:
         raise ValueError(
             'Unexpected output from git check-attr. ' +
