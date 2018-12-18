@@ -2,6 +2,11 @@
 
 ## 1.0
 
+###  1.0.4 - 2018-12
+
+- Fix git diffing failure with older versions of git. Now, an older version of git will simply prevent integration with git filters.
+- Allow for two-way merge by making the base notebook argument to `nbmerge` optional. It will now default to an empty notebook.
+
 ###  1.0.3 - 2018-10
 
 - Web: Fix issues with hiding unchanged cells. Make hiding unchanged cells configurable and on by default.
