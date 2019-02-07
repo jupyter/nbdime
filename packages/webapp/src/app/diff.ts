@@ -258,7 +258,7 @@ function initializeDiff() {
   let hideUnchangedChk = document.getElementById('nbdime-hide-unchanged') as HTMLInputElement;
   hideUnchangedChk.checked = getConfigOption('hideUnchanged', true);
   hideUnchangedChk.onchange = () => {
-    toggleShowUnchanged(!hideUnchangedChk.checked);
+    toggleShowUnchanged(!hideUnchangedChk.checked, diffWidget);
   };
 
   let trustBtn = document.getElementById('nbdime-trust') as HTMLButtonElement;
