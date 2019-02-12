@@ -58,6 +58,33 @@ class SkipAction(argparse.Action):
         pass
 
 
+class PathType(object):
+    """Argparse type for arguments that should be paths
+
+    No-op on Python 3, but casts Python 2 bytes to text
+    using sys.getfilesystemencoding()
+    """
+    def __init__(self):
+        pass
+
+    def __call__(self, value):
+        if not isinstance(value, bytes):
+            return value
+
+        # py2: decode bytes to text
+        encoding = sys.getfilesystemencoding() or 'utf-8'
+        if encoding.lower() == 'ascii':
+            # ignore ascii and use utf-8
+            # if it really is ascii, this will still be correct,
+            # but it never should actually be ascii
+            encoding = 'utf-8'
+
+        return value.decode(encoding)
+
+
+Path = PathType()
+
+
 def modify_config_for_print(config):
     output = {}
     ns = None
@@ -240,6 +267,7 @@ def add_web_args(parser, default_port=8888):
         "NOTE: Setting this to anything other than 127.0.0.1/localhost "
         "might comprimise the security of your computer. Use with care!")
     cwd = os.path.abspath(os.path.curdir)
+
     parser.add_argument(
         '-w', '--workdirectory',
         default=cwd,
@@ -344,14 +372,14 @@ def add_git_diff_driver_args(diff_parser):
     Note: Only path, base and remote are added to parsed namespace
     """
     add_filter_args(diff_parser)
-    diff_parser.add_argument('path')
-    diff_parser.add_argument('base', nargs='?', default=None)
+    diff_parser.add_argument('path', type=Path)
+    diff_parser.add_argument('base', type=Path, nargs='?', default=None)
     diff_parser.add_argument('base_sha1', nargs='?', default=None, action=SkipAction)
     diff_parser.add_argument('base_mode', nargs='?', default=None, action=SkipAction)
-    diff_parser.add_argument('remote', nargs='?', default=None)
+    diff_parser.add_argument('remote', type=Path, nargs='?', default=None)
     diff_parser.add_argument('remote_sha1', nargs='?', default=None, action=SkipAction)
     diff_parser.add_argument('remote_mode', nargs='?', default=None, action=SkipAction)
-    diff_parser.add_argument('rename_to', nargs='?', default=None, action=SkipAction)
+    diff_parser.add_argument('rename_to', type=Path, nargs='?', default=None, action=SkipAction)
 
 
 def process_diff_flags(args):
@@ -444,7 +472,7 @@ def add_filename_args(parser, names):
     Helps getting consistent doc strings.
     """
     for name in names:
-        parser.add_argument(name, help=filename_help[name])
+        parser.add_argument(name, type=Path, help=filename_help[name])
 
 
 def add_prettyprint_args(parser):
