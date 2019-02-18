@@ -12,7 +12,7 @@ import sys
 
 import nbformat
 
-from .args import ConfigBackedParser, prettyprint_config_from_args
+from .args import ConfigBackedParser, Path, prettyprint_config_from_args
 from .log import logger
 from .merging import merge_notebooks
 from .prettyprint import pretty_print_merge_decisions
@@ -116,13 +116,18 @@ def _build_arg_parser():
     add_merge_args(parser)
     add_prettyprint_args(parser)
 
-    parser.add_argument("base", help=filename_help['base'],
-        nargs='?', default=EXPLICIT_MISSING_FILE)
+    parser.add_argument(
+        "base",
+        type=Path,
+        help=filename_help['base'],
+        nargs='?',
+        default=EXPLICIT_MISSING_FILE)
     add_filename_args(parser, ['local', 'remote'])
 
     parser.add_argument(
         '--out',
         default=None,
+        type=Path,
         help="if supplied, the merged notebook is written "
              "to this file. Otherwise it is printed to the "
              "terminal.")

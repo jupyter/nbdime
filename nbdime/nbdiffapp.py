@@ -16,6 +16,7 @@ from .args import (
     add_generic_args, add_diff_args, process_diff_flags, resolve_diff_args,
     add_diff_cli_args, add_prettyprint_args, ConfigBackedParser,
     prettyprint_config_from_args,
+    Path,
     )
 from .diffing.notebooks import diff_notebooks
 from .gitfiles import changed_notebooks, is_gitref
@@ -101,19 +102,23 @@ def _build_arg_parser():
 
     parser.add_argument(
         "base", help="the base notebook filename OR base git-revision.",
+        type=Path,
         nargs='?', default='HEAD',
     )
     parser.add_argument(
         "remote", help="the remote modified notebook filename OR remote git-revision.",
+        type=Path,
         nargs='?', default=None,
     )
     parser.add_argument(
         "paths", help="filter diffs for git-revisions based on path",
+        type=Path,
         nargs='*', default=None,
     )
 
     parser.add_argument(
         '--out',
+        type=Path,
         default=None,
         help="if supplied, the diff is written to this file. "
              "Otherwise it is printed to the terminal.")

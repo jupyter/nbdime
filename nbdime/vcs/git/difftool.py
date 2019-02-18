@@ -17,7 +17,8 @@ import sys
 from subprocess import check_call, check_output, CalledProcessError
 
 from nbdime.args import (
-    add_generic_args, add_git_config_subcommand, add_filter_args, ConfigBackedParser
+    add_generic_args, add_git_config_subcommand, add_filter_args, ConfigBackedParser,
+    Path,
 )
 from nbdime.webapp import nbdifftool
 from .filter_integration import apply_possible_filter
@@ -85,7 +86,7 @@ def main(args=None):
     )
     add_filter_args(diff_parser)
     nbdifftool.build_arg_parser(diff_parser)
-    diff_parser.add_argument('path')
+    diff_parser.add_argument('path', type=Path)
 
     config = add_git_config_subcommand(subparsers,
         enable, disable,
