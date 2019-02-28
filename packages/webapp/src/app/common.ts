@@ -9,6 +9,10 @@ import {
 } from '@jupyterlab/coreutils/lib/url';
 
 import {
+  Widget
+} from '@phosphor/widgets';
+
+import {
   NotifyUserError
 } from 'nbdime/lib/common/exceptions';
 
@@ -126,7 +130,7 @@ function toggleSpinner(state?: boolean) {
  * This simply marks with a class, real work is done by CSS.
  */
 export
-function toggleShowUnchanged(show?: boolean) {
+function toggleShowUnchanged(show?: boolean, updateWidget?: Widget | null) {
   let root = document.getElementById('nbdime-root')!;
   let hiding = root.classList.contains(HIDE_UNCHANGED_CLASS);
   if (show === undefined) {
@@ -137,6 +141,9 @@ function toggleShowUnchanged(show?: boolean) {
   }
   if (show) {
     root.classList.remove(HIDE_UNCHANGED_CLASS);
+    if (updateWidget) {
+      updateWidget.update();
+    }
   } else {
     markUnchangedRanges();
     root.classList.add(HIDE_UNCHANGED_CLASS);
