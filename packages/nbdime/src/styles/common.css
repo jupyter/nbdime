@@ -1,5 +1,5 @@
 
-.CodeMirror-merge {
+.nbdime-root .CodeMirror-merge {
   position: relative;
   white-space: pre;
   /* style as jp-InputArea-editor: */
@@ -12,38 +12,34 @@
   background: transparent;
 }
 
-.CodeMirror-merge, .CodeMirror-merge .CodeMirror {
+.nbdime-root .CodeMirror-merge, .CodeMirror-merge .CodeMirror {
   height: auto;
 }
 
-.CodeMirror-scroll {
-  max-height: calc(100vh - 4em);
-}
-
-.CodeMirror-merge-4pane .CodeMirror-merge-pane-deleted {
+.nbdime-root .CodeMirror-merge-4pane .CodeMirror-merge-pane-deleted {
   display: none;
 }
 
-.CodeMirror-merge-pane-unchanged { width: 100%; }
-.CodeMirror-merge-1pane .CodeMirror-merge-gap { width: 6%; }
-.CodeMirror-merge-2pane .CodeMirror-merge-pane { width: 47%; }
-.CodeMirror-merge-2pane .CodeMirror-merge-gap { width: 6%; }
-.CodeMirror-merge-3pane .CodeMirror-merge-pane { width: 31%; }
-.CodeMirror-merge-3pane .CodeMirror-merge-gap { width: 3.5%; }
+.nbdime-root .CodeMirror-merge-pane-unchanged { width: 100%; }
+.nbdime-root .CodeMirror-merge-1pane .CodeMirror-merge-gap { width: 6%; }
+.nbdime-root .CodeMirror-merge-2pane .CodeMirror-merge-pane { width: 47%; }
+.nbdime-root .CodeMirror-merge-2pane .CodeMirror-merge-gap { width: 6%; }
+.nbdime-root .CodeMirror-merge-3pane .CodeMirror-merge-pane { width: 31%; }
+.nbdime-root .CodeMirror-merge-3pane .CodeMirror-merge-gap { width: 3.5%; }
 
-.CodeMirror-merge-pane {
+.nbdime-root .CodeMirror-merge-pane {
   display: inline-block;
   white-space: normal;
   vertical-align: top;
   width: 100%;
 }
-.CodeMirror-merge-pane-rightmost {
+.nbdime-root .CodeMirror-merge-pane-rightmost {
   position: absolute;
   right: 0px;
   z-index: 1;
 }
 
-.p-Widget.CodeMirror-merge-gap {
+.nbdime-root .p-Widget.CodeMirror-merge-gap {
   z-index: 2;
   display: inline-block;
   height: 100%;
@@ -57,29 +53,29 @@
   background: var(--jp-layout-color2);
 }
 
-.CodeMirror-merge-scrolllock-wrap {
+.nbdime-root .CodeMirror-merge-scrolllock-wrap {
   position: absolute;
   bottom: 0; left: 50%;
 }
-.CodeMirror-merge-scrolllock {
+.nbdime-root .CodeMirror-merge-scrolllock {
   position: relative;
   left: -50%;
   cursor: pointer;
   line-height: 1;
 }
 
-.CodeMirror-merge-r-inserted, .CodeMirror-merge-l-inserted {
+.nbdime-root .CodeMirror-merge-r-inserted, .CodeMirror-merge-l-inserted {
     background-color: var(--jp-diff-added-color1);
 }
 
-.CodeMirror-merge-r-deleted, .CodeMirror-merge-l-deleted {
+.nbdime-root .CodeMirror-merge-r-deleted, .CodeMirror-merge-l-deleted {
     background-color: var(--jp-diff-deleted-color1);
 }
 
-.CodeMirror-merge-collapsed-widget:before {
+.nbdime-root .CodeMirror-merge-collapsed-widget:before {
   content: "(...)";
 }
-.CodeMirror-merge-collapsed-widget {
+.nbdime-root .CodeMirror-merge-collapsed-widget {
   cursor: pointer;
   color: var(--jp-ui-font-color1);
   background: var(--jp-layout-color2);
@@ -88,8 +84,8 @@
   padding: 0 3px;
   border-radius: 4px;
 }
-.CodeMirror-merge-collapsed-line .CodeMirror-gutter-elt { display: none; }
+.nbdime-root .CodeMirror-merge-collapsed-line .CodeMirror-gutter-elt { display: none; }
 
-.CodeMirror-merge-spacer {
+.nbdime-root .CodeMirror-merge-spacer {
   background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,.5) 5px, rgba(255,255,255,.5) 10px);
 }
