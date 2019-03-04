@@ -12,6 +12,10 @@ body {
   background-color: var(--jp-layout-color1);
 }
 
+.CodeMirror-scroll {
+  max-height: calc(100vh - 4em);
+}
+
 #nbdime-header {
   margin: auto;
   width: 90%;
