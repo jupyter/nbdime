@@ -91,6 +91,7 @@ class NbdimeHandler(IPythonHandler):
                         raise ValueError('Supplied argument cannot be read: %r' % arg)
                     # Assume file is URI
                     r = requests.get(arg)
+                    r.raise_for_status()
 
             # Let nbformat do the reading and validation
             if path == EXPLICIT_MISSING_FILE:
@@ -99,7 +100,7 @@ class NbdimeHandler(IPythonHandler):
                 nb = nbformat.read(path, as_version=4)
             else:
                 nb = nbformat.reads(r.text, as_version=4)
-        except Exception as e:
+        except (ValueError, nbformat.reader.NotJSONError) as e:
             self.log.exception(e)
             raise web.HTTPError(422, 'Invalid notebook: %s' % arg)
 
