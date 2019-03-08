@@ -15,6 +15,7 @@ import sys
 
 from jsonschema import Draft4Validator as Validator
 from jsonschema import RefResolver
+from jsonschema.validators import extend
 from pytest import fixture, skip
 import nbformat
 
@@ -39,6 +40,11 @@ except ImportError:
             time.sleep(0.1)
         if p.poll() is None:
             raise TimeoutExpired
+
+try:
+    from collections.abc import Sequence
+except ImportError:
+    from collections import Sequence
 
 pjoin = os.path.join
 
@@ -265,16 +271,20 @@ def json_schema_merge(request):
         schema_json = json.load(f)
     return schema_json
 
+def is_sequence(checker, instance):
+    return isinstance(instance, Sequence)
+
+type_checker = Validator.TYPE_CHECKER.redefine("array", is_sequence)
+
+CustomValidator = extend(Validator, type_checker=type_checker)
 
 @fixture
 def merge_validator(request, json_schema_merge):
-    return Validator(
+    return CustomValidator(
         json_schema_merge,
         resolver=RefResolver(
             'file://localhost/' + schema_dir.replace('\\', '/') + '/',
             json_schema_merge),
-        # Ensure tuples validate to "array" schema type
-        types={"array": (list, tuple)},
     )
 
 
