@@ -7,7 +7,7 @@
   "dependencies": {
     "@jupyterlab/apputils": "^0.19.1",
     "@jupyterlab/coreutils": "^2.2.1",
-    "@jupyterlab/notebook": "^0.19.1",
+    "@jupyterlab/notebook": "^0.19.2",
     "@jupyterlab/rendermime": "^0.19.1",
     "@jupyterlab/services": "^3.2.1",
     "@phosphor/algorithm": "^1.1.2",
@@ -21,8 +21,8 @@
     "@jupyterlab/docregistry": "^0.19.1",
     "@phosphor/commands": "^1.6.1",
     "mkdirp": "^0.5.1",
-    "rimraf": "^2.6.2",
-    "typescript": "~3.1.1"
+    "rimraf": "^2.6.3",
+    "typescript": "~3.3.1"
   },
   "keywords": [
     "jupyter",
