@@ -2,6 +2,12 @@
 
 ## 1.0
 
+###  1.0.5 - 2019-03
+- Fixed filename encoding issue with git diff on Python 2.
+- Fixes for deploying nbdime on a non-localhost server.
+- Web: Fixed issue where unchanged cells would not show correctly if unhidden.
+- Various other fixes and adjustments.
+
 ###  1.0.4 - 2018-12
 
 - Fix git diffing failure with older versions of git. Now, an older version of git will simply prevent integration with git filters.
