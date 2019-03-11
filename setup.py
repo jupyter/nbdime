@@ -106,6 +106,7 @@ install_requires = setuptools_args['install_requires'] = [
     'nbformat',
     'six',
     'colorama',
+    'pygments',
     'tornado',
     'requests',
     'GitPython!=2.1.4, !=2.1.5, !=2.1.6',  # For difftool taking git refs

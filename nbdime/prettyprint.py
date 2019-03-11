@@ -25,6 +25,9 @@ except ImportError:
     from backports.shutil_which import which
 
 import colorama
+from pygments import highlight
+from pygments.formatters import Terminal256Formatter
+from pygments.lexers import find_lexer_class_by_name
 from six import string_types
 
 from .diff_format import NBDiffFormatError, DiffOp, op_patch
@@ -613,7 +616,10 @@ def pretty_print_attachments(attachments, prefix="", config=DefaultConfig):
 
 def pretty_print_source(source, prefix="", config=DefaultConfig):
     pretty_print_key("source", prefix, config)
-    pretty_print_multiline(source, prefix+IND, config)
+    lexer = find_lexer_class_by_name('python')()
+    formatter = Terminal256Formatter()
+    source_highlighted = highlight(source, lexer, formatter)
+    pretty_print_multiline(source_highlighted, prefix+IND, config)
 
 
 def pretty_print_cell(i, cell, prefix="", force_header=False, config=DefaultConfig):
