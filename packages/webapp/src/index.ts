@@ -26,7 +26,7 @@ import '@phosphor/widgets/style/index.css';
 import '@phosphor/dragdrop/style/index.css';
 
 import '@jupyterlab/apputils/style/materialcolors.css';
-import '@jupyterlab/theme-light-extension/static/index.css';
+import '@jupyterlab/theme-light-extension/style/index.css';
 import '@jupyterlab/notebook/style/index.css';
 import '@jupyterlab/cells/style/index.css';
 import '@jupyterlab/rendermime/style/index.css';
