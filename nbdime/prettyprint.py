@@ -87,6 +87,7 @@ class PrettyPrintConfig:
             use_git = True,
             use_diff = True,
             use_color = True,
+            language = None
             ):
         self.out = out
         if include is None:
@@ -101,6 +102,7 @@ class PrettyPrintConfig:
         self.use_git = use_git
         self.use_diff = use_diff
         self.use_color = use_color
+        self.language = language
 
     def should_ignore_path(self, path):
         starred = star_path(split_path(path))
@@ -610,10 +612,35 @@ def pretty_print_attachments(attachments, prefix="", config=DefaultConfig):
     for name in sorted(attachments):
         pretty_print_item(name, attachments[name], prefix+IND, config)
 
+try:
+    from pygments import highlight
+    from pygments.formatters import Terminal256Formatter
+    from pygments.lexers import find_lexer_class_by_name
+    from pygments.util import ClassNotFound
 
-def pretty_print_source(source, prefix="", config=DefaultConfig):
+    def colorize_source(source, lexer_name):
+        try:
+            lexer = find_lexer_class_by_name(lexer_name)()
+        except ClassNotFound:
+            return source
+        formatter = Terminal256Formatter()
+        return highlight(source, lexer, formatter)
+
+except ImportError as e:
+    def colorize_source(source, *args, **kwargs):
+        return source
+
+
+def pretty_print_source(source, prefix="", is_markdown=False, config=DefaultConfig):
     pretty_print_key("source", prefix, config)
-    pretty_print_multiline(source, prefix+IND, config)
+    if not prefix.strip() and (is_markdown or config.language):
+        source_highlighted = colorize_source(
+            source,
+            'markdown' if is_markdown else config.language
+        )
+    else:
+        source_highlighted = source
+    pretty_print_multiline(source_highlighted, prefix+IND, config)
 
 
 def pretty_print_cell(i, cell, prefix="", force_header=False, config=DefaultConfig):
@@ -653,9 +680,10 @@ def pretty_print_cell(i, cell, prefix="", force_header=False, config=DefaultConf
 
     source = cell.get("source")
     if source and config.sources:
+        is_markdown = cell.get('cell_type', None) == 'markdown'
         # Write source
         c()
-        pretty_print_source(source, key_prefix, config)
+        pretty_print_source(source, key_prefix, is_markdown=is_markdown, config=config)
 
     attachments = cell.get("attachments")
     if attachments and config.attachments:
@@ -691,6 +719,13 @@ def pretty_print_notebook(nb, config=DefaultConfig):
         A config object determining what is printed and where
     """
     prefix = ""
+
+    if config.language is None:
+        language_info = nb.metadata.get('language_info', {})
+        config.language = language_info.get(
+            'pygments_lexer',
+            language_info.get('name', None)
+        )
 
     if config.details:
         # Write notebook header
