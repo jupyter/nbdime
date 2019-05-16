@@ -2,6 +2,10 @@
 
 ## 1.0
 
+###  1.0.6 - 2019-05
+- Fixed a styling regression from 1.0.5, where the web text panes
+had incorrect styling (most notably incorrect widths).
+
 ###  1.0.5 - 2019-03
 - Fixed filename encoding issue with git diff on Python 2.
 - Fixes for deploying nbdime on a non-localhost server.
