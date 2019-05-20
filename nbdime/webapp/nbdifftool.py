@@ -5,9 +5,9 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import sys
-from argparse import ArgumentParser
 
 from ..args import (
+    ConfigBackedParser,
     add_generic_args, add_diff_args, add_web_args, add_filename_args,
     args_for_server, args_for_browse, process_diff_flags)
 from .nbdimeserver import main_server as run_server
@@ -24,7 +24,7 @@ def build_arg_parser(parser=None):
     """
     description = 'difftool for nbdime.'
     if parser is None:
-        parser = ArgumentParser(
+        parser = ConfigBackedParser(
             description=description,
             add_help=True
             )
