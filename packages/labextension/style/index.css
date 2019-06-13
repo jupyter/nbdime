@@ -83,10 +83,7 @@
   position: absolute;
   width: 100%;
   top: 0;
-  background-color: var(--jp-layout-color2);
-  border-top: solid var(--jp-layout-color3) 1px;
-  border-bottom: solid var(--jp-layout-color3) 1px;
-  text-align: center;
+  text-align: right;
 }
 
 /* Show a marker with the number of cells hidden after (for hidden cells at end) */
@@ -96,10 +93,7 @@
   position: absolute;
   width: 100%;
   bottom: 0;
-  background-color: var(--jp-layout-color2);
-  border-top: solid var(--jp-layout-color3) 1px;
-  border-bottom: solid var(--jp-layout-color3) 1px;
-  text-align: center;
+  text-align: right;
 }
 
 .nbdime-root.jp-mod-hideUnchanged .jp-Cell-diff[data-nbdime-NCellsHiddenBefore],

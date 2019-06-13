@@ -2,17 +2,17 @@
 :root {
   --codemirror-border: var(--jp-border-width) solid var(--jp-cell-editor-border-color);
 
-  --jp-nbdime-output-color1: rgba(0, 141, 255, 0.7);
+  --jp-nbdime-output-color1: rgba(225, 224, 178, 1.0);
   --jp-nbdime-output-color2: rgba(0, 141, 255, 0.5);
-  --jp-nbdime-output-color3: rgba(0, 141, 255, 0.3);
+  --jp-nbdime-output-color3: rgba(225, 224, 178, 0.25);
 
   --jp-diff-added-color0: rgba(0, 200, 20, 0.6);
   --jp-diff-added-color1: rgba(0, 200, 20, 0.3);
-  --jp-diff-added-color2: rgba(0, 200, 20, 0.3);
+  --jp-diff-added-color2: rgba(225, 244, 221, 0.3);
 
   --jp-diff-deleted-color0: rgba(240, 20, 0, 0.55);
   --jp-diff-deleted-color1: rgba(255, 20, 0, 0.3);
-  --jp-diff-deleted-color2: rgba(255, 20, 0, 0.3);
+  --jp-diff-deleted-color2: rgba(244, 221, 221, 1.0);
 
   --jp-merge-local-color1: #cbcbf8;
   --jp-merge-local-color2: #ececff;
@@ -28,3 +28,10 @@
   --jp-merge-either-color1: #aee;
   --jp-merge-either-color2: #cff4f4;
 }
+
+/* [June 12, 2019, 5:27 PM] Wang, William: 205,244,198,1
+[June 12, 2019, 5:27 PM] Wang, William: 225,244,221,1
+[June 12, 2019, 5:27 PM] Wang, William: 252,210,210,1\
+[June 12, 2019, 5:27 PM] Wang, William: 244,221,221,1
+[June 12, 2019, 5:28 PM] Wang, William: 255,224,178,0.25
+[June 12, 2019, 5:28 PM] Wang, William: 255,224,178,1 */

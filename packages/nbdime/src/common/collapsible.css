@@ -10,7 +10,6 @@ button.jp-CollapsiblePanel-header-icon {
 
     height: 24px;
     width: 24px;
-    float: right;
     font-size: var(--jp-ui-font-size1);
     line-height: var(--jp-private-toolbar-height);
     margin-top: .1em;
@@ -20,7 +19,7 @@ button.jp-CollapsiblePanel-header-icon {
     color: var(--jp-ui-font-color1);
     background-color: transparent;
 
-    border: 1px solid var(--jp-nbdime-output-color2);
+    border: none;
     border-radius: 2px;
 
     text-decoration: none;
@@ -32,12 +31,6 @@ button.jp-CollapsiblePanel-header-icon::-moz-focus-inner {
     border: none;
 }
 
-
-button.jp-CollapsiblePanel-header-icon:focus,
-button.jp-CollapsiblePanel-header-icon:hover,
-button.jp-CollapsiblePanel-header-icon:active {
-    border: 1px solid var(--jp-ui-font-color1);
-}
 
 .jp-CollapsiblePanel-header-icon-opened {
     background-image: var(--jp-icon-caretup);
@@ -51,7 +44,7 @@ button.jp-CollapsiblePanel-header-icon:active {
     padding-top: .2em;
     padding-bottom: .2em;
     background-color: var(--jp-nbdime-output-color3);
-    padding-left: 2em;
+    padding-left: 1em;
     padding-right: 2em;
     border-top: var(--jp-nbdime-output-color1) solid 1pt;
     color: var(--jp-ui-font-color1);
