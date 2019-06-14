@@ -4,7 +4,6 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from argparse import ArgumentParser
 import io
 import json
 import logging
@@ -22,7 +21,7 @@ from six import string_types
 from tornado import ioloop, web, escape, netutil, httpserver
 
 from .. import __file__ as nbdime_root
-from ..args import add_generic_args, add_web_args
+from ..args import ConfigBackedParser, add_generic_args, add_web_args
 from ..diffing.notebooks import diff_notebooks
 from ..log import logger
 from ..merging.notebooks import decide_notebook_merge
@@ -402,7 +401,7 @@ def _build_arg_parser():
     and displays a help message.
     """
     description = 'Web interface for Nbdime.'
-    parser = ArgumentParser(description=description)
+    parser = ConfigBackedParser(description=description)
     add_generic_args(parser)
     add_web_args(parser)
     return parser
