@@ -72,43 +72,6 @@ class CheckpointDifftoolHandler(NbdimeHandler):
 class ExtensionApiDiffHandler(ApiDiffHandler):
     """Diff API handler that also handles diff to git HEAD"""
 
-    def _get_git_notebooks(self, base_arg):
-        # Sometimes the root dir of the files is not cwd
-        nb_root = getattr(self.contents_manager, 'root_dir', None)
-        # Resolve base argument to a file system path
-        base = os.path.realpath(to_os_path(base_arg, nb_root))
-
-        # Ensure path/root_dir that can be sent to git:
-        try:
-            git_root = find_repo_root(base)
-        except InvalidGitRepositoryError as e:
-            self.log.exception(e)
-            raise HTTPError(422, 'Invalid notebook: %s' % base)
-        base = os.path.relpath(base, git_root)
-
-        # Get the base/remote notebooks:
-        try:
-            for fbase, fremote in changed_notebooks('HEAD', None, base, git_root):
-                base_nb = read_notebook(fbase, on_null='minimal')
-                remote_nb = read_notebook(fremote, on_null='minimal')
-                break  # there should only ever be one set of files
-            else:
-                # The filename was either invalid or the file is unchanged
-                # Assume unchanged, and let read_notebook handle error
-                # reporting if invalid
-                base_nb = self.read_notebook(os.path.join(git_root, base))
-                remote_nb = base_nb
-        except (InvalidGitRepositoryError, BadName) as e:
-            self.log.exception(e)
-            raise HTTPError(422, 'Invalid notebook: %s' % base_arg)
-        except GitCommandNotFound as e:
-            self.log.exception(e)
-            raise HTTPError(
-                500, 'Could not find git executable. '
-                     'Please ensure git is available to the server process.')
-
-        return base_nb, remote_nb
-
     @gen.coroutine
     def _get_checkpoint_notebooks(self, base):
         # Get the model for the current notebook:
@@ -142,7 +105,7 @@ class ExtensionApiDiffHandler(ApiDiffHandler):
         body = json.loads(escape.to_unicode(self.request.body))
         base = body['base']
         if base.startswith('git:'):
-            base_nb, remote_nb = self._get_git_notebooks(base[len('git:'):])
+            base_nb, remote_nb = self.get_git_notebooks(base[len('git:'):])
         elif base.startswith('checkpoint:'):
             base_nb, remote_nb = yield self._get_checkpoint_notebooks(base[len('checkpoint:'):])
         else:
@@ -170,6 +133,43 @@ class ExtensionApiDiffHandler(ApiDiffHandler):
             return super(ExtensionApiDiffHandler, self).curdir
         return root_dir
 
+
+class GitDiffHandler(ApiDiffHandler):
+    """Diff API handler that handles diffs for two git refs"""
+
+    @authenticated
+    @gen.coroutine
+    def post(self):
+        body = json.loads(escape.to_unicode(self.request.body))
+        try:
+            ref_prev = body['ref_prev']
+            ref_curr = body['ref_curr']
+            file_name = body['file_name']
+        except KeyError:
+            self.log.exception('Required keys not provided in input')
+            raise HTTPError(400, 'Required inputs ref_prev, ref_curr, file_name not provided inputs')
+
+        base_nb, remote_nb = self.get_git_notebooks(file_name, ref_prev, ref_curr)
+
+        # Perform actual diff and return data
+        try:
+            thediff = diff_notebooks(base_nb, remote_nb)
+        except Exception:
+            self.log.exception('Error diffing documents:')
+            raise HTTPError(500, 'Error while attempting to diff documents')
+
+        data = {
+            'base': base_nb,
+            'diff': thediff,
+            }
+        self.finish(data)
+
+    @property
+    def curdir(self):
+        root_dir = getattr(self.contents_manager, 'root_dir', None)
+        if root_dir is None:
+            return super(ExtensionApiDiffHandler, self).curdir
+        return root_dir
 
 class IsGitHandler(NbdimeHandler, APIHandler):
     """API handler for querying if path is in git repo"""
@@ -226,6 +226,7 @@ def _load_jupyter_server_extension(nb_server_app):
         (r'/nbdime/git-difftool', GitDifftoolHandler, params),
         (r'/nbdime/api/diff', ExtensionApiDiffHandler, params),
         (r'/nbdime/api/isgit', IsGitHandler, params),
+        (r'/nbdime/api/gitdiff', GitDiffHandler, params)
     ]
 
     # Prefix routes with base_url:

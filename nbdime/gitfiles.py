@@ -126,7 +126,7 @@ def _get_diff_entry_stream(path, blob, ref_name, repo_dir):
     return EXPLICIT_MISSING_FILE
 
 
-def changed_notebooks(ref_base, ref_remote, paths=None, repo_dir=None):
+def changed_notebooks(ref_base, ref_remote='WORKING', paths=None, repo_dir=None):
     """Iterator over all notebooks in path that has changed between the two git refs
 
     References are all valid values according to git-rev-parse. If ref_remote
@@ -144,9 +144,13 @@ def changed_notebooks(ref_base, ref_remote, paths=None, repo_dir=None):
         paths = [os.path.join(*(popped + (p,))) for p in paths]
     # Get tree for base:
     tree_base = repo.commit(ref_base).tree
-    if ref_remote is None:
-        # Diff tree against working copy:
+    if ref_remote == 'WORKING' :
+        # If a None value is provided, GitPython diffs against the Working Tree 
+        # https://gitpython.readthedocs.io/en/stable/reference.html#module-git.diff
         diff = tree_base.diff(None, paths)
+    elif ref_remote == 'INDEX':
+        # If no value is provided, GitPython diffs against the Index
+        diff = tree_base.diff(paths=paths)
     else:
         # Get remote tree and diff against base:
         tree_remote = repo.commit(ref_remote).tree

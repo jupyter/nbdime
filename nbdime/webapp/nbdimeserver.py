@@ -15,19 +15,21 @@ from jinja2 import FileSystemLoader, Environment
 import nbformat
 from notebook.base.handlers import IPythonHandler, APIHandler
 from notebook import DEFAULT_STATIC_FILES_PATH
-from notebook.utils import url_path_join
+from notebook.utils import url_path_join, to_os_path
 from notebook.log import log_request
 import requests
 from six import string_types
 from tornado import ioloop, web, escape, netutil, httpserver
+from tornado.web import HTTPError, escape, authenticated, gen
 
 from .. import __file__ as nbdime_root
 from ..args import add_generic_args, add_web_args
 from ..diffing.notebooks import diff_notebooks
+from ..gitfiles import find_repo_root, InvalidGitRepositoryError, BadName, GitCommandNotFound, changed_notebooks
 from ..log import logger
 from ..merging.notebooks import decide_notebook_merge
 from ..nbmergeapp import _build_arg_parser as build_merge_parser
-from ..utils import EXPLICIT_MISSING_FILE, is_in_repo
+from ..utils import EXPLICIT_MISSING_FILE, is_in_repo, read_notebook
 
 
 # TODO: See <notebook>/notebook/services/contents/handlers.py for possibly useful utilities:
@@ -233,6 +235,43 @@ class ApiDiffHandler(NbdimeHandler, APIHandler):
                 return nbformat.read(arg, as_version=4)
             return self.read_notebook(arg)
         return super(ApiDiffHandler, self).get_notebook_argument(argname)
+
+    def get_git_notebooks(self, file_name, ref_base='HEAD', ref_remote=None):
+        # Sometimes the root dir of the files is not cwd
+        nb_root = getattr(self.contents_manager, 'root_dir', None)
+        # Resolve base argument to a file system path
+        file_path = os.path.realpath(to_os_path(file_name, nb_root))
+
+        # Ensure path/root_dir that can be sent to git:
+        try:
+            git_root = find_repo_root(file_path)
+        except InvalidGitRepositoryError as e:
+            self.log.exception(e)
+            raise HTTPError(422, 'Invalid notebook: %s' % file_path)
+        file_path = os.path.relpath(file_path, git_root)
+
+        # Get the base/remote notebooks:
+        try:
+            for fbase, fremote in changed_notebooks(ref_base, ref_remote, file_path, git_root):
+                base_nb = read_notebook(fbase, on_null='minimal')
+                remote_nb = read_notebook(fremote, on_null='minimal')
+                break  # there should only ever be one set of files
+            else:
+                # The filename was either invalid or the file is unchanged
+                # Assume unchanged, and let read_notebook handle error
+                # reporting if invalid
+                base_nb = self.read_notebook(os.path.join(git_root, file_path))
+                remote_nb = base_nb
+        except (InvalidGitRepositoryError, BadName) as e:
+            self.log.exception(e)
+            raise HTTPError(422, 'Invalid notebook: %s' % file_name)
+        except GitCommandNotFound as e:
+            self.log.exception(e)
+            raise HTTPError(
+                500, 'Could not find git executable. '
+                     'Please ensure git is available to the server process.')
+
+        return base_nb, remote_nb
 
 
 class ApiMergeHandler(NbdimeHandler, APIHandler):
