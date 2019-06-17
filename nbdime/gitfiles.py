@@ -129,8 +129,11 @@ def _get_diff_entry_stream(path, blob, ref_name, repo_dir):
 def changed_notebooks(ref_base, ref_remote, paths=None, repo_dir=None):
     """Iterator over all notebooks in path that has changed between the two git refs
 
-    References are all valid values according to git-rev-parse. If ref_remote
-    is None, the difference is taken between ref_base and the working directory.
+    References are all valid values according to git-rev-parse. 
+    
+    - If ref_remote is None or WORKING, the difference is taken between ref_base and the working directory.
+    - If ref_remote is INDEX, the difference is taken between ref_base and the index.
+
     Iterator value is a base/remote pair of streams to Notebooks
     (or possibly EXPLICIT_MISSING_FILE for added/removed files).
     """
