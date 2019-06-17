@@ -146,8 +146,8 @@ class GitDiffHandler(ApiDiffHandler):
             ref_curr = body['ref_curr']
             file_name = body['file_name']
         except KeyError:
-            self.log.exception('Required keys not provided in input')
-            raise HTTPError(400, 'Required inputs ref_prev, ref_curr, file_name not provided inputs')
+            self.log.exception('Required keys ref_prev, ref_curr, file_name not provided in the request')
+            raise HTTPError(400, 'Required keys ref_prev, ref_curr, file_name not provided in the request')
 
         base_nb, remote_nb = self.get_git_notebooks(file_name, ref_prev, ref_curr)
 
