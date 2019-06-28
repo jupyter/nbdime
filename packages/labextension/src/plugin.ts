@@ -3,7 +3,7 @@
 
 
 import {
-  JupyterLabPlugin, JupyterLab
+  JupyterFrontEndPlugin, JupyterFrontEnd
 } from '@jupyterlab/application';
 
 import {
@@ -67,7 +67,7 @@ const INITIAL_NETWORK_RETRY = 2; // ms
 
 
 export
-class NBDiffExtension implements DocumentRegistry.IWidgetExtension<NotebookPanel, INotebookModel> {
+  class NBDiffExtension implements DocumentRegistry.IWidgetExtension<NotebookPanel, INotebookModel> {
   /**
    *
    */
@@ -82,7 +82,7 @@ class NBDiffExtension implements DocumentRegistry.IWidgetExtension<NotebookPanel
     // Create extension here
 
     // Add buttons to toolbar
-    let buttons: ToolbarButton[] = [];
+    let buttons: CommandToolbarButton[] = [];
     let insertionPoint = -1;
     find(nb.toolbar.children(), (tbb, index) => {
       if (tbb.hasClass('jp-Notebook-toolbarCellType')) {
@@ -122,19 +122,19 @@ export
 namespace CommandIDs {
 
   export
-  const diffNotebook = 'nbdime:diff';
+    const diffNotebook = 'nbdime:diff';
 
   export
-  const diffNotebookGit = 'nbdime:diff-git';
+    const diffNotebookGit = 'nbdime:diff-git';
 
   export
-  const diffNotebookCheckpoint = 'nbdime:diff-checkpoint';
+    const diffNotebookCheckpoint = 'nbdime:diff-checkpoint';
 
 }
 
 
 function addCommands(
-  app: JupyterLab,
+  app: JupyterFrontEnd,
   tracker: INotebookTracker,
   rendermime: IRenderMimeRegistry,
   settings: ISettingRegistry.ISettings
@@ -160,7 +160,7 @@ function addCommands(
 
   // This allows quicker checking, but if someone creates/removes
   // a repo during the session, this will become incorrect
-  let lut_known_git: { [key: string]: boolean} = {}
+  let lut_known_git: { [key: string]: boolean } = {}
 
   let networkRetry = INITIAL_NETWORK_RETRY;
 
@@ -176,7 +176,7 @@ function addCommands(
     let dir = PathExt.dirname(path);
     let known_git = lut_known_git[dir];
     if (known_git === undefined) {
-      const inGitPromise = isNbInGit({path: dir});
+      const inGitPromise = isNbInGit({ path: dir });
       inGitPromise.then(inGit => {
         networkRetry = INITIAL_NETWORK_RETRY;
         lut_known_git[dir] = inGit;
@@ -243,7 +243,7 @@ function addCommands(
         rendermime,
         hideUnchanged,
       });
-      shell.addToMainArea(widget);
+      shell.add(widget, 'main');
       if (args['activate'] !== false) {
         shell.activateById(widget.id);
       }
@@ -265,7 +265,7 @@ function addCommands(
         rendermime,
         hideUnchanged,
       });
-      shell.addToMainArea(widget);
+      shell.add(widget, 'main');
       if (args['activate'] !== false) {
         shell.activateById(widget.id);
       }
@@ -282,7 +282,7 @@ function addCommands(
 /**
  * The notebook diff provider.
  */
-const nbDiffProvider: JupyterLabPlugin<void> = {
+const nbDiffProvider: JupyterFrontEndPlugin<void> = {
   id: pluginId,
   requires: [INotebookTracker, IRenderMimeRegistry, ISettingRegistry],
   activate: activateWidgetExtension,
@@ -296,12 +296,12 @@ export default nbDiffProvider;
  * Activate the widget extension.
  */
 async function activateWidgetExtension(
-  app: JupyterLab,
+  app: JupyterFrontEnd,
   tracker: INotebookTracker,
   rendermime: IRenderMimeRegistry,
   settingsRegistry: ISettingRegistry,
 ): Promise<void> {
-  let {commands, docRegistry} = app;
+  let { commands, docRegistry } = app;
   let extension = new NBDiffExtension(commands);
   docRegistry.addWidgetExtension('Notebook', extension);
 
