@@ -19,6 +19,10 @@
   color: var(--jp-ui-font-color0);
 }
 
+.nbdime-toolbarButton .jp-ToolbarButtonComponent-label {
+  display: none;
+}
+
 .jp-PluginList-icon.nbdime-icon {
   font-size: 16px;
   vertical-align: text-bottom;

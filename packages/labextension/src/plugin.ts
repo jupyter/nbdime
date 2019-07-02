@@ -97,6 +97,7 @@ class NBDiffExtension implements DocumentRegistry.IWidgetExtension<NotebookPanel
         commands: this.commands,
         id
       });
+      button.addClass('nbdime-toolbarButton');
       if (insertionPoint >= 0) {
         nb.toolbar.insertItem(insertionPoint + i++, this.commands.label(id), button);
       } else {
