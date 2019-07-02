@@ -3,11 +3,11 @@
 
 
 import {
-  JupyterLabPlugin, JupyterLab
+  JupyterFrontEndPlugin, JupyterFrontEnd
 } from '@jupyterlab/application';
 
 import {
-  ToolbarButton, CommandToolbarButton
+  CommandToolbarButton
 } from '@jupyterlab/apputils';
 
 import {
@@ -82,7 +82,7 @@ class NBDiffExtension implements DocumentRegistry.IWidgetExtension<NotebookPanel
     // Create extension here
 
     // Add buttons to toolbar
-    let buttons: ToolbarButton[] = [];
+    let buttons: CommandToolbarButton[] = [];
     let insertionPoint = -1;
     find(nb.toolbar.children(), (tbb, index) => {
       if (tbb.hasClass('jp-Notebook-toolbarCellType')) {
@@ -134,7 +134,7 @@ namespace CommandIDs {
 
 
 function addCommands(
-  app: JupyterLab,
+  app: JupyterFrontEnd,
   tracker: INotebookTracker,
   rendermime: IRenderMimeRegistry,
   settings: ISettingRegistry.ISettings
@@ -243,7 +243,7 @@ function addCommands(
         rendermime,
         hideUnchanged,
       });
-      shell.addToMainArea(widget);
+      shell.add(widget);
       if (args['activate'] !== false) {
         shell.activateById(widget.id);
       }
@@ -265,7 +265,7 @@ function addCommands(
         rendermime,
         hideUnchanged,
       });
-      shell.addToMainArea(widget);
+      shell.add(widget);
       if (args['activate'] !== false) {
         shell.activateById(widget.id);
       }
@@ -282,7 +282,7 @@ function addCommands(
 /**
  * The notebook diff provider.
  */
-const nbDiffProvider: JupyterLabPlugin<void> = {
+const nbDiffProvider: JupyterFrontEndPlugin<void> = {
   id: pluginId,
   requires: [INotebookTracker, IRenderMimeRegistry, ISettingRegistry],
   activate: activateWidgetExtension,
@@ -296,7 +296,7 @@ export default nbDiffProvider;
  * Activate the widget extension.
  */
 async function activateWidgetExtension(
-  app: JupyterLab,
+  app: JupyterFrontEnd,
   tracker: INotebookTracker,
   rendermime: IRenderMimeRegistry,
   settingsRegistry: ISettingRegistry,
