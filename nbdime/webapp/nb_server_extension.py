@@ -11,7 +11,7 @@ from jinja2 import ChoiceLoader, FileSystemLoader
 from notebook.utils import url_path_join, to_os_path
 from notebook.services.contents.checkpoints import GenericCheckpointsMixin
 from notebook.services.contents.filecheckpoints import FileCheckpoints
-from tornado.web import HTTPError, escape, authenticated, gen
+from tornado.web import HTTPError, escape, authenticated, gen, MissingArgumentError
 
 from ..args import process_diff_flags
 from ..config import build_config, Namespace
@@ -137,32 +137,88 @@ class ExtensionApiDiffHandler(ApiDiffHandler):
 class GitDiffHandler(ApiDiffHandler):
     """Diff API handler that handles diffs for two git refs"""
 
+    def _validate_request(self, body):
+        # Validate ref_prev
+        try:
+            ref_prev = body['ref_prev']
+
+            # Only git is supported in ref_prev
+            if 'git' not in ref_prev:
+                self.log.exception('Required key git not provided in ref_prev')
+                raise HTTPError(400, 'Required key git not provided in ref_prev.')
+
+            if 'special' in ref_prev:
+                self.log.exception('special is not supported in ref_prev')
+                raise HTTPError(400, ':qspecial is not supported in ref_prev')
+
+        except KeyError:
+            self.log.exception('Required key ref_prev not provided in the request')
+            raise HTTPError(400, 'Required key ref_prev not provided in the request')
+
+        # Validate ref_curr
+        try:
+            ref_curr = body['ref_curr']
+
+            # Either of special or git is supported in ref_curr
+            if 'special' in ref_curr and 'git' in ref_curr:
+                self.log.exception('Only one of special and git should be present in ref_curr.')
+                raise HTTPError(400, 'Only one of special and git should be present in ref_curr.')
+
+            if not ('special' in ref_curr or 'git' in ref_curr):
+                self.log.exception('Atleast one of special and git should be present in ref_curr.')
+                raise HTTPError(400, 'Atleast one of special and git should be present in ref_curr.')
+        except KeyError:
+            self.log.exception('Required key ref_curr not provided in the request')
+            raise HTTPError(400, 'Required key ref_curr not provided in the request')
+
+        # Validate file_name
+        try:
+            body['file_path']
+        except KeyError:
+            self.log.exception('Required key file_name not provided in the request')
+            raise HTTPError(400, 'Required key file_name not provided in the request')
+
+
     @authenticated
     @gen.coroutine
     def post(self):
         body = json.loads(escape.to_unicode(self.request.body))
+
         try:
+            # Validate the request input
+            self._validate_request(body)
+
+            # Get file contents based on Git regs
             ref_prev = body['ref_prev']
             ref_curr = body['ref_curr']
-            file_name = body['file_name']
-        except KeyError:
-            self.log.exception('Required keys ref_prev, ref_curr, file_name not provided in the request')
-            raise HTTPError(400, 'Required keys ref_prev, ref_curr, file_name not provided in the request')
+            file_path = body['file_path']
+            base_nb, remote_nb = self.get_git_notebooks(file_path,
+                                                        ref_prev.get('git'),
+                                                        ref_curr.get('git'),
+                                                        ref_curr.get('special')
+                                                        )
 
-        base_nb, remote_nb = self.get_git_notebooks(file_name, ref_prev, ref_curr)
-
-        # Perform actual diff and return data
-        try:
+            # Perform actual diff and return data
             thediff = diff_notebooks(base_nb, remote_nb)
+
+            data = {
+                'base': base_nb,
+                'diff': thediff,
+            }
+            self.finish(data)
+        except HTTPError as e:
+            self.set_status(e.status_code)
+            self.finish({
+                'message': e.log_message,
+                'reason': e.reason
+            })
         except Exception:
             self.log.exception('Error diffing documents:')
-            raise HTTPError(500, 'Error while attempting to diff documents')
+            self.set_status(500)
+            self.finish({
+                'message': 'Error while attempting to diff documents'
+            })
 
-        data = {
-            'base': base_nb,
-            'diff': thediff,
-            }
-        self.finish(data)
 
     @property
     def curdir(self):

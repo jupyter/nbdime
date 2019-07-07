@@ -126,13 +126,15 @@ def _get_diff_entry_stream(path, blob, ref_name, repo_dir):
     return EXPLICIT_MISSING_FILE
 
 
-def changed_notebooks(ref_base, ref_remote, paths=None, repo_dir=None):
+def changed_notebooks(ref_base, ref_remote, paths=None, repo_dir=None, special_remote=None):
     """Iterator over all notebooks in path that has changed between the two git refs
 
     References are all valid values according to git-rev-parse. 
     
-    - If ref_remote is None or WORKING, the difference is taken between ref_base and the working directory.
-    - If ref_remote is INDEX, the difference is taken between ref_base and the index.
+    - If ref_remote is None or special_remote is None, the difference is taken between
+        ref_base and the working directory. (Default Case for Backwards Compatibility)
+    - If special_remote is WORKING, the difference is taken between ref_base and the working directort
+    - If special_remote is INDEX, the difference is taken between ref_base and the index.
 
     Iterator value is a base/remote pair of streams to Notebooks
     (or possibly EXPLICIT_MISSING_FILE for added/removed files).
@@ -147,11 +149,13 @@ def changed_notebooks(ref_base, ref_remote, paths=None, repo_dir=None):
         paths = [os.path.join(*(popped + (p,))) for p in paths]
     # Get tree for base:
     tree_base = repo.commit(ref_base).tree
-    if (not ref_remote) or ref_remote == 'WORKING' :
+    if (not ref_remote) and (not special_remote):
         # If a None value is provided, GitPython diffs against the Working Tree 
         # https://gitpython.readthedocs.io/en/stable/reference.html#module-git.diff
         diff = tree_base.diff(None, paths)
-    elif ref_remote == 'INDEX':
+    elif special_remote == 'WORKING':
+        diff = tree_base.diff(None, paths)
+    elif special_remote == 'INDEX':
         # If no value is provided, GitPython diffs against the Index
         diff = tree_base.diff(paths=paths)
     else:
