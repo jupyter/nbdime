@@ -237,6 +237,16 @@ class ApiDiffHandler(NbdimeHandler, APIHandler):
         return super(ApiDiffHandler, self).get_notebook_argument(argname)
 
     def get_git_notebooks(self, input_file_path, ref_base='HEAD', ref_remote=None, special_remote=None):
+        """
+        Gets the content of the before and after state of the notebook based on the given Git refs.
+
+        :param input_file_path: The path to the file being diff'd
+        :param ref_base: the Git ref for the "base" or the "previous" state
+        :param ref_remote: the Git ref for the "remote" or the "current" state
+        :param special_remote: the Special ref for the "base" or the "current" state.
+                This is denoted separately to avoid conflicts with real Git refs with the same name.
+        :return: (base_nb, remote_nb)
+        """
         # Sometimes the root dir of the files is not cwd
         nb_root = getattr(self.contents_manager, 'root_dir', None)
         # Resolve base argument to a file system path
