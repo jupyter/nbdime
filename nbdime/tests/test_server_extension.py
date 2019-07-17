@@ -96,6 +96,27 @@ def test_diff_api(git_repo2, server_extension_app):
     assert data['diff']
     assert len(data.keys()) == 2
 
+@pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
+def test_git_diff_api(git_repo2, server_extension_app):
+    local_path = os.path.relpath(git_repo2, server_extension_app['path'])
+    url = 'http://127.0.0.1:%i/nbdime/api/gitdiff' % server_extension_app['port']
+    r = requests.post(
+        url, headers=auth_header,
+        data=json.dumps({
+            'ref_prev': {
+                'git': 'HEAD'
+            },
+            'ref_curr': {
+                'special': 'WORKING'
+            },
+            'file_path': pjoin(local_path, 'diff.ipynb')
+        }))
+    r.raise_for_status()
+    data = r.json()
+    nbformat.validate(data['base'])
+    assert data['diff']
+    assert len(data.keys()) == 2
+
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
 def test_diff_api_checkpoint(tmpdir, filespath, server_extension_app):
