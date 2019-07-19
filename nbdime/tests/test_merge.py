@@ -171,6 +171,27 @@ def test_shallow_merge_lists_insert_conflicted():
     assert decisions[3].remote_diff == [op_addrange(3, [10])]
 
 
+def test_shallow_merge_insert_delete_overlap():
+    """We insert and delete in way that overlaps."""
+    # Insert on local, delete on remote:
+    b = [1, 2, 3, 4]
+    l = [1, 2, "new", 3, 4]
+    r = [1, 4]
+    decisions = decide_merge(b, l, r)
+    assert apply_decisions(b, decisions) == [1, "new", 4]
+    # The UI layer assumes addrange and removerange are never paired, so make
+    # sure the add-then-remove are two separate decisions:
+    assert [d["action"] for d in decisions] == ["remote", "local", "remote"]
+
+    # Delete on local, insert on remote:
+    b = [1, 2, 3, 4]
+    l = [1, 4]
+    r = [1, 2, "new", 3, 4]
+    decisions = decide_merge(b, l, r)
+    assert apply_decisions(b, decisions) == [1, "new", 4]
+    # The UI layer assumes addrange and removerange are never paired, so make
+    # sure the add-then-remove are two separate decisions:
+    assert [d["action"] for d in decisions] == ["local", "remote", "local"]
 
 
 def test_deep_merge_lists_delete_no_conflict():

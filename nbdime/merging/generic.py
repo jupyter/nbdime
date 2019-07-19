@@ -599,15 +599,28 @@ def _merge_lists(base, local_diff, remote_diff, path, parent_decisions, strategi
                     decisions.conflict(path, p0, p1, item_strategy)  # FIXME: Right strategy?
 
             # ... end pchunktypes P/P, P/R, R/P
-        # Insert before patch or remove: apply both but mark as conflicted
-        elif chunktype in ("A/P", "A/R"):
+        # Insert before patch: apply both but mark as conflicted
+        elif chunktype == "A/P":
             action = decisions.tryresolve(path, d0, d1, item_strategy)
             if not action:
                 decisions.local_then_remote(path, d0, d1, conflict=True)
-        elif chunktype in ("P/A", "R/A"):
+        elif chunktype == "P/A":
             action = decisions.tryresolve(path, d0, d1, item_strategy)
             if not action:
                 decisions.remote_then_local(path, d0, d1, conflict=True)
+
+        # Insert before remove (or vice versa) is technically a conflict,
+        # but the web UI currently can't handle that... so just resolve it.
+        elif chunktype == "A/R":
+            action = decisions.tryresolve(path, d0, d1, item_strategy)
+            if not action:
+                decisions.onesided(path, d0, [])
+                decisions.onesided(path, [], d1)
+        elif chunktype == "R/A":
+            action = decisions.tryresolve(path, d0, d1, item_strategy)
+            if not action:
+                decisions.onesided(path, [], d1)
+                decisions.onesided(path, d0, [])
 
         # Merge insertions from both sides and add onesided patch afterwards
         elif chunktype in ("A/AP", "AP/A"):
