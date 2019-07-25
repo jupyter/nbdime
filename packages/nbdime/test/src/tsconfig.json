@@ -2,7 +2,9 @@
   "extends": "../../../../tsconfig_base",
   "compilerOptions": {
     "composite": false,
-    "outDir": "../build"
+    "lib": ["dom", "es5", "es2015.promise", "es2015.iterable"],
+    "outDir": "../build",
+    "target": "es6"
   },
   "include": [
     "**/*.ts",

@@ -2,14 +2,47 @@
   "name": "nbdime-jupyterlab",
   "version": "0.6.1",
   "description": "A JupyterLab extension for showing Notebook diffs.",
+  "keywords": [
+    "jupyter",
+    "jupyterlab",
+    "jupyterlab-extension",
+    "notebook"
+  ],
+  "homepage": "https://github.com/jupyter/nbdime",
+  "bugs": {
+    "url": "https://github.com/jupyter/nbdime/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jupyter/nbdime"
+  },
+  "license": "BSD-3-Clause",
+  "author": "Project Jupyter",
+  "files": [
+    "lib/*.js",
+    "lib/*.js.map",
+    "lib/*.d.ts",
+    "style/*.css",
+    "schema/*.json"
+  ],
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
+  "scripts": {
+    "build": "npm run build:lib && npm run build:labextension",
+    "build:dev": "npm run build:lib",
+    "build:labextension": "rimraf dist && mkdirp dist && cd dist && npm pack ..",
+    "build:lib": "tsc --build",
+    "clean": "rimraf lib && rimraf dist",
+    "prepublishOnly": "npm run build",
+    "update": "rimraf node_modules/nbdime && npm install && npm run build",
+    "watch": "tsc --build --watch"
+  },
   "dependencies": {
-    "@jupyterlab/apputils": "^0.19.1",
-    "@jupyterlab/coreutils": "^2.2.1",
-    "@jupyterlab/notebook": "^0.19.2",
-    "@jupyterlab/rendermime": "^0.19.1",
-    "@jupyterlab/services": "^3.2.1",
+    "@jupyterlab/apputils": "^1.0.0",
+    "@jupyterlab/coreutils": "^3.0.0",
+    "@jupyterlab/notebook": "^1.0.0",
+    "@jupyterlab/rendermime": "^1.0.0",
+    "@jupyterlab/services": "^4.0.0",
     "@phosphor/algorithm": "^1.1.2",
     "@phosphor/coreutils": "^1.3.0",
     "@phosphor/disposable": "^1.1.2",
@@ -17,19 +50,13 @@
     "nbdime": "^4.0.0"
   },
   "devDependencies": {
-    "@jupyterlab/application": "^0.19.1",
-    "@jupyterlab/docregistry": "^0.19.1",
+    "@jupyterlab/application": "^1.0.0",
+    "@jupyterlab/docregistry": "^1.0.0",
     "@phosphor/commands": "^1.6.1",
     "mkdirp": "^0.5.1",
     "rimraf": "^2.6.3",
-    "typescript": "~3.3.1"
+    "typescript": "^3.5.2"
   },
-  "keywords": [
-    "jupyter",
-    "jupyterlab",
-    "jupyterlab-extension",
-    "notebook"
-  ],
   "jupyterlab": {
     "extension": true,
     "schemaDir": "schema",
@@ -44,32 +71,5 @@
         ]
       }
     }
-  },
-  "scripts": {
-    "clean": "rimraf lib && rimraf dist",
-    "build": "npm run build:lib && npm run build:labextension",
-    "build:dev": "npm run build:lib",
-    "build:lib": "tsc --build",
-    "build:labextension": "rimraf dist && mkdirp dist && cd dist && npm pack ..",
-    "update": "rimraf node_modules/nbdime && npm install && npm run build",
-    "prepublishOnly": "npm run build",
-    "watch": "tsc --build --watch"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/jupyter/nbdime"
-  },
-  "files": [
-    "lib/*.js",
-    "lib/*.js.map",
-    "lib/*.d.ts",
-    "style/*.css",
-    "schema/*.json"
-  ],
-  "author": "Project Jupyter",
-  "license": "BSD-3-Clause",
-  "bugs": {
-    "url": "https://github.com/jupyter/nbdime/issues"
-  },
-  "homepage": "https://github.com/jupyter/nbdime"
+  }
 }
