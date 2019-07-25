@@ -13,7 +13,7 @@
   "scripts": {
     "build": "tsc --project . && node scripts/copy-files.js",
     "build:dev": "tsc --project .",
-    "clean": "rimraf test/build && rimraf lib && rimraf node_modules",
+    "clean": "rimraf test/build && rimraf lib",
     "prepublishOnly": "npm run build",
     "test": "npm run test:firefox",
     "test:chrome": "karma start --browsers=Chrome test/karma.conf.js",
