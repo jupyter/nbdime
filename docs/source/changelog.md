@@ -2,6 +2,10 @@
 
 ## 1.0
 
+###  1.0.7 - 2019-07
+- Fixes an issue using config files (PR #476).
+- Upgrades to using lab 1.0 components, which also allows lab extension to support lab 1.0.
+
 ###  1.0.6 - 2019-05
 - Fixed a styling regression from 1.0.5, where the web text panes
 had incorrect styling (most notably incorrect widths).
