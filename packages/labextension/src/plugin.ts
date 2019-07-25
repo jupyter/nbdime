@@ -39,16 +39,8 @@ import {
 } from '@phosphor/commands';
 
 import {
-  Token
-} from '@phosphor/coreutils';
-
-import {
   IDisposable, DisposableDelegate
 } from '@phosphor/disposable';
-
-import {
-  Menu, Widget
-} from '@phosphor/widgets';
 
 import {
   diffNotebookGit, diffNotebook, diffNotebookCheckpoint, isNbInGit
