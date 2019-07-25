@@ -24,7 +24,7 @@
     "@phosphor/widgets": "^1.6.0",
     "alertify.js": "^1.0.12",
     "file-saver": "^2.0.1",
-    "nbdime": "^4.0.0"
+    "nbdime": "^5.0.0"
   },
   "devDependencies": {
     "@types/file-saver": "^2.0.0",

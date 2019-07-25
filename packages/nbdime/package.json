@@ -1,6 +1,6 @@
 {
   "name": "nbdime",
-  "version": "4.0.2",
+  "version": "5.0.0",
   "description": "Diff and merge of Jupyter Notebooks",
   "repository": {
     "type": "git",

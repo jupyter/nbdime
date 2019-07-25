@@ -47,7 +47,7 @@
     "@phosphor/coreutils": "^1.3.0",
     "@phosphor/disposable": "^1.1.2",
     "@phosphor/widgets": "^1.6.0",
-    "nbdime": "^4.0.0"
+    "nbdime": "^5.0.0"
   },
   "devDependencies": {
     "@jupyterlab/application": "^1.0.0",
