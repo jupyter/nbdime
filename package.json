@@ -2,7 +2,7 @@
   "private": true,
   "scripts": {
     "install": "lerna bootstrap --hoist",
-    "clean": "rimraf node_modules && lerna run clean",
+    "clean": "lerna run clean",
     "build": "lerna run build",
     "build:dev": "tsc --build",
     "updated": "lerna updated",
