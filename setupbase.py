@@ -141,7 +141,7 @@ class bdist_egg_disabled(bdist_egg):
 
 
 def create_cmdclass(prerelease_cmd=None, package_data_spec=None,
-        data_files_spec=None):
+                    data_files_spec=None):
     """Create a command class with the given optional prerelease class.
 
     Parameters
@@ -364,7 +364,7 @@ def install_npm(path=None, build_targets=None, sources=None, build_cmd='build', 
 
         def run(self):
             if skip_npm:
-                log.info('Skipping npm installation')
+                log.info('Skipping npm-installation')
                 return
             node_package = path or HERE
             is_yarn = os.path.exists(pjoin(node_package, 'yarn.lock'))
@@ -392,7 +392,7 @@ def install_npm(path=None, build_targets=None, sources=None, build_cmd='build', 
 
             if not which(npm_cmd[0]):
                 log.error("`{0}` unavailable.  If you're running this command "
-                          "using sudo, make sure `{0}` is availble to sudo"
+                          "using sudo, make sure `{0}` is available to sudo"
                           .format(npm_cmd[0]))
                 return
 
@@ -492,7 +492,7 @@ def _wrap_command(cmds, cls, strict=True):
     cmds: list(str)
         The names of the other commands to run prior to the command.
     strict: boolean, optional
-        Wether to raise errors when a pre-command fails.
+        Whether to raise errors when a pre-command fails.
     """
     class WrappedCommand(cls):
 
@@ -547,7 +547,7 @@ def _get_data_files(data_specs, existing, top=HERE):
     data_specs: list of tuples
         See [create_cmdclass] for description.
     existing: list of tuples
-        The existing distrubution data_files metadata.
+        The existing distribution data_files metadata.
 
     Returns
     -------
@@ -570,7 +570,6 @@ def _get_data_files(data_specs, existing, top=HERE):
             # Normalize the path.
             root = os.path.dirname(fname)
             full_path = _glob_pjoin(path, root[offset:])
-            print(dname, root, full_path, offset)
             if full_path.endswith('/'):
                 full_path = full_path[:-1]
             file_data[full_path].append(fname)
@@ -618,7 +617,7 @@ def _get_files(file_patterns, top=HERE):
                 fn = os.path.relpath(_glob_pjoin(root, filename), top)
                 fn = fn.replace(os.sep, '/')
                 if m(fn):
-                    files.add(fn.replace(os.sep, '/'))
+                    files.add(fn)
 
     return list(files)
 
