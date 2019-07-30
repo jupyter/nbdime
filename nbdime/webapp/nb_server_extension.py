@@ -19,6 +19,7 @@ from ..diffing.notebooks import set_notebook_diff_ignores, diff_notebooks
 from ..gitfiles import (
     changed_notebooks, is_path_in_repo, find_repo_root,
     InvalidGitRepositoryError, BadName, GitCommandNotFound,
+    GitRefWorkingTree, GitRefIndex
     )
 from ..ignorables import diff_ignorables
 from ..utils import read_notebook
@@ -31,6 +32,12 @@ from .nbdimeserver import (
     ApiDiffHandler,
     APIHandler,
 )
+
+
+special_refs = {
+    'working': GitRefWorkingTree,
+    'index': GitRefIndex,
+}
 
 
 class AuthMainDifftoolHandler(MainDifftoolHandler):
@@ -69,7 +76,55 @@ class CheckpointDifftoolHandler(NbdimeHandler):
             ))
 
 
-class ExtensionApiDiffHandler(ApiDiffHandler):
+class BaseGitDiffHandler(ApiDiffHandler):
+
+    def get_git_notebooks(self, file_path, ref_base='HEAD', ref_remote=None):
+        """
+        Gets the content of the before and after state of the notebook based on the given Git refs.
+
+        :param file_path: The path to the file being diffed
+        :param ref_base: the Git ref for the "local" or the "previous" state
+        :param ref_remote: the Git ref for the "remote" or the "current" state
+        :return: (base_nb, remote_nb)
+        """
+        # Sometimes the root dir of the files is not cwd
+        nb_root = getattr(self.contents_manager, 'root_dir', None)
+        # Resolve base argument to a file system path
+        file_path = os.path.realpath(to_os_path(file_path, nb_root))
+
+        # Ensure path/root_dir that can be sent to git:
+        try:
+            git_root = find_repo_root(file_path)
+        except InvalidGitRepositoryError as e:
+            self.log.exception(e)
+            raise HTTPError(422, 'Invalid notebook: %s' % file_path)
+        file_path = os.path.relpath(file_path, git_root)
+
+        # Get the base/remote notebooks:
+        try:
+            for fbase, fremote in changed_notebooks(ref_base, ref_remote, file_path, git_root):
+                base_nb = read_notebook(fbase, on_null='minimal')
+                remote_nb = read_notebook(fremote, on_null='minimal')
+                break  # there should only ever be one set of files
+            else:
+                # The filename was either invalid or the file is unchanged
+                # Assume unchanged, and let read_notebook handle error
+                # reporting if invalid
+                base_nb = self.read_notebook(os.path.join(git_root, file_path))
+                remote_nb = base_nb
+        except (InvalidGitRepositoryError, BadName) as e:
+            self.log.exception(e)
+            raise HTTPError(422, 'Invalid notebook: %s' % file_path)
+        except GitCommandNotFound as e:
+            self.log.exception(e)
+            raise HTTPError(
+                500, 'Could not find git executable. '
+                     'Please ensure git is available to the server process.')
+
+        return base_nb, remote_nb
+
+
+class ExtensionApiDiffHandler(BaseGitDiffHandler):
     """Diff API handler that also handles diff to git HEAD"""
 
     @gen.coroutine
@@ -101,6 +156,7 @@ class ExtensionApiDiffHandler(ApiDiffHandler):
     @authenticated
     @gen.coroutine
     def post(self):
+        # TODO: Add deprecation warning (for git/checkpoint only?)
         # Assuming a request on the form "{'argname':arg}"
         body = json.loads(escape.to_unicode(self.request.body))
         base = body['base']
@@ -134,49 +190,52 @@ class ExtensionApiDiffHandler(ApiDiffHandler):
         return root_dir
 
 
-class GitDiffHandler(ApiDiffHandler):
+class GitDiffHandler(BaseGitDiffHandler):
     """Diff API handler that handles diffs for two git refs"""
 
+    @classmethod
+    def parse_ref(cls, data):
+        return data.get('git', None) or special_refs[data['special'].lower()]
+
     def _validate_request(self, body):
-        # Validate ref_prev
-        try:
-            ref_prev = body['ref_prev']
+        def _fail(msg):
+            self.log.exception(msg)
+            raise HTTPError(400, msg)
 
-            # Only git is supported in ref_prev
-            if 'git' not in ref_prev:
-                self.log.exception('Required key git not provided in ref_prev')
-                raise HTTPError(400, 'Required key git not provided in ref_prev.')
+        # Validate refs
+        for refname in ('ref_local', 'ref_remote'):
 
-            if 'special' in ref_prev:
-                self.log.exception('special is not supported in ref_prev')
-                raise HTTPError(400, ':qspecial is not supported in ref_prev')
+            # Validate ref_curr
+            try:
+                ref = body[refname]
+            except KeyError:
+                _fail('Required key %s not provided in the request' % (refname))
 
-        except KeyError:
-            self.log.exception('Required key ref_prev not provided in the request')
-            raise HTTPError(400, 'Required key ref_prev not provided in the request')
+            # Either of special or git is supported in ref
+            if 'special' in ref and 'git' in ref:
+                _fail('Only one of special and git should be present in git '
+                      'reference.')
 
-        # Validate ref_curr
-        try:
-            ref_curr = body['ref_curr']
+            if not ('special' in ref or 'git' in ref):
+                _fail('At least one of special and git should be present in git '
+                      'reference.')
 
-            # Either of special or git is supported in ref_curr
-            if 'special' in ref_curr and 'git' in ref_curr:
-                self.log.exception('Only one of special and git should be present in ref_curr.')
-                raise HTTPError(400, 'Only one of special and git should be present in ref_curr.')
+            if 'special' in ref:
+                special = ref['special'].lower()
+                if refname == 'ref_local':
+                    if special != 'index':
+                        _fail('Only "index" is allowed for the "special" value '
+                              'on ref_local, got %r.' % (special,))
+                elif special not in ('index', 'working'):
+                    _fail('Only "index" or "working is allowed for the "special" value '
+                          'on ref_remote, got %r.' % (special,))
 
-            if not ('special' in ref_curr or 'git' in ref_curr):
-                self.log.exception('Atleast one of special and git should be present in ref_curr.')
-                raise HTTPError(400, 'Atleast one of special and git should be present in ref_curr.')
-        except KeyError:
-            self.log.exception('Required key ref_curr not provided in the request')
-            raise HTTPError(400, 'Required key ref_curr not provided in the request')
 
         # Validate file_name
         try:
             body['file_path']
         except KeyError:
-            self.log.exception('Required key file_name not provided in the request')
-            raise HTTPError(400, 'Required key file_name not provided in the request')
+            _fail('Required value file_path not provided in the request')
 
 
     @authenticated
@@ -189,14 +248,14 @@ class GitDiffHandler(ApiDiffHandler):
             self._validate_request(body)
 
             # Get file contents based on Git regs
-            ref_prev = body['ref_prev']
-            ref_curr = body['ref_curr']
+            ref_local = body['ref_local']
+            ref_remote = body['ref_remote']
             file_path = body['file_path']
-            base_nb, remote_nb = self.get_git_notebooks(file_path,
-                                                        ref_prev.get('git'),
-                                                        ref_curr.get('git'),
-                                                        ref_curr.get('special')
-                                                        )
+            base_nb, remote_nb = self.get_git_notebooks(
+                file_path,
+                GitDiffHandler.parse_ref(ref_local),
+                GitDiffHandler.parse_ref(ref_remote),
+            )
 
             # Perform actual diff and return data
             thediff = diff_notebooks(base_nb, remote_nb)
@@ -206,18 +265,11 @@ class GitDiffHandler(ApiDiffHandler):
                 'diff': thediff,
             }
             self.finish(data)
-        except HTTPError as e:
-            self.set_status(e.status_code)
-            self.finish({
-                'message': e.log_message,
-                'reason': e.reason
-            })
+        except HTTPError:
+            raise
         except Exception:
             self.log.exception('Error diffing documents:')
-            self.set_status(500)
-            self.finish({
-                'message': 'Error while attempting to diff documents'
-            })
+            raise HTTPError(500, 'Error while attempting to diff documents')
 
 
     @property

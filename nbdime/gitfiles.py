@@ -10,11 +10,18 @@ from six import string_types
 os.environ['GIT_PYTHON_REFRESH'] = 'quiet'
 from git import (
     Repo, InvalidGitRepositoryError, BadName, NoSuchPathError,
-    GitCommandNotFound,
+    GitCommandNotFound, Diffable
 )
 
 from nbdime.vcs.git.filter_integration import apply_possible_filter
 from .utils import EXPLICIT_MISSING_FILE, pushd
+
+
+# Git ref representing the working tree
+GitRefWorkingTree = None
+
+# Git ref representing the index
+GitRefIndex = Diffable.Index
 
 
 class BlobWrapper(io.StringIO):
@@ -93,7 +100,7 @@ def is_path_in_repo(path):
         return False
 
 
-def _get_diff_entry_stream(path, blob, ref_name, repo_dir, special_ref_name):
+def _get_diff_entry_stream(path, blob, ref_name, repo_dir):
     """Get a stream to the notebook, for a given diff entry's path and blob
 
     Returns None if path is not a Notebook file, and EXPLICIT_MISSING_FILE
@@ -101,7 +108,7 @@ def _get_diff_entry_stream(path, blob, ref_name, repo_dir, special_ref_name):
     if path:
         if not path.endswith('.ipynb'):
             return None
-        if special_ref_name == 'WORKING':
+        if blob is None:
             # Diffing against working copy, use file on disk!
             with pushd(repo_dir):
                 # Ensure we filter if appropriate:
@@ -115,10 +122,6 @@ def _get_diff_entry_stream(path, blob, ref_name, repo_dir, special_ref_name):
                     return io.open(path, encoding='utf-8')
                 except IOError:
                     return EXPLICIT_MISSING_FILE
-        elif blob is None:
-            # GitPython uses a None blob to indicate if a file was deleted or added.
-            # https://gitpython.readthedocs.io/en/stable/reference.html#git.diff.Diff
-            return EXPLICIT_MISSING_FILE
         else:
             # There were strange issues with passing blob data_streams around,
             # so we solve this by reading into a StringIO buffer.
@@ -130,18 +133,14 @@ def _get_diff_entry_stream(path, blob, ref_name, repo_dir, special_ref_name):
     return EXPLICIT_MISSING_FILE
 
 
-def changed_notebooks(ref_base, ref_remote, paths=None, repo_dir=None, special_remote=None):
+def changed_notebooks(ref_base, ref_remote, paths=None, repo_dir=None):
     """Iterator over all notebooks in path that has changed between the two git refs
 
-    References are all valid values according to git-rev-parse. 
-    
-    - If ref_remote is None or special_remote is None, the difference is taken between
-        ref_base and the working directory. (Default Case for Backwards Compatibility)
-    - If special_remote is WORKING, the difference is taken between ref_base and the working directory
-    - If special_remote is INDEX, the difference is taken between ref_base and the index.
+    References are all valid values according to git-rev-parse, or one of
+    the special sentinel values GitRefWorkingTree or GitRefIndex.
 
     Iterator value is a base/remote pair of streams to Notebooks
-    (or possibly EXPLICIT_MISSING_FILE for added/removed files).
+    or EXPLICIT_MISSING_FILE for added/removed files.
     """
     repo, popped = get_repo(repo_dir or os.curdir)
     if repo_dir is None:
@@ -152,20 +151,18 @@ def changed_notebooks(ref_base, ref_remote, paths=None, repo_dir=None, special_r
         # All paths need to be prepended by popped
         paths = [os.path.join(*(popped + (p,))) for p in paths]
 
-    if (not ref_remote) and (not special_remote):
+    if ref_remote is None:
         # Default case for backwards compatibility
-        special_remote = 'WORKING'
+        ref_remote = GitRefWorkingTree
 
-    # Get tree for base and do the actual diff
-    tree_base = repo.commit(ref_base).tree
+    # Get tree/index for base
+    if ref_base == GitRefIndex:
+        tree_base = repo.index
+    else:
+        tree_base = repo.commit(ref_base).tree
 
-    if special_remote == 'WORKING':
-        # If a None value is provided, GitPython diffs against the Working Tree
-        # https://gitpython.readthedocs.io/en/stable/reference.html#module-git.diff
-        diff = tree_base.diff(None, paths)
-    elif special_remote == 'INDEX':
-        # If no value is provided, GitPython diffs against the Index
-        diff = tree_base.diff(paths=paths)
+    if ref_remote in (GitRefWorkingTree, GitRefIndex):
+        diff = tree_base.diff(ref_remote, paths)
     else:
         # Get remote tree and diff against base:
         tree_remote = repo.commit(ref_remote).tree
@@ -174,11 +171,11 @@ def changed_notebooks(ref_base, ref_remote, paths=None, repo_dir=None, special_r
     # Return the base/remote pair of Notebook file streams
     for entry in diff:
         fa = _get_diff_entry_stream(
-            entry.a_path, entry.a_blob, ref_base, repo_dir, None)
+            entry.a_path, entry.a_blob, ref_base, repo_dir)
         if fa is None:
             continue
         fb = _get_diff_entry_stream(
-            entry.b_path, entry.b_blob, ref_remote, repo_dir, special_remote)
+            entry.b_path, entry.b_blob, ref_remote, repo_dir)
         if fb is None:
             continue
         yield (fa, fb)
