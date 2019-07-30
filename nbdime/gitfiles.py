@@ -151,10 +151,6 @@ def changed_notebooks(ref_base, ref_remote, paths=None, repo_dir=None):
         # All paths need to be prepended by popped
         paths = [os.path.join(*(popped + (p,))) for p in paths]
 
-    if ref_remote is None:
-        # Default case for backwards compatibility
-        ref_remote = GitRefWorkingTree
-
     # Get tree/index for base
     if ref_base == GitRefIndex:
         tree_base = repo.index
