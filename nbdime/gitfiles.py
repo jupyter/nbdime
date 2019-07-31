@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
-import os
 import io
+import os
 from collections import deque
 
 from six import string_types
@@ -104,11 +104,12 @@ def _get_diff_entry_stream(path, blob, ref_name, repo_dir):
     """Get a stream to the notebook, for a given diff entry's path and blob
 
     Returns None if path is not a Notebook file, and EXPLICIT_MISSING_FILE
-    if path is missing."""
+    if path is missing, or the blob is None.
+    """
     if path:
         if not path.endswith('.ipynb'):
             return None
-        if blob is None:
+        if ref_name is GitRefWorkingTree:
             # Diffing against working copy, use file on disk!
             with pushd(repo_dir):
                 # Ensure we filter if appropriate:
@@ -122,6 +123,10 @@ def _get_diff_entry_stream(path, blob, ref_name, repo_dir):
                     return io.open(path, encoding='utf-8')
                 except IOError:
                     return EXPLICIT_MISSING_FILE
+        elif blob is None:
+            # GitPython uses a None blob to indicate if a file was deleted or added.
+            # https://gitpython.readthedocs.io/en/stable/reference.html#git.diff.Diff
+            return EXPLICIT_MISSING_FILE
         else:
             # There were strange issues with passing blob data_streams around,
             # so we solve this by reading into a StringIO buffer.
