@@ -104,7 +104,8 @@ def _get_diff_entry_stream(path, blob, ref_name, repo_dir):
     """Get a stream to the notebook, for a given diff entry's path and blob
 
     Returns None if path is not a Notebook file, and EXPLICIT_MISSING_FILE
-    if path is missing, or the blob is None.
+    if path is missing, or the blob is None (unless diffing against working
+    tree).
     """
     if path:
         if not path.endswith('.ipynb'):
@@ -124,8 +125,8 @@ def _get_diff_entry_stream(path, blob, ref_name, repo_dir):
                 except IOError:
                     return EXPLICIT_MISSING_FILE
         elif blob is None:
-            # GitPython uses a None blob to indicate if a file was deleted or added.
-            # https://gitpython.readthedocs.io/en/stable/reference.html#git.diff.Diff
+            # GitPython uses a None blob to indicate if a file was deleted or
+            # added. Workaround for GitPython issue #749.
             return EXPLICIT_MISSING_FILE
         else:
             # There were strange issues with passing blob data_streams around,
