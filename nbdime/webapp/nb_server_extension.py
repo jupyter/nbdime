@@ -78,11 +78,11 @@ class CheckpointDifftoolHandler(NbdimeHandler):
 
 class BaseGitDiffHandler(ApiDiffHandler):
 
-    def get_git_notebooks(self, file_path, ref_base='HEAD', ref_remote=None):
+    def get_git_notebooks(self, file_path_arg, ref_base='HEAD', ref_remote=None):
         """
         Gets the content of the before and after state of the notebook based on the given Git refs.
 
-        :param file_path: The path to the file being diffed
+        :param file_path_arg: The path to the file being diffed
         :param ref_base: the Git ref for the "local" or the "previous" state
         :param ref_remote: the Git ref for the "remote" or the "current" state
         :return: (base_nb, remote_nb)
@@ -90,7 +90,7 @@ class BaseGitDiffHandler(ApiDiffHandler):
         # Sometimes the root dir of the files is not cwd
         nb_root = getattr(self.contents_manager, 'root_dir', None)
         # Resolve base argument to a file system path
-        file_path = os.path.realpath(to_os_path(file_path, nb_root))
+        file_path = os.path.realpath(to_os_path(file_path_arg, nb_root))
 
         # Ensure path/root_dir that can be sent to git:
         try:
@@ -114,7 +114,7 @@ class BaseGitDiffHandler(ApiDiffHandler):
                 remote_nb = base_nb
         except (InvalidGitRepositoryError, BadName) as e:
             self.log.exception(e)
-            raise HTTPError(422, 'Invalid notebook: %s' % file_path)
+            raise HTTPError(422, 'Invalid notebook: %s' % file_path_arg)
         except GitCommandNotFound as e:
             self.log.exception(e)
             raise HTTPError(
