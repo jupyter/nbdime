@@ -123,6 +123,13 @@ class BaseGitDiffHandler(ApiDiffHandler):
 
         return base_nb, remote_nb
 
+    @property
+    def curdir(self):
+        root_dir = getattr(self.contents_manager, 'root_dir', None)
+        if root_dir is None:
+            return super(ExtensionApiDiffHandler, self).curdir
+        return root_dir
+
 
 class ExtensionApiDiffHandler(BaseGitDiffHandler):
     """Diff API handler that also handles diff to git HEAD"""
@@ -181,13 +188,6 @@ class ExtensionApiDiffHandler(BaseGitDiffHandler):
             'diff': thediff,
             }
         self.finish(data)
-
-    @property
-    def curdir(self):
-        root_dir = getattr(self.contents_manager, 'root_dir', None)
-        if root_dir is None:
-            return super(ExtensionApiDiffHandler, self).curdir
-        return root_dir
 
 
 class GitDiffHandler(BaseGitDiffHandler):
@@ -271,13 +271,6 @@ class GitDiffHandler(BaseGitDiffHandler):
             self.log.exception('Error diffing documents:')
             raise HTTPError(500, 'Error while attempting to diff documents')
 
-
-    @property
-    def curdir(self):
-        root_dir = getattr(self.contents_manager, 'root_dir', None)
-        if root_dir is None:
-            return super(ExtensionApiDiffHandler, self).curdir
-        return root_dir
 
 class IsGitHandler(NbdimeHandler, APIHandler):
     """API handler for querying if path is in git repo"""
