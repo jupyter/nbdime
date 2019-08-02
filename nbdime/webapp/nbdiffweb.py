@@ -5,12 +5,13 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import sys
-from argparse import ArgumentParser
+
 import warnings
 
 from .nbdimeserver import main_server as run_server
 from .webutil import browse as browse_util
 from ..args import (
+    ConfigBackedParser,
     add_generic_args, add_web_args, add_diff_args,
     args_for_server, args_for_browse, process_diff_flags,
     resolve_diff_args)
@@ -23,7 +24,7 @@ def build_arg_parser():
     user specify a port and displays a help message.
     """
     description = 'Difftool for Nbdime.'
-    parser = ArgumentParser(
+    parser = ConfigBackedParser(
         description=description,
         add_help=True
         )

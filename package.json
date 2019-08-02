@@ -2,16 +2,20 @@
   "private": true,
   "scripts": {
     "install": "lerna bootstrap --hoist",
-    "clean": "rimraf node_modules && lerna run clean",
+    "clean": "lerna run clean",
     "build": "lerna run build",
     "build:dev": "tsc --build",
     "updated": "lerna updated",
+    "update:all": "update-dependency --lerna --minimal --regex .*",
+    "update:lab": "update-dependency --lerna --minimal --regex ^@jupyterlab/",
+    "update:lab:next": "update-dependency --lerna --minimal --regex ^@jupyterlab/ ^next",
     "test": "lerna run test",
     "publish": "npm run clean && npm run build && lerna publish -m \"Publish npm packages\"",
     "watch": "tsc --build --watch"
   },
   "devDependencies": {
     "lerna": "^3.14.1",
-    "rimraf": "^2.6.3"
+    "rimraf": "^2.6.3",
+    "@jupyterlab/buildutils": "^1.0.0"
   }
 }

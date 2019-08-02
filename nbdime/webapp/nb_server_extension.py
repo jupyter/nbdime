@@ -19,6 +19,7 @@ from ..diffing.notebooks import set_notebook_diff_ignores, diff_notebooks
 from ..gitfiles import (
     changed_notebooks, is_path_in_repo, find_repo_root,
     InvalidGitRepositoryError, BadName, GitCommandNotFound,
+    GitRefWorkingTree, GitRefIndex
     )
 from ..ignorables import diff_ignorables
 from ..utils import read_notebook
@@ -31,6 +32,12 @@ from .nbdimeserver import (
     ApiDiffHandler,
     APIHandler,
 )
+
+
+special_refs = {
+    'working': GitRefWorkingTree,
+    'index': GitRefIndex,
+}
 
 
 class AuthMainDifftoolHandler(MainDifftoolHandler):
@@ -69,26 +76,33 @@ class CheckpointDifftoolHandler(NbdimeHandler):
             ))
 
 
-class ExtensionApiDiffHandler(ApiDiffHandler):
-    """Diff API handler that also handles diff to git HEAD"""
+class BaseGitDiffHandler(ApiDiffHandler):
 
-    def _get_git_notebooks(self, base_arg):
+    def get_git_notebooks(self, file_path_arg, ref_base='HEAD', ref_remote=None):
+        """
+        Gets the content of the before and after state of the notebook based on the given Git refs.
+
+        :param file_path_arg: The path to the file being diffed
+        :param ref_base: the Git ref for the "local" or the "previous" state
+        :param ref_remote: the Git ref for the "remote" or the "current" state
+        :return: (base_nb, remote_nb)
+        """
         # Sometimes the root dir of the files is not cwd
         nb_root = getattr(self.contents_manager, 'root_dir', None)
         # Resolve base argument to a file system path
-        base = os.path.realpath(to_os_path(base_arg, nb_root))
+        file_path = os.path.realpath(to_os_path(file_path_arg, nb_root))
 
         # Ensure path/root_dir that can be sent to git:
         try:
-            git_root = find_repo_root(base)
+            git_root = find_repo_root(file_path)
         except InvalidGitRepositoryError as e:
             self.log.exception(e)
-            raise HTTPError(422, 'Invalid notebook: %s' % base)
-        base = os.path.relpath(base, git_root)
+            raise HTTPError(422, 'Invalid notebook: %s' % file_path)
+        file_path = os.path.relpath(file_path, git_root)
 
         # Get the base/remote notebooks:
         try:
-            for fbase, fremote in changed_notebooks('HEAD', None, base, git_root):
+            for fbase, fremote in changed_notebooks(ref_base, ref_remote, file_path, git_root):
                 base_nb = read_notebook(fbase, on_null='minimal')
                 remote_nb = read_notebook(fremote, on_null='minimal')
                 break  # there should only ever be one set of files
@@ -96,11 +110,11 @@ class ExtensionApiDiffHandler(ApiDiffHandler):
                 # The filename was either invalid or the file is unchanged
                 # Assume unchanged, and let read_notebook handle error
                 # reporting if invalid
-                base_nb = self.read_notebook(os.path.join(git_root, base))
+                base_nb = self.read_notebook(os.path.join(git_root, file_path))
                 remote_nb = base_nb
         except (InvalidGitRepositoryError, BadName) as e:
             self.log.exception(e)
-            raise HTTPError(422, 'Invalid notebook: %s' % base_arg)
+            raise HTTPError(422, 'Invalid notebook: %s' % file_path_arg)
         except GitCommandNotFound as e:
             self.log.exception(e)
             raise HTTPError(
@@ -108,6 +122,17 @@ class ExtensionApiDiffHandler(ApiDiffHandler):
                      'Please ensure git is available to the server process.')
 
         return base_nb, remote_nb
+
+    @property
+    def curdir(self):
+        root_dir = getattr(self.contents_manager, 'root_dir', None)
+        if root_dir is None:
+            return super(ExtensionApiDiffHandler, self).curdir
+        return root_dir
+
+
+class ExtensionApiDiffHandler(BaseGitDiffHandler):
+    """Diff API handler that also handles diff to git HEAD"""
 
     @gen.coroutine
     def _get_checkpoint_notebooks(self, base):
@@ -138,11 +163,12 @@ class ExtensionApiDiffHandler(ApiDiffHandler):
     @authenticated
     @gen.coroutine
     def post(self):
+        # TODO: Add deprecation warning (for git/checkpoint only?)
         # Assuming a request on the form "{'argname':arg}"
         body = json.loads(escape.to_unicode(self.request.body))
         base = body['base']
         if base.startswith('git:'):
-            base_nb, remote_nb = self._get_git_notebooks(base[len('git:'):])
+            base_nb, remote_nb = self.get_git_notebooks(base[len('git:'):])
         elif base.startswith('checkpoint:'):
             base_nb, remote_nb = yield self._get_checkpoint_notebooks(base[len('checkpoint:'):])
         else:
@@ -163,12 +189,87 @@ class ExtensionApiDiffHandler(ApiDiffHandler):
             }
         self.finish(data)
 
-    @property
-    def curdir(self):
-        root_dir = getattr(self.contents_manager, 'root_dir', None)
-        if root_dir is None:
-            return super(ExtensionApiDiffHandler, self).curdir
-        return root_dir
+
+class GitDiffHandler(BaseGitDiffHandler):
+    """Diff API handler that handles diffs for two git refs"""
+
+    @classmethod
+    def parse_ref(cls, data):
+        return data.get('git', None) or special_refs[data['special'].lower()]
+
+    def _validate_request(self, body):
+        def _fail(msg):
+            self.log.exception(msg)
+            raise HTTPError(400, msg)
+
+        # Validate refs
+        for refname in ('ref_local', 'ref_remote'):
+
+            # Validate ref_curr
+            try:
+                ref = body[refname]
+            except KeyError:
+                _fail('Required key %s not provided in the request' % (refname))
+
+            # Either of special or git is supported in ref
+            if 'special' in ref and 'git' in ref:
+                _fail('Only one of special and git should be present in git '
+                      'reference.')
+
+            if not ('special' in ref or 'git' in ref):
+                _fail('At least one of special and git should be present in git '
+                      'reference.')
+
+            if 'special' in ref:
+                special = ref['special'].lower()
+                if refname == 'ref_local':
+                    if special != 'index':
+                        _fail('Only "index" is allowed for the "special" value '
+                              'on ref_local, got %r.' % (special,))
+                elif special not in ('index', 'working'):
+                    _fail('Only "index" or "working" is allowed for the "special" value '
+                          'on ref_remote, got %r.' % (special,))
+
+
+        # Validate file_name
+        try:
+            body['file_path']
+        except KeyError:
+            _fail('Required value file_path not provided in the request')
+
+
+    @authenticated
+    @gen.coroutine
+    def post(self):
+        body = json.loads(escape.to_unicode(self.request.body))
+
+        try:
+            # Validate the request input
+            self._validate_request(body)
+
+            # Get file contents based on Git regs
+            ref_local = body['ref_local']
+            ref_remote = body['ref_remote']
+            file_path = body['file_path']
+            base_nb, remote_nb = self.get_git_notebooks(
+                file_path,
+                GitDiffHandler.parse_ref(ref_local),
+                GitDiffHandler.parse_ref(ref_remote),
+            )
+
+            # Perform actual diff and return data
+            thediff = diff_notebooks(base_nb, remote_nb)
+
+            data = {
+                'base': base_nb,
+                'diff': thediff,
+            }
+            self.finish(data)
+        except HTTPError:
+            raise
+        except Exception:
+            self.log.exception('Error diffing documents:')
+            raise HTTPError(500, 'Error while attempting to diff documents')
 
 
 class IsGitHandler(NbdimeHandler, APIHandler):
@@ -226,6 +327,7 @@ def _load_jupyter_server_extension(nb_server_app):
         (r'/nbdime/git-difftool', GitDifftoolHandler, params),
         (r'/nbdime/api/diff', ExtensionApiDiffHandler, params),
         (r'/nbdime/api/isgit', IsGitHandler, params),
+        (r'/nbdime/api/gitdiff', GitDiffHandler, params)
     ]
 
     # Prefix routes with base_url:

@@ -25,6 +25,22 @@ module.exports = function (config) {
       coverageOptions: {
         instrumentation: false
       },
+      bundlerOptions: {
+        acornOptions: {
+          ecmaVersion: 8,
+        },
+        transforms: [
+          require("karma-typescript-es6-transform")({
+            presets: [
+              ["env", {
+                targets: {
+                  browsers: ["last 2 Chrome versions"]
+                },
+              }]
+            ]
+          })
+        ]
+      }
     }
   });
 };
