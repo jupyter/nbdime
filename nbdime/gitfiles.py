@@ -113,13 +113,12 @@ def _get_diff_entry_stream(path, blob, ref_name, repo_dir):
         if ref_name is GitRefWorkingTree:
             # Diffing against working copy, use file on disk!
             with pushd(repo_dir):
-                # Ensure we filter if appropriate:
-                if ref_name is None:
-                    # We are diffing against working dir, so remote is candidate
-                    ret = apply_possible_filter(path)
-                    # ret == path means no filter was applied
-                    if ret != path:
-                        return ret
+                # We are diffing against working dir, so ensure we apply
+                # any git filters before comparing:
+                ret = apply_possible_filter(path)
+                # ret == path means no filter was applied
+                if ret != path:
+                    return ret
                 try:
                     return io.open(path, encoding='utf-8')
                 except IOError:
@@ -134,7 +133,10 @@ def _get_diff_entry_stream(path, blob, ref_name, repo_dir):
             # The penalty should be low as long as changed_notebooks are used
             # properly as an iterator.
             f = BlobWrapper(blob.data_stream.read().decode('utf-8'))
-            f.name = '%s (%s)' % (path, ref_name)
+            f.name = '%s (%s)' % (
+                path,
+                ref_name if ref_name != GitRefIndex else '<INDEX>'
+            )
             return f
     return EXPLICIT_MISSING_FILE
 
