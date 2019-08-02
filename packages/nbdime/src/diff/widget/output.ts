@@ -125,22 +125,8 @@ class OutputPanel extends Panel {
     }
 
     if (model.added) {
-      if (!parentModel.added) {
-        // Implies this is added output
-        let addSpacer = new Widget();
-        addSpacer.node.textContent = 'Output added';
-        addSpacer.addClass(ADD_DEL_LABEL_CLASS);
-        this.addWidget(addSpacer);
-      }
       this.addClass(ADDED_DIFF_CLASS);
     } else if (model.deleted) {
-      if (!parentModel.deleted) {
-        // Implies this is deleted output
-        let delSpacer = new Widget();
-        delSpacer.node.textContent = 'Output deleted';
-        delSpacer.addClass(ADD_DEL_LABEL_CLASS);
-        this.addWidget(delSpacer);
-      }
       this.addClass(DELETED_DIFF_CLASS);
     } else if (model.unchanged) {
       this.addClass(UNCHANGED_DIFF_CLASS);

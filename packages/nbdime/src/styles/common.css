@@ -5,7 +5,7 @@
   /* style as jp-InputArea-editor: */
   border: var(--codemirror-border);
   border-radius: 0px;
-  background: var(--jp-cell-editor-background);
+  background: var(--jp-cell-editor-active-background);
 }
 
 .nbdime-root .CodeMirror.cm-s-jupyter {
@@ -21,9 +21,9 @@
 }
 
 .nbdime-root .CodeMirror-merge-pane-unchanged { width: 100%; }
-.nbdime-root .CodeMirror-merge-1pane .CodeMirror-merge-gap { width: 6%; }
-.nbdime-root .CodeMirror-merge-2pane .CodeMirror-merge-pane { width: 47%; }
-.nbdime-root .CodeMirror-merge-2pane .CodeMirror-merge-gap { width: 6%; }
+.nbdime-root .CodeMirror-merge-1pane .CodeMirror-merge-gap { display: none }
+.nbdime-root .CodeMirror-merge-2pane .CodeMirror-merge-pane { width: 50%; }
+.nbdime-root .CodeMirror-merge-2pane .CodeMirror-merge-gap { display: none }
 .nbdime-root .CodeMirror-merge-3pane .CodeMirror-merge-pane { width: 31%; }
 .nbdime-root .CodeMirror-merge-3pane .CodeMirror-merge-gap { width: 3.5%; }
 
@@ -39,9 +39,18 @@
   z-index: 1;
 }
 
+.nbdime-root .CodeMirror-gutters {
+  border-right: none;
+  background-color: transparent;
+}
+
+.nbdime-root .cm-s-jupyter .CodeMirror-gutter {
+  background-color: transparent;
+}
+
 .nbdime-root .p-Widget.CodeMirror-merge-gap {
   z-index: 2;
-  display: inline-block;
+  display: none;
   height: 100%;
   -moz-box-sizing: border-box;
   box-sizing: border-box;

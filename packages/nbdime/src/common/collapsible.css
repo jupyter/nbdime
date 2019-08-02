@@ -2,19 +2,22 @@
 .jp-CollapsiblePanel {
     border: var(--jp-nbdime-output-color1) solid 1pt;
 }
+/* 'Collapse' stacked panel borders */
+.jp-CollapsiblePanel + .jp-CollapsiblePanel {
+    border-top: none;
+}
 
 button.jp-CollapsiblePanel-header-icon {
     background-size: 20px;
     background-position: center;
     background-repeat: no-repeat;
 
-    height: 24px;
-    width: 24px;
+    height: 1em;
+    width: 2em;
     font-size: var(--jp-ui-font-size1);
     line-height: var(--jp-private-toolbar-height);
     margin-top: .1em;
     font-weight: 500;
-    padding: var(--jp-flat-button-padding);
 
     color: var(--jp-ui-font-color1);
     background-color: transparent;
@@ -46,7 +49,6 @@ button.jp-CollapsiblePanel-header-icon::-moz-focus-inner {
     background-color: var(--jp-nbdime-output-color3);
     padding-left: 1em;
     padding-right: 2em;
-    border-top: var(--jp-nbdime-output-color1) solid 1pt;
     color: var(--jp-ui-font-color1);
 }
 
@@ -72,6 +74,7 @@ button.jp-CollapsiblePanel-header-icon::-moz-focus-inner {
         -ms-transform: translate(0, 0%);
             transform: translate(0, 0%);
     height: 100%;
+    border-top: var(--jp-nbdime-output-color1) solid 1pt;
 }
 
 .jp-CollapsiblePanel-closed {

@@ -60,6 +60,8 @@ const SOURCE_ROW_CLASS = 'jp-Cellrow-source';
 const METADATA_ROW_CLASS = 'jp-Cellrow-metadata';
 const OUTPUTS_ROW_CLASS = 'jp-Cellrow-outputs';
 
+const CHANGED_ROW_MOD_CLASS = 'jp-diff-mod-changed';
+
 
 
 /**
@@ -154,6 +156,9 @@ class CellDiffWidget extends Panel {
         let header = changed ? 'Outputs changed' : 'Outputs unchanged';
         let collapser = new CollapsiblePanel(container, header, collapsed);
         collapser.addClass(OUTPUTS_ROW_CLASS);
+        if (changed) {
+          collapser.addClass(CHANGED_ROW_MOD_CLASS);
+        }
         this.addWidget(collapser);
       }
     }

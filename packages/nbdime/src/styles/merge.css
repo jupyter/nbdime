@@ -190,15 +190,14 @@
   background-color: var(--jp-merge-remote-color2);
 }
 
-.jp-Notebook-merge .jp-Merge-gutter-picker {
+.jp-Notebook-merge .jp-Merge-gutter-picker,
+.jp-Notebook-merge .jp-Merge-gutter-conflict {
   width: 16px;
   text-align: right;
 }
 
 .jp-Notebook-merge .jp-Merge-gutter-conflict {
-  width: 16px;
   color: #b00;
-  text-align: right;
 }
 
 .jp-Notebook-merge .jp-Merge-conflict {

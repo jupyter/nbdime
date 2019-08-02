@@ -92,6 +92,11 @@
   display: none;
 }
 
+.jp-Notebook-diff .jp-Cellrow-metadata .CodeMirror-merge,
+.jp-Notebook-diff .jp-Cellrow-outputs .CodeMirror-merge {
+  border: none;
+}
+
 .jp-Notebook-diff .jp-Diff-added .jp-Cellrow-outputs,
 .jp-Notebook-diff .jp-Diff-deleted .jp-Cellrow-outputs {
   border-top: var(--jp-nbdime-output-color1) solid 1pt;
@@ -107,6 +112,14 @@
   width: 75%;
 }
 
+.jp-Notebook-diff .jp-Cellrow-outputs:not(.jp-diff-mod-changed) {
+  border: var(--codemirror-border);
+}
+
+.jp-Notebook-diff .jp-Cellrow-outputs:not(.jp-diff-mod-changed) .jp-CollapsiblePanel-header {
+  background-color: inherit;
+}
+
 .jp-Notebook-diff .jp-Diff-unchanged .jp-Output-result > * {
   display: block;
   margin-left: auto;
@@ -115,12 +128,13 @@
 
 .jp-Notebook-diff .jp-Cellrow-outputs .jp-Diff-twoway .jp-Diff-base {
   float: left;
-  width: 47%;
+  width: 50%;
 }
 
 .jp-Notebook-diff .jp-Cellrow-outputs .jp-Diff-twoway .jp-Diff-remote {
   float: right;
-  width: 47%;
+  width: 50%;
+  border-left: solid 1px var(--jp-nbdime-output-color1);
 }
 
 .jp-Notebook-diff .jp-Output-result img {
@@ -129,7 +143,8 @@
 
 .jp-Notebook-diff .CodeMirror-merge-pane-remote {
   position: relative;
-  left: 6%;
+  left: var(--jp-border-width);
+  border-left: var(--codemirror-border);
 }
 
 .jp-Notebook-diff .jp-Cellrow-source .CodeMirror-merge-pane-deleted,
@@ -149,11 +164,19 @@
 /* Color diff highlighting according to style vars */
 .jp-Notebook-diff .CodeMirror-merge-r-chunk { background-color: var(--jp-diff-deleted-color2); }
 .jp-Notebook-diff .CodeMirror-merge-r-connect { fill: var(--jp-diff-deleted-color2); stroke: var(--jp-diff-deleted-color0); stroke-width: 1px; }
-.jp-Notebook-diff .CodeMirror-merge-spacer { background-color: var(--jp-diff-deleted-color2); }
+.jp-Notebook-diff .CodeMirror-merge-spacer { background-color: var(--jp-layout-color2); }
 
 .jp-Notebook-diff .CodeMirror-merge-pane-remote .CodeMirror-merge-r-chunk { background-color: var(--jp-diff-added-color2); }
 .jp-Notebook-diff .CodeMirror-merge-pane-remote .CodeMirror-merge-r-connect { fill: var(--jp-diff-added-color2); stroke: var(--jp-diff-added-color0); stroke-width: 1px; }
-.jp-Notebook-diff .CodeMirror-merge-pane-remote .CodeMirror-merge-spacer { background-color: var(--jp-diff-added-color2); }
+
+
+.jp-Notebook-diff .CodeMirror-merge-spacer {
+  background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, var(--jp-diff-deleted-color2) 5px, var(--jp-diff-deleted-color2) 10px);
+}
+.jp-Notebook-diff .CodeMirror-merge-pane-remote .CodeMirror-merge-spacer {
+  background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, var(--jp-diff-added-color2) 5px, var(--jp-diff-added-color2) 10px);
+}
+
 
 
 .jp-Notebook-diff .jp-Diff-deleted .CodeMirror,
@@ -225,7 +248,58 @@ Output mimetype selection:
   border-bottom: var(--jp-border-width) solid var(--jp-nbdime-output-color2);
 }
 
+.jp-Diff-outputPanel:not(.jp-Diff-trustCandidate) .jp-Diff-outputsContainer > .p-Widget:not(:last-child) {
+  border-bottom: var(--codemirror-border);
+}
+
+.jp-Cellrow-outputs:not(.jp-diff-mod-changed) .jp-Diff-outputsContainer > .p-Widget:not(:last-child) {
+  border-bottom: var(--jp-border-width) solid var(--jp-cell-editor-border-color);
+}
+
 .jp-Notebook-diff .jp-Diff-renderedOutput {
   /* Ensure output is always large enough to show menu */
   min-height: 2em;
+}
+
+.jp-Notebook-diff .jp-Diff-renderedOutput.jp-RenderedText {
+  padding-top: 0.4em;
+}
+
+.jp-Notebook-diff .jp-Diff-gutter-symbol {
+  width: 16px;
+}
+
+.jp-Notebook-diff .jp-Diff-gutter-added,
+.jp-Notebook-diff .jp-Diff-gutter-removed {
+  text-align: center;
+  color: #999;
+}
+
+.jp-Notebook-diff .CodeMirror-linebackground {
+  left: -52px;
+}
+
+.jp-Notebook-diff .CodeMirror-linewidget {
+  margin-left: -52px;
+}
+
+.jp-Notebook-diff .CodeMirror-gutter.CodeMirror-linenumbers {
+  border-right: var(--codemirror-border);
+}
+
+.jp-Diff-outputPanel.jp-Diff-twoway .jp-Diff-renderedOutput::before,
+.jp-Diff-outputPanel.jp-Diff-added .jp-Diff-renderedOutput::before,
+.jp-Diff-outputPanel.jp-Diff-deleted .jp-Diff-renderedOutput::before {
+  content: "+";
+  width: 32px;
+  float: left;
+  color: #999;
+  border-right: var(--codemirror-border);
+  margin-right: 10px;
+  text-align: center;
+}
+
+.jp-Diff-outputPanel.jp-Diff-twoway .jp-Diff-base .jp-Diff-renderedOutput::before,
+.jp-Diff-outputPanel.jp-Diff-deleted .jp-Diff-base .jp-Diff-renderedOutput::before {
+  content: "-";
 }

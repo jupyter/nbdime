@@ -79,6 +79,10 @@ type DiffClasses = {
 const GUTTER_PICKER_CLASS = 'jp-Merge-gutter-picker';
 const GUTTER_CONFLICT_CLASS = 'jp-Merge-gutter-conflict';
 
+const GUTTER_DIFF_SYMBOL_CLASS = 'jp-Diff-gutter-symbol';
+const GUTTER_DIFF_ADDED_CLASS = 'jp-Diff-gutter-added';
+const GUTTER_DIFF_REMOVED_CLASS = 'jp-Diff-gutter-removed';
+
 const CHUNK_CONFLICT_CLASS = 'jp-Merge-conflict';
 
 const leftClasses: DiffClasses = { chunk: 'CodeMirror-merge-l-chunk',
@@ -484,6 +488,7 @@ class DiffView {
     }
 
     let self = this;
+    let edit = editor === self.baseEditor;
     function markChunk(editor: CodeMirror.Editor, from: number, to: number,
                        sources: ChunkSource[]) {
       if (self.classes === null && sources.length > 0) {
@@ -519,6 +524,10 @@ class DiffView {
         if (conflict) {
           editor.addLineClass(line, 'background', CHUNK_CONFLICT_CLASS);
         }
+        let symbol = edit
+          ? elt('div', '-', GUTTER_DIFF_REMOVED_CLASS)
+          : elt('div', '+', GUTTER_DIFF_ADDED_CLASS);
+        editor.setGutterMarker(line, GUTTER_DIFF_SYMBOL_CLASS, symbol);
         if (i === from) {
           editor.addLineClass(line, 'background', classes.start);
           if (self.type !== 'merge') {
@@ -573,7 +582,6 @@ class DiffView {
     }
     let cls = type === DIFF_OP.DIFF_DELETE ? classes.del : classes.insert;
     editor.operation(function() {
-      let edit = editor === self.baseEditor;
       if (self.classes) {
         clearMarks(editor, markers, classes);
       } else {
@@ -648,6 +656,7 @@ function clearMarks(editor: CodeMirror.Editor, arr: Marker[], classes: DiffClass
         editor.setGutterMarker(mark, GUTTER_PICKER_CLASS, null);
       } else {
         editor.setGutterMarker(mark, GUTTER_CONFLICT_CLASS, null);
+        editor.setGutterMarker(mark, GUTTER_DIFF_SYMBOL_CLASS, null);
       }
       let line = editor.lineInfo(mark);
       if (!line.bgClass || line.bgClass.length === 0) {
@@ -929,6 +938,8 @@ class MergeView extends Panel {
         // Turn off linewrapping for merge view by default, keep for diff
         options.lineWrapping = false;
       }
+    } else {
+      options.gutters = ['CodeMirror-linenumbers', GUTTER_DIFF_SYMBOL_CLASS];
     }
 
     this.base = new EditorWidget(options.value, copyObj({readOnly: !!options.readOnly}, options));
