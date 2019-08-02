@@ -96,6 +96,45 @@ def test_diff_api(git_repo2, server_extension_app):
     assert data['diff']
     assert len(data.keys()) == 2
 
+@pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT*6)
+def test_git_diff_api(git_repo2, server_extension_app, filespath):
+    local_path = os.path.relpath(git_repo2, server_extension_app['path'])
+    url = 'http://127.0.0.1:%i/nbdime/api/gitdiff' % server_extension_app['port']
+
+    # Add a difference betweeen index and working tree:
+    shutil.copy(
+        pjoin(filespath, 'foo--1.ipynb'),
+        pjoin(git_repo2, 'sub', 'subfile.ipynb')
+    )
+
+    def _make_ref(key):
+        if key.lower() in ('working', 'index'):
+            return {'special': key}
+        return {'git': key}
+
+    # Test various diffs:
+    for args in (
+        ('HEAD', 'WORKING', 'diff.ipynb'),
+        ('HEAD', 'INDEX', 'diff.ipynb'),
+        ('INDEX', 'HEAD', 'diff.ipynb'),
+        ('INDEX', 'WORKING', 'sub/subfile.ipynb'),
+        ('index', 'working', 'sub/subfile.ipynb'),
+        ('iNdeX', 'WorKING', 'sub/subfile.ipynb'),
+    ):
+        print(args)
+        r = requests.post(
+            url, headers=auth_header,
+            data=json.dumps({
+                'ref_local': _make_ref(args[0]),
+                'ref_remote': _make_ref(args[1]),
+                'file_path': pjoin(local_path, args[2])
+            }))
+        r.raise_for_status()
+        data = r.json()
+        nbformat.validate(data['base'])
+        assert data['diff']
+        assert len(data.keys()) == 2
+
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
 def test_diff_api_checkpoint(tmpdir, filespath, server_extension_app):

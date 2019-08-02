@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
-import os
 import io
+import os
 from collections import deque
 
 from six import string_types
@@ -10,11 +10,18 @@ from six import string_types
 os.environ['GIT_PYTHON_REFRESH'] = 'quiet'
 from git import (
     Repo, InvalidGitRepositoryError, BadName, NoSuchPathError,
-    GitCommandNotFound,
+    GitCommandNotFound, Diffable
 )
 
 from nbdime.vcs.git.filter_integration import apply_possible_filter
 from .utils import EXPLICIT_MISSING_FILE, pushd
+
+
+# Git ref representing the working tree
+GitRefWorkingTree = None
+
+# Git ref representing the index
+GitRefIndex = Diffable.Index
 
 
 class BlobWrapper(io.StringIO):
@@ -97,31 +104,39 @@ def _get_diff_entry_stream(path, blob, ref_name, repo_dir):
     """Get a stream to the notebook, for a given diff entry's path and blob
 
     Returns None if path is not a Notebook file, and EXPLICIT_MISSING_FILE
-    if path is missing."""
+    if path is missing, or the blob is None (unless diffing against working
+    tree).
+    """
     if path:
         if not path.endswith('.ipynb'):
             return None
-        if blob is None:
+        if ref_name is GitRefWorkingTree:
             # Diffing against working copy, use file on disk!
             with pushd(repo_dir):
-                # Ensure we filter if appropriate:
-                if ref_name is None:
-                    # We are diffing against working dir, so remote is candidate
-                    ret = apply_possible_filter(path)
-                    # ret == path means no filter was applied
-                    if ret != path:
-                        return ret
+                # We are diffing against working dir, so ensure we apply
+                # any git filters before comparing:
+                ret = apply_possible_filter(path)
+                # ret == path means no filter was applied
+                if ret != path:
+                    return ret
                 try:
                     return io.open(path, encoding='utf-8')
                 except IOError:
                     return EXPLICIT_MISSING_FILE
+        elif blob is None:
+            # GitPython uses a None blob to indicate if a file was deleted or
+            # added. Workaround for GitPython issue #749.
+            return EXPLICIT_MISSING_FILE
         else:
             # There were strange issues with passing blob data_streams around,
             # so we solve this by reading into a StringIO buffer.
             # The penalty should be low as long as changed_notebooks are used
             # properly as an iterator.
             f = BlobWrapper(blob.data_stream.read().decode('utf-8'))
-            f.name = '%s (%s)' % (path, ref_name)
+            f.name = '%s (%s)' % (
+                path,
+                ref_name if ref_name != GitRefIndex else '<INDEX>'
+            )
             return f
     return EXPLICIT_MISSING_FILE
 
@@ -129,10 +144,11 @@ def _get_diff_entry_stream(path, blob, ref_name, repo_dir):
 def changed_notebooks(ref_base, ref_remote, paths=None, repo_dir=None):
     """Iterator over all notebooks in path that has changed between the two git refs
 
-    References are all valid values according to git-rev-parse. If ref_remote
-    is None, the difference is taken between ref_base and the working directory.
+    References are all valid values according to git-rev-parse, or one of
+    the special sentinel values GitRefWorkingTree or GitRefIndex.
+
     Iterator value is a base/remote pair of streams to Notebooks
-    (or possibly EXPLICIT_MISSING_FILE for added/removed files).
+    or EXPLICIT_MISSING_FILE for added/removed files.
     """
     repo, popped = get_repo(repo_dir or os.curdir)
     if repo_dir is None:
@@ -142,15 +158,21 @@ def changed_notebooks(ref_base, ref_remote, paths=None, repo_dir=None):
     if paths and popped:
         # All paths need to be prepended by popped
         paths = [os.path.join(*(popped + (p,))) for p in paths]
-    # Get tree for base:
-    tree_base = repo.commit(ref_base).tree
-    if ref_remote is None:
-        # Diff tree against working copy:
-        diff = tree_base.diff(None, paths)
+
+    # Get tree/index for base
+    if ref_base == GitRefIndex:
+        tree_base = repo.index
+    else:
+        tree_base = repo.commit(ref_base).tree
+
+    if ref_remote in (GitRefWorkingTree, GitRefIndex):
+        diff = tree_base.diff(ref_remote, paths)
     else:
         # Get remote tree and diff against base:
         tree_remote = repo.commit(ref_remote).tree
         diff = tree_base.diff(tree_remote, paths)
+
+    # Return the base/remote pair of Notebook file streams
     for entry in diff:
         fa = _get_diff_entry_stream(
             entry.a_path, entry.a_blob, ref_base, repo_dir)
