@@ -227,7 +227,7 @@ class GitDiffHandler(BaseGitDiffHandler):
                         _fail('Only "index" is allowed for the "special" value '
                               'on ref_local, got %r.' % (special,))
                 elif special not in ('index', 'working'):
-                    _fail('Only "index" or "working is allowed for the "special" value '
+                    _fail('Only "index" or "working" is allowed for the "special" value '
                           'on ref_remote, got %r.' % (special,))
 
 
