@@ -313,7 +313,7 @@ function splitCellChunks(mergeDecisions: MergeDecision[]): MergeDecision[] {
           'remote', // Check for custom action first?
           md.conflict,
         ));
-      } else if (md.remoteDiff && md.localDiff && md.remoteDiff.length && md.localDiff.length) {
+      } else if (hasEntries(md.remoteDiff) && hasEntries(md.localDiff)) {
         const ops = [md.remoteDiff[0].op, md.localDiff[0].op].sort();
         if (ops.join(',') === 'addrange,removerange') {
           // Insertion and deletions on the same index are simply split
