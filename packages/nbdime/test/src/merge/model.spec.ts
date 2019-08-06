@@ -525,6 +525,58 @@ describe('merge', () => {
           expect(stripSource(d.remoteDiff)).to.eql([opAddRange(1, 'line #2\n')]);
         });
 
+        it('should split an ADDRANGE/REMOVERANGE conflict', () => {
+          const lineAdd = opPatch('source', [opAddRange(1, 'line #2\n')]);
+          let cdecs: MergeDecision[] = [new MergeDecision(
+            ['cells'],
+            [opAddRange(0, [cell1])],
+            [opRemoveRange(0, 1)],
+            'local_then_remote',
+            true
+          )];
+          let model = new NotebookMergeModel(notebook, cdecs);
+
+          expect(model.decisions.length).to.be(2);
+          let d = model.decisions[0];
+          expect(d.action).to.be('local');
+          expect(d.conflict).to.be(true);
+          expect(stripSource(d.localDiff)).to.eql([opAddRange(0, [cell1])]);
+          expect(d.remoteDiff).to.be(null);
+
+          d = model.decisions[1];
+          expect(d.action).to.be('remote');
+          expect(d.conflict).to.be(true);
+          expect(d.localDiff).to.be(null);
+          expect(stripSource(d.remoteDiff)).to.eql([opRemoveRange(0, 1)]);
+
+        });
+
+        it('should split an REMOVERANGE/ADDRANGE conflict', () => {
+          const lineAdd = opPatch('source', [opAddRange(1, 'line #2\n')]);
+          let cdecs: MergeDecision[] = [new MergeDecision(
+            ['cells'],
+            [opRemoveRange(0, 1)],
+            [opAddRange(0, [cell1])],
+            'local_then_remote',
+            true
+          )];
+          let model = new NotebookMergeModel(notebook, cdecs);
+
+          expect(model.decisions.length).to.be(2);
+          let d = model.decisions[0];
+          expect(d.action).to.be('remote');
+          expect(d.conflict).to.be(true);
+          expect(d.localDiff).to.be(null);
+          expect(stripSource(d.remoteDiff)).to.eql([opAddRange(0, [cell1])]);
+
+          d = model.decisions[1];
+          expect(d.action).to.be('local');
+          expect(d.conflict).to.be(true);
+          expect(stripSource(d.localDiff)).to.eql([opRemoveRange(0, 1)]);
+          expect(d.remoteDiff).to.be(null);
+
+        });
+
       });
 
     });

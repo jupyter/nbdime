@@ -321,11 +321,13 @@ function splitCellChunks(mergeDecisions: MergeDecision[]): MergeDecision[] {
 
           // Just do local first (alt. do add first)
           let lmd = new MergeDecision(md);
+          lmd.action = 'local';
           lmd.localDiff = md.localDiff.slice();
           lmd.remoteDiff = null;
           output.push(lmd);
 
           let rmd = new MergeDecision(md);
+          rmd.action = 'remote';
           rmd.localDiff = null;
           rmd.remoteDiff = md.remoteDiff.slice();
           output.push(rmd);
