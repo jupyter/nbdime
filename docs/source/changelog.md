@@ -1,5 +1,12 @@
 # Changes in nbdime
 
+## 1.1
+
+###  1.1.0 - 2019-08
+
+- Add rest API for server extension for handling pure git diffs of notebooks. This allows for a cleaner call without prefixing the filename etc. This is currently only available on the server extension, but can be moved to the main server if there is demand.
+
+
 ## 1.0
 
 ###  1.0.7 - 2019-07
