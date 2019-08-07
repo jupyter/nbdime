@@ -313,6 +313,27 @@ function splitCellChunks(mergeDecisions: MergeDecision[]): MergeDecision[] {
           'remote', // Check for custom action first?
           md.conflict,
         ));
+      } else if (hasEntries(md.remoteDiff) && hasEntries(md.localDiff)) {
+        const ops = [md.remoteDiff[0].op, md.localDiff[0].op].sort();
+        if (ops.join(',') === 'addrange,removerange') {
+          // Insertion and deletions on the same index are simply split
+          // but both keep the conflict status
+
+          // Just do local first (alt. do add first)
+          let lmd = new MergeDecision(md);
+          lmd.action = 'local';
+          lmd.localDiff = md.localDiff.slice();
+          lmd.remoteDiff = null;
+          output.push(lmd);
+
+          let rmd = new MergeDecision(md);
+          rmd.action = 'remote';
+          rmd.localDiff = null;
+          rmd.remoteDiff = md.remoteDiff.slice();
+          output.push(rmd);
+        } else {
+          output.push(md);  // deepCopy?
+        }
       } else {
         output.push(md);  // deepCopy?
       }
