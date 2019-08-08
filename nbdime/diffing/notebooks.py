@@ -139,7 +139,7 @@ def _compare_mimedata(mimetype, x, y, comp_text, comp_base64):
     # TODO: Compare binary images?
     #if mimetype.startswith("image/"):
     if isinstance(x, string_types) and isinstance(y, string_types):
-        _compare_mimedata_strings(x, y, comp_text, comp_base64)
+        return _compare_mimedata_strings(x, y, comp_text, comp_base64)
     # Fallback to exactly equal
     return x == y
 
