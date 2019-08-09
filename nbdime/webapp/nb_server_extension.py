@@ -87,10 +87,14 @@ class BaseGitDiffHandler(ApiDiffHandler):
         :param ref_remote: the Git ref for the "remote" or the "current" state
         :return: (base_nb, remote_nb)
         """
-        # Sometimes the root dir of the files is not cwd
-        nb_root = getattr(self.contents_manager, 'root_dir', None)
-        # Resolve base argument to a file system path
-        file_path = os.path.realpath(to_os_path(file_path_arg, nb_root))
+
+        if os.path.isabs(file_path_arg):
+            file_path = os.path.realpath(file_path_arg)
+        else:
+            # Sometimes the root dir of the files is not cwd
+            nb_root = getattr(self.contents_manager, 'root_dir', None)
+            # Resolve base argument to a file system path
+            file_path = os.path.realpath(to_os_path(file_path_arg, nb_root))
 
         # Ensure path/root_dir that can be sent to git:
         try:
