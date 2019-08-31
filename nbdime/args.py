@@ -367,7 +367,7 @@ def add_filter_args(diff_parser):
 
 def add_git_diff_driver_args(diff_parser):
     """Adds a set of 7 stanard git diff driver arguments:
-        path old-file old-hex old-mode new-file new-hex new-mode [ rename-to ]
+        path old-file old-hex old-mode new-file new-hex new-mode [ rename-to rename-metadata ]
 
     Note: Only path, base and remote are added to parsed namespace
     """
@@ -380,6 +380,7 @@ def add_git_diff_driver_args(diff_parser):
     diff_parser.add_argument('remote_sha1', nargs='?', default=None, action=SkipAction)
     diff_parser.add_argument('remote_mode', nargs='?', default=None, action=SkipAction)
     diff_parser.add_argument('rename_to', type=Path, nargs='?', default=None, action=SkipAction)
+    diff_parser.add_argument('rename_metadata', type=Path, nargs='?', default=None, action=SkipAction)
 
 
 def process_diff_flags(args):
