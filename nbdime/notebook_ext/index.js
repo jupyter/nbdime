@@ -7,6 +7,12 @@ define([
 ], function(Jupyter, $, utils) {
     "use strict";
 
+    // params are updated on config load
+    var params = {
+        add_checkpoints_toolbar_button: true,
+        add_git_toolbar_button: true,
+    };
+    
     // Custom util functions:
     var reStripLeading = /^\/+/
     var stripLeft = function (string) {
@@ -113,7 +119,7 @@ define([
         // Check whether to enable button or not
         triggerCheckpointTest();
 
-        if (isGit) {
+        if (isGit && params.add_git_toolbar_button) {
             // Register git action
             var gitAction = Jupyter.actions.register({
                 icon: 'fa-git',
@@ -121,17 +127,26 @@ define([
                 handler : nbGitDiffView
             }, 'diff-notebook-git', prefix);
 
-            // Add both buttons, with label on git button
-            var btn_group = Jupyter.toolbar.add_buttons_group([
-                checkpointAction,
-            {
-                action: gitAction,
-                label: 'nbdiff',
-            }]);
+            if (params.add_checkpoints_toolbar_button) {
+                // Add both buttons, with label on git button
+                var btn_group = Jupyter.toolbar.add_buttons_group([
+                    checkpointAction,
+                {
+                    action: gitAction,
+                    label: 'nbdiff',
+                }]);
+            } else {
+                // Add only git button
+                var btn_group = Jupyter.toolbar.add_buttons_group([{
+                    action: gitAction,
+                    label: 'nbdiff',
+                }]);
+           };
 
             // Tooltip for git button:
             btn_group.children(':last-child').attr('title', Jupyter.actions.get(gitAction).help);
-        } else {
+
+        } else if (params.add_checkpoints_toolbar_button) {
             // Add only checkpoint button, with label on it
             var btn_group = Jupyter.toolbar.add_buttons_group([{
                 action: checkpointAction,
