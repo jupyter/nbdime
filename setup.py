@@ -36,7 +36,6 @@ jstargets = [
     pjoin(static_dir, 'nbdime.js'),
 ]
 
-
 package_data = {
     name: [
         'tests/files/*.*',
@@ -48,7 +47,6 @@ package_data = {
         'notebook_ext/*.*',
     ]
 }
-
 
 data_spec = [
     ('share/jupyter/nbextensions/nbdime',
