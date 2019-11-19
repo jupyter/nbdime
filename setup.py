@@ -90,12 +90,11 @@ setup_args = dict(
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: BSD License',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
         'Framework :: Jupyter',
     ],
 )
@@ -130,14 +129,9 @@ extras_require = setuptools_args['extras_require'] = {
         'recommonmark',
         'sphinx_rtd_theme'
     ],
-
-    ':python_version == "2.7"': [
-        'backports.shutil_which',
-        'backports.functools_lru_cache',
-    ],
 }
 
-setuptools_args['python_requires'] = '>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*'
+setuptools_args['python_requires'] = '>=3.5'
 
 if 'setuptools' in sys.modules:
     setup_args.update(setuptools_args)
