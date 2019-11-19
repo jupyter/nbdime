@@ -6,9 +6,7 @@
 
 from __future__ import print_function
 
-import io
 import os
-import sys
 from glob import glob
 
 from setuptools import setup, find_packages
@@ -100,8 +98,7 @@ setup_args = dict(
 )
 
 
-setuptools_args = {}
-install_requires = setuptools_args['install_requires'] = [
+install_requires = setup_args['install_requires'] = [
     'nbformat',
     'six',
     'colorama',
@@ -113,7 +110,7 @@ install_requires = setuptools_args['install_requires'] = [
     'jinja2>=2.9',
 ]
 
-extras_require = setuptools_args['extras_require'] = {
+extras_require = setup_args['extras_require'] = {
     'test': [
         'pytest>=3.6',
         'pytest-cov',
@@ -131,33 +128,26 @@ extras_require = setuptools_args['extras_require'] = {
     ],
 }
 
-setuptools_args['python_requires'] = '>=3.5'
+setup_args['python_requires'] = '>=3.5'
 
-if 'setuptools' in sys.modules:
-    setup_args.update(setuptools_args)
-
-    # force entrypoints with setuptools (needed for Windows, unconditional because of wheels)
-    setup_args['entry_points'] = {
-        'console_scripts': [
-            'nbdime = nbdime.__main__:main_dispatch',
-            'nbshow = nbdime.nbshowapp:main',
-            'nbdiff = nbdime.nbdiffapp:main',
-            'nbdiff-web = nbdime.webapp.nbdiffweb:main',
-            'nbmerge = nbdime.nbmergeapp:main',
-            'nbmerge-web = nbdime.webapp.nbmergeweb:main',
-            'git-nbdiffdriver = nbdime.vcs.git.diffdriver:main',
-            'git-nbdifftool = nbdime.vcs.git.difftool:main',
-            'git-nbmergedriver = nbdime.vcs.git.mergedriver:main',
-            'git-nbmergetool = nbdime.vcs.git.mergetool:main',
-            'hg-nbdiff = nbdime.vcs.hg.diff:main',
-            'hg-nbdiffweb = nbdime.vcs.hg.diffweb:main',
-            'hg-nbmerge = nbdime.vcs.hg.merge:main',
-            'hg-nbmergeweb = nbdime.vcs.hg.mergeweb:main',
-        ]
-    }
-    setup_args.pop('scripts', None)
-
-    setup_args.update(setuptools_args)
+setup_args['entry_points'] = {
+    'console_scripts': [
+        'nbdime = nbdime.__main__:main_dispatch',
+        'nbshow = nbdime.nbshowapp:main',
+        'nbdiff = nbdime.nbdiffapp:main',
+        'nbdiff-web = nbdime.webapp.nbdiffweb:main',
+        'nbmerge = nbdime.nbmergeapp:main',
+        'nbmerge-web = nbdime.webapp.nbmergeweb:main',
+        'git-nbdiffdriver = nbdime.vcs.git.diffdriver:main',
+        'git-nbdifftool = nbdime.vcs.git.difftool:main',
+        'git-nbmergedriver = nbdime.vcs.git.mergedriver:main',
+        'git-nbmergetool = nbdime.vcs.git.mergetool:main',
+        'hg-nbdiff = nbdime.vcs.hg.diff:main',
+        'hg-nbdiffweb = nbdime.vcs.hg.diffweb:main',
+        'hg-nbmerge = nbdime.vcs.hg.merge:main',
+        'hg-nbmergeweb = nbdime.vcs.hg.mergeweb:main',
+    ]
+}
 
 if __name__ == '__main__':
     setup(**setup_args)
