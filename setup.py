@@ -68,9 +68,18 @@ cmdclass['js'] = combine_commands(
 )
 
 
+with open(pjoin(here, 'README.md')) as f:
+    long_description = f.read().replace(
+        'docs/source/images',
+        'https://github.com/jupyter/nbdime/raw/{version}/docs/source/images'.format(version=version)
+    )
+
+
 setup_args = dict(
     name            = name,
     description     = "Diff and merge of Jupyter Notebooks",
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     version         = version,
     scripts         = glob(pjoin('scripts', '*')),
     cmdclass        = cmdclass,
@@ -78,7 +87,7 @@ setup_args = dict(
     package_data    = package_data,
     author          = 'Jupyter Development Team',
     author_email    = 'jupyter@googlegroups.com',
-    url             = 'http://jupyter.org',
+    url             = 'https://nbdime.readthedocs.io',
     license         = 'BSD',
     platforms       = "Linux, Mac OS X, Windows",
     keywords        = ['Interactive', 'Interpreter', 'Shell', 'Web'],
