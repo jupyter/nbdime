@@ -4,8 +4,11 @@ import shutil
 import tempfile
 
 from nbdime.utils import (
-    strings_to_lists, revert_strings_to_lists, is_in_repo,
-    locate_gitattributes
+    strings_to_lists,
+    revert_strings_to_lists,
+    is_in_repo,
+    locate_gitattributes,
+    read_notebook,
 )
 
 
@@ -55,3 +58,7 @@ def test_locate_gitattributes_global(needs_git):
 def test_locate_gitattributes_system(needs_git):
     gitattr = locate_gitattributes(scope='system')
     assert gitattr is not None
+
+
+def test_read_nb_utf16(filespath):
+    read_notebook(os.path.join(filespath, 'empty-utf-16.ipynb'), 'empty')

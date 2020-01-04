@@ -22,7 +22,22 @@ else:
     EXPLICIT_MISSING_FILE = '/dev/null'
 
 
-def read_notebook(f, on_null):
+def guess_encoding(path):
+    """Guess encoding of a file
+
+    Returns encoding name as specified in `codecs`
+
+    Parameters:
+        path: Path to the file"""
+    with open(path, 'rb') as f:
+        partial = f.read(4)
+    if partial[:2] in (codecs.BOM_UTF16_BE, codecs.BOM_UTF16_LE):
+        return 'utf-16'
+    else:
+        return 'utf-8'
+
+
+def read_notebook(f, on_null, encoding=None):
     """Read and return notebook json from filename
 
     Parameters:
@@ -32,6 +47,9 @@ def read_notebook(f, on_null):
         on_null: What to return when filename null
             "empty": return empty dict
             "minimal": return miminal valid notebook
+        encoding: name of encoding used in underlying file `f`
+            Based on encoding names in `codecs`
+            If None, attempts to guess encoding
     """
     if f == EXPLICIT_MISSING_FILE:
         if on_null == 'empty':
@@ -43,7 +61,10 @@ def read_notebook(f, on_null):
                 'Not valid value for `on_null`: %r. Valid values '
                 'are "empty" or "minimal"' % (on_null,))
     else:
-        return nbformat.read(f, as_version=4)
+        if encoding is None:
+            encoding = guess_encoding(f)
+        with open(f, encoding=encoding) as handle:
+            return nbformat.read(handle, as_version=4)
 
 
 def as_text(text):
