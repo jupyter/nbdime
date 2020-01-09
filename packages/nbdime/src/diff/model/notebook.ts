@@ -40,7 +40,7 @@ export class NotebookDiffModel {
     // Process global notebook metadata field
     let metaDiff = getSubDiffByKey(diff, 'metadata');
     if (base.metadata && metaDiff) {
-      this.metadata = createPatchStringDiffModel(base, metaDiff);
+      this.metadata = createPatchStringDiffModel(base.metadata, metaDiff);
     } else {
       this.metadata = null;
     }
