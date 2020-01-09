@@ -9,7 +9,7 @@ import {
 
 import {
   JSONValue
-} from '@phosphor/coreutils';
+} from '@lumino/coreutils';
 
 import {
   createAddedCellDiffModel, createDeletedCellDiffModel,

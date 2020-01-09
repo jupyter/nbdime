@@ -5,13 +5,15 @@
 
 import * as alertify from 'alertify.js';
 
+import * as nbformat from '@jupyterlab/nbformat';
+
 import {
-  nbformat
-} from '@jupyterlab/coreutils';
+  JSONExt, JSONObject
+} from '@lumino/coreutils';
 
 import {
   Panel, Widget
-} from '@phosphor/widgets';
+} from '@lumino/widgets';
 
 import {
   RenderMimeRegistry
@@ -203,9 +205,10 @@ function saveMerged() {
 
 function downloadNotebook(notebook: nbformat.INotebookContent, filename: string) {
   let element = document.createElement('a');
+  const nbCopy = JSONExt.deepCopy(notebook) as JSONObject;
   element.setAttribute(
     'href', 'data:text/plain;charset=utf-8,' +
-    encodeURIComponent(stringify(notebook)));
+    encodeURIComponent(stringify(nbCopy)));
   element.setAttribute('download', filename);
 
   element.style.display = 'none';

@@ -3,8 +3,8 @@
 'use strict';
 
 import {
-  JSONValue, JSONArray, JSONObject
-} from '@phosphor/coreutils';
+  JSONValue, JSONArray, JSONExt, JSONObject, PartialJSONArray, PartialJSONObject, PartialJSONValue
+} from '@lumino/coreutils';
 
 import {
   deepCopy
@@ -24,20 +24,22 @@ import {
  * Patch a base JSON object according to diff. Returns the patched object.
  */
 export function patch(base: string, diff: IDiffEntry[] | null): string;
-export function patch<T extends JSONArray>(base: T, diff: IDiffEntry[] | null): T;
-export function patch<T extends JSONObject>(base: T, diff: IDiffEntry[] | null): T;
-export function patch(base: JSONValue, diff: IDiffEntry[] | null): JSONValue;
-export function patch(base: JSONValue, diff: IDiffEntry[] | null): JSONValue {
+export function patch<T extends (PartialJSONArray | JSONArray)>(base: T, diff: IDiffEntry[] | null): T;
+export function patch<T extends (JSONObject | PartialJSONObject)>(base: T, diff: IDiffEntry[] | null): T;
+export function patch(base: (JSONValue | PartialJSONValue), diff: IDiffEntry[] | null): JSONValue;
+export function patch(base: (JSONValue | PartialJSONValue), diff: IDiffEntry[] | null): JSONValue {
   if (typeof base === 'string') {
     return patchString(base, diff as IDiffArrayEntry[], 0, false).remote;
   } else if (Array.isArray(base)) {
-    return patchSequence(base, diff as IDiffArrayEntry[]);
+    const baseCopy = JSONExt.deepCopy(base) as JSONArray;
+    return patchSequence(baseCopy, diff as IDiffArrayEntry[]);
   } else if (typeof base === 'number' || typeof base === 'boolean') {
     throw new TypeError('Cannot patch an atomic type: ' + typeof base);
   } else if (base === null) {
     throw new TypeError('Cannot patch a null base!')
   } else {
-    return patchObject(base, diff as IDiffObjectEntry[]);
+    const baseCopy = JSONExt.deepCopy(base) as JSONObject;
+    return patchObject(baseCopy, diff as IDiffObjectEntry[]);
   }
 }
 

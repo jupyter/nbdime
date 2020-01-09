@@ -9,7 +9,7 @@ import {
 
 import {
   Widget
-} from '@phosphor/widgets';
+} from '@lumino/widgets';
 
 import {
   RenderMimeRegistry, standardRendererFactories

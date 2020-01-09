@@ -4,11 +4,11 @@
 
 import {
   ReadonlyJSONObject
-} from '@phosphor/coreutils';
+} from '@lumino/coreutils';
 
 import {
   IIterator
-} from '@phosphor/algorithm';
+} from '@lumino/algorithm';
 
 import {
   IDiffObjectEntry

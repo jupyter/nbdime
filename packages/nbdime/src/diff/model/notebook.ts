@@ -2,9 +2,9 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import {
-  nbformat
-} from '@jupyterlab/coreutils';
+import * as nbformat from '@jupyterlab/nbformat';
+
+import { JSONExt, JSONObject } from '@lumino/coreutils';
 
 import {
   IDiffEntry, IDiffArrayEntry
@@ -40,7 +40,7 @@ export class NotebookDiffModel {
     // Process global notebook metadata field
     let metaDiff = getSubDiffByKey(diff, 'metadata');
     if (base.metadata && metaDiff) {
-      this.metadata = createPatchStringDiffModel(base.metadata, metaDiff);
+      this.metadata = createPatchStringDiffModel(base, metaDiff);
     } else {
       this.metadata = null;
     }

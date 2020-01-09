@@ -1,8 +1,6 @@
 
 
-import {
-  nbformat
-} from '@jupyterlab/coreutils';
+import * as nbformat from '@jupyterlab/nbformat';
 
 import {
   IRenderMimeRegistry
@@ -14,15 +12,15 @@ import {
 
 import {
   JSONObject
-} from '@phosphor/coreutils';
+} from '@lumino/coreutils';
 
 import {
   Message
-} from '@phosphor/messaging';
+} from '@lumino/messaging';
 
 import {
   Widget, Panel
-} from '@phosphor/widgets';
+} from '@lumino/widgets';
 
 import {
   IDiffEntry

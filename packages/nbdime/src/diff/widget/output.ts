@@ -2,17 +2,15 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import {
-  nbformat
-} from '@jupyterlab/coreutils';
+import * as nbformat from '@jupyterlab/nbformat';
 
 import {
   Panel, Widget
-} from '@phosphor/widgets';
+} from '@lumino/widgets';
 
 import {
   each, find, toArray
-} from '@phosphor/algorithm';
+} from '@lumino/algorithm';
 
 import {
   IRenderMimeRegistry, OutputModel, IRenderMime

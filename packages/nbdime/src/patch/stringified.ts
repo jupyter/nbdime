@@ -4,11 +4,11 @@
 
 import {
   ReadonlyJSONValue, ReadonlyJSONArray, ReadonlyJSONObject
-} from '@phosphor/coreutils';
+} from '@lumino/coreutils';
 
 import {
   each
-} from '@phosphor/algorithm';
+} from '@lumino/algorithm';
 
 import {
   valueIn, repeatString

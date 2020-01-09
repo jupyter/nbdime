@@ -3,12 +3,12 @@
 'use strict';
 
 import {
-  JSONValue
-} from '@phosphor/coreutils';
+  JSONValue, PartialJSONValue
+} from '@lumino/coreutils';
 
 import {
   PanelLayout, Widget
-} from '@phosphor/widgets';
+} from '@lumino/widgets';
 
 import {
   IRenderMimeRegistry
@@ -22,7 +22,7 @@ import {
  * Widget for outputs with renderable MIME data.
  */
 export
-abstract class RenderableDiffView<T extends JSONValue> extends Widget {
+abstract class RenderableDiffView<T extends (JSONValue | PartialJSONValue)> extends Widget {
   constructor(model: RenderableDiffModel<T>, editorClass: string[],
               rendermime: IRenderMimeRegistry, mimetype: string) {
     super();
