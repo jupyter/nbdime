@@ -4,8 +4,6 @@
 
 import * as nbformat from '@jupyterlab/nbformat';
 
-import { JSONExt, JSONObject } from '@lumino/coreutils';
-
 import {
   IDiffEntry, IDiffArrayEntry
 } from '../diffentries';
