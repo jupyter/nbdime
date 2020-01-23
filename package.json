@@ -1,21 +1,21 @@
 {
   "private": true,
   "scripts": {
-    "install": "lerna bootstrap --hoist",
-    "clean": "lerna run clean",
     "build": "lerna run build",
     "build:dev": "tsc --build",
-    "updated": "lerna updated",
+    "clean": "lerna run clean",
+    "install": "lerna bootstrap --hoist",
+    "publish": "npm run clean && npm run build && lerna publish -m \"Publish npm packages\"",
+    "test": "lerna run test",
     "update:all": "update-dependency --lerna --minimal --regex .*",
     "update:lab": "update-dependency --lerna --minimal --regex ^@jupyterlab/",
     "update:lab:next": "update-dependency --lerna --minimal --regex ^@jupyterlab/ ^next",
-    "test": "lerna run test",
-    "publish": "npm run clean && npm run build && lerna publish -m \"Publish npm packages\"",
+    "updated": "lerna updated",
     "watch": "tsc --build --watch"
   },
   "devDependencies": {
+    "@jupyterlab/buildutils": "^2.0.0-beta.2",
     "lerna": "^3.14.1",
-    "rimraf": "^2.6.3",
-    "@jupyterlab/buildutils": "^1.0.0"
+    "rimraf": "^2.6.3"
   }
 }

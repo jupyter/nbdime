@@ -23,22 +23,23 @@
     "watch": "tsc --build --watch"
   },
   "dependencies": {
-    "@jupyterlab/codeeditor": "^1.0.0",
-    "@jupyterlab/codemirror": "^1.0.0",
-    "@jupyterlab/coreutils": "^3.0.0",
-    "@jupyterlab/outputarea": "^1.0.0",
-    "@jupyterlab/rendermime": "^1.0.0",
-    "@jupyterlab/services": "^4.0.0",
-    "@phosphor/algorithm": "^1.1.2",
-    "@phosphor/coreutils": "^1.3.0",
-    "@phosphor/dragdrop": "^1.3.0",
-    "@phosphor/signaling": "^1.2.2",
-    "@phosphor/widgets": "^1.6.0",
+    "@jupyterlab/codeeditor": "^2.0.0-beta.2",
+    "@jupyterlab/codemirror": "^2.0.0-beta.2",
+    "@jupyterlab/coreutils": "^4.0.0-beta.2",
+    "@jupyterlab/nbformat": "^2.0.0-beta.2",
+    "@jupyterlab/outputarea": "^2.0.0-beta.2",
+    "@jupyterlab/rendermime": "^2.0.0-beta.2",
+    "@jupyterlab/services": "^5.0.0-beta.2",
+    "@lumino/algorithm": "^1.1.2",
+    "@lumino/coreutils": "^1.3.0",
+    "@lumino/dragdrop": "^1.3.0",
+    "@lumino/signaling": "^1.2.2",
+    "@lumino/widgets": "^1.6.0",
     "json-stable-stringify": "^1.0.1"
   },
   "devDependencies": {
-    "@jupyterlab/apputils": "^1.0.0",
-    "@phosphor/messaging": "^1.2.2",
+    "@jupyterlab/apputils": "^2.0.0-beta.2",
+    "@lumino/messaging": "^1.2.2",
     "@types/expect.js": "^0.3.29",
     "@types/json-stable-stringify": "^1.0.32",
     "@types/mocha": "^5.2.6",
@@ -56,7 +57,7 @@
     "karma-typescript-es6-transform": "^4.0.0",
     "mocha": "^6.0.2",
     "rimraf": "^2.6.3",
-    "typescript": "^3.5.2"
+    "typescript": "^3.7.2"
   },
   "peerDependencies": {
     "codemirror": "^5.0.0"

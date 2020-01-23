@@ -4,19 +4,19 @@
 
 import {
   Panel, PanelLayout, Widget
-} from '@phosphor/widgets';
+} from '@lumino/widgets';
 
 import {
   Message
-} from '@phosphor/messaging';
+} from '@lumino/messaging';
 
 import {
   MimeData
-} from '@phosphor/coreutils';
+} from '@lumino/coreutils';
 
 import {
   Drag, IDragEvent, DropAction, SupportedActions
-} from '@phosphor/dragdrop';
+} from '@lumino/dragdrop';
 
 
 /**

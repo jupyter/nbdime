@@ -4,11 +4,11 @@
 
 import {
   Panel, Widget
-} from '@phosphor/widgets';
+} from '@lumino/widgets';
 
 import {
   Signal, ISignal
-} from '@phosphor/signaling';
+} from '@lumino/signaling';
 
 import {
   FriendlyDragDrop, DragDropPanel

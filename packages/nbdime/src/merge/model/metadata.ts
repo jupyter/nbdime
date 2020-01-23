@@ -2,9 +2,7 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import {
-  nbformat
-} from '@jupyterlab/coreutils';
+import * as nbformat from '@jupyterlab/nbformat';
 
 import {
   IDiffEntry
@@ -22,6 +20,7 @@ import {
 import {
     ObjectMergeModel, DecisionStringDiffModel
 } from './common';
+import { JSONObject, JSONExt } from '@lumino/coreutils';
 
 
 /**
@@ -47,7 +46,8 @@ class MetadataMergeModel extends ObjectMergeModel<nbformat.INotebookMetadata, IS
     if (diff && diff.length > 0) {
       return createPatchStringDiffModel(this.base, diff);
     } else {
-      return createDirectStringDiffModel(this.base, this.base);
+      const baseCopy = JSONExt.deepCopy(this.base) as JSONObject
+      return createDirectStringDiffModel(baseCopy, baseCopy);
     }
   }
 

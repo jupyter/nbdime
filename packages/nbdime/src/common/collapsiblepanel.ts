@@ -4,7 +4,7 @@
 
 import {
   Widget, Panel
-} from '@phosphor/widgets';
+} from '@lumino/widgets';
 
 const COLLAPSIBLE_CLASS = 'jp-CollapsiblePanel';
 const COLLAPSIBLE_HEADER = 'jp-CollapsiblePanel-header';

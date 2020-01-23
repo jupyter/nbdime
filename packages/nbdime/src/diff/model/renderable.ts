@@ -3,12 +3,12 @@
 'use strict';
 
 import {
-  JSONValue, JSONObject, JSONArray
-} from '@phosphor/coreutils';
+  JSONValue, JSONObject, JSONExt, JSONArray, PartialJSONValue
+} from '@lumino/coreutils';
 
 import {
   Signal
-} from '@phosphor/signaling';
+} from '@lumino/signaling';
 
 import {
   IDiffEntry
@@ -40,7 +40,7 @@ import {
  * make the model from.
  */
 export
-abstract class RenderableDiffModel<T extends JSONValue> implements IDiffModel {
+abstract class RenderableDiffModel<T extends (JSONValue | PartialJSONValue)> implements IDiffModel {
   constructor(
         base: T | null,
         remote: T | null,
@@ -106,8 +106,10 @@ abstract class RenderableDiffModel<T extends JSONValue> implements IDiffModel {
       }
       return (obj as JSONObject)[key];
     };
-    let base = key ? getMemberByPath(this.base, key) : this.base;
-    let remote = key ? getMemberByPath(this.remote, key) : this.remote;
+    const baseCopy = JSONExt.deepCopy(this.base) as JSONObject;
+    let base = key ? getMemberByPath(baseCopy, key) : baseCopy;
+    const remoteCopy = JSONExt.deepCopy(this.base) as JSONObject;
+    let remote = key ? getMemberByPath(remoteCopy, key) : remoteCopy;
     let diff = (this.diff && key) ?
       getMemberByPath(this.diff as any, key, getSubDiffByKey) as IDiffEntry[] | null :
       this.diff;

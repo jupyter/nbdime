@@ -11,7 +11,7 @@ import * as CodeMirror from 'codemirror';
 
 import {
   Widget, Panel
-} from '@phosphor/widgets';
+} from '@lumino/widgets';
 
 import {
   IStringDiffModel

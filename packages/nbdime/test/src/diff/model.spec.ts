@@ -3,13 +3,11 @@
 
 import expect = require('expect.js');
 
-import {
-  nbformat
-} from '@jupyterlab/coreutils';
+import * as nbformat from '@jupyterlab/nbformat';
 
 import {
   JSONValue
-} from '@phosphor/coreutils';
+} from '@lumino/coreutils';
 
 import {
   createAddedCellDiffModel, createDeletedCellDiffModel,

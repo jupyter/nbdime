@@ -2,13 +2,11 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import {
-  nbformat
-} from '@jupyterlab/coreutils';
+import * as nbformat from '@jupyterlab/nbformat';
 
 import {
-  JSONObject, JSONArray, JSONValue
-} from '@phosphor/coreutils';
+  JSONObject, JSONArray, JSONExt, JSONValue, PartialJSONObject
+} from '@lumino/coreutils';
 
 import {
   IDiffEntry
@@ -333,10 +331,11 @@ namespace StringDiffModel {
  * rules.
  */
 export
-function createPatchStringDiffModel(base: string | JSONObject | JSONArray, diff: IDiffEntry[]) : StringDiffModel {
+function createPatchStringDiffModel(base: string | JSONObject | JSONArray | PartialJSONObject, diff: IDiffEntry[]) : StringDiffModel {
   console.assert(!!diff, 'Patch model needs diff.');
-  let baseStr = stringifyAndBlankNull(base);
-  let out = patchStringified(base, diff);
+  const baseCopy = JSONExt.deepCopy(base) as JSONObject
+  let baseStr = stringifyAndBlankNull(baseCopy);
+  let out = patchStringified(baseCopy, diff);
   return new StringDiffModel(baseStr, out.remote, out.additions, out.deletions);
 }
 
