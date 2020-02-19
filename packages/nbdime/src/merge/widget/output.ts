@@ -2,9 +2,7 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import {
-  nbformat
-} from '@jupyterlab/coreutils';
+import * as nbformat from '@jupyterlab/nbformat';
 
 import {
   IRenderMimeRegistry, IOutputModel
@@ -16,11 +14,11 @@ import {
 
 import {
   DropAction, IDragEvent
-} from '@phosphor/dragdrop';
+} from '@lumino/dragdrop';
 
 import {
   PanelLayout, Widget
-} from '@phosphor/widgets';
+} from '@lumino/widgets';
 
 import {
   DragDropPanel, DropPanel, DragPanel, findChild, MIME_INDEX

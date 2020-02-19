@@ -6,9 +6,7 @@
 
 from __future__ import print_function
 
-import io
 import os
-import sys
 from glob import glob
 
 from setuptools import setup, find_packages
@@ -70,9 +68,18 @@ cmdclass['js'] = combine_commands(
 )
 
 
+with open(pjoin(here, 'README.md')) as f:
+    long_description = f.read().replace(
+        'docs/source/images',
+        'https://github.com/jupyter/nbdime/raw/{version}/docs/source/images'.format(version=version)
+    )
+
+
 setup_args = dict(
     name            = name,
     description     = "Diff and merge of Jupyter Notebooks",
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     version         = version,
     scripts         = glob(pjoin('scripts', '*')),
     cmdclass        = cmdclass,
@@ -80,7 +87,7 @@ setup_args = dict(
     package_data    = package_data,
     author          = 'Jupyter Development Team',
     author_email    = 'jupyter@googlegroups.com',
-    url             = 'http://jupyter.org',
+    url             = 'https://nbdime.readthedocs.io',
     license         = 'BSD',
     platforms       = "Linux, Mac OS X, Windows",
     keywords        = ['Interactive', 'Interpreter', 'Shell', 'Web'],
@@ -90,19 +97,17 @@ setup_args = dict(
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: BSD License',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
         'Framework :: Jupyter',
     ],
 )
 
 
-setuptools_args = {}
-install_requires = setuptools_args['install_requires'] = [
+install_requires = setup_args['install_requires'] = [
     'nbformat',
     'six',
     'colorama',
@@ -114,7 +119,7 @@ install_requires = setuptools_args['install_requires'] = [
     'jinja2>=2.9',
 ]
 
-extras_require = setuptools_args['extras_require'] = {
+extras_require = setup_args['extras_require'] = {
     'test': [
         'pytest>=3.6',
         'pytest-cov',
@@ -130,40 +135,28 @@ extras_require = setuptools_args['extras_require'] = {
         'recommonmark',
         'sphinx_rtd_theme'
     ],
-
-    ':python_version == "2.7"': [
-        'backports.shutil_which',
-        'backports.functools_lru_cache',
-    ],
 }
 
-setuptools_args['python_requires'] = '>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*'
+setup_args['python_requires'] = '>=3.5'
 
-if 'setuptools' in sys.modules:
-    setup_args.update(setuptools_args)
-
-    # force entrypoints with setuptools (needed for Windows, unconditional because of wheels)
-    setup_args['entry_points'] = {
-        'console_scripts': [
-            'nbdime = nbdime.__main__:main_dispatch',
-            'nbshow = nbdime.nbshowapp:main',
-            'nbdiff = nbdime.nbdiffapp:main',
-            'nbdiff-web = nbdime.webapp.nbdiffweb:main',
-            'nbmerge = nbdime.nbmergeapp:main',
-            'nbmerge-web = nbdime.webapp.nbmergeweb:main',
-            'git-nbdiffdriver = nbdime.vcs.git.diffdriver:main',
-            'git-nbdifftool = nbdime.vcs.git.difftool:main',
-            'git-nbmergedriver = nbdime.vcs.git.mergedriver:main',
-            'git-nbmergetool = nbdime.vcs.git.mergetool:main',
-            'hg-nbdiff = nbdime.vcs.hg.diff:main',
-            'hg-nbdiffweb = nbdime.vcs.hg.diffweb:main',
-            'hg-nbmerge = nbdime.vcs.hg.merge:main',
-            'hg-nbmergeweb = nbdime.vcs.hg.mergeweb:main',
-        ]
-    }
-    setup_args.pop('scripts', None)
-
-    setup_args.update(setuptools_args)
+setup_args['entry_points'] = {
+    'console_scripts': [
+        'nbdime = nbdime.__main__:main_dispatch',
+        'nbshow = nbdime.nbshowapp:main',
+        'nbdiff = nbdime.nbdiffapp:main',
+        'nbdiff-web = nbdime.webapp.nbdiffweb:main',
+        'nbmerge = nbdime.nbmergeapp:main',
+        'nbmerge-web = nbdime.webapp.nbmergeweb:main',
+        'git-nbdiffdriver = nbdime.vcs.git.diffdriver:main',
+        'git-nbdifftool = nbdime.vcs.git.difftool:main',
+        'git-nbmergedriver = nbdime.vcs.git.mergedriver:main',
+        'git-nbmergetool = nbdime.vcs.git.mergetool:main',
+        'hg-nbdiff = nbdime.vcs.hg.diff:main',
+        'hg-nbdiffweb = nbdime.vcs.hg.diffweb:main',
+        'hg-nbmerge = nbdime.vcs.hg.merge:main',
+        'hg-nbmergeweb = nbdime.vcs.hg.mergeweb:main',
+    ]
+}
 
 if __name__ == '__main__':
     setup(**setup_args)

@@ -11,7 +11,7 @@ import {
 } from '@jupyterlab/apputils';
 
 import {
-  PathExt, ISettingRegistry
+  PathExt
 } from '@jupyterlab/coreutils';
 
 import {
@@ -31,16 +31,20 @@ import {
 } from '@jupyterlab/notebook';
 
 import {
+  ISettingRegistry
+} from '@jupyterlab/settingregistry';
+
+import {
   find
-} from '@phosphor/algorithm';
+} from '@lumino/algorithm';
 
 import {
   CommandRegistry
-} from '@phosphor/commands';
+} from '@lumino/commands';
 
 import {
   IDisposable, DisposableDelegate
-} from '@phosphor/disposable';
+} from '@lumino/disposable';
 
 import {
   diffNotebookGit, diffNotebook, diffNotebookCheckpoint, isNbInGit

@@ -4,7 +4,7 @@
 
 import {
   Panel, Widget
-} from '@phosphor/widgets';
+} from '@lumino/widgets';
 
 import {
   IRenderMimeRegistry, MimeModel

@@ -7,7 +7,7 @@
 |----------------------------------------------------------------------------*/
 import {
   Message
-} from '@phosphor/messaging';
+} from '@lumino/messaging';
 
 import {
   FlexLayout
@@ -15,7 +15,7 @@ import {
 
 import {
   Panel, Widget
-} from '@phosphor/widgets';
+} from '@lumino/widgets';
 
 
 /**

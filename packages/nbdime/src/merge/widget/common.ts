@@ -4,7 +4,7 @@
 
 import {
   Widget
-} from '@phosphor/widgets';
+} from '@lumino/widgets';
 
 
 // Merge classes:

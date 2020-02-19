@@ -2,13 +2,11 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import {
-  nbformat
-} from '@jupyterlab/coreutils';
+import * as nbformat from '@jupyterlab/nbformat';
 
 import {
   JSONObject
-} from '@phosphor/coreutils';
+} from '@lumino/coreutils';
 
 import {
   NotifyUserError

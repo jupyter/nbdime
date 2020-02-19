@@ -4,7 +4,7 @@
 
 import {
   JSONObject
-} from '@phosphor/coreutils';
+} from '@lumino/coreutils';
 
 import {
   URLExt

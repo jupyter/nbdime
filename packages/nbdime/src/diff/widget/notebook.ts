@@ -4,7 +4,7 @@
 
 import {
   Panel
-} from '@phosphor/widgets';
+} from '@lumino/widgets';
 
 import {
   IRenderMimeRegistry

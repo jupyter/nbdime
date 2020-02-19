@@ -2,13 +2,11 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import {
-  nbformat
-} from '@jupyterlab/coreutils';
+import * as nbformat from '@jupyterlab/nbformat';
 
 import {
   Panel
-} from '@phosphor/widgets';
+} from '@lumino/widgets';
 
 import {
   createNbdimeMergeView, MergeView

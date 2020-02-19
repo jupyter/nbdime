@@ -15,7 +15,7 @@ import {
 import {
   JSON_INDENT
 } from '../../../src/diff/util';
-import { JSONObject, JSONValue } from '@phosphor/coreutils';
+import { JSONObject, JSONValue } from '@lumino/coreutils';
 
 
 function makeAddRange(key: number, values: string | any[]) : IDiffAddRange {
