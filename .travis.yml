@@ -22,6 +22,7 @@ cache:
     - nbdime-web/node_modules # NPM packages
     - $HOME/.npm
 before_install:
+  - python -c "import fcntl; fcntl.fcntl(1, fcntl.F_SETFL, 0)"
   - pip install -U pip setuptools
   - nvm install 8
   - |
