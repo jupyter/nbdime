@@ -2,6 +2,7 @@
 import io
 import os
 from six import StringIO
+from subprocess import CalledProcessError
 
 import nbformat
 
@@ -97,11 +98,16 @@ def test_apply_filter_invalid_filter(git_repo):
 
 
 def test_apply_filter_valid_filter(git_repo):
+    try:
+        call('cat --help')
+        filter_cmd = 'cat'
+    except (CalledProcessError, FileNotFoundError):
+        filter_cmd = 'findstr x*'
     path = pjoin(git_repo, 'diff.ipynb')
     gitattr = locate_gitattributes()
     with io.open(gitattr, 'a', encoding="utf8") as f:
         f.write(u'\n*.ipynb\tfilter=myfilter\n')
-    call('git config --local --add filter.myfilter.clean "cat"')
+    call('git config --local --add filter.myfilter.clean "%s"' % filter_cmd)
     f = apply_possible_filter(path)
     assert isinstance(f, StringIO)
     # Read validates notebook:
