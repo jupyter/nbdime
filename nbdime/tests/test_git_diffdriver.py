@@ -355,7 +355,7 @@ def test_git_diff_driver_no_filter_without_flag(git_repo, filespath, capsys):
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
-def test_git_web_diff_driver(filespath, unique_port, reset_log):
+def test_git_web_diff_driver(filespath, unique_port, reset_log, ioloop_patch):
     # Simulate a call from `git diff` to check basic driver functionality
 
     fn1 = os.path.join(filespath, 'foo--1.ipynb')

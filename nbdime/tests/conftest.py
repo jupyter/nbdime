@@ -287,6 +287,11 @@ def merge_validator(request, json_schema_merge):
             json_schema_merge),
     )
 
+@fixture(scope='session')
+def ioloop_patch():
+    from nbdime.webapp.nbdimeserver import asyncio_patch
+    asyncio_patch()
+
 
 class NBTestDataBase(object):
     def __init__(self):

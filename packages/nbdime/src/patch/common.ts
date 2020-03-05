@@ -81,7 +81,7 @@ class PatchObjectHelper implements IIterator<string> {
     return this;
   }
 
-  next(): string {
+  next(): string | undefined {
     let key = this._remainingKeys.shift();
     if (key && valueIn(key, this._diffKeys)) {
       let op = this._diffLUT[key].op;
@@ -93,8 +93,7 @@ class PatchObjectHelper implements IIterator<string> {
         this._currentIsAddition = undefined;
       }
     }
-    // Cast as non-undefined as phosphor doesn't support strict null checks yet:
-    return key!;
+    return key;
   }
 
   clone(): IIterator<string> {
