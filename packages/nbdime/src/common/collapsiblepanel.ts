@@ -63,6 +63,11 @@ class CollapsiblePanel extends Panel {
       collapsed === true ?
       COLLAPSIBLE_HEADER_ICON_CLOSED :
       COLLAPSIBLE_HEADER_ICON_OPEN);
+    this.button.classList.add("fa");
+    this.button.classList.add(
+      collapsed === true ?
+      "fa-caret-down" :
+      "fa-caret-up");
   }
 
   toggleCollapsed(): void {
@@ -73,12 +78,16 @@ class CollapsiblePanel extends Panel {
       slider.addClass(COLLAPSIBLE_OPEN);
       button.classList.remove(COLLAPSIBLE_HEADER_ICON_CLOSED);
       button.classList.add(COLLAPSIBLE_HEADER_ICON_OPEN);
+      this.button.classList.remove("fa-caret-down");
+      this.button.classList.add("fa-caret-up");
 
     } else {
       slider.removeClass(COLLAPSIBLE_OPEN);
       slider.addClass(COLLAPSIBLE_CLOSED);
       button.classList.remove(COLLAPSIBLE_HEADER_ICON_OPEN);
       button.classList.add(COLLAPSIBLE_HEADER_ICON_CLOSED);
+      this.button.classList.remove("fa-caret-up");
+      this.button.classList.add("fa-caret-down");
     }
   }
 

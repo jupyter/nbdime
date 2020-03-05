@@ -49,7 +49,7 @@ and nbdime's web-based viewers depend on the following Node.js packages:
   - json-stable-stringify
   - jupyter-js-services
   - jupyterlab
-  - phosphor
+  - lumino
 
 
 Installing latest development version
