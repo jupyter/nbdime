@@ -304,7 +304,7 @@ class ApiCloseHandler(NbdimeHandler, APIHandler):
         ioloop.IOLoop.current().stop()
 
 
-def _asyncio_patch():
+def asyncio_patch():
     """set default asyncio policy to be compatible with tornado
 
     Tornado 6 (at least) is not compatible with the default
@@ -389,7 +389,7 @@ def make_app(**params):
     return app
 
 def init_app(on_port=None, closable=False, **params):
-    _asyncio_patch()
+    asyncio_patch()
     _logger.debug('Using params: %s', params)
     params.update({'closable': closable})
     port = params.pop('port', 0)

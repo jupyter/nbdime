@@ -27,7 +27,7 @@ merge_c = 'multilevel-test-remote.ipynb'
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
-def test_diff_web(filespath, unique_port, reset_log):
+def test_diff_web(filespath, unique_port, reset_log, ioloop_patch):
     a = os.path.join(filespath, diff_a)
     b = os.path.join(filespath, diff_b)
     loop = ioloop.IOLoop.current()
@@ -36,7 +36,7 @@ def test_diff_web(filespath, unique_port, reset_log):
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
-def test_diff_web_localhost(filespath, unique_port, reset_log):
+def test_diff_web_localhost(filespath, unique_port, reset_log, ioloop_patch):
     a = os.path.join(filespath, diff_a)
     b = os.path.join(filespath, diff_b)
     loop = ioloop.IOLoop.current()
@@ -51,7 +51,7 @@ def test_diff_web_localhost(filespath, unique_port, reset_log):
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
-def test_diff_web_gitrefs(git_repo2, unique_port, reset_log):
+def test_diff_web_gitrefs(git_repo2, unique_port, reset_log, ioloop_patch):
     a = 'local'
     b = 'remote'
     c = 'diff.ipynb'
@@ -62,7 +62,7 @@ def test_diff_web_gitrefs(git_repo2, unique_port, reset_log):
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
-def test_merge_web(filespath, unique_port, reset_log):
+def test_merge_web(filespath, unique_port, reset_log, ioloop_patch):
     a = os.path.join(filespath, merge_a)
     b = os.path.join(filespath, merge_b)
     c = os.path.join(filespath, merge_c)
