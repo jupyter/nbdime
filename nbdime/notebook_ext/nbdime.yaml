@@ -1,0 +1,16 @@
+Type: Jupyter Notebook Extension
+Name: nbdime
+Description: Tools for diffing and merging of Jupyter notebooks.
+Main: index.js
+Compatibility: Jupyter 4.x, 5.x
+Parameters:
+
+- name: nbdime.add_checkpoints_toolbar_button
+  description: Add a toolbar button to diff against checkpointed notebook
+  input_type: checkbox
+  default: true
+
+- name: nbdime.add_git_toolbar_button
+  description: Add a toolbar button to diff against most recently git committed notebook
+  input_type: checkbox
+  default: true

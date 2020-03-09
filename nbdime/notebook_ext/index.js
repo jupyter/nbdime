@@ -7,6 +7,12 @@ define([
 ], function(Jupyter, $, utils) {
     "use strict";
 
+    // params are updated on config load
+    var params = {
+        add_checkpoints_toolbar_button: true,
+        add_git_toolbar_button: true,
+    };
+    
     // Custom util functions:
     var reStripLeading = /^\/+/
     var stripLeft = function (string) {
@@ -120,28 +126,40 @@ define([
                 help: 'Display nbdiff from git HEAD to currently saved version',
                 handler : nbGitDiffView
             }, 'diff-notebook-git', prefix);
+        }
 
-            // Add both buttons, with label on git button
-            var btn_group = Jupyter.toolbar.add_buttons_group([
-                checkpointAction,
-            {
-                action: gitAction,
-                label: 'nbdiff',
-            }]);
+        if (isGit && params.add_git_toolbar_button) {
+            if (params.add_checkpoints_toolbar_button) {
+                // Add both buttons, with label on git button
+                var btn_group = Jupyter.toolbar.add_buttons_group([
+                    checkpointAction,
+                {
+                    action: gitAction,
+                    label: 'nbdiff',
+                }]);
+            } else {
+                // Add only git button, with label on it
+                var btn_group = Jupyter.toolbar.add_buttons_group([{
+                    action: gitAction,
+                    label: 'nbdiff',
+                }]);
+           };
 
             // Tooltip for git button:
-            btn_group.children(':last-child').attr('title', Jupyter.actions.get(gitAction).help);
-        } else {
+            if (typeof btn_group !== 'undefined') {
+                btn_group.children(':last-child').attr('title', Jupyter.actions.get(gitAction).help);
+            }
+        } else if (params.add_checkpoints_toolbar_button) {
             // Add only checkpoint button, with label on it
             var btn_group = Jupyter.toolbar.add_buttons_group([{
                 action: checkpointAction,
                 label: 'nbdiff',
             }]);
+        }
 
-            if (serverMissing) {
+        if (serverMissing) {
                 setActionEnabledState(checkpointAction, false);
                 console.error(serverMissingMsg);
-            }
         }
 
         // Tooltip for checkpoint button:
@@ -159,6 +177,9 @@ define([
             // Assume that we don't have git
             register(false, error);
         });
+
+        // Update params:
+        $.extend(true, params, Jupyter.notebook.config.data.nbdime);
     };
 
     return {
