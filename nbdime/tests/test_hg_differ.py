@@ -129,7 +129,7 @@ def test_hg_diff_driver_ignore_flags(filespath, capsys, needs_hg, reset_diff_tar
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
-def test_hg_web_diff_driver(filespath, unique_port, reset_log):
+def test_hg_web_diff_driver(filespath, unique_port, reset_log, ioloop_patch):
     # Simulate a call from `hg diff` to check basic driver functionality
 
     fn1 = os.path.join(filespath, 'foo--1.ipynb')
