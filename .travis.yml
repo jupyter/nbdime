@@ -32,11 +32,12 @@ before_install:
       npm install -g codecov
     fi
 install:
+  # Don't use -v with JS as travis chokes with [Errno 11] write could not complete without blocking
   - |
     if [[ $GROUP == python ]]; then
       pip install --upgrade --upgrade-strategy=eager ".[test]" -v
     elif [[ $GROUP == js ]]; then
-      pip install --upgrade --upgrade-strategy=eager -e ".[test]" -v
+      pip install --upgrade --upgrade-strategy=eager -e ".[test]"
     fi
 before_script:
   # Set up a virtual screen for Firefox browser testing:
