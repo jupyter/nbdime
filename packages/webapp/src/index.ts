@@ -19,6 +19,9 @@ import {
 } from './app/common';
 
 
+import '@fortawesome/fontawesome-free/css/all.min.css';
+import '@fortawesome/fontawesome-free/css/v4-shims.min.css';
+
 import 'codemirror/lib/codemirror.css';
 import '@jupyterlab/codemirror/style/index.css';
 
