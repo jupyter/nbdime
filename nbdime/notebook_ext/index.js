@@ -119,14 +119,16 @@ define([
         // Check whether to enable button or not
         triggerCheckpointTest();
 
-        if (isGit && params.add_git_toolbar_button) {
+        if (isGit) {
             // Register git action
             var gitAction = Jupyter.actions.register({
                 icon: 'fa-git',
                 help: 'Display nbdiff from git HEAD to currently saved version',
                 handler : nbGitDiffView
             }, 'diff-notebook-git', prefix);
+        }
 
+        if (isGit && params.add_git_toolbar_button) {
             if (params.add_checkpoints_toolbar_button) {
                 // Add both buttons, with label on git button
                 var btn_group = Jupyter.toolbar.add_buttons_group([
@@ -136,7 +138,7 @@ define([
                     label: 'nbdiff',
                 }]);
             } else {
-                // Add only git button
+                // Add only git button, with label on it
                 var btn_group = Jupyter.toolbar.add_buttons_group([{
                     action: gitAction,
                     label: 'nbdiff',
@@ -176,7 +178,8 @@ define([
             register(false, error);
         });
 
-        $.extend(true, params, Jupyter.notebook.config.data.nbdime); // update params
+        // Update params:
+        $.extend(true, params, Jupyter.notebook.config.data.nbdime);
     };
 
     return {
