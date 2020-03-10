@@ -8,6 +8,7 @@
     "build": "webpack -p",
     "build:dev": "webpack -d",
     "clean": "rimraf build && rimraf ../../nbdime/webapp/static",
+    "profile": "webpack --profile --json > webpack-stats.json",
     "watch": "webpack --watch"
   },
   "dependencies": {

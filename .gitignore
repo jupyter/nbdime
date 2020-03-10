@@ -26,3 +26,4 @@ nbdime/webapp/static/**
 !nbdime/webapp/static/favicon.ico
 package-lock.json
 *.tsbuildinfo
+packages/webapp/webpack-stats.json
