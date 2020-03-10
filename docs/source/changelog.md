@@ -1,5 +1,17 @@
 # Changes in nbdime
 
+## 2.0
+
+###  2.0.0 - 2020-03
+
+- Dropped Python 2 support, and Python 3.4 support.
+- Fix support for Python 3.8 on Windows.
+- Various improvements to lab/notebook extensions.
+- Made web apps (e.g. nbdiff-web) work properly offline.
+- Fix for git driver with renamed files.
+- Various other fixes and adjustments.
+
+
 ## 1.1
 
 ###  1.1.0 - 2019-08
