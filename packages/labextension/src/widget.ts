@@ -102,7 +102,7 @@ class NbdimeWidget extends Panel {
     }
 
     requestApiJson(
-      ServerConnection.defaultSettings.baseUrl,
+      ServerConnection.makeSettings().baseUrl,
       'nbdime/api/diff',
       args,
       this.onData.bind(this),
