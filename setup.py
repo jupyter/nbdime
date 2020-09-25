@@ -124,7 +124,7 @@ extras_require = setup_args['extras_require'] = {
         'pytest>=3.6',
         'pytest-cov',
         'pytest-timeout',
-        'pytest-tornado5>=2',
+        'pytest-tornado',
         'jsonschema',
         'mock',
         'requests',
