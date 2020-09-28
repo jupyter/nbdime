@@ -162,6 +162,8 @@ def process_exclusive_ignorables(ns, arg_names, default=True):
 
     It checks that all specified options are either all positive or all negative.
     It then returns a namespace with the parsed options.
+
+    Returns whether any values were specified or not.
     """
     # `toggle` tracks whether:
     #  - True: One or more positive options were defined
@@ -184,6 +186,7 @@ def process_exclusive_ignorables(ns, arg_names, default=True):
     for name in arg_names:
         if getattr(ns, name) is None:
             setattr(ns, name, default)
+    return toggle is not None
 
 
 def add_generic_args(parser):
@@ -384,9 +387,12 @@ def add_git_diff_driver_args(diff_parser):
 
 
 def process_diff_flags(args):
-    process_exclusive_ignorables(args, diff_ignorables)
-    set_notebook_diff_targets(args.sources, args.outputs,
-                              args.attachments, args.metadata, args.details)
+    any_flags_given = process_exclusive_ignorables(args, diff_ignorables)
+    if any_flags_given:
+        # Note: This will blow away any options set via config (for these fields)
+        set_notebook_diff_targets(
+            args.sources, args.outputs, args.attachments, args.metadata,
+            args.details)
 
 
 def resolve_diff_args(args):
