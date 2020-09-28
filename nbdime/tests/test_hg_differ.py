@@ -67,7 +67,7 @@ expected_source_only = """nbdiff {0} {1}
 """
 
 
-def test_hg_diff_driver(filespath, capsys, needs_hg):
+def test_hg_diff_driver(filespath, capsys, needs_hg, reset_notebook_diff):
     # Simulate a call from `hg diff` to check basic driver functionality
 
     fn1 = pjoin(filespath, 'foo--1.ipynb')
@@ -129,7 +129,7 @@ def test_hg_diff_driver_ignore_flags(filespath, capsys, needs_hg, reset_notebook
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
-def test_hg_web_diff_driver(filespath, unique_port, reset_log, ioloop_patch):
+def test_hg_web_diff_driver(filespath, unique_port, reset_log, ioloop_patch, reset_notebook_diff):
     # Simulate a call from `hg diff` to check basic driver functionality
 
     fn1 = os.path.join(filespath, 'foo--1.ipynb')
