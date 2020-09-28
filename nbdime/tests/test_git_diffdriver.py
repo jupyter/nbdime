@@ -185,7 +185,7 @@ expected_helper_filter = """nbdiff {0} {1}
 
 """
 
-def test_git_diff_driver(filespath, capsys, needs_git):
+def test_git_diff_driver(filespath, capsys, needs_git, reset_notebook_diff):
     # Simulate a call from `git diff` to check basic driver functionality
 
     fn1 = pjoin(filespath, 'foo--1.ipynb')
@@ -207,7 +207,7 @@ def test_git_diff_driver(filespath, capsys, needs_git):
         assert cap_out == expected_output.format(fn1, fn2, t1, t2)
 
 
-def test_git_diff_driver_flags(filespath, capsys, needs_git, reset_diff_targets):
+def test_git_diff_driver_flags(filespath, capsys, needs_git, reset_notebook_diff):
     # Simulate a call from `git diff` to check basic driver functionality
 
     fn1 = pjoin(filespath, 'foo--1.ipynb')
@@ -229,7 +229,7 @@ def test_git_diff_driver_flags(filespath, capsys, needs_git, reset_diff_targets)
         assert cap_out == expected_source_only.format(fn1, fn2, t1, t2)
 
 
-def test_git_diff_driver_ignore_flags(filespath, capsys, needs_git, reset_diff_targets):
+def test_git_diff_driver_ignore_flags(filespath, capsys, needs_git, reset_notebook_diff):
     # Simulate a call from `git diff` to check basic driver functionality
 
     fn1 = pjoin(filespath, 'foo--1.ipynb')
@@ -264,7 +264,7 @@ def _config_filter_driver(name, capsys):
         call('git config --local --add filter.%s.smudge "%s smudge"' % (name, base_cmd))
 
 
-def test_git_diff_driver_noop_filter(git_repo, filespath, capsys):
+def test_git_diff_driver_noop_filter(git_repo, filespath, capsys, reset_notebook_diff):
     _config_filter_driver('noop', capsys)
     fn1 = pjoin(git_repo, 'diff.ipynb')
     fn2 = pjoin(filespath, 'src-and-output--1.ipynb')
@@ -287,7 +287,7 @@ def test_git_diff_driver_noop_filter(git_repo, filespath, capsys):
         assert cap_out == expected_no_filter.format(fn1, fn2, t1, t2)
 
 
-def test_git_diff_driver_strip_outputs_filter(git_repo, filespath, capsys):
+def test_git_diff_driver_strip_outputs_filter(git_repo, filespath, capsys, reset_notebook_diff):
     _config_filter_driver('strip_outputs', capsys)
     fn1 = pjoin(git_repo, 'diff.ipynb')
     fn2 = pjoin(filespath, 'src-and-output--1.ipynb')
@@ -309,7 +309,7 @@ def test_git_diff_driver_strip_outputs_filter(git_repo, filespath, capsys):
         assert cap_out == expected_strip_output_filter.format(fn1, fn2, t1, t2)
 
 
-def test_git_diff_driver_add_helper_filter(git_repo, filespath, capsys):
+def test_git_diff_driver_add_helper_filter(git_repo, filespath, capsys, reset_notebook_diff):
     _config_filter_driver('add_helper', capsys)
     fn1 = pjoin(git_repo, 'diff.ipynb')
     fn2 = pjoin(filespath, 'src-and-output--1.ipynb')
@@ -332,7 +332,7 @@ def test_git_diff_driver_add_helper_filter(git_repo, filespath, capsys):
         assert cap_out == expected_helper_filter.format(fn1, fn2, t1, t2)
 
 
-def test_git_diff_driver_no_filter_without_flag(git_repo, filespath, capsys):
+def test_git_diff_driver_no_filter_without_flag(git_repo, filespath, capsys, reset_notebook_diff):
     _config_filter_driver('add_helper', capsys)
     fn1 = pjoin(git_repo, 'diff.ipynb')
     fn2 = pjoin(filespath, 'src-and-output--1.ipynb')
@@ -355,7 +355,7 @@ def test_git_diff_driver_no_filter_without_flag(git_repo, filespath, capsys):
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
-def test_git_web_diff_driver(filespath, unique_port, reset_log, ioloop_patch):
+def test_git_web_diff_driver(filespath, unique_port, reset_log, ioloop_patch, reset_notebook_diff):
     # Simulate a call from `git diff` to check basic driver functionality
 
     fn1 = os.path.join(filespath, 'foo--1.ipynb')

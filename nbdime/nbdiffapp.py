@@ -90,10 +90,11 @@ def _handle_diff(base, remote, output, args):
     return 0
 
 
-def _build_arg_parser():
+def _build_arg_parser(prog=None):
     """Creates an argument parser for the nbdiff command."""
     parser = ConfigBackedParser(
         description=_description,
+        prog=prog,
         )
     add_generic_args(parser)
     add_diff_args(parser)

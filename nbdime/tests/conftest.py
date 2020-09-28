@@ -21,7 +21,7 @@ import nbformat
 
 from .utils import call, have_git, have_hg, wait_up, TEST_TOKEN
 
-from nbdime.diffing.notebooks import set_notebook_diff_targets
+from nbdime.diffing.notebooks import reset_notebook_differ
 
 try:
     # Python >= 3.3
@@ -417,12 +417,12 @@ def unique_port():
 
 
 @fixture()
-def reset_diff_targets():
+def reset_notebook_diff():
     try:
         yield
     finally:
-        # Reset diff targets (global variable)
-        set_notebook_diff_targets()
+        # Reset differ (global variable)
+        reset_notebook_differ()
 
 @fixture()
 def popen_with_terminator(request):
