@@ -7,6 +7,8 @@ import io
 import json
 import logging
 import os
+from pprint import pprint
+from six import text_type
 from subprocess import CalledProcessError, check_call
 import sys
 import time
@@ -24,6 +26,7 @@ from .utils import (
 
 import nbdime
 from nbdime.args import process_exclusive_ignorables
+from nbdime.diffing.notebooks import notebook_differs
 from nbdime.nbshowapp import main_show
 from nbdime.nbdiffapp import main_diff
 from nbdime.nbmergeapp import main_merge
@@ -195,6 +198,73 @@ def test_nbdiff_app_ignore_details(filespath, tmpdir, reset_diff_targets):
         assert subdiff['op'] != 'patch'
 
     assert diff[1]['key'] == 'source'
+
+
+def test_nbdiff_app_config_ignores(filespath, tmpdir, reset_diff_targets):
+    tmpdir.join('nbdime_config.json').write_text(
+        text_type(json.dumps({
+            'Diff': {
+                'Ignore': {
+                    '/cells/*/metadata': ['nbdime-dummy-field']
+                }
+            },
+        })),
+        encoding='utf-8'
+    )
+
+    afn = os.path.join(filespath, "single_cell_nb.ipynb")
+    bfn = os.path.join(filespath, "single_cell_nb--changed_metadata.ipynb")
+    dfn = os.path.join(tmpdir.dirname, "diff_output.json")
+    with tmpdir.as_cwd():
+        args = nbdiffapp._build_arg_parser('nbdiff').parse_args([afn, bfn, '--out', dfn])
+    assert 0 == main_diff(args)
+
+    pprint(notebook_differs)
+
+    with io.open(dfn) as df:
+        diff = json.load(df)
+    pprint(diff)
+    for key in ('metadata', 'language_info'):
+        assert len(diff) == 1
+        assert diff[0]['key'] == key
+        assert diff[0]['op'] == 'patch'
+        diff = diff[0]['diff']
+
+    assert len(diff) == 1
+    assert diff[0]['key'] == 'version'
+    assert diff[0]['op'] == 'patch'
+
+
+def test_nbdiff_app_flags_override_config_ignores(filespath, tmpdir, reset_diff_targets):
+    # This excercises current behavior, but should ideally (?) be different
+
+    tmpdir.join('nbdime_config.json').write_text(
+        text_type(json.dumps({
+            'Diff': {
+                'Ignore': {
+                    '/cells/*/metadata': ['nbdime-dummy-field']
+                }
+            },
+        })),
+        encoding='utf-8'
+    )
+
+    afn = os.path.join(filespath, "single_cell_nb.ipynb")
+    bfn = os.path.join(filespath, "single_cell_nb--changed_metadata.ipynb")
+    dfn = os.path.join(tmpdir.dirname, "diff_output.json")
+    with tmpdir.as_cwd():
+        args = nbdiffapp._build_arg_parser('nbdiff').parse_args([afn, bfn, '--out', dfn, '-S'])
+    assert 0 == main_diff(args)
+
+    pprint(notebook_differs)
+
+    with io.open(dfn) as df:
+        diff = json.load(df)
+    pprint(diff)
+
+    assert len(diff) == 2
+    assert diff[0]['key'] == 'cells'
+    assert diff[1]['key'] == 'metadata'
 
 
 def test_nbdiff_app_color_words(filespath):
