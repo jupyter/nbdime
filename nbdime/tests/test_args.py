@@ -71,7 +71,7 @@ def test_config_parser(entrypoint_config):
     assert arguments.log_level == 'ERROR'
 
 
-def test_ignore_config_simple(entrypoint_ignore_config, tmpdir):
+def test_ignore_config_simple(entrypoint_ignore_config, tmpdir, reset_notebook_diff):
     tmpdir.join('nbdime_config.json').write_text(
         text_type(json.dumps({
             'IgnorableConfig1': {
@@ -91,20 +91,14 @@ def test_ignore_config_simple(entrypoint_ignore_config, tmpdir):
     try:
         with tmpdir.as_cwd():
             parser.parse_args([])
-    except:
-        nbdime.diffing.notebooks.reset_notebook_differ()
-        raise
     finally:
         nbdime.diffing.notebooks.diff_ignore_keys = old_keys
 
-    try:
-        assert notebook_differs['/cells/*/metadata'] == (diff, ['collapsed', 'autoscroll'])
-    finally:
-        nbdime.diffing.notebooks.reset_notebook_differ()
+    assert notebook_differs['/cells/*/metadata'] == (diff, ['collapsed', 'autoscroll'])
 
 
 
-def test_ignore_config_merge(entrypoint_ignore_config, tmpdir):
+def test_ignore_config_merge(entrypoint_ignore_config, tmpdir, reset_notebook_diff):
     tmpdir.join('nbdime_config.json').write_text(
         text_type(json.dumps({
             'IgnorableConfig1': {
@@ -130,21 +124,15 @@ def test_ignore_config_merge(entrypoint_ignore_config, tmpdir):
     try:
         with tmpdir.as_cwd():
             parser.parse_args([])
-    except:
-        nbdime.diffing.notebooks.reset_notebook_differ()
-        raise
     finally:
         nbdime.diffing.notebooks.diff_ignore_keys = old_keys
 
-    try:
-        assert notebook_differs['/metadata'] == (diff, ['foo'])
-        # Lists are not merged:
-        assert notebook_differs['/cells/*/metadata'] == (diff, ['tags'])
-    finally:
-        nbdime.diffing.notebooks.reset_notebook_differ()
+    assert notebook_differs['/metadata'] == (diff, ['foo'])
+    # Lists are not merged:
+    assert notebook_differs['/cells/*/metadata'] == (diff, ['tags'])
 
 
-def test_config_inherit(entrypoint_ignore_config, tmpdir):
+def test_config_inherit(entrypoint_ignore_config, tmpdir, reset_notebook_diff):
     tmpdir.join('nbdime_config.json').write_text(
         text_type(json.dumps({
             'IgnorableConfig1': {
@@ -158,7 +146,4 @@ def test_config_inherit(entrypoint_ignore_config, tmpdir):
     with tmpdir.as_cwd():
         parsed = parser.parse_args([])
 
-    try:
-        assert parsed.metadata is False
-    finally:
-        nbdime.diffing.notebooks.reset_notebook_differ()
+    assert parsed.metadata is False

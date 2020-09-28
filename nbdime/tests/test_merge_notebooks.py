@@ -898,7 +898,7 @@ def test_autoresolve_empty_strategies():
     _check(partial, expected_partial, decisions, expected_conflicts)
 
 
-def test_only_sources(db, reset_diff_targets, reset_log):
+def test_only_sources(db, reset_notebook_diff, reset_log):
     base = db["mixed-conflicts--1"]
     local = db["mixed-conflicts--2"]
     remote = db["mixed-conflicts--3"]
@@ -916,7 +916,7 @@ def test_only_sources(db, reset_diff_targets, reset_log):
         assert len(path) == 2 or path[2] == 'source'
 
 
-def test_only_outputs(db, reset_diff_targets):
+def test_only_outputs(db, reset_notebook_diff):
     base = db["mixed-conflicts--1"]
     local = db["mixed-conflicts--2"]
     remote = db["mixed-conflicts--3"]
@@ -934,7 +934,7 @@ def test_only_outputs(db, reset_diff_targets):
         assert len(path) == 2 or path[2] == 'outputs'
 
 
-def test_only_metadata(db, reset_diff_targets):
+def test_only_metadata(db, reset_notebook_diff):
     base = db["mixed-conflicts--1"]
     local = db["mixed-conflicts--2"]
     remote = db["mixed-conflicts--3"]

@@ -87,7 +87,7 @@ def test_hg_diff_driver(filespath, capsys, needs_hg):
         assert cap_out == expected_output.format(fn1, fn2, t1, t2)
 
 
-def test_hg_diff_driver_flags(filespath, capsys, needs_hg, reset_diff_targets):
+def test_hg_diff_driver_flags(filespath, capsys, needs_hg, reset_notebook_diff):
     # Simulate a call from `hg diff` to check basic driver functionality
 
     fn1 = pjoin(filespath, 'foo--1.ipynb')
@@ -107,7 +107,7 @@ def test_hg_diff_driver_flags(filespath, capsys, needs_hg, reset_diff_targets):
         assert cap_out == expected_source_only.format(fn1, fn2, t1, t2)
 
 
-def test_hg_diff_driver_ignore_flags(filespath, capsys, needs_hg, reset_diff_targets):
+def test_hg_diff_driver_ignore_flags(filespath, capsys, needs_hg, reset_notebook_diff):
     # Simulate a call from `hg diff` to check basic driver functionality
 
     fn1 = pjoin(filespath, 'foo--1.ipynb')

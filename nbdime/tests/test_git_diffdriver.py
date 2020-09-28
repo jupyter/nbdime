@@ -207,7 +207,7 @@ def test_git_diff_driver(filespath, capsys, needs_git):
         assert cap_out == expected_output.format(fn1, fn2, t1, t2)
 
 
-def test_git_diff_driver_flags(filespath, capsys, needs_git, reset_diff_targets):
+def test_git_diff_driver_flags(filespath, capsys, needs_git, reset_notebook_diff):
     # Simulate a call from `git diff` to check basic driver functionality
 
     fn1 = pjoin(filespath, 'foo--1.ipynb')
@@ -229,7 +229,7 @@ def test_git_diff_driver_flags(filespath, capsys, needs_git, reset_diff_targets)
         assert cap_out == expected_source_only.format(fn1, fn2, t1, t2)
 
 
-def test_git_diff_driver_ignore_flags(filespath, capsys, needs_git, reset_diff_targets):
+def test_git_diff_driver_ignore_flags(filespath, capsys, needs_git, reset_notebook_diff):
     # Simulate a call from `git diff` to check basic driver functionality
 
     fn1 = pjoin(filespath, 'foo--1.ipynb')

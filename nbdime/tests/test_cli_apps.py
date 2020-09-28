@@ -124,7 +124,7 @@ def test_nbdiff_app_unicode_safe(filespath):
     check_call([sys.executable, '-m', 'nbdime.nbdiffapp', afn, bfn], env=env)
 
 
-def test_nbdiff_app_only_source(filespath, tmpdir, reset_diff_targets):
+def test_nbdiff_app_only_source(filespath, tmpdir, reset_notebook_diff):
     afn = os.path.join(filespath, "multilevel-test-base.ipynb")
     bfn = os.path.join(filespath, "multilevel-test-local.ipynb")
     dfn = os.path.join(tmpdir.dirname, "diff_output.json")
@@ -140,7 +140,7 @@ def test_nbdiff_app_only_source(filespath, tmpdir, reset_diff_targets):
         diff = diff[0]['diff']
 
 
-def test_nbdiff_app_ignore_source(filespath, tmpdir, reset_diff_targets):
+def test_nbdiff_app_ignore_source(filespath, tmpdir, reset_notebook_diff):
     afn = os.path.join(filespath, "multilevel-test-base.ipynb")
     bfn = os.path.join(filespath, "multilevel-test-local.ipynb")
     dfn = os.path.join(tmpdir.dirname, "diff_output.json")
@@ -156,7 +156,7 @@ def test_nbdiff_app_ignore_source(filespath, tmpdir, reset_diff_targets):
         diff = diff[0]['diff']
 
 
-def test_nbdiff_app_only_details(filespath, tmpdir, reset_diff_targets):
+def test_nbdiff_app_only_details(filespath, tmpdir, reset_notebook_diff):
     afn = os.path.join(filespath, "single_cell_nb.ipynb")
     bfn = os.path.join(filespath, "single_cell_nb--changed_source_output_ec.ipynb")
     dfn = os.path.join(tmpdir.dirname, "diff_output.json")
@@ -177,7 +177,7 @@ def test_nbdiff_app_only_details(filespath, tmpdir, reset_diff_targets):
     assert diff[0]['value'] == 2
 
 
-def test_nbdiff_app_ignore_details(filespath, tmpdir, reset_diff_targets):
+def test_nbdiff_app_ignore_details(filespath, tmpdir, reset_notebook_diff):
     afn = os.path.join(filespath, "single_cell_nb.ipynb")
     bfn = os.path.join(filespath, "single_cell_nb--changed_source_output_ec.ipynb")
     dfn = os.path.join(tmpdir.dirname, "diff_output.json")
@@ -200,7 +200,7 @@ def test_nbdiff_app_ignore_details(filespath, tmpdir, reset_diff_targets):
     assert diff[1]['key'] == 'source'
 
 
-def test_nbdiff_app_config_ignores(filespath, tmpdir, reset_diff_targets):
+def test_nbdiff_app_config_ignores(filespath, tmpdir, reset_notebook_diff):
     tmpdir.join('nbdime_config.json').write_text(
         text_type(json.dumps({
             'Diff': {
@@ -235,7 +235,7 @@ def test_nbdiff_app_config_ignores(filespath, tmpdir, reset_diff_targets):
     assert diff[0]['op'] == 'patch'
 
 
-def test_nbdiff_app_flags_override_config_ignores(filespath, tmpdir, reset_diff_targets):
+def test_nbdiff_app_flags_override_config_ignores(filespath, tmpdir, reset_notebook_diff):
     # This excercises current behavior, but should ideally (?) be different
 
     tmpdir.join('nbdime_config.json').write_text(
