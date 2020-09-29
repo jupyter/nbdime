@@ -1,9 +1,9 @@
 language: python
 python:
+  - 3.9-dev
   - 3.8
   - 3.7
   - 3.6
-  - 3.5
 sudo: false
 dist: xenial
 services:
@@ -13,7 +13,7 @@ env:
     - GROUP=python
 matrix:
   include:
-    - python: 3.5
+    - python: 3.8
       env: GROUP=js
 cache:
   pip: true
