@@ -44,7 +44,8 @@ def main_merge(args):
         # Agreed on deletion = no conflics = return 0
         return 0
 
-    b = read_notebook(bfn, on_null='minimal')
+    # Git seems to give empty base file for double insertions
+    b = read_notebook(bfn, on_null='minimal', on_empty='minimal')
     l = read_notebook(lfn, on_null='minimal')
     r = read_notebook(rfn, on_null='minimal')
 
