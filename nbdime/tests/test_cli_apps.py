@@ -609,7 +609,7 @@ def test_git_difftool(git_repo, unique_port, popen_with_terminator):
         r = requests.get(url + '/difftool')
         r.raise_for_status()
         # close it
-        r = requests.post(url + '/api/closetool', headers={'exit_code': '0'})
+        r = requests.post(url + '/api/closetool', json={'exitCode': 0})
         r.raise_for_status()
         time.sleep(0.25)
     # wait for exit
@@ -647,7 +647,7 @@ def test_git_mergetool(git_repo, unique_port, popen_with_terminator):
     )
     r.raise_for_status()
     # close it
-    r = requests.post(url + '/api/closetool', headers={'exit_code': '0'})
+    r = requests.post(url + '/api/closetool', json={'exitCode': 0})
     r.raise_for_status()
     # wait for exit
     process.wait()
@@ -709,7 +709,7 @@ def test_hg_diffweb(hg_repo, unique_port, popen_with_terminator):
         r = requests.get(url + '/difftool')
         r.raise_for_status()
         # close it
-        r = requests.post(url + '/api/closetool', headers={'exit_code': '0'})
+        r = requests.post(url + '/api/closetool', json={'exitCode': 0})
         r.raise_for_status()
         time.sleep(0.25)
     # wait for exit
@@ -743,7 +743,7 @@ def test_hg_mergetool(hg_repo, unique_port, popen_with_terminator):
     )
     r.raise_for_status()
     # close it
-    r = requests.post(url + '/api/closetool', headers={'exit_code': '0'})
+    r = requests.post(url + '/api/closetool', json={'exitCode': 0})
     r.raise_for_status()
     # wait for exit
     process.wait()

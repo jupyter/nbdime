@@ -137,7 +137,7 @@ extras_require = setup_args['extras_require'] = {
     ],
 }
 
-setup_args['python_requires'] = '>=3.5'
+setup_args['python_requires'] = '>=3.6'
 
 setup_args['entry_points'] = {
     'console_scripts': [
