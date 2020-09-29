@@ -221,11 +221,8 @@ export
 function closeTool(exitCode=0) {
   if (!toolClosed) {
     toolClosed = true;
-    let xhttp = new XMLHttpRequest();
     let url = '/api/closetool';
-    xhttp.open('POST', url, false);
-    xhttp.setRequestHeader('exit_code', exitCode.toString());
-    xhttp.send();
+    navigator.sendBeacon(url, JSON.stringify({exitCode}));
     window.close();
   }
 }
