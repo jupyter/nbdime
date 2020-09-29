@@ -72,7 +72,7 @@ class NbdimeHandler(IPythonHandler):
                 return self.finish(str(value))
         return super(NbdimeHandler, self).write_error(status_code, **kwargs)
 
-    def read_notebook(self, arg):
+    def read_notebook(self, arg, fail_on_empty=True):
         # Currently assuming arg is a filename relative to
         # where the server was started from, later we may
         # want to accept urls or full notebooks as well.
@@ -96,7 +96,17 @@ class NbdimeHandler(IPythonHandler):
             if path == EXPLICIT_MISSING_FILE:
                 nb = nbformat.v4.new_notebook()
             elif os.path.exists(path):
-                nb = nbformat.read(path, as_version=4)
+                try:
+                    nb = nbformat.read(path, as_version=4)
+                except nbformat.reader.NotJSONError:
+                    if fail_on_empty:
+                        raise
+                    # Handle empty notebook file
+                    if isinstance(path, string_types):
+                        with io.open(path, encoding='utf-8') as fo:
+                            if len(fo.read(10)) != 0:
+                                raise
+                    nb = nbformat.v4.new_notebook()
             else:
                 nb = nbformat.reads(r.text, as_version=4)
         except requests.exceptions.HTTPError as e:
@@ -261,7 +271,7 @@ class ApiMergeHandler(NbdimeHandler, APIHandler):
     def get_notebook_argument(self, argname):
         if 'mergetool_args' in self.params:
             arg = self.params['mergetool_args'][argname]
-            return self.read_notebook(arg)
+            return self.read_notebook(arg, fail_on_empty=False)
         return super(ApiMergeHandler, self).get_notebook_argument(argname)
 
 

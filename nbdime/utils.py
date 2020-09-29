@@ -6,6 +6,7 @@
 import codecs
 from collections import defaultdict
 import errno
+import io
 import locale
 import os
 import re
@@ -22,7 +23,7 @@ else:
     EXPLICIT_MISSING_FILE = '/dev/null'
 
 
-def read_notebook(f, on_null):
+def read_notebook(f, on_null, on_empty=None):
     """Read and return notebook json from filename
 
     Parameters:
@@ -32,6 +33,10 @@ def read_notebook(f, on_null):
         on_null: What to return when filename null
             "empty": return empty dict
             "minimal": return miminal valid notebook
+        on_empty: What to return when the file is completely empty (0 size)
+            None: Raise an error
+            "empty": return empty dict
+            "minimal: return minimal valid notebook
     """
     if f == EXPLICIT_MISSING_FILE:
         if on_null == 'empty':
@@ -43,7 +48,24 @@ def read_notebook(f, on_null):
                 'Not valid value for `on_null`: %r. Valid values '
                 'are "empty" or "minimal"' % (on_null,))
     else:
-        return nbformat.read(f, as_version=4)
+        try:
+            return nbformat.read(f, as_version=4)
+        except nbformat.reader.NotJSONError:
+            if on_empty is None:
+                raise
+            # Reraise if file is not empty
+            if isinstance(f, string_types):
+                with io.open(f, encoding='utf-8') as fo:
+                    if len(fo.read(10)) != 0:
+                        raise
+            if on_empty == 'empty':
+                return {}
+            elif on_empty == 'minimal':
+                return nbformat.v4.new_notebook()
+            else:
+                raise ValueError(
+                    'Not valid value for `on_empty`: %r. Valid values '
+                    'are None, "empty" or "minimal"' % (on_empty,))
 
 
 def as_text(text):
