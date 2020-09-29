@@ -297,10 +297,11 @@ class ApiCloseHandler(NbdimeHandler, APIHandler):
                 400, 'This server cannot be closed remotely.')
 
         # Fail if no exit code is supplied:
+        fallback = int(self.request.headers.get('exit_code', 1))
         try:
-            self.application.exit_code = json.loads(self.request.body).get('exitCode', 1)
+            self.application.exit_code = json.loads(self.request.body).get('exitCode', fallback)
         except json.JSONDecodeError:
-            self.application.exit_code = 1
+            self.application.exit_code = fallback
 
         _logger.info('Closing server on remote request')
         self.finish()
