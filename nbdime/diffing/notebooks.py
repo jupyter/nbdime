@@ -40,6 +40,7 @@ re_repr = re.compile(r"<[a-z0-9._]+ at 0x[a-f0-9]{8,16}>", re.IGNORECASE)
 re_pointer = re.compile(r"0x[a-f0-9]{8,16}", re.IGNORECASE)
 
 TEXT_MIMEDATA_MAX_COMPARE_LENGTH = 10000
+STREAM_MAX_COMPARE_LENGTH = 1000
 
 
 # List of mimes we can diff recursively
@@ -228,7 +229,7 @@ def compare_output_approximate(x, y):
     if ot == "stream":
         if x["name"] != y["name"]:
             return False
-        if not compare_strings_approximate(x["text"], y["text"]):
+        if not compare_strings_approximate(x["text"], y["text"], maxlen=STREAM_MAX_COMPARE_LENGTH):
             return False
         handled.update(("name", "text"))
 
