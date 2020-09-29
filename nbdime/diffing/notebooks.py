@@ -12,6 +12,7 @@ Up- and down-conversion is handled by nbformat.
 
 from __future__ import unicode_literals
 
+import json
 import operator
 import re
 import copy
@@ -139,7 +140,14 @@ def _compare_mimedata(mimetype, x, y, comp_text, comp_base64):
     # TODO: Compare binary images?
     #if mimetype.startswith("image/"):
     if isinstance(x, string_types) and isinstance(y, string_types):
-        _compare_mimedata_strings(x, y, comp_text, comp_base64)
+        return _compare_mimedata_strings(x, y, comp_text, comp_base64)
+
+    if mimetype == "application/json":
+        try:
+            return comp_text(json.dumps(x, indent=2), json.dumps(y, indent=2))
+        except TypeError:
+            pass
+    
     # Fallback to exactly equal
     return x == y
 
