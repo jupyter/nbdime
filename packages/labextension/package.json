@@ -1,6 +1,6 @@
 {
   "name": "nbdime-jupyterlab",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "A JupyterLab extension for showing Notebook diffs.",
   "keywords": [
     "jupyter",
