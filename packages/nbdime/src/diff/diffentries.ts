@@ -195,7 +195,8 @@ function opPatch(key: string | number, diff: IDiffEntry[] | null): IDiffPatch {
 export
 function validateSequenceOp(base: ReadonlyArray<any> | string, entry: IDiffEntry): void {
   if (typeof entry.key !== 'number') {
-      throw new TypeError('Invalid patch sequence op: Key is not a number: ' + entry.key);
+    console.info('Invalid patch details', base, entry);
+    throw new TypeError(`Invalid patch sequence op: Key is not a number: ${entry.key}`);
   }
   let index = entry.key;
   if (entry.op === 'addrange') {
@@ -226,7 +227,8 @@ export
 function validateObjectOp(base: any, entry: IDiffEntry, keys: string[]): void {
   let op = entry.op;
   if (typeof entry.key !== 'string') {
-      throw new TypeError('Invalid patch object op: Key is not a string: ' + entry.key);
+    console.info('Invalid patch details', base, entry, keys);
+    throw new TypeError(`Invalid patch object op: Key is not a string: ${entry.key}`);
   }
   let key = entry.key;
 

@@ -632,6 +632,47 @@ describe('merge', () => {
           baseObject.source + 'line 4\n');
       });
 
+      it('should handle multiple decisions with shared path', () => {
+        let decs = [
+          new decisions.MergeDecision({
+            local_diff: [opAddRange(0, ['top '])],
+            remote_diff: [opAddRange(0, ['not '])],
+            common_path: ['metadata', 'secret']
+          }),
+          new decisions.MergeDecision({
+            local_diff: [opAdd('foo', true)],
+            remote_diff: [opAdd('foo', true)],
+            common_path: ['metadata']
+          }),
+          new decisions.MergeDecision({
+            local_diff: [opRemoveRange(0, 1)],
+            common_path: ['seq']
+          }),
+          new decisions.MergeDecision({
+            local_diff: [opRemoveRange(1, 1)],
+            remote_diff: [opRemoveRange(1, 1)],
+            common_path: ['seq']
+          }),
+          new decisions.MergeDecision({
+            local_diff: [opAdd('bar', 43)],
+            remote_diff: [opAdd('bar', 12)],
+            common_path: ['metadata']
+          }),
+        ];
+        decs[0].action = 'local';
+        decs[1].action = 'either';
+        decs[2].action = 'local';
+        decs[3].action = 'either';
+        decs[4].action = 'local';
+        let value = decisions.applyDecisions({...baseObject, seq: ['foo', 'bar']}, decs);
+        expect(value.metadata).to.eql({
+          foo: true,
+          bar: 43,
+          secret: 'top foo!',
+        });
+        expect(value.seq).to.eql([]);
+      });
+
     });
 
   });

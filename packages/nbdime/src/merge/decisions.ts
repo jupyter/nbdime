@@ -22,7 +22,7 @@ import {
 } from '../patch';
 
 import {
-  deepCopy, valueIn, isPrefixArray, findSharedPrefix, splitLines
+  arraysEqual, deepCopy, valueIn, isPrefixArray, findSharedPrefix, splitLines
 } from '../common/util';
 
 export
@@ -534,7 +534,7 @@ export function applyDecisions(base: any, decisions: MergeDecision[]): any {
     let path = spl[0];
     let line = spl[1];
     // We patch all decisions with the same path in one op
-    if (path === prevPath) {
+    if (arraysEqual(path, prevPath)) {
       if (clearParent) {
         // Another entry will clear the parent, so all other decisions
         // should be dropped
@@ -547,7 +547,7 @@ export function applyDecisions(base: any, decisions: MergeDecision[]): any {
         if (line) {
           ad = pushPath(ad, line);
         }
-        diffs = diffs.concat();
+        diffs = diffs.concat(ad);
       }
     } else {
       // Different path, start a new collection
