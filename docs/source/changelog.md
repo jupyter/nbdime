@@ -2,6 +2,15 @@
 
 ## 2.0
 
+###  2.1.0 - 2020-10
+
+- Dropped Python 3.5 support.
+- Optimize comparison of large stream outputs.
+- Fixed an error when merging a file that were concurrently added in two branches with git.
+- Fixed a config bug where ignore configs written in a file was not taken into account.
+- Fixed compatibility with JupyterLab 2.2
+- Various other fixes and adjustments.
+
 ###  2.0.0 - 2020-03
 
 - Dropped Python 2 support, and Python 3.4 support.
