@@ -1053,6 +1053,28 @@ def test_inline_merge_outputs():
     assert merged == expected
 
 
+def test_inline_merge_outputs_conflicting_insert_in_empty():
+    # One cell with two outputs:
+    base = outputs_to_notebook([[]])
+    local = outputs_to_notebook([['local']])
+    remote = outputs_to_notebook([['remote']])
+    expected = outputs_to_notebook([[
+        nbformat.v4.new_output(
+            output_type='stream', name='stderr',
+            text='<<<<<<< local\n'),
+        'local',
+        nbformat.v4.new_output(
+            output_type='stream', name='stderr',
+            text='=======\n'),
+        'remote',
+        nbformat.v4.new_output(
+            output_type='stream', name='stderr',
+            text='>>>>>>> remote\n'),
+    ]])
+    merged, decisions = merge_notebooks(base, local, remote)
+    assert merged == expected
+
+
 def test_inline_merge_cells_insertion_similar():
     base = sources_to_notebook([['unmodified']], cell_type='markdown')
     local = sources_to_notebook([['unmodified'], ['local']], cell_type='markdown')

@@ -429,7 +429,7 @@ def resolve_strategy_inline_outputs(base_path, outputs, decisions):
             # Replace all decisions affecting key with resolution
             local_diff, remote_diff = collect_diffs(base_path, decs)
             inlined_conflict, keep_base = make_inline_output_conflict(
-                outputs[key], local_diff, remote_diff)
+                outputs[key] if outputs else None, local_diff, remote_diff)
             custom_diff = []
             custom_diff += [op_addrange(key, inlined_conflict)]
             if not keep_base:
