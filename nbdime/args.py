@@ -369,7 +369,7 @@ def add_filter_args(diff_parser):
 
 
 def add_git_diff_driver_args(diff_parser):
-    """Adds a set of 7 stanard git diff driver arguments:
+    """Adds a set of 7 standard git diff driver arguments:
         path old-file old-hex old-mode new-file new-hex new-mode [ rename-to rename-metadata ]
 
     Note: Only path, base and remote are added to parsed namespace

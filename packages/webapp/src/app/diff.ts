@@ -161,6 +161,11 @@ function getDiff(base: string, remote: string | undefined) {
   requestDiff(base, remote, baseUrl, onDiffRequestCompleted, onDiffRequestFailed);
 }
 
+export
+function renderDiff(diff: any) {
+  onDiffRequestCompleted(JSON.parse(diff));
+}
+
 /**
  * Callback for a successfull diff request
  */

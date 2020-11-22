@@ -145,6 +145,7 @@ setup_args['entry_points'] = {
         'nbshow = nbdime.nbshowapp:main',
         'nbdiff = nbdime.nbdiffapp:main',
         'nbdiff-web = nbdime.webapp.nbdiffweb:main',
+        'nbdiff-web-export = nbdime.webapp.nbdiffwebexport:main',
         'nbmerge = nbdime.nbmergeapp:main',
         'nbmerge-web = nbdime.webapp.nbmergeweb:main',
         'git-nbdiffdriver = nbdime.vcs.git.diffdriver:main',

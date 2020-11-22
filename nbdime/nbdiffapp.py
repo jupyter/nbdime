@@ -33,38 +33,27 @@ def main_diff(args):
     process_diff_flags(args)
     base, remote, paths = resolve_diff_args(args)
 
-    # Check if base/remote are gitrefs:
+    # We are asked to do a diff of git revisions:
+    status = 0
+    for fbase, fremote in list_changed_file_pairs(base, remote, paths):
+        status = _handle_diff(fbase, fremote, output, args)
+        if status != 0:
+            # Short-circuit on error in diff handling
+            return status
+    return status
+
+
+def list_changed_file_pairs(base, remote, paths):
     if is_gitref(base) and is_gitref(remote):
-        # We are asked to do a diff of git revisions:
-        status = 0
         for fbase, fremote in changed_notebooks(base, remote, paths):
-            status = _handle_diff(fbase, fremote, output, args)
-            if status != 0:
-                # Short-circuit on error in diff handling
-                return status
-        return status
+            yield fbase, fremote
     else:  # Not gitrefs:
-        return _handle_diff(base, remote, output, args)
+        yield base, remote
 
 
 def _handle_diff(base, remote, output, args):
     """Handles diffs of files, either as filenames or file-like objects"""
-    # Check that if args are filenames they either exist, or are
-    # explicitly marked as missing (added/removed):
-    for fn in (base, remote):
-        if (isinstance(fn, string_types) and not os.path.exists(fn) and
-                fn != EXPLICIT_MISSING_FILE):
-            print("Missing file {}".format(fn))
-            return 1
-    # Both files cannot be missing
-    assert not (base == EXPLICIT_MISSING_FILE and remote == EXPLICIT_MISSING_FILE), (
-        'cannot diff %r against %r' % (base, remote))
-
-    # Perform actual work:
-    a = read_notebook(base, on_null='empty')
-    b = read_notebook(remote, on_null='empty')
-
-    d = diff_notebooks(a, b)
+    a, b, d = _build_diff(base, remote, on_null="empty")
 
     # Output as JSON to file, or print to stdout:
     if output:
@@ -89,6 +78,26 @@ def _handle_diff(base, remote, output, args):
 
     return 0
 
+
+def _build_diff(base, remote, on_null):
+    """Builds diffs of files, either as filenames or file-like objects"""
+    # Check that if args are filenames they either exist, or are
+    # explicitly marked as missing (added/removed):
+    for fn in (base, remote):
+        if (isinstance(fn, string_types) and not os.path.exists(fn) and
+                fn != EXPLICIT_MISSING_FILE):
+            print("Missing file {}".format(fn))
+            return 1
+    # Both files cannot be missing
+    assert not (base == EXPLICIT_MISSING_FILE and remote == EXPLICIT_MISSING_FILE), (
+        'cannot diff %r against %r' % (base, remote))
+
+    # Perform actual work:
+    base_notebook = read_notebook(base, on_null=on_null)
+    remote_notebook = read_notebook(remote, on_null=on_null)
+
+    d = diff_notebooks(base_notebook, remote_notebook)
+    return base_notebook, remote_notebook, d
 
 def _build_arg_parser(prog=None):
     """Creates an argument parser for the nbdiff command."""

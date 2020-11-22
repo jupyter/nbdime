@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>nbdime - diff and merge your Jupyter notebooks</title>
+
+  </head>
+
+
+  <!-- TODO: make nbdime.init() setup the forms/input user interface? -->
+
+  <body>
+
+    <div id="nbdime-header" class="nbdime-Diff">
+      <h3>Notebook Diff</h3>
+      <script id='diff-and-base' type="application/json">{{ data|tojson|safe }}</script>
+      <div id="nbdime-header-buttonrow">
+        <input id="nbdime-hide-unchanged" type="checkbox"><label for="cbox1">Hide unchanged cells</label></input>
+        <button id="nbdime-trust" style="display: none">Trust outputs</button>
+        <button id="nbdime-close" type="checkbox" style="display: none">Close tool</button>
+        <button id="nbdime-export" type="checkbox" style="display: none">Export diff</button>
+      </div>
+      <div id=nbdime-header-banner>
+        <span id="nbdime-header-base">Base</span>
+        <span id="nbdime-header-remote">Remote</span>
+      </div>
+    </div> <!-- ndime-header -->
+
+    <div id="nbdime-root" class="nbdime-root">
+    </div>
+
+    <script src="{{ nbdime_url }}"></script>
+    <noscript>Nbdime relies on javascript for diff/merge views!</noscript>
+  </body>
+</html>
