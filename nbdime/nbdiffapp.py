@@ -53,8 +53,11 @@ def list_changed_file_pairs(base, remote, paths):
 
 def _handle_diff(base, remote, output, args):
     """Handles diffs of files, either as filenames or file-like objects"""
-    a, b, d = _build_diff(base, remote, on_null="empty")
-
+    try:
+        a, b, d = _build_diff(base, remote, on_null="empty")
+    except ValueError as e:
+        print(e, file=sys.stderr)
+        return 1
     # Output as JSON to file, or print to stdout:
     if output:
         with open(output, "w") as df:
@@ -86,8 +89,7 @@ def _build_diff(base, remote, on_null):
     for fn in (base, remote):
         if (isinstance(fn, string_types) and not os.path.exists(fn) and
                 fn != EXPLICIT_MISSING_FILE):
-            print("Missing file {}".format(fn))
-            return 1
+            raise ValueError("Missing file {}".format(fn))
     # Both files cannot be missing
     assert not (base == EXPLICIT_MISSING_FILE and remote == EXPLICIT_MISSING_FILE), (
         'cannot diff %r against %r' % (base, remote))

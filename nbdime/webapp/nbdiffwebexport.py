@@ -75,7 +75,11 @@ def main_export(opts):
     for fbase, fremote in list_changed_file_pairs(base, remote, paths):
         # on_null="minimal" is crucial cause web renderer expects
         # base_notebook to be a valid notebook even if it is missing
-        base_notebook, remote_notebook, diff = _build_diff(fbase, fremote, on_null="minimal")
+        try:
+            base_notebook, remote_notebook, diff = _build_diff(fbase, fremote, on_null="minimal")
+        except ValueError as e:
+            print(e, file=sys.stderr)
+            return 1
         data = json.dumps(dict(
             base=base_notebook,
             diff=diff
@@ -89,6 +93,7 @@ def main_export(opts):
         with open(outputfilename, "w") as f:
             f.write(rendered)
         index += 1
+    return 0
 
 
 def main(args=None):
