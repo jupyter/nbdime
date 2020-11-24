@@ -286,6 +286,16 @@ def test_nbdiff_app_no_colors(filespath, capsys):
     assert 0 == main_diff(args)
 
 
+def test_nbdiff_app_fail_if_file_is_missing(filespath):
+    # Simply check that the --color-words argument is accepted, not behavior
+    # Behavior is covered elsewhere
+    afn = os.path.join(filespath, "missing-file.ipynb")
+    bfn = os.path.join(filespath, "multilevel-test-local.ipynb")
+
+    args = nbdiffapp._build_arg_parser().parse_args([afn, bfn])
+    assert 1 == main_diff(args)
+
+
 def test_nbmerge_app(tempfiles, capsys, reset_log):
     bfn = os.path.join(tempfiles, "multilevel-test-base.ipynb")
     lfn = os.path.join(tempfiles, "multilevel-test-local.ipynb")
