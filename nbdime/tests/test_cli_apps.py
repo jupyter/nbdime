@@ -287,8 +287,6 @@ def test_nbdiff_app_no_colors(filespath, capsys):
 
 
 def test_nbdiff_app_fail_if_file_is_missing(filespath):
-    # Simply check that the --color-words argument is accepted, not behavior
-    # Behavior is covered elsewhere
     afn = os.path.join(filespath, "missing-file.ipynb")
     bfn = os.path.join(filespath, "multilevel-test-local.ipynb")
 
