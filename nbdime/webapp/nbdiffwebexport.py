@@ -50,7 +50,7 @@ def build_arg_parser():
         "--nbdime_url",
         type=Path,
         default="",
-        help="URL to nbdime.js"
+        help="URL to nbdime.js. If missing output html will contain the script embedded"
     )
     parser.add_argument(
         "--output-dir",
@@ -64,11 +64,12 @@ def build_arg_parser():
 def main_export(opts):
     env = Environment(loader=FileSystemLoader([template_path]), autoescape=False)
     outputdir = opts.output_dir
+    nbdime_content = ""
     nbdime_url = opts.nbdime_url
     if not nbdime_url:
-        nbdime_url = "nbdime.js"
-        import shutil
-        shutil.copy(os.path.join(static_path, "nbdime.js"), os.path.join(outputdir, nbdime_url))
+        # if nbdime_url is empty then we would embed the script
+        with open(os.path.join(static_path, "nbdime.js"), "r") as f:
+            nbdime_content = f.read()
 
     base, remote, paths = resolve_diff_args(opts)
     index = 1
@@ -88,7 +89,8 @@ def main_export(opts):
         template = env.get_template("diffembedded.html")
         rendered = template.render(
             data=data,
-            nbdime_url=nbdime_url)
+            nbdime_url=nbdime_url,
+            nbdime_content=nbdime_content)
         outputfilename = os.path.join(outputdir, "diff" + str(index) + ".html")
         with open(outputfilename, "w") as f:
             f.write(rendered)

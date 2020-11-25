@@ -32,7 +32,11 @@
     <div id="nbdime-root" class="nbdime-root">
     </div>
 
+    {% if ndime_url == "" %}
     <script src="{{ nbdime_url }}"></script>
+    {% else %}
+    <script>{{ nbdime_content }}</script>
+    {% endif %}
     <noscript>Nbdime relies on javascript for diff/merge views!</noscript>
   </body>
 </html>
