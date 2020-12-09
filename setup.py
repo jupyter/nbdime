@@ -115,7 +115,7 @@ install_requires = setup_args['install_requires'] = [
     'tornado',
     'requests',
     'GitPython!=2.1.4, !=2.1.5, !=2.1.6',  # For difftool taking git refs
-    'notebook',
+    'jupyter_server',
     'jinja2>=2.9',
 ]
 

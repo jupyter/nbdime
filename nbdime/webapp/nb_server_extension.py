@@ -8,9 +8,9 @@ import os
 
 from jinja2 import ChoiceLoader, FileSystemLoader
 
-from notebook.utils import url_path_join, to_os_path
-from notebook.services.contents.checkpoints import GenericCheckpointsMixin
-from notebook.services.contents.filecheckpoints import FileCheckpoints
+from jupyter_server.utils import url_path_join, to_os_path
+from jupyter_server.services.contents.checkpoints import GenericCheckpointsMixin
+from jupyter_server.services.contents.filecheckpoints import FileCheckpoints
 from tornado.web import HTTPError, escape, authenticated, gen
 
 from ..args import process_diff_flags
