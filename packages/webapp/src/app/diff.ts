@@ -18,10 +18,6 @@ import {
 } from '@jupyterlab/apputils';
 
 import {
-  PageConfig
-} from '@jupyterlab/coreutils';
-
-import {
   MathJaxTypesetter
 } from '@jupyterlab/mathjax2';
 
@@ -158,18 +154,14 @@ function editHistory(pushHistory: boolean | 'replace', statedata: any, title: st
 export
 function getDiff(base: string, remote: string | undefined) {
   let baseUrl = getBaseUrl();
-  requestDiff(base, remote, baseUrl, onDiffRequestCompleted, onDiffRequestFailed);
+  requestDiff(base, remote, baseUrl, renderDiff, renderError);
 }
 
-export
-function renderDiff(diff: any) {
-  onDiffRequestCompleted(JSON.parse(diff));
-}
 
 /**
  * Callback for a successfull diff request
  */
-function onDiffRequestCompleted(data: any) {
+function renderDiff(data: {base: nbformat.INotebookContent, diff: IDiffEntry[]}) {
   let layoutWork = showDiff(data);
 
   layoutWork.then(() => {
@@ -183,13 +175,13 @@ function onDiffRequestCompleted(data: any) {
 /**
  * Callback for a failed diff request
  */
-function onDiffRequestFailed(response: string) {
+function renderError(message: string) {
   console.log('Diff request failed.');
   let root = document.getElementById('nbdime-root');
   if (!root) {
     throw new Error('Missing root element "nbidme-root"');
   }
-  root.innerHTML = '<pre>' + response + '</pre>';
+  root.innerHTML = '<pre>' + message + '</pre>';
   diffWidget = null;
   toggleSpinner(false);
 }
@@ -247,12 +239,28 @@ function attachToForm() {
  */
 export
 function initializeDiff() {
-  attachToForm();
-  // If arguments supplied in config, run diff directly:
-  let base = getConfigOption('base');
-  let remote = getConfigOption('remote');
-  if (base && (remote || hasPrefix(base))) {
-    compare(base, remote, 'replace');
+  // Check to see if we already have the diff data embedded
+  if (document.getElementById('diff-and-base')) {
+    let el = document.getElementById('diff-and-base');
+    if (el && el.textContent) {
+      let data;
+      try {
+        data = JSON.parse(el.textContent);
+      } catch {
+        renderError('Failed to parse diff data');
+      }
+      renderDiff(data);
+    } else {
+      renderError('Missing diff data');
+    }
+  } else {
+    attachToForm();
+    // If arguments supplied in config, run diff directly:
+    let base = getConfigOption('base');
+    let remote = getConfigOption('remote');
+    if (base && (remote || hasPrefix(base))) {
+      compare(base, remote, 'replace');
+    }
   }
 
   let exportBtn = document.getElementById('nbdime-export') as HTMLButtonElement;

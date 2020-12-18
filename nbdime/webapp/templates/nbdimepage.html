@@ -10,9 +10,7 @@
   </head>
 
 
-  <!-- TODO: make nbdime.init() setup the forms/input user interface? -->
-
-  <body> <!-- onload="nbdime.init()" -->
+  <body>
 
     {% block nbdimeheader %}
     {% endblock %}
@@ -20,8 +18,10 @@
     <div id="nbdime-root" class="nbdime-root">
     </div>
 
+    {% block nbdimescripts %}
     <script id='nbdime-config-data' type="application/json">{{ config_data|tojson|safe }}</script>
     <script src="{{ static_url('nbdime.js') }}"></script>
     <noscript>Nbdime relies on javascript for diff/merge views!</noscript>
+    {% endblock %}
   </body>
 </html>

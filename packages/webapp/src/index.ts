@@ -3,7 +3,7 @@
 'use strict';
 
 import {
-  initializeDiff, renderDiff
+  initializeDiff
 } from './app/diff';
 
 import {
@@ -44,15 +44,8 @@ import './app/merge.css';
 /** */
 function initialize() {
   let closable = getConfigOption('closable');
-  let type: 'diff' | 'merge' | 'compare' | 'diff-and-base';
-  if (document.getElementById('diff-and-base')) {
-    type = 'diff-and-base'
-    closable = false
-    let el = document.getElementById('diff-and-base');
-    if (el && el.textContent) {
-      renderDiff(JSON.parse(el.textContent))
-    }
-  } else if (document.getElementById('compare-local')) {
+  let type: 'diff' | 'merge' | 'compare';
+  if (document.getElementById('compare-local')) {
     initializeCompare();
     type = 'compare';
   } else if (getConfigOption('local') || document.getElementById('merge-local')) {
