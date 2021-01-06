@@ -1,9 +1,5 @@
 import pytest
 
-# Add the jupyter_Server plugin for testing against jupyter_server
-pytest_plugins = ("jupyter_server.pytest_plugin",)
-
-
 def pytest_addoption(parser):
     parser.addoption("--quick", action="store_true",
                      default=False, help="skip slow tests")

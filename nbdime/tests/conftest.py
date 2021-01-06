@@ -50,6 +50,9 @@ pjoin = os.path.join
 
 schema_dir = os.path.abspath(pjoin(os.path.dirname(__file__), ".."))
 
+# Add the jupyter_Server plugin for testing against jupyter_server
+pytest_plugins = ("jupyter_server.pytest_plugin",)
+
 
 def testspath():
     return os.path.abspath(os.path.dirname(__file__))

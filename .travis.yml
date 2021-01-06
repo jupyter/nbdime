@@ -35,7 +35,6 @@ install:
   # Don't use -v with JS as travis chokes with [Errno 11] write could not complete without blocking
   - |
     if [[ $GROUP == python ]]; then
-      pip install jupyter_server[test]
       pip install --upgrade --upgrade-strategy=eager ".[test]" -v
     elif [[ $GROUP == js ]]; then
       pip install --upgrade --upgrade-strategy=eager -e ".[test]"

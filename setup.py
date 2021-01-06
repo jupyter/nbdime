@@ -116,7 +116,6 @@ install_requires = setup_args['install_requires'] = [
     'requests',
     'GitPython!=2.1.4, !=2.1.5, !=2.1.6',  # For difftool taking git refs
     'notebook',
-    'nbclassic',
     'jupyter_server',
     'jinja2>=2.9',
 ]
