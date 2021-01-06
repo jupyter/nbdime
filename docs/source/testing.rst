@@ -11,7 +11,7 @@ Dependencies
 
 Install the test dependencies::
 
-    pip install "nbdime[test]"
+    pip install .[test]
 
 Running tests locally
 ---------------------
