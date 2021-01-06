@@ -9,8 +9,14 @@ import os
 from jinja2 import ChoiceLoader, FileSystemLoader
 
 from jupyter_server.utils import url_path_join, to_os_path
-from jupyter_server.services.contents.checkpoints import GenericCheckpointsMixin
-from jupyter_server.services.contents.filecheckpoints import FileCheckpoints
+
+from jupyter_server.services.contents.checkpoints import GenericCheckpointsMixin as jpserver_GenericCheckpointsMixin
+from jupyter_server.services.contents.filecheckpoints import FileCheckpoints as jpserver_FileCheckpoints
+
+from notebook.services.contents.checkpoints import GenericCheckpointsMixin as nbserver_GenericCheckpointsMixin
+from notebook.services.contents.filecheckpoints import FileCheckpoints as nbserver_FileCheckpoints
+
+
 from tornado.web import HTTPError, escape, authenticated, gen
 
 from ..args import process_diff_flags
@@ -148,11 +154,11 @@ class ExtensionApiDiffHandler(BaseGitDiffHandler):
             raise gen.Return((remote_nb, remote_nb))
         self.log.debug('Checkpoints: %r', checkpoints)
         checkpoint = checkpoints[0]
-        if isinstance(cm.checkpoints, GenericCheckpointsMixin):
+        if isinstance(cm.checkpoints, (jpserver_GenericCheckpointsMixin, nbserver_GenericCheckpointsMixin)):
             checkpoint_model = yield gen.maybe_future(
                 cm.checkpoints.get_notebook_checkpoint(checkpoint, base))
             base_nb = checkpoint_model['content']
-        elif isinstance(cm.checkpoints, FileCheckpoints):
+        elif isinstance(cm.checkpoints, (jpserver_FileCheckpoints, nbserver_FileCheckpoints)):
             path = yield gen.maybe_future(
                 cm.checkpoints.checkpoint_path(checkpoint['id'], base))
             base_nb = read_notebook(path, on_null='minimal')

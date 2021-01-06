@@ -149,7 +149,6 @@ def test_diff_api_checkpoint(tmpdir, filespath, server_extension_app):
     if os.sep == '\\':
         url_path = url_path.replace('\\', '/')
 
-
     # Create checkpoint
     url = 'http://127.0.0.1:%i/api/contents/%s/checkpoints' % (
         server_extension_app['port'],
@@ -164,7 +163,8 @@ def test_diff_api_checkpoint(tmpdir, filespath, server_extension_app):
 
     url = 'http://127.0.0.1:%i/nbdime/api/diff' % server_extension_app['port']
     r = requests.post(
-        url, headers=auth_header,
+        url,
+        headers=auth_header,
         data=json.dumps({
             'base': 'checkpoint:' + url_path,
         }))
