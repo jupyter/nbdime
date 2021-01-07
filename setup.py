@@ -127,7 +127,6 @@ extras_require = setup_args['extras_require'] = {
         'pytest-timeout',
         'pytest-tornado',
         'jupyter_server[test]',
-        'pytest-tornasync',
         'jsonschema',
         'mock',
         'requests',
