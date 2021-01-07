@@ -70,6 +70,7 @@ the following flags to any of the diff commands:
     - ``--outputs`` / ``-o``
     - ``--metadata`` / ``-m``
     - ``--attachments`` / ``-a``
+    - ``--details`` / ``-d``
 
 These flags can be combined, e.g. `-sm` will only process source and metadata.
 Alternatively, you can supply some arguments to process everything *except* some
@@ -79,7 +80,9 @@ parts:
     - ``--ignore-outputs`` / ``-O``
     - ``--ignore-metadata`` / ``-M``
     - ``--ignore-attachments`` / ``-A``
+    - ``--ignore-details`` / ``-D``
 
+Above "details" refer to things like execution count etc.
 
 
 Merging
