@@ -8,6 +8,7 @@ import os
 import re
 import requests
 import shutil
+import uuid
 
 import pytest
 
@@ -178,7 +179,7 @@ def test_diff_api_checkpoint(tmpdir, filespath, server_extension_app):
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
 def test_diff_api_symlink(git_repo2, server_extension_app, needs_symlink):
     root = server_extension_app['path']
-    subdir = pjoin(root, 'has space', 'subdir')
+    subdir = pjoin(root, str(uuid.uuid4()), 'has space', 'subdir')
     os.makedirs(subdir)
     symlink = pjoin(subdir, 'link')
     with pushd(subdir):

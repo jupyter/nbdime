@@ -50,9 +50,6 @@ pjoin = os.path.join
 
 schema_dir = os.path.abspath(pjoin(os.path.dirname(__file__), ".."))
 
-# Add the jupyter_Server plugin for testing against jupyter_server
-pytest_plugins = ("jupyter_server.pytest_plugin",)
-
 
 def testspath():
     return os.path.abspath(os.path.dirname(__file__))
@@ -444,11 +441,14 @@ def popen_with_terminator(request):
 
 
 
-def create_server_extension_config(tmpdir_factory):
+def create_server_extension_config(tmpdir_factory, cmd):
+    appname = 'NotebookApp' if cmd == 'notebook' else 'ServerApp'
+    filename = 'jupyter_notebook_config.json' if cmd == 'notebook' else 'jupyter_server_config.json'
+    config_entry = 'nbserver_extensions' if cmd == 'notebook' else 'jpserver_extensions'
     path = tmpdir_factory.mktemp('server-extension-config')
     config = {
-        "NotebookApp": {
-            "nbserver_extensions": {
+        appname: {
+            config_entry: {
                 "nbdime": True
             }
         }
@@ -456,13 +456,16 @@ def create_server_extension_config(tmpdir_factory):
     config_str = json.dumps(config)
     if isinstance(config_str, bytes):
         config_str = unicode(config_str)
-    path.join('jupyter_notebook_config.json').write_text(config_str, 'utf-8')
+    path.join(filename).write_text(config_str, 'utf-8')
     return str(path)
 
 
 
-@fixture(scope='module')
+@fixture(scope='module', params=('notebook', 'jupyter_server'))
 def server_extension_app(tmpdir_factory, request):
+    cmd = request.param
+
+    appname = 'NotebookApp' if cmd == 'notebook' else 'ServerApp'
 
     def _kill_nb_app():
         try:
@@ -472,7 +475,7 @@ def server_extension_app(tmpdir_factory, request):
             pass
         popen_wait(process, 10)
 
-    config_dir = create_server_extension_config(tmpdir_factory)
+    config_dir = create_server_extension_config(tmpdir_factory, cmd)
     env = os.environ.copy()
     env.update({'JUPYTER_CONFIG_DIR': config_dir})
 
@@ -481,10 +484,10 @@ def server_extension_app(tmpdir_factory, request):
 
     os.chdir(root_dir)
     process = Popen([
-        sys.executable, '-m', 'notebook',
+        sys.executable, '-m', cmd,
          '--port=%i' % port,
         '--ip=127.0.0.1',
-        '--no-browser', '--NotebookApp.token=%s' % TEST_TOKEN],
+        '--no-browser', '--%s.token=%s' % (appname, TEST_TOKEN)],
         env=env)
 
     request.addfinalizer(_kill_nb_app)
