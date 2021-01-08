@@ -48,4 +48,6 @@ __all__ = [
     "decide_merge", "merge_notebooks", "apply_decisions",
     "load_jupyter_server_extension",
     "_load_jupyter_server_extension",
+    "_jupyter_server_extension_points",
+    "_jupyter_server_extension_paths",
     ]
