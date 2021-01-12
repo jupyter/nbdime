@@ -128,6 +128,7 @@ extras_require = setup_args['extras_require'] = {
         'jupyter_server[test]',
         'jsonschema',
         'mock',
+        'notebook',
         'requests',
         'tabulate',  # For profiling
     ],
