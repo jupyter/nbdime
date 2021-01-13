@@ -29,6 +29,9 @@ try:
 except ModuleNotFoundError:
     pass
 
+generic_checkpoint_mixin_types = tuple(generic_checkpoint_mixin_types)
+file_checkpoint_mixin_types = tuple(file_checkpoint_mixin_types)
+
 
 from tornado.web import HTTPError, escape, authenticated, gen
 
