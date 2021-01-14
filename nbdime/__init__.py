@@ -18,10 +18,16 @@ def load_jupyter_server_extension(nb_server_app):
     _load_jupyter_server_extension(nb_server_app)
 
 
+_load_jupyter_server_extension = load_jupyter_server_extension
+
+
 def _jupyter_server_extension_paths():
     return [{
         "module": "nbdime"
     }]
+
+
+_jupyter_server_extension_points = _jupyter_server_extension_paths
 
 
 def _jupyter_nbextension_paths():
@@ -41,4 +47,7 @@ __all__ = [
     "patch", "patch_notebook",
     "decide_merge", "merge_notebooks", "apply_decisions",
     "load_jupyter_server_extension",
+    "_load_jupyter_server_extension",
+    "_jupyter_server_extension_points",
+    "_jupyter_server_extension_paths",
     ]

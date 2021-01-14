@@ -11,6 +11,7 @@ MANIFEST
 .coverage
 .cache
 .pytest_cache
+.idea
 
 
 .spyderproject

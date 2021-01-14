@@ -89,10 +89,14 @@ Installing Jupyter extensions
 If you want to use the development version of the notebook and lab extensions,
 you will also have to run the following commands after the pip dev install::
 
-    jupyter serverextension enable --py nbdime [--sys-prefix/--user/--system]
+> Note: only run one of the following two server commands, running both can cause issues in some cases
 
-    jupyter nbextension install --py nbdime [--sym-link] [--sys-prefix/--user/--system]
-    jupyter nbextension enable --py nbdime [--sys-prefix/--user/--system]
+    jupyter serverextension enable --py nbdime --sys-prefix # if developing for jupyter notebook
+
+    jupyter server extension enable nbdime # if developing for jupyter lab or nbclassic
+
+    jupyter nbextension install --py nbdime --sys-prefix [--sym-link]
+    jupyter nbextension enable --py nbdime --sys-prefix
 
     jupyter labextension link ./packages/nbdime --no-build
     jupyter labextension install ./packages/labextension

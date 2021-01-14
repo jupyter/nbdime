@@ -98,11 +98,7 @@ def test_apply_filter_invalid_filter(git_repo):
 
 
 def test_apply_filter_valid_filter(git_repo):
-    try:
-        call('cat --help')
-        filter_cmd = 'cat'
-    except (CalledProcessError, FileNotFoundError):
-        filter_cmd = 'findstr x*'
+    filter_cmd = 'findstr x*' if os.name == 'nt' else 'cat'
     path = pjoin(git_repo, 'diff.ipynb')
     gitattr = locate_gitattributes()
     with io.open(gitattr, 'a', encoding="utf8") as f:

@@ -12,10 +12,10 @@ import sys
 
 from jinja2 import FileSystemLoader, Environment
 import nbformat
-from notebook.base.handlers import IPythonHandler, APIHandler
-from notebook import DEFAULT_STATIC_FILES_PATH
-from notebook.utils import url_path_join
-from notebook.log import log_request
+from jupyter_server.base.handlers import JupyterHandler, APIHandler
+from jupyter_server import DEFAULT_STATIC_FILES_PATH
+from jupyter_server.utils import url_path_join
+from jupyter_server.log import log_request
 import requests
 from six import string_types
 from tornado import ioloop, web, escape, netutil, httpserver
@@ -43,7 +43,7 @@ static_path = os.path.join(here, 'static')
 template_path = os.path.join(here, 'templates')
 
 
-class NbdimeHandler(IPythonHandler):
+class NbdimeHandler(JupyterHandler):
     def initialize(self, **params):
         self.params = params
 
