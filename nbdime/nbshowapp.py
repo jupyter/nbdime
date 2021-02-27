@@ -92,6 +92,10 @@ def _build_arg_parser():
         action=IgnorableAction,
         help="show/ignore metadata.")
     ignorables.add_argument(
+        '-i', '--id',
+        action=IgnorableAction,
+        help="show/ignore identifiers.")
+    ignorables.add_argument(
         '-d', '--details',
         action=IgnorableAction,
         help="show/ignore details not covered by other options.")

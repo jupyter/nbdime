@@ -112,6 +112,8 @@ class PrettyPrintConfig:
             return not self.attachments
         if starred.startswith('/cells/*/metadata') or starred.startswith('/metadata'):
             return not self.metadata
+        if starred.startswith('/id'):
+            return not self.id
         if starred.startswith('/cells/*/outputs'):
             return (
                 not self.outputs or
@@ -699,7 +701,7 @@ def pretty_print_cell(i, cell, prefix="", force_header=False, config=DefaultConf
 
     exclude_keys = {
         'cell_type', 'source', 'execution_count', 'outputs', 'metadata',
-        'attachment',
+        'id', 'attachment',
     }
     if (set(cell) - exclude_keys) and config.details:
         # present anything we haven't special-cased yet (future-proofing)

@@ -323,6 +323,10 @@ def add_diff_args(parser):
         action=IgnorableAction,
         help="process/ignore metadata.")
     ignorables.add_argument(
+        '-i', '--id',
+        action=IgnorableAction,
+        help="process/ignore identifiers.")
+    ignorables.add_argument(
         '-d', '--details',
         action=IgnorableAction,
         help="process/ignore details not covered by other options.")
@@ -392,7 +396,7 @@ def process_diff_flags(args):
         # Note: This will blow away any options set via config (for these fields)
         set_notebook_diff_targets(
             args.sources, args.outputs, args.attachments, args.metadata,
-            args.details)
+            args.id, args.details)
 
 
 def resolve_diff_args(args):

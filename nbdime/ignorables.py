@@ -5,4 +5,4 @@
 
 from __future__ import unicode_literals
 
-diff_ignorables = ('sources', 'outputs', 'attachments', 'metadata', 'details')
+diff_ignorables = ('sources', 'outputs', 'attachments', 'metadata', 'id', 'details')
