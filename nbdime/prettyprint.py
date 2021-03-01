@@ -112,7 +112,7 @@ class PrettyPrintConfig:
             return not self.attachments
         if starred.startswith('/cells/*/metadata') or starred.startswith('/metadata'):
             return not self.metadata
-        if starred.startswith('/id'):
+        if starred.startswith('/cells/*/id'):
             return not self.id
         if starred.startswith('/cells/*/outputs'):
             return (
