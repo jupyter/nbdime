@@ -238,9 +238,8 @@ def add_git_config_subcommand(subparsers, enable, disable, subparser_help, enabl
     )
     return config
 
-
-def add_web_args(parser, default_port=8888):
-    """Adds a set of arguments common to all commands that show a web gui.
+def add_server_args(parser, default_port=8888):
+    """Adds a set of arguments common to all commands that run a server.
     """
     port_help = (
         "specify the port you want the server to run on. Default is %d%s." % (
@@ -251,6 +250,29 @@ def add_web_args(parser, default_port=8888):
         default=default_port,
         type=int,
         help=port_help)
+    parser.add_argument(
+        '--ip',
+        default='127.0.0.1',
+        help="specify the interface to listen to for the web server. "
+        "NOTE: Setting this to anything other than 127.0.0.1/localhost "
+        "might comprimise the security of your computer. Use with care!")
+    parser.add_argument(
+        '--base-url',
+        default='/',
+        help="The base URL prefix under which to run the web app")
+    parser.add_argument(
+        '--num-processes',
+        default=1,
+        type=int,
+        help="The number of server processes to spawn (Unix only). "
+        "A value of <= 0 will use the number of cores available on this machine."
+    )
+
+def add_web_args(parser, default_port=8888):
+    """Adds a set of arguments common to all commands that show a web gui.
+    """
+    add_server_args(parser, default_port)
+
     parser.add_argument(
         '-b', '--browser',
         default=None,
@@ -263,12 +285,6 @@ def add_web_args(parser, default_port=8888):
         help="prevent server shutting down on remote close request (when these"
              " would normally be supported)."
     )
-    parser.add_argument(
-        '--ip',
-        default='127.0.0.1',
-        help="specify the interface to listen to for the web server. "
-        "NOTE: Setting this to anything other than 127.0.0.1/localhost "
-        "might comprimise the security of your computer. Use with care!")
     cwd = os.path.abspath(os.path.curdir)
 
     parser.add_argument(
@@ -277,10 +293,6 @@ def add_web_args(parser, default_port=8888):
         help="specify the working directory you want "
              "the server to run from. Default is the "
              "actual cwd at program start.")
-    parser.add_argument(
-        '--base-url',
-        default='/',
-        help="The base URL prefix under which to run the web app")
     parser.add_argument(
         '--show-unchanged',
         dest='hide_unchanged',
@@ -528,6 +540,7 @@ def args_for_server(arguments):
                 workdirectory='cwd',
                 base_url='base_url',
                 hide_unchanged='hide_unchanged',
+                num_processes='num_processes'
                 )
     ret = {kmap[k]: v for k, v in vars(arguments).items() if k in kmap}
     if 'persist' in arguments:

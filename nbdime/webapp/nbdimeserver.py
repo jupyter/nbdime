@@ -21,7 +21,7 @@ from six import string_types
 from tornado import ioloop, web, escape, netutil, httpserver
 
 from .. import __file__ as nbdime_root
-from ..args import ConfigBackedParser, add_generic_args, add_web_args
+from ..args import ConfigBackedParser, add_generic_args, add_web_args, args_for_server
 from ..diffing.notebooks import diff_notebooks
 from ..log import logger
 from ..merging.notebooks import decide_notebook_merge
@@ -402,7 +402,8 @@ def make_app(**params):
     app.exit_code = 0
     return app
 
-def init_app(on_port=None, closable=False, **params):
+
+def init_app(make_app, on_port=None, closable=False, **params):
     asyncio_patch()
     _logger.debug('Using params: %s', params)
     params.update({'closable': closable})
@@ -427,10 +428,13 @@ def init_app(on_port=None, closable=False, **params):
     return app, server
 
 
-def main_server(on_port=None, closable=False, **params):
-    app, server = init_app(on_port, closable, **params)
+def main_server(make_app=make_app, on_port=None, closable=False, **params):
+    app, server = init_app(make_app, on_port, closable, **params)
+    is_win = sys.platform.startswith('win')
+    if not is_win:
+        server.start(params.pop("num_processes", 1))
     io_loop = ioloop.IOLoop.current()
-    if sys.platform.startswith('win'):
+    if is_win:
         # workaround for tornado on Windows:
         # add no-op to wake every 5s
         # to handle signals that may be ignored by the inner loop
@@ -458,11 +462,7 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
     arguments = _build_arg_parser().parse_args(args)
-    return main_server(port=arguments.port,
-                       ip=arguments.ip,
-                       cwd=arguments.workdirectory,
-                       base_url=arguments.base_url,
-                      )
+    return main_server(make_app, **args_for_server(arguments))
 
 
 if __name__ == '__main__':
