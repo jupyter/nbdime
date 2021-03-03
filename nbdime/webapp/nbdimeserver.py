@@ -403,7 +403,7 @@ def make_app(**params):
     return app
 
 
-def init_app(make_app, on_port=None, closable=False, **params):
+def init_app(make_app=make_app, on_port=None, closable=False, **params):
     asyncio_patch()
     _logger.debug('Using params: %s', params)
     params.update({'closable': closable})
