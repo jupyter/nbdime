@@ -42,13 +42,14 @@ class NbApiHandler(JupyterHandler):
             raise web.HTTPError(400, 'Expecting a notebook JSON object.')
 
         try:
-            # Convert dictionary to a notebook object with nbformat
-            from nbformat import versions, NBFormatError, reader
+            # Convert dictionary to a v4 notebook object with nbformat
+            from nbformat import versions, NBFormatError, reader, convert, validate
             (major, minor) = reader.get_version(arg)
             if major in versions:
                 nb = versions[major].to_notebook_json(arg, minor=minor)
             else:
                 raise NBFormatError('Unsupported nbformat version %s' % major)
+            nb = convert(nb, 4)
         except Exception as e:
             self.log.exception(e)
             raise web.HTTPError(422, 'Invalid notebook: %s' % argname)
