@@ -4,8 +4,8 @@
 import json
 import sys
 
-from notebook.base.handlers import IPythonHandler, APIHandler
-from notebook.log import log_request
+from jupyter_server.base.handlers import JupyterHandler, APIHandler
+from jupyter_server.log import log_request
 from tornado import web, escape
 
 from .nbdimeserver import main_server
@@ -17,7 +17,7 @@ from ..merging.notebooks import decide_notebook_merge
 from ..nbmergeapp import _build_arg_parser as build_merge_parser
 
 
-class NbApiHandler(IPythonHandler):
+class NbApiHandler(JupyterHandler):
     def initialize(self, **params):
         self.params = params
         self.body = None
