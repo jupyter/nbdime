@@ -29,15 +29,15 @@ import {
  */
 function combinatorialTest(
     description: string,
-    steps: ((done: Mocha.Done) => void)[] | { [key: string]: ((done?: Mocha.Done) => void) },
-    beforeEach?: (done: Mocha.Done) => void,
-    afterEach?: (done: Mocha.Done) => void) {
+    steps: ((done: MochaDone) => void)[] | { [key: string]: ((done?: MochaDone) => void) },
+    beforeEach?: (done: MochaDone) => void,
+    afterEach?: (done: MochaDone) => void) {
   let stepNames: string[];
   if (Array.isArray(steps)) {
     stepNames = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
   } else {
     stepNames = Object.keys(steps);
-    let stepArray: ((done?: Mocha.Done) => void)[] = [];
+    let stepArray: ((done?: MochaDone) => void)[] = [];
     for (let key of stepNames) {
       stepArray.push(steps[key]);
     }
