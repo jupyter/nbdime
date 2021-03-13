@@ -30,9 +30,9 @@
   "scripts": {
     "build": "npm run build:lib && npm run build:labextension",
     "build:dev": "npm run build:lib",
-    "build:labextension": "rimraf dist && mkdirp dist && cd dist && npm pack ..",
+    "build:labextension": "rimraf dist && mkdirp dist && jupyter labextension build . && cd dist && npm pack ..",
     "build:lib": "tsc --build",
-    "clean": "rimraf lib && rimraf dist",
+    "clean": "rimraf tsconfig.tsbuildinfo lib dist",
     "prepublishOnly": "npm run build",
     "update": "rimraf node_modules/nbdime && npm install && npm run build",
     "watch": "tsc --build --watch"
@@ -53,6 +53,7 @@
   },
   "devDependencies": {
     "@jupyterlab/application": "^2 || ^3",
+    "@jupyterlab/builder": "^3.0.0",
     "@jupyterlab/docregistry": "^2 || ^3",
     "@lumino/commands": "^1.6.1",
     "mkdirp": "^0.5.1",
@@ -71,6 +72,16 @@
           "pip",
           "conda"
         ]
+      }
+    },
+    "outputDir": "dist/static",
+    "sharedPackages": {
+      "codemirror": {
+        "bundled": false,
+        "singleton": true
+      },
+      "nbdime": {
+        "singleton": true
       }
     }
   }
