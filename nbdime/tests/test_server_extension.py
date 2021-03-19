@@ -78,7 +78,7 @@ def test_git_difftool(git_repo2, server_extension_app):
         "savable": False,
         "hideUnchanged": True,
         "mathjaxConfig": "TeX-AMS-MML_HTMLorMML-full,Safe",
-        "mathjaxUrl": "/static/components/MathJax/MathJax.js",
+        "mathjaxUrl": "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js",
     }
 
 

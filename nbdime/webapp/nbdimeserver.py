@@ -49,12 +49,20 @@ class NbdimeHandler(JupyterHandler):
 
     def base_args(self):
         fn = self.params.get('outputfilename', None)
+
+        # if mathjax is not provided by the server, use a version from CDN
+        mathjax_url = self.mathjax_url
+        print('aaaa', mathjax_url)
+        raise mathjax_url
+        if not mathjax_url:
+            mathjax_url = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js'
+
         base = {
             'closable': self.params.get('closable', False),
             'savable': fn is not None,
             'baseUrl': self.nbdime_base_url,
             'hideUnchanged': self.params.get('hide_unchanged', True),
-            'mathjaxUrl': self.mathjax_url,
+            'mathjaxUrl': mathjax_url,
             'mathjaxConfig': self.mathjax_config,
         }
         if fn:
