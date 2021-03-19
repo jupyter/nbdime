@@ -21,6 +21,7 @@ import nbformat
 
 from nbdime import patch, diff
 from nbdime.diff_format import is_valid_diff
+from nbdime.utils import strip_cell_id
 
 
 try:
@@ -69,7 +70,7 @@ def check_symmetric_diff_and_patch(a, b):
     check_diff_and_patch(b, a)
 
 
-def sources_to_notebook(sources, cell_type='code', id_seed=0):
+def sources_to_notebook(sources, cell_type='code', id_seed=0, strip_ids=False):
     assert isinstance(sources, list)
     nb = nbformat.v4.new_notebook()
     with random_seed(id_seed):
@@ -80,6 +81,8 @@ def sources_to_notebook(sources, cell_type='code', id_seed=0):
                 nb.cells.append(nbformat.v4.new_code_cell(source))
             elif cell_type == 'markdown':
                 nb.cells.append(nbformat.v4.new_markdown_cell(source))
+    if strip_ids:
+        strip_cell_ids(nb)
     return nb
 
 
@@ -119,15 +122,13 @@ def outputs_to_notebook(outputs, strip_ids=False):
 
 def strip_cell_ids(nb):
     for cell in nb["cells"]:
-        if "id" in cell:
-            del cell["id"]
+        strip_cell_id(cell)
     return nb
 
 
 def new_cell_wo_id(*args, **kwargs):
     cell = nbformat.v4.new_code_cell(*args, **kwargs)
-    if "id" in cell:
-        del cell["id"]
+    strip_cell_id(cell)
     return cell
 
 

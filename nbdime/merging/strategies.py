@@ -18,7 +18,7 @@ from ..diff_format import (
     op_patch, op_addrange, op_removerange, op_add, op_replace)
 from ..patching import patch
 from ..prettyprint import merge_render
-from ..utils import join_path
+from ..utils import join_path, strip_cell_id
 
 
 # =============================================================================
@@ -239,7 +239,9 @@ def _cell_marker_format(text):
 
 
 def cell_marker(text):
-    return nbformat.v4.new_markdown_cell(source=_cell_marker_format(text))
+    cell = nbformat.v4.new_markdown_cell(source=_cell_marker_format(text))
+    strip_cell_id(cell)
+    return cell
 
 
 def get_outputs_and_note(base, removes, patches):
