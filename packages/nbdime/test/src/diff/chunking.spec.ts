@@ -1,8 +1,6 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import expect = require('expect.js');
-
 import {
   DiffRangeRaw, raw2Pos
 } from '../../../src/diff/range';
@@ -22,156 +20,156 @@ describe('diff', () => {
         let base = 'Single line text';
         let raw = new DiffRangeRaw('Single '.length, 'line '.length);
         let pos = raw2Pos([raw], base);
-        expect(pos).to.have.length(1);
-        expect(pos[0].from.line).to.equal(0);
-        expect(pos[0].to.line).to.equal(0);
-        expect(pos[0].from.ch).to.equal(raw.from);
-        expect(pos[0].to.ch).to.equal(raw.to);
-        expect(pos[0].chunkStartLine).to.be(true);
-        expect(pos[0].endsOnNewline).to.be(false);
+        expect(pos).toHaveLength(1);
+        expect(pos[0].from.line).toEqual(0);
+        expect(pos[0].to.line).toEqual(0);
+        expect(pos[0].from.ch).toEqual(raw.from);
+        expect(pos[0].to.ch).toEqual(raw.to);
+        expect(pos[0].chunkStartLine).toBe(true);
+        expect(pos[0].endsOnNewline).toBe(false);
       });
 
       it('should convert a pos in the middle of a non-first line', () => {
         let base = 'Line 1\nLine 2 is now like this.';
         let raw = new DiffRangeRaw('Line 1\nLine 2 is '.length, 'now '.length);
         let pos = raw2Pos([raw], base);
-        expect(pos).to.have.length(1);
-        expect(pos[0].from.line).to.equal(1);
-        expect(pos[0].to.line).to.equal(1);
-        expect(pos[0].from.ch).to.equal('Line 2 is '.length);
-        expect(pos[0].to.ch).to.equal('Line 2 is now '.length);
-        expect(pos[0].chunkStartLine).to.be(true);
-        expect(pos[0].endsOnNewline).to.be(false);
+        expect(pos).toHaveLength(1);
+        expect(pos[0].from.line).toEqual(1);
+        expect(pos[0].to.line).toEqual(1);
+        expect(pos[0].from.ch).toEqual('Line 2 is '.length);
+        expect(pos[0].to.ch).toEqual('Line 2 is now '.length);
+        expect(pos[0].chunkStartLine).toBe(true);
+        expect(pos[0].endsOnNewline).toBe(false);
       });
 
       it('should convert a pos in the middle of a non-first line with additional lines', () => {
         let base = 'Line 1\nLine 2 is now like this\nLine 3\nLine4\n';
         let raw = new DiffRangeRaw('Line 1\nLine 2 is '.length, 'now '.length);
         let pos = raw2Pos([raw], base);
-        expect(pos).to.have.length(1);
-        expect(pos[0].from.line).to.equal(1);
-        expect(pos[0].to.line).to.equal(1);
-        expect(pos[0].from.ch).to.equal('Line 2 is '.length);
-        expect(pos[0].to.ch).to.equal('Line 2 is now '.length);
-        expect(pos[0].chunkStartLine).to.be(true);
-        expect(pos[0].endsOnNewline).to.be(false);
+        expect(pos).toHaveLength(1);
+        expect(pos[0].from.line).toEqual(1);
+        expect(pos[0].to.line).toEqual(1);
+        expect(pos[0].from.ch).toEqual('Line 2 is '.length);
+        expect(pos[0].to.ch).toEqual('Line 2 is now '.length);
+        expect(pos[0].chunkStartLine).toBe(true);
+        expect(pos[0].endsOnNewline).toBe(false);
       });
 
       it('should convert a pos in the middle of a non-first line with final newline', () => {
         let base = 'Line 1\nLine 2 is now like this\n';
         let raw = new DiffRangeRaw('Line 1\nLine 2 is '.length, 'now '.length);
         let pos = raw2Pos([raw], base);
-        expect(pos).to.have.length(1);
-        expect(pos[0].from.line).to.equal(1);
-        expect(pos[0].to.line).to.equal(1);
-        expect(pos[0].from.ch).to.equal('Line 2 is '.length);
-        expect(pos[0].to.ch).to.equal('Line 2 is now '.length);
-        expect(pos[0].chunkStartLine).to.be(true);
-        expect(pos[0].endsOnNewline).to.be(false);
+        expect(pos).toHaveLength(1);
+        expect(pos[0].from.line).toEqual(1);
+        expect(pos[0].to.line).toEqual(1);
+        expect(pos[0].from.ch).toEqual('Line 2 is '.length);
+        expect(pos[0].to.ch).toEqual('Line 2 is now '.length);
+        expect(pos[0].chunkStartLine).toBe(true);
+        expect(pos[0].endsOnNewline).toBe(false);
       });
 
       it('should convert a pos at the start of the first line', () => {
         let base = 'Line 1\nLine 2 is now like this\n';
         let raw = new DiffRangeRaw(0, 'Line '.length);
         let pos = raw2Pos([raw], base);
-        expect(pos).to.have.length(1);
-        expect(pos[0].from.line).to.equal(0);
-        expect(pos[0].to.line).to.equal(0);
-        expect(pos[0].from.ch).to.equal(0);
-        expect(pos[0].to.ch).to.equal('Line '.length);
-        expect(pos[0].chunkStartLine).to.be(true);
-        expect(pos[0].endsOnNewline).to.be(false);
+        expect(pos).toHaveLength(1);
+        expect(pos[0].from.line).toEqual(0);
+        expect(pos[0].to.line).toEqual(0);
+        expect(pos[0].from.ch).toEqual(0);
+        expect(pos[0].to.ch).toEqual('Line '.length);
+        expect(pos[0].chunkStartLine).toBe(true);
+        expect(pos[0].endsOnNewline).toBe(false);
       });
 
       it('should convert a pos at the start of a non-first line', () => {
         let base = 'Line 1\nLine 2 is now like this\n';
         let raw = new DiffRangeRaw('Line 1\n'.length, 'Line '.length);
         let pos = raw2Pos([raw], base);
-        expect(pos).to.have.length(1);
-        expect(pos[0].from.line).to.equal(1);
-        expect(pos[0].to.line).to.equal(1);
-        expect(pos[0].from.ch).to.equal(0);
-        expect(pos[0].to.ch).to.equal('Line '.length);
-        expect(pos[0].chunkStartLine).to.be(true);
-        expect(pos[0].endsOnNewline).to.be(false);
+        expect(pos).toHaveLength(1);
+        expect(pos[0].from.line).toEqual(1);
+        expect(pos[0].to.line).toEqual(1);
+        expect(pos[0].from.ch).toEqual(0);
+        expect(pos[0].to.ch).toEqual('Line '.length);
+        expect(pos[0].chunkStartLine).toBe(true);
+        expect(pos[0].endsOnNewline).toBe(false);
       });
 
       it('should convert a pos including the end of the first line', () => {
         let base = 'Line 1\nLine 2 is now like this\n';
         let raw = new DiffRangeRaw('Line'.length, ' 1'.length);
         let pos = raw2Pos([raw], base);
-        expect(pos).to.have.length(1);
-        expect(pos[0].from.line).to.equal(0);
-        expect(pos[0].to.line).to.equal(0);
-        expect(pos[0].from.ch).to.equal('Line'.length);
-        expect(pos[0].to.ch).to.equal('Line 1'.length);
-        expect(pos[0].chunkStartLine).to.be(true);
-        expect(pos[0].endsOnNewline).to.be(false);
+        expect(pos).toHaveLength(1);
+        expect(pos[0].from.line).toEqual(0);
+        expect(pos[0].to.line).toEqual(0);
+        expect(pos[0].from.ch).toEqual('Line'.length);
+        expect(pos[0].to.ch).toEqual('Line 1'.length);
+        expect(pos[0].chunkStartLine).toBe(true);
+        expect(pos[0].endsOnNewline).toBe(false);
       });
 
       it('should convert a pos with newline in middle', () => {
         let base = 'Line 1\nLine 2 is now like this\n';
         let raw = new DiffRangeRaw('Line '.length, '1\nLine '.length);
         let pos = raw2Pos([raw], base);
-        expect(pos).to.have.length(1);
-        expect(pos[0].from.line).to.equal(0);
-        expect(pos[0].to.line).to.equal(1);
-        expect(pos[0].from.ch).to.equal('Line '.length);
-        expect(pos[0].to.ch).to.equal('Line '.length);
-        expect(pos[0].chunkStartLine).to.be(true);
-        expect(pos[0].endsOnNewline).to.be(false);
+        expect(pos).toHaveLength(1);
+        expect(pos[0].from.line).toEqual(0);
+        expect(pos[0].to.line).toEqual(1);
+        expect(pos[0].from.ch).toEqual('Line '.length);
+        expect(pos[0].to.ch).toEqual('Line '.length);
+        expect(pos[0].chunkStartLine).toBe(true);
+        expect(pos[0].endsOnNewline).toBe(false);
       });
 
       it('should convert a pos with newline at start', () => {
         let base = 'Line 1\nLine 2 is now like this\n';
         let raw = new DiffRangeRaw('Line 1'.length, '\nLine 2'.length);
         let pos = raw2Pos([raw], base);
-        expect(pos).to.have.length(1);
-        expect(pos[0].from.line).to.equal(0);
-        expect(pos[0].to.line).to.equal(1);
-        expect(pos[0].from.ch).to.equal('Line 1'.length);
-        expect(pos[0].to.ch).to.equal('Line 2'.length);
-        expect(pos[0].chunkStartLine).to.be(true);
-        expect(pos[0].endsOnNewline).to.be(false);
+        expect(pos).toHaveLength(1);
+        expect(pos[0].from.line).toEqual(0);
+        expect(pos[0].to.line).toEqual(1);
+        expect(pos[0].from.ch).toEqual('Line 1'.length);
+        expect(pos[0].to.ch).toEqual('Line 2'.length);
+        expect(pos[0].chunkStartLine).toBe(true);
+        expect(pos[0].endsOnNewline).toBe(false);
       });
 
       it('should convert a pos at the start of the first line with newline at start', () => {
         let base = '\nLine 1\nLine 2 is now like this\n';
         let raw = new DiffRangeRaw(0, '\n'.length);
         let pos = raw2Pos([raw], base);
-        expect(pos).to.have.length(1);
-        expect(pos[0].from.line).to.equal(0);
-        expect(pos[0].to.line).to.equal(0);
-        expect(pos[0].from.ch).to.equal(0);
-        expect(pos[0].to.ch).to.equal('\n'.length);
-        expect(pos[0].chunkStartLine).to.be(true);
-        expect(pos[0].endsOnNewline).to.be(true);
+        expect(pos).toHaveLength(1);
+        expect(pos[0].from.line).toEqual(0);
+        expect(pos[0].to.line).toEqual(0);
+        expect(pos[0].from.ch).toEqual(0);
+        expect(pos[0].to.ch).toEqual('\n'.length);
+        expect(pos[0].chunkStartLine).toBe(true);
+        expect(pos[0].endsOnNewline).toBe(true);
       });
 
       it('should convert a pos with newline at end', () => {
         let base = 'Line 1\nLine 2\nLine 3\n';
         let raw = new DiffRangeRaw('Line 1\n'.length, 'Line 2\n'.length);
         let pos = raw2Pos([raw], base);
-        expect(pos).to.have.length(1);
-        expect(pos[0].from.line).to.equal(1);
-        expect(pos[0].to.line).to.equal(1);
-        expect(pos[0].from.ch).to.equal(0);
-        expect(pos[0].to.ch).to.equal('Line 2\n'.length);
-        expect(pos[0].chunkStartLine).to.be(true);
-        expect(pos[0].endsOnNewline).to.be(true);
+        expect(pos).toHaveLength(1);
+        expect(pos[0].from.line).toEqual(1);
+        expect(pos[0].to.line).toEqual(1);
+        expect(pos[0].from.ch).toEqual(0);
+        expect(pos[0].to.ch).toEqual('Line 2\n'.length);
+        expect(pos[0].chunkStartLine).toBe(true);
+        expect(pos[0].endsOnNewline).toBe(true);
       });
 
       it('should convert a pos with new at start AND end', () => {
         let base = 'Line 1\nLine 2\nLine 3\nLine 4\n';
         let raw = new DiffRangeRaw('Line 1\nLine 2'.length, '\nLine 3\n'.length);
         let pos = raw2Pos([raw], base);
-        expect(pos).to.have.length(1);
-        expect(pos[0].from.line).to.equal(1);
-        expect(pos[0].to.line).to.equal(2);
-        expect(pos[0].from.ch).to.equal('Line 2'.length);
-        expect(pos[0].to.ch).to.equal('Line 3\n'.length);
-        expect(pos[0].chunkStartLine).to.be(true);
-        expect(pos[0].endsOnNewline).to.be(true);
+        expect(pos).toHaveLength(1);
+        expect(pos[0].from.line).toEqual(1);
+        expect(pos[0].to.line).toEqual(2);
+        expect(pos[0].from.ch).toEqual('Line 2'.length);
+        expect(pos[0].to.ch).toEqual('Line 3\n'.length);
+        expect(pos[0].chunkStartLine).toBe(true);
+        expect(pos[0].endsOnNewline).toBe(true);
       });
 
       it('should convert a pos with multiple line insert', () => {
@@ -180,13 +178,13 @@ describe('diff', () => {
           'Line 1\n'.length,
           'Line 2\nLine 3\nLine 4\n'.length);
         let pos = raw2Pos([raw], base);
-        expect(pos).to.have.length(1);
-        expect(pos[0].from.line).to.equal(1);
-        expect(pos[0].to.line).to.equal(3);
-        expect(pos[0].from.ch).to.equal(0);
-        expect(pos[0].to.ch).to.equal('Line 4\n'.length);
-        expect(pos[0].chunkStartLine).to.be(true);
-        expect(pos[0].endsOnNewline).to.be(true);
+        expect(pos).toHaveLength(1);
+        expect(pos[0].from.line).toEqual(1);
+        expect(pos[0].to.line).toEqual(3);
+        expect(pos[0].from.ch).toEqual(0);
+        expect(pos[0].to.ch).toEqual('Line 4\n'.length);
+        expect(pos[0].chunkStartLine).toBe(true);
+        expect(pos[0].endsOnNewline).toBe(true);
       });
 
     });
@@ -201,11 +199,11 @@ describe('diff', () => {
           added.push(new DiffRangeRaw('Single '.length, 'update '.length));
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
-          expect(chunks).to.have.length(1);
-          expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
-          expect(chunks[0].baseTo).to.equal(chunks[0].remoteTo);
-          expect(chunks[0].baseFrom).to.equal(0);
-          expect(chunks[0].baseTo).to.equal(1);
+          expect(chunks).toHaveLength(1);
+          expect(chunks[0].baseFrom).toEqual(chunks[0].remoteFrom);
+          expect(chunks[0].baseTo).toEqual(chunks[0].remoteTo);
+          expect(chunks[0].baseFrom).toEqual(0);
+          expect(chunks[0].baseTo).toEqual(1);
         });
 
         it('should chunk a single entry in a multi-line diff', () => {
@@ -216,11 +214,11 @@ describe('diff', () => {
             'Line 1\nLine 2 is '.length, 'now '.length));
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
-          expect(chunks).to.have.length(1);
-          expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
-          expect(chunks[0].baseTo).to.equal(chunks[0].remoteTo);
-          expect(chunks[0].baseFrom).to.equal(1);
-          expect(chunks[0].baseTo).to.equal(2);
+          expect(chunks).toHaveLength(1);
+          expect(chunks[0].baseFrom).toEqual(chunks[0].remoteFrom);
+          expect(chunks[0].baseTo).toEqual(chunks[0].remoteTo);
+          expect(chunks[0].baseFrom).toEqual(1);
+          expect(chunks[0].baseTo).toEqual(2);
         });
 
         it('should chunk a start-of-line entry in a multi-line diff', () => {
@@ -231,11 +229,11 @@ describe('diff', () => {
             'Line 1\n'.length, 'Now '.length));
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
-          expect(chunks).to.have.length(1);
-          expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
-          expect(chunks[0].baseTo).to.equal(chunks[0].remoteTo);
-          expect(chunks[0].baseFrom).to.equal(1);
-          expect(chunks[0].baseTo).to.equal(2);
+          expect(chunks).toHaveLength(1);
+          expect(chunks[0].baseFrom).toEqual(chunks[0].remoteFrom);
+          expect(chunks[0].baseTo).toEqual(chunks[0].remoteTo);
+          expect(chunks[0].baseFrom).toEqual(1);
+          expect(chunks[0].baseTo).toEqual(2);
         });
 
         it('should chunk an end-of-line entry in a multi-line diff', () => {
@@ -246,11 +244,11 @@ describe('diff', () => {
             'Line 1\nLine 2 is like this'.length, ' now'.length));
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
-          expect(chunks).to.have.length(1);
-          expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
-          expect(chunks[0].baseTo).to.equal(chunks[0].remoteTo);
-          expect(chunks[0].remoteFrom).to.equal(1);
-          expect(chunks[0].remoteTo).to.equal(2);
+          expect(chunks).toHaveLength(1);
+          expect(chunks[0].baseFrom).toEqual(chunks[0].remoteFrom);
+          expect(chunks[0].baseTo).toEqual(chunks[0].remoteTo);
+          expect(chunks[0].remoteFrom).toEqual(1);
+          expect(chunks[0].remoteTo).toEqual(2);
         });
 
         it('should chunk a newline at start of entry', () => {
@@ -261,11 +259,11 @@ describe('diff', () => {
             'Line 1'.length, '\nLine 1.1'.length));
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
-          expect(chunks).to.have.length(1);
-          expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
-          expect(chunks[0].remoteFrom).to.equal(1);
-          expect(chunks[0].baseTo).to.equal(1);
-          expect(chunks[0].remoteTo).to.equal(2);
+          expect(chunks).toHaveLength(1);
+          expect(chunks[0].baseFrom).toEqual(chunks[0].remoteFrom);
+          expect(chunks[0].remoteFrom).toEqual(1);
+          expect(chunks[0].baseTo).toEqual(1);
+          expect(chunks[0].remoteTo).toEqual(2);
         });
 
         it('should chunk a newline at end of entry', () => {
@@ -276,11 +274,11 @@ describe('diff', () => {
             'Line 1\n'.length, 'Line 1.1\n'.length));
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
-          expect(chunks).to.have.length(1);
-          expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
-          expect(chunks[0].remoteFrom).to.equal(1);
-          expect(chunks[0].baseTo).to.equal(1);
-          expect(chunks[0].remoteTo).to.equal(2);
+          expect(chunks).toHaveLength(1);
+          expect(chunks[0].baseFrom).toEqual(chunks[0].remoteFrom);
+          expect(chunks[0].remoteFrom).toEqual(1);
+          expect(chunks[0].baseTo).toEqual(1);
+          expect(chunks[0].remoteTo).toEqual(2);
         });
 
         it('should chunk a line split', () => {
@@ -294,11 +292,11 @@ describe('diff', () => {
             'Line 1'.length, '\n'.length));
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
-          expect(chunks).to.have.length(1);
-          expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
-          expect(chunks[0].remoteFrom).to.equal(0);
-          expect(chunks[0].baseTo).to.equal(1);
-          expect(chunks[0].remoteTo).to.equal(2);
+          expect(chunks).toHaveLength(1);
+          expect(chunks[0].baseFrom).toEqual(chunks[0].remoteFrom);
+          expect(chunks[0].remoteFrom).toEqual(0);
+          expect(chunks[0].baseTo).toEqual(1);
+          expect(chunks[0].remoteTo).toEqual(2);
         });
 
         it('should chunk an extended line split', () => {
@@ -312,11 +310,11 @@ describe('diff', () => {
             'Line 1'.length, '\n\n\n'.length));
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
-          expect(chunks).to.have.length(1);
-          expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
-          expect(chunks[0].remoteFrom).to.equal(0);
-          expect(chunks[0].baseTo).to.equal(1);
-          expect(chunks[0].remoteTo).to.equal(4);
+          expect(chunks).toHaveLength(1);
+          expect(chunks[0].baseFrom).toEqual(chunks[0].remoteFrom);
+          expect(chunks[0].remoteFrom).toEqual(0);
+          expect(chunks[0].baseTo).toEqual(1);
+          expect(chunks[0].remoteTo).toEqual(4);
         });
 
         it('should chunk a newline at start AND end of entry', () => {
@@ -330,11 +328,11 @@ describe('diff', () => {
             'Line 1'.length, '\nLine 1.1\n'.length));
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
-          expect(chunks).to.have.length(1);
-          expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
-          expect(chunks[0].remoteFrom).to.equal(0);
-          expect(chunks[0].baseTo).to.equal(1);
-          expect(chunks[0].remoteTo).to.equal(3);
+          expect(chunks).toHaveLength(1);
+          expect(chunks[0].baseFrom).toEqual(chunks[0].remoteFrom);
+          expect(chunks[0].remoteFrom).toEqual(0);
+          expect(chunks[0].baseTo).toEqual(1);
+          expect(chunks[0].remoteTo).toEqual(3);
         });
 
         it('should chunk an inserted line at start', () => {
@@ -345,11 +343,11 @@ describe('diff', () => {
             0, 'Line 0\n'.length));
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
-          expect(chunks).to.have.length(1);
-          expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
-          expect(chunks[0].baseFrom).to.equal(0);
-          expect(chunks[0].baseTo).to.equal(0);
-          expect(chunks[0].remoteTo).to.equal(1);
+          expect(chunks).toHaveLength(1);
+          expect(chunks[0].baseFrom).toEqual(chunks[0].remoteFrom);
+          expect(chunks[0].baseFrom).toEqual(0);
+          expect(chunks[0].baseTo).toEqual(0);
+          expect(chunks[0].remoteTo).toEqual(1);
         });
 
         it('should chunk an inserted empty line at unterminated end', () => {
@@ -360,11 +358,11 @@ describe('diff', () => {
             'Line 1\nLine 2\nLine 3'.length, '\n'.length));
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
-          expect(chunks).to.have.length(1);
-          expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
-          expect(chunks[0].baseFrom).to.equal(2);
-          expect(chunks[0].baseTo).to.equal(3);
-          expect(chunks[0].remoteTo).to.equal(4);
+          expect(chunks).toHaveLength(1);
+          expect(chunks[0].baseFrom).toEqual(chunks[0].remoteFrom);
+          expect(chunks[0].baseFrom).toEqual(2);
+          expect(chunks[0].baseTo).toEqual(3);
+          expect(chunks[0].remoteTo).toEqual(4);
         });
 
         it('should chunk an inserted line at unterminated end', () => {
@@ -375,11 +373,11 @@ describe('diff', () => {
             'Line 1\nLine 2\nLine 3'.length, '\nLine 4'.length));
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
-          expect(chunks).to.have.length(1);
-          expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
-          expect(chunks[0].baseFrom).to.equal(2);
-          expect(chunks[0].baseTo).to.equal(3);
-          expect(chunks[0].remoteTo).to.equal(4);
+          expect(chunks).toHaveLength(1);
+          expect(chunks[0].baseFrom).toEqual(chunks[0].remoteFrom);
+          expect(chunks[0].baseFrom).toEqual(2);
+          expect(chunks[0].baseTo).toEqual(3);
+          expect(chunks[0].remoteTo).toEqual(4);
         });
 
         it('should chunk an inserted line + termination at unterminated end', () => {
@@ -390,11 +388,11 @@ describe('diff', () => {
             'Line 1\nLine 2\nLine 3'.length, '\nLine 4\n'.length));
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
-          expect(chunks).to.have.length(1);
-          expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
-          expect(chunks[0].baseFrom).to.equal(2);
-          expect(chunks[0].baseTo).to.equal(3);
-          expect(chunks[0].remoteTo).to.equal(5);
+          expect(chunks).toHaveLength(1);
+          expect(chunks[0].baseFrom).toEqual(chunks[0].remoteFrom);
+          expect(chunks[0].baseFrom).toEqual(2);
+          expect(chunks[0].baseTo).toEqual(3);
+          expect(chunks[0].remoteTo).toEqual(5);
         });
 
         it('should chunk an inserted unterminated line at terminated end', () => {
@@ -405,11 +403,11 @@ describe('diff', () => {
             'Line 1\nLine 2\nLine 3\n'.length, 'Line 4'.length));
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
-          expect(chunks).to.have.length(1);
-          expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
-          expect(chunks[0].baseFrom).to.equal(3);
-          expect(chunks[0].baseTo).to.equal(4);
-          expect(chunks[0].remoteTo).to.equal(4);
+          expect(chunks).toHaveLength(1);
+          expect(chunks[0].baseFrom).toEqual(chunks[0].remoteFrom);
+          expect(chunks[0].baseFrom).toEqual(3);
+          expect(chunks[0].baseTo).toEqual(4);
+          expect(chunks[0].remoteTo).toEqual(4);
         });
 
         it('should chunk an inserted terminated line at terminated end', () => {
@@ -420,11 +418,11 @@ describe('diff', () => {
             'Line 1\nLine 2\nLine 3\n'.length, 'Line 4\n'.length));
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
-          expect(chunks).to.have.length(1);
-          expect(chunks[0].baseFrom).to.equal(chunks[0].remoteFrom);
-          expect(chunks[0].baseFrom).to.equal(3);
-          expect(chunks[0].baseTo).to.equal(3);
-          expect(chunks[0].remoteTo).to.equal(4);
+          expect(chunks).toHaveLength(1);
+          expect(chunks[0].baseFrom).toEqual(chunks[0].remoteFrom);
+          expect(chunks[0].baseFrom).toEqual(3);
+          expect(chunks[0].baseTo).toEqual(3);
+          expect(chunks[0].remoteTo).toEqual(4);
         });
 
       });

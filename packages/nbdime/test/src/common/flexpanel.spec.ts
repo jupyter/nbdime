@@ -1,8 +1,6 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import expect = require('expect.js');
-
 import {
   Widget
 } from '@lumino/widgets';
@@ -29,15 +27,15 @@ import {
  */
 function combinatorialTest(
     description: string,
-    steps: ((done: Mocha.Done) => void)[] | { [key: string]: ((done?: Mocha.Done) => void) },
-    beforeEach?: (done: Mocha.Done) => void,
-    afterEach?: (done: Mocha.Done) => void) {
+    steps: ((done: jest.DoneCallback) => void)[] | { [key: string]: ((done?: jest.DoneCallback) => void) },
+    beforeEach?: (done: jest.DoneCallback) => void,
+    afterEach?: (done: jest.DoneCallback) => void) {
   let stepNames: string[];
   if (Array.isArray(steps)) {
     stepNames = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
   } else {
     stepNames = Object.keys(steps);
-    let stepArray: ((done?: Mocha.Done) => void)[] = [];
+    let stepArray: ((done?: jest.DoneCallback) => void)[] = [];
     for (let key of stepNames) {
       stepArray.push(steps[key]);
     }
@@ -102,12 +100,12 @@ describe('upstreaming', () => {
 
     it('should be initialized with no options', () => {
       let p = new FlexPanel();
-      expect(p).to.not.be(null);
+      expect(p).not.toBe(null);
     });
 
     it('should add a class name to the flex panel', () => {
       let p = new FlexPanel();
-      expect(p.hasClass('p-FlexPanel')).to.be(true);
+      expect(p.hasClass('p-FlexPanel')).toBe(true);
     });
 
     it('should add a class name to the flex panel children', () => {
@@ -116,7 +114,7 @@ describe('upstreaming', () => {
       p.addWidget(new Widget());
       p.addWidget(new Widget());
       each(p.widgets, (child) => {
-        expect(child.hasClass('p-FlexPanel-child')).to.be(true);
+        expect(child.hasClass('p-FlexPanel-child')).toBe(true);
       });
     });
 
@@ -128,7 +126,7 @@ describe('upstreaming', () => {
       while (p.widgets.length > 0) {
         let child = p.widgets[0];
         child.parent = null!;
-        expect(child.hasClass('p-FlexPanel-child')).to.be(false);
+        expect(child.hasClass('p-FlexPanel-child')).toBe(false);
       }
     });
 
@@ -136,34 +134,34 @@ describe('upstreaming', () => {
       let p = new FlexPanel();
       // Check that it has a valid initial value
       p.direction = 'bottom-to-top';
-      expect(p.direction).to.be('bottom-to-top');
+      expect(p.direction).toBe('bottom-to-top');
     });
 
     it('should apply direction if attached after setting', () => {
       let p = new FlexPanel();
       p.direction = 'bottom-to-top';
       Widget.attach(p, document.body);
-      expect(p.hasClass('p-mod-bottom-to-top')).to.be(true);
+      expect(p.hasClass('p-mod-bottom-to-top')).toBe(true);
     });
 
     it('should apply direction if attached before setting', () => {
       let p = new FlexPanel();
       Widget.attach(p, document.body);
       p.direction = 'bottom-to-top';
-      expect(p.hasClass('p-mod-bottom-to-top')).to.be(true);
+      expect(p.hasClass('p-mod-bottom-to-top')).toBe(true);
     });
 
     it('should report isHorizontal/isVertical correctly', () => {
       let p = new FlexPanel();
       for (let v of ['top-to-bottom', 'bottom-to-top']) {
         p.direction = v as any;
-        expect(p.layout.isHorizontal()).to.be(false);
-        expect(p.layout.isVertical()).to.be(true);
+        expect(p.layout.isHorizontal()).toBe(false);
+        expect(p.layout.isVertical()).toBe(true);
       }
       for (let v of ['left-to-right', 'right-to-left']) {
         p.direction = v as any;
-        expect(p.layout.isHorizontal()).to.be(true);
-        expect(p.layout.isVertical()).to.be(false);
+        expect(p.layout.isHorizontal()).toBe(true);
+        expect(p.layout.isVertical()).toBe(false);
       }
     });
 
@@ -171,7 +169,7 @@ describe('upstreaming', () => {
       let p = new FlexPanel();
       // Check that it has a valid initial value
       p.minimumSpacing = 10;
-      expect(p.minimumSpacing).to.be(10);
+      expect(p.minimumSpacing).toBe(10);
     });
 
     let p: FlexPanel;
@@ -191,7 +189,7 @@ describe('upstreaming', () => {
       (done) => {
         requestAnimationFrame(() => {
           try {
-            expect(child.node.style.marginBottom).to.be('10px');
+            expect(child.node.style.marginBottom).toBe('10px');
           } finally {
             p.close();
             p.dispose();
@@ -205,7 +203,7 @@ describe('upstreaming', () => {
       let p = new FlexPanel();
       // Check that it has a valid initial value
       p.wrap = true;
-      expect(p.wrap).to.be(true);
+      expect(p.wrap).toBe(true);
     });
 
     it('should apply wrap if attached after setting', (done) => {
@@ -213,7 +211,7 @@ describe('upstreaming', () => {
       p.wrap = true;
       Widget.attach(p, document.body);
       requestAnimationFrame(() => {
-        expect(p.node.style.flexWrap).to.be('wrap');
+        expect(p.node.style.flexWrap).toBe('wrap');
         p.dispose();
         done();
       });
@@ -224,7 +222,7 @@ describe('upstreaming', () => {
       Widget.attach(p, document.body);
       p.wrap = true;
       requestAnimationFrame(() => {
-        expect(p.node.style.flexWrap).to.be('wrap');
+        expect(p.node.style.flexWrap).toBe('wrap');
         p.dispose();
         done();
       });
@@ -232,9 +230,9 @@ describe('upstreaming', () => {
 
     it('should set and get justifyContent', () => {
       let p = new FlexPanel();
-      expect(p.justifyContent).to.be(null);
+      expect(p.justifyContent).toBe(null);
       p.justifyContent = 'center';
-      expect(p.justifyContent).to.be('center');
+      expect(p.justifyContent).toBe('center');
     });
 
     it('should apply justifyContent if attached after setting', (done) => {
@@ -242,7 +240,7 @@ describe('upstreaming', () => {
       p.justifyContent = 'center';
       Widget.attach(p, document.body);
       requestAnimationFrame(() => {
-        expect(p.node.style.justifyContent).to.be('center');
+        expect(p.node.style.justifyContent).toBe('center');
         p.dispose();
         done();
       });
@@ -253,7 +251,7 @@ describe('upstreaming', () => {
       Widget.attach(p, document.body);
       p.justifyContent = 'center';
       requestAnimationFrame(() => {
-        expect(p.node.style.justifyContent).to.be('center');
+        expect(p.node.style.justifyContent).toBe('center');
         p.dispose();
         done();
       });
@@ -261,9 +259,9 @@ describe('upstreaming', () => {
 
     it('should set and get alignItems', () => {
       let p = new FlexPanel();
-      expect(p.alignItems).to.be(null);
+      expect(p.alignItems).toBe(null);
       p.alignItems = 'center';
-      expect(p.alignItems).to.be('center');
+      expect(p.alignItems).toBe('center');
     });
 
     it('should apply alignItems if attached after setting', (done) => {
@@ -271,7 +269,7 @@ describe('upstreaming', () => {
       p.alignItems = 'center';
       Widget.attach(p, document.body);
       requestAnimationFrame(() => {
-        expect(p.node.style.alignItems).to.be('center');
+        expect(p.node.style.alignItems).toBe('center');
         p.dispose();
         done();
       });
@@ -282,7 +280,7 @@ describe('upstreaming', () => {
       Widget.attach(p, document.body);
       p.alignItems = 'center';
       requestAnimationFrame(() => {
-        expect(p.node.style.alignItems).to.be('center');
+        expect(p.node.style.alignItems).toBe('center');
         p.dispose();
         done();
       });
@@ -290,9 +288,9 @@ describe('upstreaming', () => {
 
     it('should set and get alignContent', () => {
       let p = new FlexPanel();
-      expect(p.alignContent).to.be(null);
+      expect(p.alignContent).toBe(null);
       p.alignContent = 'center';
-      expect(p.alignContent).to.be('center');
+      expect(p.alignContent).toBe('center');
     });
 
     it('should apply alignContent if attached after setting', (done) => {
@@ -300,7 +298,7 @@ describe('upstreaming', () => {
       p.alignContent = 'center';
       Widget.attach(p, document.body);
       requestAnimationFrame(() => {
-        expect(p.node.style.alignContent).to.be('center');
+        expect(p.node.style.alignContent).toBe('center');
         p.dispose();
         done();
       });
@@ -311,7 +309,7 @@ describe('upstreaming', () => {
       Widget.attach(p, document.body);
       p.alignContent = 'center';
       requestAnimationFrame(() => {
-        expect(p.node.style.alignContent).to.be('center');
+        expect(p.node.style.alignContent).toBe('center');
         p.dispose();
         done();
       });
@@ -319,9 +317,9 @@ describe('upstreaming', () => {
 
     it('should set and get stretchType', () => {
       let p = new FlexPanel();
-      expect(p.stretchType).to.be(null);
+      expect(p.stretchType).toBe(null);
       p.stretchType = 'both';
-      expect(p.stretchType).to.be('both');
+      expect(p.stretchType).toBe('both');
     });
 
     combinatorialTest(
@@ -338,8 +336,8 @@ describe('upstreaming', () => {
       (done) => {
         requestAnimationFrame(() => {
           try {
-            expect(child.node.style.flexGrow).to.be('1');
-            expect(child.node.style.flexShrink).to.be('1');
+            expect(child.node.style.flexGrow).toBe('1');
+            expect(child.node.style.flexShrink).toBe('1');
           } finally {
             p.close();
             p.dispose();
@@ -351,9 +349,9 @@ describe('upstreaming', () => {
 
     it('should set and get evenSizes', () => {
       let p = new FlexPanel();
-      expect(p.evenSizes).to.be(false);
+      expect(p.evenSizes).toBe(false);
       p.evenSizes = true;
-      expect(p.evenSizes).to.be(true);
+      expect(p.evenSizes).toBe(true);
     });
 
     combinatorialTest(
@@ -370,9 +368,9 @@ describe('upstreaming', () => {
       (done) => {
         requestAnimationFrame(() => {
           try {
-            expect(child.node.style.flexBasis).to.be('0px');
-            expect(child.node.style.flexGrow).to.be('1');
-            expect(child.node.style.flexShrink).to.be('');
+            expect(child.node.style.flexBasis).toBe('0px');
+            expect(child.node.style.flexGrow).toBe('1');
+            expect(child.node.style.flexShrink).toBe('');
           } finally {
             p.close();
             p.dispose();

@@ -1,8 +1,6 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import expect = require('expect.js');
-
 import * as nbformat from '@jupyterlab/nbformat';
 
 import {
@@ -49,32 +47,32 @@ describe('diff', () => {
         it('should say insignificant for plain text', () => {
           base.data['text/plain'] = '365.0';
           let significant = OutputPanel.isTrustSignificant(model, rendermime);
-          expect(significant).to.be(false);
+          expect(significant).toBe(false);
         });
 
         it('should say insignificant for plain text in remote', () => {
           remote.data['text/plain'] = '365.0';
           let significant = OutputPanel.isTrustSignificant(model, rendermime);
-          expect(significant).to.be(false);
+          expect(significant).toBe(false);
         });
 
         it('should say significant for untrusted html', () => {
           base.data['text/html'] = '<html><body><script>alert("wee");</script></body></html';
           let significant = OutputPanel.isTrustSignificant(model, rendermime);
-          expect(significant).to.be(true);
+          expect(significant).toBe(true);
         });
 
         it('should say significant for untrusted html in remote', () => {
           remote.data['text/html'] = '<html><body><script>alert("wee");</script></body></html';
           let significant = OutputPanel.isTrustSignificant(model, rendermime);
-          expect(significant).to.be(true);
+          expect(significant).toBe(true);
         });
 
         it('should say insignificant for trusted html', () => {
           base.data['text/html'] = '<html><body><script>alert("wee");</script></body></html';
           model.trusted = true;
           let significant = OutputPanel.isTrustSignificant(model, rendermime);
-          expect(significant).to.be(false);
+          expect(significant).toBe(false);
         });
 
       });
