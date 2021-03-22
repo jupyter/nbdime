@@ -3,7 +3,7 @@ skip_branch_with_pr: true
 
 # environment variables
 environment:
-  nodejs_version: "8.15"
+  nodejs_version: "14"
   matrix:
     - PYTHON: "C:\\Python37-x64"
       PYTHON_VERSION: "3.7.x"
