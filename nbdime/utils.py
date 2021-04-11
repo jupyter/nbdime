@@ -352,9 +352,3 @@ class defaultdict2(defaultdict):
             return v
         except KeyError:
             return super(defaultdict2, self).__missing__(key)
-
-
-def strip_cell_id(cell):
-    if "id" in cell:
-        del cell["id"]
-    return cell

@@ -15,7 +15,7 @@ from nbdime.merging.generic import decide_merge, decide_merge_with_diff
 from nbdime.merging.decisions import apply_decisions
 from nbdime.merging.strategies import _cell_marker_format
 
-from .utils import outputs_to_notebook, sources_to_notebook, strip_cell_ids
+from .utils import outputs_to_notebook, sources_to_notebook, strip_cell_ids, strip_cell_id
 
 
 def test_decide_merge_strategy_fail(reset_log):
@@ -1108,7 +1108,7 @@ def test_inline_merge_cells_insertion_unsimilar():
         [_cell_marker_format((">"*7) + ' remote')],
     ], cell_type='markdown', strip_ids=True)
     merged, decisions = merge_notebooks(base, local, remote)
-    assert merged == expected
+    assert strip_cell_ids(merged) == expected
 
 
 def test_inline_merge_cells_replacement_similar():
@@ -1142,4 +1142,4 @@ def test_inline_merge_cells_replacement_unsimilar():
         [_cell_marker_format((">"*7) + ' remote')],
     ], cell_type='markdown', strip_ids=True)
     merged, decisions = merge_notebooks(base, local, remote)
-    assert merged == expected
+    assert strip_cell_ids(merged) == expected

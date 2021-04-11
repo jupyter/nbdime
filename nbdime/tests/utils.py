@@ -21,7 +21,6 @@ import nbformat
 
 from nbdime import patch, diff
 from nbdime.diff_format import is_valid_diff
-from nbdime.utils import strip_cell_id
 
 
 try:
@@ -46,7 +45,6 @@ def random_seed(a=0):
     random.seed(a)
     yield
     random.setstate(old_state)
-
 
 def assert_is_valid_notebook(nb):
     """These are the current assumptions on notebooks in these tests. Loosen on demand."""
@@ -118,6 +116,12 @@ def outputs_to_notebook(outputs, strip_ids=False):
     if strip_ids:
         strip_cell_ids(nb)
     return nb
+
+
+def strip_cell_id(cell):
+    if "id" in cell:
+        del cell["id"]
+    return cell
 
 
 def strip_cell_ids(nb):
