@@ -1,11 +1,11 @@
 language: python
 python:
-  - 3.9-dev
+  - 3.9
   - 3.8
   - 3.7
   - 3.6
 sudo: false
-dist: xenial
+dist: bionic
 services:
   - xvfb
 env:
@@ -24,7 +24,7 @@ cache:
 before_install:
   - python -c "import fcntl; fcntl.fcntl(1, fcntl.F_SETFL, 0)"
   - pip install -U pip setuptools
-  - nvm install 8
+  - nvm install 14
   - |
     if [[ $GROUP == python ]]; then
       pip install codecov
@@ -40,11 +40,7 @@ install:
       pip install --upgrade --upgrade-strategy=eager -e ".[test]"
     fi
 before_script:
-  # Set up a virtual screen for Firefox browser testing:
   - |
-    if [[ $GROUP == js ]]; then
-      export CHROME_BIN=chromium-browser
-    fi
     git config --global user.email travis@fake.com
     git config --global user.name "Travis CI"
 script:

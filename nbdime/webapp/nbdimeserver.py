@@ -13,7 +13,7 @@ import sys
 from jinja2 import FileSystemLoader, Environment
 import nbformat
 from jupyter_server.base.handlers import JupyterHandler, APIHandler
-from jupyter_server import DEFAULT_STATIC_FILES_PATH
+from jupyter_server_mathjax.app import STATIC_ASSETS_PATH
 from jupyter_server.utils import url_path_join
 from jupyter_server.log import log_request
 import requests
@@ -364,7 +364,7 @@ def make_app(**params):
         (r'/api/store', ApiMergeStoreHandler, params),
         (r'/api/closetool', ApiCloseHandler, params),
         (r'/nb-static/mathjax/(.*)', web.StaticFileHandler, {
-            'path': os.path.join(DEFAULT_STATIC_FILES_PATH, 'components', 'MathJax')
+            'path': STATIC_ASSETS_PATH
         })
         # Static handler will be added automatically
     ]

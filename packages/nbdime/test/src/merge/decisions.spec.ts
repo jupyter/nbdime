@@ -1,8 +1,6 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import expect = require('expect.js');
-
 import * as decisions from '../../../src/merge/decisions';
 
 import {
@@ -48,12 +46,12 @@ describe('merge', () => {
 
       it('should initialize by full JSON structure', () => {
         let value = new decisions.MergeDecision(jsonStructure);
-        expect(value.action).to.equal(jsonStructure.action);
-        expect(value.localDiff).to.eql(jsonStructure.local_diff);
-        expect(value.remoteDiff).to.eql(jsonStructure.remote_diff);
-        expect(value.customDiff).to.eql(jsonStructure.custom_diff);
-        expect(value.conflict).to.equal(jsonStructure.conflict);
-        expect(value.absolutePath).to.eql(jsonStructure.common_path);
+        expect(value.action).toEqual(jsonStructure.action);
+        expect(value.localDiff).toEqual(jsonStructure.local_diff);
+        expect(value.remoteDiff).toEqual(jsonStructure.remote_diff);
+        expect(value.customDiff).toEqual(jsonStructure.custom_diff);
+        expect(value.conflict).toEqual(jsonStructure.conflict);
+        expect(value.absolutePath).toEqual(jsonStructure.common_path);
       });
 
       it('should serialize out a JSON structure', () => {
@@ -66,45 +64,45 @@ describe('merge', () => {
           jsonStructure.custom_diff
         );
         let value = d.serialize();
-        expect(value).to.eql(jsonStructure);
+        expect(value).toEqual(jsonStructure);
       });
 
       it('should recreate a JSON structure from constructor/serialize', () => {
         let value = new decisions.MergeDecision(jsonStructure).serialize();
-        expect(value).to.eql(jsonStructure);
+        expect(value).toEqual(jsonStructure);
       });
 
       it('should initialize to defaults by partial JSON structure', () => {
         // Check everything in one go with empty structure:
         let s: decisions.IMergeDecision = { };
         let value = new decisions.MergeDecision(s);
-        expect(value.action).to.equal('base');
-        expect(value.localDiff).to.equal(null);
-        expect(value.remoteDiff).to.equal(null);
-        expect(value.customDiff).to.equal(null);
-        expect(value.conflict).to.equal(false);
-        expect(value.absolutePath).to.eql([]);
+        expect(value.action).toEqual('base');
+        expect(value.localDiff).toEqual(null);
+        expect(value.remoteDiff).toEqual(null);
+        expect(value.customDiff).toEqual(null);
+        expect(value.conflict).toEqual(false);
+        expect(value.absolutePath).toEqual([]);
       });
 
       it('should initialize by copy constructor', () => {
         // Check everything in one go with empty structure:
         let initial = new decisions.MergeDecision(jsonStructure);
         let value = new decisions.MergeDecision(initial);
-        expect(value.action).to.equal(jsonStructure.action);
-        expect(value.localDiff).to.eql(jsonStructure.local_diff);
-        expect(value.remoteDiff).to.eql(jsonStructure.remote_diff);
-        expect(value.customDiff).to.eql(jsonStructure.custom_diff);
-        expect(value.conflict).to.equal(jsonStructure.conflict);
-        expect(value.absolutePath).to.eql(jsonStructure.common_path);
+        expect(value.action).toEqual(jsonStructure.action);
+        expect(value.localDiff).toEqual(jsonStructure.local_diff);
+        expect(value.remoteDiff).toEqual(jsonStructure.remote_diff);
+        expect(value.customDiff).toEqual(jsonStructure.custom_diff);
+        expect(value.conflict).toEqual(jsonStructure.conflict);
+        expect(value.absolutePath).toEqual(jsonStructure.common_path);
       });
 
       it('should slice localPath to level', () => {
         let value = new decisions.MergeDecision(jsonStructure);
-        expect(value.localPath).to.eql(jsonStructure.common_path);
+        expect(value.localPath).toEqual(jsonStructure.common_path);
 
         for (let i = 0; i <= jsonStructure.common_path!.length; ++i) {
           value.level = i;
-          expect(value.localPath).to.eql(jsonStructure.common_path!.slice(i));
+          expect(value.localPath).toEqual(jsonStructure.common_path!.slice(i));
         }
       });
 
@@ -112,15 +110,15 @@ describe('merge', () => {
         let value = new decisions.MergeDecision(jsonStructure);
 
         value.pushPath('test');
-        expect(value.absolutePath).to.eql(['a', 0, '32', 'foo', 'bar', 'test']);
+        expect(value.absolutePath).toEqual(['a', 0, '32', 'foo', 'bar', 'test']);
       });
 
       it('should be able to set absolute path', () => {
         let value = new decisions.MergeDecision(jsonStructure);
         let path = ['a', 5];
         value.absolutePath = path;
-        expect(value.absolutePath).to.eql(path);
-        expect(value.localPath).to.eql(path);
+        expect(value.absolutePath).toEqual(path);
+        expect(value.localPath).toEqual(path);
       });
 
       it('should be able to get diffs', () => {
@@ -128,7 +126,7 @@ describe('merge', () => {
 
         value.customDiff = null;
 
-        expect(value.diffs).to.eql([
+        expect(value.diffs).toEqual([
           jsonStructure.local_diff,
           jsonStructure.remote_diff
           ]);
@@ -142,8 +140,8 @@ describe('merge', () => {
           jsonStructure.local_diff!,
         ];
 
-        expect(value.localDiff).to.eql(jsonStructure.remote_diff);
-        expect(value.remoteDiff).to.eql(jsonStructure.local_diff);
+        expect(value.localDiff).toEqual(jsonStructure.remote_diff);
+        expect(value.remoteDiff).toEqual(jsonStructure.local_diff);
 
         value.diffs = [
           jsonStructure.local_diff!,
@@ -151,15 +149,15 @@ describe('merge', () => {
           null
         ];
 
-        expect(value.localDiff).to.eql(jsonStructure.local_diff);
-        expect(value.remoteDiff).to.eql(jsonStructure.remote_diff);
-        expect(value.customDiff).to.eql(null);
+        expect(value.localDiff).toEqual(jsonStructure.local_diff);
+        expect(value.remoteDiff).toEqual(jsonStructure.remote_diff);
+        expect(value.customDiff).toEqual(null);
       });
 
       it('should have diffs include custom diff if set', () => {
         let value = new decisions.MergeDecision(jsonStructure);
 
-        expect(value.diffs).to.eql([
+        expect(value.diffs).toEqual([
           jsonStructure.local_diff,
           jsonStructure.remote_diff,
           jsonStructure.custom_diff
@@ -174,21 +172,21 @@ describe('merge', () => {
         let diffs: IDiffEntry[][] = [[opPatch('a', [opPatch(0, [opPatch('foo',
           [opAdd('two', 'bar')])])])]];
         let value = decisions.popPath(diffs)!;
-        expect(value.key).to.be('a');
-        expect(value.diffs.length).to.be(1);
-        expect(value.diffs[0]).to.equal((diffs[0][0] as IDiffPatch).diff);
+        expect(value.key).toBe('a');
+        expect(value.diffs.length).toBe(1);
+        expect(value.diffs[0]).toEqual((diffs[0][0] as IDiffPatch).diff);
 
         diffs = [(diffs[0][0] as IDiffPatch).diff!];
         value = decisions.popPath(diffs)!;
-        expect(value.key).to.be(0);
-        expect(value.diffs.length).to.be(1);
-        expect(value.diffs[0]).to.equal((diffs[0][0] as IDiffPatch).diff);
+        expect(value.key).toBe(0);
+        expect(value.diffs.length).toBe(1);
+        expect(value.diffs[0]).toEqual((diffs[0][0] as IDiffPatch).diff);
 
         diffs = [(diffs[0][0] as IDiffPatch).diff!];
         value = decisions.popPath(diffs)!;
-        expect(value.key).to.be('foo');
-        expect(value.diffs.length).to.be(1);
-        expect(value.diffs[0]).to.equal((diffs[0][0] as IDiffPatch).diff);
+        expect(value.key).toBe('foo');
+        expect(value.diffs.length).toBe(1);
+        expect(value.diffs[0]).toEqual((diffs[0][0] as IDiffPatch).diff);
       });
 
       it('should pop shared patch paths', () => {
@@ -197,18 +195,18 @@ describe('merge', () => {
           [opPatch('a', [opPatch(0, [opAdd('two', 'whizz')])])]
         ];
         let value = decisions.popPath(diffs)!;
-        expect(value.key).to.be('a');
-        expect(value.diffs.length).to.be(2);
-        expect(value.diffs[0]).to.equal((diffs[0][0] as IDiffPatch).diff);
-        expect(value.diffs[1]).to.equal((diffs[1][0] as IDiffPatch).diff);
+        expect(value.key).toBe('a');
+        expect(value.diffs.length).toBe(2);
+        expect(value.diffs[0]).toEqual((diffs[0][0] as IDiffPatch).diff);
+        expect(value.diffs[1]).toEqual((diffs[1][0] as IDiffPatch).diff);
 
         diffs = [(diffs[0][0] as IDiffPatch).diff!,
                  (diffs[1][0] as IDiffPatch).diff!];
         value = decisions.popPath(diffs)!;
-        expect(value.key).to.be(0);
-        expect(value.diffs.length).to.be(2);
-        expect(value.diffs[0]).to.equal((diffs[0][0] as IDiffPatch).diff);
-        expect(value.diffs[1]).to.equal((diffs[1][0] as IDiffPatch).diff);
+        expect(value.key).toBe(0);
+        expect(value.diffs.length).toBe(2);
+        expect(value.diffs[0]).toEqual((diffs[0][0] as IDiffPatch).diff);
+        expect(value.diffs[1]).toEqual((diffs[1][0] as IDiffPatch).diff);
       });
 
       it('should pop patch path if one entry is null', () => {
@@ -217,10 +215,10 @@ describe('merge', () => {
           null
         ];
         let value = decisions.popPath(diffs)!;
-        expect(value.key).to.be('a');
-        expect(value.diffs.length).to.be(2);
-        expect(value.diffs[0]).to.equal((diffs[0]![0] as IDiffPatch).diff);
-        expect(value.diffs[1]).to.equal(null);
+        expect(value.key).toBe('a');
+        expect(value.diffs.length).toBe(2);
+        expect(value.diffs[0]).toEqual((diffs[0]![0] as IDiffPatch).diff);
+        expect(value.diffs[1]).toEqual(null);
 
         // Check there is no preference for order:
         diffs = [
@@ -228,10 +226,10 @@ describe('merge', () => {
           [opPatch('a', [opPatch(0, [opAdd('three', 'bar')])])]
         ];
         value = decisions.popPath(diffs)!;
-        expect(value.key).to.be('a');
-        expect(value.diffs.length).to.be(2);
-        expect(value.diffs[0]).to.equal(null);
-        expect(value.diffs[1]).to.equal((diffs[1]![0] as IDiffPatch).diff);
+        expect(value.key).toBe('a');
+        expect(value.diffs.length).toBe(2);
+        expect(value.diffs[0]).toEqual(null);
+        expect(value.diffs[1]).toEqual((diffs[1]![0] as IDiffPatch).diff);
       });
 
       it('should NOT pop patch path if only one side has patch', () => {
@@ -240,7 +238,7 @@ describe('merge', () => {
           [opAdd('b', 'bar')]
         ];
         let value = decisions.popPath(diffs);
-        expect(value).to.be(null);
+        expect(value).toBe(null);
       });
 
       it('should NOT pop patch path if only one side has multiple entries', () => {
@@ -249,14 +247,14 @@ describe('merge', () => {
           [opPatch('a', [opPatch(0, [opAdd('three', 'bar')])]), opAdd('b', 'bar')]
         ];
         let value = decisions.popPath(diffs);
-        expect(value).to.be(null);
+        expect(value).toBe(null);
 
         diffs = [
           [opPatch('a', [opPatch(0, [opAdd('three', 'bar')])])],
           [opAdd('b', 'bar'), opPatch('a', [opPatch(0, [opAdd('three', 'bar')])])]
         ];
         value = decisions.popPath(diffs);
-        expect(value).to.be(null);
+        expect(value).toBe(null);
       });
 
       it('should NOT pop path if both sides has multiple entries', () => {
@@ -265,20 +263,20 @@ describe('merge', () => {
           [opPatch('a', [opPatch(0, [opAdd('three', 'bar')])]), opAdd('b', 'bar')]
         ];
         let value = decisions.popPath(diffs);
-        expect(value).to.be(null);
+        expect(value).toBe(null);
 
         diffs = [
           [opAdd('b', 'bar'), opPatch('a', [opPatch(0, [opAdd('three', 'bar')])])],
           [opAdd('b', 'bar'), opPatch('a', [opPatch(0, [opAdd('three', 'bar')])])]
         ];
         value = decisions.popPath(diffs);
-        expect(value).to.be(null);
+        expect(value).toBe(null);
       });
 
       it('should return null on empty input', () => {
-        expect(decisions.popPath([])).to.be(null);
-        expect(decisions.popPath([[], []])).to.be(null);
-        expect(decisions.popPath([null, null])).to.be(null);
+        expect(decisions.popPath([])).toBe(null);
+        expect(decisions.popPath([[], []])).toBe(null);
+        expect(decisions.popPath([null, null])).toBe(null);
       });
 
       it('should only pop patch path if inner diffs have a length of 1, or if popInner is true', () => {
@@ -287,39 +285,39 @@ describe('merge', () => {
           [opPatch(0, [opAdd('three', 'bar'), opAdd('one', 'bar')])]
         ];
         let value = decisions.popPath(diffs);
-        expect(value).to.be(null);
+        expect(value).toBe(null);
 
         value = decisions.popPath(diffs, true)!;
-        expect(value).to.not.be(null);
-        expect(value.key).to.be(0);
-        expect(value.diffs[0]!.length).to.be(2);
-        expect(value.diffs[1]!.length).to.be(2);
+        expect(value).not.toBe(null);
+        expect(value.key).toBe(0);
+        expect(value.diffs[0]!.length).toBe(2);
+        expect(value.diffs[1]!.length).toBe(2);
 
         diffs = [
           [opPatch(0, [opAdd('three', 'bar')])],
           [opPatch(0, [opAdd('three', 'bar'), opAdd('one', 'bar')])]
         ];
         value = decisions.popPath(diffs);
-        expect(value).to.be(null);
+        expect(value).toBe(null);
 
         value = decisions.popPath(diffs, true)!;
-        expect(value).to.not.be(null);
-        expect(value.key).to.be(0);
-        expect(value.diffs[0]!.length).to.be(1);
-        expect(value.diffs[1]!.length).to.be(2);
+        expect(value).not.toBe(null);
+        expect(value.key).toBe(0);
+        expect(value.diffs[0]!.length).toBe(1);
+        expect(value.diffs[1]!.length).toBe(2);
 
         diffs = [
           [opPatch(0, [opAdd('three', 'bar'), opAdd('two', 'bar')])],
           [opPatch(0, [opAdd('three', 'bar')])]
         ];
         value = decisions.popPath(diffs);
-        expect(value).to.be(null);
+        expect(value).toBe(null);
 
         value = decisions.popPath(diffs, true)!;
-        expect(value).to.not.be(null);
-        expect(value.key).to.be(0);
-        expect(value.diffs[0]!.length).to.be(2);
-        expect(value.diffs[1]!.length).to.be(1);
+        expect(value).not.toBe(null);
+        expect(value.key).toBe(0);
+        expect(value.diffs[0]!.length).toBe(2);
+        expect(value.diffs[1]!.length).toBe(1);
       });
 
     });
@@ -339,9 +337,9 @@ describe('merge', () => {
         ];
 
         decisions.resolveCommonPaths(decs);
-        expect(decs.length).to.be(2);
-        expect(decs[0].absolutePath).to.eql(['a', 0]);
-        expect(decs[1].absolutePath).to.eql([33, 0, 'foo']);
+        expect(decs.length).toBe(2);
+        expect(decs[0].absolutePath).toEqual(['a', 0]);
+        expect(decs[1].absolutePath).toEqual([33, 0, 'foo']);
       });
 
     });
@@ -357,13 +355,13 @@ describe('merge', () => {
       it('should push a single level prefix', () => {
         let dec = new decisions.MergeDecision(simpleDecision);
         let value = decisions.pushPatchDecision(dec, ['source']);
-        expect(value.absolutePath).to.eql(
+        expect(value.absolutePath).toEqual(
           ['cells', 3]
         );
-        expect(value.localDiff).to.eql(
+        expect(value.localDiff).toEqual(
           [opPatch('source', dec.localDiff)]
         );
-        expect(value.remoteDiff).to.eql(
+        expect(value.remoteDiff).toEqual(
           [opPatch('source', dec.remoteDiff)]
         );
       });
@@ -371,12 +369,12 @@ describe('merge', () => {
       it('should push a multi-level prefix', () => {
         let dec = new decisions.MergeDecision(simpleDecision);
         let value = decisions.pushPatchDecision(dec, ['cells', 3, 'source']);
-        expect(value.absolutePath).to.eql([]);
-        expect(value.localDiff).to.eql(
+        expect(value.absolutePath).toEqual([]);
+        expect(value.localDiff).toEqual(
           [opPatch('cells', [opPatch(3,
             [opPatch('source', dec.localDiff)])])]
         );
-        expect(value.remoteDiff).to.eql(
+        expect(value.remoteDiff).toEqual(
           [opPatch('cells', [opPatch(3,
             [opPatch('source', dec.remoteDiff)])])]
         );
@@ -386,10 +384,10 @@ describe('merge', () => {
         let dec = new decisions.MergeDecision(simpleDecision);
         dec.localDiff = dec.remoteDiff = null;
         let value = decisions.pushPatchDecision(dec, ['cells', 3, 'source']);
-        expect(value.absolutePath).to.eql([]);
+        expect(value.absolutePath).toEqual([]);
         // Check that everything else is unchanged:
         dec.absolutePath = [];
-        expect(value.serialize()).to.eql(dec.serialize());
+        expect(value.serialize()).toEqual(dec.serialize());
       });
 
       it('should push a custom diff as well', () => {
@@ -397,26 +395,26 @@ describe('merge', () => {
         dec.customDiff = dec.localDiff;
         dec.localDiff = dec.remoteDiff = null;
         let value = decisions.pushPatchDecision(dec, ['source']);
-        expect(value.absolutePath).to.eql(
+        expect(value.absolutePath).toEqual(
           ['cells', 3]
         );
-        expect(value.customDiff).to.eql(
+        expect(value.customDiff).toEqual(
           [opPatch('source', dec.customDiff)]
         );
       });
 
       it('should fail to push an invalid prefix', () => {
         let dec = new decisions.MergeDecision(simpleDecision);
-        expect(decisions.pushPatchDecision).withArgs(
-          dec, ['cells']).to.throwException(
+        expect(() => {decisions.pushPatchDecision(
+          dec, ['cells'])}).toThrow(
             /Cannot push a patch that doesn\'t correspond to a key in the decision path!/
           );
       });
 
       it('should fail to push a prefix longer than path', () => {
         let dec = new decisions.MergeDecision(simpleDecision);
-        expect(decisions.pushPatchDecision).withArgs(
-          dec, ['/', 'cells', 3, 'source']).to.throwException(
+        expect(() => {decisions.pushPatchDecision(
+          dec, ['/', 'cells', 3, 'source'])}).toThrow(
             /Cannot remove key from empty decision path: /
           );
       });
@@ -442,7 +440,7 @@ describe('merge', () => {
         for (let a of ['base', 'local', 'remote', 'clear', 'local_then_remote']) {
           dec.action = a as any;
           let value = decisions.buildDiffs(base, [dec], 'local');
-          expect(value).to.eql(
+          expect(value).toEqual(
             [opPatch('source', dec.localDiff)]
           );
         }
@@ -453,7 +451,7 @@ describe('merge', () => {
         for (let a of ['base', 'local', 'remote', 'clear', 'local_then_remote']) {
           dec.action = a as any;
           let value = decisions.buildDiffs(base, [dec], 'remote');
-          expect(value).to.eql(
+          expect(value).toEqual(
             [opPatch('source', dec.remoteDiff)]
           );
         }
@@ -463,7 +461,7 @@ describe('merge', () => {
         let dec = new decisions.MergeDecision(simpleDecision);
         dec.action = 'local';
         let value = decisions.buildDiffs(base, [dec], 'merged');
-        expect(value).to.eql(
+        expect(value).toEqual(
           [opPatch('source', dec.localDiff)]
         );
       });
@@ -472,7 +470,7 @@ describe('merge', () => {
         let dec = new decisions.MergeDecision(simpleDecision);
         dec.action = 'remote';
         let value = decisions.buildDiffs(base, [dec], 'merged');
-        expect(value).to.eql(
+        expect(value).toEqual(
           [opPatch('source', dec.remoteDiff)]
         );
       });
@@ -482,7 +480,7 @@ describe('merge', () => {
         dec.customDiff = dec.localDiff;
         dec.action = 'custom';
         let value = decisions.buildDiffs(base, [dec], 'merged');
-        expect(value).to.eql(
+        expect(value).toEqual(
           [opPatch('source', dec.customDiff)]
         );
       });
@@ -490,14 +488,14 @@ describe('merge', () => {
       it('should build an empty merged diff for base decision', () => {
         let dec = new decisions.MergeDecision(simpleDecision);
         let value = decisions.buildDiffs(base, [dec], 'merged');
-        expect(isDiffEmpty(value)).to.be(true);
+        expect(isDiffEmpty(value)).toBe(true);
       });
 
       it('should build an interleaved merged diff for local_then_remote decision', () => {
         let dec = new decisions.MergeDecision(simpleDecision);
         dec.action = 'local_then_remote';
         let value = decisions.buildDiffs(base, [dec], 'merged');
-        expect(value).to.eql(
+        expect(value).toEqual(
           [opPatch('source', dec.localDiff!.concat(dec.remoteDiff!))]
         );
       });
@@ -506,7 +504,7 @@ describe('merge', () => {
         let dec = new decisions.MergeDecision(simpleDecision);
         dec.action = 'remote_then_local';
         let value = decisions.buildDiffs(base, [dec], 'merged');
-        expect(value).to.eql(
+        expect(value).toEqual(
           [opPatch('source', dec.remoteDiff!.concat(dec.localDiff!))]
         );
       });
@@ -517,7 +515,7 @@ describe('merge', () => {
         let value = decisions.buildDiffs(base, [dec], 'merged');
         let expectedInner = opRemoveRange(0, 4);
         expectedInner.source = { decision: dec, action: 'custom' };
-        expect(value).to.eql(
+        expect(value).toEqual(
           [opPatch('source', [expectedInner])]
         );
       });
@@ -540,38 +538,38 @@ describe('merge', () => {
 
       it('should pass all on shared prefix', () => {
         let value = decisions.filterDecisions(decs, ['cells']);
-        expect(value).to.eql(decs);
+        expect(value).toEqual(decs);
         for (let d of value) {
-          expect(d.level).to.be(1);
+          expect(d.level).toBe(1);
         }
       });
 
       it('should return same instances', () => {
         let value = decisions.filterDecisions(decs, ['cells']);
-        expect(arraysEqual(value, decs)).to.be(true);
+        expect(arraysEqual(value, decs)).toBe(true);
       });
 
       it('should filter on shared prefix', () => {
         let value = decisions.filterDecisions(decs, ['cells', 0]);
-        expect(value).to.eql(decs.slice(0, 2));
+        expect(value).toEqual(decs.slice(0, 2));
         for (let d of value) {
-          expect(d.level).to.be(2);
+          expect(d.level).toBe(2);
         }
       });
 
       it('should filter on common segment with skipLevels', () => {
         let value = decisions.filterDecisions(decs, ['outputs'], 2);
-        expect(value).to.eql(decs);
+        expect(value).toEqual(decs);
         for (let d of value) {
-          expect(d.level).to.be(3);
+          expect(d.level).toBe(3);
         }
       });
 
       it('should filter on shared prefix', () => {
         let value = decisions.filterDecisions(decs, ['outputs', 0], 2);
-        expect(value).to.eql([decs[0], decs[3]]);
+        expect(value).toEqual([decs[0], decs[3]]);
         for (let d of value) {
-          expect(d.level).to.be(4);
+          expect(d.level).toBe(4);
         }
       });
 
@@ -596,7 +594,7 @@ describe('merge', () => {
           simpleObjectDecision
         )];
         let value = decisions.applyDecisions(baseObject, decs);
-        expect(value).to.eql(baseObject);
+        expect(value).toEqual(baseObject);
       });
 
       it('should apply \'local\' action on object', () => {
@@ -605,7 +603,7 @@ describe('merge', () => {
         )];
         decs[0].action = 'local';
         let value = decisions.applyDecisions(baseObject, decs);
-        expect(value.source).to.eql(
+        expect(value.source).toEqual(
           baseObject.source + 'line 4\n'
         );
       });
@@ -616,7 +614,7 @@ describe('merge', () => {
         )];
         decs[0].action = 'remote';
         let value = decisions.applyDecisions(baseObject, decs);
-        expect(value.source).to.eql(
+        expect(value.source).toEqual(
           baseObject.source + 'alternative line 4\n'
         );
       });
@@ -628,7 +626,7 @@ describe('merge', () => {
         decs[0].remoteDiff = decs[0].localDiff;
         decs[0].action = 'either';
         let value = decisions.applyDecisions(baseObject, decs);
-        expect(value.source).to.eql(
+        expect(value.source).toEqual(
           baseObject.source + 'line 4\n');
       });
 
@@ -665,12 +663,12 @@ describe('merge', () => {
         decs[3].action = 'either';
         decs[4].action = 'local';
         let value = decisions.applyDecisions({...baseObject, seq: ['foo', 'bar']}, decs);
-        expect(value.metadata).to.eql({
+        expect(value.metadata).toEqual({
           foo: true,
           bar: 43,
           secret: 'top foo!',
         });
-        expect(value.seq).to.eql([]);
+        expect(value.seq).toEqual([]);
       });
 
     });
