@@ -1,8 +1,6 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import expect = require('expect.js');
-
 import * as nbformat from '@jupyterlab/nbformat';
 
 import {
@@ -28,10 +26,34 @@ import {
 import {
     CellMergeWidget, NotebookMergeWidget, MetadataMergeWidget
 } from '../../../src/merge/widget';
+import { CodeEditor } from '@jupyterlab/codeeditor';
 
 
 const notebook = require('../../files/base.ipynb.json') as nbformat.INotebookContent;
 const NBdecisions = require('../../files/decisionsA.json') as IMergeDecision[];
+
+jest.mock('@jupyterlab/codemirror', () => {
+  return {
+    CodeMirrorEditor: jest.fn(),
+    CodeMirrorEditorFactory: jest.fn().mockImplementation(() => {
+      return {
+        newInlineEditor: jest.fn().mockImplementation((options: CodeEditor.IOptions) => {
+          return {
+            model: {
+              selections: { changed: { connect: jest.fn() } },
+            },
+            editor: { 
+              getValue: jest.fn().mockImplementation(() => options.model.value.text),
+              on: jest.fn(),
+              operation: jest.fn(),
+              state: {}
+            },
+          };
+        }),
+      };
+    }),
+  };
+});
 
 describe('merge', () => {
 
@@ -58,7 +80,7 @@ describe('merge', () => {
           let model = new MetadataMergeModel(
               base, []);
           let widget = new MetadataMergeWidget(model);
-          expect(widget).to.not.be(null);
+          expect(widget).not.toBe(null);
       });
 
     });
@@ -68,7 +90,7 @@ describe('merge', () => {
       it('should create a widget for a simple realistic model', () => {
           let model = new NotebookMergeModel(notebook, NBdecisions);
           let widget = new NotebookMergeWidget(model, rendermime);
-          expect(widget).to.not.be(null);
+          expect(widget).not.toBe(null);
           Widget.attach(widget, document.body);
       });
 

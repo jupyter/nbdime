@@ -5,6 +5,6 @@
     "outDir": "lib"
   },
   "include": [
-    "src/**/*.ts",
+    "src/**/*.ts"
   ]
 }

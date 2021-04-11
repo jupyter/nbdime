@@ -1,8 +1,6 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import expect = require('expect.js');
-
 import * as nbformat from '@jupyterlab/nbformat';
 
 import {
@@ -45,41 +43,41 @@ describe('diff', () => {
 
       it('should create an added model', () => {
           let model = createDirectStringDiffModel(null, 'foobar!');
-          expect(model.added).to.be(true);
-          expect(model.deleted).to.be(false);
-          expect(model.unchanged).to.be(false);
-          expect(model.additions).to.not.be.empty();
-          expect(model.deletions).to.be.empty();
+          expect(model.added).toBe(true);
+          expect(model.deleted).toBe(false);
+          expect(model.unchanged).toBe(false);
+          expect(model.additions).not.toHaveLength(0);
+          expect(model.deletions).toHaveLength(0);
       });
 
       it('should create a deleted model', () => {
           let model = createDirectStringDiffModel('foobar!', null);
-          expect(model.added).to.be(false);
-          expect(model.deleted).to.be(true);
-          expect(model.unchanged).to.be(false);
-          expect(model.additions).to.be.empty();
-          expect(model.deletions).to.not.be.empty();
+          expect(model.added).toBe(false);
+          expect(model.deleted).toBe(true);
+          expect(model.unchanged).toBe(false);
+          expect(model.additions).toHaveLength(0);
+          expect(model.deletions).not.toHaveLength(0);
       });
 
       it('should create an unchanged model', () => {
           let model = createDirectStringDiffModel('foobar!', 'foobar!');
-          expect(model.added).to.be(false);
-          expect(model.deleted).to.be(false);
-          expect(model.unchanged).to.be(true);
-          expect(model.additions).to.be.empty();
-          expect(model.deletions).to.be.empty();
+          expect(model.added).toBe(false);
+          expect(model.deleted).toBe(false);
+          expect(model.unchanged).toBe(true);
+          expect(model.additions).toHaveLength(0);
+          expect(model.deletions).toHaveLength(0);
       });
 
       it('should fail for differing non-null string inputs', () => {
-          expect(createDirectStringDiffModel).withArgs(
-              'foobar!', 'barfoo!').to.throwException(
+          expect(() => {createDirectStringDiffModel(
+              'foobar!', 'barfoo!')}).toThrow(
                   /Invalid arguments to createDirectStringDiffModel\(\)/
               );
       });
 
       it('should fail for all null inputs', () => {
-          expect(createDirectStringDiffModel).withArgs(
-              null, null).to.throwException(
+          expect(() => {createDirectStringDiffModel(
+              null, null)}).toThrow(
                   /Invalid arguments to createDirectStringDiffModel\(\)/
               );
       });
@@ -94,33 +92,33 @@ describe('diff', () => {
           let base = [0, 1, 'foo'];
           let diff = [opAddRange(2, 'bar')];
           let model = createPatchStringDiffModel(base, diff);
-          expect(model.added).to.be(false);
-          expect(model.deleted).to.be(false);
-          expect(model.unchanged).to.be(false);
-          expect(model.additions).to.not.be.empty();
-          expect(model.deletions).to.be.empty();
+          expect(model.added).toBe(false);
+          expect(model.deleted).toBe(false);
+          expect(model.unchanged).toBe(false);
+          expect(model.additions).not.toHaveLength(0);
+          expect(model.deletions).toHaveLength(0);
       });
 
       it('should create an unchanged model by empty diff', () => {
           let base = 'foobar!';
           let diff: IDiffEntry[] = [];
           let model = createPatchStringDiffModel(base, diff);
-          expect(model.added).to.be(false);
-          expect(model.deleted).to.be(false);
-          expect(model.unchanged).to.be(true);
-          expect(model.additions).to.be.empty();
-          expect(model.deletions).to.be.empty();
+          expect(model.added).toBe(false);
+          expect(model.deleted).toBe(false);
+          expect(model.unchanged).toBe(true);
+          expect(model.additions).toHaveLength(0);
+          expect(model.deletions).toHaveLength(0);
       });
 
       it('should create an unchanged model by empty diff for non-string input', () => {
           let base = [0, 1, 'foo'];
           let diff: IDiffEntry[] = [];
           let model = createPatchStringDiffModel(base, diff);
-          expect(model.added).to.be(false);
-          expect(model.deleted).to.be(false);
-          expect(model.unchanged).to.be(true);
-          expect(model.additions).to.be.empty();
-          expect(model.deletions).to.be.empty();
+          expect(model.added).toBe(false);
+          expect(model.deleted).toBe(false);
+          expect(model.unchanged).toBe(true);
+          expect(model.additions).toHaveLength(0);
+          expect(model.deletions).toHaveLength(0);
       });
 
     });
@@ -137,37 +135,37 @@ describe('diff', () => {
         let model = new OutputDiffModel(
           null, dummyOutput
         );
-        expect(model.added).to.be(true);
-        expect(model.deleted).to.be(false);
-        expect(model.unchanged).to.be(false);
+        expect(model.added).toBe(true);
+        expect(model.deleted).toBe(false);
+        expect(model.unchanged).toBe(false);
       });
 
       it('should create a deleted model', () => {
         let model = new OutputDiffModel(
           dummyOutput, null
         );
-        expect(model.added).to.be(false);
-        expect(model.deleted).to.be(true);
-        expect(model.unchanged).to.be(false);
+        expect(model.added).toBe(false);
+        expect(model.deleted).toBe(true);
+        expect(model.unchanged).toBe(false);
       });
 
       it('should create an unchanged model', () => {
         let model = new OutputDiffModel(
             dummyOutput, dummyOutput
         );
-        expect(model.added).to.be(false);
-        expect(model.deleted).to.be(false);
-        expect(model.unchanged).to.be(true);
+        expect(model.added).toBe(false);
+        expect(model.deleted).toBe(false);
+        expect(model.unchanged).toBe(true);
       });
 
       it('should patch output if given diff and no remote', () => {
         let diff = [opPatch('text', [opPatch(0, [opAddRange(3, ' bar')])])];
         let model = new OutputDiffModel(dummyOutput, null, diff);
-        expect(model.added).to.be(false);
-        expect(model.deleted).to.be(false);
-        expect(model.unchanged).to.be(false);
-        expect(model.diff).to.be(diff);
-        expect(model.remote).to.eql({
+        expect(model.added).toBe(false);
+        expect(model.deleted).toBe(false);
+        expect(model.unchanged).toBe(false);
+        expect(model.diff).toBe(diff);
+        expect(model.remote).toEqual({
           output_type: 'stream',
           name: 'stdout',
           text: 'Foo bar!'
@@ -177,7 +175,7 @@ describe('diff', () => {
       it('should fail for all null input', () => {
         expect(() => {
           new OutputDiffModel(null, null );
-        }).to.throwException(
+        }).toThrow(
           /Either remote or base value need to be given/);
       });
 
@@ -201,64 +199,64 @@ describe('diff', () => {
 
       it('should be creatable by createAddedCellDiffModel', () => {
         let model = createAddedCellDiffModel(codeCellA, mimetype);
-        expect(model.added).to.be(true);
-        expect(model.deleted).to.be(false);
-        expect(model.unchanged).to.be(false);
-        expect(model.source.base).to.be(null);
-        expect(model.source.remote).to.eql(codeCellA.source);
-        expect(model.metadata.base).to.be(null);
-        expect(model.metadata.remote).to.eql(stringify(codeCellA.metadata as JSONValue));
-        expect(model.outputs!.length).to.equal(codeCellA.outputs.length);
+        expect(model.added).toBe(true);
+        expect(model.deleted).toBe(false);
+        expect(model.unchanged).toBe(false);
+        expect(model.source.base).toBe(null);
+        expect(model.source.remote).toEqual(codeCellA.source);
+        expect(model.metadata.base).toBe(null);
+        expect(model.metadata.remote).toEqual(stringify(codeCellA.metadata as JSONValue));
+        expect(model.outputs!.length).toEqual(codeCellA.outputs.length);
       });
 
       it('should be creatable by createDeletedCellDiffModel', () => {
         let model = createDeletedCellDiffModel(codeCellA, mimetype);
-        expect(model.added).to.be(false);
-        expect(model.deleted).to.be(true);
-        expect(model.unchanged).to.be(false);
-        expect(model.source.base).to.eql(codeCellA.source);
-        expect(model.source.remote).to.be(null);
-        expect(model.metadata.base).to.eql(stringify(codeCellA.metadata as JSONValue));
-        expect(model.metadata.remote).to.be(null);
-        expect(model.outputs!.length).to.equal(codeCellA.outputs.length);
+        expect(model.added).toBe(false);
+        expect(model.deleted).toBe(true);
+        expect(model.unchanged).toBe(false);
+        expect(model.source.base).toEqual(codeCellA.source);
+        expect(model.source.remote).toBe(null);
+        expect(model.metadata.base).toEqual(stringify(codeCellA.metadata as JSONValue));
+        expect(model.metadata.remote).toBe(null);
+        expect(model.outputs!.length).toEqual(codeCellA.outputs.length);
       });
 
       it('should be creatable by createUnchangedCellDiffModel', () => {
         let model = createUnchangedCellDiffModel(codeCellA, mimetype);
-        expect(model.added).to.be(false);
-        expect(model.deleted).to.be(false);
-        expect(model.unchanged).to.be(true);
-        expect(model.source.base).to.eql(codeCellA.source);
-        expect(model.source.remote).to.eql(codeCellA.source);
-        expect(model.metadata.base).to.eql(stringify(codeCellA.metadata as JSONValue));
-        expect(model.metadata.remote).to.eql(stringify(codeCellA.metadata as JSONValue));
-        expect(model.outputs!.length).to.equal(codeCellA.outputs.length);
+        expect(model.added).toBe(false);
+        expect(model.deleted).toBe(false);
+        expect(model.unchanged).toBe(true);
+        expect(model.source.base).toEqual(codeCellA.source);
+        expect(model.source.remote).toEqual(codeCellA.source);
+        expect(model.metadata.base).toEqual(stringify(codeCellA.metadata as JSONValue));
+        expect(model.metadata.remote).toEqual(stringify(codeCellA.metadata as JSONValue));
+        expect(model.outputs!.length).toEqual(codeCellA.outputs.length);
       });
 
       describe('createPatchedCellDiffModel', () => {
 
         it('should create an unchanged model for null diff', () => {
           let model = createPatchedCellDiffModel(codeCellA, null, mimetype);
-          expect(model.added).to.be(false);
-          expect(model.deleted).to.be(false);
-          expect(model.unchanged).to.be(true);
-          expect(model.source.base).to.eql(codeCellA.source);
-          expect(model.source.remote).to.eql(codeCellA.source);
-          expect(model.metadata.base).to.eql(stringify(codeCellA.metadata as JSONValue));
-          expect(model.metadata.remote).to.eql(stringify(codeCellA.metadata as JSONValue));
-          expect(model.outputs!.length).to.equal(codeCellA.outputs.length);
+          expect(model.added).toBe(false);
+          expect(model.deleted).toBe(false);
+          expect(model.unchanged).toBe(true);
+          expect(model.source.base).toEqual(codeCellA.source);
+          expect(model.source.remote).toEqual(codeCellA.source);
+          expect(model.metadata.base).toEqual(stringify(codeCellA.metadata as JSONValue));
+          expect(model.metadata.remote).toEqual(stringify(codeCellA.metadata as JSONValue));
+          expect(model.outputs!.length).toEqual(codeCellA.outputs.length);
         });
 
         it('should create an unchanged model for an empty diff', () => {
           let model = createPatchedCellDiffModel(codeCellA, [], mimetype);
-          expect(model.added).to.be(false);
-          expect(model.deleted).to.be(false);
-          expect(model.unchanged).to.be(true);
-          expect(model.source.base).to.eql(codeCellA.source);
-          expect(model.source.remote).to.eql(codeCellA.source);
-          expect(model.metadata.base).to.eql(stringify(codeCellA.metadata as JSONValue));
-          expect(model.metadata.remote).to.eql(stringify(codeCellA.metadata as JSONValue));
-          expect(model.outputs!.length).to.equal(codeCellA.outputs.length);
+          expect(model.added).toBe(false);
+          expect(model.deleted).toBe(false);
+          expect(model.unchanged).toBe(true);
+          expect(model.source.base).toEqual(codeCellA.source);
+          expect(model.source.remote).toEqual(codeCellA.source);
+          expect(model.metadata.base).toEqual(stringify(codeCellA.metadata as JSONValue));
+          expect(model.metadata.remote).toEqual(stringify(codeCellA.metadata as JSONValue));
+          expect(model.outputs!.length).toEqual(codeCellA.outputs.length);
         });
 
         it('should create a patched model with a diff', () => {
@@ -266,14 +264,14 @@ describe('diff', () => {
             opPatch('source', [opAddRange(1, ['l += 2\n'])])
           ];
           let model = createPatchedCellDiffModel(codeCellA, diff, mimetype);
-          expect(model.added).to.be(false);
-          expect(model.deleted).to.be(false);
-          expect(model.unchanged).to.be(false);
-          expect(model.source.base).to.eql(codeCellA.source);
-          expect(model.source.remote).to.eql('l = f(3, 4)\nl += 2\nprint(l)');
-          expect(model.metadata.base).to.eql(stringify(codeCellA.metadata as JSONValue));
-          expect(model.metadata.remote).to.eql(stringify(codeCellA.metadata as JSONValue));
-          expect(model.outputs!.length).to.equal(codeCellA.outputs.length);
+          expect(model.added).toBe(false);
+          expect(model.deleted).toBe(false);
+          expect(model.unchanged).toBe(false);
+          expect(model.source.base).toEqual(codeCellA.source);
+          expect(model.source.remote).toEqual('l = f(3, 4)\nl += 2\nprint(l)');
+          expect(model.metadata.base).toEqual(stringify(codeCellA.metadata as JSONValue));
+          expect(model.metadata.remote).toEqual(stringify(codeCellA.metadata as JSONValue));
+          expect(model.outputs!.length).toEqual(codeCellA.outputs.length);
         });
 
       });

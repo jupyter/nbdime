@@ -1,8 +1,6 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import expect = require('expect.js');
-
 import {
   deepCopy
 } from '../../../src/common/util';
@@ -21,33 +19,33 @@ describe('diff', () => {
 
       it('should return null for an empty diff', () => {
         let diff = util.getSubDiffByKey([], 'not_present');
-        expect(diff).to.be(null);
+        expect(diff).toBe(null);
       });
 
       it('should return null for a null diff', () => {
         let diff = util.getSubDiffByKey(null, 'not_present');
-        expect(diff).to.be(null);
+        expect(diff).toBe(null);
       });
 
       it('should return null for a missing key', () => {
         let subdiff = [opAdd('foo', 11)];
         let diff = [opPatch('a', subdiff)];
         let value = util.getSubDiffByKey(diff, 'b');
-        expect(value).to.be(null);
+        expect(value).toBe(null);
       });
 
       it('should return a sub-diff for valid key', () => {
         let subdiff = [opAdd('foo', 11)];
         let diff = [opPatch('a', subdiff)];
         let value = util.getSubDiffByKey(diff, 'a');
-        expect(value).to.be(subdiff);
+        expect(value).toBe(subdiff);
       });
 
       it('should return null for a key to a non-patch op', () => {
         let subdiff = [opAdd('foo', 11)];
         let diff = [opPatch('a', subdiff), opAdd('b', subdiff)];
         let value = util.getSubDiffByKey(diff, 'b');
-        expect(value).to.be(null);
+        expect(value).toBe(null);
       });
 
     });
@@ -57,12 +55,12 @@ describe('diff', () => {
 
       it('should work for an empty diff', () => {
         let diff = util.flattenStringDiff('test', []);
-        expect(diff).to.eql([]);
+        expect(diff).toEqual([]);
       });
 
       it('should work for an empty diff on array of lines', () => {
         let diff = util.flattenStringDiff(['test'], []);
-        expect(diff).to.eql([]);
+        expect(diff).toEqual([]);
       });
 
       it('should work for a valid line addition', () => {
@@ -72,7 +70,7 @@ describe('diff', () => {
         ]
         let diff = util.flattenStringDiff(source, sourceDiff);
         let expected = [opAddRange(source[0].length, 'wee\n')];
-        expect(util.stripSource(diff)).to.eql(expected);
+        expect(util.stripSource(diff)).toEqual(expected);
       });
 
       it('should work for a valid line addition', () => {
@@ -82,7 +80,7 @@ describe('diff', () => {
         ]
         let diff = util.flattenStringDiff(source, sourceDiff);
         let expected = [opAddRange(source[0].length, 'wee\n')];
-        expect(util.stripSource(diff)).to.eql(expected);
+        expect(util.stripSource(diff)).toEqual(expected);
       });
 
       it('should be robust against different line endings', () => {
@@ -105,21 +103,21 @@ describe('diff', () => {
           opAddRange('test\nfoo\n\n'.length, 'wee\n'),
           opAddRange('test\nfoo\n\n'.length, 'ooh\n')
           ];
-        expect(util.stripSource(diff)).to.eql(expected);
+        expect(util.stripSource(diff)).toEqual(expected);
 
         diff = util.flattenStringDiff(sourceB, sourceDiffB);
         expected = [
           opAddRange('test\r\nfoo\r\n\r\n'.length, 'wee\r\n'),
           opAddRange('test\r\nfoo\r\n\r\n'.length, 'ooh\r\n')
           ];
-        expect(util.stripSource(diff)).to.eql(expected);
+        expect(util.stripSource(diff)).toEqual(expected);
 
         diff = util.flattenStringDiff(sourceC, sourceDiffC);
         expected = [
           opAddRange('test\rfoo\r\r'.length, 'wee\r'),
           opAddRange('test\rfoo\r\r'.length, 'ooh\r')
           ];
-        expect(util.stripSource(diff)).to.eql(expected);
+        expect(util.stripSource(diff)).toEqual(expected);
       });
 
       it('should work for a valid line deletion', () => {
@@ -129,7 +127,7 @@ describe('diff', () => {
         ]
         let diff = util.flattenStringDiff(source, sourceDiff);
         let expected = [opRemoveRange(source[0].length, 'wee\n'.length)];
-        expect(util.stripSource(diff)).to.eql(expected);
+        expect(util.stripSource(diff)).toEqual(expected);
       });
 
     });
