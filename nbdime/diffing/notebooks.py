@@ -223,8 +223,8 @@ def compare_output_approximate(x, y):
     if xkeys != ykeys:
         return False
 
-    # Deliberately skipping metadata, cell id and execution count here
-    handled = set(("output_type", "metadata", "id", "execution_count"))
+    # Deliberately skipping metadata and execution count here
+    handled = set(("output_type", "metadata", "execution_count"))
 
     if ot == "stream":
         if x["name"] != y["name"]:
