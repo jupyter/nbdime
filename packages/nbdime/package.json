@@ -36,7 +36,6 @@
   "devDependencies": {
     "@babel/core": "^7.5.0",
     "@babel/preset-env": "^7.5.0",
-    "@jupyterlab/testutils": "^2.0.0",
     "@jupyterlab/apputils": "^2 || ^3",
     "@lumino/messaging": "^1.2.2",
     "@types/json-stable-stringify": "^1.0.32",
