@@ -58,6 +58,7 @@ cli_conflict_strategies_output = cli_conflict_strategies + (
 
 def notebook_merge_strategies(args):
     strategies = Strategies({
+        "/cells/*/id": "remove",
         # These fields should never conflict, that would be an internal error:
         "/nbformat": "fail",
         "/cells/*/cell_type": "fail",

@@ -187,6 +187,12 @@ class _Ignorables(NbdimeConfigurable):
         help="process/ignore metadata.",
     ).tag(config=True)
 
+    id = Bool(
+        None,
+        allow_none=True,
+        help="process/ignore identifiers.",
+    ).tag(config=True)
+
     attachments = Bool(
         None,
         allow_none=True,

@@ -38,6 +38,14 @@ WEB_TEST_TIMEOUT = 15
 TEST_TOKEN = 'nbdime-test-token'
 
 
+@contextmanager
+def random_seed(a=0):
+    import random
+    old_state = random.getstate()
+    random.seed(a)
+    yield
+    random.setstate(old_state)
+
 def assert_is_valid_notebook(nb):
     """These are the current assumptions on notebooks in these tests. Loosen on demand."""
     assert nb["nbformat"] == 4
@@ -60,16 +68,19 @@ def check_symmetric_diff_and_patch(a, b):
     check_diff_and_patch(b, a)
 
 
-def sources_to_notebook(sources, cell_type='code'):
+def sources_to_notebook(sources, cell_type='code', id_seed=0, strip_ids=False):
     assert isinstance(sources, list)
     nb = nbformat.v4.new_notebook()
-    for source in sources:
-        if isinstance(source, list):
-            source = "".join(source)
-        if cell_type == 'code':
-            nb.cells.append(nbformat.v4.new_code_cell(source))
-        elif cell_type == 'markdown':
-            nb.cells.append(nbformat.v4.new_markdown_cell(source))
+    with random_seed(id_seed):
+        for source in sources:
+            if isinstance(source, list):
+                source = "".join(source)
+            if cell_type == 'code':
+                nb.cells.append(nbformat.v4.new_code_cell(source))
+            elif cell_type == 'markdown':
+                nb.cells.append(nbformat.v4.new_markdown_cell(source))
+    if strip_ids:
+        strip_cell_ids(nb)
     return nb
 
 
@@ -85,7 +96,7 @@ def notebook_to_sources(nb, as_str=True):
     return sources
 
 
-def outputs_to_notebook(outputs):
+def outputs_to_notebook(outputs, strip_ids=False):
     assert isinstance(outputs, list)
     assert len(outputs) == 0 or isinstance(outputs[0], list)
     nb = nbformat.v4.new_notebook()
@@ -102,7 +113,27 @@ def outputs_to_notebook(outputs):
                 )
             assert isinstance(output, dict)
             cell.outputs.append(output)
+    if strip_ids:
+        strip_cell_ids(nb)
     return nb
+
+
+def strip_cell_id(cell):
+    if "id" in cell:
+        del cell["id"]
+    return cell
+
+
+def strip_cell_ids(nb):
+    for cell in nb["cells"]:
+        strip_cell_id(cell)
+    return nb
+
+
+def new_cell_wo_id(*args, **kwargs):
+    cell = nbformat.v4.new_code_cell(*args, **kwargs)
+    strip_cell_id(cell)
+    return cell
 
 
 @contextmanager

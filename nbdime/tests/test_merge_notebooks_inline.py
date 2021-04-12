@@ -15,7 +15,7 @@ from nbdime.merging.generic import decide_merge, decide_merge_with_diff
 from nbdime.merging.decisions import apply_decisions
 from nbdime.merging.strategies import _cell_marker_format
 
-from .utils import outputs_to_notebook, sources_to_notebook
+from .utils import outputs_to_notebook, sources_to_notebook, strip_cell_ids, strip_cell_id
 
 
 def test_decide_merge_strategy_fail(reset_log):
@@ -769,8 +769,10 @@ def test_inline_merge_source_empty():
     assert merged == expected
 
 
-def code_nb(sources):
-    return new_notebook(cells=[new_code_cell(s) for s in sources])
+def code_nb(sources, strip_ids=False):
+    nb = new_notebook(cells=[new_code_cell(s) for s in sources])
+    strip_cell_ids(nb)
+    return nb
 
 
 def test_inline_merge_source_all_equal():
@@ -849,21 +851,21 @@ def test_inline_merge_source_replace_line():
         "this cell will be deleted and patched",
         "yet more content",
         "and a final line",
-        ])
+        ], strip_ids=True)
     local = code_nb([
         "1st source",  # onesided change
         "other text",
         #"this cell will be deleted and patched",
         "some more content",  # twosided equal change
         "And a Final line",  # twosided conflicted change
-        ])
+        ], strip_ids=True)
     remote = code_nb([
         "first source",
         "other text?",  # onesided change
         "this cell will be deleted and modified",
         "some more content",   # equal
         "and The final Line",  # conflicted
-        ])
+        ], strip_ids=True)
     expected = code_nb([
         "1st source",
         "other text?",
@@ -871,7 +873,7 @@ def test_inline_merge_source_replace_line():
         '<<<<<<< LOCAL CELL DELETED >>>>>>>\nthis cell will be deleted and modified',
         "some more content",  # equal
         '<<<<<<< local\nAnd a Final line\n=======\nand The final Line\n>>>>>>> remote'
-        ])
+        ], strip_ids=True)
     merged, decisions = merge_notebooks(base, local, remote)
     assert merged == expected
     expected = code_nb([
@@ -881,7 +883,7 @@ def test_inline_merge_source_replace_line():
         '<<<<<<< REMOTE CELL DELETED >>>>>>>\nthis cell will be deleted and modified',
         "some more content",
         '<<<<<<< local\nand The final Line\n=======\nAnd a Final line\n>>>>>>> remote'
-        ])
+        ], strip_ids=True)
     merged, decisions = merge_notebooks(base, remote, local)
     assert merged == expected
 
@@ -895,21 +897,21 @@ def test_inline_merge_source_add_to_line():
         "this cell will be deleted and patched\nhere we add",
         "yet more content",
         "and a final line",
-        ])
+        ], strip_ids=True)
     local = code_nb([
         "1st source",  # onesided change
         "other text",
         #"this cell will be deleted and patched",
         "some more content",  # twosided equal change
         "And a Final line",  # twosided conflicted change
-        ])
+        ], strip_ids=True)
     remote = code_nb([
         "first source",
         "other text?",  # onesided change
         "this cell will be deleted and patched\nhere we add text to a line",
         "some more content",   # equal
         "and The final Line",  # conflicted
-        ])
+        ], strip_ids=True)
     expected = code_nb([
         "1st source",
         "other text?",
@@ -917,7 +919,7 @@ def test_inline_merge_source_add_to_line():
         '<<<<<<< LOCAL CELL DELETED >>>>>>>\nthis cell will be deleted and patched\nhere we add text to a line',
         "some more content",  # equal
         '<<<<<<< local\nAnd a Final line\n=======\nand The final Line\n>>>>>>> remote'
-        ])
+        ], strip_ids=True)
     merged, decisions = merge_notebooks(base, local, remote)
     assert merged == expected
     expected = code_nb([
@@ -927,7 +929,7 @@ def test_inline_merge_source_add_to_line():
         '<<<<<<< REMOTE CELL DELETED >>>>>>>\nthis cell will be deleted and patched\nhere we add text to a line',
         "some more content",
         '<<<<<<< local\nand The final Line\n=======\nAnd a Final line\n>>>>>>> remote'
-        ])
+        ], strip_ids=True)
     merged, decisions = merge_notebooks(base, remote, local)
     assert merged == expected
 
@@ -941,28 +943,28 @@ def test_inline_merge_source_patches_both_ends():
         "this cell will be untouched",
         "yet more content",
         "and final line will be changed",
-        ])
+        ], strip_ids=True)
     local = code_nb([
         "first source will be modified locally",
         "other text",
         "this cell will be untouched",
         "yet more content",
         "and final line will be changed locally",
-        ])
+        ], strip_ids=True)
     remote = code_nb([
         "first source will be modified remotely",
         "other text",
         "this cell will be untouched",
         "yet more content",
         "and final line will be changed remotely",
-        ])
+        ], strip_ids=True)
     expected = code_nb([
         '<<<<<<< local\nfirst source will be modified locally\n=======\nfirst source will be modified remotely\n>>>>>>> remote',
         "other text",
         "this cell will be untouched",
         "yet more content",
         '<<<<<<< local\nand final line will be changed locally\n=======\nand final line will be changed remotely\n>>>>>>> remote',
-        ])
+        ], strip_ids=True)
     merged, decisions = merge_notebooks(base, local, remote)
     assert merged == expected
     expected = code_nb([
@@ -971,7 +973,7 @@ def test_inline_merge_source_patches_both_ends():
         "this cell will be untouched",
         "yet more content",
         '<<<<<<< local\nand final line will be changed remotely\n=======\nand final line will be changed locally\n>>>>>>> remote',
-        ])
+        ], strip_ids=True)
     merged, decisions = merge_notebooks(base, remote, local)
     assert merged == expected
 
@@ -1032,9 +1034,9 @@ def test_inline_merge_attachments():
 
 def test_inline_merge_outputs():
     # One cell with two outputs:
-    base = outputs_to_notebook([['unmodified', 'base']])
-    local = outputs_to_notebook([['unmodified', 'local']])
-    remote = outputs_to_notebook([['unmodified', 'remote']])
+    base = outputs_to_notebook([['unmodified', 'base']], strip_ids=True)
+    local = outputs_to_notebook([['unmodified', 'local']], strip_ids=True)
+    remote = outputs_to_notebook([['unmodified', 'remote']], strip_ids=True)
     expected = outputs_to_notebook([[
         'unmodified',
         nbformat.v4.new_output(
@@ -1048,16 +1050,16 @@ def test_inline_merge_outputs():
         nbformat.v4.new_output(
             output_type='stream', name='stderr',
             text='>>>>>>> remote <modified: text/plain>\n'),
-    ]])
+    ]], strip_ids=True)
     merged, decisions = merge_notebooks(base, local, remote)
     assert merged == expected
 
 
 def test_inline_merge_outputs_conflicting_insert_in_empty():
     # One cell with two outputs:
-    base = outputs_to_notebook([[]])
-    local = outputs_to_notebook([['local']])
-    remote = outputs_to_notebook([['remote']])
+    base = outputs_to_notebook([[]], strip_ids=True)
+    local = outputs_to_notebook([['local']], strip_ids=True)
+    remote = outputs_to_notebook([['remote']], strip_ids=True)
     expected = outputs_to_notebook([[
         nbformat.v4.new_output(
             output_type='stream', name='stderr',
@@ -1070,15 +1072,15 @@ def test_inline_merge_outputs_conflicting_insert_in_empty():
         nbformat.v4.new_output(
             output_type='stream', name='stderr',
             text='>>>>>>> remote\n'),
-    ]])
+    ]], strip_ids=True)
     merged, decisions = merge_notebooks(base, local, remote)
     assert merged == expected
 
 
 def test_inline_merge_cells_insertion_similar():
-    base = sources_to_notebook([['unmodified']], cell_type='markdown')
-    local = sources_to_notebook([['unmodified'], ['local']], cell_type='markdown')
-    remote = sources_to_notebook([['unmodified'], ['remote']], cell_type='markdown')
+    base = sources_to_notebook([['unmodified']], cell_type='markdown', strip_ids=True)
+    local = sources_to_notebook([['unmodified'], ['local']], cell_type='markdown', strip_ids=True)
+    remote = sources_to_notebook([['unmodified'], ['remote']], cell_type='markdown', strip_ids=True)
     expected = sources_to_notebook([
         'unmodified',
         [
@@ -1088,15 +1090,15 @@ def test_inline_merge_cells_insertion_similar():
             'remote\n',
             (">"*7) + ' remote'
         ]
-    ], cell_type='markdown')
+    ], cell_type='markdown', strip_ids=True)
     merged, decisions = merge_notebooks(base, local, remote)
     assert merged == expected
 
 
 def test_inline_merge_cells_insertion_unsimilar():
-    base = sources_to_notebook([['unmodified']], cell_type='markdown')
-    local = sources_to_notebook([['unmodified'], ['local\n', 'friendly faces\n', '3.14']], cell_type='markdown')
-    remote = sources_to_notebook([['unmodified'], ['remote\n', 'foo bar baz\n']], cell_type='markdown')
+    base = sources_to_notebook([['unmodified']], cell_type='markdown', strip_ids=True)
+    local = sources_to_notebook([['unmodified'], ['local\n', 'friendly faces\n', '3.14']], cell_type='markdown', strip_ids=True)
+    remote = sources_to_notebook([['unmodified'], ['remote\n', 'foo bar baz\n']], cell_type='markdown', strip_ids=True)
     expected = sources_to_notebook([
         ['unmodified'],
         [_cell_marker_format(("<"*7) + ' local')],
@@ -1104,15 +1106,15 @@ def test_inline_merge_cells_insertion_unsimilar():
         [_cell_marker_format("="*7)],
         ['remote\n', 'foo bar baz\n'],
         [_cell_marker_format((">"*7) + ' remote')],
-    ], cell_type='markdown')
+    ], cell_type='markdown', strip_ids=True)
     merged, decisions = merge_notebooks(base, local, remote)
-    assert merged == expected
+    assert strip_cell_ids(merged) == expected
 
 
 def test_inline_merge_cells_replacement_similar():
-    base = sources_to_notebook([['unmodified'], ['base']], cell_type='markdown')
-    local = sources_to_notebook([['unmodified'], ['local']], cell_type='markdown')
-    remote = sources_to_notebook([['unmodified'], ['remote']], cell_type='markdown')
+    base = sources_to_notebook([['unmodified'], ['base']], cell_type='markdown', strip_ids=False)
+    local = sources_to_notebook([['unmodified'], ['local']], cell_type='markdown', strip_ids=True)
+    remote = sources_to_notebook([['unmodified'], ['remote']], cell_type='markdown', strip_ids=True)
     expected = sources_to_notebook([
         ['unmodified'],
         [
@@ -1122,15 +1124,15 @@ def test_inline_merge_cells_replacement_similar():
             'remote\n',
             (">"*7) + ' remote'
         ]
-    ], cell_type='markdown')
+    ], cell_type='markdown', strip_ids=True)
     merged, decisions = merge_notebooks(base, local, remote)
     assert merged == expected
 
 
 def test_inline_merge_cells_replacement_unsimilar():
-    base = sources_to_notebook([['unmodified'], ['base']], cell_type='markdown')
-    local = sources_to_notebook([['unmodified'], ['local\n', 'friendly faces\n', '3.14']], cell_type='markdown')
-    remote = sources_to_notebook([['unmodified'], ['remote\n', 'foo bar baz\n']], cell_type='markdown')
+    base = sources_to_notebook([['unmodified'], ['base']], cell_type='markdown', strip_ids=False)
+    local = sources_to_notebook([['unmodified'], ['local\n', 'friendly faces\n', '3.14']], cell_type='markdown', strip_ids=True)
+    remote = sources_to_notebook([['unmodified'], ['remote\n', 'foo bar baz\n']], cell_type='markdown', strip_ids=True)
     expected = sources_to_notebook([
         ['unmodified'],
         [_cell_marker_format(("<"*7) + ' local')],
@@ -1138,6 +1140,6 @@ def test_inline_merge_cells_replacement_unsimilar():
         [_cell_marker_format("="*7)],
         ['remote\n', 'foo bar baz\n'],
         [_cell_marker_format((">"*7) + ' remote')],
-    ], cell_type='markdown')
+    ], cell_type='markdown', strip_ids=True)
     merged, decisions = merge_notebooks(base, local, remote)
-    assert merged == expected
+    assert strip_cell_ids(merged) == expected

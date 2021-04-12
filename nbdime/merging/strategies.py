@@ -589,6 +589,12 @@ def resolve_strategy_inline_recurse(path, base, decisions):
                     "remote_metadata": rcell[k],
                 }
 
+            elif k == 'id':
+                cell[k] = {
+                    "local_id": lcell[k],
+                    "remote_id": rcell[k],
+                }
+
             elif k == 'execution_count':
                 cell[k] = None  # Clear
 

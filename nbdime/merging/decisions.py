@@ -628,7 +628,7 @@ def apply_decisions(base, decisions):
             else:
                 if md.action == "clear_all":
                     clear_all_flag = True
-                    # Clear any exisiting decisions!
+                    # Clear any existing decisions!
                     diffs = []
                 ad = resolve_action(resolved, md)
                 if line:

@@ -574,7 +574,7 @@ def set_notebook_diff_ignores(ignore_paths):
 
 
 def set_notebook_diff_targets(sources=True, outputs=True, attachments=True,
-                              metadata=True, details=True):
+                              metadata=True, identifier=True, details=True):
     """Configure the notebook differs to include/ignore various changes."""
 
     config = {
@@ -582,6 +582,7 @@ def set_notebook_diff_targets(sources=True, outputs=True, attachments=True,
         '/cells/*/outputs': not outputs,
         '/cells/*/attachments': not attachments,
         '/metadata': not metadata,
+        '/cells/*/id': not identifier,
         '/cells/*/metadata': not metadata,
         '/cells/*/outputs/*/metadata': not metadata,
         '/cells/*': False if details else ('execution_count',),

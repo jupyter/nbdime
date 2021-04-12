@@ -58,7 +58,7 @@ def test_nbshow_app(filespath, capsys):
     args = nbshowapp._build_arg_parser().parse_args([afn, '--log-level=CRITICAL'])
     process_exclusive_ignorables(
         args,
-        ('sources', 'outputs', 'attachments', 'metadata', 'details'))
+        ('sources', 'outputs', 'attachments', 'metadata', 'id', 'details'))
     assert 0 == main_show(args)
     assert args.log_level == 'CRITICAL'
     assert nbdime.log.logger.level == logging.CRITICAL

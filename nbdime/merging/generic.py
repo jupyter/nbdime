@@ -13,7 +13,7 @@ from .decisions import MergeDecisionBuilder
 from .chunks import make_merge_chunks, chunk_typename
 from .strategies import (
     resolve_strategy_generic,
-     resolve_conflicted_decisions_dict,
+    resolve_conflicted_decisions_dict,
     resolve_conflicted_decisions_list,
     resolve_conflicted_decisions_strings,
     resolve_strategy_inline_source,
