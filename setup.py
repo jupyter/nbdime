@@ -7,7 +7,7 @@
 from __future__ import print_function
 
 import os
-imoprt sys
+import sys
 from glob import glob
 
 from setuptools import setup, find_packages
