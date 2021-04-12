@@ -25,7 +25,7 @@ install:
   # Ensure python scripts are from right version:
   - 'SET "PATH=%PYTHON%\Scripts;%PYTHON%;%PATH%"'
   # Install coverage utilities:
-  - 'pip install codecov'
+  - 'pip install codecov jupyterlab~=3.0'
   # Package up sdist for our package:
   - 'python setup.py sdist'
   - 'for /f %%i in (''dir .\dist\nbdime-*.tar.gz /B'') do set fname=%%i'
