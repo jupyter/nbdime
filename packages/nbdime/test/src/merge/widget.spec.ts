@@ -32,6 +32,14 @@ import { CodeEditor } from '@jupyterlab/codeeditor';
 const notebook = require('../../files/base.ipynb.json') as nbformat.INotebookContent;
 const NBdecisions = require('../../files/decisionsA.json') as IMergeDecision[];
 
+// Mock codemirror editor as it is provided by JupyterLab
+//  Notes: 
+//    The signal `selections.changed` must be mocked as it is connected
+//    to a slot in CodeEditorWrapper in @jupyterlab/codeeditor 
+//    See https://github.com/jupyterlab/jupyterlab/blob/4fc0a73336fe7bb92b2b2c0e6e8be89545086a50/packages/codeeditor/src/widget.ts#L51
+//
+//    Some method of the CodeMirror editor called when instantiating an editor in src/common/mergeview are also mocked.
+//    As these tests are only checking the widget instantiation, it is fine.
 jest.mock('@jupyterlab/codemirror', () => {
   return {
     CodeMirrorEditor: jest.fn(),
