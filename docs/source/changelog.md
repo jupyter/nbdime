@@ -1,5 +1,13 @@
 # Changes in nbdime
 
+## 3.0
+
+###  3.0.0 - 2021-04
+
+- Added support for JupyterLab 3. This includes compatability with jupyter_server (notebook is still supported as well).
+- Basic functionality for working with cell ids introduced in notebook format spec 4.5. Full utilization of this for diffing/merging functionality is planned for a later release.
+- Fixed some issues with inline merging
+
 ## 2.0
 
 ###  2.1.0 - 2020-10
