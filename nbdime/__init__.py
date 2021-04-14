@@ -32,7 +32,7 @@ _jupyter_server_extension_points = _jupyter_server_extension_paths
 
 def _jupyter_labextension_paths():
     return [{
-        "src": "labextension/federated",
+        "src": "labextension",
         "dest": "nbdime-jupyterlab"
     }]
 
