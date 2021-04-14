@@ -29,6 +29,7 @@ prune packages/*/node_modules
 prune packages/*/test/build
 
 # Extension files
+graft nbdime/labextension
 graft nbdime/notebook_ext
 
 # Patterns to exclude from any directory

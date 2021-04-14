@@ -29,10 +29,12 @@
   "typings": "lib/index.d.ts",
   "scripts": {
     "build": "npm run build:lib && npm run build:labextension",
-    "build:dev": "npm run build:lib",
-    "build:labextension": "rimraf dist && mkdirp dist && jupyter labextension build . && cd dist && npm pack ..",
+    "build:dev": "npm run build:lib && jupyter labextension build --development True .",
+    "build:labextension": "rimraf ../../nbdime/labextension && mkdirp ../../nbdime/labextension/federated && jupyter labextension build . && cd ../../nbdime/labextension && npm pack ../../packages/labextension",
     "build:lib": "tsc --build",
-    "clean": "rimraf tsconfig.tsbuildinfo lib dist",
+    "clean": "npm run clean:lib && npm run clean:labextension",
+    "clean:lib": "rimraf tsconfig.tsbuildinfo lib",
+    "clean:labextension": "rimraf ../../nbdime/labextension",
     "prepublishOnly": "npm run build",
     "update": "rimraf node_modules/nbdime && npm install && npm run build",
     "watch": "tsc --build --watch"
@@ -74,7 +76,7 @@
         ]
       }
     },
-    "outputDir": "dist/static",
+    "outputDir": "../../nbdime/labextension/federated",
     "sharedPackages": {
       "codemirror": {
         "bundled": false,

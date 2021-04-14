@@ -25,7 +25,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 
 
 # Minimal Python version sanity check
-ensure_python(('2.7', '>=3.4'))
+ensure_python('>=3.6')
 
 # the name of the project
 name = 'nbdime'
@@ -49,6 +49,10 @@ package_data = {
         'webapp/static/*.*',
         'webapp/templates/*.*',
         'webapp/testnotebooks/*.*',
+        'labextension/*.*',
+        'labextension/federated/*.*',
+        'labextension/federated/schemas/nbdime-jupyterlab/*.*',
+        'labextension/federated/static/*.*',
         'notebook_ext/*.*',
     ]
 }
@@ -59,10 +63,10 @@ data_spec = [
      name + '/notebook_ext',
      '*.js'),
     ('share/jupyter/lab/extensions',
-     'packages/labextension/dist',
+     name + '/labextension',
      'nbdime-jupyterlab-*.tgz'),
     ('share/jupyter/labextensions/nbdime-jupyterlab',
-     'packages/labextension/dist/static',
+     name + '/labextension/federated',
      '**/*'),
     ('etc/jupyter',
      'jupyter-config',
@@ -107,10 +111,10 @@ setup_args = dict(
         'License :: OSI Approved :: BSD License',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'Framework :: Jupyter',
     ],
 )
