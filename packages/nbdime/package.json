@@ -13,7 +13,7 @@
   "scripts": {
     "build": "tsc --project . && node scripts/copy-files.js",
     "build:dev": "tsc --project .",
-    "clean": "rimraf test/build && rimraf lib",
+    "clean": "rimraf test/build lib tsconfig.tsbuildinfo",
     "prepublishOnly": "npm run build",
     "test": "jest --coverage",
     "watch": "tsc --build --watch"

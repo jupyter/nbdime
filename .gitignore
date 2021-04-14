@@ -28,3 +28,4 @@ nbdime/webapp/static/**
 package-lock.json
 *.tsbuildinfo
 packages/webapp/webpack-stats.json
+nbdime/labextension/

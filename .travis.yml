@@ -35,7 +35,7 @@ install:
   # Don't use -v with JS as travis chokes with [Errno 11] write could not complete without blocking
   - |
     if [[ $GROUP == python ]]; then
-      pip install --upgrade --upgrade-strategy=eager ".[test]" -v
+      pip install --upgrade --upgrade-strategy=eager ".[test]"
     elif [[ $GROUP == js ]]; then
       pip install --upgrade --upgrade-strategy=eager -e ".[test]"
     fi

@@ -29,10 +29,12 @@
   "typings": "lib/index.d.ts",
   "scripts": {
     "build": "npm run build:lib && npm run build:labextension",
-    "build:dev": "npm run build:lib",
-    "build:labextension": "rimraf dist && mkdirp dist && cd dist && npm pack ..",
+    "build:dev": "npm run build:lib && jupyter labextension build --development True .",
+    "build:labextension": "rimraf ../../nbdime/labextension && mkdirp ../../nbdime/labextension/federated && jupyter labextension build . && cd ../../nbdime/labextension && npm pack ../../packages/labextension",
     "build:lib": "tsc --build",
-    "clean": "rimraf lib && rimraf dist",
+    "clean": "npm run clean:lib && npm run clean:labextension",
+    "clean:lib": "rimraf tsconfig.tsbuildinfo lib",
+    "clean:labextension": "rimraf ../../nbdime/labextension",
     "prepublishOnly": "npm run build",
     "update": "rimraf node_modules/nbdime && npm install && npm run build",
     "watch": "tsc --build --watch"
@@ -53,6 +55,7 @@
   },
   "devDependencies": {
     "@jupyterlab/application": "^2 || ^3",
+    "@jupyterlab/builder": "^3.0.0",
     "@jupyterlab/docregistry": "^2 || ^3",
     "@lumino/commands": "^1.6.1",
     "mkdirp": "^0.5.1",
@@ -71,6 +74,16 @@
           "pip",
           "conda"
         ]
+      }
+    },
+    "outputDir": "../../nbdime/labextension/federated",
+    "sharedPackages": {
+      "codemirror": {
+        "bundled": false,
+        "singleton": true
+      },
+      "nbdime": {
+        "singleton": true
       }
     }
   }

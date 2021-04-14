@@ -30,6 +30,13 @@ def _jupyter_server_extension_paths():
 _jupyter_server_extension_points = _jupyter_server_extension_paths
 
 
+def _jupyter_labextension_paths():
+    return [{
+        "src": "labextension/federated",
+        "dest": "nbdime-jupyterlab"
+    }]
+
+
 def _jupyter_nbextension_paths():
     return [dict(
         section="notebook",
