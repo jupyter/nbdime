@@ -1,0 +1,29 @@
+{% extends "nbdimepage.html" %}
+
+    {% block nbdimeheader %}
+
+    <div id="nbdime-header" class="nbdime-Diff">
+      <h3>Notebook Diff</h3>
+      <script id='diff-and-base' type="application/json">{{ data|tojson|safe }}</script>
+      <div id="nbdime-header-buttonrow">
+        <input id="nbdime-hide-unchanged" type="checkbox"><label for="nbdime-hide-unchanged">Hide unchanged cells</label></input>
+        <button id="nbdime-trust" style="display: none">Trust outputs</button>
+        <button id="nbdime-export" type="checkbox" style="display: none">Export diff</button>
+      </div>
+      <div id=nbdime-header-banner>
+        <span id="nbdime-header-base">{{ base_label }}</span>
+        <span id="nbdime-header-remote">{{ remote_label }}</span>
+      </div>
+    </div> <!-- ndime-header -->
+
+    {% endblock %}
+
+    {% block nbdimescripts %}
+    <script id='nbdime-config-data' type="application/json">{{ config_data|tojson|safe }}</script>
+    {% if nbdime_js_url == "" %}
+    <script>{{ nbdime_js_content }}</script>
+    {% else %}
+    <script src="{{ nbdime_js_url }}"></script>
+    {% endif %}
+    <noscript>Nbdime relies on javascript for diff/merge views!</noscript>
+    {% endblock %}

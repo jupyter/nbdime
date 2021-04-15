@@ -402,6 +402,7 @@ def make_app(**params):
     app.exit_code = 0
     return app
 
+
 def init_app(on_port=None, closable=False, **params):
     asyncio_patch()
     _logger.debug('Using params: %s', params)
