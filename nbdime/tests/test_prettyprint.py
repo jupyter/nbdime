@@ -3,22 +3,12 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-# Messes up tests by writing u'str':
-#from __future__ import unicode_literals
-
-from __future__ import print_function
-
-try:
-    from base64 import encodebytes
-except ImportError:
-    from base64 import encodestring as encodebytes
+from base64 import encodebytes
+    
 import os
-from six import StringIO
+from io import StringIO
 
-try:
-    from unittest import mock
-except ImportError:
-    import mock
+from unittest import mock
 
 from nbformat import v4
 

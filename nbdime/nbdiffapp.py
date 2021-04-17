@@ -3,14 +3,9 @@
 # Copyright (c) IPython Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-from __future__ import unicode_literals
-from __future__ import print_function
-
 import json
 import os
 import sys
-
-from six import string_types
 
 from .args import (
     add_generic_args, add_diff_args, process_diff_flags, resolve_diff_args,
@@ -52,7 +47,7 @@ def _handle_diff(base, remote, output, args):
     # Check that if args are filenames they either exist, or are
     # explicitly marked as missing (added/removed):
     for fn in (base, remote):
-        if (isinstance(fn, string_types) and not os.path.exists(fn) and
+        if (isinstance(fn, str) and not os.path.exists(fn) and
                 fn != EXPLICIT_MISSING_FILE):
             print("Missing file {}".format(fn))
             return 1
@@ -83,8 +78,8 @@ def _handle_diff(base, remote, output, args):
         # This sets up what to ignore:
         config = prettyprint_config_from_args(args, out=Printer())
         # Separate out filenames:
-        base_name = base if isinstance(base, string_types) else base.name
-        remote_name = remote if isinstance(remote, string_types) else remote.name
+        base_name = base if isinstance(base, str) else base.name
+        remote_name = remote if isinstance(remote, str) else remote.name
         pretty_print_notebook_diff(base_name, remote_name, a, d, config)
 
     return 0

@@ -3,19 +3,13 @@
 # Copyright (c) IPython Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-from __future__ import unicode_literals
-from __future__ import print_function
-
 import sys
 from subprocess import call
 
 import nbdime
 from ._version import __version__
 
-try:
-    from shutil import which
-except ImportError:
-    from backports.shutil_which import which
+from shutil import which
 
 COMMANDS = ["show", "diff", "merge", "diff-web", "merge-web", "mergetool",
             "config-git", "extensions"]

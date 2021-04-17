@@ -8,7 +8,6 @@ import json
 import logging
 import os
 from pprint import pprint
-from six import text_type
 from subprocess import CalledProcessError, check_call
 import sys
 import time
@@ -202,13 +201,13 @@ def test_nbdiff_app_ignore_details(filespath, tmpdir, reset_notebook_diff):
 
 def test_nbdiff_app_config_ignores(filespath, tmpdir, reset_notebook_diff):
     tmpdir.join('nbdime_config.json').write_text(
-        text_type(json.dumps({
+        json.dumps({
             'Diff': {
                 'Ignore': {
                     '/cells/*/metadata': ['nbdime-dummy-field']
                 }
             },
-        })),
+        }),
         encoding='utf-8'
     )
 
@@ -239,13 +238,13 @@ def test_nbdiff_app_flags_override_config_ignores(filespath, tmpdir, reset_noteb
     # This excercises current behavior, but should ideally (?) be different
 
     tmpdir.join('nbdime_config.json').write_text(
-        text_type(json.dumps({
+        json.dumps({
             'Diff': {
                 'Ignore': {
                     '/cells/*/metadata': ['nbdime-dummy-field']
                 }
             },
-        })),
+        }),
         encoding='utf-8'
     )
 

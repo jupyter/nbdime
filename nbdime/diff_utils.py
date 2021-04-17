@@ -6,9 +6,6 @@
 import itertools
 import copy
 
-from six import string_types
-from six.moves import xrange as range
-
 from .diff_format import DiffOp, DiffEntry, op_addrange, op_removerange
 from .log import NBDiffFormatError
 
@@ -50,7 +47,7 @@ def source_as_string(source):
     """Return source as a single string, joined as lines if it's a list."""
     if isinstance(source, list):
         source = "\n".join(line.strip("\n") for line in source)
-    if not isinstance(source, string_types):
+    if not isinstance(source, str):
         raise TypeError("Invalid argument type. Should be string or sequence of strings."
                         "Got %r" % source)
     return source
@@ -94,7 +91,7 @@ def _combine_ops(existing, new):
         if new.op == DiffOp.ADDRANGE:
             d.valuelist += new.valuelist
         else:
-            if isinstance(d.valuelist, string_types):
+            if isinstance(d.valuelist, str):
                 d.valuelist += new.value
             else:
                 d.valuelist.append(new.value)
@@ -108,7 +105,7 @@ def flatten_list_of_string_diff(a, linebased_diff):
     """Translates a diff of strings split by str.splitlines(True) to a diff of
     the joined multiline string.
     """
-    if isinstance(a, string_types):
+    if isinstance(a, str):
         a = a.splitlines(True)
 
     line_to_char = [0] + list(_accum(len(ia) for ia in a))
@@ -196,15 +193,15 @@ def to_json_patch(d, path=""):
     for e in d:
         op = e.op
         if op == DiffOp.ADD:
-            assert isinstance(e.key, string_types), "'add' diff op needs string key"
+            assert isinstance(e.key, str), "'add' diff op needs string key"
             p = "/".join([path, e.key])
             jp.append({"op": "add", "path": p, "value": e.value})
         elif op == DiffOp.REPLACE:
-            assert isinstance(e.key, string_types), "'replace' diff op needs string key"
+            assert isinstance(e.key, str), "'replace' diff op needs string key"
             p = "/".join([path, e.key])
             jp.append({"op": "replace", "path": p, "value": e.value})
         elif op == DiffOp.REMOVE:
-            assert isinstance(e.key, string_types), "'remove' diff op needs string key"
+            assert isinstance(e.key, str), "'remove' diff op needs string key"
             p = "/".join([path, e.key])
             jp.append({"op": "remove", "path": p})
         elif op == DiffOp.ADDRANGE:

@@ -1,7 +1,7 @@
 
 import io
 import os
-from six import StringIO
+from io import StringIO
 from subprocess import CalledProcessError
 
 import nbformat

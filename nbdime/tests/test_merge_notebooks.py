@@ -3,11 +3,10 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-from __future__ import unicode_literals
+
 
 import pytest
 import copy
-from six import string_types
 import nbformat
 
 from nbdime.diff_format import op_patch, op_addrange, op_removerange, op_replace
@@ -165,7 +164,7 @@ def src2nb(src, strip_ids=False):
     src is either a single multiline string to become one cell,
     or a list (cells) of lists (lines) of singleline strings.
     """
-    if isinstance(src, string_types):
+    if isinstance(src, str):
         src = [[src]]
     if isinstance(src, list):
         src = sources_to_notebook(src)

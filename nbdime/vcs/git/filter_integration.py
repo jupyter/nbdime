@@ -2,7 +2,7 @@
 import io
 from subprocess import check_output, STDOUT, CalledProcessError
 
-from six import StringIO
+from io import StringIO
 
 from nbdime.utils import EXPLICIT_MISSING_FILE
 

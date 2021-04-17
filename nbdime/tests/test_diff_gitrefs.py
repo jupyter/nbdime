@@ -1,11 +1,7 @@
 
 import os
 import shutil
-from six import string_types
-try:
-    from itertools import zip_longest
-except ImportError:
-    from itertools import izip_longest as zip_longest
+from itertools import zip_longest
 
 import pytest
 
@@ -31,7 +27,7 @@ from ..utils import EXPLICIT_MISSING_FILE
 
 
 def _nb_name(f):
-    if isinstance(f, string_types):
+    if isinstance(f, str):
         return f
     return f.name
 

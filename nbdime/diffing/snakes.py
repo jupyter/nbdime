@@ -7,8 +7,6 @@
 Utilities for computing 'snakes', or contiguous sequences of equal elements of two sequences.
 """
 
-from __future__ import unicode_literals
-
 from ..diff_format import SequenceDiffBuilder
 from .seq_bruteforce import bruteforce_compute_snakes
 

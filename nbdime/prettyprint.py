@@ -3,9 +3,6 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-from __future__ import unicode_literals
-from __future__ import print_function
-
 from collections import namedtuple
 import datetime
 from difflib import unified_diff
@@ -19,13 +16,9 @@ from subprocess import Popen, PIPE
 import sys
 import tempfile
 
-try:
-    from shutil import which
-except ImportError:
-    from backports.shutil_which import which
+from shutil import which
 
 import colorama
-from six import string_types
 
 from .diff_format import NBDiffFormatError, DiffOp, op_patch
 from .ignorables import diff_ignorables
@@ -430,7 +423,7 @@ def _trim_base64(s):
 
 def format_value(v):
     "Format simple value for printing. Snips base64 strings and uses pprint for the rest."
-    if not isinstance(v, string_types):
+    if not isinstance(v, str):
         # Not a string, defer to pprint
         vstr = pprint.pformat(v)
     else:
@@ -525,7 +518,7 @@ def pretty_print_item(k, v, prefix="", config=DefaultConfig):
 
 
 def pretty_print_multiline(text, prefix="", config=DefaultConfig):
-    assert isinstance(text, string_types), 'expected string argument'
+    assert isinstance(text, str), 'expected string argument'
 
     # Preprend prefix to lines, letting lines keep their own newlines
     lines = text.splitlines(True)
@@ -858,7 +851,7 @@ def pretty_print_diff(a, di, path, config=DefaultConfig):
         pretty_print_dict_diff(a, di, path, config)
     elif isinstance(a, list):
         pretty_print_list_diff(a, di, path, config)
-    elif isinstance(a, string_types):
+    elif isinstance(a, str):
         pretty_print_string_diff(a, di, path, config)
     else:
         raise NBDiffFormatError(
@@ -930,7 +923,7 @@ def pretty_print_merge_decision(base, decision, config=DefaultConfig):
                 config.INFO.replace("##", "---"), dkey, note, config.RESET))
             value = base
             for i, k in enumerate(decision.common_path):
-                if isinstance(value, string_types):
+                if isinstance(value, str):
                     # Example case:
                     #   common_path = /cells/0/source/3
                     #   value = nb.cells[0].source
