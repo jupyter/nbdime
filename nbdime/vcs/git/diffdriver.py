@@ -16,7 +16,7 @@ Use with:
     git diff [<commit> [<commit>]]
 """
 
-from __future__ import print_function
+
 
 import io
 import os

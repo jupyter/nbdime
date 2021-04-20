@@ -3,9 +3,9 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-from __future__ import unicode_literals
 
-from six import StringIO
+
+from io import StringIO
 
 from .generic import decide_merge_with_diff
 from .decisions import apply_decisions

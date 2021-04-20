@@ -3,9 +3,8 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-from __future__ import unicode_literals
 
-from six import string_types
+
 from collections import defaultdict
 
 import nbdime.log
@@ -497,7 +496,7 @@ def _merge_lists(base, local_diff, remote_diff, path, parent_decisions, strategi
             nbdime.log.error("Not expecting conflicting two-sided removal at this point.")
 
         # Workaround for string merge
-        elif isinstance(base, string_types) and chunktype == "AP/AP":
+        elif isinstance(base, str) and chunktype == "AP/AP":
             # If we get here, base is a single line from a parent multiline string.
 
             # item_strategy points to characters, list_strategy points to lines,
@@ -639,7 +638,7 @@ def _merge_lists(base, local_diff, remote_diff, path, parent_decisions, strategi
 def _merge_strings(base, local_diff, remote_diff,
                    path, parent_decisions, strategies):
     """Perform a three-way merge of strings. See docstring of merge."""
-    assert isinstance(base, string_types)
+    assert isinstance(base, str)
 
     # This functions uses a (static) state variable to track recursion.
     # The first time it is called, base can (potentially) be a
@@ -714,7 +713,7 @@ def _merge(base, local_diff, remote_diff, path, decisions, strategies):
         return _merge_lists(
             base, local_diff, remote_diff,
             path, decisions, strategies)
-    elif isinstance(base, string_types):
+    elif isinstance(base, str):
         return _merge_strings(
             base, local_diff, remote_diff,
             path, decisions, strategies)

@@ -3,10 +3,7 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-from __future__ import unicode_literals
-
 import copy
-from six import string_types
 import nbformat
 from nbformat import NotebookNode
 
@@ -92,7 +89,7 @@ def patch_dict(obj, diff):
     for e in diff:
         op = e.op
         key = e.key
-        assert isinstance(key, string_types), 'dict key must be string'
+        assert isinstance(key, str), 'dict key must be string'
         assert key not in newobj, 'multiple diff entries target same key: %r' % key
 
         if op == DiffOp.ADD:
@@ -133,7 +130,7 @@ def patch(obj, diff):
         return patch_dict(obj, diff)
     elif isinstance(obj, list):
         return patch_list(obj, diff)
-    elif isinstance(obj, string_types):
+    elif isinstance(obj, str):
         return patch_string(obj, diff)
     else:
         raise ValueError("Invalid object type to patch: {}".format(type(obj).__name__))

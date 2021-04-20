@@ -3,11 +3,6 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-from __future__ import unicode_literals
-
-from six import string_types, text_type
-from six.moves import xrange as range
-
 import copy
 import nbformat
 
@@ -470,9 +465,9 @@ def _sort_key(k):
     """
     ret = []
     for s in k.common_path:
-        if not isinstance(s, (int, text_type)):
+        if not isinstance(s, (int, str)):
             s = s.decode("utf8")
-        if isinstance(s, text_type) and r_is_int.match(s):
+        if isinstance(s, str) and r_is_int.match(s):
             s = int(s)
         if isinstance(s, int):
             ret.append(('', -s))
@@ -493,7 +488,7 @@ def split_string_path(base, path):
     position, and any line key in the second position.
     """
     for i in range(len(path)):
-        if isinstance(base, string_types):
+        if isinstance(base, str):
             return path[:i], path[i:]
         base = base[path[i]]
     return path, ()
@@ -507,7 +502,7 @@ def make_cleared_value(value):
     elif isinstance(value, dict):
         # Clearing e.g. a metadata dict means setting it to an empty dict
         return {}
-    elif isinstance(value, string_types):
+    elif isinstance(value, str):
         # Clearing e.g. a source string means setting it to an empty string
         return ""
     else:
@@ -573,7 +568,7 @@ def resolve_action(base, decision):
         key, = set(d.key for d in decision.local_diff + decision.remote_diff)
         if a == 'clear':
             return [op_replace(key, make_cleared_value(base[key]))]
-        elif isinstance(base, (list,) + string_types):
+        elif isinstance(base, (list, str)):
             return [op_removerange(key, 1)]
         else:
             return [op_remove(key)]
@@ -583,7 +578,7 @@ def resolve_action(base, decision):
             # Ideally we would do a op_replace on the parent, but this is not
             # easily combined with this method, so simply remove all keys
             return [op_remove(key) for key in base.keys()]
-        elif isinstance(base, (list,) + string_types):
+        elif isinstance(base, (list, str)):
             return [op_removerange(0, len(base))]
 
     elif a == "take_max":

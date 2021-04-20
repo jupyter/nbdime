@@ -3,10 +3,6 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-from __future__ import unicode_literals
-
-from six import string_types
-
 from .log import NBDiffFormatError
 
 
@@ -195,7 +191,7 @@ def validate_diff(diff, deep=False):
         validate_diff_entry(e, deep=deep)
 
 
-sequence_types = string_types + (list,)
+sequence_types = (str, list)
 
 
 def validate_diff_entry(e, deep=False):
@@ -230,7 +226,7 @@ def validate_diff_entry(e, deep=False):
                 validate_diff(e.diff, deep=deep)
         else:
             raise NBDiffFormatError("Unknown diff op '{}'.".format(op))
-    elif isinstance(key, string_types) and op in MappingDiffBuilder.OPS:
+    elif isinstance(key, str) and op in MappingDiffBuilder.OPS:
         if op == DiffOp.ADD:
             pass  # e.value is a single value to insert at key
         elif op == DiffOp.REMOVE:

@@ -5,8 +5,6 @@ import io
 import os
 from collections import deque
 
-from six import string_types
-
 os.environ['GIT_PYTHON_REFRESH'] = 'quiet'
 from git import (
     Repo, InvalidGitRepositoryError, BadName, NoSuchPathError,
@@ -153,7 +151,7 @@ def changed_notebooks(ref_base, ref_remote, paths=None, repo_dir=None):
     repo, popped = get_repo(repo_dir or os.curdir)
     if repo_dir is None:
         repo_dir = os.path.relpath(repo.working_tree_dir, os.curdir)
-    if isinstance(paths, string_types):
+    if isinstance(paths, str):
         paths = (paths,)
     if paths and popped:
         # All paths need to be prepended by popped

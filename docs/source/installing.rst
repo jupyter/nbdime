@@ -31,17 +31,14 @@ For manual registration see :doc:`extensions`.
 Dependencies
 ------------
 
-nbdime requires Python version 3.3 or higher. If you are using Python 2,
-nbdime requires 2.7.1 or higher.
+nbdime requires Python version 3.6 or higher.
 
 nbdime depends on the following Python packages,
 which will be installed by :command:`pip`:
 
-  - six
   - nbformat
   - tornado
   - colorama
-  - backports.shutil_which (on python 2.7)
 
 and nbdime's web-based viewers depend on the following Node.js packages:
 

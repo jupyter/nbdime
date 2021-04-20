@@ -3,8 +3,6 @@ import argparse
 import pytest
 import json
 
-from six import text_type
-
 from traitlets import Enum
 
 from nbdime.args import (
@@ -73,13 +71,13 @@ def test_config_parser(entrypoint_config):
 
 def test_ignore_config_simple(entrypoint_ignore_config, tmpdir, reset_notebook_diff):
     tmpdir.join('nbdime_config.json').write_text(
-        text_type(json.dumps({
+        json.dumps({
             'IgnorableConfig1': {
                 'Ignore': {
                     '/cells/*/metadata': ['collapsed', 'autoscroll']
                 }
             },
-        })),
+        }),
         encoding='utf-8'
     )
 
@@ -100,7 +98,7 @@ def test_ignore_config_simple(entrypoint_ignore_config, tmpdir, reset_notebook_d
 
 def test_ignore_config_merge(entrypoint_ignore_config, tmpdir, reset_notebook_diff):
     tmpdir.join('nbdime_config.json').write_text(
-        text_type(json.dumps({
+        json.dumps({
             'IgnorableConfig1': {
                 'Ignore': {
                     '/cells/*/metadata': ['collapsed', 'autoscroll']
@@ -112,7 +110,7 @@ def test_ignore_config_merge(entrypoint_ignore_config, tmpdir, reset_notebook_di
                     '/cells/*/metadata': ['tags']
                 }
             },
-        })),
+        }),
         encoding='utf-8'
     )
 
@@ -134,11 +132,11 @@ def test_ignore_config_merge(entrypoint_ignore_config, tmpdir, reset_notebook_di
 
 def test_config_inherit(entrypoint_ignore_config, tmpdir, reset_notebook_diff):
     tmpdir.join('nbdime_config.json').write_text(
-        text_type(json.dumps({
+        json.dumps({
             'IgnorableConfig1': {
                 'metadata': False
             },
-        })),
+        }),
         encoding='utf-8'
     )
 

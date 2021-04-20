@@ -3,10 +3,6 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-from __future__ import unicode_literals
-
-from six import string_types
-from six.moves import xrange as range
 import operator
 from collections import defaultdict
 import difflib
@@ -22,7 +18,7 @@ __all__ = ["diff"]
 
 def is_atomic(x):
     "Return True for values that diff should treat as a single atomic value."
-    return not isinstance(x, string_types + (list, dict))
+    return not isinstance(x, (str, list, dict))
 
 
 def default_predicates():
@@ -90,7 +86,7 @@ def diff(a, b, path="", predicates=None, differs=None):
         d = diff_lists(a, b, path=path, predicates=predicates, differs=differs)
     elif isinstance(a, dict) and isinstance(b, dict):
         d = diff_dicts(a, b, path=path, predicates=predicates, differs=differs)
-    elif isinstance(a, string_types) and isinstance(b, string_types):
+    elif isinstance(a, str) and isinstance(b, str):
         # Don't pass differs/predicates as the only possible use case is to
         # use a different character differ within each line or predicates
         # for comparing lines

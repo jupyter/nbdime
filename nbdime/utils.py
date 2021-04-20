@@ -15,7 +15,6 @@ import sys
 from contextlib import contextmanager
 
 import nbformat
-from six import string_types, text_type, PY2
 
 if os.name == 'nt':
     EXPLICIT_MISSING_FILE = 'nul'
@@ -54,7 +53,7 @@ def read_notebook(f, on_null, on_empty=None):
             if on_empty is None:
                 raise
             # Reraise if file is not empty
-            if isinstance(f, string_types):
+            if isinstance(f, str):
                 with io.open(f, encoding='utf-8') as fo:
                     if len(fo.read(10)) != 0:
                         raise
@@ -77,12 +76,12 @@ def as_text(text):
 
 
 def as_text_lines(text):
-    if isinstance(text, string_types):
+    if isinstance(text, str):
         text = text.splitlines(True)
     if isinstance(text, tuple):
         text = list(text)
     assert isinstance(text, list), 'text argument should be string or string sequence'
-    assert all(isinstance(t, string_types) for t in text), (
+    assert all(isinstance(t, str) for t in text), (
         'text argument should be string or string sequence')
     return text
 
@@ -92,7 +91,7 @@ def strings_to_lists(obj):
         return {k: strings_to_lists(v) for k, v in obj.items()}
     elif isinstance(obj, list):
         return [strings_to_lists(v) for v in obj]
-    elif isinstance(obj, string_types):
+    elif isinstance(obj, str):
         return obj.splitlines(True)
     else:
         return obj
@@ -104,7 +103,7 @@ def revert_strings_to_lists(obj):
     elif isinstance(obj, list):
         if not obj:
             return obj
-        elif isinstance(obj[0], string_types):
+        elif isinstance(obj[0], str):
             return "".join(obj)
         else:
             return [revert_strings_to_lists(v) for v in obj]
@@ -135,7 +134,7 @@ def star_path(path):
         if isinstance(p, int):
             path[i] = '*'
         else:
-            if not isinstance(p, text_type):
+            if not isinstance(p, str):
                 p = p.decode()
             if r_is_int.match(p):
                 path[i] = '*'
@@ -289,10 +288,7 @@ def _setup_std_stream_encoding():
         errors = getattr(stream, 'errors', None) or 'strict'
         # if error-handler is strict, switch to replace
         if errors == 'strict' or errors.startswith('surrogate'):
-            if PY2:
-                bin_stream = stream
-            else:
-                bin_stream = stream.buffer
+            bin_stream = stream.buffer
             new_stream = codecs.getwriter(enc)(bin_stream, errors='backslashreplace')
             setattr(sys, name, new_stream)
 

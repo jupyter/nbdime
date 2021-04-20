@@ -3,10 +3,7 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-from __future__ import unicode_literals
-
 import operator
-from six import string_types
 from collections import defaultdict
 
 from .seq_difflib import diff_sequence_difflib
@@ -42,7 +39,7 @@ def diff_sequence(a, b, compare=operator.__eq__):
 
 def diff_strings_by_char(a, b, path="", predicates=None, differs=None):
     "Compute char-based diff of two strings."
-    assert isinstance(a, string_types) and isinstance(b, string_types), (
+    assert isinstance(a, str) and isinstance(b, str), (
         'Arguments need to be string types. Got %r and %r' % (a, b))
     if a == b:
         return []
@@ -53,7 +50,7 @@ def diff_strings_by_char(a, b, path="", predicates=None, differs=None):
 def diff_strings_linewise(a, b):
     """Do a line-wise diff of two strings
     """
-    assert isinstance(a, string_types) and isinstance(b, string_types), (
+    assert isinstance(a, str) and isinstance(b, str), (
         'Arguments need to be string types. Got %r and %r' % (a, b))
     lines_a = a.splitlines(True)
     lines_b = b.splitlines(True)

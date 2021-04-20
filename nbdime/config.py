@@ -1,6 +1,5 @@
 
 import os
-from six import string_types
 
 from ipython_genutils import py3compat
 from jupyter_core.paths import jupyter_config_path
@@ -161,7 +160,7 @@ class IgnoreConfig(Dict):
                 raise TraitError('ignore config paths need to start with `/`')
             if not (v in (True, False) or
                     (isinstance(v, (tuple, list, set)) and
-                     all(isinstance(i, string_types) for i in v)
+                     all(isinstance(i, str) for i in v)
                     )):
                 raise TraitError('ignore config value needs to be True, False or a list of strings')
         return self.klass(value)

@@ -3,8 +3,6 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-from __future__ import print_function, unicode_literals
-
 from ..diff_format import DiffOp, Deleted
 from ..patching import patch
 from ..utils import split_path, resolve_path

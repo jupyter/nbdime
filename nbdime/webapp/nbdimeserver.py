@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
-from __future__ import print_function
-from __future__ import unicode_literals
+
+
 
 import io
 import json
@@ -17,7 +17,6 @@ from jupyter_server_mathjax.app import STATIC_ASSETS_PATH
 from jupyter_server.utils import url_path_join
 from jupyter_server.log import log_request
 import requests
-from six import string_types
 from tornado import ioloop, web, escape, netutil, httpserver
 
 from .. import __file__ as nbdime_root
@@ -76,7 +75,7 @@ class NbdimeHandler(JupyterHandler):
         # Currently assuming arg is a filename relative to
         # where the server was started from, later we may
         # want to accept urls or full notebooks as well.
-        if not isinstance(arg, string_types):
+        if not isinstance(arg, str):
             raise web.HTTPError(400, 'Expecting a filename or a URL.')
 
         try:
@@ -102,7 +101,7 @@ class NbdimeHandler(JupyterHandler):
                     if fail_on_empty:
                         raise
                     # Handle empty notebook file
-                    if isinstance(path, string_types):
+                    if isinstance(path, str):
                         with io.open(path, encoding='utf-8') as fo:
                             if len(fo.read(10)) != 0:
                                 raise
@@ -173,11 +172,11 @@ class MainDifftoolHandler(NbdimeHandler):
         if 'difftool_args' in self.params:
             base = self.params['difftool_args']['base']
             remote = self.params['difftool_args']['remote']
-            if isinstance(base, string_types):
+            if isinstance(base, str):
                 args['base'] = base
             else:
                 args['base'] = base.name
-            if isinstance(remote, string_types):
+            if isinstance(remote, str):
                 args['remote'] = remote
             else:
                 args['remote'] = remote.name
@@ -236,7 +235,7 @@ class ApiDiffHandler(NbdimeHandler, APIHandler):
     def get_notebook_argument(self, argname):
         if 'difftool_args' in self.params:
             arg = self.params['difftool_args'][argname]
-            if not isinstance(arg, string_types):
+            if not isinstance(arg, str):
                 # Assume arg is file-like
                 arg.seek(0)
                 return nbformat.read(arg, as_version=4)
