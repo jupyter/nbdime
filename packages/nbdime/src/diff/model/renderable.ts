@@ -108,7 +108,7 @@ abstract class RenderableDiffModel<T extends (JSONValue | PartialJSONValue)> imp
     };
     const baseCopy = JSONExt.deepCopy(this.base) as JSONObject;
     let base = key ? getMemberByPath(baseCopy, key) : baseCopy;
-    const remoteCopy = JSONExt.deepCopy(this.base) as JSONObject;
+    const remoteCopy = JSONExt.deepCopy(this.remote) as JSONObject;
     let remote = key ? getMemberByPath(remoteCopy, key) : remoteCopy;
     let diff = (this.diff && key) ?
       getMemberByPath(this.diff as any, key, getSubDiffByKey) as IDiffEntry[] | null :
