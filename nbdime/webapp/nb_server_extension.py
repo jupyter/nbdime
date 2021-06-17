@@ -8,16 +8,23 @@ import os
 
 from jinja2 import ChoiceLoader, FileSystemLoader
 
-from jupyter_server.utils import url_path_join, to_os_path
+from jupyter_server.utils import url_path_join, to_os_path, ensure_async
 
 generic_checkpoint_mixin_types = []
 file_checkpoint_mixin_types = []
+async_generic_checkpoint_mixin_types = None
+async_file_checkpoint_mixin_types = None
 
 try:
     from jupyter_server.services.contents.checkpoints import GenericCheckpointsMixin as jpserver_GenericCheckpointsMixin
     from jupyter_server.services.contents.filecheckpoints import FileCheckpoints as jpserver_FileCheckpoints
+    from jupyter_server.services.contents.checkpoints import AsyncGenericCheckpointsMixin as async_jpserver_GenericCheckpointsMixin
+    from jupyter_server.services.contents.filecheckpoints import AsyncFileCheckpoints as async_jpserver_FileCheckpoints
     generic_checkpoint_mixin_types.append(jpserver_GenericCheckpointsMixin)
     file_checkpoint_mixin_types.append(jpserver_FileCheckpoints)
+    async_generic_checkpoint_mixin_types = async_jpserver_GenericCheckpointsMixin
+    async_file_checkpoint_mixin_types = async_jpserver_FileCheckpoints
+
 except ModuleNotFoundError:
     pass
 
@@ -156,35 +163,41 @@ class BaseGitDiffHandler(ApiDiffHandler):
 class ExtensionApiDiffHandler(BaseGitDiffHandler):
     """Diff API handler that also handles diff to git HEAD"""
 
-    @gen.coroutine
-    def _get_checkpoint_notebooks(self, base):
+    async def _get_checkpoint_notebooks(self, base):
         # Get the model for the current notebook:
         cm = self.contents_manager
-        model = yield gen.maybe_future(cm.get(base, content=True, type='notebook'))
+        model = await ensure_async(cm.get(base, content=True, type='notebook'))
         remote_nb = model['content']
         # Get the model for the checkpoint notebook:
-        checkpoints = yield gen.maybe_future(cm.list_checkpoints(base))
+        checkpoints = await ensure_async(cm.list_checkpoints(base))
         if not checkpoints:
             # No checkpoints, indicate unchanged:
             self.log.info('No checkpoints for file: %r, %r', base, checkpoints)
-            raise gen.Return((remote_nb, remote_nb))
+            return remote_nb, remote_nb
         self.log.debug('Checkpoints: %r', checkpoints)
         checkpoint = checkpoints[0]
         if isinstance(cm.checkpoints, generic_checkpoint_mixin_types):
-            checkpoint_model = yield gen.maybe_future(
+            checkpoint_model = await ensure_async(
                 cm.checkpoints.get_notebook_checkpoint(checkpoint, base))
             base_nb = checkpoint_model['content']
         elif isinstance(cm.checkpoints, file_checkpoint_mixin_types):
-            path = yield gen.maybe_future(
+            path = await ensure_async(
+                cm.checkpoints.checkpoint_path(checkpoint['id'], base))
+            base_nb = read_notebook(path, on_null='minimal')
+        elif isinstance(cm.checkpoints, async_generic_checkpoint_mixin_types):
+            checkpoint_model = await ensure_async(
+                cm.checkpoints.get_notebook_checkpoint(checkpoint, base))
+            base_nb = checkpoint_model['content']
+        elif isinstance(cm.checkpoints, async_file_checkpoint_mixin_types):
+            path = await ensure_async(
                 cm.checkpoints.checkpoint_path(checkpoint['id'], base))
             base_nb = read_notebook(path, on_null='minimal')
         else:
             raise RuntimeError('Unknown checkpoint handler interface')
-        raise gen.Return((base_nb, remote_nb))
+        return base_nb, remote_nb
 
     @authenticated
-    @gen.coroutine
-    def post(self):
+    async def post(self):
         # TODO: Add deprecation warning (for git/checkpoint only?)
         # Assuming a request on the form "{'argname':arg}"
         body = json.loads(escape.to_unicode(self.request.body))
@@ -192,7 +205,7 @@ class ExtensionApiDiffHandler(BaseGitDiffHandler):
         if base.startswith('git:'):
             base_nb, remote_nb = self.get_git_notebooks(base[len('git:'):])
         elif base.startswith('checkpoint:'):
-            base_nb, remote_nb = yield self._get_checkpoint_notebooks(base[len('checkpoint:'):])
+            base_nb, remote_nb = await self._get_checkpoint_notebooks(base[len('checkpoint:'):])
         else:
             # Regular files, call super
             super(ExtensionApiDiffHandler, self).post()
