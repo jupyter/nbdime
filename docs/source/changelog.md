@@ -1,10 +1,17 @@
 # Changes in nbdime
 
+## 3.1
+
+###  3.1.0 - 2021-05
+
+- Removed py2 compatibility code.
+- Fixed issue with certain output diffs in web view.
+
 ## 3.0
 
 ###  3.0.0 - 2021-04
 
-- Added support for JupyterLab 3. This includes compatability with jupyter_server (notebook is still supported as well).
+- Added support for JupyterLab 3. This includes compatibility with jupyter_server (notebook is still supported as well).
 - Basic functionality for working with cell ids introduced in notebook format spec 4.5. Full utilization of this for diffing/merging functionality is planned for a later release.
 - Fixed some issues with inline merging
 
@@ -103,7 +110,7 @@ had incorrect styling (most notably incorrect widths).
 - Fixed issues with the diff filtering options.
 - Added git diffdriver using web-diff.
 - Added mercurial integration code and entry points.
-- Added notebook extentions for integration into its web interface.
+- Added notebook extensions for integration into its web interface.
 - Changed layout for web diff such that chunks of added/removed cells or outputs are shown side-by-side. For small monitors, they will still be shown below each other.
 - In the web-diff, relative images in rendered markdown will now show a placeholder image instead of broken images.
 - Various fixes and performance improvements.
