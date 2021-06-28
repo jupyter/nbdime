@@ -13,6 +13,10 @@
     "updated": "lerna updated",
     "watch": "tsc --build --watch"
   },
+   "repository": {
+    "type": "git",
+    "url": "https://github.com/jupyter/nbdime.git"
+  },
   "devDependencies": {
     "@jupyterlab/buildutils": "^3.0.0",
     "lerna": "^3.14.1",
