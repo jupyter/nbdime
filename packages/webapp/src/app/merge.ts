@@ -179,7 +179,10 @@ function onMergeRequestFailed(response: string) {
   if (!root) {
     throw new Error('Missing root element "nbidme-root"');
   }
-  root.innerHTML = '<pre>' + response + '</pre>';
+  const pre = document.createElement('pre');
+  pre.innerText = response;
+  root.innerHTML = '';
+  root.appendChild(pre);
   mergeWidget = null;
   toggleSpinner(false);
 }

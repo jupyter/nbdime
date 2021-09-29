@@ -298,7 +298,7 @@ function buildSelect(options: string[], select?: HTMLSelectElement): HTMLSelectE
   }
   for (let option of options) {
     let opt = document.createElement('option');
-    opt.value = opt.innerHTML = option;
+    opt.value = opt.innerText = option;
     select.appendChild(opt);
   }
   return select;
