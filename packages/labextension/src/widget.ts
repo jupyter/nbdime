@@ -239,9 +239,11 @@ namespace Private {
         <button class="nbdime-export" style="display: none">Export diff</button>
       </div>
       <div class=nbdime-header-banner>
-        <span class="nbdime-header-base">${baseLabel}</span>
-        <span class="nbdime-header-remote">${remoteLabel}</span>
+        <span class="nbdime-header-base"></span>
+        <span class="nbdime-header-remote"></span>
       </div>`;
+    (node.getElementsByClassName("nbdime-header-base")[0] as HTMLSpanElement).innerText = baseLabel;
+    (node.getElementsByClassName("nbdime-header-remote")[0] as HTMLSpanElement).innerText = remoteLabel;
 
     return new Widget({node});
   }
