@@ -16,7 +16,7 @@ module.exports = {
   setupFiles: ['<rootDir>/test/jest-setup-files.js'],
   testPathIgnorePatterns: ['/lib/', '/node_modules/'],
   testRegex: '/test/src/.*.spec.ts$',
-  transformIgnorePatterns: ['/node_modules/(?!(@jupyterlab/.*)/)'],
+  transformIgnorePatterns: ['/node_modules/(?!((@jupyterlab|y-protocols|lib0)/.*))'],
   globals: {
     'ts-jest': {
       tsconfig: tsOptions
