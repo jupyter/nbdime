@@ -11,7 +11,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v1
       with:
-        python-version: 3.7
+        python-version: 3.8
     - uses: actions/cache@v1
       with:
         path: ~/.cache/pip
@@ -22,8 +22,8 @@ jobs:
       run: |
         sudo apt-get install -y pandoc
         python -m pip install --upgrade pip
-        python -m pip install file://$PWD#egg=ipywidgets
-        python -m pip install -r ./docs/requirements.txt
+        python -m pip install .[docs]
+        python -m pip install -r ./docs/doc-requirements.txt
     - name: Build docs
       run: |
         cd docs
@@ -102,7 +102,6 @@ jobs:
       run: |
         git config --global user.email CI@fake.com
         git config --global user.name "CI"
-        pytest --cov=ipywidgets ipywidgets
         pushd $(mktemp -d)
         py.test -l --cov-report xml --cov=nbdime --pyargs nbdime
         codecov
