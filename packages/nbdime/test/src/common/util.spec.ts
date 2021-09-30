@@ -255,6 +255,36 @@ describe('common', () => {
 
     });
 
+    describe('buildSelect', () => {
+
+      it('should create an empty select', () => {
+        let value = util.buildSelect([]);
+        expect(value.outerHTML).toEqual("<select></select>");
+      });
+
+      it('should reuse a given select', () => {
+        const select = document.createElement('select');
+        let value = util.buildSelect([], select);
+        expect(value).toBe(select);
+      });
+
+      it('should create a select with options', () => {
+        let value = util.buildSelect([
+          'foo',
+          'bar',
+          '<div>boo</div>'
+        ]);
+        expect(value.outerHTML).toEqual(
+          '<select>' +
+            '<option>foo</option>' +
+            '<option>bar</option>' +
+            '<option>&lt;div&gt;boo&lt;/div&gt;</option>' +
+          '</select>'
+        );
+      });
+
+    });
+
   });
 
 });
