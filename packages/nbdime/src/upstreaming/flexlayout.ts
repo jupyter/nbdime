@@ -378,9 +378,9 @@ class FlexLayout extends PanelLayout {
     Private.toggleDirection(this.parent!, this._direction);
     let style = this.parent!.node.style;
     style.flexWrap = this._wrap ? 'wrap' : 'nowrap';
-    style.justifyContent = Private.translateFlexString(this._justifyContent);
-    style.alignContent = Private.translateFlexString(this._alignContent);
-    style.alignItems = Private.translateFlexString(this._alignItems);
+    style.justifyContent = Private.translateFlexString(this._justifyContent)!;
+    style.alignContent = Private.translateFlexString(this._alignContent)!;
+    style.alignItems = Private.translateFlexString(this._alignItems)!;
     this.parent!.fit();
   }
 
@@ -533,7 +533,7 @@ class FlexLayout extends PanelLayout {
     // Update display order
     for (let i = 0; i < widgets.length; ++i) {
       let widget = widgets[i];
-      widget.node.style.order = this.order ?  i.toString() : null;
+      widget.node.style.order = this.order ?  i.toString() : '';
     }
   }
 
@@ -717,7 +717,7 @@ namespace FlexLayout {
     if (value === 'auto') {
       widget.node.style.flexBasis = value as string;
     } else if (value === null) {
-      widget.node.style.flexBasis = value;
+      widget.node.style.flexBasis = '';
     } else {
       widget.node.style.flexBasis = value.toString() + 'px';
     }

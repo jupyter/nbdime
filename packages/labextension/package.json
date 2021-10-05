@@ -55,7 +55,7 @@
     "@phosphor/commands": "^1.6.1",
     "mkdirp": "^0.5.1",
     "rimraf": "^2.6.3",
-    "typescript": "^3.5.2"
+    "typescript": "^3.7.2"
   },
   "jupyterlab": {
     "extension": true,
