@@ -16,14 +16,11 @@ from setuptools import setup, find_packages
 sys.path.append(os.path.dirname(__file__))
 
 from setupbase import (create_cmdclass, install_npm, ensure_targets,
-    combine_commands, ensure_python, get_version)
+    combine_commands, get_version)
 
 pjoin = os.path.join
 here = os.path.abspath(os.path.dirname(__file__))
 
-
-# Minimal Python version sanity check
-ensure_python('>=3.6')
 
 # the name of the project
 name = 'nbdime'
@@ -112,8 +109,10 @@ setup_args = dict(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'Framework :: Jupyter',
     ],
+    python_requires = '>=3.6',
 )
 
 
@@ -148,8 +147,6 @@ extras_require = setup_args['extras_require'] = {
         'sphinx_rtd_theme'
     ],
 }
-
-setup_args['python_requires'] = '>=3.6'
 
 setup_args['entry_points'] = {
     'console_scripts': [
