@@ -180,11 +180,14 @@ function onDiffRequestCompleted(data: any) {
  */
 function onDiffRequestFailed(response: string) {
   console.log('Diff request failed.');
-  let root = document.getElementById('nbdime-root');
+  const root = document.getElementById('nbdime-root');
   if (!root) {
     throw new Error('Missing root element "nbidme-root"');
   }
-  root.innerHTML = '<pre>' + response + '</pre>';
+  const pre = document.createElement('pre');
+  pre.innerText = response;
+  root.innerHTML = '';
+  root.appendChild(pre);
   diffWidget = null;
   toggleSpinner(false);
 }
