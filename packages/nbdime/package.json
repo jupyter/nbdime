@@ -34,6 +34,7 @@
     "@phosphor/dragdrop": "^1.3.0",
     "@phosphor/signaling": "^1.2.2",
     "@phosphor/widgets": "^1.6.0",
+    "@types/node": "^16.10.2",
     "json-stable-stringify": "^1.0.1"
   },
   "devDependencies": {
@@ -42,7 +43,6 @@
     "@types/expect.js": "^0.3.29",
     "@types/json-stable-stringify": "^1.0.32",
     "@types/mocha": "^5.2.6",
-    "@types/node": "^12.0.10",
     "@types/sanitizer": "^0.0.28",
     "expect.js": "^0.3.1",
     "fs-extra": "^8.1.0",
@@ -56,7 +56,7 @@
     "karma-typescript-es6-transform": "^4.0.0",
     "mocha": "^6.0.2",
     "rimraf": "^2.6.3",
-    "typescript": "^3.5.2"
+    "typescript": "^3.7.2"
   },
   "peerDependencies": {
     "codemirror": "^5.0.0"
