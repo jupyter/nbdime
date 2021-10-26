@@ -1,6 +1,5 @@
 {
   "name": "nbdime-webapp",
-  "version": "3.0.0",
   "private": true,
   "license": "BSD-3-Clause",
   "main": "static/nbdime.js",
@@ -24,7 +23,7 @@
     "@phosphor/widgets": "^1.6.0",
     "alertify.js": "^1.0.12",
     "file-saver": "^2.0.1",
-    "nbdime": "^5.0.0"
+    "nbdime": "^5.0.2"
   },
   "devDependencies": {
     "@types/file-saver": "^2.0.0",
