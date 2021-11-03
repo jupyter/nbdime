@@ -83,10 +83,12 @@ and use :command:`pip` to install::
 Installing Jupyter extensions
 -----------------------------
 
+.. note::
+
+    Only run one of the following two server commands, running both can cause issues in some cases
+
 If you want to use the development version of the notebook and lab extensions,
 you will also have to run the following commands after the pip dev install::
-
-> Note: only run one of the following two server commands, running both can cause issues in some cases
 
     jupyter serverextension enable --py nbdime --sys-prefix # if developing for jupyter notebook
 
