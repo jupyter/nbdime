@@ -57,7 +57,7 @@ col_const = {
         KEEP   = '{color}   '.format(color=''),
         REMOVE = '{color}-  '.format(color=colorama.Fore.RED),
         ADD    = '{color}+  '.format(color=colorama.Fore.GREEN),
-        INFO   = '{color}## '.format(color=colorama.Fore.BLUE),
+        INFO   = '{color}## '.format(color=colorama.Fore.BLUE + colorama.Style.BRIGHT),
         RESET  = colorama.Style.RESET_ALL,
     ),
 
