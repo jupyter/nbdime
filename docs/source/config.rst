@@ -178,7 +178,7 @@ time, you can use the following config sections:
 
 
 Global
-    Options to apply to all commands.
+    Options to apply to all commands, only for options that are supported by all commands
 
 Web
     Options to web commands (Server, NbDiffWeb, NbMergeWeb, NbDiffTool,
