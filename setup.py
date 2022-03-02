@@ -95,6 +95,9 @@ setup_args = dict(
     author          = 'Jupyter Development Team',
     author_email    = 'jupyter@googlegroups.com',
     url             = 'https://nbdime.readthedocs.io',
+    project_urls    = {
+        'Source': 'https://github.com/jupyter/nbdime',
+    },
     license         = 'BSD',
     platforms       = "Linux, Mac OS X, Windows",
     keywords        = ['Interactive', 'Interpreter', 'Shell', 'Web'],
