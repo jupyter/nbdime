@@ -1,7 +1,6 @@
 
 import os
 
-from ipython_genutils import py3compat
 from jupyter_core.paths import jupyter_config_path
 
 from traitlets import Unicode, Enum, Integer, Bool, HasTraits, Dict, TraitError
@@ -81,7 +80,7 @@ def build_config(entrypoint, include_none=False):
     # Get config from disk:
     disk_config = {}
     path = jupyter_config_path()
-    path.insert(0, py3compat.getcwd())
+    path.insert(0, os.getcwd())
     for c in _load_config_files('nbdime_config', path=path):
         recursive_update(disk_config, c, include_none)
 
