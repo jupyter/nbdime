@@ -151,9 +151,9 @@ Acknowledgements
 
 nbdime is developed with financial support from:
 
-- OpenDreamKit Horizon 2020 European Research Infrastructures project (#676541), http://opendreamkit.org .
+- OpenDreamKit Horizon 2020 European Research Infrastructures project (`CORDIS 676541`_), http://opendreamkit.org .
 
-- The Gordon and Betty Moore Foundation through Grant GBMF #4856,by the Alfred P. Sloan Foundation and by the Helmsley Trust.
+- The Gordon and Betty Moore Foundation through Grant `GBMF 4856`_, by the Alfred P. Sloan Foundation and by the Helmsley Trust.
 
 
 .. links
@@ -161,3 +161,5 @@ nbdime is developed with financial support from:
 .. _`Jupyter notebooks`: http://jupyter-notebook.readthedocs.io/en/latest/
 
 .. _`git diff documentation`: https://git-scm.com/docs/git-diff
+.. _`CORDIS 676541`: https://cordis.europa.eu/project/id/676541
+.. _`GBMF 4856`: https://www.moore.org/grant-detail?grantId=GBMF4856
