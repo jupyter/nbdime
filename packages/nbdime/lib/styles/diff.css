@@ -1,0 +1,236 @@
+
+
+.jp-Notebook-diff .jp-Diff-unchanged .jp-Output *:first-child {
+  margin-left: auto;
+}
+
+.jp-Notebook-diff .jp-Diff-unchanged .jp-Output *:last-child {
+  margin-right: auto;
+}
+
+/* Alternative for showing single cell when cells are equal */
+.jp-Notebook-diff .jp-Diff-unchanged {
+  margin-left: 10%;
+  width: 80%;
+}
+
+.jp-Notebook-diff .jp-Diff-unchanged .jp-Diff-unchanged {
+  margin-left: 0;
+  width: 100%;
+}
+
+/* Match input border of unchanged cell source */
+.jp-Notebook-diff .jp-Diff-unchanged .CodeMirror-merge-pane-unchanged {
+  border: var(--jp-border-width) solid var(--jp-private-notebook-cell-editor-border);
+}
+
+/* Do not use border between unchanged cells */
+.jp-Notebook-diff .jp-Diff-unchanged + .jp-Diff-unchanged > div:first-of-type {
+    border: none;
+}
+
+/* We can float prompt left when unchanged */
+.jp-Notebook-diff .jp-Diff-unchanged .jp-Cellrow-executionCount {
+  float: left;
+}
+
+
+.jp-Notebook-diff .jp-Metadata-diff {
+  margin-bottom: 20px;
+  border: solid black thin;
+}
+
+.jp-Notebook-diff .jp-Cell-diff {
+  margin-bottom: 20px;
+}
+
+/* Border on top of cell */
+.jp-Notebook-diff .jp-Cell-diff > div:first-of-type {
+  border-top: solid #ccc 1px;
+}
+
+
+.jp-Notebook-diff .jp-Diff-added .jp-Cellrow-source,
+.jp-Notebook-diff .jp-Diff-added .jp-Cellrow-outputs {
+  border-left: var(--codemirror-border);
+}
+
+.jp-Notebook-diff .jp-Diff-deleted .jp-Cellrow-source,
+.jp-Notebook-diff .jp-Diff-deleted .jp-Cellrow-outputs {
+  border-right: var(--codemirror-border);
+}
+
+/* Add/delete chunks for small width devices (added before delete) */
+.jp-Notebook-diff .jp-Diff-addremchunk {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: space-between;
+}
+
+.jp-Notebook-diff .jp-Diff-addremchunk .jp-Diff-addedchunk,
+.jp-Notebook-diff .jp-Diff-addremchunk .jp-Diff-removedchunk {
+  width: 100%;
+}
+
+/* Add/delete chunks should show side-by-side for larger screens */
+@media (min-width: 1000px) {
+  .jp-Notebook-diff .jp-Diff-addremchunk {
+    flex-direction: row-reverse;
+  }
+
+  .jp-Notebook-diff .jp-Diff-addremchunk .jp-Diff-addedchunk,
+  .jp-Notebook-diff .jp-Diff-addremchunk .jp-Diff-removedchunk {
+    width: 49%;
+  }
+}
+
+/* Hide metadata changes by default */
+.jp-Notebook-diff .jp-Diff-added .jp-Cellrow-metadata,
+.jp-Notebook-diff .jp-Diff-deleted .jp-Cellrow-metadata,
+.jp-Notebook-diff .jp-Diff-unchanged .jp-Cellrow-outputs {
+  display: none;
+}
+
+.jp-Notebook-diff .jp-Diff-added .jp-Cellrow-outputs,
+.jp-Notebook-diff .jp-Diff-deleted .jp-Cellrow-outputs {
+  border-top: var(--jp-nbdime-output-color1) solid 1pt;
+}
+
+.jp-Notebook-diff .jp-Diff-added .jp-Diff-unchanged {
+  margin-left: 25%;
+  width: 75%;
+}
+
+.jp-Notebook-diff .jp-Diff-deleted .jp-Diff-unchanged {
+  margin-left: 0;
+  width: 75%;
+}
+
+.jp-Notebook-diff .jp-Diff-unchanged .jp-Output-result > * {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.jp-Notebook-diff .jp-Cellrow-outputs .jp-Diff-twoway .jp-Diff-base {
+  float: left;
+  width: 47%;
+}
+
+.jp-Notebook-diff .jp-Cellrow-outputs .jp-Diff-twoway .jp-Diff-remote {
+  float: right;
+  width: 47%;
+}
+
+.jp-Notebook-diff .jp-Output-result img {
+  max-width: 100%;
+}
+
+.jp-Notebook-diff .CodeMirror-merge-pane-remote {
+  position: relative;
+  left: 6%;
+}
+
+.jp-Notebook-diff .jp-Cellrow-source .CodeMirror-merge-pane-deleted,
+.jp-Notebook-diff .jp-Cellrow-source .CodeMirror-merge-pane-added {
+  width: 75%;
+}
+
+.jp-Notebook-diff .jp-Diff-twoway .jp-Cellrow-outputs .jp-Diff-unchanged .jp-CodeMirrorWidget {
+  width: initial;
+  max-width: 100%;
+}
+/* Ensure unchanged images are centered */
+.jp-Notebook-diff .jp-Diff-twoway .jp-Cellrow-outputs .jp-Diff-unchanged .jp-RenderedImage {
+  text-align: center;
+}
+
+/* Color diff highlighting according to style vars */
+.jp-Notebook-diff .CodeMirror-merge-r-chunk { background-color: var(--jp-diff-deleted-color2); }
+.jp-Notebook-diff .CodeMirror-merge-r-chunk-start { border-top: 1px solid var(--jp-diff-deleted-color0); }
+.jp-Notebook-diff .CodeMirror-merge-r-chunk-end { border-bottom: 1px solid var(--jp-diff-deleted-color0); }
+.jp-Notebook-diff .CodeMirror-merge-r-connect { fill: var(--jp-diff-deleted-color2); stroke: var(--jp-diff-deleted-color0); stroke-width: 1px; }
+.jp-Notebook-diff .CodeMirror-merge-spacer { background-color: var(--jp-diff-deleted-color2); }
+
+.jp-Notebook-diff .CodeMirror-merge-pane-remote .CodeMirror-merge-r-chunk { background-color: var(--jp-diff-added-color2); }
+.jp-Notebook-diff .CodeMirror-merge-pane-remote .CodeMirror-merge-r-chunk-start { border-top: 1px solid var(--jp-diff-added-color0); }
+.jp-Notebook-diff .CodeMirror-merge-pane-remote .CodeMirror-merge-r-chunk-end { border-bottom: 1px solid var(--jp-diff-added-color0); }
+.jp-Notebook-diff .CodeMirror-merge-pane-remote .CodeMirror-merge-r-connect { fill: var(--jp-diff-added-color2); stroke: var(--jp-diff-added-color0); stroke-width: 1px; }
+.jp-Notebook-diff .CodeMirror-merge-pane-remote .CodeMirror-merge-spacer { background-color: var(--jp-diff-added-color2); }
+
+
+.jp-Notebook-diff .jp-Diff-deleted .CodeMirror,
+.jp-Notebook-diff .jp-Diff-deleted .jp-Diff-renderedOutput,
+.jp-Cellrow-outputs .jp-Diff-twoway .jp-Diff-base {
+  background-color: var(--jp-diff-deleted-color2);
+  border: solid 1px var(--jp-diff-deleted-color0);
+}
+
+.jp-Notebook-diff .jp-Diff-added .CodeMirror,
+.jp-Notebook-diff .jp-Diff-added .jp-Diff-renderedOutput,
+.jp-Cellrow-outputs .jp-Diff-twoway .jp-Diff-remote {
+  background-color: var(--jp-diff-added-color2);
+  border: solid 1px var(--jp-diff-added-color0);
+}
+
+.jp-Notebook-diff .jp-Diff-added .CodeMirror-merge-pane-added,
+.jp-Notebook-diff .jp-Diff-deleted .CodeMirror-merge-pane-deleted {
+  width: 100%;
+}
+
+.jp-Notebook-diff .jp-Cellrow-source .jp-InputPrompt {
+  text-align: left;
+}
+
+.jp-CollapsiblePanel-container {
+  background-color: var(--jp-layout-color1);
+  color: var(--jp-ui-font-color1);
+}
+
+/*
+Output mimetype selection:
+*/
+
+.jp-Notebook-diff .jp-Diff-outputPanel .jp-Diff-outputMenu {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, 0);
+  background-color: var(--jp-layout-color1);
+  color: var(--jp-ui-font-color1);
+  padding: 3px 5px;
+  border: var(--jp-border-width) solid var(--jp-cell-editor-border-color);
+  z-index: 10;
+}
+
+.jp-Notebook-diff .jp-Diff-outputPanel:hover .jp-Diff-outputMenu {
+  display: initial;
+}
+
+.jp-Notebook-diff .jp-Diff-trustOutputButton {
+  display: none;
+}
+
+.jp-Notebook-diff .jp-Diff-trustCandidate .jp-Diff-trustOutputButton {
+  display: initial;
+}
+
+.jp-Notebook-diff .jp-Diff-outputPanel:not(.jp-Diff-trustCandidate) .jp-diff-base64Output + .jp-Diff-outputMenu {
+  display: none;
+}
+
+.jp-Notebook-diff .jp-Diff-outputPanel .jp-Diff-outputMenu > :not(:first-child) {
+  margin-left: 5px;
+}
+
+.jp-Diff-outputsContainer > .p-Widget:not(:last-child) {
+  padding-bottom: 6px;
+  min-height: 2em;
+  border-bottom: var(--jp-border-width) solid var(--jp-nbdime-output-color2);
+}
+
+.jp-Notebook-diff .jp-Diff-renderedOutput {
+  /* Ensure output is always large enough to show menu */
+  min-height: 2em;
+}

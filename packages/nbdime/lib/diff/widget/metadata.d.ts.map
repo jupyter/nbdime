@@ -1,0 +1,1 @@
+{"version":3,"file":"metadata.d.ts","sourceRoot":"","sources":["../../../src/diff/widget/metadata.ts"],"names":[],"mappings":"AAIA,OAAO,EACL,KAAK,EACN,MAAM,iBAAiB,CAAC;AAUzB,OAAO,EACL,gBAAgB,EACjB,MAAM,UAAU,CAAC;AAUlB;;GAEG;AACH,qBACM,kBAAmB,SAAQ,KAAK;gBACxB,KAAK,EAAE,gBAAgB;IAQnC,IAAI;IAaJ,OAAO,CAAC,MAAM,CAAmB;CAClC"}

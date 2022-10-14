@@ -1,0 +1,77 @@
+
+.jp-CollapsiblePanel {
+    border: var(--jp-nbdime-output-color1) solid 1pt;
+}
+
+button.jp-CollapsiblePanel-header-icon {
+    height: 24px;
+    width: 24px;
+    float: right;
+    font-size: var(--jp-ui-font-size1);
+    margin-top: .1em;
+    padding: 0 2px;
+
+    color: var(--jp-ui-font-color2);
+    background-color: transparent;
+
+    border: 1px solid var(--jp-nbdime-output-color2);
+    border-radius: 2px;
+
+    text-decoration: none;
+    transition: background-color 0.1s ease;
+}
+
+/* Remove text border, as we don't use button text for icon */
+button.jp-CollapsiblePanel-header-icon::-moz-focus-inner {
+    border: none;
+}
+
+
+button.jp-CollapsiblePanel-header-icon:focus,
+button.jp-CollapsiblePanel-header-icon:hover,
+button.jp-CollapsiblePanel-header-icon:active {
+    border: 1px solid var(--jp-ui-font-color1);
+}
+
+.jp-CollapsiblePanel-header {
+    padding-top: .2em;
+    padding-bottom: .2em;
+    background-color: var(--jp-nbdime-output-color3);
+    padding-left: 2em;
+    padding-right: 2em;
+    border-top: var(--jp-nbdime-output-color1) solid 1pt;
+    color: var(--jp-ui-font-color1);
+}
+
+.jp-CollapsiblePanel-container {
+    overflow: hidden;
+}
+
+.jp-CollapsiblePanel-slider {
+	/* complete liquid height based on the parent's height!! */
+    height:100%;
+
+    /* only transition on transform properties which are hardware accelerated = way better performances */
+	-webkit-transition: -webkit-transform .3s ease, height 0.3s;
+       -moz-transition:    -moz-transform .3s ease, height 0.3s;
+        -ms-transition:     -ms-transform .3s ease, height 0.3s;
+            transition:         transform .3s ease, height 0.3s;
+}
+
+.jp-CollapsiblePanel-opened {
+    /* visible */
+    -webkit-transform: translate(0, 0%);
+       -moz-transform: translate(0, 0%);
+        -ms-transform: translate(0, 0%);
+            transform: translate(0, 0%);
+    height: 100%;
+}
+
+.jp-CollapsiblePanel-closed {
+    /* completely offscreen */
+    -webkit-transform: translate(0, -100%);
+       -moz-transform: translate(0, -100%);
+        -ms-transform: translate(0, -100%);
+            transform: translate(0, -100%);
+    height: 0;
+}

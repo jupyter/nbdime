@@ -13,13 +13,13 @@ MANIFEST
 .pytest_cache
 .idea
 
-
 .spyderproject
 **/.vscode/
 **/node_modules/
 nbdime/webapp/test/build/
 nbdime/webapp/build/
-packages/**/lib/
+packages/labextension/lib/
+packages/webapp/lib/
 packages/**/coverage/
 packages/**/test/build/
 
