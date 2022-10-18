@@ -2,7 +2,7 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import * as nbformat from '@jupyterlab/nbformat';
+import type * as nbformat from '@jupyterlab/nbformat';
 
 import { Panel, Widget } from '@lumino/widgets';
 
@@ -30,7 +30,7 @@ import {
 
 import { RenderableDiffView } from './renderable';
 
-import { CellDiffModel, OutputDiffModel } from '../model';
+import type { CellDiffModel, OutputDiffModel } from '../model';
 
 /**
  * Class for output panel
@@ -107,7 +107,7 @@ export class OutputPanel extends Panel {
 		this.editorClasses = editorClasses;
 
 		model.trustedChanged.connect(
-			(sender: OutputDiffModel, trusted: boolean) => {
+			(_sender: OutputDiffModel, trusted: boolean) => {
 				this.trustedChanged(trusted);
 			},
 		);
@@ -251,7 +251,7 @@ export class OutputPanel extends Panel {
 		let btnSource = document.createElement('button');
 		let sourceText = ['Show source', 'Render'];
 		btnSource.innerText = sourceText[0];
-		btnSource.onclick = (ev: MouseEvent) => {
+		btnSource.onclick = (_ev: MouseEvent) => {
 			this.forceText = !this.forceText;
 			btnSource.innerText = sourceText[this.forceText ? 1 : 0];
 			this.updateView();
@@ -263,7 +263,7 @@ export class OutputPanel extends Panel {
 		// Add trust button:
 		let btnTrust = document.createElement('button');
 		btnTrust.innerText = 'Trust';
-		btnTrust.onclick = (ev: MouseEvent) => {
+		btnTrust.onclick = (_ev: MouseEvent) => {
 			// Triggers change event:
 			this.model.trusted = !this.model.trusted;
 		};
@@ -284,7 +284,7 @@ export class OutputPanel extends Panel {
 			if (selectedMimetype) {
 				cboMimetype.selectedIndex = mimetypes.indexOf(selectedMimetype);
 			}
-			cboMimetype.onchange = (ev: Event) => {
+			cboMimetype.onchange = (_ev: Event) => {
 				this.selectedMimetype = mimetypes[cboMimetype.selectedIndex];
 			};
 			w = new Widget({ node: cboMimetype });
@@ -454,7 +454,7 @@ export class RenderableOutputView extends RenderableDiffView<nbformat.IOutput> {
 		});
 	}
 
-	protected model: OutputDiffModel;
+	protected declare model: OutputDiffModel;
 
 	/**
 	 * Checks if a cell output can be rendered (either safe/trusted or

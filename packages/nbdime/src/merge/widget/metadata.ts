@@ -2,7 +2,7 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import * as nbformat from '@jupyterlab/nbformat';
+import type * as nbformat from '@jupyterlab/nbformat';
 
 import { Panel } from '@lumino/widgets';
 
@@ -10,9 +10,7 @@ import { createNbdimeMergeView, MergeView } from '../../common/mergeview';
 
 import { CollapsiblePanel } from '../../common/collapsiblepanel';
 
-import { MetadataMergeModel } from '../model';
-
-import { MERGE_CLASSES } from './common';
+import type { MetadataMergeModel } from '../model';
 
 const ROOT_METADATA_CLASS = 'jp-Metadata-diff';
 

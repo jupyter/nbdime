@@ -4,11 +4,11 @@
 
 import * as nbformat from '@jupyterlab/nbformat';
 
-import { JSONObject } from '@lumino/coreutils';
+import type { JSONObject } from '@lumino/coreutils';
 
 import { NotifyUserError } from '../../common/exceptions';
 
-import { IDiffEntry, IDiffArrayEntry, IDiffReplace } from '../diffentries';
+import type { IDiffEntry, IDiffArrayEntry, IDiffReplace } from '../diffentries';
 
 import { getSubDiffByKey, getDiffEntryByKey } from '../util';
 

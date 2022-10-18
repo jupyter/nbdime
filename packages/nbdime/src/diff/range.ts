@@ -6,7 +6,7 @@ import * as CodeMirror from 'codemirror';
 
 import { valueIn } from '../common/util';
 
-import { ChunkSource } from '../chunking';
+import type { ChunkSource } from '../chunking';
 
 /**
  * Represents a range in a diff (typically in a string), in absolute indices (1D)

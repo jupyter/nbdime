@@ -6,7 +6,7 @@ import * as alertify from 'alertify.js';
 
 import { URLExt } from '@jupyterlab/coreutils/lib/url';
 
-import { Widget } from '@lumino/widgets';
+import type { Widget } from '@lumino/widgets';
 
 import { NotifyUserError } from 'nbdime/lib/common/exceptions';
 
@@ -228,9 +228,9 @@ export function closeTool(exitCode = 0) {
 
 function showError(
 	error: NotifyUserError,
-	url: string,
-	line: number,
-	column: number,
+	_url: string,
+	_line: number,
+	_column: number,
 ) {
 	let message = error.message.replace('\n', '</br>');
 	switch (error.severity) {
@@ -246,7 +246,7 @@ function showError(
 }
 
 export function handleError(
-	msg: string,
+	_msg: string,
 	url: string,
 	line: number,
 	col?: number,
@@ -259,7 +259,7 @@ export function handleError(
 		}
 	} catch (e) {
 		// Not something that user should care about
-		console.log(e.stack);
+		console.log(e);
 	}
 	return false; // Do not suppress default error alert
 }

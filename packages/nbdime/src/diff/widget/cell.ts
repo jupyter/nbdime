@@ -31,7 +31,6 @@ import {
 	CHUNK_PANEL_CLASS,
 	ADDED_CHUNK_PANEL_CLASS,
 	REMOVED_CHUNK_PANEL_CLASS,
-	ADD_DEL_LABEL_CLASS,
 } from './common';
 
 import { OutputPanel } from './output';

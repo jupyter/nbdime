@@ -6,11 +6,11 @@ import * as nbformat from '@jupyterlab/nbformat';
 
 import { NotifyUserError } from '../../common/exceptions';
 
-import { IDiffArrayEntry } from '../diffentries';
+import type { IDiffArrayEntry } from '../diffentries';
 
 import { RenderableDiffModel } from './renderable';
 
-import { IStringDiffModel } from './string';
+import type { IStringDiffModel } from './string';
 
 const TEXT_MIMETYPES = [
 	'text/plain',

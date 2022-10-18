@@ -12,13 +12,13 @@ import {
 
 import { Signal } from '@lumino/signaling';
 
-import { IDiffEntry } from '../diffentries';
+import type { IDiffEntry } from '../diffentries';
 
 import { getSubDiffByKey } from '../util';
 
 import { patch } from '../../patch';
 
-import { IDiffModel } from './common';
+import type { IDiffModel } from './common';
 
 import {
 	IStringDiffModel,

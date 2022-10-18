@@ -4,7 +4,7 @@
 
 import { valueIn } from '../common/util';
 
-import { ChunkSource } from '../chunking';
+import type { ChunkSource } from '../chunking';
 
 /**
  * The different diff operations available

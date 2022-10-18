@@ -660,7 +660,7 @@ declare namespace CodeMirror {
 				instance: CodeMirror.Editor,
 				line: number,
 				gutter: string,
-				clickEvent: Event,
+				clickEvent: MouseEvent,
 			) => void,
 		): void;
 		off(

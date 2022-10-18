@@ -2,7 +2,7 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import { IDiffEntry } from '../../diff/diffentries';
+import type { IDiffEntry } from '../../diff/diffentries';
 
 import { DiffRangePos, raw2Pos } from '../../diff/range';
 
@@ -14,7 +14,7 @@ import { LineChunker, Chunk, labelSource } from '../../chunking';
 
 import { patchStringified, stringifyAndBlankNull } from '../../patch';
 
-import { DeepCopyableObject } from '../../common/util';
+import type { DeepCopyableObject } from '../../common/util';
 
 /**
  * A string diff model based on merge decisions.
@@ -42,6 +42,7 @@ export class DecisionStringDiffModel extends StringDiffModel {
 
 	rawBase: any;
 
+	// @ts-expect-error
 	get additions(): DiffRangePos[] {
 		if (this._outdated) {
 			this._update();
@@ -52,6 +53,7 @@ export class DecisionStringDiffModel extends StringDiffModel {
 		this._additions = value;
 	}
 
+	// @ts-expect-error
 	get deletions(): DiffRangePos[] {
 		if (this._outdated) {
 			this._update();
@@ -62,6 +64,7 @@ export class DecisionStringDiffModel extends StringDiffModel {
 		this._deletions = value;
 	}
 
+	// @ts-expect-error
 	get remote(): string {
 		if (this._outdated) {
 			this._update();
@@ -118,9 +121,9 @@ export class DecisionStringDiffModel extends StringDiffModel {
 		this._remote = out.remote;
 	}
 
-	protected _additions: DiffRangePos[];
-	protected _deletions: DiffRangePos[];
-	protected _remote: string;
+	protected declare _additions: DiffRangePos[];
+	protected declare _deletions: DiffRangePos[];
+	protected declare _remote: string;
 	protected _outdated: boolean;
 	protected _sourceModels: (IStringDiffModel | null)[];
 }

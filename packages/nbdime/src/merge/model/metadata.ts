@@ -2,9 +2,9 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import * as nbformat from '@jupyterlab/nbformat';
+import type * as nbformat from '@jupyterlab/nbformat';
 
-import { IDiffEntry } from '../../diff/diffentries';
+import type { IDiffEntry } from '../../diff/diffentries';
 
 import {
 	IStringDiffModel,
@@ -12,7 +12,7 @@ import {
 	createDirectStringDiffModel,
 } from '../../diff/model';
 
-import { MergeDecision } from '../../merge/decisions';
+import type { MergeDecision } from '../decisions';
 
 import { ObjectMergeModel, DecisionStringDiffModel } from './common';
 import { JSONObject, JSONExt } from '@lumino/coreutils';
@@ -54,5 +54,5 @@ export class MetadataMergeModel extends ObjectMergeModel<
 		]);
 	}
 
-	base: nbformat.INotebookMetadata;
+	declare base: nbformat.INotebookMetadata;
 }

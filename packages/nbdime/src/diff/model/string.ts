@@ -12,7 +12,7 @@ import {
 	PartialJSONObject,
 } from '@lumino/coreutils';
 
-import { IDiffEntry } from '../diffentries';
+import type { IDiffEntry } from '../diffentries';
 
 import { DiffRangeRaw, DiffRangePos, raw2Pos } from '../range';
 
@@ -20,7 +20,7 @@ import { Chunk, LineChunker } from '../../chunking';
 
 import { patchStringified, stringifyAndBlankNull } from '../../patch';
 
-import { IDiffModel } from './common';
+import type { IDiffModel } from './common';
 
 /**
  * Interface for a string diff model.

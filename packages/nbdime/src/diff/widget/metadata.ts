@@ -8,9 +8,9 @@ import { createNbdimeMergeView } from '../../common/mergeview';
 
 import { CollapsiblePanel } from '../../common/collapsiblepanel';
 
-import { IStringDiffModel } from '../model';
+import type { IStringDiffModel } from '../model';
 
-import { DIFF_CLASSES, TWOWAY_DIFF_CLASS } from './common';
+import { TWOWAY_DIFF_CLASS } from './common';
 
 const ROOT_METADATA_CLASS = 'jp-Metadata-diff';
 

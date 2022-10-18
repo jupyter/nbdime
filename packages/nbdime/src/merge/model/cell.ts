@@ -6,7 +6,7 @@ import * as nbformat from '@jupyterlab/nbformat';
 
 import { Signal } from '@lumino/signaling';
 
-import {
+import type {
 	IDiffAddRange,
 	IDiffEntry,
 	IDiffArrayEntry,

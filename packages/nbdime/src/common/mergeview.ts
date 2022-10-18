@@ -11,11 +11,11 @@ import * as CodeMirror from 'codemirror';
 
 import { Widget, Panel } from '@lumino/widgets';
 
-import { IStringDiffModel } from '../diff/model';
+import type { IStringDiffModel } from '../diff/model';
 
 import { DecisionStringDiffModel } from '../merge/model';
 
-import { DiffRangePos } from '../diff/range';
+import type { DiffRangePos } from '../diff/range';
 
 import { ChunkSource, Chunk, lineToNormalChunks } from '../chunking';
 

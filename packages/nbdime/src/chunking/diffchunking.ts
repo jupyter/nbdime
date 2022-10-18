@@ -2,11 +2,11 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import { IDiffEntry } from '../diff/diffentries';
+import type { IDiffEntry } from '../diff/diffentries';
 
-import { DiffRangePos } from '../diff/range';
+import type { DiffRangePos } from '../diff/range';
 
-import { MergeDecision } from '../merge/decisions';
+import type { MergeDecision } from '../merge/decisions';
 
 import { valueIn, shallowCopy, unique } from '../common/util';
 

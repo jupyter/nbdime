@@ -66,7 +66,7 @@ export function getDiffEntryByKey(
 function validateStringDiff(
 	base: string[],
 	entry: IDiffArrayEntry,
-	lineToChar: number[],
+	_lineToChar: number[],
 ): void {
 	// First valdiate line ops:
 	validateSequenceOp(base, entry);

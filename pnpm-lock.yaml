@@ -33,7 +33,7 @@ importers:
       mkdirp: ^0.5.1
       nbdime: ^6.1.2
       rimraf: ^2.6.3
-      typescript: ^3.7.2
+      typescript: ^4.8.4
     dependencies:
       '@jupyterlab/apputils': 3.4.8
       '@jupyterlab/coreutils': 5.4.8
@@ -55,7 +55,7 @@ importers:
       '@lumino/commands': 1.20.1
       mkdirp: 0.5.6
       rimraf: 2.7.1
-      typescript: 3.9.10
+      typescript: 4.8.4
 
   packages/nbdime:
     specifiers:
@@ -85,7 +85,7 @@ importers:
       jest-fetch-mock: ^3.0.3
       json-stable-stringify: ^1.0.1
       rimraf: ^2.6.3
-      typescript: ^3.7.2
+      typescript: ^4.8.4
     dependencies:
       '@jupyterlab/codeeditor': 3.4.8
       '@jupyterlab/codemirror': 3.4.8
@@ -114,7 +114,7 @@ importers:
       jest: 26.6.3
       jest-fetch-mock: 3.0.3
       rimraf: 2.7.1
-      typescript: 3.9.10
+      typescript: 4.8.4
 
   packages/webapp:
     specifiers:
@@ -143,7 +143,7 @@ importers:
       rimraf: ^2.6.3
       style-loader: ^3.3.1
       swc-loader: ^0.2.3
-      typescript: ^3.7.2
+      typescript: ^4.8.4
       webpack: ^5.74.0
     dependencies:
       '@fortawesome/fontawesome-free': 5.15.4
@@ -172,7 +172,7 @@ importers:
       rimraf: 2.7.1
       style-loader: 3.3.1_webpack@5.74.0
       swc-loader: 0.2.3_webpack@5.74.0
-      typescript: 3.9.10
+      typescript: 4.8.4
       webpack: 5.74.0
 
 packages:
@@ -8032,14 +8032,14 @@ packages:
       is-typedarray: 1.0.0
     dev: true
 
-  /typescript/3.9.10:
-    resolution: {integrity: sha512-w6fIxVE/H1PkLKcCPsFqKE7Kv7QUwhU8qQY2MueZXWx5cPZdwFupLgKK3vntcK98BtNHZtAF4LA/yl2a7k8R6Q==}
+  /typescript/4.1.6:
+    resolution: {integrity: sha512-pxnwLxeb/Z5SP80JDRzVjh58KsM6jZHRAOtTpS7sXLS4ogXNKC9ANxHHZqLLeVHZN35jCtI4JdmLLbLiC1kBow==}
     engines: {node: '>=4.2.0'}
     hasBin: true
     dev: true
 
-  /typescript/4.1.6:
-    resolution: {integrity: sha512-pxnwLxeb/Z5SP80JDRzVjh58KsM6jZHRAOtTpS7sXLS4ogXNKC9ANxHHZqLLeVHZN35jCtI4JdmLLbLiC1kBow==}
+  /typescript/4.8.4:
+    resolution: {integrity: sha512-QCh+85mCy+h0IGff8r5XWzOVSbBO+KfeYrMQh7NJ58QujwcE22u+NUSmUxqF+un70P9GXKxa2HCNiTTMJknyjQ==}
     engines: {node: '>=4.2.0'}
     hasBin: true
     dev: true

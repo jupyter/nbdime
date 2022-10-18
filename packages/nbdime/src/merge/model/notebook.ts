@@ -2,7 +2,7 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import * as nbformat from '@jupyterlab/nbformat';
+import type * as nbformat from '@jupyterlab/nbformat';
 
 import {
 	arraysEqual,
@@ -11,7 +11,7 @@ import {
 	stableSort,
 } from '../../common/util';
 
-import {
+import type {
 	IDiffAddRange,
 	IDiffPatch,
 	IDiffRemoveRange,

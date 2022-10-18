@@ -2,11 +2,11 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import { ReadonlyJSONObject } from '@lumino/coreutils';
+import type { ReadonlyJSONObject } from '@lumino/coreutils';
 
-import { IIterator } from '@lumino/algorithm';
+import type { IIterator } from '@lumino/algorithm';
 
-import { IDiffObjectEntry } from '../diff/diffentries';
+import type { IDiffObjectEntry } from '../diff/diffentries';
 
 import { valueIn, unique } from '../common/util';
 

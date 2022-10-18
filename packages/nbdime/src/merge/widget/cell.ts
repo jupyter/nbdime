@@ -6,7 +6,7 @@ import * as nbformat from '@jupyterlab/nbformat';
 
 import { Panel, Widget } from '@lumino/widgets';
 
-import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
+import type { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
 import { CollapsiblePanel } from '../../common/collapsiblepanel';
 
@@ -27,7 +27,7 @@ import { CellDiffWidget } from '../../diff/widget';
 
 import { FlexPanel } from '../../upstreaming/flexpanel';
 
-import { CellMergeModel } from '../model';
+import type { CellMergeModel } from '../model';
 
 import { RenderableOutputsMergeView } from './output';
 
@@ -66,7 +66,7 @@ export class CellMergeWidget extends Panel {
 		local: IDiffModel | null,
 		remote: IDiffModel | null,
 		merged: IDiffModel,
-		editorClasses: string[],
+		_editorClasses: string[],
 		readOnly = false,
 	): Widget | null {
 		let view: Widget | null = null;
@@ -413,7 +413,7 @@ export class CellMergeWidget extends Panel {
 			this.addClass(MARKED_CLEAR_OUTPUTS);
 		}
 		// Map checkbox -> model
-		checkbox.onchange = (event) => {
+		checkbox.onchange = (_event) => {
 			this.model.clearOutputs = checkbox.checked;
 			this.toggleClass(MARKED_CLEAR_OUTPUTS, checkbox.checked);
 		};
@@ -435,7 +435,7 @@ export class CellMergeWidget extends Panel {
 			this.addClass(MARKED_DELETE);
 		}
 		// Map checkbox -> model
-		checkbox.onchange = (event) => {
+		checkbox.onchange = (_event) => {
 			this.model.deleteCell = checkbox.checked;
 			this.toggleClass(MARKED_DELETE, checkbox.checked);
 		};

@@ -2,9 +2,9 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import * as nbformat from '@jupyterlab/nbformat';
+import type * as nbformat from '@jupyterlab/nbformat';
 
-import { IRenderMimeRegistry, IOutputModel } from '@jupyterlab/rendermime';
+import type { IRenderMimeRegistry, IOutputModel } from '@jupyterlab/rendermime';
 
 import {
 	OutputArea,
@@ -12,7 +12,7 @@ import {
 	IOutputAreaModel,
 } from '@jupyterlab/outputarea';
 
-import { DropAction, IDragEvent } from '@lumino/dragdrop';
+import type { DropAction, IDragEvent } from '@lumino/dragdrop';
 
 import { PanelLayout, Widget } from '@lumino/widgets';
 
@@ -57,7 +57,7 @@ export class ReorderableOutputModel extends OutputAreaModel {
  * capabilities of ReorderableOutputModel
  */
 export class ReorderableOutputWidget extends OutputArea {
-	readonly model: ReorderableOutputModel;
+	declare readonly model: ReorderableOutputModel;
 
 	/**
 	 * Follow changes on the model state.
@@ -252,7 +252,7 @@ export class RenderableOutputsMergeView extends DragDropPanel {
 
 	protected getIndexOfChildNode(
 		node: HTMLElement,
-		parent?: PanelLayout,
+		_parent?: PanelLayout,
 	): any {
 		for (let pane of this.panes) {
 			let child = findChild(pane.node, node);

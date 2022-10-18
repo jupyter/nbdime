@@ -2,9 +2,9 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import * as nbformat from '@jupyterlab/nbformat';
+import type * as nbformat from '@jupyterlab/nbformat';
 
-import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
+import type { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
 import { Panel } from '@lumino/widgets';
 
@@ -12,7 +12,7 @@ import { hasEntries, deepCopy } from '../../common/util';
 
 import { FlexPanel } from '../../upstreaming/flexpanel';
 
-import { NotebookMergeModel } from '../model';
+import type { NotebookMergeModel } from '../model';
 
 import { MetadataMergeWidget } from './metadata';
 
@@ -136,7 +136,7 @@ export class NotebookMergeWidget extends Panel {
 	}
 
 	protected onDragDropMove(
-		sender: CellsDragDrop,
+		_sender: CellsDragDrop,
 		args: CellsDragDrop.IMovedArgs,
 	): void {
 		// Move cell in model list
@@ -169,7 +169,7 @@ export class NotebookMergeWidget extends Panel {
 		}
 	}
 
-	protected onChunkResolved(sender: ChunkedCellsWidget, args: void): void {
+	protected onChunkResolved(sender: ChunkedCellsWidget, _args: void): void {
 		let index = this.cellContainer.widgets.indexOf(sender);
 		while (sender.cells.widgets.length > 0) {
 			this.cellContainer.insertWidget(index++, sender.cells.widgets[0]);

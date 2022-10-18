@@ -2,7 +2,7 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import * as nbformat from '@jupyterlab/nbformat';
+import type * as nbformat from '@jupyterlab/nbformat';
 
 import { Panel, Widget } from '@lumino/widgets';
 
@@ -10,11 +10,9 @@ import { RenderMimeRegistry } from '@jupyterlab/rendermime';
 
 import { defaultSanitizer } from '@jupyterlab/apputils';
 
-import { PageConfig } from '@jupyterlab/coreutils';
-
 import { MathJaxTypesetter } from '@jupyterlab/mathjax2';
 
-import { IDiffEntry } from 'nbdime/lib/diff/diffentries';
+import type { IDiffEntry } from 'nbdime/lib/diff/diffentries';
 
 import { NotebookDiffModel } from 'nbdime/lib/diff/model';
 

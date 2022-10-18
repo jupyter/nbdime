@@ -4,7 +4,7 @@
 
 import { Panel, PanelLayout, Widget } from '@lumino/widgets';
 
-import { Message } from '@lumino/messaging';
+import type { Message } from '@lumino/messaging';
 
 import { MimeData } from '@lumino/coreutils';
 
@@ -230,7 +230,7 @@ export abstract class DropPanel extends Panel {
 	/**
 	 * Handle `after_attach` messages for the widget.
 	 */
-	protected onAfterAttach(msg: Message): void {
+	protected onAfterAttach(_msg: Message): void {
 		let node = this.node;
 		node.addEventListener('p-dragenter', this);
 		node.addEventListener('p-dragleave', this);
@@ -241,7 +241,7 @@ export abstract class DropPanel extends Panel {
 	/**
 	 * Handle `before_detach` messages for the widget.
 	 */
-	protected onBeforeDetach(msg: Message): void {
+	protected onBeforeDetach(_msg: Message): void {
 		let node = this.node;
 		node.removeEventListener('p-dragenter', this);
 		node.removeEventListener('p-dragleave', this);
@@ -405,7 +405,7 @@ export abstract class DragDropPanelBase extends DropPanel {
 	/**
 	 * Called when a drag has completed with this panel as a source
 	 */
-	protected onDragComplete(action: DropAction) {
+	protected onDragComplete(_action: DropAction) {
 		this.drag = null;
 	}
 
@@ -613,7 +613,7 @@ export abstract class DragPanel extends DragDropPanelBase {
 	/**
 	 * No-op on DragPanel, as it does not support dropping
 	 */
-	protected processDrop(dropTarget: HTMLElement, event: IDragEvent): void {
+	protected processDrop(_dropTarget: HTMLElement, _event: IDragEvent): void {
 		// Intentionally empty
 	}
 
@@ -621,8 +621,8 @@ export abstract class DragPanel extends DragDropPanelBase {
 	 * Simply returns null for DragPanel, as it does not support dropping
 	 */
 	protected findDropTarget(
-		input: HTMLElement,
-		mimeData: MimeData,
+		_input: HTMLElement,
+		_mimeData: MimeData,
 	): HTMLElement | null {
 		return null;
 	}
@@ -894,7 +894,7 @@ export class FriendlyDragDrop extends DragDropPanel {
 
 	protected getIndexOfChildNode(
 		node: HTMLElement,
-		parent?: PanelLayout,
+		_parent?: PanelLayout,
 	): any {
 		const friends = this.friends;
 		for (let panel of friends) {

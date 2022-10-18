@@ -3,7 +3,7 @@
 
 'use strict';
 
-import { Widget } from '@lumino/widgets';
+import type { Widget } from '@lumino/widgets';
 
 import { CodeEditorWrapper, CodeEditor } from '@jupyterlab/codeeditor';
 

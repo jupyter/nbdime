@@ -8,7 +8,7 @@ import { Signal, ISignal } from '@lumino/signaling';
 
 import { FriendlyDragDrop, DragDropPanel } from '../../common/dragpanel';
 
-import { CellMergeWidget } from './cell';
+import type { CellMergeWidget } from './cell';
 
 const CELL_DRAG_DROP_CLASS = 'jp-merge-celldragdrop';
 
@@ -100,7 +100,7 @@ export class ChunkedCellsWidget extends Panel {
 		this.addWidget(this.cells);
 	}
 
-	onResolve(event?: MouseEvent) {
+	onResolve(_event?: MouseEvent) {
 		for (let cell of this.cells.widgets) {
 			let model = (cell as CellMergeWidget).model;
 			if (model.onesided && model.conflicted) {

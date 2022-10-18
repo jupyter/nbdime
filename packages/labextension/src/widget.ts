@@ -1,16 +1,16 @@
-import * as nbformat from '@jupyterlab/nbformat';
+import type * as nbformat from '@jupyterlab/nbformat';
 
-import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
+import type { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
 import { ServerConnection } from '@jupyterlab/services';
 
-import { JSONObject } from '@lumino/coreutils';
+import type { JSONObject } from '@lumino/coreutils';
 
-import { Message } from '@lumino/messaging';
+import type { Message } from '@lumino/messaging';
 
 import { Widget, Panel } from '@lumino/widgets';
 
-import { IDiffEntry } from 'nbdime/lib/diff/diffentries';
+import type { IDiffEntry } from 'nbdime/lib/diff/diffentries';
 
 import { NotebookDiffModel } from 'nbdime/lib/diff/model';
 
@@ -105,7 +105,7 @@ export class NbdimeWidget extends Panel {
 	/**
 	 * Handle `'activate-request'` messages.
 	 */
-	protected onActivateRequest(msg: Message): void {
+	protected onActivateRequest(_msg: Message): void {
 		this.scroller.node.focus();
 	}
 
@@ -127,13 +127,18 @@ export class NbdimeWidget extends Panel {
 	}
 
 	protected onError(
-		error: ServerConnection.NetworkError | ServerConnection.ResponseError,
+		error:
+			| ServerConnection.NetworkError
+			| ServerConnection.ResponseError
+			| string,
 	): void {
 		if (this.isDisposed) {
 			return;
 		}
 		let widget = new Widget();
-		widget.node.innerHTML = `Failed to fetch diff: ${error.message}`;
+		widget.node.innerHTML = `Failed to fetch diff: ${
+			typeof error === 'string' ? error : error.message
+		}`;
 		this.scroller.addWidget(widget);
 	}
 

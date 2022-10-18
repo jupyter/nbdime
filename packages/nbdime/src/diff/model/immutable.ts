@@ -2,9 +2,9 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import { IDiffModel } from './common';
+import type { IDiffModel } from './common';
 
-import { IDiffImmutableObjectEntry } from '../diffentries';
+import type { IDiffImmutableObjectEntry } from '../diffentries';
 
 export type ImmutableValue = number | boolean | null;
 

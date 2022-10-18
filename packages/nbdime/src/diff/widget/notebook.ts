@@ -4,7 +4,7 @@
 
 import { Panel } from '@lumino/widgets';
 
-import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
+import type { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
 import { CellDiffWidget } from './cell';
 
@@ -16,7 +16,7 @@ import {
 
 import { MetadataDiffWidget } from './metadata';
 
-import { NotebookDiffModel } from '../model';
+import type { NotebookDiffModel } from '../model';
 
 const NBDIFF_CLASS = 'jp-Notebook-diff';
 

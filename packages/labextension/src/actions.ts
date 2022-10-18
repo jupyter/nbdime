@@ -1,10 +1,10 @@
 import { PathExt, URLExt } from '@jupyterlab/coreutils';
 
-import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
+import type { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
 import { ServerConnection } from '@jupyterlab/services';
 
-import { Widget } from '@lumino/widgets';
+import type { Widget } from '@lumino/widgets';
 
 import { NbdimeWidget } from './widget';
 

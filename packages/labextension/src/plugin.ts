@@ -1,7 +1,7 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import {
+import type {
 	JupyterFrontEndPlugin,
 	JupyterFrontEnd,
 } from '@jupyterlab/application';
@@ -10,11 +10,11 @@ import { CommandToolbarButton } from '@jupyterlab/apputils';
 
 import { PathExt } from '@jupyterlab/coreutils';
 
-import { DocumentRegistry } from '@jupyterlab/docregistry';
+import type { DocumentRegistry } from '@jupyterlab/docregistry';
 
 import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
-import { INotebookModel } from '@jupyterlab/notebook';
+import type { INotebookModel } from '@jupyterlab/notebook';
 
 import { NotebookPanel, INotebookTracker } from '@jupyterlab/notebook';
 
@@ -22,16 +22,11 @@ import { ISettingRegistry } from '@jupyterlab/settingregistry';
 
 import { find } from '@lumino/algorithm';
 
-import { CommandRegistry } from '@lumino/commands';
+import type { CommandRegistry } from '@lumino/commands';
 
 import { IDisposable, DisposableDelegate } from '@lumino/disposable';
 
-import {
-	diffNotebookGit,
-	diffNotebook,
-	diffNotebookCheckpoint,
-	isNbInGit,
-} from './actions';
+import { diffNotebookGit, diffNotebookCheckpoint, isNbInGit } from './actions';
 
 const pluginId = 'nbdime-jupyterlab:plugin';
 
@@ -58,7 +53,7 @@ export class NBDiffExtension
 	 */
 	createNew(
 		nb: NotebookPanel,
-		context: DocumentRegistry.IContext<INotebookModel>,
+		_context: DocumentRegistry.IContext<INotebookModel>,
 	): IDisposable {
 		// Create extension here
 
@@ -127,13 +122,6 @@ function addCommands(
 	/**
 	 * Whether there is an active notebook.
 	 */
-	function hasWidget(): boolean {
-		return tracker.currentWidget !== null;
-	}
-
-	/**
-	 * Whether there is an active notebook.
-	 */
 	function baseEnabled(): boolean {
 		return hasAPI && tracker.currentWidget !== null;
 	}
@@ -198,7 +186,7 @@ function addCommands(
 	});
 
 	commands.addCommand(CommandIDs.diffNotebook, {
-		execute: (args) => {
+		execute: (_args) => {
 			// TODO: Check args for base/remote
 			// if missing, prompt with dialog.
 			//let content = current.notebook;

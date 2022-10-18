@@ -5,7 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import { Message } from '@lumino/messaging';
+import type { Message } from '@lumino/messaging';
 
 import { FlexLayout } from './flexlayout';
 
@@ -177,7 +177,7 @@ export class FlexPanel extends Panel {
 		this.fit();
 	}
 
-	layout: FlexLayout;
+	declare layout: FlexLayout;
 }
 
 /**
