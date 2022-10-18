@@ -1,21 +1,20 @@
 {
   "private": true,
+  "engines": {
+    "node": ">=16.18.0"
+  },
   "scripts": {
-    "build": "lerna run build",
+    "build": "pnpm run -r build",
     "build:dev": "tsc --build",
-    "clean": "lerna run clean",
-    "install": "lerna bootstrap --hoist",
-    "publish": "npm run clean && npm run build && lerna publish -m \"Publish npm packages\"",
-    "test": "lerna run test",
-    "update:all": "update-dependency --lerna --minimal --regex .*",
-    "update:lab": "update-dependency --lerna --minimal --regex ^@jupyterlab/",
-    "update:lab:next": "update-dependency --lerna --minimal --regex ^@jupyterlab/ ^next",
-    "updated": "lerna updated",
+    "clean": "pnpm run -r clean",
+    "test": "pnpm run -r test",
     "watch": "tsc --build --watch"
   },
   "devDependencies": {
     "@jupyterlab/buildutils": "^3.0.0",
-    "lerna": "^4.0.0",
     "rimraf": "^2.6.3"
+  },
+  "volta": {
+    "node": "16.18.0"
   }
 }

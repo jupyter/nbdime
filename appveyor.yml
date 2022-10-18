@@ -3,7 +3,7 @@ skip_branch_with_pr: true
 
 # environment variables
 environment:
-  nodejs_version: "14"
+  nodejs_version: "16"
   matrix:
     - PYTHON: "C:\\Python37-x64"
       PYTHON_VERSION: "3.7.x"
@@ -22,6 +22,8 @@ cache:
 install:
   # Install node:
   - ps: Install-Product node $env:nodejs_version
+  - curl -f https://get.pnpm.io/v6.16.js | node - add --global pnpm@7
+  - pnpm install
   # Ensure python scripts are from right version:
   - 'SET "PATH=%PYTHON%\Scripts;%PYTHON%;%PATH%"'
   # Install coverage utilities:
