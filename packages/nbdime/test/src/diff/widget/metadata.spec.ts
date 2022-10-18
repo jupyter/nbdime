@@ -1,29 +1,18 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import {
-    createDirectStringDiffModel
-} from '../../../../src/diff/model/string';
+import { createDirectStringDiffModel } from '../../../../src/diff/model/string';
 
-import {
-  MetadataDiffWidget
-} from '../../../../src/diff/widget';
-
+import { MetadataDiffWidget } from '../../../../src/diff/widget';
 
 describe('diff', () => {
-
-  describe('widget', () => {
-
-    describe('MetadataDiffWidget', () => {
-
-      it('should create a widget for an unchanged model', () => {
-          let model = createDirectStringDiffModel('{}', '{}');
-          let widget = new MetadataDiffWidget(model);
-          expect(widget).not.toBe(null);
-      });
-
-    });
-
-  });
-
+	describe('widget', () => {
+		describe('MetadataDiffWidget', () => {
+			it('should create a widget for an unchanged model', () => {
+				let model = createDirectStringDiffModel('{}', '{}');
+				let widget = new MetadataDiffWidget(model);
+				expect(widget).not.toBe(null);
+			});
+		});
+	});
 });

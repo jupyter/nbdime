@@ -3,16 +3,16 @@ skip_branch_with_pr: true
 
 # environment variables
 environment:
-  nodejs_version: "16"
+  nodejs_version: '16'
   matrix:
     - PYTHON: "C:\\Python37-x64"
-      PYTHON_VERSION: "3.7.x"
+      PYTHON_VERSION: '3.7.x'
       PYTHON_MAJOR: 3
-      PYTHON_ARCH: "64"
+      PYTHON_ARCH: '64'
     - PYTHON: "C:\\Python38-x64"
-      PYTHON_VERSION: "3.8.x"
+      PYTHON_VERSION: '3.8.x'
       PYTHON_MAJOR: 3
-      PYTHON_ARCH: "64"
+      PYTHON_ARCH: '64'
 
 # build cache to preserve files/folders between builds
 cache:
@@ -46,7 +46,6 @@ before_test:
   - set "tmptestdir=%tmp%\nbdime-%RANDOM%"
   - mkdir "%tmptestdir%"
   - cd "%tmptestdir%"
-
 
 # to run your custom scripts instead of automatic tests
 test_script:

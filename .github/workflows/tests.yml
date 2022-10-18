@@ -10,74 +10,74 @@ jobs:
     name: Documentation
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.8
-    - uses: actions/cache@v1
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/setup.py') }}-${{hashFiles('**/requirements.txt')}}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-    - name: Install dependencies
-      run: |
-        sudo apt-get install -y pandoc
-        python -m pip install --upgrade pip
-        python -m pip install .[docs]
-        python -m pip install -r ./docs/doc-requirements.txt
-    - name: Build docs
-      run: |
-        cd docs
-        make html
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+      - uses: actions/cache@v1
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/setup.py') }}-${{hashFiles('**/requirements.txt')}}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Install dependencies
+        run: |
+          sudo apt-get install -y pandoc
+          python -m pip install --upgrade pip
+          python -m pip install .[docs]
+          python -m pip install -r ./docs/doc-requirements.txt
+      - name: Build docs
+        run: |
+          cd docs
+          make html
   js:
     name: JavaScript
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Set up Python
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.8
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
 
-    - uses: actions/cache@v2
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/setup.py') }}-${{hashFiles('**/requirements.txt')}}
-        restore-keys: |
-          ${{ runner.os }}-pip-
+      - uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/setup.py') }}-${{hashFiles('**/requirements.txt')}}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install jupyterlab~=3.0
-        npm install -g codecov
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install jupyterlab~=3.0
+          npm install -g codecov
 
-    - name: Use Node.js 16.x
-      uses: actions/setup-node@v3
-      with:
-        node-version: 16.x
-        cache: 'pnpm'
+      - name: Use Node.js 16.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+          cache: 'pnpm'
 
-    - uses: pnpm/action-setup@v2.2.4
-      with:
-        version: 7.11.0
+      - uses: pnpm/action-setup@v2.2.4
+        with:
+          version: 7.11.0
 
-    - name: install
-      run: |-
-        pnpm install --frozen-lockfile
-        python -m pip install --upgrade --upgrade-strategy=eager -e ".[test]"
+      - name: install
+        run: |-
+          pnpm install --frozen-lockfile
+          python -m pip install --upgrade --upgrade-strategy=eager -e ".[test]"
 
-    - name: build
-      run: pnpm build
+      - name: build
+        run: pnpm build
 
-    - name: test
-      run: |-
-        pnpm test
-        codecov
+      - name: test
+        run: |-
+          pnpm test
+          codecov
 
   python:
     name: Python
@@ -88,28 +88,28 @@ jobs:
         python-version: ['3.6', '3.7', '3.8', '3.9', '3.10']
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
-      with:
-        python-version: ${{ matrix.python-version }}
-    - uses: actions/cache@v1
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/setup.py') }}-${{hashFiles('**/requirements.txt')}}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-    - name: Install dependencies
-      run: |
-        python -m pip install codecov
-        python -m pip install --upgrade pip
-        python -m pip install jupyterlab~=3.0
-        python -m pip install --upgrade --upgrade-strategy=eager ".[test]"
-    - name: Test with pytest
-      run: |
-        git config --global user.email CI@fake.com
-        git config --global user.name "CI"
-        pushd $(mktemp -d)
-        py.test -l --cov-report xml --cov=nbdime --pyargs nbdime
-        codecov
-        popd
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: actions/cache@v1
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/setup.py') }}-${{hashFiles('**/requirements.txt')}}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Install dependencies
+        run: |
+          python -m pip install codecov
+          python -m pip install --upgrade pip
+          python -m pip install jupyterlab~=3.0
+          python -m pip install --upgrade --upgrade-strategy=eager ".[test]"
+      - name: Test with pytest
+        run: |
+          git config --global user.email CI@fake.com
+          git config --global user.name "CI"
+          pushd $(mktemp -d)
+          py.test -l --cov-report xml --cov=nbdime --pyargs nbdime
+          codecov
+          popd

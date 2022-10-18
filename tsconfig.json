@@ -1,9 +1,9 @@
 {
-  "files": [],
-  "include": [],
-  "references": [
-    { "path": "./packages/nbdime" },
-    { "path": "./packages/webapp" },
-    { "path": "./packages/labextension" }
-  ]
+	"files": [],
+	"include": [],
+	"references": [
+		{ "path": "./packages/nbdime" },
+		{ "path": "./packages/webapp" },
+		{ "path": "./packages/labextension" }
+	]
 }

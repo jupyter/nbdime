@@ -5,9 +5,11 @@ importers:
   .:
     specifiers:
       '@jupyterlab/buildutils': ^3.0.0
+      prettier: ^2.7.1
       rimraf: ^2.6.3
     devDependencies:
       '@jupyterlab/buildutils': 3.4.8
+      prettier: 2.7.1
       rimraf: 2.7.1
 
   packages/labextension:
@@ -7838,6 +7840,12 @@ packages:
 
   /prettier/2.1.2:
     resolution: {integrity: sha512-16c7K+x4qVlJg9rEbXl7HEGmQyZlG4R9AgP+oHKRMsMsuk8s+ATStlf1NpDqyBI1HpVyfjLOeMhH2LvuNvV5Vg==}
+    engines: {node: '>=10.13.0'}
+    hasBin: true
+    dev: true
+
+  /prettier/2.7.1:
+    resolution: {integrity: sha512-ujppO+MkdPqoVINuDFDRLClm7D78qbDt0/NR+wp5FqEZOoTNAjPHWj17QRhu7geIHJfcNhRk1XVQmF8Bp3ye+g==}
     engines: {node: '>=10.13.0'}
     hasBin: true
     dev: true

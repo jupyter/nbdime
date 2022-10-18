@@ -9,4 +9,4 @@ coverage:
       default:
         target: 0%
 ignore:
-  - "nbdime/tests"
+  - 'nbdime/tests'

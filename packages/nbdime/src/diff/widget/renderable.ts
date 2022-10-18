@@ -2,60 +2,57 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import {
-  JSONValue, PartialJSONValue
-} from '@lumino/coreutils';
+import { JSONValue, PartialJSONValue } from '@lumino/coreutils';
 
-import {
-  PanelLayout, Widget
-} from '@lumino/widgets';
+import { PanelLayout, Widget } from '@lumino/widgets';
 
-import {
-  IRenderMimeRegistry
-} from '@jupyterlab/rendermime';
+import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
-import {
-   RenderableDiffModel
-} from '../model';
+import { RenderableDiffModel } from '../model';
 
 /**
  * Widget for outputs with renderable MIME data.
  */
-export
-abstract class RenderableDiffView<T extends (JSONValue | PartialJSONValue)> extends Widget {
-  constructor(model: RenderableDiffModel<T>, editorClass: string[],
-              rendermime: IRenderMimeRegistry, mimetype: string) {
-    super();
-    this.rendermime = rendermime;
-    this.model = model;
-    this.mimetype = mimetype;
-    let bdata = model.base;
-    let rdata = model.remote;
-    this.layout = new PanelLayout();
+export abstract class RenderableDiffView<
+	T extends JSONValue | PartialJSONValue,
+> extends Widget {
+	constructor(
+		model: RenderableDiffModel<T>,
+		editorClass: string[],
+		rendermime: IRenderMimeRegistry,
+		mimetype: string,
+	) {
+		super();
+		this.rendermime = rendermime;
+		this.model = model;
+		this.mimetype = mimetype;
+		let bdata = model.base;
+		let rdata = model.remote;
+		this.layout = new PanelLayout();
 
-    let ci = 0;
-    if (bdata) {
-      let widget = this.createSubView(bdata, model.trusted);
-      this.layout.addWidget(widget);
-      widget.addClass(editorClass[ci++]);
-    }
-    if (rdata && rdata !== bdata) {
-      let widget = this.createSubView(rdata, model.trusted);
-      this.layout.addWidget(widget);
-      widget.addClass(editorClass[ci++]);
-    }
-  }
+		let ci = 0;
+		if (bdata) {
+			let widget = this.createSubView(bdata, model.trusted);
+			this.layout.addWidget(widget);
+			widget.addClass(editorClass[ci++]);
+		}
+		if (rdata && rdata !== bdata) {
+			let widget = this.createSubView(rdata, model.trusted);
+			this.layout.addWidget(widget);
+			widget.addClass(editorClass[ci++]);
+		}
+	}
 
-  layout: PanelLayout;
+	layout: PanelLayout;
 
-  mimetype: string;
+	mimetype: string;
 
-  /**
-   * Create a widget which renders the given cell output
-   */
-  protected abstract createSubView(data: T, trusted: boolean): Widget;
+	/**
+	 * Create a widget which renders the given cell output
+	 */
+	protected abstract createSubView(data: T, trusted: boolean): Widget;
 
-  protected rendermime: IRenderMimeRegistry;
+	protected rendermime: IRenderMimeRegistry;
 
-  protected model: RenderableDiffModel<T>;
+	protected model: RenderableDiffModel<T>;
 }

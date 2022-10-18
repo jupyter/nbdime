@@ -4,58 +4,55 @@
 
 import * as nbformat from '@jupyterlab/nbformat';
 
-import {
-  IDiffEntry
-} from '../../diff/diffentries';
+import { IDiffEntry } from '../../diff/diffentries';
 
 import {
-  IStringDiffModel, createPatchStringDiffModel,
-  createDirectStringDiffModel
+	IStringDiffModel,
+	createPatchStringDiffModel,
+	createDirectStringDiffModel,
 } from '../../diff/model';
 
-import {
-  MergeDecision
-} from '../../merge/decisions';
+import { MergeDecision } from '../../merge/decisions';
 
-import {
-    ObjectMergeModel, DecisionStringDiffModel
-} from './common';
+import { ObjectMergeModel, DecisionStringDiffModel } from './common';
 import { JSONObject, JSONExt } from '@lumino/coreutils';
-
 
 /**
  * Model of a merge of metadata with decisions
  */
-export
-class MetadataMergeModel extends ObjectMergeModel<nbformat.INotebookMetadata, IStringDiffModel> {
-  constructor(base: nbformat.INotebookMetadata, decisions: MergeDecision[]) {
-    super(base, decisions, 'application/json');
-  }
+export class MetadataMergeModel extends ObjectMergeModel<
+	nbformat.INotebookMetadata,
+	IStringDiffModel
+> {
+	constructor(base: nbformat.INotebookMetadata, decisions: MergeDecision[]) {
+		super(base, decisions, 'application/json');
+	}
 
-  serialize(): nbformat.INotebookMetadata {
-    if (!this.merged || this.merged.remote === null) {
-      throw new Error('Missing notebook metadata merge data.');
-    }
-    // This will check whether metadata is valid JSON.
-    // Validation of compatibility vs notebook format
-    // will happen on server side.
-    return JSON.parse(this.merged.remote);
-  }
+	serialize(): nbformat.INotebookMetadata {
+		if (!this.merged || this.merged.remote === null) {
+			throw new Error('Missing notebook metadata merge data.');
+		}
+		// This will check whether metadata is valid JSON.
+		// Validation of compatibility vs notebook format
+		// will happen on server side.
+		return JSON.parse(this.merged.remote);
+	}
 
-  protected createDiffModel(diff: IDiffEntry[]): IStringDiffModel {
-    if (diff && diff.length > 0) {
-      return createPatchStringDiffModel(this.base, diff);
-    } else {
-      const baseCopy = JSONExt.deepCopy(this.base) as JSONObject
-      return createDirectStringDiffModel(baseCopy, baseCopy);
-    }
-  }
+	protected createDiffModel(diff: IDiffEntry[]): IStringDiffModel {
+		if (diff && diff.length > 0) {
+			return createPatchStringDiffModel(this.base, diff);
+		} else {
+			const baseCopy = JSONExt.deepCopy(this.base) as JSONObject;
+			return createDirectStringDiffModel(baseCopy, baseCopy);
+		}
+	}
 
-  protected createMergedDiffModel(): IStringDiffModel {
-    return new DecisionStringDiffModel(
-      this.base, this.decisions,
-      [this.local, this.remote]);
-  }
+	protected createMergedDiffModel(): IStringDiffModel {
+		return new DecisionStringDiffModel(this.base, this.decisions, [
+			this.local,
+			this.remote,
+		]);
+	}
 
-  base: nbformat.INotebookMetadata;
+	base: nbformat.INotebookMetadata;
 }

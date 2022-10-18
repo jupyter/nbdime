@@ -1,14 +1,10 @@
 {
-  "extends": "../../tsconfig_base",
-  "compilerOptions": {
-    "noImplicitAny": false,
-    "rootDir": "src",
-    "outDir": "lib"
-  },
-  "references": [
-    { "path": "../nbdime" }
-  ],
-  "include": [
-    "src/**/*.ts",
-  ]
+	"extends": "../../tsconfig_base",
+	"compilerOptions": {
+		"noImplicitAny": false,
+		"rootDir": "src",
+		"outDir": "lib"
+	},
+	"references": [{ "path": "../nbdime" }],
+	"include": ["src/**/*.ts"]
 }

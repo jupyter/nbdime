@@ -1,9 +1,5 @@
-**[Installation](#installation)** |
-**[Documentation](#documentation)** |
-**[Contributing](#contributing)** |
-**[Development Install](#development-install)** |
-**[Testing](#testing)** |
-**[License](#license)** |
+**[Installation](#installation)** | **[Documentation](#documentation)** | **[Contributing](#contributing)** |
+**[Development Install](#development-install)** | **[Testing](#testing)** | **[License](#license)** |
 **[Getting help](#getting-help)**
 
 # [nbdime](https://github.com/jupyter/nbdime) Jupyter Notebook Diff and Merge tools
@@ -35,21 +31,26 @@ Install nbdime with pip:
 
     pip install nbdime
 
-See [the installation docs](https://nbdime.readthedocs.io/en/latest/installing.html) for more installation details and development installation instructions.
+See [the installation docs](https://nbdime.readthedocs.io/en/latest/installing.html) for more installation details and
+development installation instructions.
 
 ## Documentation
 
 See the latest documentation at https://nbdime.readthedocs.io.
 
-See also description and discussion in the [Jupyter Enhancement Proposal](https://github.com/jupyter/enhancement-proposals/pull/8).
+See also description and discussion in the
+[Jupyter Enhancement Proposal](https://github.com/jupyter/enhancement-proposals/pull/8).
 
 ## Contributing
 
-If you would like to contribute to the project, please read our [contributor documentation](http://jupyter.readthedocs.io/en/latest/contributor/content-contributor.html) and the [`CONTRIBUTING.md`](CONTRIBUTING.md).
+If you would like to contribute to the project, please read our
+[contributor documentation](http://jupyter.readthedocs.io/en/latest/contributor/content-contributor.html) and the
+[`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Development Install
 
-To install a development version of nbdime, you will need [pnpm installed](https://pnpm.io/installation) and available on your PATH while installing.
+To install a development version of nbdime, you will need [pnpm installed](https://pnpm.io/installation) and available
+on your PATH while installing.
 
 For a **development install**, follow these steps:
 
@@ -58,14 +59,15 @@ For a **development install**, follow these steps:
    ```bash
    pip install -e git+https://github.com/jupyter/nbdime#egg=nbdime
    ```
-   
-   See [installation](https://nbdime.readthedocs.io/en/latest/installing.html#installing-latest-development-version) documentation for additional detail, particularly related to performing
-   a dev install for working on the browser script code.
+
+   See [installation](https://nbdime.readthedocs.io/en/latest/installing.html#installing-latest-development-version)
+   documentation for additional detail, particularly related to performing a dev install for working on the browser
+   script code.
 
 2. Install dependencies: `pnpm install`
 3. Useful commands;
-    - `pnpm build` — builds all the packages
-    - `pnpm test` — runs the test suites
+   - `pnpm build` — builds all the packages
+   - `pnpm test` — runs the test suites
 
 ## Testing
 
@@ -77,14 +79,14 @@ To run Python tests locally, enter on the command line: `pytest`
 
 To run Javascript tests locally, enter: `pnpm test`
 
-Install the [codecov browser extension](https://github.com/codecov/browser-extension#codecov-extension) to view test coverage in the source browser on github.
+Install the [codecov browser extension](https://github.com/codecov/browser-extension#codecov-extension) to view test
+coverage in the source browser on github.
 
 See [testing](https://nbdime.readthedocs.io/en/latest/testing.html) documentation for additional detail.
 
 ## License
 
-We use a shared copyright model that enables all contributors to maintain the
-copyright on their contributions.
+We use a shared copyright model that enables all contributors to maintain the copyright on their contributions.
 
 All code is licensed under the terms of the revised BSD license.
 
@@ -95,7 +97,9 @@ We encourage you to ask questions on the [mailing list](https://groups.google.co
 ## Resources
 
 - [Reporting Issues](https://github.com/jupyter/nbdime/issues)
-- [Documentation for nbdime](https://nbdime.readthedocs.io/en/latest/) | [PDF (latest)](https://media.readthedocs.org/pdf/nbdime/latest/nbdime.pdf)
+- [Documentation for nbdime](https://nbdime.readthedocs.io/en/latest/) |
+  [PDF (latest)](https://media.readthedocs.org/pdf/nbdime/latest/nbdime.pdf)
 
-- [Documentation for Project Jupyter](https://jupyter.readthedocs.io/en/latest/index.html) | [PDF](https://media.readthedocs.org/pdf/jupyter/latest/jupyter.pdf)
+- [Documentation for Project Jupyter](https://jupyter.readthedocs.io/en/latest/index.html) |
+  [PDF](https://media.readthedocs.org/pdf/jupyter/latest/jupyter.pdf)
 - [Project Jupyter website](https://jupyter.org)

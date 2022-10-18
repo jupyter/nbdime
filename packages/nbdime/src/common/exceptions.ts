@@ -3,36 +3,28 @@
 
 'use strict';
 
-
 /**
  * An error that should be displayed to the user
  */
-export
-class NotifyUserError extends Error {
-  constructor(
-      message: string,
-      severity: NotifyUserError.Severity = 'error') {
-    super(message);
-    // Set the prototype explicitly.
-    (Object as any).setPrototypeOf(this, NotifyUserError.prototype);
-    this.message = message;
-    this.stack = new Error().stack;
-    this.severity = severity;
-  }
+export class NotifyUserError extends Error {
+	constructor(message: string, severity: NotifyUserError.Severity = 'error') {
+		super(message);
+		// Set the prototype explicitly.
+		(Object as any).setPrototypeOf(this, NotifyUserError.prototype);
+		this.message = message;
+		this.stack = new Error().stack;
+		this.severity = severity;
+	}
 
-  severity: NotifyUserError.Severity;
+	severity: NotifyUserError.Severity;
 }
 
-export
-namespace NotifyUserError {
-  /**
-   * Severity of an error.
-   *
-   * Anything less severe that warning shouldn't
-   * use an exception.
-   */
-  export
-  type Severity = 'error' | 'warning';
-
+export namespace NotifyUserError {
+	/**
+	 * Severity of an error.
+	 *
+	 * Anything less severe that warning shouldn't
+	 * use an exception.
+	 */
+	export type Severity = 'error' | 'warning';
 }
-
