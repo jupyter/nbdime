@@ -3,12 +3,12 @@ const path = require('path');
 module.exports = {
 	entry: './src/index.ts',
 	output: {
-		path: path.resolve(__dirname, '..', '..', 'nbdime', 'webapp', 'static'),
+		path: path.join(__dirname, '../../nbdime/webapp/static'),
 		filename: 'nbdime.js',
 		publicPath: './static/',
 	},
 	bail: true,
-	devtool: 'source-map',
+	devtool: 'eval-cheap-module-source-map',
 	module: {
 		rules: [
 			{
@@ -38,69 +38,19 @@ module.exports = {
 				],
 			},
 			{
-				test: /\.js$/,
-				loader: require.resolve('source-map-loader'),
-			},
-			{ test: /\.html$/, loader: require.resolve('file-loader') }, // jquery-ui loads some images
-			{
-				test: /\.(jpg|png|gif)$/,
-				loader: require.resolve('file-loader'),
-			}, // required to load font-awesome
-			{
-				test: /\.woff2(\?v=\d+\.\d+\.\d+)?$/,
-				use: [
-					{
-						loader: require.resolve('url-loader'),
-						options: {
-							limit: 10000,
-							mimetype: 'application/font-woff',
-						},
-					},
-				],
+				test: /\.(html|jpg|png|gif|svg)$/,
+				type: 'asset/resource',
 			},
 			{
-				test: /\.woff(\?v=\d+\.\d+\.\d+)?$/,
-				use: [
-					{
-						loader: require.resolve('url-loader'),
-						options: {
-							limit: 10000,
-							mimetype: 'application/font-woff',
-						},
-					},
-				],
-			},
-			{
-				test: /\.ttf(\?v=\d+\.\d+\.\d+)?$/,
-				use: [
-					{
-						loader: require.resolve('url-loader'),
-						options: {
-							limit: 10000,
-							mimetype: 'application/octet-stream',
-						},
-					},
-				],
-			},
-			{
-				test: /\.eot(\?v=\d+\.\d+\.\d+)?$/,
-				loader: require.resolve('file-loader'),
-			},
-			{
-				test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
-				use: [
-					{
-						loader: require.resolve('url-loader'),
-						options: {
-							limit: 10000,
-							mimetype: 'image/svg+xml',
-						},
-					},
-				],
+				test: /\.((?:woff2?|ttf|eot)(?:\?v=.*)?|)$/,
+				type: 'asset/resource',
 			},
 		],
 	},
+	infrastructureLogging: {
+		level: 'error',
+	},
 	resolve: {
-		extensions: ['.webpack.js', '.web.js', '.ts', '.js'],
+		extensions: ['.ts', '.js', '.json'],
 	},
 };

@@ -4,8 +4,7 @@
 	"license": "BSD-3-Clause",
 	"main": "static/nbdime.js",
 	"scripts": {
-		"build": "webpack -p",
-		"build:dev": "webpack -d",
+		"build": "webpack --mode development",
 		"clean": "rimraf build && rimraf ../../nbdime/webapp/static",
 		"profile": "webpack --profile --json > webpack-stats.json",
 		"watch": "webpack --watch"
@@ -33,16 +32,13 @@
 		"@types/json-stable-stringify": "^1.0.32",
 		"@types/node": "^18.11.0",
 		"@types/sanitizer": "^0.0.28",
-		"css-loader": "^3.0.0",
-		"file-loader": "^4.0.0",
+		"css-loader": "^6.7.1",
+		"file-loader": "^6.2.0",
 		"rimraf": "^2.6.3",
-		"source-map-loader": "^0.2.4",
-		"style-loader": "^0.23.1",
+		"style-loader": "^3.3.1",
 		"swc-loader": "^0.2.3",
 		"typescript": "^3.7.2",
-		"url-loader": "^2.0.1",
-		"webpack": "^4.29.6",
-		"webpack-cli": "^3.2.3"
+		"webpack": "^5.74.0"
 	},
 	"peerDependencies": {
 		"codemirror": "^5.0.0"
