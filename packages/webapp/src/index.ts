@@ -1,67 +1,65 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
-'use strict';
+"use strict";
+
+import { initializeDiff } from "./app/diff";
+
+import { initializeMerge, closeMerge, forceCloseMerge } from "./app/merge";
+
+import { initializeCompare, closeCompare } from "./app/compare";
 
 import {
-  initializeDiff
-} from './app/diff';
+  closeTool,
+  getConfigOption,
+  handleError,
+  toolClosed,
+} from "./app/common";
 
-import {
-  initializeMerge, closeMerge, forceCloseMerge
-} from './app/merge';
+import "@fortawesome/fontawesome-free/css/all.min.css";
+import "@fortawesome/fontawesome-free/css/v4-shims.min.css";
 
-import {
-  initializeCompare, closeCompare
-} from './app/compare';
+import "codemirror/lib/codemirror.css";
+import "@jupyterlab/codemirror/style/index.css";
 
-import {
-  closeTool, getConfigOption, handleError, toolClosed
-} from './app/common';
+import "@jupyterlab/theme-light-extension/style/theme.css";
+import "@jupyterlab/notebook/style/index.css";
 
+import "nbdime/lib/common/collapsible.css";
+import "nbdime/lib/upstreaming/flexpanel.css";
+import "nbdime/lib/common/dragpanel.css";
+import "nbdime/lib/styles/variables.css";
+import "nbdime/lib/styles/common.css";
+import "nbdime/lib/styles/diff.css";
+import "nbdime/lib/styles/merge.css";
 
-import '@fortawesome/fontawesome-free/css/all.min.css';
-import '@fortawesome/fontawesome-free/css/v4-shims.min.css';
-
-import 'codemirror/lib/codemirror.css';
-import '@jupyterlab/codemirror/style/index.css';
-
-import '@jupyterlab/theme-light-extension/style/theme.css';
-import '@jupyterlab/notebook/style/index.css';
-
-import 'nbdime/lib/common/collapsible.css';
-import 'nbdime/lib/upstreaming/flexpanel.css';
-import 'nbdime/lib/common/dragpanel.css';
-import 'nbdime/lib/styles/variables.css';
-import 'nbdime/lib/styles/common.css';
-import 'nbdime/lib/styles/diff.css';
-import 'nbdime/lib/styles/merge.css';
-
-import './app/common.css';
-import './app/diff.css';
-import './app/merge.css';
-
+import "./app/common.css";
+import "./app/diff.css";
+import "./app/merge.css";
 
 /** */
 function initialize() {
-  let closable = getConfigOption('closable');
-  let type: 'diff' | 'merge' | 'compare';
-  if (document.getElementById('compare-local')) {
+  let closable = getConfigOption("closable");
+  let type: "diff" | "merge" | "compare";
+  if (document.getElementById("compare-local")) {
     initializeCompare();
-    type = 'compare';
-  } else if (getConfigOption('local') || document.getElementById('merge-local')) {
+    type = "compare";
+  } else if (
+    getConfigOption("local") ||
+    document.getElementById("merge-local")
+  ) {
     initializeMerge();
-    type = 'merge';
+    type = "merge";
   } else {
     initializeDiff();
-    type = 'diff';
+    type = "diff";
   }
 
-  let closeBtn = document.getElementById('nbdime-close') as HTMLButtonElement;
+  let closeBtn = document.getElementById("nbdime-close") as HTMLButtonElement;
   if (closable) {
-    let close = (ev: Event, unloading=false) => {
-      if (type === 'merge') {
+    let close = (ev: Event, unloading = false) => {
+      if (type === "merge") {
         return closeMerge(ev, unloading);
-      } else if (type === 'compare') {
+      } else if (type === "compare") {
         return closeCompare(ev, unloading);
       } else if (!unloading) {
         return closeTool();
@@ -78,7 +76,7 @@ function initialize() {
 
     window.onunload = (ev: Event) => {
       if (!toolClosed) {
-        if (type === 'merge') {
+        if (type === "merge") {
           forceCloseMerge();
         } else {
           closeTool();
@@ -86,7 +84,7 @@ function initialize() {
       }
     };
 
-    closeBtn.style.display = 'initial';
+    closeBtn.style.display = "initial";
   }
 }
 

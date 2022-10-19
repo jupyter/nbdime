@@ -8,10 +8,12 @@
     "build:dev": "tsc --build",
     "clean": "pnpm run -r clean",
     "test": "pnpm run -r test",
-    "watch": "tsc --build --watch"
+    "watch": "tsc --build --watch",
+    "format": "prettier --write --list-different \"{*,packages/**/*,.github/**/*}.+(ts|tsx|js|json|yml|md)\""
   },
   "devDependencies": {
     "@jupyterlab/buildutils": "^3.0.0",
+    "prettier": "^2.7.1",
     "rimraf": "^2.6.3"
   },
   "volta": {

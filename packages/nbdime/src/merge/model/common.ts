@@ -1,49 +1,36 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
-'use strict';
+"use strict";
 
-import {
-  IDiffEntry
-} from '../../diff/diffentries';
+import { IDiffEntry } from "../../diff/diffentries";
 
-import {
-  DiffRangePos, raw2Pos
-} from '../../diff/range';
+import { DiffRangePos, raw2Pos } from "../../diff/range";
 
-import {
-  StringDiffModel, IStringDiffModel
-} from '../../diff/model';
+import { StringDiffModel, IStringDiffModel } from "../../diff/model";
 
-import {
-  MergeDecision, buildDiffs, applyDecisions
-} from '../decisions';
+import { MergeDecision, buildDiffs, applyDecisions } from "../decisions";
 
-import {
-   LineChunker, Chunk, labelSource
-} from '../../chunking';
+import { LineChunker, Chunk, labelSource } from "../../chunking";
 
-import {
-  patchStringified, stringifyAndBlankNull
-} from '../../patch';
+import { patchStringified, stringifyAndBlankNull } from "../../patch";
 
-import {
-  DeepCopyableObject
-} from '../../common/util';
-
-
+import { DeepCopyableObject } from "../../common/util";
 
 /**
  * A string diff model based on merge decisions.
  */
-export
-class DecisionStringDiffModel extends StringDiffModel {
-  constructor(base: any, decisions: MergeDecision[],
-              sourceModels: (IStringDiffModel | null)[],
-              collapsible?: boolean, header?: string, collapsed?: boolean) {
+export class DecisionStringDiffModel extends StringDiffModel {
+  constructor(
+    base: any,
+    decisions: MergeDecision[],
+    sourceModels: (IStringDiffModel | null)[],
+    collapsible?: boolean,
+    header?: string,
+    collapsed?: boolean
+  ) {
     // Set up initial parameters for super call
     let baseStr = stringifyAndBlankNull(base);
-    super(baseStr, '', [], [],
-      collapsible, header, collapsed);
+    super(baseStr, "", [], [], collapsible, header, collapsed);
     this.rawBase = base;
     this.decisions = decisions;
     this._outdated = true;
@@ -109,7 +96,7 @@ class DecisionStringDiffModel extends StringDiffModel {
         chunker.addDiff(v.range, v.isAddition);
       } else {
         // Skip ops in other models that are not no-ops
-        if (!v.range.source || v.range.source.decision.action !== 'base') {
+        if (!v.range.source || v.range.source.decision.action !== "base") {
           continue;
         }
         // Other model
@@ -121,10 +108,10 @@ class DecisionStringDiffModel extends StringDiffModel {
 
   protected _update(): void {
     this._outdated = false;
-    let diff = buildDiffs(this.rawBase, this.decisions, 'merged');
+    let diff = buildDiffs(this.rawBase, this.decisions, "merged");
     let out = patchStringified(this.rawBase, diff);
     this._additions = raw2Pos(out.additions, out.remote);
-    this._deletions = raw2Pos(out.deletions, this.base || '');
+    this._deletions = raw2Pos(out.deletions, this.base || "");
     this._remote = out.remote;
   }
 
@@ -135,7 +122,6 @@ class DecisionStringDiffModel extends StringDiffModel {
   protected _sourceModels: (IStringDiffModel | null)[];
 }
 
-
 /**
  * Abstract base class for a merge model of objects of the type ObjectType,
  * which uses DiffModelType to model each side internally.
@@ -143,9 +129,10 @@ class DecisionStringDiffModel extends StringDiffModel {
  * Implementors need to define the abstract functions createDiffModel and
  * createMergedDiffModel.
  */
-export
-abstract class ObjectMergeModel<ObjectType extends DeepCopyableObject, DiffModelType> {
-
+export abstract class ObjectMergeModel<
+  ObjectType extends DeepCopyableObject,
+  DiffModelType
+> {
   /**
    * Create a diff model of the correct type given the diff (which might be
    * null)
@@ -160,8 +147,12 @@ abstract class ObjectMergeModel<ObjectType extends DeepCopyableObject, DiffModel
   /**
    *
    */
-  constructor(base: ObjectType | null, decisions: MergeDecision[], mimetype: string,
-              whitelist?: string[]) {
+  constructor(
+    base: ObjectType | null,
+    decisions: MergeDecision[],
+    mimetype: string,
+    whitelist?: string[]
+  ) {
     this.base = base;
     this.mimetype = mimetype;
     this._whitelist = whitelist || null;
@@ -201,7 +192,7 @@ abstract class ObjectMergeModel<ObjectType extends DeepCopyableObject, DiffModel
     if (this._local === undefined) {
       // We're builiding from decisions
       this._finalizeDecisions();
-      let diff = buildDiffs(this.base, this.decisions, 'local');
+      let diff = buildDiffs(this.base, this.decisions, "local");
       this._local = this.createDiffModel(diff);
     }
     return this._local;
@@ -213,7 +204,7 @@ abstract class ObjectMergeModel<ObjectType extends DeepCopyableObject, DiffModel
   get remote(): DiffModelType | null {
     if (this._remote === undefined) {
       this._finalizeDecisions();
-      let diff = buildDiffs(this.base, this.decisions, 'remote');
+      let diff = buildDiffs(this.base, this.decisions, "remote");
       this._remote = this.createDiffModel(diff);
     }
     return this._remote;
@@ -247,14 +238,14 @@ abstract class ObjectMergeModel<ObjectType extends DeepCopyableObject, DiffModel
   protected _finalizeDecisions(): void {
     if (!this._finalized) {
       for (let md of this.decisions) {
-        if (md.action === 'either') {
-          labelSource(md.localDiff, {decision: md, action: 'either'});
-          labelSource(md.remoteDiff, {decision: md, action: 'either'});
+        if (md.action === "either") {
+          labelSource(md.localDiff, { decision: md, action: "either" });
+          labelSource(md.remoteDiff, { decision: md, action: "either" });
         } else {
-          labelSource(md.localDiff, {decision: md, action: 'local'});
-          labelSource(md.remoteDiff, {decision: md, action: 'remote'});
+          labelSource(md.localDiff, { decision: md, action: "local" });
+          labelSource(md.remoteDiff, { decision: md, action: "remote" });
         }
-        labelSource(md.customDiff, {decision: md, action: 'custom'});
+        labelSource(md.customDiff, { decision: md, action: "custom" });
       }
       this._finalized = true;
     }

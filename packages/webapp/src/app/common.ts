@@ -1,42 +1,30 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
-'use strict';
+"use strict";
 
-import * as alertify from 'alertify.js';
+import * as alertify from "alertify.js";
 
-import {
-  URLExt
-} from '@jupyterlab/coreutils/lib/url';
+import { URLExt } from "@jupyterlab/coreutils/lib/url";
 
-import {
-  Widget
-} from '@lumino/widgets';
+import { Widget } from "@lumino/widgets";
+
+import { NotifyUserError } from "nbdime/lib/common/exceptions";
 
 import {
-  NotifyUserError
-} from 'nbdime/lib/common/exceptions';
+  UNCHANGED_DIFF_CLASS,
+  CHUNK_PANEL_CLASS,
+} from "nbdime/lib/diff/widget/common";
 
-import {
-  UNCHANGED_DIFF_CLASS, CHUNK_PANEL_CLASS
-} from 'nbdime/lib/diff/widget/common';
+import { UNCHANGED_MERGE_CLASS } from "nbdime/lib/merge/widget/common";
 
-import {
-  UNCHANGED_MERGE_CLASS
-} from 'nbdime/lib/merge/widget/common';
+import { CELLDIFF_CLASS } from "nbdime/lib/diff/widget";
 
-import {
-  CELLDIFF_CLASS
-} from 'nbdime/lib/diff/widget';
-
-import {
-  CELLMERGE_CLASS
-} from 'nbdime/lib/merge/widget';
-
+import { CELLMERGE_CLASS } from "nbdime/lib/merge/widget";
 
 /**
  * DOM class for whether or not to hide unchanged cells
  */
-const HIDE_UNCHANGED_CLASS = 'jp-mod-hideUnchanged';
+const HIDE_UNCHANGED_CLASS = "jp-mod-hideUnchanged";
 
 /**
  * Global config data for the Nbdime application.
@@ -50,13 +38,12 @@ alertify.delay(0).closeLogOnClick(true);
  *  Make an object fully immutable by freezing each object in it.
  */
 function deepFreeze(obj: any): any {
-
   // Freeze properties before freezing self
-  Object.getOwnPropertyNames(obj).forEach(function(name) {
+  Object.getOwnPropertyNames(obj).forEach(function (name) {
     let prop = obj[name];
 
     // Freeze prop if it is an object
-    if (typeof prop === 'object' && prop !== null && !Object.isFrozen(prop)) {
+    if (typeof prop === "object" && prop !== null && !Object.isFrozen(prop)) {
       deepFreeze(prop);
     }
   });
@@ -68,8 +55,7 @@ function deepFreeze(obj: any): any {
 /**
  * Retrive a config option
  */
-export
-function getConfigOption(name: string, defaultValue?: any): any {
+export function getConfigOption(name: string, defaultValue?: any): any {
   if (configData) {
     let ret = configData[name];
     if (ret === undefined) {
@@ -77,8 +63,8 @@ function getConfigOption(name: string, defaultValue?: any): any {
     }
     return ret;
   }
-  if (typeof document !== 'undefined') {
-    let el = document.getElementById('nbdime-config-data');
+  if (typeof document !== "undefined") {
+    let el = document.getElementById("nbdime-config-data");
     if (el && el.textContent) {
       configData = JSON.parse(el.textContent);
     } else {
@@ -96,25 +82,23 @@ function getConfigOption(name: string, defaultValue?: any): any {
 /**
  * Get the base url.
  */
-export
-function getBaseUrl(): string {
-  return URLExt.join(window.location.origin, getConfigOption('baseUrl'));
+export function getBaseUrl(): string {
+  return URLExt.join(window.location.origin, getConfigOption("baseUrl"));
 }
 
-const spinner = document.createElement('div');
-spinner.className = 'nbdime-spinner';
+const spinner = document.createElement("div");
+spinner.className = "nbdime-spinner";
 /**
  * Turn spinner (loading indicator) on/off
  */
-export
-function toggleSpinner(state?: boolean) {
-  let header = document.getElementById('nbdime-header-buttonrow')!;
+export function toggleSpinner(state?: boolean) {
+  let header = document.getElementById("nbdime-header-buttonrow")!;
   // Figure out current state
   let current = header.contains(spinner);
   if (state === undefined) {
     state = !current;
   } else if (state === current) {
-    return;  // Nothing to do
+    return; // Nothing to do
   }
   if (state) {
     header.appendChild(spinner);
@@ -123,15 +107,16 @@ function toggleSpinner(state?: boolean) {
   }
 }
 
-
 /**
  * Toggle whether to show or hide unchanged cells.
  *
  * This simply marks with a class, real work is done by CSS.
  */
-export
-function toggleShowUnchanged(show?: boolean, updateWidget?: Widget | null) {
-  let root = document.getElementById('nbdime-root')!;
+export function toggleShowUnchanged(
+  show?: boolean,
+  updateWidget?: Widget | null
+) {
+  let root = document.getElementById("nbdime-root")!;
   let hiding = root.classList.contains(HIDE_UNCHANGED_CLASS);
   if (show === undefined) {
     show = hiding;
@@ -150,7 +135,6 @@ function toggleShowUnchanged(show?: boolean, updateWidget?: Widget | null) {
   }
 }
 
-
 /**
  * Gets the chunk element of an added/removed cell, or the cell element for others
  * @param cellElement
@@ -166,25 +150,30 @@ function getChunkElement(cellElement: Element): Element {
   return cellElement;
 }
 
-
 /**
  * Marks certain cells with
  */
-export
-function markUnchangedRanges() {
-  let root = document.getElementById('nbdime-root')!;
-  let children = root.querySelectorAll(`.${CELLDIFF_CLASS}, .${CELLMERGE_CLASS}`);
+export function markUnchangedRanges() {
+  let root = document.getElementById("nbdime-root")!;
+  let children = root.querySelectorAll(
+    `.${CELLDIFF_CLASS}, .${CELLMERGE_CLASS}`
+  );
   let rangeStart = -1;
-  for (let i=0; i < children.length; ++i) {
+  for (let i = 0; i < children.length; ++i) {
     let child = children[i];
-    if (!child.classList.contains(UNCHANGED_DIFF_CLASS) &&
-        !child.classList.contains(UNCHANGED_MERGE_CLASS)) {
+    if (
+      !child.classList.contains(UNCHANGED_DIFF_CLASS) &&
+      !child.classList.contains(UNCHANGED_MERGE_CLASS)
+    ) {
       // Visible
       if (rangeStart !== -1) {
         // Previous was hidden
         let N = i - rangeStart;
         // Set attribute on element / chunk element as appropriate
-        getChunkElement(child).setAttribute('data-nbdime-NCellsHiddenBefore', N.toString());
+        getChunkElement(child).setAttribute(
+          "data-nbdime-NCellsHiddenBefore",
+          N.toString()
+        );
         rangeStart = -1;
       }
     } else if (rangeStart === -1) {
@@ -198,16 +187,19 @@ function markUnchangedRanges() {
     if (rangeStart === 0) {
       // All elements were hidden, nothing to mark
       // Add info on root instead
-      let tag = root.querySelector('.jp-Notebook-diff, .jp-Notebook-merge') || root;
-      tag.setAttribute('data-nbdime-AllCellsHidden', N.toString());
+      let tag =
+        root.querySelector(".jp-Notebook-diff, .jp-Notebook-merge") || root;
+      tag.setAttribute("data-nbdime-AllCellsHidden", N.toString());
       return;
     }
     let lastVisible = children[rangeStart - 1];
     // Set attribute on element / chunk element as appropriate
-    getChunkElement(lastVisible).setAttribute('data-nbdime-NCellsHiddenAfter', N.toString());
+    getChunkElement(lastVisible).setAttribute(
+      "data-nbdime-NCellsHiddenAfter",
+      N.toString()
+    );
   }
 }
-
 
 export let toolClosed = false;
 /**
@@ -217,41 +209,49 @@ export let toolClosed = false;
  * Used to indicate that the tool has finished its operation, and that the tool
  * should return to its caller.
  */
-export
-function closeTool(exitCode=0) {
+export function closeTool(exitCode = 0) {
   if (!toolClosed) {
     toolClosed = true;
-    let url = '/api/closetool';
-    navigator.sendBeacon(url, JSON.stringify({exitCode}));
+    let url = "/api/closetool";
+    navigator.sendBeacon(url, JSON.stringify({ exitCode }));
     window.close();
   }
 }
 
-
-function showError(error: NotifyUserError, url: string, line: number, column: number) {
-  let message = error.message.replace('\n', '</br>');
+function showError(
+  error: NotifyUserError,
+  url: string,
+  line: number,
+  column: number
+) {
+  let message = error.message.replace("\n", "</br>");
   switch (error.severity) {
-  case 'warning':
-    alertify.log(message);
-    break;
-  case 'error':
-    alertify.error(message);
-    break;
-  default:
-    alertify.error(message);
+    case "warning":
+      alertify.log(message);
+      break;
+    case "error":
+      alertify.error(message);
+      break;
+    default:
+      alertify.error(message);
   }
 }
 
-export
-function handleError(msg: string, url: string, line: number, col?: number, error?: Error): boolean {
+export function handleError(
+  msg: string,
+  url: string,
+  line: number,
+  col?: number,
+  error?: Error
+): boolean {
   try {
     if (error instanceof NotifyUserError) {
       showError(error, url, line, col || 0);
-      return false;  // Suppress error alert
+      return false; // Suppress error alert
     }
   } catch (e) {
     // Not something that user should care about
     console.log(e.stack);
   }
-  return false;  // Do not suppress default error alert
+  return false; // Do not suppress default error alert
 }

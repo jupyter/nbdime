@@ -1,26 +1,23 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
-'use strict';
+"use strict";
 
-import {
-  Widget, Panel
-} from '@lumino/widgets';
+import { Widget, Panel } from "@lumino/widgets";
 
-const COLLAPSIBLE_CLASS = 'jp-CollapsiblePanel';
-const COLLAPSIBLE_HEADER = 'jp-CollapsiblePanel-header';
-const COLLAPSIBLE_HEADER_ICON = 'jp-CollapsiblePanel-header-icon';
-const COLLAPSIBLE_HEADER_ICON_OPEN = 'jp-CollapsiblePanel-header-icon-opened';
-const COLLAPSIBLE_HEADER_ICON_CLOSED = 'jp-CollapsiblePanel-header-icon-closed';
-const COLLAPSIBLE_SLIDER = 'jp-CollapsiblePanel-slider';
-const COLLAPSIBLE_OPEN = 'jp-CollapsiblePanel-opened';
-const COLLAPSIBLE_CLOSED = 'jp-CollapsiblePanel-closed';
-const COLLAPSIBLE_CONTAINER = 'jp-CollapsiblePanel-container';
+const COLLAPSIBLE_CLASS = "jp-CollapsiblePanel";
+const COLLAPSIBLE_HEADER = "jp-CollapsiblePanel-header";
+const COLLAPSIBLE_HEADER_ICON = "jp-CollapsiblePanel-header-icon";
+const COLLAPSIBLE_HEADER_ICON_OPEN = "jp-CollapsiblePanel-header-icon-opened";
+const COLLAPSIBLE_HEADER_ICON_CLOSED = "jp-CollapsiblePanel-header-icon-closed";
+const COLLAPSIBLE_SLIDER = "jp-CollapsiblePanel-slider";
+const COLLAPSIBLE_OPEN = "jp-CollapsiblePanel-opened";
+const COLLAPSIBLE_CLOSED = "jp-CollapsiblePanel-closed";
+const COLLAPSIBLE_CONTAINER = "jp-CollapsiblePanel-container";
 
 /**
  * CollapsiblePanel
  */
-export
-class CollapsiblePanel extends Panel {
+export class CollapsiblePanel extends Panel {
   static createHeader(headerTitle?: string): Panel {
     let header = new Panel();
     header.addClass(COLLAPSIBLE_HEADER);
@@ -29,7 +26,7 @@ class CollapsiblePanel extends Panel {
       header.node.innerText = headerTitle;
       // header.appendChild(title);
     }
-    let button = document.createElement('button');
+    let button = document.createElement("button");
     button.className = COLLAPSIBLE_HEADER_ICON;
     header.node.appendChild(button);
 
@@ -44,7 +41,8 @@ class CollapsiblePanel extends Panel {
     let header = constructor.createHeader(headerTitle);
     this.header = header;
     this.button = header.node.getElementsByClassName(
-      COLLAPSIBLE_HEADER_ICON)[0] as HTMLElement;
+      COLLAPSIBLE_HEADER_ICON
+    )[0] as HTMLElement;
     header.node.onclick = this.toggleCollapsed.bind(this);
     this.addWidget(header);
     this.container = new Panel();
@@ -56,18 +54,17 @@ class CollapsiblePanel extends Panel {
     this.addWidget(this.container);
 
     this.slider.addClass(
-      collapsed === true ?
-      COLLAPSIBLE_CLOSED :
-      COLLAPSIBLE_OPEN);
+      collapsed === true ? COLLAPSIBLE_CLOSED : COLLAPSIBLE_OPEN
+    );
     this.button.classList.add(
-      collapsed === true ?
-      COLLAPSIBLE_HEADER_ICON_CLOSED :
-      COLLAPSIBLE_HEADER_ICON_OPEN);
+      collapsed === true
+        ? COLLAPSIBLE_HEADER_ICON_CLOSED
+        : COLLAPSIBLE_HEADER_ICON_OPEN
+    );
     this.button.classList.add("fa");
     this.button.classList.add(
-      collapsed === true ?
-      "fa-caret-down" :
-      "fa-caret-up");
+      collapsed === true ? "fa-caret-down" : "fa-caret-up"
+    );
   }
 
   toggleCollapsed(): void {
@@ -80,7 +77,6 @@ class CollapsiblePanel extends Panel {
       button.classList.add(COLLAPSIBLE_HEADER_ICON_OPEN);
       this.button.classList.remove("fa-caret-down");
       this.button.classList.add("fa-caret-up");
-
     } else {
       slider.removeClass(COLLAPSIBLE_OPEN);
       slider.addClass(COLLAPSIBLE_CLOSED);

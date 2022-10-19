@@ -1,29 +1,22 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
-'use strict';
+"use strict";
 
-import * as nbformat from '@jupyterlab/nbformat';
+import * as nbformat from "@jupyterlab/nbformat";
 
-import {
-  NotifyUserError
-} from '../../common/exceptions';
+import { NotifyUserError } from "../../common/exceptions";
 
-import {
-  IDiffArrayEntry
-} from '../diffentries';
+import { IDiffArrayEntry } from "../diffentries";
 
-import {
-  RenderableDiffModel
-} from './renderable';
+import { RenderableDiffModel } from "./renderable";
 
-import {
-  IStringDiffModel
-} from './string';
+import { IStringDiffModel } from "./string";
 
-
-const TEXT_MIMETYPES = ['text/plain', 'application/vnd.jupyter.stdout',
-                        'application/vnd.jupyter.stderr'];
-
+const TEXT_MIMETYPES = [
+  "text/plain",
+  "application/vnd.jupyter.stdout",
+  "application/vnd.jupyter.stderr",
+];
 
 /**
  * Diff model for single cell output entries.
@@ -32,9 +25,7 @@ const TEXT_MIMETYPES = ['text/plain', 'application/vnd.jupyter.stdout',
  * takes an optional argument `key` which specifies a subpath of the IOutput to
  * make the model from.
  */
-export
-class OutputDiffModel extends RenderableDiffModel<nbformat.IOutput> {
-
+export class OutputDiffModel extends RenderableDiffModel<nbformat.IOutput> {
   /**
    * Checks whether the given mimetype is present in the output's mimebundle.
    * If so, it returns the path/key to that mimetype's data. If not present,
@@ -44,15 +35,17 @@ class OutputDiffModel extends RenderableDiffModel<nbformat.IOutput> {
    */
   hasMimeType(mimetype: string): string | string[] | null {
     let outputs = this.base || this.remote!;
-    if (nbformat.isStream(outputs) &&
-        TEXT_MIMETYPES.indexOf(mimetype) !== -1) {
-      return 'text';
+    if (nbformat.isStream(outputs) && TEXT_MIMETYPES.indexOf(mimetype) !== -1) {
+      return "text";
     } else if (nbformat.isError(outputs)) {
-      return 'traceback';
-    } else if (nbformat.isExecuteResult(outputs) || nbformat.isDisplayData(outputs)) {
+      return "traceback";
+    } else if (
+      nbformat.isExecuteResult(outputs) ||
+      nbformat.isDisplayData(outputs)
+    ) {
       let data = outputs.data;
       if (mimetype in data) {
-        return ['data', mimetype];
+        return ["data", mimetype];
       }
     }
     return null;
@@ -66,16 +59,21 @@ class OutputDiffModel extends RenderableDiffModel<nbformat.IOutput> {
    *
    * See also: hasMimeType
    */
-  innerMimeType(key: string | string[]) : string {
+  innerMimeType(key: string | string[]): string {
     let t = (this.base || this.remote!).output_type;
-    if (t === 'stream' && key === 'text' || t === 'error' && key === 'traceback') {
+    if (
+      (t === "stream" && key === "text") ||
+      (t === "error" && key === "traceback")
+    ) {
       // TODO: 'application/vnd.jupyter.console-text'?
-      return 'text/plain';
-    } else if ((t === 'execute_result' || t === 'display_data') &&
-          Array.isArray(key)) {
+      return "text/plain";
+    } else if (
+      (t === "execute_result" || t === "display_data") &&
+      Array.isArray(key)
+    ) {
       return key[1];
     }
-    throw new NotifyUserError('Unknown MIME type for key: ' + key);
+    throw new NotifyUserError("Unknown MIME type for key: " + key);
   }
 
   /**
@@ -83,15 +81,14 @@ class OutputDiffModel extends RenderableDiffModel<nbformat.IOutput> {
    * takes an optional argument `key` which specifies a subpath of the IOutput to
    * make the model from.
    */
-  stringify(key?: string | string[]) : IStringDiffModel {
+  stringify(key?: string | string[]): IStringDiffModel {
     let model = super.stringify(key);
     if (key) {
-       model.mimetype = this.innerMimeType(key);
+      model.mimetype = this.innerMimeType(key);
     }
     return model;
   }
 }
-
 
 /**
  * Function used to create a list of models for a list diff
@@ -105,14 +102,15 @@ class OutputDiffModel extends RenderableDiffModel<nbformat.IOutput> {
  * - If remote is null, it returns a list of models representing
  *   deleted entries.
  */
-export
-function makeOutputModels(base: nbformat.IOutput[] | null,
-                          remote: nbformat.IOutput[] | null,
-                          diff?: IDiffArrayEntry[] | null) : OutputDiffModel[] {
+export function makeOutputModels(
+  base: nbformat.IOutput[] | null,
+  remote: nbformat.IOutput[] | null,
+  diff?: IDiffArrayEntry[] | null
+): OutputDiffModel[] {
   let models: OutputDiffModel[] = [];
   if (remote === null && !diff) {
     if (base === null) {
-      throw new Error('Either base or remote need to be specififed!');
+      throw new Error("Either base or remote need to be specififed!");
     }
     // Cell deleted
     for (let o of base) {
@@ -120,7 +118,7 @@ function makeOutputModels(base: nbformat.IOutput[] | null,
     }
   } else if (base === null) {
     if (remote === null) {
-      throw new Error('Either base or remote need to be specififed!');
+      throw new Error("Either base or remote need to be specififed!");
     }
     // Cell added
     for (let o of remote) {
@@ -141,26 +139,25 @@ function makeOutputModels(base: nbformat.IOutput[] | null,
         // Add unchanged entries
         models.push(new OutputDiffModel(o, o));
       }
-      if (d.op === 'addrange') {
+      if (d.op === "addrange") {
         // Entries added
         for (let o of d.valuelist) {
           models.push(new OutputDiffModel(null, o));
         }
         skip = 0;
-      } else if (d.op === 'removerange') {
+      } else if (d.op === "removerange") {
         // Entries removed
         let len = d.length;
         for (let i = index; i < index + len; i++) {
           models.push(new OutputDiffModel(base[i], null));
         }
         skip = len;
-      } else if (d.op === 'patch') {
+      } else if (d.op === "patch") {
         // Entry changed
-        models.push(new OutputDiffModel(
-          base[index], null, d.diff));
+        models.push(new OutputDiffModel(base[index], null, d.diff));
         skip = 1;
       } else {
-        throw new Error('Invalid diff operation: ' + d);
+        throw new Error("Invalid diff operation: " + d);
       }
       consumed = Math.max(consumed, index + skip);
     }
@@ -169,7 +166,7 @@ function makeOutputModels(base: nbformat.IOutput[] | null,
       models.push(new OutputDiffModel(o, o));
     }
   } else {
-    throw new Error('Invalid arguments to makeOutputModels()');
+    throw new Error("Invalid arguments to makeOutputModels()");
   }
   return models;
 }

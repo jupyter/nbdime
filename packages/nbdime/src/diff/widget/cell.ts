@@ -1,77 +1,67 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
-'use strict';
+"use strict";
+
+import { Panel, Widget } from "@lumino/widgets";
+
+import { IRenderMimeRegistry, MimeModel } from "@jupyterlab/rendermime";
+
+import { FlexPanel } from "../../upstreaming/flexpanel";
+
+import { CollapsiblePanel } from "../../common/collapsiblepanel";
+
+import { createNbdimeMergeView } from "../../common/mergeview";
+
+import { hasEntries } from "../../common/util";
 
 import {
-  Panel, Widget
-} from '@lumino/widgets';
+  CellDiffModel,
+  IDiffModel,
+  StringDiffModel,
+  OutputDiffModel,
+  ImmutableDiffModel,
+} from "../model";
 
 import {
-  IRenderMimeRegistry, MimeModel
-} from '@jupyterlab/rendermime';
+  DIFF_CLASSES,
+  ADDED_DIFF_CLASS,
+  DELETED_DIFF_CLASS,
+  TWOWAY_DIFF_CLASS,
+  UNCHANGED_DIFF_CLASS,
+  CHUNK_PANEL_CLASS,
+  ADDED_CHUNK_PANEL_CLASS,
+  REMOVED_CHUNK_PANEL_CLASS,
+  ADD_DEL_LABEL_CLASS,
+} from "./common";
 
-import {
-  FlexPanel
-} from '../../upstreaming/flexpanel';
-
-import {
-  CollapsiblePanel
-} from '../../common/collapsiblepanel';
-
-import {
-  createNbdimeMergeView
-} from '../../common/mergeview';
-
-import {
-  hasEntries
-} from '../../common/util';
-
-import {
-  CellDiffModel, IDiffModel, StringDiffModel, OutputDiffModel,
-  ImmutableDiffModel
-} from '../model';
-
-import {
-  DIFF_CLASSES, ADDED_DIFF_CLASS, DELETED_DIFF_CLASS,
-  TWOWAY_DIFF_CLASS, UNCHANGED_DIFF_CLASS, CHUNK_PANEL_CLASS,
-  ADDED_CHUNK_PANEL_CLASS, REMOVED_CHUNK_PANEL_CLASS,
-  ADD_DEL_LABEL_CLASS
-} from './common';
-
-import {
-  OutputPanel
-} from './output';
-
+import { OutputPanel } from "./output";
 
 /**
  * The class name added to the prompt area of cell.
  */
-const PROMPT_CLASS = 'jp-InputPrompt';
+const PROMPT_CLASS = "jp-InputPrompt";
 
+export const CELLDIFF_CLASS = "jp-Cell-diff";
 
-export
-const CELLDIFF_CLASS = 'jp-Cell-diff';
+export const OUTPUTS_DIFF_CLASS = "jp-Diff-outputsContainer";
 
-export
-const OUTPUTS_DIFF_CLASS = 'jp-Diff-outputsContainer';
-
-const EXECUTIONCOUNT_ROW_CLASS = 'jp-Cellrow-executionCount';
-const SOURCE_ROW_CLASS = 'jp-Cellrow-source';
-const METADATA_ROW_CLASS = 'jp-Cellrow-metadata';
-const OUTPUTS_ROW_CLASS = 'jp-Cellrow-outputs';
-
-
+const EXECUTIONCOUNT_ROW_CLASS = "jp-Cellrow-executionCount";
+const SOURCE_ROW_CLASS = "jp-Cellrow-source";
+const METADATA_ROW_CLASS = "jp-Cellrow-metadata";
+const OUTPUTS_ROW_CLASS = "jp-Cellrow-outputs";
 
 /**
  * CellDiffWidget for cell changes
  */
-export
-class CellDiffWidget extends Panel {
+export class CellDiffWidget extends Panel {
   /**
    *
    */
-  constructor(model: CellDiffModel, rendermime: IRenderMimeRegistry,
-              mimetype: string) {
+  constructor(
+    model: CellDiffModel,
+    rendermime: IRenderMimeRegistry,
+    mimetype: string
+  ) {
     super();
     this.addClass(CELLDIFF_CLASS);
     this._model = model;
@@ -85,7 +75,7 @@ class CellDiffWidget extends Panel {
     let model = this.model;
 
     // Add 'cell added/deleted' notifiers, as appropriate
-    let CURR_DIFF_CLASSES = DIFF_CLASSES.slice();  // copy
+    let CURR_DIFF_CLASSES = DIFF_CLASSES.slice(); // copy
     if (model.added) {
       this.addClass(ADDED_DIFF_CLASS);
       CURR_DIFF_CLASSES = DIFF_CLASSES.slice(1, 2);
@@ -100,17 +90,27 @@ class CellDiffWidget extends Panel {
 
     // Add inputs and outputs, on a row-by-row basis
     let sourceView = CellDiffWidget.createView(
-      model.source, model, CURR_DIFF_CLASSES, this._rendermime);
+      model.source,
+      model,
+      CURR_DIFF_CLASSES,
+      this._rendermime
+    );
     sourceView.addClass(SOURCE_ROW_CLASS);
     if (model.executionCount) {
-      sourceView.insertWidget(0, CellDiffWidget.createPrompts(
-        model.executionCount, model));
+      sourceView.insertWidget(
+        0,
+        CellDiffWidget.createPrompts(model.executionCount, model)
+      );
     }
     this.addWidget(sourceView);
 
     if (!model.metadata.unchanged) {
       let metadataView = CellDiffWidget.createView(
-        model.metadata, model, CURR_DIFF_CLASSES, this._rendermime);
+        model.metadata,
+        model,
+        CURR_DIFF_CLASSES,
+        this._rendermime
+      );
       metadataView.addClass(METADATA_ROW_CLASS);
       this.addWidget(metadataView);
     }
@@ -123,7 +123,11 @@ class CellDiffWidget extends Panel {
         if (chunk.length === 1) {
           let o = chunk[0];
           let outputsWidget = CellDiffWidget.createView(
-            o, model, CURR_DIFF_CLASSES, this._rendermime);
+            o,
+            model,
+            CURR_DIFF_CLASSES,
+            this._rendermime
+          );
           container.addWidget(outputsWidget);
           changed = changed || !o.unchanged || o.added || o.deleted;
         } else {
@@ -137,7 +141,11 @@ class CellDiffWidget extends Panel {
           for (let o of chunk) {
             let target = o.deleted ? removedPanel : addedPanel;
             let outputsWidget = CellDiffWidget.createView(
-              o, model, CURR_DIFF_CLASSES, this._rendermime);
+              o,
+              model,
+              CURR_DIFF_CLASSES,
+              this._rendermime
+            );
             target.addWidget(outputsWidget);
             changed = changed || !o.unchanged || o.added || o.deleted;
           }
@@ -151,7 +159,7 @@ class CellDiffWidget extends Panel {
         this.addWidget(container);
       } else {
         let collapsed = !changed;
-        let header = changed ? 'Outputs changed' : 'Outputs unchanged';
+        let header = changed ? "Outputs changed" : "Outputs unchanged";
         let collapser = new CollapsiblePanel(container, header, collapsed);
         collapser.addClass(OUTPUTS_ROW_CLASS);
         this.addWidget(collapser);
@@ -159,19 +167,22 @@ class CellDiffWidget extends Panel {
     }
   }
 
-  static createPrompts(model: ImmutableDiffModel, parent: CellDiffModel): Panel {
+  static createPrompts(
+    model: ImmutableDiffModel,
+    parent: CellDiffModel
+  ): Panel {
     let prompts: string[] = [];
     if (!parent.added) {
       let base = model.base as number | null;
-      let baseStr = `In [${base || ' '}]:`;
+      let baseStr = `In [${base || " "}]:`;
       prompts.push(baseStr);
     }
     if (!parent.unchanged && !parent.deleted) {
       let remote = model.remote as number | null;
-      let remoteStr = `In [${remote || ' '}]:`;
+      let remoteStr = `In [${remote || " "}]:`;
       prompts.push(remoteStr);
     }
-    let container = new FlexPanel({direction: 'left-to-right'});
+    let container = new FlexPanel({ direction: "left-to-right" });
     for (let text of prompts) {
       let w = new Widget();
       w.node.innerText = text;
@@ -186,17 +197,22 @@ class CellDiffWidget extends Panel {
   /**
    * Create a new sub-view.
    */
-  static
-  createView(model: IDiffModel, parent: CellDiffModel,
-             editorClasses: string[], rendermime: IRenderMimeRegistry): Panel {
+  static createView(
+    model: IDiffModel,
+    parent: CellDiffModel,
+    editorClasses: string[],
+    rendermime: IRenderMimeRegistry
+  ): Panel {
     let view: Panel;
     if (model instanceof StringDiffModel) {
       let inner: Widget | null = null;
-      if (model.unchanged && parent.cellType === 'markdown') {
-        let mimeModel = new MimeModel({ data: {'text/markdown': model.base!} });
-        let mimeType = rendermime.preferredMimeType(mimeModel.data, 'ensure');
+      if (model.unchanged && parent.cellType === "markdown") {
+        let mimeModel = new MimeModel({
+          data: { "text/markdown": model.base! },
+        });
+        let mimeType = rendermime.preferredMimeType(mimeModel.data, "ensure");
         if (!mimeType) {
-          throw new Error('No renderer for output');
+          throw new Error("No renderer for output");
         }
         let renderer = rendermime.createRenderer(mimeType);
         renderer.renderModel(mimeModel);
@@ -206,7 +222,10 @@ class CellDiffWidget extends Panel {
       }
       if (model.collapsible) {
         view = new CollapsiblePanel(
-            inner, model.collapsibleHeader, model.startCollapsed);
+          inner,
+          model.collapsibleHeader,
+          model.startCollapsed
+        );
       } else {
         view = new Panel();
         view.addWidget(inner);
@@ -223,11 +242,10 @@ class CellDiffWidget extends Panel {
         view.addClass(TWOWAY_DIFF_CLASS);
       }
     } else {
-      throw new Error('Unrecognized model type.');
+      throw new Error("Unrecognized model type.");
     }
     return view;
   }
-
 
   mimetype: string;
 

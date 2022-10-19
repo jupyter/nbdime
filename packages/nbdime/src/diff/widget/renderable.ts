@@ -1,30 +1,27 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
-'use strict';
+"use strict";
 
-import {
-  JSONValue, PartialJSONValue
-} from '@lumino/coreutils';
+import { JSONValue, PartialJSONValue } from "@lumino/coreutils";
 
-import {
-  PanelLayout, Widget
-} from '@lumino/widgets';
+import { PanelLayout, Widget } from "@lumino/widgets";
 
-import {
-  IRenderMimeRegistry
-} from '@jupyterlab/rendermime';
+import { IRenderMimeRegistry } from "@jupyterlab/rendermime";
 
-import {
-   RenderableDiffModel
-} from '../model';
+import { RenderableDiffModel } from "../model";
 
 /**
  * Widget for outputs with renderable MIME data.
  */
-export
-abstract class RenderableDiffView<T extends (JSONValue | PartialJSONValue)> extends Widget {
-  constructor(model: RenderableDiffModel<T>, editorClass: string[],
-              rendermime: IRenderMimeRegistry, mimetype: string) {
+export abstract class RenderableDiffView<
+  T extends JSONValue | PartialJSONValue
+> extends Widget {
+  constructor(
+    model: RenderableDiffModel<T>,
+    editorClass: string[],
+    rendermime: IRenderMimeRegistry,
+    mimetype: string
+  ) {
     super();
     this.rendermime = rendermime;
     this.model = model;

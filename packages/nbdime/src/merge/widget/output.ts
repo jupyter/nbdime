@@ -1,46 +1,40 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
-'use strict';
+"use strict";
 
-import * as nbformat from '@jupyterlab/nbformat';
+import * as nbformat from "@jupyterlab/nbformat";
 
-import {
-  IRenderMimeRegistry, IOutputModel
-} from '@jupyterlab/rendermime';
+import { IRenderMimeRegistry, IOutputModel } from "@jupyterlab/rendermime";
 
 import {
-  OutputArea, OutputAreaModel, IOutputAreaModel
-} from '@jupyterlab/outputarea';
+  OutputArea,
+  OutputAreaModel,
+  IOutputAreaModel,
+} from "@jupyterlab/outputarea";
+
+import { DropAction, IDragEvent } from "@lumino/dragdrop";
+
+import { PanelLayout, Widget } from "@lumino/widgets";
 
 import {
-  DropAction, IDragEvent
-} from '@lumino/dragdrop';
+  DragDropPanel,
+  DropPanel,
+  DragPanel,
+  findChild,
+  MIME_INDEX,
+} from "../../common/dragpanel";
 
-import {
-  PanelLayout, Widget
-} from '@lumino/widgets';
+import { FlexPanel } from "../../upstreaming/flexpanel";
 
-import {
-  DragDropPanel, DropPanel, DragPanel, findChild, MIME_INDEX
-} from '../../common/dragpanel';
-
-import {
-  FlexPanel
-} from '../../upstreaming/flexpanel';
-
-
-const REORDERABLE_OUTPUT_CLASS = 'jp-Merge-reorder-outputs';
-const REORDERABLE_OUTPUT_DRAGIMAGE_CLASS = 'jp-Merge-dragimage-output';
-const DELETE_DROP_ZONE_CLASS = 'jp-Merge-output-drop-delete';
-
+const REORDERABLE_OUTPUT_CLASS = "jp-Merge-reorder-outputs";
+const REORDERABLE_OUTPUT_DRAGIMAGE_CLASS = "jp-Merge-dragimage-output";
+const DELETE_DROP_ZONE_CLASS = "jp-Merge-output-drop-delete";
 
 /**
  * An OutputAreaModel which allows for reordering of its
  * outputs.
  */
-export
-class ReorderableOutputModel extends OutputAreaModel {
-
+export class ReorderableOutputModel extends OutputAreaModel {
   insert(index: number, item: IOutputModel): void {
     // Note: We do not need worry about consolidating outputs
     // like the `add` method in parent class.
@@ -62,37 +56,36 @@ class ReorderableOutputModel extends OutputAreaModel {
  * An OutputArea which supports the reordering
  * capabilities of ReorderableOutputModel
  */
-export
-class ReorderableOutputWidget extends OutputArea {
-
+export class ReorderableOutputWidget extends OutputArea {
   readonly model: ReorderableOutputModel;
 
   /**
    * Follow changes on the model state.
    */
-  protected onModelChanged(sender: IOutputAreaModel, args: IOutputAreaModel.ChangedArgs) {
+  protected onModelChanged(
+    sender: IOutputAreaModel,
+    args: IOutputAreaModel.ChangedArgs
+  ) {
     let layout = this.layout as PanelLayout;
     switch (args.type) {
-    case 'move':
-      layout.insertWidget(args.newIndex,
-        layout.widgets[args.oldIndex]);
-      break;
-    case 'remove':
-      layout.removeWidgetAt(args.oldIndex);
-      break;
-    default:
-      return super.onModelChanged(sender, args);
+      case "move":
+        layout.insertWidget(args.newIndex, layout.widgets[args.oldIndex]);
+        break;
+      case "remove":
+        layout.removeWidgetAt(args.oldIndex);
+        break;
+      default:
+        return super.onModelChanged(sender, args);
     }
   }
 }
 
-
 class DisconnectedDropTarget extends DropPanel {
   constructor() {
-    super({acceptDropsFromExternalSource: true});
+    super({ acceptDropsFromExternalSource: true });
   }
 
-  protected findDropTarget(input: HTMLElement): HTMLElement | null  {
+  protected findDropTarget(input: HTMLElement): HTMLElement | null {
     if (input === this.node || this.node.contains(input)) {
       return this.node;
     }
@@ -103,18 +96,16 @@ class DisconnectedDropTarget extends DropPanel {
     if (this.callback) {
       this.callback(dropTarget, event);
     }
-  };
+  }
 
-  callback: ((dropTarget: HTMLElement, event: IDragEvent) => void) | null = null;
+  callback: ((dropTarget: HTMLElement, event: IDragEvent) => void) | null =
+    null;
 }
-
 
 /**
  * Widget for showing side by side comparison and picking of merge outputs
  */
-export
-class RenderableOutputsMergeView extends DragDropPanel {
-
+export class RenderableOutputsMergeView extends DragDropPanel {
   static makeOutputsDraggable(area: OutputArea): void {
     let i = area.layout!.iter();
     for (let w = i.next(); w !== undefined; w = i.next()) {
@@ -126,11 +117,11 @@ class RenderableOutputsMergeView extends DragDropPanel {
     if (!RenderableOutputsMergeView._deleteDrop) {
       let widget = new DisconnectedDropTarget();
       widget.addClass(DELETE_DROP_ZONE_CLASS);
-      let icon = document.createElement('i');
-      icon.className = 'fa fa-lg fa-trash-o';
-      icon.setAttribute('aria-hidden', 'true');
+      let icon = document.createElement("i");
+      icon.className = "fa fa-lg fa-trash-o";
+      icon.setAttribute("aria-hidden", "true");
       widget.node.appendChild(icon);
-      widget.node.style.position = 'absolute';
+      widget.node.style.position = "absolute";
       RenderableOutputsMergeView._deleteDrop = widget;
     }
     return RenderableOutputsMergeView._deleteDrop;
@@ -140,37 +131,42 @@ class RenderableOutputsMergeView extends DragDropPanel {
   /**
    *
    */
-  constructor(merged: nbformat.IOutput[],
-              classes: string[], rendermime: IRenderMimeRegistry,
-              base: nbformat.IOutput[] | null, remote: nbformat.IOutput[] | null,
-              local: nbformat.IOutput[] | null) {
+  constructor(
+    merged: nbformat.IOutput[],
+    classes: string[],
+    rendermime: IRenderMimeRegistry,
+    base: nbformat.IOutput[] | null,
+    remote: nbformat.IOutput[] | null,
+    local: nbformat.IOutput[] | null
+  ) {
     super();
     this.addClass(REORDERABLE_OUTPUT_CLASS);
 
     if (!base !== !remote || !base !== !local) {
       // Assert that either none, or all of base/remote/local are given
       throw new Error(
-        'Renderable outputs merge-view either takes only merged output ' +
-        'or a full set of four output lists.');
+        "Renderable outputs merge-view either takes only merged output " +
+          "or a full set of four output lists."
+      );
     }
 
     if (base) {
       this.base = new OutputAreaModel();
       for (let output of base) {
-          this.base.add(output);
+        this.base.add(output);
       }
       this.remote = new OutputAreaModel();
       for (let output of remote!) {
-          this.remote.add(output);
+        this.remote.add(output);
       }
       this.local = new OutputAreaModel();
       for (let output of local!) {
-          this.local.add(output);
+        this.local.add(output);
       }
     }
     this.merged = new ReorderableOutputModel();
     for (let output of merged) {
-        this.merged.add(output);
+      this.merged.add(output);
     }
     this.rendermime = rendermime;
     this.panes = [];
@@ -179,31 +175,43 @@ class RenderableOutputsMergeView extends DragDropPanel {
   }
 
   init(classes: string[]): void {
-    let row = new FlexPanel({direction: 'left-to-right', evenSizes: true});
+    let row = new FlexPanel({ direction: "left-to-right", evenSizes: true });
     if (this.local) {
-      let leftPane = new OutputArea({model: this.local, rendermime: this.rendermime});
+      let leftPane = new OutputArea({
+        model: this.local,
+        rendermime: this.rendermime,
+      });
       leftPane.addClass(classes[1]);
       row.addWidget(leftPane);
       this.panes.push(leftPane);
     }
     if (this.base) {
-      let basePane = new OutputArea({model: this.base, rendermime: this.rendermime});
+      let basePane = new OutputArea({
+        model: this.base,
+        rendermime: this.rendermime,
+      });
       basePane.addClass(classes[0]);
       row.addWidget(basePane);
       this.panes.push(basePane);
     }
     if (this.remote) {
-      let rightPane = new OutputArea({model: this.remote, rendermime: this.rendermime});
+      let rightPane = new OutputArea({
+        model: this.remote,
+        rendermime: this.rendermime,
+      });
       rightPane.addClass(classes[2]);
       row.addWidget(rightPane);
       this.panes.push(rightPane);
     }
     if (row.widgets.length > 0) {
       this.addWidget(row);
-      row = new FlexPanel({direction: 'left-to-right', evenSizes: true});
+      row = new FlexPanel({ direction: "left-to-right", evenSizes: true });
     }
 
-    this.mergePane = new ReorderableOutputWidget({model: this.merged, rendermime: this.rendermime});
+    this.mergePane = new ReorderableOutputWidget({
+      model: this.merged,
+      rendermime: this.rendermime,
+    });
     this.mergePane.addClass(classes[3]);
     row.addWidget(this.mergePane);
     this.panes.push(this.mergePane);
@@ -238,13 +246,14 @@ class RenderableOutputsMergeView extends DragDropPanel {
       let child = findChild(pane.node, node);
       if (child !== null) {
         let paneIndex = this.panes.indexOf(pane);
-        return [paneIndex, super.getIndexOfChildNode(child,
-                pane.layout as PanelLayout)];
+        return [
+          paneIndex,
+          super.getIndexOfChildNode(child, pane.layout as PanelLayout),
+        ];
       }
     }
     return null;
   }
-
 
   /**
    * Called when something has been dropped in the panel.
@@ -307,15 +316,18 @@ class RenderableOutputsMergeView extends DragDropPanel {
       // Event cleanup
       event.preventDefault();
       event.stopPropagation();
-      event.dropAction = 'move';
-    } else if (dropTarget === this.mergePane.node && this.mergePane.model.length === 0) {
+      event.dropAction = "move";
+    } else if (
+      dropTarget === this.mergePane.node &&
+      this.mergePane.model.length === 0
+    ) {
       // Dropping on empty merge pane
       let sourceKey = event.mimeData.getData(MIME_INDEX) as number[];
       this.move(sourceKey, [this.panes.indexOf(this.mergePane), 0]);
       // Event cleanup
       event.preventDefault();
       event.stopPropagation();
-      event.dropAction = 'copy';
+      event.dropAction = "copy";
     } else {
       super.processDrop(dropTarget, event);
     }
@@ -325,14 +337,18 @@ class RenderableOutputsMergeView extends DragDropPanel {
     let target = this.findDragTarget(handle);
     if (target) {
       let image = target.cloneNode(true) as HTMLElement;
-      image.style.width = target.offsetWidth.toString() + 'px';
+      image.style.width = target.offsetWidth.toString() + "px";
       image.classList.add(REORDERABLE_OUTPUT_DRAGIMAGE_CLASS);
       return image;
     }
     return null;
   }
 
-  protected startDrag(handle: HTMLElement, clientX: number, clientY: number): void {
+  protected startDrag(
+    handle: HTMLElement,
+    clientX: number,
+    clientY: number
+  ): void {
     super.startDrag(handle, clientX, clientY);
     // After starting drag, show delete drop-zone ('trash')
     if (findChild(this.mergePane.node, handle)) {
@@ -340,10 +356,11 @@ class RenderableOutputsMergeView extends DragDropPanel {
       dd.callback = this.processDrop.bind(this);
       // Calculate position and size:
       let ourRect = this.mergePane.node.getBoundingClientRect();
-      dd.node.style.left = '0';
-      dd.node.style.width = (ourRect.left + window.pageXOffset).toString() + 'px';
-      dd.node.style.top = (ourRect.top + window.pageYOffset).toString() + 'px';
-      dd.node.style.height = ourRect.height.toString() + 'px';
+      dd.node.style.left = "0";
+      dd.node.style.width =
+        (ourRect.left + window.pageXOffset).toString() + "px";
+      dd.node.style.top = (ourRect.top + window.pageYOffset).toString() + "px";
+      dd.node.style.height = ourRect.height.toString() + "px";
       // Attach to document
       Widget.attach(dd, document.body);
     }

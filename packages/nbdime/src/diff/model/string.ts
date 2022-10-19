@@ -1,33 +1,26 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
-'use strict';
+"use strict";
 
-import * as nbformat from '@jupyterlab/nbformat';
-
-import {
-  JSONObject, JSONArray, JSONExt, JSONValue, PartialJSONObject
-} from '@lumino/coreutils';
+import * as nbformat from "@jupyterlab/nbformat";
 
 import {
-  IDiffEntry
-} from '../diffentries';
+  JSONObject,
+  JSONArray,
+  JSONExt,
+  JSONValue,
+  PartialJSONObject,
+} from "@lumino/coreutils";
 
-import {
-  DiffRangeRaw, DiffRangePos, raw2Pos
-} from '../range';
+import { IDiffEntry } from "../diffentries";
 
-import {
-  Chunk, LineChunker
-} from '../../chunking';
+import { DiffRangeRaw, DiffRangePos, raw2Pos } from "../range";
 
-import {
-  patchStringified, stringifyAndBlankNull
-} from '../../patch';
+import { Chunk, LineChunker } from "../../chunking";
 
-import {
-  IDiffModel
-} from './common';
+import { patchStringified, stringifyAndBlankNull } from "../../patch";
 
+import { IDiffModel } from "./common";
 
 /**
  * Interface for a string diff model.
@@ -37,8 +30,7 @@ import {
  * (as compared to e.g. images). As such, it is NOT restricted
  * to cases where original content is in a string format.
  */
-export
-interface IStringDiffModel extends IDiffModel {
+export interface IStringDiffModel extends IDiffModel {
   /**
    * Base value
    */
@@ -81,13 +73,10 @@ interface IStringDiffModel extends IDiffModel {
   iterateDiffs(): StringDiffModel.DiffIter;
 }
 
-
 /**
  * Standard implementation of the IStringDiffModel interface.
  */
-export
-class StringDiffModel implements IStringDiffModel {
-
+export class StringDiffModel implements IStringDiffModel {
   /**
    * StringDiffModel constructor.
    *
@@ -98,13 +87,14 @@ class StringDiffModel implements IStringDiffModel {
    * Collapsible and collapsed both defaults to false.
    */
   constructor(
-        public base: string | null,
-        public remote: string | null,
-        additions: DiffRangeRaw[],
-        deletions: DiffRangeRaw[],
-        collapsible?: boolean,
-        header?: string,
-        collapsed?: boolean) {
+    public base: string | null,
+    public remote: string | null,
+    additions: DiffRangeRaw[],
+    deletions: DiffRangeRaw[],
+    collapsible?: boolean,
+    header?: string,
+    collapsed?: boolean
+  ) {
     if (base === null) {
       console.assert(deletions.length === 0);
       this.deletions = [];
@@ -120,12 +110,12 @@ class StringDiffModel implements IStringDiffModel {
 
     this.collapsible = collapsible === true;
     if (this.collapsible) {
-      this.collapsibleHeader = header ? header : '';
+      this.collapsibleHeader = header ? header : "";
       this.startCollapsed = collapsed === true;
     }
   }
 
-  iterateDiffs(): StringDiffModel.DiffIter  {
+  iterateDiffs(): StringDiffModel.DiffIter {
     return new StringDiffModel.DiffIter(this);
   }
 
@@ -163,19 +153,16 @@ class StringDiffModel implements IStringDiffModel {
   deletions: DiffRangePos[];
 }
 
+export namespace StringDiffModel {
+  export type DiffIterValue =
+    | { range: DiffRangePos; isAddition: boolean }
+    | undefined;
 
-export
-namespace StringDiffModel {
-  export
-  type DiffIterValue = {range: DiffRangePos, isAddition: boolean} | undefined;
-
-  export
-  interface IIterator<T> {
+  export interface IIterator<T> {
     next(): T | undefined;
   }
 
-  export
-  class DiffIter implements IIterator<DiffIterValue> {
+  export class DiffIter implements IIterator<DiffIterValue> {
     constructor(model: IStringDiffModel) {
       this.model = model;
     }
@@ -192,8 +179,10 @@ namespace StringDiffModel {
         if (this.id < deletions.length) {
           let ra = additions[this.ia];
           let rd = deletions[this.id];
-          if (ra.from.line === rd.from.line - this.editOffset &&
-              ra.from.ch === rd.from.ch) {
+          if (
+            ra.from.line === rd.from.line - this.editOffset &&
+            ra.from.ch === rd.from.ch
+          ) {
             // An addition and deletion start at seemingly same location
             // Take addition, and flag to ensure deletion gets taken next
             if (hintTakeDeletion) {
@@ -202,9 +191,11 @@ namespace StringDiffModel {
               this.hintTakeDeletion = true;
               isAddition = true;
             }
-          } else if (ra.from.line < rd.from.line - this.editOffset ||
-                (ra.from.line === rd.from.line - this.editOffset &&
-                  ra.from.ch < rd.from.ch)) {
+          } else if (
+            ra.from.line < rd.from.line - this.editOffset ||
+            (ra.from.line === rd.from.line - this.editOffset &&
+              ra.from.ch < rd.from.ch)
+          ) {
             // TODO: Character editOffset should also be used
             isAddition = true;
           } else {
@@ -233,7 +224,7 @@ namespace StringDiffModel {
         linediff += 1;
       }
       this.editOffset += isAddition ? -linediff : linediff;
-      return {range: range, isAddition: isAddition};
+      return { range: range, isAddition: isAddition };
     }
 
     editOffset = 0;
@@ -245,10 +236,13 @@ namespace StringDiffModel {
     protected hintTakeDeletion = false;
   }
 
-  export
-  class SyncedDiffIter implements IIterator<DiffIterValue> {
-    static cmp(a: DiffIterValue, b: DiffIterValue,
-               offsetA: number, offsetB: number) {
+  export class SyncedDiffIter implements IIterator<DiffIterValue> {
+    static cmp(
+      a: DiffIterValue,
+      b: DiffIterValue,
+      offsetA: number,
+      offsetB: number
+    ) {
       if (a === undefined && b === undefined) {
         return 0;
       } else if (a === undefined) {
@@ -256,8 +250,8 @@ namespace StringDiffModel {
       } else if (b === undefined) {
         return -1;
       }
-      let lineA = a.range.from.line  + (a.isAddition ? offsetA : 0);
-      let lineB = b.range.from.line  + (b.isAddition ? offsetB : 0);
+      let lineA = a.range.from.line + (a.isAddition ? offsetA : 0);
+      let lineB = b.range.from.line + (b.isAddition ? offsetB : 0);
       if (lineA < lineB || a.range.from.ch < b.range.from.ch) {
         return -1;
       } else if (lineA > lineB || a.range.from.ch > b.range.from.ch) {
@@ -289,9 +283,15 @@ namespace StringDiffModel {
       // Compare in base index to see which diff is next
       let i = 0;
       for (let j = 1; j < this.values.length; ++j) {
-        if (0 > SyncedDiffIter.cmp(this.values[j], this.values[i],
-                                   this.iterators[j].editOffset,
-                                   this.iterators[i].editOffset)) {
+        if (
+          0 >
+          SyncedDiffIter.cmp(
+            this.values[j],
+            this.values[i],
+            this.iterators[j].editOffset,
+            this.iterators[i].editOffset
+          )
+        ) {
           i = j;
         }
       }
@@ -322,7 +322,6 @@ namespace StringDiffModel {
   }
 }
 
-
 /**
  * Creates a StringDiffModel based on a patch operation.
  *
@@ -330,15 +329,16 @@ namespace StringDiffModel {
  * and it will be stringified according to JSON stringification
  * rules.
  */
-export
-function createPatchStringDiffModel(base: string | JSONObject | JSONArray | PartialJSONObject, diff: IDiffEntry[]) : StringDiffModel {
-  console.assert(!!diff, 'Patch model needs diff.');
-  const baseCopy = JSONExt.deepCopy(base) as JSONObject
+export function createPatchStringDiffModel(
+  base: string | JSONObject | JSONArray | PartialJSONObject,
+  diff: IDiffEntry[]
+): StringDiffModel {
+  console.assert(!!diff, "Patch model needs diff.");
+  const baseCopy = JSONExt.deepCopy(base) as JSONObject;
   let baseStr = stringifyAndBlankNull(baseCopy);
   let out = patchStringified(baseCopy, diff);
   return new StringDiffModel(baseStr, out.remote, out.additions, out.deletions);
 }
-
 
 /**
  * Factory for creating cell diff models for added, removed or unchanged content.
@@ -347,16 +347,20 @@ function createPatchStringDiffModel(base: string | JSONObject | JSONArray | Part
  * treated as removed. Otherwise base and remote should be equal, represeting
  * unchanged content.
  */
-export
-function createDirectStringDiffModel(base: JSONValue | null, remote: JSONValue | null): StringDiffModel {
+export function createDirectStringDiffModel(
+  base: JSONValue | null,
+  remote: JSONValue | null
+): StringDiffModel {
   let baseStr: string | null = stringifyAndBlankNull(base);
   let remoteStr: string | null = stringifyAndBlankNull(remote);
   let additions: DiffRangeRaw[] = [];
   let deletions: DiffRangeRaw[] = [];
 
   if (base === null && remote === null) {
-    throw new Error('Invalid arguments to createDirectStringDiffModel(). ' +
-      'Both base and remote cannot be equal!');
+    throw new Error(
+      "Invalid arguments to createDirectStringDiffModel(). " +
+        "Both base and remote cannot be equal!"
+    );
   } else if (base === null) {
     // Added cell
     baseStr = null;
@@ -366,12 +370,13 @@ function createDirectStringDiffModel(base: JSONValue | null, remote: JSONValue |
     remoteStr = null;
     deletions.push(new DiffRangeRaw(0, baseStr.length, undefined));
   } else if (remoteStr !== baseStr) {
-    throw new Error('Invalid arguments to createDirectStringDiffModel(). ' +
-      'Either base or remote should be null, or they should be equal!');
+    throw new Error(
+      "Invalid arguments to createDirectStringDiffModel(). " +
+        "Either base or remote should be null, or they should be equal!"
+    );
   }
   return new StringDiffModel(baseStr, remoteStr, additions, deletions);
 }
-
 
 /**
  * Assign MIME type to an IStringDiffModel based on the cell type.
@@ -379,14 +384,16 @@ function createDirectStringDiffModel(base: JSONValue | null, remote: JSONValue |
  * The parameter nbMimetype is the MIME type set for the entire notebook, and is
  * used as the MIME type for code cells.
  */
-export
-function setMimetypeFromCellType(model: IStringDiffModel, cell: nbformat.ICell,
-                                 nbMimetype: string) {
-  if (cell.cell_type === 'code') {
+export function setMimetypeFromCellType(
+  model: IStringDiffModel,
+  cell: nbformat.ICell,
+  nbMimetype: string
+) {
+  if (cell.cell_type === "code") {
     model.mimetype = nbMimetype;
-  } else if (cell.cell_type === 'markdown') {
-    model.mimetype = 'text/markdown';
+  } else if (cell.cell_type === "markdown") {
+    model.mimetype = "text/markdown";
   } else if (nbformat.isRaw(cell)) {
-    model.mimetype = cell.metadata.format || 'text/plain';
+    model.mimetype = cell.metadata.format || "text/plain";
   }
 }

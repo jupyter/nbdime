@@ -58,14 +58,14 @@ For a **development install**, follow these steps:
    ```bash
    pip install -e git+https://github.com/jupyter/nbdime#egg=nbdime
    ```
-   
+
    See [installation](https://nbdime.readthedocs.io/en/latest/installing.html#installing-latest-development-version) documentation for additional detail, particularly related to performing
    a dev install for working on the browser script code.
 
 2. Install dependencies: `pnpm install`
 3. Useful commands;
-    - `pnpm build` — builds all the packages
-    - `pnpm test` — runs the test suites
+   - `pnpm build` — builds all the packages
+   - `pnpm test` — runs the test suites
 
 ## Testing
 

@@ -1,38 +1,25 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
-'use strict';
+"use strict";
 
-import * as nbformat from '@jupyterlab/nbformat';
+import * as nbformat from "@jupyterlab/nbformat";
 
-import {
-  Panel
-} from '@lumino/widgets';
+import { Panel } from "@lumino/widgets";
 
-import {
-  createNbdimeMergeView, MergeView
-} from '../../common/mergeview';
+import { createNbdimeMergeView, MergeView } from "../../common/mergeview";
 
-import {
-  CollapsiblePanel
-} from '../../common/collapsiblepanel';
+import { CollapsiblePanel } from "../../common/collapsiblepanel";
 
-import {
-  MetadataMergeModel
-} from '../model';
+import { MetadataMergeModel } from "../model";
 
-import {
-  MERGE_CLASSES
-} from './common';
+import { MERGE_CLASSES } from "./common";
 
-
-const ROOT_METADATA_CLASS = 'jp-Metadata-diff';
-
+const ROOT_METADATA_CLASS = "jp-Metadata-diff";
 
 /**
  * MetadataWidget for changes to Notebook-level metadata
  */
-export
-class MetadataMergeWidget extends Panel {
+export class MetadataMergeWidget extends Panel {
   constructor(model: MetadataMergeModel) {
     super();
     this._model = model;
@@ -45,14 +32,18 @@ class MetadataMergeWidget extends Panel {
 
     // We know/assume that MetadataMergeModel never has
     // null values for local/remote:
-    this.view = createNbdimeMergeView(
-      model.remote, model.local, model.merged);
+    this.view = createNbdimeMergeView(model.remote, model.local, model.merged);
     let wrapper = new CollapsiblePanel(
-      this.view, 'Notebook metadata changed', true);
+      this.view,
+      "Notebook metadata changed",
+      true
+    );
     this.addWidget(wrapper);
   }
 
-  validateMerged(candidate: nbformat.INotebookMetadata): nbformat.INotebookMetadata {
+  validateMerged(
+    candidate: nbformat.INotebookMetadata
+  ): nbformat.INotebookMetadata {
     let text = this.view.getMergedValue();
     if (JSON.stringify(candidate) !== text) {
       // This will need to be validated server side,

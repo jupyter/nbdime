@@ -1,37 +1,27 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
-'use strict';
+"use strict";
 
-import {
-  ReadonlyJSONObject
-} from '@lumino/coreutils';
+import { ReadonlyJSONObject } from "@lumino/coreutils";
 
-import {
-  IIterator
-} from '@lumino/algorithm';
+import { IIterator } from "@lumino/algorithm";
 
-import {
-  IDiffObjectEntry
-} from '../diff/diffentries';
+import { IDiffObjectEntry } from "../diff/diffentries";
 
-import {
-  valueIn, unique
-} from '../common/util';
+import { valueIn, unique } from "../common/util";
 
-
-export
-class PatchObjectHelper implements IIterator<string> {
+export class PatchObjectHelper implements IIterator<string> {
   constructor(base: ReadonlyJSONObject, diff: IDiffObjectEntry[] | null) {
-      this._diffLUT = {};
-      let diffKeys : string[] = [];
-      if (diff) {
-        for (let d of diff) {
-          diffKeys.push(d.key);
-          this._diffLUT[d.key] = d;
-        }
+    this._diffLUT = {};
+    let diffKeys: string[] = [];
+    if (diff) {
+      for (let d of diff) {
+        diffKeys.push(d.key);
+        this._diffLUT[d.key] = d;
       }
-      this._diffKeys = diffKeys;
-      this.baseKeys = _objectKeys(base);
+    }
+    this._diffKeys = diffKeys;
+    this.baseKeys = _objectKeys(base);
   }
 
   isDiffKey(key: string): boolean {
@@ -55,11 +45,11 @@ class PatchObjectHelper implements IIterator<string> {
    */
   entriesAfterCurrentAddRem(): boolean {
     if (this._currentIsAddition === undefined) {
-      throw new Error('Current op is not an add or remove op');
+      throw new Error("Current op is not an add or remove op");
     }
     // Check for unchanged entries after, or any changed entries
     // that are not of the OPPOSITE add/remove type:
-    let oppositeOp = this._currentIsAddition ? 'remove' : 'add';
+    let oppositeOp = this._currentIsAddition ? "remove" : "add";
     for (let key of this._remainingKeys) {
       if (!valueIn(key, this._diffKeys)) {
         // There remains unchanged entries after
@@ -73,7 +63,10 @@ class PatchObjectHelper implements IIterator<string> {
   }
 
   iter(): IIterator<string> {
-    this._remainingKeys = this.baseKeys.concat(this._diffKeys).filter(unique).sort();
+    this._remainingKeys = this.baseKeys
+      .concat(this._diffKeys)
+      .filter(unique)
+      .sort();
     return this;
   }
 
@@ -85,9 +78,9 @@ class PatchObjectHelper implements IIterator<string> {
     let key = this._remainingKeys.shift();
     if (key && valueIn(key, this._diffKeys)) {
       let op = this._diffLUT[key].op;
-      if (op === 'add') {
+      if (op === "add") {
         this._currentIsAddition = true;
-      } else if (op === 'remove') {
+      } else if (op === "remove") {
         this._currentIsAddition = false;
       } else {
         this._currentIsAddition = undefined;
@@ -110,22 +103,27 @@ class PatchObjectHelper implements IIterator<string> {
 
   private _currentIsAddition: boolean | undefined;
   private _diffKeys: string[];
-  private _diffLUT: { [key: string]: IDiffObjectEntry};
+  private _diffLUT: { [key: string]: IDiffObjectEntry };
   private _remainingKeys: string[];
 }
-
 
 /**
  * The keys present in a Object class. Equivalent to Object.keys, but with a
  * fallback if not defined.
  */
-let _objectKeys = Object.keys || function (obj: any): string[] {
-  let has = Object.prototype.hasOwnProperty || function () { return true; };
-  let keys: string[] = [];
-  for (let key in obj) {
-    if (has.call(obj, key)) {
-      keys.push(key);
+let _objectKeys =
+  Object.keys ||
+  function (obj: any): string[] {
+    let has =
+      Object.prototype.hasOwnProperty ||
+      function () {
+        return true;
+      };
+    let keys: string[] = [];
+    for (let key in obj) {
+      if (has.call(obj, key)) {
+        keys.push(key);
+      }
     }
-  }
-  return keys;
-};
+    return keys;
+  };

@@ -1,33 +1,33 @@
-const path = require('path');
+const path = require("path");
 
 module.exports = {
-  entry: './src/index.ts',
+  entry: "./src/index.ts",
   output: {
-    path: path.resolve(__dirname, '..', '..', 'nbdime', 'webapp', 'static'),
-    filename: 'nbdime.js',
-    publicPath: './static/',
+    path: path.resolve(__dirname, "..", "..", "nbdime", "webapp", "static"),
+    filename: "nbdime.js",
+    publicPath: "./static/",
   },
   bail: true,
-  devtool: 'source-map',
+  devtool: "source-map",
   module: {
     rules: [
       {
         test: /\.css$/,
-        use: [require.resolve('style-loader'), require.resolve('css-loader')],
+        use: [require.resolve("style-loader"), require.resolve("css-loader")],
       },
       {
         test: /\.ipynb$/,
-        type: 'json',
+        type: "json",
       },
       {
         test: /\.ts$/,
         use: [
           {
-            loader: 'swc-loader',
+            loader: "swc-loader",
             options: {
               jsc: {
                 parser: {
-                  syntax: 'typescript',
+                  syntax: "typescript",
                 },
               },
             },
@@ -36,18 +36,18 @@ module.exports = {
       },
       {
         test: /\.js$/,
-        loader: require.resolve('source-map-loader'),
+        loader: require.resolve("source-map-loader"),
       },
-      { test: /\.html$/, loader: require.resolve('file-loader') }, // jquery-ui loads some images
-      { test: /\.(jpg|png|gif)$/, loader: require.resolve('file-loader') }, // required to load font-awesome
+      { test: /\.html$/, loader: require.resolve("file-loader") }, // jquery-ui loads some images
+      { test: /\.(jpg|png|gif)$/, loader: require.resolve("file-loader") }, // required to load font-awesome
       {
         test: /\.woff2(\?v=\d+\.\d+\.\d+)?$/,
         use: [
           {
-            loader: require.resolve('url-loader'),
+            loader: require.resolve("url-loader"),
             options: {
               limit: 10000,
-              mimetype: 'application/font-woff',
+              mimetype: "application/font-woff",
             },
           },
         ],
@@ -56,10 +56,10 @@ module.exports = {
         test: /\.woff(\?v=\d+\.\d+\.\d+)?$/,
         use: [
           {
-            loader: require.resolve('url-loader'),
+            loader: require.resolve("url-loader"),
             options: {
               limit: 10000,
-              mimetype: 'application/font-woff',
+              mimetype: "application/font-woff",
             },
           },
         ],
@@ -68,26 +68,26 @@ module.exports = {
         test: /\.ttf(\?v=\d+\.\d+\.\d+)?$/,
         use: [
           {
-            loader: require.resolve('url-loader'),
+            loader: require.resolve("url-loader"),
             options: {
               limit: 10000,
-              mimetype: 'application/octet-stream',
+              mimetype: "application/octet-stream",
             },
           },
         ],
       },
       {
         test: /\.eot(\?v=\d+\.\d+\.\d+)?$/,
-        loader: require.resolve('file-loader'),
+        loader: require.resolve("file-loader"),
       },
       {
         test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
         use: [
           {
-            loader: require.resolve('url-loader'),
+            loader: require.resolve("url-loader"),
             options: {
               limit: 10000,
-              mimetype: 'image/svg+xml',
+              mimetype: "image/svg+xml",
             },
           },
         ],
@@ -95,6 +95,6 @@ module.exports = {
     ],
   },
   resolve: {
-    extensions: ['.webpack.js', '.web.js', '.ts', '.js'],
+    extensions: [".webpack.js", ".web.js", ".ts", ".js"],
   },
 };

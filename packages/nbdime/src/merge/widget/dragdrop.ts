@@ -1,35 +1,22 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
-'use strict';
+"use strict";
 
-import {
-  Panel, Widget
-} from '@lumino/widgets';
+import { Panel, Widget } from "@lumino/widgets";
 
-import {
-  Signal, ISignal
-} from '@lumino/signaling';
+import { Signal, ISignal } from "@lumino/signaling";
 
-import {
-  FriendlyDragDrop, DragDropPanel
-} from '../../common/dragpanel';
+import { FriendlyDragDrop, DragDropPanel } from "../../common/dragpanel";
 
-import {
-  CellMergeWidget
-} from './cell';
+import { CellMergeWidget } from "./cell";
 
+const CELL_DRAG_DROP_CLASS = "jp-merge-celldragdrop";
 
-const CELL_DRAG_DROP_CLASS = 'jp-merge-celldragdrop';
+const MARK_CHUNK_RESOLVED_CLASS = "jp-conflicted-cells-button";
+const CHUNK_HEADER_CLASS = "jp-conflicted-cells-header";
+const CONLICTED_CELL_CHUNK_CLASS = "jp-conflicted-cells";
 
-const MARK_CHUNK_RESOLVED_CLASS = 'jp-conflicted-cells-button';
-const CHUNK_HEADER_CLASS = 'jp-conflicted-cells-header';
-const CONLICTED_CELL_CHUNK_CLASS = 'jp-conflicted-cells';
-
-
-
-export
-class CellsDragDrop extends FriendlyDragDrop {
-
+export class CellsDragDrop extends FriendlyDragDrop {
   /**
    *
    */
@@ -66,10 +53,14 @@ class CellsDragDrop extends FriendlyDragDrop {
     this._moved.emit({
       widget: cell as CellMergeWidget,
       oldParent: fromPanel as CellsDragDrop,
-      before: adjustedTo > 0 ?
-        toPanel.widgets[adjustedTo - 1] as CellMergeWidget : null,
-      after: adjustedTo < toPanel.widgets.length ?
-        toPanel.widgets[adjustedTo + 1] as CellMergeWidget : null,
+      before:
+        adjustedTo > 0
+          ? (toPanel.widgets[adjustedTo - 1] as CellMergeWidget)
+          : null,
+      after:
+        adjustedTo < toPanel.widgets.length
+          ? (toPanel.widgets[adjustedTo + 1] as CellMergeWidget)
+          : null,
     });
   }
 
@@ -81,8 +72,7 @@ class CellsDragDrop extends FriendlyDragDrop {
 }
 
 export namespace CellsDragDrop {
-  export
-  interface IMovedArgs {
+  export interface IMovedArgs {
     widget: CellMergeWidget;
     oldParent: CellsDragDrop;
     before: CellMergeWidget | null;
@@ -90,9 +80,7 @@ export namespace CellsDragDrop {
   }
 }
 
-
-export
-class ChunkedCellsWidget extends Panel {
+export class ChunkedCellsWidget extends Panel {
   /**
    *
    */
@@ -101,9 +89,9 @@ class ChunkedCellsWidget extends Panel {
     this.addClass(CONLICTED_CELL_CHUNK_CLASS);
     this.header = new Widget();
     this.header.addClass(CHUNK_HEADER_CLASS);
-    this.header.node.innerText = 'Conflicting cell operations';
-    let button = document.createElement('button');
-    button.innerText = 'Resolve Conflict';
+    this.header.node.innerText = "Conflicting cell operations";
+    let button = document.createElement("button");
+    button.innerText = "Resolve Conflict";
     button.onclick = this.onResolve.bind(this);
     button.className = MARK_CHUNK_RESOLVED_CLASS;
     this.header.node.appendChild(button);

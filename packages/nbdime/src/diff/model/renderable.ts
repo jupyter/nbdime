@@ -1,36 +1,30 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
-'use strict';
+"use strict";
 
 import {
-  JSONValue, JSONObject, JSONExt, JSONArray, PartialJSONValue
-} from '@lumino/coreutils';
+  JSONValue,
+  JSONObject,
+  JSONExt,
+  JSONArray,
+  PartialJSONValue,
+} from "@lumino/coreutils";
+
+import { Signal } from "@lumino/signaling";
+
+import { IDiffEntry } from "../diffentries";
+
+import { getSubDiffByKey } from "../util";
+
+import { patch } from "../../patch";
+
+import { IDiffModel } from "./common";
 
 import {
-  Signal
-} from '@lumino/signaling';
-
-import {
-  IDiffEntry
-} from '../diffentries';
-
-import {
-  getSubDiffByKey
-} from '../util';
-
-import {
-  patch
-} from '../../patch';
-
-import {
-  IDiffModel
-} from './common';
-
-import {
-  IStringDiffModel, createDirectStringDiffModel, createPatchStringDiffModel
-} from './string';
-
-
+  IStringDiffModel,
+  createDirectStringDiffModel,
+  createPatchStringDiffModel,
+} from "./string";
 
 /**
  * Diff model for a renderable object (something that has an internal MimeBundle)
@@ -39,14 +33,13 @@ import {
  * takes an optional argument `key` which specifies a subpath of the IOutput to
  * make the model from.
  */
-export
-abstract class RenderableDiffModel<T extends (JSONValue | PartialJSONValue)> implements IDiffModel {
-  constructor(
-        base: T | null,
-        remote: T | null,
-        diff?: IDiffEntry[] | null) {
+export abstract class RenderableDiffModel<
+  T extends JSONValue | PartialJSONValue
+> implements IDiffModel
+{
+  constructor(base: T | null, remote: T | null, diff?: IDiffEntry[] | null) {
     if (!remote && !base) {
-      throw new Error('Either remote or base value need to be given');
+      throw new Error("Either remote or base value need to be given");
     }
     this.base = base;
     if (!remote && diff) {
@@ -58,7 +51,7 @@ abstract class RenderableDiffModel<T extends (JSONValue | PartialJSONValue)> imp
     this.collapsible = false;
   }
 
-  get unchanged() : boolean {
+  get unchanged(): boolean {
     return JSON.stringify(this.base) === JSON.stringify(this.remote);
   }
 
@@ -80,7 +73,7 @@ abstract class RenderableDiffModel<T extends (JSONValue | PartialJSONValue)> imp
   /**
    * Get the mimetype for a given key from hasMimeType.
    */
-  abstract innerMimeType(key: string | string[]) : string;
+  abstract innerMimeType(key: string | string[]): string;
 
   /**
    * Convert to a StringDiffModel.
@@ -88,19 +81,21 @@ abstract class RenderableDiffModel<T extends (JSONValue | PartialJSONValue)> imp
    * Takes an optional argument `key` which specifies a subpath of the MimeBundle to
    * make the model from.
    */
-  stringify(key?: string | string[]) : IStringDiffModel {
-    let getMemberByPath = function(obj: JSONValue | null, key: string | string[], f?: (obj: any, key: string) => any): JSONValue | null {
+  stringify(key?: string | string[]): IStringDiffModel {
+    let getMemberByPath = function (
+      obj: JSONValue | null,
+      key: string | string[],
+      f?: (obj: any, key: string) => any
+    ): JSONValue | null {
       if (!obj) {
         return obj;
       }
       if (Array.isArray(key)) {
         const tail = key.length > 2 ? key.slice(1) : key[1];
         if (f) {
-          return getMemberByPath(
-            f(obj, key[0]), tail, f);
+          return getMemberByPath(f(obj, key[0]), tail, f);
         }
-        return getMemberByPath(
-          (obj as JSONObject)[key[0]], tail, f);
+        return getMemberByPath((obj as JSONObject)[key[0]], tail, f);
       } else if (f) {
         return f(obj, key);
       }
@@ -110,16 +105,22 @@ abstract class RenderableDiffModel<T extends (JSONValue | PartialJSONValue)> imp
     let base = key ? getMemberByPath(baseCopy, key) : baseCopy;
     const remoteCopy = JSONExt.deepCopy(this.remote) as JSONObject;
     let remote = key ? getMemberByPath(remoteCopy, key) : remoteCopy;
-    let diff = (this.diff && key) ?
-      getMemberByPath(this.diff as any, key, getSubDiffByKey) as IDiffEntry[] | null :
-      this.diff;
+    let diff =
+      this.diff && key
+        ? (getMemberByPath(this.diff as any, key, getSubDiffByKey) as
+            | IDiffEntry[]
+            | null)
+        : this.diff;
     let model: IStringDiffModel | null = null;
     if (this.unchanged || this.added || this.deleted || !diff) {
       model = createDirectStringDiffModel(base, remote);
     } else {
-      model = createPatchStringDiffModel(base as (string | JSONObject | JSONArray), diff);
+      model = createPatchStringDiffModel(
+        base as string | JSONObject | JSONArray,
+        diff
+      );
     }
-    model.mimetype = key ? this.innerMimeType(key) : 'application/json';
+    model.mimetype = key ? this.innerMimeType(key) : "application/json";
     model.collapsible = this.collapsible;
     model.collapsibleHeader = this.collapsibleHeader;
     model.startCollapsed = this.startCollapsed;
