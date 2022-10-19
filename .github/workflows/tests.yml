@@ -2,108 +2,135 @@ name: Test
 
 on: [push, pull_request]
 
+env:
+  CI: true
+
 jobs:
   docs:
     name: Documentation
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.8
-    - uses: actions/cache@v1
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/setup.py') }}-${{hashFiles('**/requirements.txt')}}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-    - name: Install dependencies
-      run: |
-        sudo apt-get install -y pandoc
-        python -m pip install --upgrade pip
-        python -m pip install .[docs]
-        python -m pip install -r ./docs/doc-requirements.txt
-    - name: Build docs
-      run: |
-        cd docs
-        make html
+      - uses: actions/checkout@v3
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+          cache: pip
+          architecture: x64
+          cache-dependency-path: |
+            **/setup.py
+            **/requirements.txt
+
+      - uses: pnpm/action-setup@v2.2.4
+        with:
+          version: 7.11.0
+
+      - name: Use Node.js 16.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get install -y pandoc
+          python -m pip install --upgrade pip
+          python -m pip install .[docs]
+          python -m pip install -r ./docs/doc-requirements.txt
+
+      - name: Build docs
+        run: |
+          cd docs
+          make html
+
   js:
     name: JavaScript
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.8
-    - uses: actions/cache@v2
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/setup.py') }}-${{hashFiles('**/requirements.txt')}}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install jupyterlab~=3.0
-        npm install -g codecov
+      - uses: actions/checkout@v3
 
-    - name: Use Node.js 12.x
-      uses: actions/setup-node@v1
-      with:
-        node-version: 12.x
-    - name: Get npm cache directory
-      id: npm-cache-dir
-      run: |
-        echo "::set-output name=dir::$(npm config get cache)"
-    - uses: actions/cache@v2
-      id: npm-cache
-      with:
-        path: ${{ steps.npm-cache-dir.outputs.dir }}
-        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-node-
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+          cache: pip
+          architecture: x64
+          cache-dependency-path: |
+            **/setup.py
+            **/requirements.txt
 
-    - name: install, build, test
-      run: |
-        python -m pip install --upgrade --upgrade-strategy=eager -e ".[test]"
-        npm test
-        codecov
-      env:
-        CI: true
+      - uses: pnpm/action-setup@v2.2.4
+        with:
+          version: 7.11.0
+
+      - name: Use Node.js 16.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install jupyterlab~=3.0
+          npm install -g codecov
+
+      - name: install
+        run: |-
+          pnpm install --frozen-lockfile
+          python -m pip install --upgrade --upgrade-strategy=eager -e ".[test]"
+
+      - name: build
+        run: pnpm build
+
+      - name: test
+        run: |-
+          pnpm test
+          codecov
+
   python:
     name: Python
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
-      max-parallel: 4
       matrix:
-        python-version: ['3.6', '3.7', '3.8', '3.9', '3.10']
+        python-version: ['3.7', '3.8', '3.9', '3.10']
+        os: ['ubuntu-latest', 'windows-latest']
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
-      with:
-        python-version: ${{ matrix.python-version }}
-    - uses: actions/cache@v1
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/setup.py') }}-${{hashFiles('**/requirements.txt')}}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-    - name: Install dependencies
-      run: |
-        python -m pip install codecov
-        python -m pip install --upgrade pip
-        python -m pip install jupyterlab~=3.0
-        python -m pip install --upgrade --upgrade-strategy=eager ".[test]"
-    - name: Test with pytest
-      run: |
-        git config --global user.email CI@fake.com
-        git config --global user.name "CI"
-        pushd $(mktemp -d)
-        py.test -l --cov-report xml --cov=nbdime --pyargs nbdime
-        codecov
-        popd
+      - uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          architecture: x64
+          cache-dependency-path: |
+            **/setup.py
+            **/requirements.txt
+
+      - uses: pnpm/action-setup@v2.2.4
+        with:
+          version: 7.11.0
+
+      - name: Use Node.js 16.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install codecov
+          python -m pip install --upgrade pip
+          python -m pip install jupyterlab~=3.0
+          python -m pip install --upgrade --upgrade-strategy=eager ".[test]"
+
+      - name: Test with pytest
+        run: |
+          git config --global user.email CI@fake.com
+          git config --global user.name "CI"
+          py.test -l --cov-report xml --cov=nbdime --pyargs nbdime
+          codecov -X gcov --file "coverage.xml"

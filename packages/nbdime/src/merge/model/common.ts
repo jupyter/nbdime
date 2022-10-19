@@ -16,7 +16,7 @@ import {
 
 import {
   MergeDecision, buildDiffs, applyDecisions
-} from '../../merge/decisions';
+} from '../decisions';
 
 import {
    LineChunker, Chunk, labelSource

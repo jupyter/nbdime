@@ -49,16 +49,23 @@ If you would like to contribute to the project, please read our [contributor doc
 
 ## Development Install
 
-To install a development version of nbdime, you will need [npm installed](https://nodejs.org/en/download/) and available on your PATH while installing.
+To install a development version of nbdime, you will need [pnpm installed](https://pnpm.io/installation) and available on your PATH while installing.
 
-For a **development install**, enter on the command line:
+For a **development install**, follow these steps:
 
-```bash
-pip install -e git+https://github.com/jupyter/nbdime#egg=nbdime
-```
+1. Setup the development environment:
 
-See [installation](https://nbdime.readthedocs.io/en/latest/installing.html#installing-latest-development-version) documentation for additional detail, particularly related to performing
-a dev install for working on the browser script code.
+   ```bash
+   pip install -e git+https://github.com/jupyter/nbdime#egg=nbdime
+   ```
+   
+   See [installation](https://nbdime.readthedocs.io/en/latest/installing.html#installing-latest-development-version) documentation for additional detail, particularly related to performing
+   a dev install for working on the browser script code.
+
+2. Install dependencies: `pnpm install`
+3. Useful commands;
+    - `pnpm build` — builds all the packages
+    - `pnpm test` — runs the test suites
 
 ## Testing
 
@@ -68,7 +75,7 @@ Install the test requirements:
 
 To run Python tests locally, enter on the command line: `pytest`
 
-To run Javascript tests locally, enter: `npm test`
+To run Javascript tests locally, enter: `pnpm test`
 
 Install the [codecov browser extension](https://github.com/codecov/browser-extension#codecov-extension) to view test coverage in the source browser on github.
 
