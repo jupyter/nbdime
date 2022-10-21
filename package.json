@@ -1,18 +1,21 @@
 {
   "private": true,
-  "engines": {
-    "node": ">=16.18.0"
-  },
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "build": "pnpm run -r build",
+    "build": "npm run build --workspaces --if-present",
     "build:dev": "tsc --build",
-    "clean": "pnpm run -r clean",
-    "test": "pnpm run -r test",
+    "clean": "npm run clean --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
     "watch": "tsc --build --watch"
   },
   "devDependencies": {
     "@jupyterlab/buildutils": "^3.0.0",
     "rimraf": "^2.6.3"
+  },
+  "engines": {
+    "node": ">=16.18.0"
   },
   "volta": {
     "node": "16.18.0"

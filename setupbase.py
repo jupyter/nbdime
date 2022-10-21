@@ -350,15 +350,12 @@ def install_npm(path=None, build_targets=None, sources=None, build_cmd='build', 
                 return
             node_package = path or HERE
             is_yarn = os.path.exists(pjoin(node_package, 'yarn.lock'))
-            is_pnpm = os.path.exists(pjoin(node_package, 'pnpm-lock.yaml'))
 
             npm_cmd = npm
 
             if npm is None:
                 if is_yarn:
                     npm_cmd = ['yarn']
-                elif is_pnpm:
-                    npm_cmd = ['pnpm']
                 else:
                     npm_cmd = ['npm']
 
