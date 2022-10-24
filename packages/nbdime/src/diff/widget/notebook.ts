@@ -66,8 +66,6 @@ export class NotebookDiffWidget extends Panel {
   }
 
   private addDiffChunk(chunk: CellDiffModel[]): void {
-    console.log("Adding chunk");
-    console.log(this.previousCell);
     if (chunk.length === 1 && !(chunk[0].added || chunk[0].deleted)) {
       this.addWidget(this.addCellPanel(chunk[0]));
     } else {

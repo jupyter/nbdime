@@ -39,7 +39,6 @@ class LinkedListCell extends Panel {
     }
 
     if (nextCell.lazy) {
-      console.log("call expandDown");
       nextCell.expandDown();
     }
   }
