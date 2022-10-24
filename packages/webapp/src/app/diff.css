@@ -1,5 +1,3 @@
-
-
 .jp-Notebook-diff {
   width: 90%;
   margin: auto;
@@ -49,15 +47,16 @@
   display: none;
 }
 
-
 /* Hiding unchanged cells if told to */
 #nbdime-root.jp-mod-hideUnchanged .jp-Cell-diff.jp-Diff-unchanged {
   display: none;
 }
 
 /* Show a marker with the number of cells hidden before */
-#nbdime-root.jp-mod-hideUnchanged .jp-Cell-diff[data-nbdime-NCellsHiddenBefore]::before,
-#nbdime-root.jp-mod-hideUnchanged .jp-Diff-addremchunk[data-nbdime-NCellsHiddenBefore]::before {
+#nbdime-root.jp-mod-hideUnchanged
+  .jp-Cell-diff[data-nbdime-NCellsHiddenBefore]::before,
+#nbdime-root.jp-mod-hideUnchanged
+  .jp-Diff-addremchunk[data-nbdime-NCellsHiddenBefore]::before {
   content: attr(data-nbdime-NCellsHiddenBefore) " unchanged cell(s) hidden";
   position: absolute;
   width: 100%;
@@ -69,8 +68,10 @@
 }
 
 /* Show a marker with the number of cells hidden after (for hidden cells at end) */
-#nbdime-root.jp-mod-hideUnchanged .jp-Cell-diff[data-nbdime-NCellsHiddenAfter]::after,
-#nbdime-root.jp-mod-hideUnchanged .jp-Diff-addremchunk[data-nbdime-NCellsHiddenAfter]::after {
+#nbdime-root.jp-mod-hideUnchanged
+  .jp-Cell-diff[data-nbdime-NCellsHiddenAfter]::after,
+#nbdime-root.jp-mod-hideUnchanged
+  .jp-Diff-addremchunk[data-nbdime-NCellsHiddenAfter]::after {
   content: attr(data-nbdime-NCellsHiddenAfter) " unchanged cell(s) hidden";
   position: absolute;
   width: 100%;
@@ -82,22 +83,46 @@
 }
 
 #nbdime-root.jp-mod-hideUnchanged .jp-Cell-diff[data-nbdime-NCellsHiddenBefore],
-#nbdime-root.jp-mod-hideUnchanged .jp-Diff-addremchunk[data-nbdime-NCellsHiddenBefore] {
+#nbdime-root.jp-mod-hideUnchanged
+  .jp-Diff-addremchunk[data-nbdime-NCellsHiddenBefore] {
   padding-top: 40px;
 }
 
 #nbdime-root.jp-mod-hideUnchanged .jp-Cell-diff[data-nbdime-NCellsHiddenAfter],
-#nbdime-root.jp-mod-hideUnchanged .jp-Diff-addremchunk[data-nbdime-NCellsHiddenAfter] {
+#nbdime-root.jp-mod-hideUnchanged
+  .jp-Diff-addremchunk[data-nbdime-NCellsHiddenAfter] {
   padding-bottom: 40px;
 }
 
 /* Marker for when all cells are unchanged and hidden */
-#nbdime-root.jp-mod-hideUnchanged .jp-Notebook-diff[data-nbdime-AllCellsHidden]::after {
-  content: "No changes, " attr(data-nbdime-AllCellsHidden) " unchanged cell(s) hidden";
+#nbdime-root.jp-mod-hideUnchanged
+  .jp-Notebook-diff[data-nbdime-AllCellsHidden]::after {
+  content: "No changes, " attr(data-nbdime-AllCellsHidden)
+    " unchanged cell(s) hidden";
   display: block;
   width: 100%;
   background-color: #eee;
   border-top: solid #ccc 1px;
   border-bottom: solid #ccc 1px;
   text-align: center;
+}
+
+.jp-expand-output-wrapper {
+  height: 40px;
+  width: 100%;
+  display: inline-block;
+  background: rgb(221, 244, 255);
+  color: rgb(87, 96, 106);
+  a {
+    height: 100%;
+    display: block;
+    width: 40px;
+    background-color: rgba(84, 174, 255, 0.4);
+  }
+  svg {
+    height: 23px;
+    width: 23px;
+    margin: 8px;
+    fill: rgb(87, 96, 106);
+  }
 }
