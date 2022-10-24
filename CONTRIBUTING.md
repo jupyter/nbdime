@@ -1,3 +1,23 @@
 # Contributing
 
 We follow the [IPython Contributing Guide](https://github.com/ipython/ipython/blob/master/CONTRIBUTING.md).
+
+# Contributing with codespaces
+
+If you open this in Codespaces it will pre-install the environment you need to develop with.
+
+## Updating Javascript packages.
+
+This project uses lerna to manage the multiple packages inside the packages folder. If you run npm command at the root it will run the command for each subpackage. This is good for working across packages, however more commonly we want to work with an individual package. To do this change directories into the package you wish to alter, then npm will run only for that package.
+
+### Adding npm dependencie
+
+This should be done inside the package that needs the package installed for.
+
+### Testing changes to the webapp
+
+The python setup.py script will built the entirety of the project and place it inside the build folder. Run `python setup.py build` once you are ready to test a change. Then the nbdime module can be invoked to test changes by running `python -m nbdime service` for example diff web can be started at `python -m nbdime diff-web testnotebookpath testnotebookpath2` there are test notebooks in the `nbdime/webapp/testnotebook` folder.
+
+### Running npm tests
+
+The project uses jest to test the javascript, a typescript compile step will happen prior to testing. You can run the tests for the entire project with `npm run test` in the root, or change directories to the package you are working on and run `npm run test` to test just that package.
