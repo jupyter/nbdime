@@ -4,7 +4,7 @@ We follow the [IPython Contributing Guide](https://github.com/ipython/ipython/bl
 
 # Contributing with codespaces
 
-If you open this in Codespaces it will pre-install the environment you need to develop with.
+Opening this repository in Codespaces will pre-install the environment you need to develop with.
 
 ## Updating Javascript packages.
 
@@ -12,7 +12,7 @@ This project uses lerna to manage the multiple packages inside the packages fold
 
 ### Adding npm dependencie
 
-This should be done inside the package that needs the package installed for.
+This should be done inside the directory of the package which requires the dependency.
 
 ### Testing changes to the webapp
 
@@ -20,4 +20,4 @@ The python setup.py script will built the entirety of the project and place it i
 
 ### Running npm tests
 
-The project uses jest to test the javascript, a typescript compile step will happen prior to testing. You can run the tests for the entire project with `npm run test` in the root, or change directories to the package you are working on and run `npm run test` to test just that package.
+The project uses jest to test the javascript, a typescript compile step occurs before the test suite runs. You can run the tests for the entire project with `npm run test` in the root, or change directories to the package you are working on and run `npm run test` to test just that package.
