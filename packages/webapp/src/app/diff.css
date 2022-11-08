@@ -111,18 +111,25 @@
   height: 40px;
   width: 100%;
   display: inline-block;
-  background: rgb(221, 244, 255);
-  color: rgb(87, 96, 106);
+  background: var(--jp-expand-outer-wrapper);
+  color: var(--jp-expand-color);
   a {
+    cursor: pointer;
     height: 100%;
     display: block;
     width: 40px;
-    background-color: rgba(84, 174, 255, 0.4);
+    background-color: var(--jp-expand-a-color);
+    &:hover {
+      background-color: var(--jp-expand-a-hover-color);
+      svg {
+        fill: var(--jp-expand-svg-hover-color);
+      }
+    }
   }
   svg {
     height: 23px;
     width: 23px;
     margin: 8px;
-    fill: rgb(87, 96, 106);
+    fill: var(--jp-expand-svg-color);
   }
 }
