@@ -49,5 +49,6 @@
 	"features": {
 		"git": "latest",
 		"github-cli": "latest",
+		"jupyterlab": "latest"
 	}
 }
