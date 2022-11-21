@@ -2,3 +2,7 @@
 
 pip install .
 python setup.py build
+
+sudo mkdir /usr/local/share/jupyter
+sudo chown vscode /usr/local/share/jupyter
+jupyter labextension develop . --overwrite

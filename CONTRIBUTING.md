@@ -10,7 +10,7 @@ Opening this repository in Codespaces will pre-install the environment you need 
 
 This project uses lerna to manage the multiple packages inside the packages folder. If you run an npm command at the root it will run the command for each subpackage. This is good for working across packages, however more commonly we want to work with an individual package. To do this change directories into the package you wish to alter, then npm will run only for that package.
 
-### Adding npm dependencie
+### Adding npm dependency
 
 This should be done inside the directory of the package which requires the dependency.
 

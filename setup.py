@@ -8,15 +8,15 @@ import os
 import sys
 from glob import glob
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 # ensure the current directory is on sys.path
 # so setupbase can be imported when pip uses
 # PEP 517/518 build rules.
 sys.path.append(os.path.dirname(__file__))
 
-from setupbase import (create_cmdclass, install_npm, ensure_targets,
-    combine_commands, get_version)
+from setupbase import (combine_commands, create_cmdclass, ensure_targets,
+                       get_version, install_npm)
 
 pjoin = os.path.join
 here = os.path.abspath(os.path.dirname(__file__))
