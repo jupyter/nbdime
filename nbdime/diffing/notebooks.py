@@ -412,6 +412,8 @@ def add_mime_diff(key, avalue, bvalue, diffbuilder):
     # I.e. image diff, svg diff, json diff, etc.
 
     mimetype = key.lower()
+    if isinstance(avalue, str) and isinstance(bvalue, str) and avalue == bvalue:
+        return
     if any(mimetype.startswith(tm) for tm in _split_mimes):
         dd = diff(avalue, bvalue)
         if dd:
