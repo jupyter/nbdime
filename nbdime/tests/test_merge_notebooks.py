@@ -109,7 +109,7 @@ def test_merge_cell_sources_neighbouring_inserts():
     merge_args = copy.deepcopy(args)
     merge_args.merge_strategy = "mergetool"
 
-    _check_sources(base, local, remote, expected_partial, expected_conflicts, merge_args)
+    _check_sources(base, local, remote, expected_partial, expected_conflicts, merge_args, ignore_cell_ids=True)
 
 
 def test_merge_cell_sources_separate_inserts():
@@ -310,11 +310,9 @@ def test_merge_simple_cell_source_conflicting_insert():
     _check_sources(base, local, remote, expected_partial, expected_conflicts, merge_args, True)
 
 
-@pytest.mark.xfail
 def test_merge_multiline_cell_source_conflict():
     # Modifying cell on both sides interpreted as editing the original cell
-    # (this is where heuristics kick in: when is a cell modified and when is
-    # it replaced?)
+    # Note: This only works with cell ids hinting that the cells are the same
     source = [
         "def foo(x, y):\n",
         "    z = x * y\n",
@@ -324,16 +322,19 @@ def test_merge_multiline_cell_source_conflict():
     base = [source + [""]]
     remote = [source + ["remote\n"] + [""]]
 
-    le = op_addrange(3, "local\n")
-    re = op_addrange(3, "remote\n")
+    le = op_addrange(3, ["local\n"])
+    re = op_addrange(3, ["remote\n"])
 
     expected_partial = base
     expected_conflicts = [{
-        "common_path": ("cells", "0", "source"),
+        "common_path": ("cells", 0, "source"),
         "local_diff": [le],
         "remote_diff": [re]
     }]
-    _check_sources(base, local, remote, expected_partial, expected_conflicts)
+    merge_args = copy.deepcopy(args)
+    merge_args.merge_strategy = "mergetool"
+
+    _check_sources(base, local, remote, expected_partial, expected_conflicts, merge_args)
 
 
 def test_merge_insert_cells_around_conflicting_cell():
