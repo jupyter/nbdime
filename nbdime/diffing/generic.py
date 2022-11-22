@@ -94,6 +94,17 @@ def diff(a, b, path="", config=None):
     return d
 
 
+def diff_string_lines(a, b, path="", config=None):
+    """Diff two lists of strings (lines)"""
+
+    # This is mainly about short-circuiting to avoid full snakes for equal content
+    # since we know we can rely on __eq__ comparison
+    if len(a) == len(b) and a == b:
+        return []
+    
+    return diff_sequence_multilevel(a, b, path=path, config=config)
+
+
 def diff_sequence_multilevel(a, b, path="", config=None):
     """Compute diff of two lists with configurable behaviour."""
 

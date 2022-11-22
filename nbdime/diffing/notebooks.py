@@ -529,6 +529,7 @@ notebook_predicates = defaultdict2(lambda: [operator.__eq__], {
 notebook_differs = defaultdict2(lambda: diff, {
     "/cells": diff_sequence_multilevel,
     "/cells/*": diff,
+    "/cells/*/source": diff_string_lines,
     "/cells/*/outputs": diff_sequence_multilevel,
     "/cells/*/outputs/*": diff_single_outputs,
     "/cells/*/attachments": diff_attachments,
