@@ -396,39 +396,42 @@ def test_merge_insert_cells_around_conflicting_cell():
     _check_sources(base, local, remote, expected_partial, expected_conflicts, merge_args, True)
 
 
-@pytest.mark.xfail
 def test_merge_interleave_cell_add_remove():
     # Interleaving cell inserts and deletes
     # no modifications = avoids heuristics
-    local = [["local 1"],
-             ["base 1"],
-             ["local 2"],
-             ["base 2"],
-             ["local 3"],
-             ["base 3"],
-             ["base 4"]]
-    base = [["base 1"],
-            ["base 2"],
-            ["base 3"],
-            ["base 4"]]
-    remote = [["remote 1"],
-              ["base 1"],
-              ["remote 2"],
-              ["remote 3"],
-              ["base 3"]]
+    local = [["local 1\n"],
+             ["base 1\n"],
+             ["local 2\n"],
+             ["base 2\n"],
+             ["local 3\n"],
+             ["base 3\n"],
+             ["base 4\n"]]
+    base = [["base 1\n"],
+            ["base 2\n"],
+            ["base 3\n"],
+            ["base 4\n"]]
+    remote = [["remote 1\n"],
+              ["base 1\n"],
+              ["remote 2\n"],
+              ["remote 3\n"],
+              ["base 3\n"]]
     # Note: in this case "remote 3" is before "local 3" because it's lumped
     # together with "remote 2" in the diff and the insert of
     # ["remote 2", "remote 3"]starts before the removal of "base 2"
-    expected_partial = [["local 1"],
-                        ["remote 1"],
-                        ["base 1"],
-                        ["local 2"],
-                        ["remote 2"],
-                        ["remote 3"],
-                        ["local 3"],
-                        ["base 3"]]
+    expected_partial = [["local 1\n"],
+                        ["remote 1\n"],
+                        ["base 1\n"],
+                        ["local 2\n"],
+                        ["remote 2\n"],
+                        ["remote 3\n"],
+                        ["local 3\n"],
+                        ["base 3\n"]]
     expected_conflicts = []
-    _check_sources(base, local, remote, expected_partial, expected_conflicts)
+
+    merge_args = copy.deepcopy(args)
+    merge_args.merge_strategy = "union"
+
+    _check_sources(base, local, remote, expected_partial, expected_conflicts, merge_args, ignore_cell_ids=True)
 
 
 @pytest.mark.xfail
