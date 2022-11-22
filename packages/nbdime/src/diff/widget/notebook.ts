@@ -8,7 +8,7 @@ import type {
   IRenderMimeRegistry
 } from '@jupyterlab/rendermime';
 
-import { LazyDisplayLinkedListCell, LinkedListCell } from "./linked-cells";
+import { ILinkedListCell, LazyDisplayLinkedListCell, LinkedListCell } from "./linked-cells";
 import { CellDiffWidget } from "./cell";
 import {
   CHUNK_PANEL_CLASS,
@@ -26,12 +26,19 @@ const NBDIFF_CLASS = "jp-Notebook-diff";
  * NotebookDiffWidget
  */
 export class NotebookDiffWidget extends Panel {
-  constructor(model: NotebookDiffModel, rendermime: IRenderMimeRegistry) {
+  constructor(
+    model: NotebookDiffModel,
+    rendermime: IRenderMimeRegistry,
+    displayedCellWrapper: ILinkedListCell = LinkedListCell,
+    lazyDisplayWrapper: ILinkedListCell = LazyDisplayLinkedListCell
+  ) {
     super();
     this._model = model;
     this._rendermime = rendermime;
     this.addClass(NBDIFF_CLASS);
     this.previousCell = null;
+    this.displayedCellWrapper = displayedCellWrapper;
+    this.lazyDisplayWrapper = lazyDisplayWrapper;
   }
 
   /**
@@ -139,4 +146,6 @@ export class NotebookDiffWidget extends Panel {
   private _model: NotebookDiffModel;
   private _rendermime: IRenderMimeRegistry;
   private previousCell: LinkedListCell | null;
+  private displayedCellWrapper: LinkedListCell;
+  private lazyDisplayWrapper: LazyDisplayLinkedListCell;
 }

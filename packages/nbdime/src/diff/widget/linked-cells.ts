@@ -1,9 +1,34 @@
 import { Panel, Widget } from "@lumino/widgets";
 import type { CellDiffWidget } from "./";
+import { LabIcon }  from "@jupyterlab/ui-components";
 
 import foldDown from "./fold-down.svg";
 import foldUp from "./fold-up.svg";
 import fold from "./fold.svg";
+
+export const foldDownIcon = new LabIcon({
+  name: "nbdime:fold-down",
+  svgstr: foldDown
+});
+
+export const foldUpIcon = new LabIcon({
+  name: "nbdime:fold-up",
+  svgstr: foldUp
+});
+
+export const foldIcon = new LabIcon({
+  name: "nbdime:fold",
+  svgstr: fold
+});
+
+export interface ILinkedListCell {
+  next: () => ILinkedListCell | null;
+  prev: () => ILinkedListCell | null;
+  displayed: () => boolean;
+  lazy: boolean;
+  expandUp: () => void;
+  expandDown: () => void;
+}
 
 class LinkedListCell extends Panel {
   _next: LinkedListCell | LazyDisplayLinkedListCell | null;
@@ -159,19 +184,15 @@ class LazyDisplayLinkedListCell extends LinkedListCell {
     const button = document.createElement("a");
     button.title = `Expand ${direction}`;
     button.setAttribute("aria-label", `Expand ${direction}`);
-    button.innerHTML = this.buttonSvg(direction);
-    if (direction === "Up") {
-      button.innerHTML = foldUp;
-    } else if (direction === "Down") {
-      button.innerHTML = foldDown;
-    } else {
-      button.innerHTML = fold;
-    }
+    let icon = this.buttonSvg(direction);
+    icon.element({
+      container: button,
+    })
     this.expandButtonDisplayed = true;
     return button;
   }
 
-  buttonSvg(direction: "Up" | "Down" | "Fold"): string {
+  buttonSvg(direction: "Up" | "Down" | "Fold"): LabIcon {
     if (direction === "Up") {
       return foldUp;
     } else if (direction === "Down") {
