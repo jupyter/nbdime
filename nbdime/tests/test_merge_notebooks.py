@@ -10,7 +10,7 @@ import copy
 import nbformat
 
 from nbdime.diff_format import op_patch, op_addrange, op_removerange, op_replace
-from .utils import sources_to_notebook, outputs_to_notebook, have_git, strip_cell_ids, new_cell_wo_id
+from .utils import sources_to_notebook, outputs_to_notebook, have_git, strip_cell_ids, new_cell_wo_id, deterministic_cell_ids
 from nbdime.nbmergeapp import _build_arg_parser
 from nbdime import merge_notebooks, apply_decisions
 from nbdime.diffing.notebooks import diff_notebooks, set_notebook_diff_targets
@@ -172,6 +172,8 @@ def src2nb(src, strip_ids=False):
     assert "cells" in src
     if strip_ids:
         strip_cell_ids(src)
+    else:
+        deterministic_cell_ids(src)
     return src
 
 
