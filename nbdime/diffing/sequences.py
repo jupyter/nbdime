@@ -53,6 +53,8 @@ def diff_strings_linewise(a, b):
     """
     assert isinstance(a, str) and isinstance(b, str), (
         'Arguments need to be string types. Got %r and %r' % (a, b))
+    if a == b:
+        return []
     lines_a = a.splitlines(True)
     lines_b = b.splitlines(True)
 
