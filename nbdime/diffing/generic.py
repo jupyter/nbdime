@@ -102,7 +102,7 @@ def diff_string_lines(a, b, path="", config=None):
     if len(a) == len(b) and a == b:
         return []
     
-    return diff_sequence_multilevel(a, b, path=path, config=config)
+    return diff_strings_linewise(a, b)
 
 
 def diff_sequence_multilevel(a, b, path="", config=None):
