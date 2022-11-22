@@ -33,7 +33,7 @@ generic_conflict_strategies = (
     "mergetool",        # Do not modify decision (but prevent processing at deeper path)
     "record-conflict",  # Valid for metadata only: produce new metadata with conflicts recorded for external inspection
     "take-max",         # Take the maximum value in case of conflict
-    "union",            # Join values in case of conflict, don't insert new markers
+    "union",            # Join values in case of conflict, don't insert new markers (only applies to sequence types)
     "use-base",         # Keep base value in case of conflict
     "use-local",        # Use local value in case of conflict
     "use-remote",       # Use remote value in case of conflict
@@ -90,11 +90,13 @@ def notebook_merge_strategies(args):
     # Default to merge_strategy
     input_strategy = input_strategy or merge_strategy
     output_strategy = output_strategy or merge_strategy
-    metadata_strategy = merge_strategy
+    metadata_strategy = merge_strategy if merge_strategy != "union" else None
 
     # Set root strategy
     if merge_strategy == 'inline':
         strategies['/cells'] = "inline-cells"
+    elif merge_strategy == 'union':
+        strategies['/cells'] = merge_strategy
     else:
         strategies["/"] = merge_strategy
 

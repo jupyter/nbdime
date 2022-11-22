@@ -208,6 +208,8 @@ class MergeDecisionBuilder(object):
                 action = "remote"
             elif strategy == "use-base":
                 action = "base"
+            elif strategy == "union":
+                action = "local_then_remote"
             elif strategy == "clear":
                 action = "clear"
             elif strategy == "take-max":

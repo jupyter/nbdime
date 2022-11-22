@@ -674,6 +674,8 @@ def _merge_strings(base, local_diff, remote_diff,
         if strategy == "inline-source":
             decisions = resolve_strategy_inline_source(
                 path, base, local_diff, remote_diff)
+        elif strategy == "union":
+            decisions.local_then_remote(path, local_diff, remote_diff)
         else:
             # FIXME XXX: Test regular string merge well also for no specific strategy!
 
@@ -687,8 +689,6 @@ def _merge_strings(base, local_diff, remote_diff,
             finally:
                 # Ensure recursion stops even in case of exceptions
                 _merge_strings.recursion = False
-        #elif strategy == "union":
-        #    nbdime.log.error("union strategy not implemented for source")  # FIXME
         # TODO: Add option to try git merge-file or diff3 even when using mergetool
         #elif strategy == "try-external":
         #    nbdime.log.error("try-external strategy is not implemented")

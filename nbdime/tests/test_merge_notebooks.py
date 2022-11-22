@@ -797,7 +797,6 @@ def test_metadata_union_strategy_metadata():
     _check(partial, expected_partial, decisions, expected_conflicts)
 
 
-@pytest.mark.skip
 def test_metadata_union_strategy_not_applied_immutable_on_dict():
     # Conflicting cell inserts at same location as removing old cell
     expected_partial_source = [["remote\n", "some other\n", "lines\n", "to align\n"]]
@@ -827,7 +826,6 @@ def test_metadata_union_strategy_not_applied_immutable_on_dict():
     _check(partial, expected_partial, decisions, expected_conflicts)
 
 
-@pytest.mark.skip
 def test_merge_mix_strategies():
     # Conflicting cell inserts at same location as removing old cell
     expected_partial_source = [["remote\n", "some other\n", "lines\n", "to align\n"]]

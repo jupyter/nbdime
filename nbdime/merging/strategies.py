@@ -18,7 +18,7 @@ from ..diff_format import (
     op_patch, op_addrange, op_removerange, op_add, op_replace)
 from ..patching import patch
 from ..prettyprint import merge_render
-from ..utils import join_path
+from ..utils import join_path, resolve_path
 
 
 # =============================================================================
@@ -654,6 +654,15 @@ def resolve_conflicted_decisions_list(path, base, decisions, strategy):
         # Affects conflicts on output dicts at /cells/*/outputs
         resolve_strategy_remove_outputs(path, base, decisions)
 
+    elif strategy == "union":
+        action = "local_then_remote"
+        for d in decisions:
+            if d.conflict:
+                # do not to apply to subdecisions on dicts
+                if not isinstance(resolve_path(base, d.common_path[len(path):]), dict):
+                    d.action = action
+                    d.conflict = False
+
     elif strategy == "clear-all":
         # Old approach that relies on special handling in apply_decisions
         # to deal with clear-all overriding other decisions:
@@ -688,6 +697,14 @@ def resolve_conflicted_decisions_dict(path, base, decisions, strategy):
     elif strategy == "inline-attachments":
         # affects conflicts on string at /cells/*/attachments or below
         resolve_strategy_inline_attachments(path, base, decisions)
+
+    elif strategy == "union":
+        # union ops on dicts doesn't really work if they are decided to be conflicting
+        for d in decisions:
+            if d.conflict:
+                msg = "Unexpected strategy {} for dict on {}.".format(
+                    strategy, join_path(path))
+                nbdime.log.error(msg)
 
     else:
         resolve_strategy_generic(path, decisions, strategy)
