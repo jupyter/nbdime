@@ -297,6 +297,10 @@ def compare_cell_approximate(x, y):
     This is used to align cells in the /cells list
     in the third and last multilevel diff iteration.
     """
+    # if both have an id, they must match
+    if 'id' in x and 'id' in y and x.get('id') != y.get('id'):
+        return False
+
     # Cell types must match
     if x["cell_type"] != y["cell_type"]:
         return False
@@ -326,6 +330,10 @@ def compare_cell_moderate(x, y):
     This is used to align cells in the /cells list
     in the second multilevel diff iteration.
     """
+    # if both have an id, they must match
+    if 'id' in x and 'id' in y and x.get('id') != y.get('id'):
+        return False
+
     # Cell types must match
     if x["cell_type"] != y["cell_type"]:
         return False
@@ -352,6 +360,10 @@ def compare_cell_strict(x, y):
     This is used to align cells in the /cells list
     in the first multilevel diff iteration.
     """
+    # if either have an id, short circuit
+    if 'id' in x or 'id' in y:
+        return x.get('id') == y.get('id')
+
     # Cell types must match
     if x["cell_type"] != y["cell_type"]:
         return False
