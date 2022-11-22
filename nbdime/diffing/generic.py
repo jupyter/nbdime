@@ -10,15 +10,11 @@ import difflib
 from ..diff_format import SequenceDiffBuilder, MappingDiffBuilder, validate_diff
 from ..diff_utils import count_consumed_symbols
 
+from .config import DiffConfig
 from .sequences import diff_strings_linewise, diff_sequence
 from .snakes import compute_snakes_multilevel, compute_diff_from_snakes
 
 __all__ = ["diff"]
-
-
-def is_atomic(x):
-    "Return True for values that diff should treat as a single atomic value."
-    return not isinstance(x, (str, list, dict))
 
 
 def default_predicates():
@@ -74,18 +70,16 @@ def compare_strings_approximate(x, y, threshold=0.7, maxlen=None):
     return s.ratio() > threshold
 
 
-def diff(a, b, path="", predicates=None, differs=None):
+def diff(a, b, path="", config=None):
     "Compute the diff of two json-like objects, list or dict or string."
 
-    if predicates is None:
-        predicates = default_predicates()
-    if differs is None:
-        differs = default_differs()
+    if config is None:
+        config = DiffConfig()
 
     if isinstance(a, list) and isinstance(b, list):
-        d = diff_lists(a, b, path=path, predicates=predicates, differs=differs)
+        d = diff_lists(a, b, path=path, config=config)
     elif isinstance(a, dict) and isinstance(b, dict):
-        d = diff_dicts(a, b, path=path, predicates=predicates, differs=differs)
+        d = diff_dicts(a, b, path=path, config=config)
     elif isinstance(a, str) and isinstance(b, str):
         # Don't pass differs/predicates as the only possible use case is to
         # use a different character differ within each line or predicates
@@ -100,35 +94,31 @@ def diff(a, b, path="", predicates=None, differs=None):
     return d
 
 
-def diff_sequence_multilevel(a, b, path="", predicates=None, differs=None):
+def diff_sequence_multilevel(a, b, path="", config=None):
     """Compute diff of two lists with configurable behaviour."""
 
-    if predicates is None:
-        predicates = default_predicates()
-    if differs is None:
-        differs = default_differs()
+    if config is None:
+        config = DiffConfig()
 
     # Invoke multilevel snake computation algorithm
-    compares = predicates[path or '/']
+    compares = config.predicates[path or '/']
     snakes = compute_snakes_multilevel(a, b, compares)
 
     # Convert snakes to diff
-    return compute_diff_from_snakes(a, b, snakes, path=path, predicates=predicates, differs=differs)
+    return compute_diff_from_snakes(a, b, snakes, path=path, config=config)
 
 
-def diff_lists(a, b, path="", predicates=None, differs=None, shallow_diff=None):
+def diff_lists(a, b, path="", config=None, shallow_diff=None):
     """Compute diff of two lists with configurable behaviour."""
 
-    if predicates is None:
-        predicates = default_predicates()
-    if differs is None:
-        differs = default_differs()
+    if config is None:
+        config = DiffConfig()
 
     # If multiple compares are provided to this path, delegate to multilevel algorithm
-    compares = predicates[path or '/']
+    compares = config.predicates[path or '/']
     if len(compares) > 1:
         assert shallow_diff is None
-        return diff_sequence_multilevel(a, b, path=path, predicates=predicates, differs=differs)
+        return diff_sequence_multilevel(a, b, path=path, config=config)
 
     # First make a shallow sequence diff with custom compare,
     # unless it's provided for us
@@ -138,7 +128,7 @@ def diff_lists(a, b, path="", predicates=None, differs=None, shallow_diff=None):
     # Next we recurse to diff items in sequence that are considered
     # similar by compares[0] in the loop below
     subpath = "/".join((path, "*"))
-    diffit = differs[subpath]
+    diffit = config.differs[subpath]
 
     # Count consumed items i,j from a,b, (i="take" in patch_list)
     i, j = 0, 0
@@ -165,8 +155,8 @@ def diff_lists(a, b, path="", predicates=None, differs=None, shallow_diff=None):
         for k in range(n):
             aval = a[i + k]
             bval = b[j + k]
-            if not is_atomic(aval):
-                cd = diffit(aval, bval, path=subpath, predicates=predicates, differs=differs)
+            if not config.is_atomic(aval, subpath):
+                cd = diffit(aval, bval, path=subpath, config=config)
                 if cd:
                     di.patch(i + k, cd)  # FIXME: Not covered in tests, create test situation
 
@@ -186,7 +176,7 @@ def diff_lists(a, b, path="", predicates=None, differs=None, shallow_diff=None):
     return di.validated()
 
 
-def diff_dicts(a, b, path="", predicates=None, differs=None):
+def diff_dicts(a, b, path="", config=None):
     """Compute diff of two dicts with configurable behaviour.
 
     Keys in both a and b will be handled based on
@@ -197,10 +187,8 @@ def diff_dicts(a, b, path="", predicates=None, differs=None):
     Items not mentioned in diff are items where compare(x, y) return True.
     For other items the diff will contain delete, insert, or replace entries.
     """
-    if predicates is None:
-        predicates = default_predicates()
-    if differs is None:
-        differs = default_differs()
+    if config is None:
+        config = DiffConfig()
 
     if not isinstance(a, dict) or not isinstance(b, dict):
         raise TypeError('Arguments to diff_dicts need to be dicts, got %r and %r' % (a, b))
@@ -218,14 +206,14 @@ def diff_dicts(a, b, path="", predicates=None, differs=None):
         avalue = a[key]
         bvalue = b[key]
         # If types are the same and nonatomic, recurse
-        if type(avalue) is type(bvalue) and not is_atomic(avalue):
-            subpath = "/".join((path, key))
-            diffit = differs[subpath]
-            dd = diffit(avalue, bvalue, path=subpath, predicates=predicates, differs=differs)
+        subpath = "/".join((path, key))
+        if type(avalue) is type(bvalue) and not config.is_atomic(avalue, path=subpath):
+            diffit = config.differs[subpath]
+            dd = diffit(avalue, bvalue, path=subpath, config=config)
             if dd:
                 di.patch(key, dd)
         else:
-            if (path or '/') in predicates:
+            if (path or '/') in config.predicates:
                 # Could also this a warning, but I think it shouldn't be done
                 raise RuntimeError(
                     "Found predicate(s) for path {} pointing to dict entry.".format(

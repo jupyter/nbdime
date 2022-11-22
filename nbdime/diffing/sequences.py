@@ -6,6 +6,7 @@
 import operator
 from collections import defaultdict
 
+from .config import DiffConfig
 from .seq_difflib import diff_sequence_difflib
 from .seq_bruteforce import diff_sequence_bruteforce
 from .seq_myers import diff_sequence_myers
@@ -37,7 +38,7 @@ def diff_sequence(a, b, compare=operator.__eq__):
         raise RuntimeError("Unknown diff_sequence_algorithm {}.".format(diff_sequence_algorithm))
 
 
-def diff_strings_by_char(a, b, path="", predicates=None, differs=None):
+def diff_strings_by_char(a, b, path="", config=None):
     "Compute char-based diff of two strings."
     assert isinstance(a, str) and isinstance(b, str), (
         'Arguments need to be string types. Got %r and %r' % (a, b))
@@ -56,8 +57,10 @@ def diff_strings_linewise(a, b):
     lines_b = b.splitlines(True)
 
     from .generic import diff_lists, compare_strings_approximate
-    predicates = defaultdict(lambda: [
-        compare_strings_approximate,
-        operator.__eq__])
-    differs = defaultdict(lambda: diff_strings_by_char)
-    return diff_lists(lines_a, lines_b, predicates=predicates, differs=differs)
+    config = DiffConfig(
+        predicates=defaultdict(lambda: [
+            compare_strings_approximate,
+            operator.__eq__]),
+        differs=defaultdict(lambda: diff_strings_by_char)
+    )
+    return diff_lists(lines_a, lines_b, config=config)

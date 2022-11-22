@@ -6,6 +6,7 @@
 
 
 from collections import defaultdict
+import copy
 
 import nbdime.log
 from .decisions import MergeDecisionBuilder
@@ -22,7 +23,7 @@ from ..diff_format import (
     DiffEntry, DiffOp, ParentDeleted, Missing,
     op_patch, op_addrange, op_removerange)
 from ..diff_utils import as_dict_based_diff
-from ..diffing.notebooks import notebook_predicates, notebook_differs
+from ..diffing.notebooks import notebook_config
 from ..patching import patch
 from ..utils import star_path, Strategies
 
@@ -286,8 +287,8 @@ def _split_addrange(key, local, remote, path, item_strategy):
     # measures defined in notebook predicates.
     intermediate_diff = perform_diff(
         local, remote, path=star_path(path),
-        predicates=notebook_predicates.copy(),
-        differs=notebook_differs.copy())
+        config=copy.copy(notebook_config)
+    )
 
     # Next, translate the diff into decisions
     decisions = MergeDecisionBuilder()

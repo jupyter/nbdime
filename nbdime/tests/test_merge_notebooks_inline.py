@@ -11,6 +11,7 @@ from collections import defaultdict
 from nbdime import merge_notebooks, diff
 from nbdime.diff_format import op_patch
 from nbdime.utils import Strategies
+from nbdime.diffing.config import DiffConfig
 from nbdime.merging.generic import decide_merge, decide_merge_with_diff
 from nbdime.merging.decisions import apply_decisions
 from nbdime.merging.strategies import _cell_marker_format
@@ -344,9 +345,11 @@ def test_decide_merge_list_conflicting_insertions_in_chunks__union():
 def test_decide_merge_list_transients():
     # For this test, we need to use a custom predicate to ensure alignment
     common = {'id': 'This ensures alignment'}
-    predicates = defaultdict(lambda: [operator.__eq__], {
-        '/': [lambda a, b: a['id'] == b['id']],
-    })
+    config = DiffConfig(
+        predicates=defaultdict(lambda: [operator.__eq__], {
+            '/': [lambda a, b: a['id'] == b['id']],
+        })
+    )
 
     # Setup transient difference in base and local, deletion in remote
     b = [{'transient': 22}]
@@ -356,8 +359,8 @@ def test_decide_merge_list_transients():
     r = []
 
     # Make decisions based on diffs with predicates
-    ld = diff(b, l, path="", predicates=predicates)
-    rd = diff(b, r, path="", predicates=predicates)
+    ld = diff(b, l, path="", config=config)
+    rd = diff(b, r, path="", config=config)
 
     # Assert that generic merge without strategies gives conflict:
     strategies = Strategies()
@@ -400,9 +403,11 @@ def test_decide_merge_dict_transients():
 def test_decide_merge_mixed_nested_transients():
     # For this test, we need to use a custom predicate to ensure alignment
     common = {'id': 'This ensures alignment'}
-    predicates = defaultdict(lambda: [operator.__eq__], {
-        '/': [lambda a, b: a['id'] == b['id']],
-    })
+    config = DiffConfig(
+        predicates=defaultdict(lambda: [operator.__eq__], {
+            '/': [lambda a, b: a['id'] == b['id']],
+        })
+    )
     # Setup transient difference in base and local, deletion in remote
     b = [{'a': {'transient': 22}}]
     l = [{'a': {'transient': 242}}]
@@ -411,8 +416,8 @@ def test_decide_merge_mixed_nested_transients():
     r = []
 
     # Make decisions based on diffs with predicates
-    ld = diff(b, l, path="", predicates=predicates)
-    rd = diff(b, r, path="", predicates=predicates)
+    ld = diff(b, l, path="", config=config)
+    rd = diff(b, r, path="", config=config)
 
     # Assert that generic merge gives conflict
     strategies = Strategies()
