@@ -647,6 +647,8 @@ def pretty_print_cell(i, cell, prefix="", force_header=False, config=DefaultConf
             # Write cell type and optionally number:
             numstr = "" if i is None else " %d" % i
             k = "%s cell%s" % (cell.get("cell_type"), numstr)
+            if "id" in cell:
+                k += f" [{cell['id']}]"
             pretty_print_key(k, prefix, config)
             c.called = True
     c.called = False
