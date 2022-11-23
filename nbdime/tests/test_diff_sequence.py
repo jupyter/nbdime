@@ -26,7 +26,7 @@ def check_diff_sequence_and_patch(a, b):
 algorithms = ["difflib", "bruteforce"]
 
 
-@pytest.yield_fixture(params=algorithms)
+@pytest.fixture(params=algorithms)
 def algorithm(request):
     alg = nbdime.diffing.sequences.diff_sequence_algorithm
     nbdime.diffing.sequences.diff_sequence_algorithm = request.param
