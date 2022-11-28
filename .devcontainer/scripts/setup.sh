@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-pip install .
+pip install -e .
 python setup.py build
 
 # sudo mkdir /usr/local/share/jupyter

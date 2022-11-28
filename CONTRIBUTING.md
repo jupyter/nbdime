@@ -21,3 +21,7 @@ The python setup.py script will built the entirety of the project and place it i
 ### Running npm tests
 
 The project uses jest to test the javascript, a typescript compile step occurs before the test suite runs. You can run the tests for the entire project with `npm run test` in the root, or change directories to the package you are working on and run `npm run test` to test just that package.
+
+### VSCode/CodeSpace Setup
+
+If you are working in vscode with GitHub codespaces many of the command you will need to run have been moved into vscode tasks. This includes building the webapp and lab extension, running test, launching the webapp, launching vscode and others. You can see the available tasks by choosing `Run Build Task from the global Terminal menu` to learn more about tasks see [this doc](https://code.visualstudio.com/docs/editor/tasks).
