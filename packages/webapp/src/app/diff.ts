@@ -253,7 +253,6 @@ function initializeDiff() {
     compare(base, remote, 'replace');
   }
 
-  console.log("RUns")
   let exportBtn = document.getElementById('nbdime-export') as HTMLButtonElement;
   exportBtn.onclick = exportDiff;
 
