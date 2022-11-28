@@ -15,7 +15,6 @@ MANIFEST
 
 
 .spyderproject
-**/.vscode/
 **/node_modules/
 nbdime/webapp/test/build/
 nbdime/webapp/build/

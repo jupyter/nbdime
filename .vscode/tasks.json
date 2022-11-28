@@ -1,0 +1,86 @@
+{
+	"tasks": [
+		{
+			"type": "npm",
+			"script": "build",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "npm: build",
+			"detail": "lerna run build"
+		},
+		{
+			"type": "shell",
+			"command": "./.vscode/scripts/rebuild-lab.sh",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "rebuild-lab",
+			"detail": "rebuild lab"
+		},
+		{
+			"type": "shell",
+			"command": "./.vscode/scripts/watch-lab.sh",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "watch-lab",
+			"detail": "watch lab",
+			"presentation": {
+				"panel": "dedicated"
+			}
+		},
+		{
+			"type": "shell",
+			"command": "./.vscode/scripts/watch-webapp.sh",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "watch-webapp",
+			"detail": "watch webapp",
+			"presentation": {
+				"panel": "dedicated"
+			}
+		},
+		{
+			"type": "shell",
+			"command": "jupyter lab",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "Run Jupyter Lab",
+			"detail": "Run Jupyter Lab",
+			"presentation": {
+				"panel": "dedicated"
+			}
+		},
+		{
+			"type": "shell",
+			"command": "./.vscode/scripts/run-webapp.sh",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "run-webapp",
+			"detail": "run webapp",
+			"presentation": {
+				"panel": "dedicated"
+			},
+			"inputs": [
+				{
+					"id": "head",
+					"description": "Head Notebook:",
+					"default": "./nbdime/tests/files/apap--1.ipynb",
+					"type": "promptString"
+				},
+				{
+					"id": "base",
+					"description": "Base Notebook:",
+					"default": "./nbdime/tests/files/apap.ipynb",
+					"type": "promptString"
+				}
+			]
+		},
+		{
+			"type": "npm",
+			"script": "test",
+			"group": "test",
+			"problemMatcher": [],
+			"label": "npm: test",
+			"detail": "lerna run test"
+		}
+	]
+}
