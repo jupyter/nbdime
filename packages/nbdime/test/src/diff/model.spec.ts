@@ -1,9 +1,9 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import * as nbformat from '@jupyterlab/nbformat';
+import type * as nbformat from '@jupyterlab/nbformat';
 
-import {
+import type {
   JSONValue
 } from '@lumino/coreutils';
 
@@ -11,10 +11,6 @@ import {
   createAddedCellDiffModel, createDeletedCellDiffModel,
   createPatchedCellDiffModel, createUnchangedCellDiffModel
 } from '../../../src/diff/model/cell';
-
-import {
-  NotebookDiffModel
-} from '../../../src/diff/model/notebook';
 
 import {
   OutputDiffModel

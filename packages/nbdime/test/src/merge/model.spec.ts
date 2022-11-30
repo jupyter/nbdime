@@ -1,7 +1,7 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import * as nbformat from '@jupyterlab/nbformat';
+import type * as nbformat from '@jupyterlab/nbformat';
 
 import {
   stripSource
@@ -244,11 +244,6 @@ describe('merge', () => {
         const cell2: nbformat.ICell = {
           cell_type: 'markdown',
           source: 'This is cell 2\n',
-          metadata: {},
-        };
-        const cell3: nbformat.ICell = {
-          cell_type: 'markdown',
-          source: 'This is cell 3\n',
           metadata: {},
         };
 
@@ -522,7 +517,6 @@ describe('merge', () => {
         });
 
         it('should split an ADDRANGE/REMOVERANGE conflict', () => {
-          const lineAdd = opPatch('source', [opAddRange(1, 'line #2\n')]);
           let cdecs: MergeDecision[] = [new MergeDecision(
             ['cells'],
             [opAddRange(0, [cell1])],
@@ -548,7 +542,6 @@ describe('merge', () => {
         });
 
         it('should split an REMOVERANGE/ADDRANGE conflict', () => {
-          const lineAdd = opPatch('source', [opAddRange(1, 'line #2\n')]);
           let cdecs: MergeDecision[] = [new MergeDecision(
             ['cells'],
             [opRemoveRange(0, 1)],

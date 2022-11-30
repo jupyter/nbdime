@@ -1,7 +1,7 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import * as nbformat from '@jupyterlab/nbformat';
+import type * as nbformat from '@jupyterlab/nbformat';
 
 import {
   Widget
@@ -15,7 +15,7 @@ import {
   defaultSanitizer
 } from '@jupyterlab/apputils';
 
-import {
+import type {
     IMergeDecision
 } from '../../../src/merge/decisions';
 
@@ -24,18 +24,18 @@ import {
 } from '../../../src/merge/model';
 
 import {
-    CellMergeWidget, NotebookMergeWidget, MetadataMergeWidget
+    NotebookMergeWidget, MetadataMergeWidget
 } from '../../../src/merge/widget';
-import { CodeEditor } from '@jupyterlab/codeeditor';
+import type { CodeEditor } from '@jupyterlab/codeeditor';
 
 
 const notebook = require('../../files/base.ipynb.json') as nbformat.INotebookContent;
 const NBdecisions = require('../../files/decisionsA.json') as IMergeDecision[];
 
 // Mock codemirror editor as it is provided by JupyterLab
-//  Notes: 
+//  Notes:
 //    The signal `selections.changed` must be mocked as it is connected
-//    to a slot in CodeEditorWrapper in @jupyterlab/codeeditor 
+//    to a slot in CodeEditorWrapper in @jupyterlab/codeeditor
 //    See https://github.com/jupyterlab/jupyterlab/blob/4fc0a73336fe7bb92b2b2c0e6e8be89545086a50/packages/codeeditor/src/widget.ts#L51
 //
 //    Some method of the CodeMirror editor called when instantiating an editor in src/common/mergeview are also mocked.
@@ -50,7 +50,7 @@ jest.mock('@jupyterlab/codemirror', () => {
             model: {
               selections: { changed: { connect: jest.fn() } },
             },
-            editor: { 
+            editor: {
               getValue: jest.fn().mockImplementation(() => options.model.value.text),
               on: jest.fn(),
               operation: jest.fn(),
