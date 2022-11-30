@@ -27,6 +27,7 @@ The `python setup.py build` script will again update the extension. In order to 
 jupyter server extension enable nbdime
 jupyter labextension develop . --overwrite
 ```
+(Note if you are using Codespace the above setup should have already happened for you.)
 
 Every time you make a change you can re-run the build script and overwrite the lab extension to see the update.
 
