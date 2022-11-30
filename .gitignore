@@ -12,7 +12,7 @@ MANIFEST
 .cache
 .pytest_cache
 .idea
-
+**/.vscode/
 
 .spyderproject
 **/node_modules/

@@ -18,10 +18,18 @@ This should be done inside the directory of the package which requires the depen
 
 The python setup.py script will built the entirety of the project and place it inside the build folder. Run `python setup.py build` once you are ready to test a change. Then the nbdime module can be invoked to test changes by running `python -m nbdime service` for example diff web can be started at `python -m nbdime diff-web testnotebookpath testnotebookpath2` there are test notebooks in the `nbdime/webapp/testnotebook` folder.
 
+
+### Testing Changes to The Jupyter Lab Extension
+
+The `python setup.py build` script will again update the extension. In order to see changes to in the Jupyter Lab interface you will need it to be setup. Running these commands will setup the environment:
+
+```bash
+jupyter server extension enable nbdime
+jupyter labextension develop . --overwrite
+```
+
+Every time you make a change you can re-run the build script and overwrite the lab extension to see the update.
+
 ### Running npm tests
 
 The project uses jest to test the javascript, a typescript compile step occurs before the test suite runs. You can run the tests for the entire project with `npm run test` in the root, or change directories to the package you are working on and run `npm run test` to test just that package.
-
-### VSCode/CodeSpace Setup
-
-If you are working in vscode with GitHub codespaces many of the command you will need to run have been moved into vscode tasks. This includes building the webapp and lab extension, running test, launching the webapp, launching vscode and others. You can see the available tasks by choosing `Run Build Task from the global Terminal menu` to learn more about tasks see [this doc](https://code.visualstudio.com/docs/editor/tasks).
