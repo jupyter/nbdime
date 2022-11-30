@@ -2,7 +2,7 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import * as nbformat from '@jupyterlab/nbformat';
+import type * as nbformat from '@jupyterlab/nbformat';
 
 import {
   Panel
@@ -16,13 +16,9 @@ import {
   CollapsiblePanel
 } from '../../common/collapsiblepanel';
 
-import {
+import type {
   MetadataMergeModel
 } from '../model';
-
-import {
-  MERGE_CLASSES
-} from './common';
 
 
 const ROOT_METADATA_CLASS = 'jp-Metadata-diff';

@@ -2,9 +2,9 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import * as nbformat from '@jupyterlab/nbformat';
+import type * as nbformat from '@jupyterlab/nbformat';
 
-import {
+import type {
   IDiffEntry
 } from '../../diff/diffentries';
 
@@ -13,7 +13,7 @@ import {
   createDirectStringDiffModel
 } from '../../diff/model';
 
-import {
+import type {
   MergeDecision
 } from '../../merge/decisions';
 
@@ -57,5 +57,5 @@ class MetadataMergeModel extends ObjectMergeModel<nbformat.INotebookMetadata, IS
       [this.local, this.remote]);
   }
 
-  base: nbformat.INotebookMetadata;
+  declare base: nbformat.INotebookMetadata;
 }

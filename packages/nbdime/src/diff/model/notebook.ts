@@ -2,9 +2,9 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import * as nbformat from '@jupyterlab/nbformat';
+import type * as nbformat from '@jupyterlab/nbformat';
 
-import {
+import type {
   IDiffEntry, IDiffArrayEntry
 } from '../diffentries';
 

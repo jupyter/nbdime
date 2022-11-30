@@ -38,8 +38,8 @@
     "rimraf": "^2.6.3",
     "source-map-loader": "^0.2.4",
     "style-loader": "^0.23.1",
-    "ts-loader": "^6.0.4",
-    "typescript": "^3.7.2",
+    "ts-loader": "^8.2.0",
+    "typescript": "^4.9.0",
     "url-loader": "^2.0.1",
     "webpack": "^4.29.6",
     "webpack-cli": "^3.2.3"

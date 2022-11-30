@@ -62,7 +62,7 @@
     "@lumino/commands": "^1.6.1",
     "mkdirp": "^0.5.1",
     "rimraf": "^2.6.3",
-    "typescript": "^3.7.2"
+    "typescript": "^4.9.0"
   },
   "jupyterlab": {
     "extension": true,

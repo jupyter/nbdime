@@ -13,7 +13,7 @@ import {
   Widget, Panel
 } from '@lumino/widgets';
 
-import {
+import type {
   IStringDiffModel
 } from '../diff/model';
 
@@ -21,7 +21,7 @@ import {
   DecisionStringDiffModel
 } from '../merge/model';
 
-import {
+import type {
   DiffRangePos
 } from '../diff/range';
 
@@ -176,7 +176,9 @@ class DiffView {
      (this.baseEditor.state.diffViews = [])).push(this);
     this.ownEditor.state.diffViews = [this];
 
+    // @ts-expect-error
     this.baseEditor.on('gutterClick', this.onGutterClick.bind(this));
+    // @ts-expect-error
     this.ownEditor.on('gutterClick', this.onGutterClick.bind(this));
 
     this.lineChunks = this.model.getLineChunks();

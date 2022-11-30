@@ -14,12 +14,12 @@ import {
   CollapsiblePanel
 } from '../../common/collapsiblepanel';
 
-import {
+import type {
   IStringDiffModel
 } from '../model';
 
 import {
-  DIFF_CLASSES, TWOWAY_DIFF_CLASS
+  TWOWAY_DIFF_CLASS
 } from './common';
 
 

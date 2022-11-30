@@ -315,12 +315,12 @@ class FlexLayout extends PanelLayout {
    *
    * @param toIndex - The current index of the widget in the layout.
    *
-   * @param widget - The widget to move in the parent.
+   * @param _widget - The widget to move in the parent.
    *
    * #### Notes
    * This is a reimplementation of the superclass method.
    */
-  protected moveWidget(fromIndex: number, toIndex: number, widget: Widget): void {
+  protected moveWidget(fromIndex: number, toIndex: number, _widget: Widget): void {
     if (fromIndex !== toIndex) {
       // Change the order of the widget.
       if (!this.order) {
@@ -387,21 +387,21 @@ class FlexLayout extends PanelLayout {
   /**
    * A message handler invoked on a `'child-shown'` message.
    */
-  protected onChildShown(msg: Widget.ChildMessage): void {
+  protected onChildShown(_msg: Widget.ChildMessage): void {
     this.parent!.fit();
   }
 
   /**
    * A message handler invoked on a `'child-hidden'` message.
    */
-  protected onChildHidden(msg: Widget.ChildMessage): void {
+  protected onChildHidden(_msg: Widget.ChildMessage): void {
     this.parent!.fit();
   }
 
   /**
    * A message handler invoked on a `'resize'` message.
    */
-  protected onResize(msg: Widget.ResizeMessage): void {
+  protected onResize(_msg: Widget.ResizeMessage): void {
     if (this.parent!.isVisible) {
       this._update();
     }
@@ -410,7 +410,7 @@ class FlexLayout extends PanelLayout {
   /**
    * A message handler invoked on an `'update-request'` message.
    */
-  protected onUpdateRequest(msg: Message): void {
+  protected onUpdateRequest(_msg: Message): void {
     if (this.parent!.isVisible) {
       this._update();
     }
@@ -419,7 +419,7 @@ class FlexLayout extends PanelLayout {
   /**
    * A message handler invoked on a `'fit-request'` message.
    */
-  protected onFitRequest(msg: Message): void {
+  protected onFitRequest(_msg: Message): void {
     if (this.parent!.isAttached) {
       this._fit();
     }

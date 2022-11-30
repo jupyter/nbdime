@@ -3,15 +3,15 @@
 'use strict';
 
 
-import {
+import type {
   IDiffEntry,
 } from '../diff/diffentries';
 
-import {
+import type {
   DiffRangePos
 } from '../diff/range';
 
-import {
+import type {
   MergeDecision
 } from '../merge/decisions';
 

@@ -8,7 +8,7 @@ import {
   URLExt
 } from '@jupyterlab/coreutils/lib/url';
 
-import {
+import type {
   Widget
 } from '@lumino/widgets';
 
@@ -228,7 +228,7 @@ function closeTool(exitCode=0) {
 }
 
 
-function showError(error: NotifyUserError, url: string, line: number, column: number) {
+function showError(error: NotifyUserError, _url: string, _line: number, _column: number) {
   let message = error.message.replace('\n', '</br>');
   switch (error.severity) {
   case 'warning':
@@ -243,7 +243,7 @@ function showError(error: NotifyUserError, url: string, line: number, column: nu
 }
 
 export
-function handleError(msg: string, url: string, line: number, col?: number, error?: Error): boolean {
+function handleError(_msg: string, url: string, line: number, col?: number, error?: Error): boolean {
   try {
     if (error instanceof NotifyUserError) {
       showError(error, url, line, col || 0);
@@ -251,6 +251,7 @@ function handleError(msg: string, url: string, line: number, col?: number, error
     }
   } catch (e) {
     // Not something that user should care about
+    // @ts-expect-error
     console.log(e.stack);
   }
   return false;  // Do not suppress default error alert

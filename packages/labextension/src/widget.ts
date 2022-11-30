@@ -1,8 +1,8 @@
 
 
-import * as nbformat from '@jupyterlab/nbformat';
+import type * as nbformat from '@jupyterlab/nbformat';
 
-import {
+import type {
   IRenderMimeRegistry
 } from '@jupyterlab/rendermime';
 
@@ -10,11 +10,11 @@ import {
   ServerConnection
 } from '@jupyterlab/services';
 
-import {
+import type {
   JSONObject
 } from '@lumino/coreutils';
 
-import {
+import type {
   Message
 } from '@lumino/messaging';
 
@@ -22,7 +22,7 @@ import {
   Widget, Panel
 } from '@lumino/widgets';
 
-import {
+import type {
   IDiffEntry
 } from 'nbdime/lib/diff/diffentries';
 
@@ -106,6 +106,7 @@ class NbdimeWidget extends Panel {
       'nbdime/api/diff',
       args,
       this.onData.bind(this),
+      // @ts-expect-error
       this.onError.bind(this));
     this.id = `nbdime-${JSON.stringify(args)}`;
     this.title.closable = true;
@@ -122,7 +123,7 @@ class NbdimeWidget extends Panel {
   /**
    * Handle `'activate-request'` messages.
    */
-  protected onActivateRequest(msg: Message): void {
+  protected onActivateRequest(_msg: Message): void {
     this.scroller.node.focus();
   }
 

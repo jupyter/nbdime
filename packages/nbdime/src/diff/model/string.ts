@@ -8,7 +8,7 @@ import {
   JSONObject, JSONArray, JSONExt, JSONValue, PartialJSONObject
 } from '@lumino/coreutils';
 
-import {
+import type {
   IDiffEntry
 } from '../diffentries';
 
@@ -24,7 +24,7 @@ import {
   patchStringified, stringifyAndBlankNull
 } from '../../patch';
 
-import {
+import type {
   IDiffModel
 } from './common';
 

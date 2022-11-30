@@ -8,7 +8,7 @@ import {
   Panel, Widget
 } from '@lumino/widgets';
 
-import {
+import type {
   IRenderMimeRegistry
 } from '@jupyterlab/rendermime';
 
@@ -40,7 +40,7 @@ import {
   FlexPanel
 } from '../../upstreaming/flexpanel';
 
-import {
+import type {
   CellMergeModel
 } from '../model';
 
@@ -83,7 +83,7 @@ export
 class CellMergeWidget extends Panel {
 
   static createMergeView(local: IDiffModel | null, remote: IDiffModel | null, merged: IDiffModel,
-                         editorClasses: string[], readOnly=false): Widget | null {
+                         _editorClasses: string[], readOnly=false): Widget | null {
     let view: Widget | null = null;
     if (merged instanceof StringDiffModel) {
       view = createNbdimeMergeView(
@@ -372,7 +372,7 @@ class CellMergeWidget extends Panel {
       this.addClass(MARKED_CLEAR_OUTPUTS);
     }
     // Map checkbox -> model
-    checkbox.onchange = (event) => {
+    checkbox.onchange = (_event) => {
       this.model.clearOutputs = checkbox.checked;
       this.toggleClass(MARKED_CLEAR_OUTPUTS, checkbox.checked);
     };
@@ -392,7 +392,7 @@ class CellMergeWidget extends Panel {
       this.addClass(MARKED_DELETE);
     }
     // Map checkbox -> model
-    checkbox.onchange = (event) => {
+    checkbox.onchange = (_event) => {
       this.model.deleteCell = checkbox.checked;
       this.toggleClass(MARKED_DELETE, checkbox.checked);
     };

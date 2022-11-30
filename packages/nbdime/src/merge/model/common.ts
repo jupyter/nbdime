@@ -2,7 +2,7 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import {
+import type {
   IDiffEntry
 } from '../../diff/diffentries';
 
@@ -26,7 +26,7 @@ import {
   patchStringified, stringifyAndBlankNull
 } from '../../patch';
 
-import {
+import type {
   DeepCopyableObject
 } from '../../common/util';
 
@@ -55,6 +55,7 @@ class DecisionStringDiffModel extends StringDiffModel {
 
   rawBase: any;
 
+  // @ts-expect-error
   get additions(): DiffRangePos[] {
     if (this._outdated) {
       this._update();
@@ -65,6 +66,7 @@ class DecisionStringDiffModel extends StringDiffModel {
     this._additions = value;
   }
 
+  // @ts-expect-error
   get deletions(): DiffRangePos[] {
     if (this._outdated) {
       this._update();
@@ -75,6 +77,7 @@ class DecisionStringDiffModel extends StringDiffModel {
     this._deletions = value;
   }
 
+  // @ts-expect-error
   get remote(): string {
     if (this._outdated) {
       this._update();

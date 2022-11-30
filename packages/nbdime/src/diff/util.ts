@@ -54,7 +54,7 @@ function getDiffEntryByKey(diff: IDiffEntry[] | null, key: string | number) : ID
 }
 
 
-function validateStringDiff(base: string[], entry: IDiffArrayEntry, lineToChar: number[]): void {
+function validateStringDiff(base: string[], entry: IDiffArrayEntry, _lineToChar: number[]): void {
   // First valdiate line ops:
   validateSequenceOp(base, entry);
 
