@@ -141,6 +141,13 @@ function addCommands(
   // Whether we have our server extension available
   let hasAPI = true;
 
+  /**
+   * Whether there is an active notebook.
+   */
+  // @ts-expect-error
+  function hasWidget(): boolean {
+    return tracker.currentWidget !== null;
+  }
 
   /**
    * Whether there is an active notebook.
