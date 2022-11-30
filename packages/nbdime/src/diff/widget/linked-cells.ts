@@ -22,19 +22,19 @@ export const foldIcon = new LabIcon({
 });
 
 export interface ILinkedListCell {
-  next: () => ILinkedListCell | null;
-  prev: () => ILinkedListCell | null;
-  displayed: () => boolean;
+  _next: ILinkedListCell | null;
+  _prev: ILinkedListCell | null;
+  displayed: boolean;
   lazy: boolean;
   expandUp: () => void;
   expandDown: () => void;
 }
 
-class LinkedListCell extends Panel {
-  _next: LinkedListCell | LazyDisplayLinkedListCell | null;
-  _prev: LinkedListCell | LazyDisplayLinkedListCell | null;
+class LinkedListCell extends Panel implements ILinkedListCell {
   renderFunc: () => CellDiffWidget;
-  _displayed: boolean;
+  displayed: boolean;
+  _next: ILinkedListCell | null;
+  _prev: ILinkedListCell | null;
   lazy: boolean;
 
   constructor(renderFunc: () => CellDiffWidget) {
@@ -42,7 +42,7 @@ class LinkedListCell extends Panel {
     this._next = null;
     this._prev = null;
     this.renderFunc = renderFunc;
-    this._displayed = true;
+    this.displayed = true;
     this.renderCell();
     this.addClass("linked-cell");
     this.lazy = false;
@@ -50,14 +50,14 @@ class LinkedListCell extends Panel {
 
   protected renderCell() {
     this.addWidget(this.renderFunc());
-    this._displayed = true;
+    this.displayed = true;
   }
 
-  get next(): LinkedListCell | LazyDisplayLinkedListCell | null {
+  get next() {
     return this._next;
   }
 
-  set next(nextCell: LinkedListCell | LazyDisplayLinkedListCell | null) {
+  set next(nextCell) {
     this._next = nextCell;
     if (nextCell === null) {
       return;
@@ -68,23 +68,19 @@ class LinkedListCell extends Panel {
     }
   }
 
-  get prev(): LinkedListCell | LazyDisplayLinkedListCell | null {
+  get prev() {
     return this._prev;
   }
 
-  set prev(prevCell: LinkedListCell | LazyDisplayLinkedListCell | null) {
+  set prev(prevCell) {
     this._prev = prevCell;
     if (prevCell === null) {
       return;
     }
-    prevCell.next = this;
+    prevCell._next = this as ILinkedListCell;
     if (prevCell.lazy) {
       prevCell.expandUp();
     }
-  }
-
-  get displayed(): boolean {
-    return this._displayed;
   }
 
   expandUp(): void {
@@ -120,11 +116,11 @@ class LazyDisplayLinkedListCell extends LinkedListCell {
   }
 
   protected renderCell() {
-    this._displayed = false;
+    this.displayed = false;
   }
 
   expandUp(): void {
-    if (this._displayed) {
+    if (this.displayed) {
       return;
     }
     if (this.expandButtonDisplayed) {
@@ -135,7 +131,7 @@ class LazyDisplayLinkedListCell extends LinkedListCell {
   }
 
   expandDown(): void {
-    if (this._displayed) {
+    if (this.displayed) {
       return;
     }
     if (this.expandButtonDisplayed) {
@@ -194,11 +190,11 @@ class LazyDisplayLinkedListCell extends LinkedListCell {
 
   buttonSvg(direction: "Up" | "Down" | "Fold"): LabIcon {
     if (direction === "Up") {
-      return foldUp;
+      return foldUpIcon;
     } else if (direction === "Down") {
-      return foldDown;
+      return foldDownIcon;
     } else {
-      return fold;
+      return foldIcon;
     }
   }
 
@@ -214,7 +210,7 @@ class LazyDisplayLinkedListCell extends LinkedListCell {
 
   showLazyCell() {
     this.addWidget(this.renderFunc());
-    this._displayed = true;
+    this.displayed = true;
     this.expandButton.remove();
   }
 }

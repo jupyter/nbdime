@@ -22,6 +22,9 @@ import { NotebookDiffModel, CellDiffModel } from "../model";
 
 const NBDIFF_CLASS = "jp-Notebook-diff";
 
+type Command<T> = new (renderFunc: ()=> CellDiffWidget) => T
+
+
 /**
  * NotebookDiffWidget
  */
@@ -29,8 +32,8 @@ export class NotebookDiffWidget extends Panel {
   constructor(
     model: NotebookDiffModel,
     rendermime: IRenderMimeRegistry,
-    displayedCellWrapper: ILinkedListCell = LinkedListCell,
-    lazyDisplayWrapper: ILinkedListCell = LazyDisplayLinkedListCell
+    displayedCellWrapper: Command<ILinkedListCell> = LinkedListCell,
+    lazyDisplayWrapper: Command<LazyDisplayLinkedListCell> = LazyDisplayLinkedListCell
   ) {
     super();
     this._model = model;
@@ -146,6 +149,6 @@ export class NotebookDiffWidget extends Panel {
   private _model: NotebookDiffModel;
   private _rendermime: IRenderMimeRegistry;
   private previousCell: LinkedListCell | null;
-  private displayedCellWrapper: LinkedListCell;
-  private lazyDisplayWrapper: LazyDisplayLinkedListCell;
+  private displayedCellWrapper: Command<ILinkedListCell>;
+  private lazyDisplayWrapper: Command<ILinkedListCell>;
 }
