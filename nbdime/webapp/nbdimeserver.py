@@ -4,6 +4,7 @@
 
 
 
+import base64
 import io
 import json
 import logging
@@ -386,6 +387,7 @@ def make_app(**params):
         'jinja2_env': env,
         'mathjax_url': prefix + '/nb-static/mathjax/MathJax.js',
         'local_hostnames': ['localhost', '127.0.0.1'],
+        'cookie_secret': base64.encodebytes(os.urandom(32)), # Needed even for an unsecured server.
     }
 
     if is_in_repo(nbdime_root):
