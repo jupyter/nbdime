@@ -510,6 +510,13 @@ def add_prettyprint_args(parser):
         default=True,
         help=("prevent use of diff/diff3 for formatting diff/merge text output")
     )
+    parser.add_argument(
+        '--compatible',
+        dest='compatible',
+        action="store_true",
+        default=False,
+        help=("output a diff compatible with other tools")
+    )
 
 
 def prettyprint_config_from_args(arguments, **kwargs):
@@ -520,6 +527,7 @@ def prettyprint_config_from_args(arguments, **kwargs):
         use_color=getattr(arguments, 'use_color', True),
         use_git=getattr(arguments, 'use_git', True),
         use_diff=getattr(arguments, 'use_diff', True),
+        compatible=getattr(arguments, 'compatible', False),
         **kwargs
     )
 

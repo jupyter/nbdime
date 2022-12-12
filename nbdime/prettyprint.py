@@ -80,7 +80,8 @@ class PrettyPrintConfig:
             use_git = True,
             use_diff = True,
             use_color = True,
-            language = None
+            language = None,
+            compatible = False,
             ):
         self.out = out
         if include is None:
@@ -96,6 +97,7 @@ class PrettyPrintConfig:
         self.use_diff = use_diff
         self.use_color = use_color
         self.language = language
+        self.compatible = compatible
 
     def should_ignore_path(self, path):
         starred = star_path(split_path(path))
@@ -824,7 +826,10 @@ def pretty_print_string_diff(a, di, path, config=DefaultConfig):
     ta = _trim_base64(a)
     tb = _trim_base64(b)
 
-    if ta != a or tb != b:
+    if config.compatible:
+        diff = diff_render(a if a == ta else ta, b if b == tb else tb, config)
+        config.out.write(diff)
+    elif ta != a or tb != b:
         if ta != a:
             config.out.write('%s%s\n' % (config.REMOVE, ta))
         else:
