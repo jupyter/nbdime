@@ -647,14 +647,18 @@ def pretty_print_cell(i, cell, prefix="", force_header=False, config=DefaultConf
             # Write cell type and optionally number:
             numstr = "" if i is None else " %d" % i
             k = "%s cell%s" % (cell.get("cell_type"), numstr)
-            if "id" in cell:
-                k += f" [{cell['id']}]"
             pretty_print_key(k, prefix, config)
             c.called = True
     c.called = False
 
     if force_header:
         c()
+
+    id = cell.get("id")
+    if id and config.details:
+        # Write execution count if there (only source cells)
+        c()
+        pretty_print_item("id", id, key_prefix, config)
 
     execution_count = cell.get("execution_count")
     if execution_count and config.details:
