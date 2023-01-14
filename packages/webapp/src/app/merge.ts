@@ -5,7 +5,7 @@
 
 import * as alertify from 'alertify.js';
 
-import type * as nbformat from '@jupyterlab/nbformat';
+import * as nbformat from '@jupyterlab/nbformat';
 
 import {
   JSONExt, JSONObject
@@ -27,7 +27,7 @@ import {
   NotebookMergeModel
 } from 'nbdime/lib/merge/model';
 
-import type {
+import {
   IMergeDecision
 } from 'nbdime/lib/merge/decisions';
 
@@ -289,7 +289,7 @@ function onSubmissionCompleted() {
 /**
  * Callback for a failed store of the submitted merged notebook
  */
-function onSubmissionFailed(_response: string) {
+function onSubmissionFailed(response: string) {
   alertify.error('Was not able to save the notebook! See console and/or server log for details.');
 }
 

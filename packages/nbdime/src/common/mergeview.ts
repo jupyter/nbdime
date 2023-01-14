@@ -13,7 +13,7 @@ import {
   Widget, Panel
 } from '@lumino/widgets';
 
-import type {
+import {
   IStringDiffModel
 } from '../diff/model';
 
@@ -21,7 +21,7 @@ import {
   DecisionStringDiffModel
 } from '../merge/model';
 
-import type {
+import {
   DiffRangePos
 } from '../diff/range';
 
@@ -176,9 +176,7 @@ class DiffView {
      (this.baseEditor.state.diffViews = [])).push(this);
     this.ownEditor.state.diffViews = [this];
 
-    // @ts-expect-error
     this.baseEditor.on('gutterClick', this.onGutterClick.bind(this));
-    // @ts-expect-error
     this.ownEditor.on('gutterClick', this.onGutterClick.bind(this));
 
     this.lineChunks = this.model.getLineChunks();
@@ -361,8 +359,8 @@ class DiffView {
             this.model.invalid;
   }
 
-  protected onGutterClick(instance: CodeMirror.Editor, line: number, gutter: string, clickEvent: MouseEvent): void {
-    if (clickEvent.button !== 0) {
+  protected onGutterClick(instance: CodeMirror.Editor, line: number, gutter: string, clickEvent: Event): void {
+    if ((clickEvent as MouseEvent).button !== 0) {
       // Only care about left clicks
       return;
     }

@@ -4,7 +4,7 @@
 'use strict';
 
 
-import type {
+import {
   Widget
 } from '@lumino/widgets';
 

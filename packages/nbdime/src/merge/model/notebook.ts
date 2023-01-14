@@ -2,13 +2,13 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import type * as nbformat from '@jupyterlab/nbformat';
+import * as nbformat from '@jupyterlab/nbformat';
 
 import {
   arraysEqual, valueIn, hasEntries, stableSort
 } from '../../common/util';
 
-import type {
+import {
   IDiffAddRange, IDiffPatch, IDiffRemoveRange, IDiffArrayEntry,
   IDiffEntry
 } from '../../diff/diffentries';

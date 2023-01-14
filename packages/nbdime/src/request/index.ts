@@ -2,7 +2,7 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import type {
+import {
   JSONObject
 } from '@lumino/coreutils';
 

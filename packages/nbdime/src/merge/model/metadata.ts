@@ -2,9 +2,9 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import type * as nbformat from '@jupyterlab/nbformat';
+import * as nbformat from '@jupyterlab/nbformat';
 
-import type {
+import {
   IDiffEntry
 } from '../../diff/diffentries';
 
@@ -13,7 +13,7 @@ import {
   createDirectStringDiffModel
 } from '../../diff/model';
 
-import type {
+import {
   MergeDecision
 } from '../../merge/decisions';
 

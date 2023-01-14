@@ -2,7 +2,7 @@
 // Distributed under the terms of the Modified BSD License.
 
 
-import type {
+import {
   JupyterFrontEndPlugin, JupyterFrontEnd
 } from '@jupyterlab/application';
 
@@ -14,7 +14,7 @@ import {
   PathExt
 } from '@jupyterlab/coreutils';
 
-import type {
+import {
   DocumentRegistry
 } from '@jupyterlab/docregistry';
 
@@ -22,7 +22,7 @@ import {
   IRenderMimeRegistry
 } from '@jupyterlab/rendermime';
 
-import type {
+import {
   INotebookModel
 } from '@jupyterlab/notebook';
 
@@ -38,7 +38,7 @@ import {
   find
 } from '@lumino/algorithm';
 
-import type {
+import {
   CommandRegistry
 } from '@lumino/commands';
 
@@ -74,7 +74,7 @@ class NBDiffExtension implements DocumentRegistry.IWidgetExtension<NotebookPanel
   /**
    * Create a new extension object.
    */
-  createNew(nb: NotebookPanel, _context: DocumentRegistry.IContext<INotebookModel>): IDisposable {
+  createNew(nb: NotebookPanel, context: DocumentRegistry.IContext<INotebookModel>): IDisposable {
     // Create extension here
 
     // Add buttons to toolbar
@@ -144,14 +144,6 @@ function addCommands(
   /**
    * Whether there is an active notebook.
    */
-  // @ts-expect-error
-  function hasWidget(): boolean {
-    return tracker.currentWidget !== null;
-  }
-
-  /**
-   * Whether there is an active notebook.
-   */
   function baseEnabled(): boolean {
     return hasAPI && tracker.currentWidget !== null;
   }
@@ -217,7 +209,7 @@ function addCommands(
 
 
   commands.addCommand(CommandIDs.diffNotebook, {
-    execute: _args => {
+    execute: args => {
       // TODO: Check args for base/remote
       // if missing, prompt with dialog.
       //let content = current.notebook;

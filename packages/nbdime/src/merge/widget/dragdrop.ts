@@ -14,7 +14,7 @@ import {
   FriendlyDragDrop, DragDropPanel
 } from '../../common/dragpanel';
 
-import type {
+import {
   CellMergeWidget
 } from './cell';
 
@@ -112,7 +112,7 @@ class ChunkedCellsWidget extends Panel {
     this.addWidget(this.cells);
   }
 
-  onResolve(_event?: MouseEvent) {
+  onResolve(event?: MouseEvent) {
     for (let cell of this.cells.widgets) {
       let model = (cell as CellMergeWidget).model;
       if (model.onesided && model.conflicted) {

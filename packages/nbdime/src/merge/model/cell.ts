@@ -8,7 +8,7 @@ import {
   Signal
 } from '@lumino/signaling';
 
-import type {
+import {
   IDiffAddRange, IDiffEntry, IDiffArrayEntry,
   IDiffPatchObject, IDiffImmutableObjectEntry
 } from '../../diff/diffentries';

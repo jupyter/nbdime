@@ -2,9 +2,9 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import type * as nbformat from '@jupyterlab/nbformat';
+import * as nbformat from '@jupyterlab/nbformat';
 
-import type {
+import {
   IRenderMimeRegistry, IOutputModel
 } from '@jupyterlab/rendermime';
 
@@ -12,7 +12,7 @@ import {
   OutputArea, OutputAreaModel, IOutputAreaModel
 } from '@jupyterlab/outputarea';
 
-import type {
+import {
   DropAction, IDragEvent
 } from '@lumino/dragdrop';
 
@@ -233,7 +233,7 @@ class RenderableOutputsMergeView extends DragDropPanel {
     return null;
   }
 
-  protected getIndexOfChildNode(node: HTMLElement, _parent?: PanelLayout): any {
+  protected getIndexOfChildNode(node: HTMLElement, parent?: PanelLayout): any {
     for (let pane of this.panes) {
       let child = findChild(pane.node, node);
       if (child !== null) {

@@ -6,7 +6,7 @@ import {
   valueIn
 } from '../common/util';
 
-import type {
+import {
   ChunkSource
 } from '../chunking';
 

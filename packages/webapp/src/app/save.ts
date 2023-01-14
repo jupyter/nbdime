@@ -4,9 +4,9 @@
 
 import * as alertify from 'alertify.js';
 
-import type * as nbformat from '@jupyterlab/nbformat';
+import * as nbformat from '@jupyterlab/nbformat';
 
-import type {
+import {
   NotebookMergeWidget
 } from 'nbdime/lib/merge/widget';
 

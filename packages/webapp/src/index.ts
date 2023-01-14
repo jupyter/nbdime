@@ -76,7 +76,7 @@ function initialize() {
       }
     };
 
-    window.onunload = (_ev: Event) => {
+    window.onunload = (ev: Event) => {
       if (!toolClosed) {
         if (type === 'merge') {
           forceCloseMerge();
@@ -91,5 +91,4 @@ function initialize() {
 }
 
 window.onload = initialize;
-// @ts-expect-error
 window.onerror = handleError;

@@ -2,11 +2,11 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import type {
+import {
   IDiffModel
 } from './common';
 
-import type {
+import {
   IDiffImmutableObjectEntry
 } from '../diffentries';
 

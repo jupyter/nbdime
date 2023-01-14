@@ -43,8 +43,7 @@ function combinatorialTest(
   }
   function range(start: number, count: number): number[] {
     return Array.apply(0, Array(count))
-       // @ts-expect-error
-      .map(function (_element: undefined, index: number) {
+      .map(function (element: unknown, index: number, array: unknown[]) {
         return index + start;
     });
   }

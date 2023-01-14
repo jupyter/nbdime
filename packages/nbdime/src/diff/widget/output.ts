@@ -2,7 +2,7 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import type * as nbformat from '@jupyterlab/nbformat';
+import * as nbformat from '@jupyterlab/nbformat';
 
 import {
   Panel, Widget
@@ -38,7 +38,7 @@ import {
   RenderableDiffView
 } from './renderable';
 
-import type {
+import {
   CellDiffModel, OutputDiffModel
 } from '../model';
 
@@ -115,7 +115,7 @@ class OutputPanel extends Panel {
     this.editorClasses = editorClasses;
 
     model.trustedChanged.connect(
-      (_sender: OutputDiffModel, trusted: boolean) => {
+      (sender: OutputDiffModel, trusted: boolean) => {
       this.trustedChanged(trusted);
     });
     if (OutputPanel.isTrustSignificant(model, this.rendermime)) {
@@ -251,7 +251,7 @@ class OutputPanel extends Panel {
     let btnSource = document.createElement('button');
     let sourceText = ['Show source', 'Render'];
     btnSource.innerText = sourceText[0];
-    btnSource.onclick = (_ev: MouseEvent) => {
+    btnSource.onclick = (ev: MouseEvent) => {
       this.forceText = !this.forceText;
       btnSource.innerText = sourceText[this.forceText ? 1 : 0];
       this.updateView();
@@ -263,7 +263,7 @@ class OutputPanel extends Panel {
     // Add trust button:
     let btnTrust = document.createElement('button');
     btnTrust.innerText = 'Trust';
-    btnTrust.onclick = (_ev: MouseEvent) => {
+    btnTrust.onclick = (ev: MouseEvent) => {
       // Triggers change event:
       this.model.trusted = !this.model.trusted;
     };
@@ -284,7 +284,7 @@ class OutputPanel extends Panel {
       if (selectedMimetype) {
         cboMimetype.selectedIndex = mimetypes.indexOf(selectedMimetype);
       }
-      cboMimetype.onchange = (_ev: Event) => {
+      cboMimetype.onchange = (ev: Event) => {
         this.selectedMimetype = mimetypes[cboMimetype.selectedIndex];
       };
       w = new Widget({node: cboMimetype});

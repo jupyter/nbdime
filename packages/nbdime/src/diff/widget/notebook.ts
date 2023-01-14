@@ -6,7 +6,7 @@ import {
   Panel
 } from '@lumino/widgets';
 
-import type {
+import {
   IRenderMimeRegistry
 } from '@jupyterlab/rendermime';
 
@@ -22,7 +22,7 @@ import {
   MetadataDiffWidget
 } from './metadata';
 
-import type {
+import {
   NotebookDiffModel
 } from '../model';
 

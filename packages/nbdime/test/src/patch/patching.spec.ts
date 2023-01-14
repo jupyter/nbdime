@@ -5,7 +5,7 @@ import {
   patch, patchStringified
 } from '../../../src/patch';
 
-import type {
+import {
   IDiffEntry, IDiffAdd, IDiffRemove, IDiffReplace,
   IDiffPatch, IDiffAddRange, IDiffRemoveRange
 } from '../../../src/diff/diffentries';
@@ -13,7 +13,7 @@ import type {
 import {
   JSON_INDENT
 } from '../../../src/diff/util';
-import type { JSONValue } from '@lumino/coreutils';
+import { JSONValue } from '@lumino/coreutils';
 
 
 function makeAddRange(key: number, values: string | any[]) : IDiffAddRange {
