@@ -24,6 +24,7 @@ diff_b = 'src-and-output--2.ipynb'
 merge_a = 'multilevel-test-base.ipynb'
 merge_b = 'multilevel-test-local.ipynb'
 merge_c = 'multilevel-test-remote.ipynb'
+        
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
@@ -83,12 +84,12 @@ def test_fetch_diff(http_client, base_url, nbdime_base_url):
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
 @pytest.mark.gen_test
-def test_api_diff(http_client, base_url, nbdime_base_url, diff_validator, filespath):
+def test_api_diff(http_client, base_url, nbdime_base_url, diff_validator, filespath, auth_header):
     post_data = dict(base=diff_a, remote=diff_b)
     body = json_encode(post_data)
 
     url = base_url + nbdime_base_url + '/api/diff'
-    response = yield http_client.fetch(url, method='POST', headers=None, body=body)
+    response = yield http_client.fetch(url, method='POST', headers=auth_header, body=body)
     assert response.code == 200
     # Check that response is sane:
     data = json_decode(response.body)
@@ -111,12 +112,12 @@ def test_fetch_merge(http_client, base_url, nbdime_base_url):
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
 @pytest.mark.gen_test
-def test_api_merge(http_client, base_url, nbdime_base_url, merge_validator, filespath):
+def test_api_merge(http_client, base_url, nbdime_base_url, merge_validator, filespath, auth_header):
     post_data = dict(base=merge_a, local=merge_b, remote=merge_c)
     body = json_encode(post_data)
 
     url = base_url + nbdime_base_url + '/api/merge'
-    response = yield http_client.fetch(url, method='POST', headers=None, body=body)
+    response = yield http_client.fetch(url, method='POST', headers=auth_header, body=body)
     assert response.code == 200
     # Check that response is sane:
     data = json_decode(response.body)

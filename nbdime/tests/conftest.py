@@ -235,6 +235,20 @@ def app(nbdime_base_url, filespath):
 
 
 @fixture
+def auth_header():
+    old = os.environ.get('JUPYTER_TOKEN')
+    os.environ['JUPYTER_TOKEN'] = TEST_TOKEN
+    try:
+        yield {
+            'Authorization': 'token %s' % TEST_TOKEN
+        }
+    finally:
+        if old:
+            os.environ['JUPYTER_TOKEN'] = old
+        else:
+            del os.environ['JUPYTER_TOKEN']
+
+@fixture
 def json_schema_diff(request):
     schema_path = os.path.join(schema_dir, 'diff_format.schema.json')
     with io.open(schema_path, encoding="utf8") as f:
