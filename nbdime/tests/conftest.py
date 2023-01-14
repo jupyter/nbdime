@@ -443,12 +443,28 @@ def create_server_extension_config(tmpdir_factory, cmd):
     return str(path)
 
 
-
-@fixture(scope='module', params=('notebook', 'jupyter_server'))
+# TODO: Add back 'notebook' as param when NB 7.0 is out ?
+@fixture(scope='module', params=('jupyter_server',))
 def server_extension_app(tmpdir_factory, request):
     cmd = request.param
 
-    appname = 'NotebookApp' if cmd == 'notebook' else 'ServerApp'
+    if cmd == 'notebook':
+        token_config_location = 'NotebookApp'
+    else:
+        v = None
+        try:
+            from importlib.metadata import version
+            v = version('jupyter_server')
+        except ImportError:
+            import pkg_resources
+            v = pkg_resources.get_distribution('jupyter_server').version
+        from packaging import version
+        if version.parse(v).major >= 2:
+            token_config_location = 'IdentityProvider'
+        else:
+            token_config_location = 'ServerApp'
+
+
 
     def _kill_nb_app():
         try:
@@ -470,7 +486,7 @@ def server_extension_app(tmpdir_factory, request):
         sys.executable, '-m', cmd,
          '--port=%i' % port,
         '--ip=127.0.0.1',
-        '--no-browser', '--%s.token=%s' % (appname, TEST_TOKEN)],
+        '--no-browser', '--%s.token=%s' % (token_config_location, TEST_TOKEN)],
         env=env)
 
     request.addfinalizer(_kill_nb_app)
