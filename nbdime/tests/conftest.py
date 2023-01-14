@@ -500,6 +500,7 @@ def server_extension_app(tmpdir_factory, request):
         sys.executable, '-m', cmd,
          '--port=%i' % port,
         '--ip=127.0.0.1',
+        '--log-level=DEBUG',
         '--no-browser', '--%s.token=%s' % (token_config_location, TEST_TOKEN)],
         env=env)
 
