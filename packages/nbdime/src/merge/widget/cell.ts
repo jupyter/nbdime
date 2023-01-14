@@ -8,7 +8,7 @@ import {
   Panel, Widget
 } from '@lumino/widgets';
 
-import {
+import type {
   IRenderMimeRegistry
 } from '@jupyterlab/rendermime';
 
@@ -40,7 +40,7 @@ import {
   FlexPanel
 } from '../../upstreaming/flexpanel';
 
-import {
+import type {
   CellMergeModel
 } from '../model';
 

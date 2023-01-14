@@ -2,7 +2,7 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import {
+import type {
   IDiffEntry
 } from '../../diff/diffentries';
 
@@ -26,7 +26,7 @@ import {
   patchStringified, stringifyAndBlankNull
 } from '../../patch';
 
-import {
+import type {
   DeepCopyableObject
 } from '../../common/util';
 

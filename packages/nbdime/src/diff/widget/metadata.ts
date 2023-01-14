@@ -14,7 +14,7 @@ import {
   CollapsiblePanel
 } from '../../common/collapsiblepanel';
 
-import {
+import type {
   IStringDiffModel
 } from '../model';
 

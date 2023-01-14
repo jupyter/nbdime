@@ -13,7 +13,7 @@ import {
   Widget, Panel
 } from '@lumino/widgets';
 
-import {
+import type {
   IStringDiffModel
 } from '../diff/model';
 
@@ -21,7 +21,7 @@ import {
   DecisionStringDiffModel
 } from '../merge/model';
 
-import {
+import type {
   DiffRangePos
 } from '../diff/range';
 

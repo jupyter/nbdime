@@ -16,6 +16,7 @@
     "esModuleInterop": true,
     "noImplicitReturns": true,
     "resolveJsonModule": true,
+    "importsNotUsedAsValues": "error",
     "strictPropertyInitialization": false
   }
 }

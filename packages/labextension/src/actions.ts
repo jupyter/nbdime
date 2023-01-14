@@ -4,7 +4,7 @@ import {
   PathExt, URLExt
 } from '@jupyterlab/coreutils';
 
-import {
+import type {
   IRenderMimeRegistry
 } from '@jupyterlab/rendermime';
 
@@ -12,7 +12,7 @@ import {
   ServerConnection
 } from '@jupyterlab/services';
 
-import {
+import type {
   Widget
 } from '@lumino/widgets';
 

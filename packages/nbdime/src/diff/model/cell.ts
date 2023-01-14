@@ -4,7 +4,7 @@
 
 import * as nbformat from '@jupyterlab/nbformat';
 
-import {
+import type {
   JSONObject
 } from '@lumino/coreutils';
 
@@ -12,7 +12,7 @@ import {
   NotifyUserError
 } from '../../common/exceptions';
 
-import {
+import type {
   IDiffEntry, IDiffArrayEntry, IDiffReplace
 } from '../diffentries';
 

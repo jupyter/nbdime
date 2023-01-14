@@ -1,8 +1,8 @@
 
 
-import * as nbformat from '@jupyterlab/nbformat';
+import type * as nbformat from '@jupyterlab/nbformat';
 
-import {
+import type {
   IRenderMimeRegistry
 } from '@jupyterlab/rendermime';
 
@@ -10,11 +10,11 @@ import {
   ServerConnection
 } from '@jupyterlab/services';
 
-import {
+import type {
   JSONObject
 } from '@lumino/coreutils';
 
-import {
+import type {
   Message
 } from '@lumino/messaging';
 
@@ -22,7 +22,7 @@ import {
   Widget, Panel
 } from '@lumino/widgets';
 
-import {
+import type {
   IDiffEntry
 } from 'nbdime/lib/diff/diffentries';
 

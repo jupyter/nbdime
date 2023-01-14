@@ -1,7 +1,7 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import * as nbformat from '@jupyterlab/nbformat';
+import type * as nbformat from '@jupyterlab/nbformat';
 
 import {
   Widget
@@ -15,7 +15,7 @@ import {
   defaultSanitizer
 } from '@jupyterlab/apputils';
 
-import {
+import type {
     IMergeDecision
 } from '../../../src/merge/decisions';
 
@@ -26,7 +26,7 @@ import {
 import {
     NotebookMergeWidget, MetadataMergeWidget
 } from '../../../src/merge/widget';
-import { CodeEditor } from '@jupyterlab/codeeditor';
+import type { CodeEditor } from '@jupyterlab/codeeditor';
 
 
 const notebook = require('../../files/base.ipynb.json') as nbformat.INotebookContent;

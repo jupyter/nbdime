@@ -2,9 +2,9 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import * as nbformat from '@jupyterlab/nbformat';
+import type * as nbformat from '@jupyterlab/nbformat';
 
-import {
+import type {
   IRenderMimeRegistry
 } from '@jupyterlab/rendermime';
 
@@ -20,7 +20,7 @@ import {
   FlexPanel
 } from '../../upstreaming/flexpanel';
 
-import {
+import type {
   NotebookMergeModel
 } from '../model';
 

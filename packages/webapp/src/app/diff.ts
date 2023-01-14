@@ -3,7 +3,7 @@
 'use strict';
 
 
-import * as nbformat from '@jupyterlab/nbformat';
+import type * as nbformat from '@jupyterlab/nbformat';
 
 import {
   Panel, Widget
@@ -22,7 +22,7 @@ import {
   MathJaxTypesetter
 } from '@jupyterlab/mathjax2';
 
-import {
+import type {
   IDiffEntry
 } from 'nbdime/lib/diff/diffentries';
 

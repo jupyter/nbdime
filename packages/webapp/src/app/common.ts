@@ -8,7 +8,7 @@ import {
   URLExt
 } from '@jupyterlab/coreutils/lib/url';
 
-import {
+import type {
   Widget
 } from '@lumino/widgets';
 

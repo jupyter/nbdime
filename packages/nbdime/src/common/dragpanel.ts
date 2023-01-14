@@ -6,7 +6,7 @@ import {
   Panel, PanelLayout, Widget
 } from '@lumino/widgets';
 
-import {
+import type {
   Message
 } from '@lumino/messaging';
 

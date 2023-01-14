@@ -8,7 +8,7 @@ import {
   NotifyUserError
 } from '../../common/exceptions';
 
-import {
+import type {
   IDiffArrayEntry
 } from '../diffentries';
 
@@ -16,7 +16,7 @@ import {
   RenderableDiffModel
 } from './renderable';
 
-import {
+import type {
   IStringDiffModel
 } from './string';
 
