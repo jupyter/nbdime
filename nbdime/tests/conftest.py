@@ -452,7 +452,7 @@ def create_server_extension_config(tmpdir_factory, cmd):
     }
     config_str = json.dumps(config)
     if isinstance(config_str, bytes):
-        config_str = unicode(config_str)
+        config_str = str(config_str)
     path.join(filename).write_text(config_str, 'utf-8')
     return str(path)
 
