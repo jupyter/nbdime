@@ -33,7 +33,8 @@ auth_header = {
 def test_isgit(git_repo2, server_extension_app):
     url = 'http://127.0.0.1:%i/nbdime/api/isgit' % server_extension_app['port']
     r = requests.post(
-        url, headers=auth_header,
+        url,
+        headers=auth_header,
         data=json.dumps({
             'path': git_repo2,
         }))
@@ -45,7 +46,8 @@ def test_isgit(git_repo2, server_extension_app):
 def test_isgit_nonrepo(git_repo2, server_extension_app):
     url = 'http://127.0.0.1:%i/nbdime/api/isgit' % server_extension_app['port']
     r = requests.post(
-        url, headers=auth_header,
+        url,
+        headers=auth_header,
         data=json.dumps({
             'path': server_extension_app['path'],
         }))
@@ -64,7 +66,8 @@ def test_difftool(git_repo2, server_extension_app):
 def test_git_difftool(git_repo2, server_extension_app):
     url = 'http://127.0.0.1:%i/nbdime/git-difftool' % server_extension_app['port']
     r = requests.get(
-        url, headers=auth_header)
+        url,
+        headers=auth_header)
     r.raise_for_status()
     assert r.text.startswith('<!DOCTYPE html')
     # Extract config data
@@ -87,7 +90,8 @@ def test_diff_api(git_repo2, server_extension_app):
     local_path = os.path.relpath(git_repo2, server_extension_app['path'])
     url = 'http://127.0.0.1:%i/nbdime/api/diff' % server_extension_app['port']
     r = requests.post(
-        url, headers=auth_header,
+        url,
+        headers=auth_header,
         data=json.dumps({
             'base': 'git:' + pjoin(local_path, 'diff.ipynb'),
         }))
@@ -124,7 +128,8 @@ def test_git_diff_api(git_repo2, server_extension_app, filespath):
     ):
         print(args)
         r = requests.post(
-            url, headers=auth_header,
+            url,
+            headers=auth_header,
             data=json.dumps({
                 'ref_local': _make_ref(args[0]),
                 'ref_remote': _make_ref(args[1]),
@@ -193,7 +198,8 @@ def test_diff_api_symlink(git_repo2, server_extension_app, needs_symlink):
     local_path = os.path.relpath(symlink, server_extension_app['path'])
     url = 'http://127.0.0.1:%i/nbdime/api/diff' % server_extension_app['port']
     r = requests.post(
-        url, headers=auth_header,
+        url,
+        headers=auth_header,
         data=json.dumps({
             'base': 'git:' + pjoin(local_path, 'diff.ipynb'),
         }))
