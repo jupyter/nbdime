@@ -235,7 +235,7 @@ def output_marker(text):
 
 
 def _cell_marker_format(text):
-    return '<span style="color:red">**{0}**</span>'.format(text)
+    return '<span style="color:red"><b>{0}</b></span>'.format(text)
 
 
 def cell_marker(text):
