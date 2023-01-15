@@ -7,11 +7,16 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "noEmitOnError": true,
-    "noImplicitAny": true,
     "pretty": true,
     "skipLibCheck": true,
-    "strictNullChecks": true,
+    "strict": true,
     "sourceMap": true,
-    "target": "es6"
+    "target": "es2020",
+    "noUnusedLocals": true,
+    "esModuleInterop": true,
+    "noImplicitReturns": true,
+    "resolveJsonModule": true,
+    "importsNotUsedAsValues": "error",
+    "strictPropertyInitialization": false
   }
 }

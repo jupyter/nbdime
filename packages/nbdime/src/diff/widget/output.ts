@@ -2,7 +2,7 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import * as nbformat from '@jupyterlab/nbformat';
+import type * as nbformat from '@jupyterlab/nbformat';
 
 import {
   Panel, Widget
@@ -38,7 +38,7 @@ import {
   RenderableDiffView
 } from './renderable';
 
-import {
+import type {
   CellDiffModel, OutputDiffModel
 } from '../model';
 
@@ -439,7 +439,7 @@ class RenderableOutputView extends RenderableDiffView<nbformat.IOutput> {
     });
   }
 
-  protected model: OutputDiffModel;
+  declare protected model: OutputDiffModel;
 
   /**
    * Checks if a cell output can be rendered (either safe/trusted or

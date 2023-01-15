@@ -1,8 +1,8 @@
 
 
-import * as nbformat from '@jupyterlab/nbformat';
+import type * as nbformat from '@jupyterlab/nbformat';
 
-import {
+import type {
   IRenderMimeRegistry
 } from '@jupyterlab/rendermime';
 
@@ -10,11 +10,11 @@ import {
   ServerConnection
 } from '@jupyterlab/services';
 
-import {
+import type {
   JSONObject
 } from '@lumino/coreutils';
 
-import {
+import type {
   Message
 } from '@lumino/messaging';
 
@@ -22,7 +22,7 @@ import {
   Widget, Panel
 } from '@lumino/widgets';
 
-import {
+import type {
   IDiffEntry
 } from 'nbdime/lib/diff/diffentries';
 
@@ -144,12 +144,12 @@ class NbdimeWidget extends Panel {
     return work;
   }
 
-  protected onError(error: ServerConnection.NetworkError | ServerConnection.ResponseError): void {
+  protected onError(error: string): void {
     if (this.isDisposed) {
       return;
     }
     let widget = new Widget();
-    widget.node.innerHTML = `Failed to fetch diff: ${error.message}`;
+    widget.node.innerHTML = `Failed to fetch diff: ${error}`;
     this.scroller.addWidget(widget);
   }
 

@@ -8,7 +8,7 @@ import {
   JSONObject, JSONArray, JSONExt, JSONValue, PartialJSONObject
 } from '@lumino/coreutils';
 
-import {
+import type {
   IDiffEntry
 } from '../diffentries';
 
@@ -24,7 +24,7 @@ import {
   patchStringified, stringifyAndBlankNull
 } from '../../patch';
 
-import {
+import type {
   IDiffModel
 } from './common';
 
@@ -99,12 +99,13 @@ class StringDiffModel implements IStringDiffModel {
    */
   constructor(
         public base: string | null,
-        public remote: string | null,
+        remote: string | null,
         additions: DiffRangeRaw[],
         deletions: DiffRangeRaw[],
         collapsible?: boolean,
         header?: string,
         collapsed?: boolean) {
+    this._remote = remote;
     if (base === null) {
       console.assert(deletions.length === 0);
       this.deletions = [];
@@ -141,6 +142,14 @@ class StringDiffModel implements IStringDiffModel {
     return chunker.chunks;
   }
 
+  get remote(): string | null {
+    return this._remote;
+  }
+  set remote(value: string | null) {
+    this._remote = value;
+  }
+
+
   get unchanged(): boolean {
     return this.base === this.remote;
   }
@@ -153,14 +162,29 @@ class StringDiffModel implements IStringDiffModel {
     return this.remote === null;
   }
 
+  get additions(): DiffRangePos[] {
+    return this._additions;
+  }
+  set additions(value: DiffRangePos[]) {
+    this._additions = value;
+  }
+
+  get deletions(): DiffRangePos[] {
+    return this._deletions;
+  }
+  set deletions(value: DiffRangePos[]) {
+    this._deletions = value;
+  }
+
   collapsible: boolean;
   collapsibleHeader: string;
   startCollapsed: boolean;
 
   mimetype: string;
 
-  additions: DiffRangePos[];
-  deletions: DiffRangePos[];
+  protected _remote: string | null;
+  protected _additions: DiffRangePos[];
+  protected _deletions: DiffRangePos[];
 }
 
 

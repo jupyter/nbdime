@@ -10,27 +10,9 @@ from jinja2 import ChoiceLoader, FileSystemLoader
 
 from jupyter_server.utils import url_path_join, to_os_path, ensure_async
 
-generic_checkpoint_mixin_types = []
-file_checkpoint_mixin_types = []
 
-try:
-    from jupyter_server.services.contents.checkpoints import GenericCheckpointsMixin as jpserver_GenericCheckpointsMixin
-    from jupyter_server.services.contents.filecheckpoints import FileCheckpoints as jpserver_FileCheckpoints
-    generic_checkpoint_mixin_types.append(jpserver_GenericCheckpointsMixin)
-    file_checkpoint_mixin_types.append(jpserver_FileCheckpoints)
-except ModuleNotFoundError:
-    pass
-
-try:
-    from notebook.services.contents.checkpoints import GenericCheckpointsMixin as nbserver_GenericCheckpointsMixin
-    from notebook.services.contents.filecheckpoints import FileCheckpoints as nbserver_FileCheckpoints
-    generic_checkpoint_mixin_types.append(nbserver_GenericCheckpointsMixin)
-    file_checkpoint_mixin_types.append(nbserver_FileCheckpoints)
-except ModuleNotFoundError:
-    pass
-
-generic_checkpoint_mixin_types = tuple(generic_checkpoint_mixin_types)
-file_checkpoint_mixin_types = tuple(file_checkpoint_mixin_types)
+from jupyter_server.services.contents.checkpoints import GenericCheckpointsMixin
+from jupyter_server.services.contents.filecheckpoints import FileCheckpoints
 
 
 from tornado.web import HTTPError, escape, authenticated, gen
@@ -169,11 +151,11 @@ class ExtensionApiDiffHandler(BaseGitDiffHandler):
             return remote_nb, remote_nb
         self.log.debug('Checkpoints: %r', checkpoints)
         checkpoint = checkpoints[0]
-        if isinstance(cm.checkpoints, generic_checkpoint_mixin_types):
+        if isinstance(cm.checkpoints, GenericCheckpointsMixin):
             checkpoint_model = await ensure_async(
                 cm.checkpoints.get_notebook_checkpoint(checkpoint, base))
             base_nb = checkpoint_model['content']
-        elif isinstance(cm.checkpoints, file_checkpoint_mixin_types):
+        elif isinstance(cm.checkpoints, FileCheckpoints):
             path = await ensure_async(
                 cm.checkpoints.checkpoint_path(checkpoint['id'], base))
             base_nb = read_notebook(path, on_null='minimal')

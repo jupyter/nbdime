@@ -14,7 +14,7 @@ import {
   FriendlyDragDrop, DragDropPanel
 } from '../../common/dragpanel';
 
-import {
+import type {
   CellMergeWidget
 } from './cell';
 

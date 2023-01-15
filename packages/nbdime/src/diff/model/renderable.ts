@@ -10,7 +10,7 @@ import {
   Signal
 } from '@lumino/signaling';
 
-import {
+import type {
   IDiffEntry
 } from '../diffentries';
 
@@ -22,7 +22,7 @@ import {
   patch
 } from '../../patch';
 
-import {
+import type {
   IDiffModel
 } from './common';
 

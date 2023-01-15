@@ -235,6 +235,20 @@ def app(nbdime_base_url, filespath):
 
 
 @fixture
+def auth_header():
+    old = os.environ.get('JUPYTER_TOKEN')
+    os.environ['JUPYTER_TOKEN'] = TEST_TOKEN
+    try:
+        yield {
+            'Authorization': 'token %s' % TEST_TOKEN
+        }
+    finally:
+        if old:
+            os.environ['JUPYTER_TOKEN'] = old
+        else:
+            del os.environ['JUPYTER_TOKEN']
+
+@fixture
 def json_schema_diff(request):
     schema_path = os.path.join(schema_dir, 'diff_format.schema.json')
     with io.open(schema_path, encoding="utf8") as f:
@@ -438,17 +452,33 @@ def create_server_extension_config(tmpdir_factory, cmd):
     }
     config_str = json.dumps(config)
     if isinstance(config_str, bytes):
-        config_str = unicode(config_str)
+        config_str = str(config_str)
     path.join(filename).write_text(config_str, 'utf-8')
     return str(path)
 
 
-
-@fixture(scope='module', params=('notebook', 'jupyter_server'))
+# TODO: Add back 'notebook' as param when NB 7.0 is out ?
+@fixture(scope='module', params=('jupyter_server',))
 def server_extension_app(tmpdir_factory, request):
     cmd = request.param
 
-    appname = 'NotebookApp' if cmd == 'notebook' else 'ServerApp'
+    if cmd == 'notebook':
+        token_config_location = 'NotebookApp'
+    else:
+        v = None
+        try:
+            from importlib.metadata import version
+            v = version('jupyter_server')
+        except ImportError:
+            import pkg_resources
+            v = pkg_resources.get_distribution('jupyter_server').version
+        from packaging import version
+        if version.parse(v).major >= 2:
+            token_config_location = 'IdentityProvider'
+        else:
+            token_config_location = 'ServerApp'
+
+
 
     def _kill_nb_app():
         try:
@@ -470,7 +500,8 @@ def server_extension_app(tmpdir_factory, request):
         sys.executable, '-m', cmd,
          '--port=%i' % port,
         '--ip=127.0.0.1',
-        '--no-browser', '--%s.token=%s' % (appname, TEST_TOKEN)],
+        '--log-level=DEBUG',
+        '--no-browser', '--%s.token=%s' % (token_config_location, TEST_TOKEN)],
         env=env)
 
     request.addfinalizer(_kill_nb_app)

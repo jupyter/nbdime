@@ -2,7 +2,7 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import {
+import type {
   JSONValue, PartialJSONValue
 } from '@lumino/coreutils';
 
@@ -10,11 +10,11 @@ import {
   PanelLayout, Widget
 } from '@lumino/widgets';
 
-import {
+import type {
   IRenderMimeRegistry
 } from '@jupyterlab/rendermime';
 
-import {
+import type {
    RenderableDiffModel
 } from '../model';
 

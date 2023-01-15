@@ -13,7 +13,7 @@ import {
   Widget, Panel
 } from '@lumino/widgets';
 
-import {
+import type {
   IStringDiffModel
 } from '../diff/model';
 
@@ -21,7 +21,7 @@ import {
   DecisionStringDiffModel
 } from '../merge/model';
 
-import {
+import type {
   DiffRangePos
 } from '../diff/range';
 
@@ -359,8 +359,8 @@ class DiffView {
             this.model.invalid;
   }
 
-  protected onGutterClick(instance: CodeMirror.Editor, line: number, gutter: string, clickEvent: MouseEvent): void {
-    if (clickEvent.button !== 0) {
+  protected onGutterClick(instance: CodeMirror.Editor, line: number, gutter: string, clickEvent: Event): void {
+    if ((clickEvent as MouseEvent).button !== 0) {
       // Only care about left clicks
       return;
     }

@@ -2,9 +2,9 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import * as nbformat from '@jupyterlab/nbformat';
+import type * as nbformat from '@jupyterlab/nbformat';
 
-import {
+import type {
   IRenderMimeRegistry, IOutputModel
 } from '@jupyterlab/rendermime';
 
@@ -12,7 +12,7 @@ import {
   OutputArea, OutputAreaModel, IOutputAreaModel
 } from '@jupyterlab/outputarea';
 
-import {
+import type {
   DropAction, IDragEvent
 } from '@lumino/dragdrop';
 
@@ -65,7 +65,7 @@ class ReorderableOutputModel extends OutputAreaModel {
 export
 class ReorderableOutputWidget extends OutputArea {
 
-  readonly model: ReorderableOutputModel;
+  declare readonly model: ReorderableOutputModel;
 
   /**
    * Follow changes on the model state.

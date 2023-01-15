@@ -585,7 +585,7 @@ def test_git_mergedriver(git_repo, filespath):
 
 
 @pytest.mark.timeout(timeout=3*WEB_TEST_TIMEOUT)
-def test_git_difftool(git_repo, unique_port, popen_with_terminator):
+def test_git_difftool(git_repo, unique_port, popen_with_terminator, auth_header):
     gitdifftool.main(['config', '--enable'])
     cmd = get_output('git config --get --local difftool.nbdime.cmd').strip()
 
@@ -608,7 +608,7 @@ def test_git_difftool(git_repo, unique_port, popen_with_terminator):
         r = requests.get(url + '/difftool')
         r.raise_for_status()
         # close it
-        r = requests.post(url + '/api/closetool', json={'exitCode': 0})
+        r = requests.post(url + '/api/closetool', json={'exitCode': 0}, headers=auth_header)
         r.raise_for_status()
         time.sleep(0.25)
     # wait for exit
@@ -617,7 +617,7 @@ def test_git_difftool(git_repo, unique_port, popen_with_terminator):
 
 
 @pytest.mark.timeout(timeout=3*WEB_TEST_TIMEOUT)
-def test_git_mergetool(git_repo, unique_port, popen_with_terminator):
+def test_git_mergetool(git_repo, unique_port, popen_with_terminator, auth_header):
     gitmergetool.main(['config', '--enable'])
     cmd = get_output('git config --get --local mergetool.nbdime.cmd').strip()
 
@@ -642,11 +642,12 @@ def test_git_mergetool(git_repo, unique_port, popen_with_terminator):
         url_concat(url + '/api/store', {'outputfilename': 'merge-conflict.ipynb'}),
         data=json.dumps({
             'merged': nbformat.v4.new_notebook(),
-        })
+        }),
+        headers=auth_header
     )
     r.raise_for_status()
     # close it
-    r = requests.post(url + '/api/closetool', json={'exitCode': 0})
+    r = requests.post(url + '/api/closetool', json={'exitCode': 0}, headers=auth_header)
     r.raise_for_status()
     # wait for exit
     process.wait()
@@ -693,7 +694,7 @@ def test_hg_mergedriver(hg_repo, filespath, reset_log):
 
 
 @pytest.mark.timeout(timeout=3*WEB_TEST_TIMEOUT)
-def test_hg_diffweb(hg_repo, unique_port, popen_with_terminator):
+def test_hg_diffweb(hg_repo, unique_port, popen_with_terminator, auth_header):
     # enable diff/merge drivers
     write_local_hg_config(hg_repo)
 
@@ -708,7 +709,7 @@ def test_hg_diffweb(hg_repo, unique_port, popen_with_terminator):
         r = requests.get(url + '/difftool')
         r.raise_for_status()
         # close it
-        r = requests.post(url + '/api/closetool', json={'exitCode': 0})
+        r = requests.post(url + '/api/closetool', json={'exitCode': 0}, headers=auth_header)
         r.raise_for_status()
         time.sleep(0.25)
     # wait for exit
@@ -717,7 +718,7 @@ def test_hg_diffweb(hg_repo, unique_port, popen_with_terminator):
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
-def test_hg_mergetool(hg_repo, unique_port, popen_with_terminator):
+def test_hg_mergetool(hg_repo, unique_port, popen_with_terminator, auth_header):
     # enable diff/merge drivers
     write_local_hg_config(hg_repo)
 
@@ -738,11 +739,12 @@ def test_hg_mergetool(hg_repo, unique_port, popen_with_terminator):
         url_concat(url + '/api/store', {'outputfilename': 'merge-conflict.ipynb'}),
         data=json.dumps({
             'merged': nbformat.v4.new_notebook(),
-        })
+        }),
+        headers=auth_header
     )
     r.raise_for_status()
     # close it
-    r = requests.post(url + '/api/closetool', json={'exitCode': 0})
+    r = requests.post(url + '/api/closetool', json={'exitCode': 0}, headers=auth_header)
     r.raise_for_status()
     # wait for exit
     process.wait()

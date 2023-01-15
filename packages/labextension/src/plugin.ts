@@ -2,7 +2,7 @@
 // Distributed under the terms of the Modified BSD License.
 
 
-import {
+import type {
   JupyterFrontEndPlugin, JupyterFrontEnd
 } from '@jupyterlab/application';
 
@@ -14,7 +14,7 @@ import {
   PathExt
 } from '@jupyterlab/coreutils';
 
-import {
+import type {
   DocumentRegistry
 } from '@jupyterlab/docregistry';
 
@@ -22,7 +22,7 @@ import {
   IRenderMimeRegistry
 } from '@jupyterlab/rendermime';
 
-import {
+import type {
   INotebookModel
 } from '@jupyterlab/notebook';
 
@@ -38,7 +38,7 @@ import {
   find
 } from '@lumino/algorithm';
 
-import {
+import type {
   CommandRegistry
 } from '@lumino/commands';
 
@@ -47,7 +47,7 @@ import {
 } from '@lumino/disposable';
 
 import {
-  diffNotebookGit, diffNotebook, diffNotebookCheckpoint, isNbInGit
+  diffNotebookGit, diffNotebookCheckpoint, isNbInGit
 } from './actions';
 
 
@@ -140,13 +140,6 @@ function addCommands(
 
   // Whether we have our server extension available
   let hasAPI = true;
-
-  /**
-   * Whether there is an active notebook.
-   */
-  function hasWidget(): boolean {
-    return tracker.currentWidget !== null;
-  }
 
   /**
    * Whether there is an active notebook.
