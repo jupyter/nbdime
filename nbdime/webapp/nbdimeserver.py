@@ -387,6 +387,12 @@ def make_app(**params):
         'cookie_secret': base64.encodebytes(os.urandom(32)), # Needed even for an unsecured server.
     }
 
+    try:
+        from jupyter_server.auth import IdentityProvider
+        settings['identity_provider'] = IdentityProvider()
+    except ImportError:
+        pass
+
     if is_in_repo(nbdime_root):
         # don't cache when working from repo
         settings.update({
