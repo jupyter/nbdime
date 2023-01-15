@@ -306,11 +306,17 @@ class ApiCloseHandler(NbdimeHandler, APIHandler):
         # Fail if no exit code is supplied:
         fallback = int(self.request.headers.get('exit_code', 1))
         try:
-            self.application.exit_code = json.loads(self.request.body).get('exitCode', fallback)
-        except json.JSONDecodeError:
-            self.application.exit_code = fallback
+            self.application.exit_code = self.get_argument('exitCode')
+        except web.MissingArgumentError:
+            try:
+                self.application.exit_code = json.loads(self.request.body).get('exitCode', fallback)
+            except json.JSONDecodeError:
+                self.application.exit_code = fallback
+        
+        if isinstance(self.application.exit_code, str):
+            self.application.exit_code = int(self.application.exit_code, 10)
 
-        _logger.info('Closing server on remote request')
+        _logger.info('Closing server on remote request (%d)', self.application.exit_code)
         self.finish()
         ioloop.IOLoop.current().stop()
 
