@@ -9,6 +9,10 @@ import {
 } from '@jupyterlab/coreutils/lib/url';
 
 import type {
+  PartialJSONObject
+} from '@lumino/coreutils';
+
+import type {
   Widget
 } from '@lumino/widgets';
 
@@ -209,6 +213,35 @@ function markUnchangedRanges() {
 }
 
 
+/**
+ * Get the XSRF token from the cookie, if present
+ */
+function getXsrfToken(): string | undefined {
+  const r = document.cookie.match(/\b_xsrf=([^;]*)\b/);
+  return r ? r[1] : undefined;
+}
+
+
+/**
+ * Wrap a navigator.sendBeacon call with XSRF data 
+ */
+function sendBeacon(url: string, data: PartialJSONObject): void {
+  const formData = new FormData();
+  const token = getXsrfToken();
+  if (token) {
+    formData.append('_xsrf', token);
+  }
+
+  for (let key of Object.keys(data)) {
+    if (data[key]) {
+      formData.append(key, data[key]!.toString() );
+    }
+  }
+
+  navigator.sendBeacon(url, formData);
+}
+
+
 export let toolClosed = false;
 /**
  * POSTs to the server that it should shut down if it was launched as a
@@ -222,7 +255,7 @@ function closeTool(exitCode=0) {
   if (!toolClosed) {
     toolClosed = true;
     let url = '/api/closetool';
-    navigator.sendBeacon(url, JSON.stringify({exitCode}));
+    sendBeacon(url, {exitCode});
     window.close();
   }
 }
