@@ -694,7 +694,7 @@ def test_hg_mergedriver(hg_repo, filespath, reset_log):
 
 
 @pytest.mark.timeout(timeout=3*WEB_TEST_TIMEOUT)
-def test_hg_diffweb(hg_repo, unique_port, popen_with_terminator, auth_header:
+def test_hg_diffweb(hg_repo, unique_port, popen_with_terminator, auth_header):
     # enable diff/merge drivers
     write_local_hg_config(hg_repo)
 
