@@ -2,16 +2,12 @@
 // Distributed under the terms of the Modified BSD License.
 "use strict";
 
-import * as nbformat from "@jupyterlab/nbformat";
-
 import type * as nbformat from '@jupyterlab/nbformat';
 import { Panel, Widget } from "@lumino/widgets";
 
 import { RenderMimeRegistry } from "@jupyterlab/rendermime";
 
 import { defaultSanitizer } from "@jupyterlab/apputils";
-
-import { PageConfig } from "@jupyterlab/coreutils";
 
 import type {
   IDiffEntry
@@ -27,6 +23,7 @@ import { getBaseUrl, getConfigOption, toggleSpinner } from "./common";
 import { exportDiff } from "./staticdiff";
 
 import { rendererFactories } from "./rendermime";
+import { MathJaxTypesetter } from "@jupyterlab/mathjax2";
 
 let diffWidget: NotebookDiffWidget | null = null;
 

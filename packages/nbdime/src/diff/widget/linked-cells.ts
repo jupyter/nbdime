@@ -200,12 +200,16 @@ class LazyDisplayLinkedListCell extends LinkedListCell {
 
   showLazyCellUp() {
     this.showLazyCell();
-    this._prev?.expandUp();
+    if (this._prev) {
+      this._prev.expandUp();
+    }
   }
 
   showLazyCellDown() {
     this.showLazyCell();
-    this._next?.expandDown();
+    if (this._next) {
+      this._next.expandDown();
+    }
   }
 
   showLazyCell() {
