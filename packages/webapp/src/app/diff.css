@@ -118,11 +118,11 @@
     height: 100%;
     display: block;
     width: 40px;
-    background-color: var(--jp-expand-a-color);
+    background-color: var(--jp-expand-activate-color);
     &:hover {
-      background-color: var(--jp-expand-a-hover-color);
+      background-color: var(--jp-expand-activate-focus-color);
       svg {
-        fill: var(--jp-expand-svg-hover-color);
+        fill: var(--jp-expand-background-focus-color);
       }
     }
   }
@@ -130,6 +130,6 @@
     height: 23px;
     width: 23px;
     margin: 8px;
-    fill: var(--jp-expand-svg-color);
+    fill: var(--jp-expand-background-color);
   }
 }
