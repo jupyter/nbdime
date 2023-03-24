@@ -52,7 +52,7 @@ def main_merge(args):
     returncode = 1 if conflicted else 0
 
     if conflicted:
-        logger.warning("Conflicts occured during merge operation.")
+        logger.warning("Conflicts occurred during merge operation.")
     else:
         logger.debug("Merge completed successfully with no unresolvable conflicts.")
 
