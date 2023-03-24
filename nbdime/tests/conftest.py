@@ -89,7 +89,7 @@ def git_repo(tmpdir, request, filespath, needs_git, slow):
     save_cwd = os.getcwd()
     os.chdir(repo)
     request.addfinalizer(lambda: os.chdir(save_cwd))
-    call('git init'.split())
+    call('git init -b master'.split())
 
     # setup base branch
     src = filespath
@@ -131,7 +131,7 @@ def git_repo2(tmpdir, request, filespath, needs_git, slow):
     save_cwd = os.getcwd()
     os.chdir(repo)
     request.addfinalizer(lambda: os.chdir(save_cwd))
-    call('git init'.split())
+    call('git init -b master'.split())
 
     # setup base branch
     src = filespath
@@ -457,14 +457,11 @@ def create_server_extension_config(tmpdir_factory, cmd):
     return str(path)
 
 
-# TODO: Add back 'notebook' as param when NB 7.0 is out ?
-@fixture(scope='module', params=('jupyter_server',))
+@fixture(scope='module', params=('jupyter_server', 'notebook'))
 def server_extension_app(tmpdir_factory, request):
     cmd = request.param
 
-    if cmd == 'notebook':
-        token_config_location = 'NotebookApp'
-    else:
+    def _get_version(pkg):
         v = None
         try:
             from importlib.metadata import version
@@ -473,7 +470,15 @@ def server_extension_app(tmpdir_factory, request):
             import pkg_resources
             v = pkg_resources.get_distribution('jupyter_server').version
         from packaging import version
-        if version.parse(v).major >= 2:
+        return version.parse(v)
+
+    if cmd == 'notebook':
+        token_config_location = 'NotebookApp'
+        if _get_version('notebook').major <= 6 and _get_version('jupyter_server').major >= 2:
+            skip('Do not test with notebook<=6 + jupyter_server>=2')
+    else:
+        from packaging import version
+        if _get_version('jupyter_server').major >= 2:
             token_config_location = 'IdentityProvider'
         else:
             token_config_location = 'ServerApp'
