@@ -80,6 +80,11 @@ jobs:
       max-parallel: 4
       matrix:
         python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
+        include:
+          - python-version: '3.11'
+            jupyter_server-version: '<2'
+          - python-version: '3.11'
+            jupyter_server-version: '>=2'
 
     steps:
     - uses: actions/checkout@v2
@@ -100,6 +105,7 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install jupyterlab~=3.0
         python -m pip install --upgrade --upgrade-strategy=eager ".[test]"
+        python -m pip install jupyter_server${{ matrix.jupyter_server-version }}
     - name: Test with pytest
       run: |
         git config --global user.email CI@fake.com
