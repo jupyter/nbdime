@@ -140,7 +140,6 @@ extras_require = setup_args['extras_require'] = {
         'pytest-tornado',
         'jupyter_server[test]',
         'jsonschema',
-        'mock',
         'notebook',
         'requests',
         'tabulate',  # For profiling

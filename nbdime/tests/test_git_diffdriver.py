@@ -9,8 +9,8 @@ import io
 import os
 from os.path import join as pjoin
 import sys
+from unittest import mock
 
-import mock
 import pytest
 from tornado import ioloop
 
