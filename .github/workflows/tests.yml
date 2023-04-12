@@ -50,10 +50,10 @@ jobs:
         python -m pip install jupyterlab~=3.0
         npm install -g codecov
 
-    - name: Use Node.js 14.x
+    - name: Use Node.js 18.x
       uses: actions/setup-node@v1
       with:
-        node-version: 14.x
+        node-version: 18.x
     - name: Get npm cache directory
       id: npm-cache-dir
       run: |
@@ -100,7 +100,6 @@ jobs:
           ${{ runner.os }}-pip-
     - name: Install dependencies
       run: |
-        export NODE_OPTIONS="--openssl-legacy-provider"
         python -m pip install codecov
         python -m pip install --upgrade pip
         python -m pip install jupyterlab~=3.0
