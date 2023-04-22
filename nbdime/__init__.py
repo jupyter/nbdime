@@ -3,6 +3,7 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+from functools import partial
 from ._version import __version__
 
 from .diffing import diff, diff_notebooks
@@ -10,13 +11,13 @@ from .patching import patch, patch_notebook
 from .merging import merge_notebooks, decide_merge, apply_decisions
 
 
-def load_jupyter_server_extension(nb_server_app):
+def _load_jupyter_server_extension(nb_server_app, nb6_entrypoint=False):
     # Wrap this here to avoid pulling in webapp in a normal run
     from .webapp.nb_server_extension import _load_jupyter_server_extension
-    _load_jupyter_server_extension(nb_server_app)
+    _load_jupyter_server_extension(nb_server_app, nb6_entrypoint=nb6_entrypoint)
 
 
-_load_jupyter_server_extension = load_jupyter_server_extension
+load_jupyter_server_extension = partial(_load_jupyter_server_extension, nb6_entrypoint=True)
 
 
 def _jupyter_server_extension_paths():

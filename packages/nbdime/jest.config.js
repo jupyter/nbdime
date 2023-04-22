@@ -6,6 +6,7 @@ tsOptions["rootDir"] = null;
 tsOptions["inlineSourceMap"] = true;
 
 module.exports = {
+  testEnvironment: 'jsdom',
   automock: false,
   moduleNameMapper: {
     '\\.(css|less|sass|scss)$': 'identity-obj-proxy',
@@ -16,7 +17,7 @@ module.exports = {
   setupFiles: ['<rootDir>/test/jest-setup-files.js'],
   testPathIgnorePatterns: ['/lib/', '/node_modules/'],
   testRegex: '/test/src/.*.spec.ts$',
-  transformIgnorePatterns: ['/node_modules/(?!((@jupyterlab|y-protocols|lib0)/.*))'],
+  transformIgnorePatterns: ['/node_modules/(?!((@jupyterlab|y-protocols|yjs|@jupyter/ydoc|lib0)/.*))'],
   globals: {
     'ts-jest': {
       tsconfig: tsOptions

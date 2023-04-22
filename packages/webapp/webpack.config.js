@@ -17,13 +17,13 @@ module.exports = {
       { test: /\.js$/, loader: "source-map-loader" },
       { test: /\.html$/, loader: 'file-loader' },
       // jquery-ui loads some images
-      { test: /\.(jpg|png|gif)$/, loader: 'file-loader' },
+      { test: /\.(jpg|png|gif)$/, type: 'asset/resource' },
       // required to load font-awesome
-      { test: /\.woff2(\?v=\d+\.\d+\.\d+)?$/, loader: 'url-loader?limit=10000&mimetype=application/font-woff' },
-      { test: /\.woff(\?v=\d+\.\d+\.\d+)?$/, loader: 'url-loader?limit=10000&mimetype=application/font-woff' },
-      { test: /\.ttf(\?v=\d+\.\d+\.\d+)?$/, loader: 'url-loader?limit=10000&mimetype=application/octet-stream' },
-      { test: /\.eot(\?v=\d+\.\d+\.\d+)?$/, loader: 'file-loader' },
-      { test: /\.svg(\?v=\d+\.\d+\.\d+)?$/, loader: 'url-loader?limit=10000&mimetype=image/svg+xml' }
+      { test: /\.woff2(\?v=\d+\.\d+\.\d+)?$/, type: 'asset' },
+      { test: /\.woff(\?v=\d+\.\d+\.\d+)?$/, type: 'asset' },
+      { test: /\.ttf(\?v=\d+\.\d+\.\d+)?$/, type: 'asset' },
+      { test: /\.eot(\?v=\d+\.\d+\.\d+)?$/, type: 'asset/resource' },
+      { test: /\.svg(\?v=\d+\.\d+\.\d+)?$/, type: 'asset' }
     ],
   },
   resolve: {

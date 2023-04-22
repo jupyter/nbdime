@@ -50,10 +50,10 @@ jobs:
         python -m pip install jupyterlab~=3.0
         npm install -g codecov
 
-    - name: Use Node.js 14.x
+    - name: Use Node.js 18.x
       uses: actions/setup-node@v1
       with:
-        node-version: 14.x
+        node-version: 18.x
     - name: Get npm cache directory
       id: npm-cache-dir
       run: |
@@ -75,11 +75,21 @@ jobs:
         CI: true
   python:
     name: Python
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       max-parallel: 4
       matrix:
         python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
+        os: [ubuntu-latest]
+        include:
+          - python-version: '3.11'
+            jupyter_server-version: '<2'
+          - python-version: '3.11'
+            jupyter_server-version: '>=2'
+          - python-version: '3.7'
+            os: windows-latest
+          - python-version: '3.11'
+            os: windows-latest
 
     steps:
     - uses: actions/checkout@v2
@@ -95,16 +105,30 @@ jobs:
           ${{ runner.os }}-pip-
     - name: Install dependencies
       run: |
-        export NODE_OPTIONS="--openssl-legacy-provider"
-        python -m pip install codecov
         python -m pip install --upgrade pip
         python -m pip install jupyterlab~=3.0
         python -m pip install --upgrade --upgrade-strategy=eager ".[test]"
-    - name: Test with pytest
+        python -m pip install jupyter_server${{ matrix.jupyter_server-version }}
+    - name: Test with pytest (Linux)
+      if: startsWith(matrix.os, 'ubuntu')
       run: |
         git config --global user.email CI@fake.com
         git config --global user.name "CI"
-        pushd $(mktemp -d)
+        tmpdir=$(mktemp -d)
+        echo "TEST_TMPDIR=$tmpdir" >> $GITHUB_ENV
+        pushd $tmpdir
         py.test -l --cov-report xml --cov=nbdime --pyargs nbdime
-        codecov
-        popd
+    - name: Test with pytest (Windows)
+      if: startsWith(matrix.os, 'windows')
+      run: |
+        git config --global user.email CI@fake.com
+        git config --global user.name "CI"
+        $hgconfig = "[ui]`r`nusername = CI <CI@fake.com>"
+        $hgconfig | Set-Content ($HOME + "\mercurial.ini")
+        echo "TEST_TMPDIR=." >> $Env:GITHUB_ENV
+        py.test -l --cov-report xml --cov=nbdime --pyargs nbdime
+    - uses: codecov/codecov-action@v3
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        verbose: true
+        directory: ${{ env.TEST_TMPDIR }}
