@@ -5,7 +5,7 @@
     "build:dev": "tsc --build",
     "clean": "lerna run clean",
     "install": "lerna bootstrap --hoist",
-    "publish": "npm run clean && npm run build && lerna publish -m \"Publish npm packages\"",
+    "publish": "lerna version && npm run clean && npm run build && lerna publish --no-private -m \"Publish npm packages\"",
     "test": "lerna run test",
     "update:all": "update-dependency --lerna --minimal --regex .*",
     "update:lab": "update-dependency --lerna --minimal --regex ^@jupyterlab/",
