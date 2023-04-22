@@ -15,7 +15,7 @@
   },
   "devDependencies": {
     "@jupyterlab/buildutils": "^3.0.0",
-    "lerna": "^4.0.0",
+    "lerna": "^6.6.1",
     "rimraf": "^5.0.0"
   }
 }
