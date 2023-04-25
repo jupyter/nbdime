@@ -8,9 +8,9 @@ import { Panel, Widget } from '@lumino/widgets';
 
 import { RenderMimeRegistry } from '@jupyterlab/rendermime';
 
-import { defaultSanitizer } from '@jupyterlab/apputils';
+import { Sanitizer } from '@jupyterlab/apputils';
 
-import { MathJaxTypesetter } from '@jupyterlab/mathjax2';
+import { MathJaxTypesetter } from '@jupyterlab/mathjax-extension';
 
 import type { IDiffEntry } from 'nbdime/lib/diff/diffentries';
 
@@ -25,7 +25,7 @@ import {
   getConfigOption,
   toggleSpinner,
   toggleShowUnchanged,
-  markUnchangedRanges,
+  markUnchangedRanges
 } from './common';
 
 import { exportDiff } from './staticdiff';
@@ -63,11 +63,8 @@ function showDiff(data: {
 }): Promise<void> {
   let rendermime = new RenderMimeRegistry({
     initialFactories: rendererFactories,
-    sanitizer: defaultSanitizer,
-    latexTypesetter: new MathJaxTypesetter({
-      url: getConfigOption('mathjaxUrl'),
-      config: getConfigOption('mathjaxConfig'),
-    }),
+    sanitizer: new Sanitizer(),
+    latexTypesetter: new MathJaxTypesetter()
   });
 
   let nbdModel = new NotebookDiffModel(data.base, data.diff);
@@ -110,7 +107,7 @@ function onDiff(e: Event) {
 function compare(
   base: string,
   remote: string | undefined,
-  pushHistory: boolean | 'replace',
+  pushHistory: boolean | 'replace'
 ) {
   toggleSpinner(true);
   getDiff(base, remote);
@@ -125,7 +122,7 @@ function compare(
       pushHistory,
       { base, remote },
       'Diff: "' + base + '" vs "' + remote + '"',
-      uri,
+      uri
     );
   }
 }
@@ -134,7 +131,7 @@ function editHistory(
   pushHistory: boolean | 'replace',
   statedata: any,
   title: string,
-  url?: string,
+  url?: string
 ): void {
   if (pushHistory === true) {
     history.pushState(statedata, title, url);
@@ -153,7 +150,7 @@ export function getDiff(base: string, remote: string | undefined) {
     remote,
     baseUrl,
     onDiffRequestCompleted,
-    onDiffRequestFailed,
+    onDiffRequestFailed
   );
 }
 
@@ -165,7 +162,7 @@ function onDiffRequestCompleted(data: any) {
 
   layoutWork.then(() => {
     let exportBtn = document.getElementById(
-      'nbdime-export',
+      'nbdime-export'
     ) as HTMLButtonElement;
     exportBtn.style.display = 'initial';
     toggleSpinner(false);
@@ -251,7 +248,7 @@ export function initializeDiff() {
   exportBtn.onclick = exportDiff;
 
   let hideUnchangedChk = document.getElementById(
-    'nbdime-hide-unchanged',
+    'nbdime-hide-unchanged'
   ) as HTMLInputElement;
   hideUnchangedChk.checked = getConfigOption('hideUnchanged', true);
   hideUnchangedChk.onchange = () => {

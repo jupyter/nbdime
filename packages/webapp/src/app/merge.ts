@@ -12,7 +12,7 @@ import { Panel, Widget } from '@lumino/widgets';
 
 import { RenderMimeRegistry } from '@jupyterlab/rendermime';
 
-import { defaultSanitizer } from '@jupyterlab/apputils';
+import { Sanitizer } from '@jupyterlab/apputils';
 
 import { NotebookMergeModel } from 'nbdime/lib/merge/model';
 
@@ -30,7 +30,7 @@ import {
   closeTool,
   toggleSpinner,
   toggleShowUnchanged,
-  markUnchangedRanges,
+  markUnchangedRanges
 } from './common';
 
 import { rendererFactories } from './rendermime';
@@ -49,7 +49,7 @@ function showMerge(data: {
 }): Promise<void> {
   let rendermime = new RenderMimeRegistry({
     initialFactories: rendererFactories,
-    sanitizer: defaultSanitizer,
+    sanitizer: new Sanitizer
   });
 
   let nbmModel = new NotebookMergeModel(data.base, data.merge_decisions);
@@ -88,7 +88,7 @@ export function getMerge(base: string, local: string, remote: string) {
     remote,
     baseUrl,
     onMergeRequestCompleted,
-    onMergeRequestFailed,
+    onMergeRequestFailed
   );
 }
 
@@ -111,7 +111,7 @@ function compare(
   b: string,
   c: string,
   r: string,
-  pushHistory: boolean | 'replace',
+  pushHistory: boolean | 'replace'
 ) {
   // All values present, do merge
   toggleSpinner(true);
@@ -129,7 +129,7 @@ function compare(
       pushHistory,
       { base: b, local: c, remote: r },
       'Merge: "' + c + '" - "' + b + '" - "' + r + '"',
-      uri,
+      uri
     );
   }
 }
@@ -138,7 +138,7 @@ function editHistory(
   pushHistory: boolean | 'replace',
   statedata: any,
   title: string,
-  url?: string,
+  url?: string
 ): void {
   if (pushHistory === true) {
     history.pushState(statedata, title, url);
@@ -209,13 +209,13 @@ export function saveMerged() {
 
 function downloadNotebook(
   notebook: nbformat.INotebookContent,
-  filename: string,
+  filename: string
 ) {
   let element = document.createElement('a');
   const nbCopy = JSONExt.deepCopy(notebook) as JSONObject;
   element.setAttribute(
     'href',
-    'data:text/plain;charset=utf-8,' + encodeURIComponent(stringify(nbCopy)),
+    'data:text/plain;charset=utf-8,' + encodeURIComponent(stringify(nbCopy))
   );
   element.setAttribute('download', filename);
 
@@ -261,7 +261,7 @@ export function downloadMerged() {
         'Do you still want to download the merge output?',
       () => {
         download();
-      },
+      }
     );
   } else {
     download();
@@ -273,7 +273,7 @@ export function downloadMerged() {
  */
 function submitMerge(
   mergedNotebook: nbformat.INotebookContent,
-  conflicts: IMergeDecision[],
+  conflicts: IMergeDecision[]
 ) {
   requestApi(
     getBaseUrl(),
@@ -283,7 +283,7 @@ function submitMerge(
       conflicts: conflicts,
     },
     onSubmissionCompleted,
-    onSubmissionFailed,
+    onSubmissionFailed
   );
 }
 
@@ -300,7 +300,7 @@ function onSubmissionCompleted() {
  */
 function onSubmissionFailed(response: string) {
   alertify.error(
-    'Was not able to save the notebook! See console and/or server log for details.',
+    'Was not able to save the notebook! See console and/or server log for details.'
   );
 }
 
@@ -329,7 +329,7 @@ export function closeMerge(ev: Event, unloading = false): string | void | null {
           },
           () => {
             ev.preventDefault();
-          },
+          }
         );
         return null;
       } else {
@@ -347,7 +347,7 @@ export function closeMerge(ev: Event, unloading = false): string | void | null {
           },
           () => {
             ev.preventDefault();
-          },
+          }
         );
         return null;
       }
@@ -367,7 +367,7 @@ export function closeMerge(ev: Event, unloading = false): string | void | null {
       },
       () => {
         ev.preventDefault();
-      },
+      }
     );
     return null;
   }
@@ -423,13 +423,13 @@ export function initializeMerge() {
     saveBtn.style.display = 'initial';
   }
   let downloadBtn = document.getElementById(
-    'nbdime-download',
+    'nbdime-download'
   ) as HTMLButtonElement;
   downloadBtn.onclick = downloadMerged;
   downloadBtn.style.display = 'initial';
 
   let hideUnchangedChk = document.getElementById(
-    'nbdime-hide-unchanged',
+    'nbdime-hide-unchanged'
   ) as HTMLInputElement;
   hideUnchangedChk.checked = getConfigOption('hideUnchanged', true);
   hideUnchangedChk.onchange = () => {

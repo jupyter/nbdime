@@ -177,7 +177,15 @@ export class FlexPanel extends Panel {
     this.fit();
   }
 
-  declare layout: FlexLayout;
+  /*declare layout: FlexLayout;*/
+
+  get layout(): FlexLayout {
+    return super.layout as FlexLayout;
+  }
+
+  set layout(value: FlexLayout) {
+    super.layout = value;
+  }
 }
 
 /**

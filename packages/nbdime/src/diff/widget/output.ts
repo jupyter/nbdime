@@ -432,7 +432,7 @@ export class RenderableOutputView extends RenderableDiffView<nbformat.IOutput> {
     let i = 0;
     let model = this.model;
     this.mimetype = mimeType;
-    each(this.layout.widgets, (w: Widget) => {
+    each(this.layout!.widgets, (w: Widget) => {
       if (w instanceof RenderedOutputWidget) {
         let output: nbformat.IOutput | null = null;
         if (i === 0 && model.base) {

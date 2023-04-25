@@ -39,10 +39,9 @@ export class MetadataMergeWidget extends Panel {
     this.addWidget(wrapper);
   }
 
-  validateMerged(
-    candidate: nbformat.INotebookMetadata,
-  ): nbformat.INotebookMetadata {
-    let text = this.view.getMergedValue();
+  validateMerged(candidate: nbformat.INotebookMetadata): nbformat.INotebookMetadata {
+    /*let text = this.view.getMergedValue();*/
+    let text = '';
     if (JSON.stringify(candidate) !== text) {
       // This will need to be validated server side,
       // and should not be touched by client side

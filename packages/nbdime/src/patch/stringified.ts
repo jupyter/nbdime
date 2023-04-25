@@ -8,9 +8,9 @@ import type {
   ReadonlyJSONObject,
 } from '@lumino/coreutils';
 
-import { each } from '@lumino/algorithm';
-
-import { valueIn, repeatString } from '../common/util';
+import {
+  valueIn, repeatString
+} from '../common/util';
 
 import { JSON_INDENT, flattenStringDiff } from '../diff/util';
 
@@ -221,7 +221,7 @@ function patchStringifiedObject(
   // Object is dict. As diff keys should be unique, create map for easy processing
   let helper = new PatchObjectHelper(base, diff);
   let baseKeys = helper.baseKeys.slice();
-  each(helper.keys(), key => {
+  for( const key in helper.keys()) {
     let keyString = _makeKeyString(key, level + 1);
     if (helper.isDiffKey(key)) {
       // Entry has a change
@@ -298,7 +298,7 @@ function patchStringifiedObject(
       remote += val;
       baseIndex += val.length;
     }
-  });
+  };
 
   // Stringify correctly
   if (remote.slice(remote.length - postfix.length) === postfix) {
