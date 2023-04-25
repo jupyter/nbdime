@@ -218,7 +218,7 @@ function addCommands(
     label: erroredGen('Notebook diff'),
     caption: erroredGen('Display nbdiff between two notebooks'),
     isEnabled: baseEnabled,
-    icon: 'jp-Icon jp-Icon-16 action-notebook-diff action-notebook-diff-notebooks',
+    iconClass: 'jp-Icon jp-Icon-16 action-notebook-diff action-notebook-diff-notebooks',
     iconLabel: 'nbdiff',
   });
 

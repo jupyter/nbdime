@@ -46,8 +46,13 @@ abstract class RenderableDiffView<T extends (JSONValue | PartialJSONValue)> exte
     }
   }
 
-  layout: PanelLayout;
+  get layout(): PanelLayout | null{
+    return super.layout as PanelLayout | null;
+  }
 
+  set layout(value: PanelLayout | null) {
+    super.layout = value;
+  }
   mimetype: string;
 
   /**

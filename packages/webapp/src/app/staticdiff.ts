@@ -6,9 +6,9 @@ import {
   saveAs
 } from 'file-saver';
 
-import {
+/* import {
   EditorWidget
-} from 'nbdime/lib/common/editor';
+} from 'nbdime/lib/common/editor'; */
 
 
 
@@ -57,16 +57,16 @@ const codeMirrorEllipsisExportStyle =
 
 
 function ensureRendered(callback: () => void): void {
-  for (let e of EditorWidget.editors) {
+  /*for (let e of EditorWidget.editors) {
     e.setOption('viewportMargin', Infinity);
-  }
+  }*/
   window.requestAnimationFrame(() => {
     // Assume entire viewport has been rendered now
     callback();
-    for (let e of EditorWidget.editors) {
+    /*for (let e of EditorWidget.editors) {
       // Reset to default according to docs
       e.setOption('viewportMargin', 10);
-    }
+    }*/
   });
 }
 

@@ -6,9 +6,9 @@ import type {
   ReadonlyJSONObject
 } from '@lumino/coreutils';
 
-import type {
-  IIterator
-} from '@lumino/algorithm';
+/* import type {
+  Iterator
+} from '@lumino/algorithm'; */
 
 import type {
   IDiffObjectEntry
@@ -20,7 +20,7 @@ import {
 
 
 export
-class PatchObjectHelper implements IIterator<string> {
+class PatchObjectHelper implements Iterator<string> {
   constructor(base: ReadonlyJSONObject, diff: IDiffObjectEntry[] | null) {
       this._diffLUT = {};
       let diffKeys : string[] = [];
@@ -72,16 +72,16 @@ class PatchObjectHelper implements IIterator<string> {
     return false;
   }
 
-  iter(): IIterator<string> {
+  iter(): Iterator<string> {
     this._remainingKeys = this.baseKeys.concat(this._diffKeys).filter(unique).sort();
     return this;
   }
 
-  keys(): IIterator<string> {
+  keys(): PatchObjectHelper {
     return this;
   }
 
-  next(): string | undefined {
+  next(): any {
     let key = this._remainingKeys.shift();
     if (key && valueIn(key, this._diffKeys)) {
       let op = this._diffLUT[key].op;
@@ -96,7 +96,7 @@ class PatchObjectHelper implements IIterator<string> {
     return key;
   }
 
-  clone(): IIterator<string> {
+  clone(): PatchObjectHelper {
     let c = new PatchObjectHelper({}, null);
     c.baseKeys = this.baseKeys;
     c._diffKeys = this._diffKeys;

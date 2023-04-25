@@ -12,9 +12,7 @@ import {
   OutputArea, OutputAreaModel, IOutputAreaModel
 } from '@jupyterlab/outputarea';
 
-import type {
-  DropAction, IDragEvent
-} from '@lumino/dragdrop';
+import type { Drag } from '@lumino/dragdrop';
 
 import {
   PanelLayout, Widget
@@ -99,13 +97,13 @@ class DisconnectedDropTarget extends DropPanel {
     return null;
   }
 
-  protected processDrop(dropTarget: HTMLElement, event: IDragEvent): void {
+  protected processDrop(dropTarget: HTMLElement, event: Drag.Event): void {
     if (this.callback) {
       this.callback(dropTarget, event);
     }
   };
 
-  callback: ((dropTarget: HTMLElement, event: IDragEvent) => void) | null = null;
+  callback: ((dropTarget: HTMLElement, event: Drag.Event) => void) | null = null;
 }
 
 
@@ -116,9 +114,8 @@ export
 class RenderableOutputsMergeView extends DragDropPanel {
 
   static makeOutputsDraggable(area: OutputArea): void {
-    let i = area.layout!.iter();
-    for (let w = i.next(); w !== undefined; w = i.next()) {
-      DragPanel.makeHandle(w);
+    for (const widget of area.layout!) {
+      DragPanel.makeHandle(widget);
     }
   }
 
@@ -295,7 +292,7 @@ class RenderableOutputsMergeView extends DragDropPanel {
     return findChild(this.mergePane.node, node);
   }
 
-  protected processDrop(dropTarget: HTMLElement, event: IDragEvent): void {
+  protected processDrop(dropTarget: HTMLElement, event: Drag.Event): void {
     if (dropTarget === RenderableOutputsMergeView.deleteDrop.node) {
       // Simply remove output
       let [paneIdx, outputIdx] = event.mimeData.getData(MIME_INDEX) as number[];
@@ -349,7 +346,7 @@ class RenderableOutputsMergeView extends DragDropPanel {
     }
   }
 
-  protected onDragComplete(action: DropAction) {
+  protected onDragComplete(action: Drag.DropAction) {
     super.onDragComplete(action);
     // After finishing drag, hide delete drop-zone ('trash')
     if (RenderableOutputsMergeView.deleteDrop.isAttached) {

@@ -2,60 +2,40 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-
 import * as alertify from 'alertify.js';
 
 import type * as nbformat from '@jupyterlab/nbformat';
 
-import {
-  JSONExt, JSONObject
-} from '@lumino/coreutils';
+import { JSONExt, JSONObject } from '@lumino/coreutils';
+
+import { Panel, Widget } from '@lumino/widgets';
+
+import { RenderMimeRegistry } from '@jupyterlab/rendermime';
+
+import { Sanitizer } from '@jupyterlab/apputils';
+
+import { NotebookMergeModel } from 'nbdime/lib/merge/model';
+
+import type { IMergeDecision } from 'nbdime/lib/merge/decisions';
+
+import { NotebookMergeWidget } from 'nbdime/lib/merge/widget';
+
+import { stringify } from 'nbdime/lib/patch';
+
+import { requestMerge, requestApi } from 'nbdime/lib/request';
 
 import {
-  Panel, Widget
-} from '@lumino/widgets';
-
-import {
-  RenderMimeRegistry
-} from '@jupyterlab/rendermime';
-
-import {
-  defaultSanitizer
-} from '@jupyterlab/apputils';
-
-import {
-  NotebookMergeModel
-} from 'nbdime/lib/merge/model';
-
-import type {
-  IMergeDecision
-} from 'nbdime/lib/merge/decisions';
-
-import {
-  NotebookMergeWidget
-} from 'nbdime/lib/merge/widget';
-
-import {
-  stringify
-} from 'nbdime/lib/patch';
-
-import {
-  requestMerge, requestApi
-} from 'nbdime/lib/request';
-
-import {
-  getBaseUrl, getConfigOption, closeTool, toggleSpinner,
-  toggleShowUnchanged, markUnchangedRanges
+  getBaseUrl,
+  getConfigOption,
+  closeTool,
+  toggleSpinner,
+  toggleShowUnchanged,
+  markUnchangedRanges
 } from './common';
 
-import {
-  rendererFactories
-} from './rendermime';
+import { rendererFactories } from './rendermime';
 
-import {
-  extractMergedNotebook
-} from './save';
-
+import { extractMergedNotebook } from './save';
 
 let mergeWidget: NotebookMergeWidget | null = null;
 
@@ -64,17 +44,15 @@ let mergeWidget: NotebookMergeWidget | null = null;
  * list of merge decisions
  */
 function showMerge(data: {
-    base: nbformat.INotebookContent,
-    merge_decisions: IMergeDecision[]
-    }): Promise<void> {
-
+  base: nbformat.INotebookContent;
+  merge_decisions: IMergeDecision[];
+}): Promise<void> {
   let rendermime = new RenderMimeRegistry({
     initialFactories: rendererFactories,
-    sanitizer: defaultSanitizer,
+    sanitizer: new Sanitizer
   });
 
-  let nbmModel = new NotebookMergeModel(data.base,
-      data.merge_decisions);
+  let nbmModel = new NotebookMergeModel(data.base, data.merge_decisions);
   let nbmWidget = new NotebookMergeWidget(nbmModel, rendermime);
 
   let root = document.getElementById('nbdime-root');
@@ -91,7 +69,9 @@ function showMerge(data: {
   panel.addWidget(nbmWidget);
   let work = nbmWidget.init();
   work.then(() => {
-    window.onresize = () => { panel.update(); };
+    window.onresize = () => {
+      panel.update();
+    };
   });
   mergeWidget = nbmWidget;
   return work;
@@ -100,10 +80,16 @@ function showMerge(data: {
 /**
  * Calls `requestMerge` with our response handlers
  */
-export
-function getMerge(base: string, local: string, remote: string) {
+export function getMerge(base: string, local: string, remote: string) {
   let baseUrl = getBaseUrl();
-  requestMerge(base, local, remote, baseUrl, onMergeRequestCompleted, onMergeRequestFailed);
+  requestMerge(
+    base,
+    local,
+    remote,
+    baseUrl,
+    onMergeRequestCompleted,
+    onMergeRequestFailed
+  );
 }
 
 /**
@@ -119,23 +105,41 @@ function onMerge(e: Event) {
   let r = (document.getElementById('merge-remote') as HTMLInputElement).value;
   compare(b, c, r, true);
   return false;
-};
+}
 
-function compare(b: string, c: string, r: string, pushHistory: boolean | 'replace') {
+function compare(
+  b: string,
+  c: string,
+  r: string,
+  pushHistory: boolean | 'replace'
+) {
   // All values present, do merge
   toggleSpinner(true);
   getMerge(b, c, r);
   if (pushHistory) {
     let uri = window.location.pathname;
-    uri += '?base=' + encodeURIComponent(b) +
-      '&local=' + encodeURIComponent(c) +
-      '&remote=' + encodeURIComponent(r);
-    editHistory(pushHistory, {base: b, local: c, remote: r},
-      'Merge: "' + c + '" - "' + b + '" - "' + r + '"', uri);
+    uri +=
+      '?base=' +
+      encodeURIComponent(b) +
+      '&local=' +
+      encodeURIComponent(c) +
+      '&remote=' +
+      encodeURIComponent(r);
+    editHistory(
+      pushHistory,
+      { base: b, local: c, remote: r },
+      'Merge: "' + c + '" - "' + b + '" - "' + r + '"',
+      uri
+    );
   }
 }
 
-function editHistory(pushHistory: boolean | 'replace', statedata: any, title: string, url?: string): void {
+function editHistory(
+  pushHistory: boolean | 'replace',
+  statedata: any,
+  title: string,
+  url?: string
+): void {
   if (pushHistory === true) {
     history.pushState(statedata, title, url);
   } else if (pushHistory === 'replace') {
@@ -148,9 +152,9 @@ function editHistory(pushHistory: boolean | 'replace', statedata: any, title: st
  */
 function onPopState(e: PopStateEvent) {
   if (e.state) {
-    let eb = (document.getElementById('merge-base') as HTMLInputElement);
-    let el = (document.getElementById('merge-local') as HTMLInputElement);
-    let er = (document.getElementById('merge-remote') as HTMLInputElement);
+    let eb = document.getElementById('merge-base') as HTMLInputElement;
+    let el = document.getElementById('merge-local') as HTMLInputElement;
+    let er = document.getElementById('merge-remote') as HTMLInputElement;
 
     eb.value = e.state.base;
     el.value = e.state.local;
@@ -187,13 +191,11 @@ function onMergeRequestFailed(response: string) {
   toggleSpinner(false);
 }
 
-
 /**
  * Extract the merged notebook from the model, as well as any remaining
  * conflicts, and send them to the server for storage / further processing.
  */
-export
-function saveMerged() {
+export function saveMerged() {
   if (!mergeWidget) {
     return;
   }
@@ -205,13 +207,16 @@ function saveMerged() {
   submitMerge(nb, conflicts);
 }
 
-
-function downloadNotebook(notebook: nbformat.INotebookContent, filename: string) {
+function downloadNotebook(
+  notebook: nbformat.INotebookContent,
+  filename: string
+) {
   let element = document.createElement('a');
   const nbCopy = JSONExt.deepCopy(notebook) as JSONObject;
   element.setAttribute(
-    'href', 'data:text/plain;charset=utf-8,' +
-    encodeURIComponent(stringify(nbCopy)));
+    'href',
+    'data:text/plain;charset=utf-8,' + encodeURIComponent(stringify(nbCopy))
+  );
   element.setAttribute('download', filename);
 
   element.style.display = 'none';
@@ -222,7 +227,6 @@ function downloadNotebook(notebook: nbformat.INotebookContent, filename: string)
     document.body.removeChild(element);
   }
 }
-
 
 function getMergeFilename() {
   // If present use 'outputfilename'
@@ -241,8 +245,7 @@ function getMergeFilename() {
 /**
  *
  */
-export
-function downloadMerged() {
+export function downloadMerged() {
   if (!mergeWidget) {
     return;
   }
@@ -253,10 +256,13 @@ function downloadMerged() {
   }
   let conflicted = mergeWidget.model.conflicts.length > 0;
   if (conflicted) {
-    alertify.confirm('There are conflicts remaining. ' +
-      'Do you still want to download the merge output?', () => {
+    alertify.confirm(
+      'There are conflicts remaining. ' +
+        'Do you still want to download the merge output?',
+      () => {
         download();
-      });
+      }
+    );
   } else {
     download();
   }
@@ -265,8 +271,10 @@ function downloadMerged() {
 /**
  * Submit a merged notebook
  */
-function submitMerge(mergedNotebook: nbformat.INotebookContent,
-                     conflicts: IMergeDecision[]) {
+function submitMerge(
+  mergedNotebook: nbformat.INotebookContent,
+  conflicts: IMergeDecision[]
+) {
   requestApi(
     getBaseUrl(),
     '/api/store',
@@ -275,7 +283,8 @@ function submitMerge(mergedNotebook: nbformat.INotebookContent,
       conflicts: conflicts
     },
     onSubmissionCompleted,
-    onSubmissionFailed);
+    onSubmissionFailed
+  );
 }
 
 /**
@@ -290,15 +299,15 @@ function onSubmissionCompleted() {
  * Callback for a failed store of the submitted merged notebook
  */
 function onSubmissionFailed(response: string) {
-  alertify.error('Was not able to save the notebook! See console and/or server log for details.');
+  alertify.error(
+    'Was not able to save the notebook! See console and/or server log for details.'
+  );
 }
-
 
 /**
  * Called when the merge tool is closing, but it can be prevented.
  */
-export
-function closeMerge(ev: Event, unloading=false): string | void | null {
+export function closeMerge(ev: Event, unloading = false): string | void | null {
   if (!mergeWidget) {
     return closeTool(1);
   }
@@ -306,34 +315,40 @@ function closeMerge(ev: Event, unloading=false): string | void | null {
   for (let md of mergeWidget.model.conflicts) {
     if (md.conflict) {
       if (mergeWidget.model.unsavedChanges && savable) {
-        let prompt = 'There are remaining conflicts, and you have unsaved changes. Do you want to close anyway?';
+        let prompt =
+          'There are remaining conflicts, and you have unsaved changes. Do you want to close anyway?';
         if (unloading) {
           ev.returnValue = true;
           return prompt;
         }
-        alertify.confirm(prompt,
+        alertify.confirm(
+          prompt,
           () => {
             window.onbeforeunload = null!;
             closeTool(1);
           },
           () => {
             ev.preventDefault();
-          });
+          }
+        );
         return null;
       } else {
-        let prompt = 'There are remaining conflicts. Do you want to close anyway?';
+        let prompt =
+          'There are remaining conflicts. Do you want to close anyway?';
         if (unloading) {
           ev.returnValue = true;
           return prompt;
         }
-        alertify.confirm(prompt,
+        alertify.confirm(
+          prompt,
           () => {
             window.onbeforeunload = null!;
             closeTool(1);
           },
           () => {
             ev.preventDefault();
-          });
+          }
+        );
         return null;
       }
     }
@@ -344,28 +359,28 @@ function closeMerge(ev: Event, unloading=false): string | void | null {
       ev.returnValue = true;
       return prompt;
     }
-    alertify.confirm(prompt,
+    alertify.confirm(
+      prompt,
       () => {
         window.onbeforeunload = null!;
         closeTool(0);
       },
       () => {
         ev.preventDefault();
-      });
+      }
+    );
     return null;
   }
   closeTool(0);
   return null;
 }
 
-
 /**
  * Called when merge tool is closing, and it shouldn't be prevented.
  *
  * Will only try to set the correct exit code for the tool.
  */
-export
-function forceCloseMerge(): void {
+export function forceCloseMerge(): void {
   if (!mergeWidget) {
     return closeTool(1);
   }
@@ -376,7 +391,6 @@ function forceCloseMerge(): void {
   }
   closeTool(0);
 }
-
 
 /**
  * Wire up callbacks.
@@ -392,12 +406,11 @@ function attachToForm() {
 }
 
 /** */
-export
-function initializeMerge() {
+export function initializeMerge() {
   attachToForm();
   // If arguments supplied in config, run merge directly:
   let base = getConfigOption('base');
-  let local = getConfigOption('local');  // Only available for merge
+  let local = getConfigOption('local'); // Only available for merge
   let remote = getConfigOption('remote');
   if (base && local && remote) {
     compare(base, local, remote, 'replace');
@@ -409,11 +422,15 @@ function initializeMerge() {
     saveBtn.onclick = saveMerged;
     saveBtn.style.display = 'initial';
   }
-  let downloadBtn = document.getElementById('nbdime-download') as HTMLButtonElement;
+  let downloadBtn = document.getElementById(
+    'nbdime-download'
+  ) as HTMLButtonElement;
   downloadBtn.onclick = downloadMerged;
   downloadBtn.style.display = 'initial';
 
-  let hideUnchangedChk = document.getElementById('nbdime-hide-unchanged') as HTMLInputElement;
+  let hideUnchangedChk = document.getElementById(
+    'nbdime-hide-unchanged'
+  ) as HTMLInputElement;
   hideUnchangedChk.checked = getConfigOption('hideUnchanged', true);
   hideUnchangedChk.onchange = () => {
     toggleShowUnchanged(!hideUnchangedChk.checked, mergeWidget);
