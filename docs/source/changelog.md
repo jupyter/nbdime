@@ -1,5 +1,19 @@
 # Changes in nbdime
 
+## 3.2
+
+###  3.2.1 - 2023-04
+
+- Fixed incorrect exit code submission when succesfully closing web tools.
+
+###  3.2.0 - 2023-04
+
+- Jupyter server 2.0 support
+- Removed ipython_genutils code.
+- Make INFO text more readable in dark terminal
+- Compatible with asynchronous contentsmanager
+- Update cell marker format to use bold correctly
+
 ## 3.1
 
 ###  3.1.0 - 2021-05
