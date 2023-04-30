@@ -233,7 +233,7 @@ function sendBeacon(url: string, data: PartialJSONObject): void {
   }
 
   for (let key of Object.keys(data)) {
-    if (data[key]) {
+    if (data[key] !== null && data[key] !== undefined) {
       formData.append(key, data[key]!.toString() );
     }
   }
