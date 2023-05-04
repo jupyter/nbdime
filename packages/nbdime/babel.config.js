@@ -1,13 +1,13 @@
 module.exports = {
-  sourceMap: "inline",
+  sourceMap: 'inline',
   presets: [
     [
-      "@babel/preset-env",
+      '@babel/preset-env',
       {
         targets: {
-          node: "current",
-        },
-      },
-    ],
-  ],
+          node: 'current'
+        }
+      }
+    ]
+  ]
 };

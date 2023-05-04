@@ -1,69 +1,46 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-
 import type {
-  JupyterFrontEndPlugin, JupyterFrontEnd
+  JupyterFrontEndPlugin,
+  JupyterFrontEnd
 } from '@jupyterlab/application';
 
-import {
-  CommandToolbarButton
-} from '@jupyterlab/apputils';
+import { CommandToolbarButton } from '@jupyterlab/apputils';
 
-import {
-  PathExt
-} from '@jupyterlab/coreutils';
+import { PathExt } from '@jupyterlab/coreutils';
 
-import type {
-  DocumentRegistry
-} from '@jupyterlab/docregistry';
+import type { DocumentRegistry } from '@jupyterlab/docregistry';
 
-import {
-  IRenderMimeRegistry
-} from '@jupyterlab/rendermime';
+import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
-import type {
-  INotebookModel
-} from '@jupyterlab/notebook';
+import type { INotebookModel } from '@jupyterlab/notebook';
 
-import {
-  NotebookPanel, INotebookTracker
-} from '@jupyterlab/notebook';
+import { NotebookPanel, INotebookTracker } from '@jupyterlab/notebook';
 
-import {
-  ISettingRegistry
-} from '@jupyterlab/settingregistry';
+import { ISettingRegistry } from '@jupyterlab/settingregistry';
 
-import {
-  find
-} from '@lumino/algorithm';
+import { find } from '@lumino/algorithm';
 
-import type {
-  CommandRegistry
-} from '@lumino/commands';
+import type { CommandRegistry } from '@lumino/commands';
 
-import {
-  IDisposable, DisposableDelegate
-} from '@lumino/disposable';
+import { IDisposable, DisposableDelegate } from '@lumino/disposable';
 
-import {
-  diffNotebookGit, diffNotebookCheckpoint, isNbInGit
-} from './actions';
-
+import { diffNotebookGit, diffNotebookCheckpoint, isNbInGit } from './actions';
 
 const pluginId = 'nbdime-jupyterlab:plugin';
 
 /**
  * Error message if the nbdime API is unavailable.
  */
-const serverMissingMsg = 'Unable to query nbdime API. Is the server extension enabled?';
-
+const serverMissingMsg =
+  'Unable to query nbdime API. Is the server extension enabled?';
 
 const INITIAL_NETWORK_RETRY = 2; // ms
 
-
-export
-class NBDiffExtension implements DocumentRegistry.IWidgetExtension<NotebookPanel, INotebookModel> {
+export class NBDiffExtension
+  implements DocumentRegistry.IWidgetExtension<NotebookPanel, INotebookModel>
+{
   /**
    *
    */
@@ -74,7 +51,10 @@ class NBDiffExtension implements DocumentRegistry.IWidgetExtension<NotebookPanel
   /**
    * Create a new extension object.
    */
-  createNew(nb: NotebookPanel, context: DocumentRegistry.IContext<INotebookModel>): IDisposable {
+  createNew(
+    nb: NotebookPanel,
+    context: DocumentRegistry.IContext<INotebookModel>
+  ): IDisposable {
     // Create extension here
 
     // Add buttons to toolbar
@@ -88,20 +68,26 @@ class NBDiffExtension implements DocumentRegistry.IWidgetExtension<NotebookPanel
       return false;
     });
     let i = 1;
-    for (let id of [CommandIDs.diffNotebookCheckpoint, CommandIDs.diffNotebookGit]) {
+    for (let id of [
+      CommandIDs.diffNotebookCheckpoint,
+      CommandIDs.diffNotebookGit
+    ]) {
       let button = new CommandToolbarButton({
         commands: this.commands,
         id
       });
       button.addClass('nbdime-toolbarButton');
       if (insertionPoint >= 0) {
-        nb.toolbar.insertItem(insertionPoint + i++, this.commands.label(id), button);
+        nb.toolbar.insertItem(
+          insertionPoint + i++,
+          this.commands.label(id),
+          button
+        );
       } else {
         nb.toolbar.addItem(this.commands.label(id), button);
       }
       buttons.push(button);
     }
-
 
     return new DisposableDelegate(() => {
       // Cleanup extension here
@@ -114,21 +100,13 @@ class NBDiffExtension implements DocumentRegistry.IWidgetExtension<NotebookPanel
   protected commands: CommandRegistry;
 }
 
+export namespace CommandIDs {
+  export const diffNotebook = 'nbdime:diff';
 
-export
-namespace CommandIDs {
+  export const diffNotebookGit = 'nbdime:diff-git';
 
-  export
-  const diffNotebook = 'nbdime:diff';
-
-  export
-  const diffNotebookGit = 'nbdime:diff-git';
-
-  export
-  const diffNotebookCheckpoint = 'nbdime:diff-checkpoint';
-
+  export const diffNotebookCheckpoint = 'nbdime:diff-checkpoint';
 }
-
 
 function addCommands(
   app: JupyterFrontEnd,
@@ -150,7 +128,7 @@ function addCommands(
 
   // This allows quicker checking, but if someone creates/removes
   // a repo during the session, this will become incorrect
-  let lut_known_git: { [key: string]: boolean} = {}
+  let lut_known_git: { [key: string]: boolean } = {};
 
   let networkRetry = INITIAL_NETWORK_RETRY;
 
@@ -166,7 +144,7 @@ function addCommands(
     let dir = PathExt.dirname(path);
     let known_git = lut_known_git[dir];
     if (known_git === undefined) {
-      const inGitPromise = isNbInGit({path: dir});
+      const inGitPromise = isNbInGit({ path: dir });
       inGitPromise.then(inGit => {
         networkRetry = INITIAL_NETWORK_RETRY;
         lut_known_git[dir] = inGit;
@@ -175,7 +153,7 @@ function addCommands(
           commands.notifyCommandChanged(CommandIDs.diffNotebookGit);
         }
       });
-      inGitPromise.catch((reason) => {
+      inGitPromise.catch(reason => {
         hasAPI = reason.status !== undefined && reason.status !== 404;
         setTimeout(() => {
           networkRetry *= 2;
@@ -191,7 +169,6 @@ function addCommands(
     return known_git;
   }
 
-
   function erroredGen(text: string) {
     return () => {
       if (hasAPI) {
@@ -201,12 +178,10 @@ function addCommands(
     };
   }
 
-
   let hideUnchanged = settings.get('hideUnchanged').composite !== false;
   settings.changed.connect(() => {
     hideUnchanged = settings.get('hideUnchanged').composite !== false;
   });
-
 
   commands.addCommand(CommandIDs.diffNotebook, {
     execute: args => {
@@ -219,7 +194,7 @@ function addCommands(
     caption: erroredGen('Display nbdiff between two notebooks'),
     isEnabled: baseEnabled,
     icon: 'jp-Icon jp-Icon-16 action-notebook-diff action-notebook-diff-notebooks',
-    iconLabel: 'nbdiff',
+    iconLabel: 'nbdiff'
   });
 
   commands.addCommand(CommandIDs.diffNotebookCheckpoint, {
@@ -231,7 +206,7 @@ function addCommands(
       let widget = diffNotebookCheckpoint({
         path: current.context.path,
         rendermime,
-        hideUnchanged,
+        hideUnchanged
       });
       shell.add(widget);
       if (args['activate'] !== false) {
@@ -239,9 +214,12 @@ function addCommands(
       }
     },
     label: erroredGen('Notebook checkpoint diff'),
-    caption: erroredGen('Display nbdiff from checkpoint to currently saved version'),
+    caption: erroredGen(
+      'Display nbdiff from checkpoint to currently saved version'
+    ),
     isEnabled: baseEnabled,
-    iconClass: 'jp-Icon jp-Icon-16 fa fa-clock-o action-notebook-diff action-notebook-diff-checkpoint',
+    iconClass:
+      'jp-Icon jp-Icon-16 fa fa-clock-o action-notebook-diff action-notebook-diff-checkpoint'
   });
 
   commands.addCommand(CommandIDs.diffNotebookGit, {
@@ -253,7 +231,7 @@ function addCommands(
       let widget = diffNotebookGit({
         path: current.context.path,
         rendermime,
-        hideUnchanged,
+        hideUnchanged
       });
       shell.add(widget);
       if (args['activate'] !== false) {
@@ -261,13 +239,14 @@ function addCommands(
       }
     },
     label: erroredGen('Notebook Git diff'),
-    caption: erroredGen('Display nbdiff from git HEAD to currently saved version'),
+    caption: erroredGen(
+      'Display nbdiff from git HEAD to currently saved version'
+    ),
     isEnabled: hasGitNotebook,
-    iconClass: 'jp-Icon jp-Icon-16 fa fa-git action-notebook-diff action-notebook-diff-git',
+    iconClass:
+      'jp-Icon jp-Icon-16 fa fa-git action-notebook-diff action-notebook-diff-git'
   });
 }
-
-
 
 /**
  * The notebook diff provider.
@@ -281,7 +260,6 @@ const nbDiffProvider: JupyterFrontEndPlugin<void> = {
 
 export default nbDiffProvider;
 
-
 /**
  * Activate the widget extension.
  */
@@ -289,9 +267,9 @@ async function activateWidgetExtension(
   app: JupyterFrontEnd,
   tracker: INotebookTracker,
   rendermime: IRenderMimeRegistry,
-  settingsRegistry: ISettingRegistry,
+  settingsRegistry: ISettingRegistry
 ): Promise<void> {
-  let {commands, docRegistry} = app;
+  let { commands, docRegistry } = app;
   let extension = new NBDiffExtension(commands);
   docRegistry.addWidgetExtension('Notebook', extension);
 

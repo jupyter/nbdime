@@ -2,35 +2,22 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import {
-  Panel, Widget
-} from '@lumino/widgets';
+import { Panel, Widget } from '@lumino/widgets';
 
-import {
-  createNbdimeMergeView
-} from '../../common/mergeview';
+import { createNbdimeMergeView } from '../../common/mergeview';
 
-import {
-  CollapsiblePanel
-} from '../../common/collapsiblepanel';
+import { CollapsiblePanel } from '../../common/collapsiblepanel';
 
-import type {
-  IStringDiffModel
-} from '../model';
+import type { IStringDiffModel } from '../model';
 
-import {
-  TWOWAY_DIFF_CLASS
-} from './common';
-
+import { TWOWAY_DIFF_CLASS } from './common';
 
 const ROOT_METADATA_CLASS = 'jp-Metadata-diff';
-
 
 /**
  * MetadataWidget for changes to Notebook-level metadata
  */
-export
-class MetadataDiffWidget extends Panel {
+export class MetadataDiffWidget extends Panel {
   constructor(model: IStringDiffModel) {
     super();
     this._model = model;
@@ -46,7 +33,10 @@ class MetadataDiffWidget extends Panel {
       let view: Widget = createNbdimeMergeView(model);
       if (model.collapsible) {
         view = new CollapsiblePanel(
-          view, model.collapsibleHeader, model.startCollapsed);
+          view,
+          model.collapsibleHeader,
+          model.startCollapsed
+        );
       }
       this.addWidget(view);
     }

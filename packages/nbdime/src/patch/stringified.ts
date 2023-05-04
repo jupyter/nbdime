@@ -3,37 +3,30 @@
 'use strict';
 
 import type {
-  ReadonlyJSONValue, ReadonlyJSONArray, ReadonlyJSONObject
+  ReadonlyJSONValue,
+  ReadonlyJSONArray,
+  ReadonlyJSONObject
 } from '@lumino/coreutils';
 
-import {
-  each
-} from '@lumino/algorithm';
+import { each } from '@lumino/algorithm';
+
+import { valueIn, repeatString } from '../common/util';
+
+import { JSON_INDENT, flattenStringDiff } from '../diff/util';
 
 import {
-  valueIn, repeatString
-} from '../common/util';
-
-import {
-  JSON_INDENT, flattenStringDiff
-} from '../diff/util';
-
-import {
-  IDiffEntry, IDiffArrayEntry, IDiffObjectEntry,
-  validateObjectOp, validateSequenceOp
+  IDiffEntry,
+  IDiffArrayEntry,
+  IDiffObjectEntry,
+  validateObjectOp,
+  validateSequenceOp
 } from '../diff/diffentries';
 
-import {
-  DiffRangeRaw
-} from '../diff/range';
+import { DiffRangeRaw } from '../diff/range';
 
-import {
-  PatchObjectHelper
-} from './common';
-
+import { PatchObjectHelper } from './common';
 
 import stableStringify = require('json-stable-stringify');
-
 
 // Workaround for TS issue #17002
 declare global {
@@ -42,32 +35,28 @@ declare global {
   }
 }
 
-
-
 /**
  * The result of a patch operation of a stringified object.
  *
  * Contains the resulting remote string, as well as ranges describing which
  * parts of the string were changed.
  */
-export
-type StringifiedPatchResult = {
+export type StringifiedPatchResult = {
   /**
    * The patched string value
    */
-  remote: string,
+  remote: string;
 
   /**
    * Position ranges indicating added content, as indices into the remote value
    */
-  additions: DiffRangeRaw[],
+  additions: DiffRangeRaw[];
 
   /**
    * Position ranges indicating removed content, as indices into the base value
    */
-  deletions: DiffRangeRaw[]
+  deletions: DiffRangeRaw[];
 };
-
 
 /**
  * Ordered stringify. Wraps stableStringify(), but handles indentation.
@@ -75,11 +64,12 @@ type StringifiedPatchResult = {
  * indentFirst controls whether the first line is indented as well, and
  * defaults to true.
  */
-export
-function stringify(values: ReadonlyJSONValue | null,
-                   level?: number,
-                   indentFirst: boolean = true) : string {
-  let ret = stableStringify(values, {space: JSON_INDENT});
+export function stringify(
+  values: ReadonlyJSONValue | null,
+  level?: number,
+  indentFirst: boolean = true
+): string {
+  let ret = stableStringify(values, { space: JSON_INDENT });
   if (level) {
     ret = _indent(ret, level, indentFirst);
   }
@@ -89,8 +79,7 @@ function stringify(values: ReadonlyJSONValue | null,
 /**
  * Ensure value is string, if not stringify.
  */
-export
-function stringifyAndBlankNull(value: ReadonlyJSONValue | null): string {
+export function stringifyAndBlankNull(value: ReadonlyJSONValue | null): string {
   if (typeof value === 'string') {
     return value;
   } else if (value === null) {
@@ -99,7 +88,6 @@ function stringifyAndBlankNull(value: ReadonlyJSONValue | null): string {
     return stringify(value);
   }
 }
-
 
 /**
  * Patch a stringified JSON object.
@@ -112,14 +100,23 @@ function stringifyAndBlankNull(value: ReadonlyJSONValue | null): string {
  * can therefore differ from a straigh string-based diff of stringified JSON
  * objects.
  */
-export function patchStringified(base: ReadonlyJSONValue, diff: IDiffEntry[] | null, level?: number) : StringifiedPatchResult {
+export function patchStringified(
+  base: ReadonlyJSONValue,
+  diff: IDiffEntry[] | null,
+  level?: number
+): StringifiedPatchResult {
   if (level === undefined) {
     level = 0;
   }
   if (typeof base === 'string') {
     // Only stringify if level > 0
     let stringifyPatch = level > 0;
-    return patchString(base, diff as IDiffArrayEntry[] | null, level, stringifyPatch);
+    return patchString(
+      base,
+      diff as IDiffArrayEntry[] | null,
+      level,
+      stringifyPatch
+    );
   } else if (Array.isArray(base)) {
     return patchStringifiedList(base, diff as IDiffArrayEntry[] | null, level);
   } else if (typeof base === 'number' || typeof base === 'boolean') {
@@ -127,25 +124,34 @@ export function patchStringified(base: ReadonlyJSONValue, diff: IDiffEntry[] | n
   } else if (base === null) {
     throw new TypeError('Cannot patch a null base!');
   } else {
-    return patchStringifiedObject(base, diff as IDiffObjectEntry[] | null, level);
+    return patchStringifiedObject(
+      base,
+      diff as IDiffObjectEntry[] | null,
+      level
+    );
   }
 }
-
 
 /**
  * Patch a string according to a line based diff
  */
-export
-function patchString(base: string, diff: IDiffArrayEntry[] | null, level: number, stringifyPatch?: boolean) : StringifiedPatchResult {
+export function patchString(
+  base: string,
+  diff: IDiffArrayEntry[] | null,
+  level: number,
+  stringifyPatch?: boolean
+): StringifiedPatchResult {
   let additions: DiffRangeRaw[] = [];
   let deletions: DiffRangeRaw[] = [];
   let baseIndex = 0;
 
   // Short-circuit if diff is empty
   if (diff === null) {
-    return {remote: stringifyPatch ? stringify(base, level) : base,
-            additions: additions,
-            deletions: deletions};
+    return {
+      remote: stringifyPatch ? stringify(base, level) : base,
+      additions: additions,
+      deletions: deletions
+    };
   }
   // Diffs are line-based, so flatten to character based:
   diff = flattenStringDiff(base, diff);
@@ -185,14 +191,17 @@ function patchString(base: string, diff: IDiffArrayEntry[] | null, level: number
     _adjustRangesByJSONEscapes(remote, additions);
     _adjustRangesByJSONEscapes(stringify(base, level), deletions);
   }
-  return {remote: remote, additions: additions, deletions: deletions};
+  return { remote: remote, additions: additions, deletions: deletions };
 }
-
 
 /**
  * Patch a stringified object according to the object diff
  */
-function patchStringifiedObject(base: ReadonlyJSONObject, diff: IDiffObjectEntry[] | null, level: number) : StringifiedPatchResult {
+function patchStringifiedObject(
+  base: ReadonlyJSONObject,
+  diff: IDiffObjectEntry[] | null,
+  level: number
+): StringifiedPatchResult {
   let remote = '';
   let additions: DiffRangeRaw[] = [];
   let deletions: DiffRangeRaw[] = [];
@@ -202,9 +211,11 @@ function patchStringifiedObject(base: ReadonlyJSONObject, diff: IDiffObjectEntry
 
   // Short-circuit if diff is empty
   if (diff === null) {
-    return { remote: stringify(base, level),
-             additions: additions,
-             deletions: deletions};
+    return {
+      remote: stringify(base, level),
+      additions: additions,
+      deletions: deletions
+    };
   }
 
   // Object is dict. As diff keys should be unique, create map for easy processing
@@ -222,8 +233,7 @@ function patchStringifiedObject(base: ReadonlyJSONObject, diff: IDiffObjectEntry
         // Replace is simply an add + remove, but without modifying keystring
         let isReplace = e.op === 'replace';
         if (e.op === 'add' || e.op === 'replace') {
-          let valr = stringify(e.value, level + 1, false) +
-              postfix;
+          let valr = stringify(e.value, level + 1, false) + postfix;
           let start = remote.length;
           let length = valr.length;
           // Modify range depending on add or replace:
@@ -236,7 +246,7 @@ function patchStringifiedObject(base: ReadonlyJSONObject, diff: IDiffObjectEntry
           if (isReplace || !helper.entriesAfterCurrentAddRem()) {
             length -= postfix.length;
             if (e.op === 'add') {
-              length += 1;  // Newline will still be added
+              length += 1; // Newline will still be added
             }
           }
           additions.push(new DiffRangeRaw(start, length, e.source));
@@ -267,17 +277,19 @@ function patchStringifiedObject(base: ReadonlyJSONObject, diff: IDiffObjectEntry
         let pd = patchStringified(base[key], e.diff, level + 1);
         let valr = pd.remote;
         // Insert key string:
-        valr = keyString + valr.slice((level + 1) * JSON_INDENT.length) +
-            postfix;
-        let offset = remote.length + keyString.length -
-            (level + 1) * JSON_INDENT.length;
+        valr =
+          keyString + valr.slice((level + 1) * JSON_INDENT.length) + postfix;
+        let offset =
+          remote.length + keyString.length - (level + 1) * JSON_INDENT.length;
         _offsetRanges(offset, pd.additions, pd.deletions);
         remote += valr;
         additions = additions.concat(pd.additions);
         deletions = deletions.concat(pd.deletions);
 
-        baseIndex += stringify(base[key], level + 1, false).length +
-            keyString.length + postfix.length;
+        baseIndex +=
+          stringify(base[key], level + 1, false).length +
+          keyString.length +
+          postfix.length;
         baseKeys.splice(baseKeys.indexOf(key), 1);
       }
     } else {
@@ -295,25 +307,30 @@ function patchStringifiedObject(base: ReadonlyJSONObject, diff: IDiffObjectEntry
   let indent = repeatString(JSON_INDENT, level);
   remote = indent + '{\n' + remote + '\n' + indent + '}';
   _offsetRanges(indent.length + 2, additions, deletions);
-  return {remote: remote, additions: additions, deletions: deletions};
+  return { remote: remote, additions: additions, deletions: deletions };
 }
-
 
 /**
  * Patch a stringified list according to the list diff
  */
-function patchStringifiedList(base: ReadonlyJSONArray, diff: IDiffArrayEntry[] | null, level: number) : StringifiedPatchResult {
+function patchStringifiedList(
+  base: ReadonlyJSONArray,
+  diff: IDiffArrayEntry[] | null,
+  level: number
+): StringifiedPatchResult {
   let remote = '';
   let additions: DiffRangeRaw[] = [];
   let deletions: DiffRangeRaw[] = [];
-  let baseIndex = 0;  // Position in base string
+  let baseIndex = 0; // Position in base string
   let postfix = ',\n';
 
   // Short-circuit if diff is empty
   if (diff === null) {
-    return {remote: stringify(base, level),
-            additions: additions,
-            deletions: deletions};
+    return {
+      remote: stringify(base, level),
+      additions: additions,
+      deletions: deletions
+    };
   }
   // Index into obj, the next item to take unless diff says otherwise
   let take = 0;
@@ -387,10 +404,8 @@ function patchStringifiedList(base: ReadonlyJSONArray, diff: IDiffArrayEntry[] |
   let indent = repeatString(JSON_INDENT, level);
   remote = indent + '[\n' + remote + '\n' + indent + ']';
   _offsetRanges(indent.length + 2, additions, deletions);
-  return {remote: remote, additions: additions, deletions: deletions};
+  return { remote: remote, additions: additions, deletions: deletions };
 }
-
-
 
 // Utility functions and variables:
 
@@ -399,7 +414,7 @@ function patchStringifiedList(base: ReadonlyJSONArray, diff: IDiffArrayEntry[] |
  *
  * indentFirst controls whether the first line is indented as well.
  */
-function _indent(str: string, levels: number, indentFirst: boolean) : string {
+function _indent(str: string, levels: number, indentFirst: boolean): string {
   indentFirst = indentFirst !== false;
   let lines = str.split('\n');
   let ret: string[] = new Array(lines.length);
@@ -418,7 +433,11 @@ function _makeKeyString(key: string, level: number) {
 }
 
 /** Shift all positions in given ranges by same amount */
-function _offsetRanges(offset: number, additions: DiffRangeRaw[], deletions: DiffRangeRaw[]) {
+function _offsetRanges(
+  offset: number,
+  additions: DiffRangeRaw[],
+  deletions: DiffRangeRaw[]
+) {
   for (let a of additions) {
     a.offset(offset);
   }
@@ -427,18 +446,21 @@ function _offsetRanges(offset: number, additions: DiffRangeRaw[], deletions: Dif
   }
 }
 
-
 /**
  * Adjust diff ranges to compensate for increased length occupied by characters
  * escaped during JSON stringification.
  */
-function _adjustRangesByJSONEscapes(jsonString: string, ranges: DiffRangeRaw[]) {
+function _adjustRangesByJSONEscapes(
+  jsonString: string,
+  ranges: DiffRangeRaw[]
+) {
   // First find all escaped characters, and expansion coefficients
-  let simpleEscapes = [
-      '\\\"', '\\\\', '\\/', '\\b', '\\f', '\\n', '\\r', '\\t'];
-  let surrogateUnicodes = /\\uD[89A-Fa-f][0-9a-fA-F]{2}\\uD[c-fC-F][0-9a-fA-F]{2}/g;
+  let simpleEscapes = ['\\"', '\\\\', '\\/', '\\b', '\\f', '\\n', '\\r', '\\t'];
+  let surrogateUnicodes =
+    /\\uD[89A-Fa-f][0-9a-fA-F]{2}\\uD[c-fC-F][0-9a-fA-F]{2}/g;
   // Look for unicodes that are not part of a surrogate:
-  let unicodes = /(?!\\uD[c-fC-F][0-9a-fA-F]{2})\\u(?!D[89A-Fa-f][0-9a-fA-F]{2})\d{4}/g;
+  let unicodes =
+    /(?!\\uD[c-fC-F][0-9a-fA-F]{2})\\u(?!D[89A-Fa-f][0-9a-fA-F]{2})\d{4}/g;
   const SIMPLE_ESCAPE_LENGTH = 2;
   const UNICODE_ESCAPE_LENGTH = 6;
   const SURROGATE_ESCAPE_LENGTH = 12;
@@ -447,7 +469,6 @@ function _adjustRangesByJSONEscapes(jsonString: string, ranges: DiffRangeRaw[]) 
   // factor of each escaped character:
   let indices: number[] = [];
   let expansions: number[] = [];
-
 
   for (let e of simpleEscapes) {
     let len = JSON.parse('"' + e + '"').length as number;
@@ -466,14 +487,14 @@ function _adjustRangesByJSONEscapes(jsonString: string, ranges: DiffRangeRaw[]) 
   while ((match = unicodes.exec(jsonString)) !== null) {
     indices.push(match.index);
     expansions.push(
-      UNICODE_ESCAPE_LENGTH -
-      JSON.parse('"' + match[0] + '"').length);
+      UNICODE_ESCAPE_LENGTH - JSON.parse('"' + match[0] + '"').length
+    );
   }
   while ((match = surrogateUnicodes.exec(jsonString)) !== null) {
     indices.push(match.index);
     expansions.push(
-      SURROGATE_ESCAPE_LENGTH -
-      JSON.parse('"' + match[0] + '"').length);
+      SURROGATE_ESCAPE_LENGTH - JSON.parse('"' + match[0] + '"').length
+    );
   }
 
   // Now adjust differences

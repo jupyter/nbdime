@@ -5,18 +5,11 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import {
-  ArrayExt
-} from '@lumino/algorithm';
+import { ArrayExt } from '@lumino/algorithm';
 
-import {
-  Message, MessageLoop
-} from '@lumino/messaging';
+import { Message, MessageLoop } from '@lumino/messaging';
 
-import {
-  PanelLayout, Widget
-} from '@lumino/widgets';
-
+import { PanelLayout, Widget } from '@lumino/widgets';
 
 /**
  * The class name added to left-to-right flex layout parents.
@@ -38,7 +31,6 @@ const TOP_TO_BOTTOM_CLASS = 'p-mod-top-to-bottom';
  */
 const BOTTOM_TO_TOP_CLASS = 'p-mod-bottom-to-top';
 
-
 /**
  * A layout which arranges its widgets in a single row or column.
  *
@@ -54,8 +46,7 @@ const BOTTOM_TO_TOP_CLASS = 'p-mod-bottom-to-top';
  *  - Manually by CSS using the flexbox CSS attribute for the classes
  *    `p-FlexPanel` and `p-FlexPanel-child`.
  */
-export
-class FlexLayout extends PanelLayout {
+export class FlexLayout extends PanelLayout {
   /**
    * Construct a new flex layout.
    *
@@ -267,7 +258,9 @@ class FlexLayout extends PanelLayout {
    * Determine whether direction is a horizontal one
    */
   isHorizontal(): boolean {
-    return this.direction === 'right-to-left' || this.direction === 'left-to-right';
+    return (
+      this.direction === 'right-to-left' || this.direction === 'left-to-right'
+    );
   }
 
   /**
@@ -320,7 +313,11 @@ class FlexLayout extends PanelLayout {
    * #### Notes
    * This is a reimplementation of the superclass method.
    */
-  protected moveWidget(fromIndex: number, toIndex: number, widget: Widget): void {
+  protected moveWidget(
+    fromIndex: number,
+    toIndex: number,
+    widget: Widget
+  ): void {
     if (fromIndex !== toIndex) {
       // Change the order of the widget.
       if (!this.order) {
@@ -378,7 +375,8 @@ class FlexLayout extends PanelLayout {
     Private.toggleDirection(this.parent!, this._direction);
     let style = this.parent!.node.style;
     style.flexWrap = this._wrap ? 'wrap' : 'nowrap';
-    style.justifyContent = Private.translateFlexString(this._justifyContent) || '';
+    style.justifyContent =
+      Private.translateFlexString(this._justifyContent) || '';
     style.alignContent = Private.translateFlexString(this._alignContent) || '';
     style.alignItems = Private.translateFlexString(this._alignItems) || '';
     this.parent!.fit();
@@ -490,29 +488,28 @@ class FlexLayout extends PanelLayout {
         grow = 1;
       } else {
         switch (this._stretchType) {
-        case 'grow':
-          // Allow items to grow from default size
-          grow = 1;
-          shrink = 0;
-          break;
-        case 'shrink':
-          // Allow items to shrink from default size
-          grow = 0;
-          shrink = 1;
-          break;
-        case 'both':
-          // Both growing and shrinking is allowed.
-          grow = 1;
-          shrink = 1;
-          break;
-        case 'fixed':
-          // Disallow both growing and shrinking.
-          grow = 0;
-          shrink = 0;
-          break;
-        default:
-          throw new TypeError(
-            'Invalid stretch type: ' + this._stretchType);
+          case 'grow':
+            // Allow items to grow from default size
+            grow = 1;
+            shrink = 0;
+            break;
+          case 'shrink':
+            // Allow items to shrink from default size
+            grow = 0;
+            shrink = 1;
+            break;
+          case 'both':
+            // Both growing and shrinking is allowed.
+            grow = 1;
+            shrink = 1;
+            break;
+          case 'fixed':
+            // Disallow both growing and shrinking.
+            grow = 0;
+            shrink = 0;
+            break;
+          default:
+            throw new TypeError('Invalid stretch type: ' + this._stretchType);
         }
       }
       for (let i = 0; i < widgets.length; ++i) {
@@ -533,7 +530,7 @@ class FlexLayout extends PanelLayout {
     // Update display order
     for (let i = 0; i < widgets.length; ++i) {
       let widget = widgets[i];
-      widget.node.style.order = this.order ?  i.toString() : '';
+      widget.node.style.order = this.order ? i.toString() : '';
     }
   }
 
@@ -548,40 +545,46 @@ class FlexLayout extends PanelLayout {
   private _evenSizes: boolean = false;
 }
 
-
 /**
  * The namespace for the `FlexLayout` class statics.
  */
-export
-namespace FlexLayout {
+export namespace FlexLayout {
   /**
    * A type alias for a flex layout direction.
    */
-  export
-  type Direction = (
-    'left-to-right' | 'right-to-left' | 'top-to-bottom' | 'bottom-to-top'
-  );
+  export type Direction =
+    | 'left-to-right'
+    | 'right-to-left'
+    | 'top-to-bottom'
+    | 'bottom-to-top';
 
   /**
    * Describes how to align children in the direction of the layout.
    */
-  export
-  type ContentJustification = 'start' | 'end' | 'center' | 'space-between' | 'space-around';
+  export type ContentJustification =
+    | 'start'
+    | 'end'
+    | 'center'
+    | 'space-between'
+    | 'space-around';
 
   /**
    * If layout is set to wrap, this defines how the wrapped lines will be
    * aligned in relation ro each other.
    */
-  export
-  type ContentAlignment = ContentJustification | 'stretch';
+  export type ContentAlignment = ContentJustification | 'stretch';
 
   /**
    * Controls how to align children in the direction perpendicular to that
    * of the layout (for a horizontal layout the will be the vertical align,
    * and vice-versa).
    */
-  export
-  type ItemAlignment = 'start' | 'end' | 'center' | 'baseline' | 'stretch';
+  export type ItemAlignment =
+    | 'start'
+    | 'end'
+    | 'center'
+    | 'baseline'
+    | 'stretch';
 
   /**
    * Describe how to stretch items to fit into flex panel:
@@ -590,14 +593,12 @@ namespace FlexLayout {
    * 'both': Both growing and shrinking is allowed.
    * 'fixed': Do not allow either growing or shrinking.
    */
-  export
-  type StretchType = 'grow' | 'shrink' | 'both' | 'fixed';
+  export type StretchType = 'grow' | 'shrink' | 'both' | 'fixed';
 
   /**
    * An options object for initializing a flex layout.
    */
-  export
-  interface IOptions {
+  export interface IOptions {
     /**
      * The direction of the layout.
      *
@@ -655,8 +656,7 @@ namespace FlexLayout {
   /**
    * Get the flex-grow number of the widget
    */
-  export
-  function getGrow(widget: Widget): number | null {
+  export function getGrow(widget: Widget): number | null {
     let value = widget.node.style.flexGrow;
     return value ? parseInt(value, 10) : null;
   }
@@ -664,8 +664,7 @@ namespace FlexLayout {
   /**
    * Set the flex-grow number of the widget
    */
-  export
-  function setGrow(widget: Widget, value: number, fit=true): void {
+  export function setGrow(widget: Widget, value: number, fit = true): void {
     widget.node.style.flexGrow = value === null ? '' : value.toString();
     if (fit && widget.parent) {
       widget.parent.fit();
@@ -675,8 +674,7 @@ namespace FlexLayout {
   /**
    * Get the flex-shrink number of the widget
    */
-  export
-  function getShrink(widget: Widget): number | null {
+  export function getShrink(widget: Widget): number | null {
     let value = widget.node.style.flexShrink;
     return value ? parseInt(value, 10) : null;
   }
@@ -684,8 +682,7 @@ namespace FlexLayout {
   /**
    * Set the flex-shrink number of the widget
    */
-  export
-  function setShrink(widget: Widget, value: number | null, fit=true) {
+  export function setShrink(widget: Widget, value: number | null, fit = true) {
     widget.node.style.flexShrink = value === null ? '' : value.toString();
     if (fit && widget.parent) {
       widget.parent.fit();
@@ -695,8 +692,7 @@ namespace FlexLayout {
   /**
    * Get the size basis of the widget.
    */
-  export
-  function getSizeBasis(widget: Widget): number | 'auto' | null {
+  export function getSizeBasis(widget: Widget): number | 'auto' | null {
     let value = widget.node.style.flexBasis;
     if (value === 'auto') {
       return 'auto';
@@ -712,8 +708,11 @@ namespace FlexLayout {
    * (grow) or negatie (shrink) free space in a flex box. The value
    * `'auto'` uses the `width`/`height` field of the box as the basis.
    */
-  export
-  function setSizeBasis(widget: Widget, value: number | 'auto' | null, fit=true) {
+  export function setSizeBasis(
+    widget: Widget,
+    value: number | 'auto' | null,
+    fit = true
+  ) {
     if (value === 'auto') {
       widget.node.style.flexBasis = value as string;
     } else if (value === null) {
@@ -727,18 +726,14 @@ namespace FlexLayout {
   }
 }
 
-
-
 /**
  * The namespace for the private module data.
  */
 namespace Private {
-
   /**
    * Test whether a direction has horizontal orientation.
    */
-  export
-  function isHorizontal(dir: FlexLayout.Direction): boolean {
+  export function isHorizontal(dir: FlexLayout.Direction): boolean {
     return dir === 'left-to-right' || dir === 'right-to-left';
   }
 
@@ -759,8 +754,10 @@ namespace Private {
   /**
    * Toggle the CSS direction class for the given widget.
    */
-  export
-  function toggleDirection(widget: Widget, dir: FlexLayout.Direction): void {
+  export function toggleDirection(
+    widget: Widget,
+    dir: FlexLayout.Direction
+  ): void {
     widget.toggleClass(LEFT_TO_RIGHT_CLASS, dir === 'left-to-right');
     widget.toggleClass(RIGHT_TO_LEFT_CLASS, dir === 'right-to-left');
     widget.toggleClass(TOP_TO_BOTTOM_CLASS, dir === 'top-to-bottom');
@@ -770,8 +767,7 @@ namespace Private {
   /**
    * Clamp a spacing value to an integer >= 0.
    */
-  export
-  function clampSpacing(value: number): number {
+  export function clampSpacing(value: number): number {
     return Math.max(0, Math.floor(value));
   }
 }

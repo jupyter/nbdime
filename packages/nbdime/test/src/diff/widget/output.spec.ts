@@ -4,43 +4,37 @@
 import type * as nbformat from '@jupyterlab/nbformat';
 
 import {
-  RenderMimeRegistry, standardRendererFactories
+  RenderMimeRegistry,
+  standardRendererFactories
 } from '@jupyterlab/rendermime';
 
-import {
-    OutputDiffModel
-} from '../../../../src/diff/model/output';
+import { OutputDiffModel } from '../../../../src/diff/model/output';
 
-import {
-    OutputPanel
-} from '../../../../src/diff/widget/output';
-
+import { OutputPanel } from '../../../../src/diff/widget/output';
 
 describe('diff', () => {
-
   describe('widget', () => {
-
     describe('OutputPanel', () => {
-
       describe('#isTrustSignificant', () => {
-
-        let rendermime = new RenderMimeRegistry({initialFactories: standardRendererFactories});
+        let rendermime = new RenderMimeRegistry({
+          initialFactories: standardRendererFactories
+        });
 
         let model: OutputDiffModel;
         let base: nbformat.IExecuteResult;
         let remote: nbformat.IDisplayData;
         beforeEach(() => {
           base = {
-              output_type: 'execute_result',
-              data: {},
-              execution_count: 4,
-              metadata: {}
-            };
+            output_type: 'execute_result',
+            data: {},
+            execution_count: 4,
+            metadata: {}
+          };
           remote = {
-              output_type: 'display_data',
-              data: {},
-              metadata: {}
-            };
+            output_type: 'display_data',
+            data: {},
+            metadata: {}
+          };
           model = new OutputDiffModel(base, remote);
         });
 
@@ -57,28 +51,27 @@ describe('diff', () => {
         });
 
         it('should say significant for untrusted html', () => {
-          base.data['text/html'] = '<html><body><script>alert("wee");</script></body></html';
+          base.data['text/html'] =
+            '<html><body><script>alert("wee");</script></body></html';
           let significant = OutputPanel.isTrustSignificant(model, rendermime);
           expect(significant).toBe(true);
         });
 
         it('should say significant for untrusted html in remote', () => {
-          remote.data['text/html'] = '<html><body><script>alert("wee");</script></body></html';
+          remote.data['text/html'] =
+            '<html><body><script>alert("wee");</script></body></html';
           let significant = OutputPanel.isTrustSignificant(model, rendermime);
           expect(significant).toBe(true);
         });
 
         it('should say insignificant for trusted html', () => {
-          base.data['text/html'] = '<html><body><script>alert("wee");</script></body></html';
+          base.data['text/html'] =
+            '<html><body><script>alert("wee");</script></body></html';
           model.trusted = true;
           let significant = OutputPanel.isTrustSignificant(model, rendermime);
           expect(significant).toBe(false);
         });
-
       });
-
     });
-
   });
-
 });

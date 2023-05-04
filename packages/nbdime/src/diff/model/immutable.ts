@@ -2,36 +2,28 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import type {
-  IDiffModel
-} from './common';
+import type { IDiffModel } from './common';
 
-import type {
-  IDiffImmutableObjectEntry
-} from '../diffentries';
-
-
+import type { IDiffImmutableObjectEntry } from '../diffentries';
 
 export type ImmutableValue = number | boolean | null;
-
 
 /**
  * Standard implementation of the IStringDiffModel interface.
  */
-export
-class ImmutableDiffModel implements IDiffModel {
-
+export class ImmutableDiffModel implements IDiffModel {
   /**
    * ImmutableDiffModel constructor.
    *
    * `collapsible` and `collapsed` both defaults to false.
    */
   constructor(
-        base: ImmutableValue | undefined,
-        remote: ImmutableValue | undefined,
-        collapsible?: boolean,
-        header?: string,
-        collapsed?: boolean) {
+    base: ImmutableValue | undefined,
+    remote: ImmutableValue | undefined,
+    collapsible?: boolean,
+    header?: string,
+    collapsed?: boolean
+  ) {
     this.base = base;
     this.remote = remote;
 
@@ -62,7 +54,6 @@ class ImmutableDiffModel implements IDiffModel {
   startCollapsed: boolean;
 }
 
-
 /**
  * Create an ImmutableDiffModel from a base value, a remote value, and a single diff entry.
  *
@@ -75,8 +66,11 @@ class ImmutableDiffModel implements IDiffModel {
  * @param {(IDiffImmutableObjectEntry | null)} diff : The diff entry, or null if unchanged
  * @returns {ImmutableDiffModel}
  */
-export
-function createImmutableModel(base: ImmutableValue | undefined, remote: ImmutableValue | undefined, diff?: IDiffImmutableObjectEntry | null): ImmutableDiffModel {
+export function createImmutableModel(
+  base: ImmutableValue | undefined,
+  remote: ImmutableValue | undefined,
+  diff?: IDiffImmutableObjectEntry | null
+): ImmutableDiffModel {
   if (!diff) {
     return new ImmutableDiffModel(base, remote);
   } else if (diff.op === 'add') {
@@ -89,7 +83,8 @@ function createImmutableModel(base: ImmutableValue | undefined, remote: Immutabl
       throw new Error('Invalid diff op on immutable value');
     }
     return new ImmutableDiffModel(base, undefined);
-  } else { // diff.op === 'replace'
+  } else {
+    // diff.op === 'replace'
     if (base === undefined) {
       throw new Error('Invalid diff op on immutable value');
     }

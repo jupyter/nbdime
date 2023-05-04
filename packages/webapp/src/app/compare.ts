@@ -2,23 +2,18 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
+import { getDiff } from './diff';
+
+import { getMerge, closeMerge, saveMerged, downloadMerged } from './merge';
 
 import {
-  getDiff
-} from './diff';
-
-import {
-  getMerge, closeMerge, saveMerged, downloadMerged
-} from './merge';
-
-import {
-  getConfigOption, closeTool, toggleSpinner, toggleShowUnchanged
+  getConfigOption,
+  closeTool,
+  toggleSpinner,
+  toggleShowUnchanged
 } from './common';
 
-import {
-  exportDiff
-} from './staticdiff';
-
+import { exportDiff } from './staticdiff';
 
 const ERROR_COMPARE_NUMBER = 'Need two or more values to compare!';
 
@@ -30,8 +25,7 @@ let hasMerge = false;
 /**
  *
  */
-export
-function closeCompare(ev: Event, unloading?: boolean) {
+export function closeCompare(ev: Event, unloading?: boolean) {
   if (hasMerge) {
     return closeMerge(ev, unloading);
   } else {
@@ -50,9 +44,14 @@ function onCompare(e: Event) {
   let r = (document.getElementById('compare-remote') as HTMLInputElement).value;
   compare(b, c, r, true);
   return false;
-};
+}
 
-function compare(b: string, c: string, r: string, pushHistory: boolean | 'replace') {
+function compare(
+  b: string,
+  c: string,
+  r: string,
+  pushHistory: boolean | 'replace'
+) {
   toggleSpinner(true);
   let count = 0;
   for (let v of [b, c, r]) {
@@ -67,11 +66,19 @@ function compare(b: string, c: string, r: string, pushHistory: boolean | 'replac
     getMerge(b, c, r);
     if (pushHistory) {
       let uri = window.location.pathname;
-      uri += '?base=' + encodeURIComponent(b) +
-        '&local=' + encodeURIComponent(c) +
-        '&remote=' + encodeURIComponent(r);
-      editHistory(pushHistory, {base: b, local: c, remote: r},
-        'Merge: "' + c + '" - "' + b + '" - "' + r + '"', uri);
+      uri +=
+        '?base=' +
+        encodeURIComponent(b) +
+        '&local=' +
+        encodeURIComponent(c) +
+        '&remote=' +
+        encodeURIComponent(r);
+      editHistory(
+        pushHistory,
+        { base: b, local: c, remote: r },
+        'Merge: "' + c + '" - "' + b + '" - "' + r + '"',
+        uri
+      );
     }
     hasMerge = true;
   } else if (count < 2) {
@@ -97,17 +104,30 @@ function compare(b: string, c: string, r: string, pushHistory: boolean | 'replac
     getDiff(base, remote);
     if (pushHistory) {
       let uri = window.location.pathname;
-      uri += '?base=' + encodeURIComponent(b) +
-        '&local=' + encodeURIComponent(c) +
-        '&remote=' + encodeURIComponent(r);
-      editHistory(pushHistory, {base, remote},
-        'Diff: "' + b + '" vs "' + r + '"', uri);
+      uri +=
+        '?base=' +
+        encodeURIComponent(b) +
+        '&local=' +
+        encodeURIComponent(c) +
+        '&remote=' +
+        encodeURIComponent(r);
+      editHistory(
+        pushHistory,
+        { base, remote },
+        'Diff: "' + b + '" vs "' + r + '"',
+        uri
+      );
     }
     hasMerge = false;
   }
 }
 
-function editHistory(pushHistory: boolean | 'replace', statedata: any, title: string, url?: string): void {
+function editHistory(
+  pushHistory: boolean | 'replace',
+  statedata: any,
+  title: string,
+  url?: string
+): void {
   if (pushHistory === true) {
     history.pushState(statedata, title, url);
   } else if (pushHistory === 'replace') {
@@ -120,9 +140,9 @@ function editHistory(pushHistory: boolean | 'replace', statedata: any, title: st
  */
 function onPopState(e: PopStateEvent) {
   if (e.state) {
-    let eb = (document.getElementById('compare-base') as HTMLInputElement);
-    let el = (document.getElementById('compare-local') as HTMLInputElement);
-    let er = (document.getElementById('compare-remote') as HTMLInputElement);
+    let eb = document.getElementById('compare-base') as HTMLInputElement;
+    let el = document.getElementById('compare-local') as HTMLInputElement;
+    let er = document.getElementById('compare-remote') as HTMLInputElement;
 
     let base: string = e.state.base || '';
     let local: string = e.state.local || '';
@@ -149,8 +169,7 @@ function attachToForm() {
 }
 
 /** */
-export
-function initializeCompare() {
+export function initializeCompare() {
   attachToForm();
   // If arguments supplied in config, run compare directly:
   let base = getConfigOption('base');
@@ -168,7 +187,9 @@ function initializeCompare() {
   if (saveBtn) {
     saveBtn.onclick = saveMerged;
   }
-  let downloadBtn = document.getElementById('nbdime-download') as HTMLButtonElement;
+  let downloadBtn = document.getElementById(
+    'nbdime-download'
+  ) as HTMLButtonElement;
   if (hasMerge) {
     downloadBtn.onclick = downloadMerged;
     downloadBtn.style.display = 'initial';
@@ -179,7 +200,9 @@ function initializeCompare() {
   let exportBtn = document.getElementById('nbdime-export') as HTMLButtonElement;
   exportBtn.onclick = exportDiff;
 
-  let hideUnchangedChk = document.getElementById('nbdime-hide-unchanged') as HTMLInputElement;
+  let hideUnchangedChk = document.getElementById(
+    'nbdime-hide-unchanged'
+  ) as HTMLInputElement;
   hideUnchangedChk.checked = getConfigOption('hideUnchanged', true);
   hideUnchangedChk.onchange = () => {
     toggleShowUnchanged(!hideUnchangedChk.checked);

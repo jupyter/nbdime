@@ -2,14 +2,12 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-
 /**
  * Describes a model whose view can be collapsible.
  *
  * Intended as hints for a view of the model, and not a requirement.
  */
-export
-interface ICollapsibleModel {
+export interface ICollapsibleModel {
   /**
    * Whether a view of the model should be collapsible (hint)
    */
@@ -29,8 +27,7 @@ interface ICollapsibleModel {
 /**
  * Base interface for diff models.
  */
-export
-interface IDiffModel extends ICollapsibleModel {
+export interface IDiffModel extends ICollapsibleModel {
   /**
    * Is diff no-op?
    */

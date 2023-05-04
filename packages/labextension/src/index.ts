@@ -11,7 +11,6 @@ import 'nbdime/lib/styles/common.css';
 import 'nbdime/lib/styles/diff.css';
 import 'nbdime/lib/styles/merge.css';
 
-import '../style/index.css'
+import '../style/index.css';
 
 export default NBDiffProvider;
-

@@ -2,22 +2,18 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import {
-  initializeDiff
-} from './app/diff';
+import { initializeDiff } from './app/diff';
+
+import { initializeMerge, closeMerge, forceCloseMerge } from './app/merge';
+
+import { initializeCompare, closeCompare } from './app/compare';
 
 import {
-  initializeMerge, closeMerge, forceCloseMerge
-} from './app/merge';
-
-import {
-  initializeCompare, closeCompare
-} from './app/compare';
-
-import {
-  closeTool, getConfigOption, handleError, toolClosed
+  closeTool,
+  getConfigOption,
+  handleError,
+  toolClosed
 } from './app/common';
-
 
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import '@fortawesome/fontawesome-free/css/v4-shims.min.css';
@@ -40,7 +36,6 @@ import './app/common.css';
 import './app/diff.css';
 import './app/merge.css';
 
-
 /** */
 function initialize() {
   let closable = getConfigOption('closable');
@@ -48,7 +43,10 @@ function initialize() {
   if (document.getElementById('compare-local')) {
     initializeCompare();
     type = 'compare';
-  } else if (getConfigOption('local') || document.getElementById('merge-local')) {
+  } else if (
+    getConfigOption('local') ||
+    document.getElementById('merge-local')
+  ) {
     initializeMerge();
     type = 'merge';
   } else {
@@ -58,7 +56,7 @@ function initialize() {
 
   let closeBtn = document.getElementById('nbdime-close') as HTMLButtonElement;
   if (closable) {
-    let close = (ev: Event, unloading=false) => {
+    let close = (ev: Event, unloading = false) => {
       if (type === 'merge') {
         return closeMerge(ev, unloading);
       } else if (type === 'compare') {

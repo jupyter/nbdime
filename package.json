@@ -11,7 +11,10 @@
     "update:lab": "update-dependency --lerna --minimal --regex ^@jupyterlab/",
     "update:lab:next": "update-dependency --lerna --minimal --regex ^@jupyterlab/ ^next",
     "updated": "lerna updated",
-    "watch": "tsc --build --watch"
+    "watch": "tsc --build --watch",
+    "prettier": "prettier --list-different --write \"**/*{.ts,.tsx,.js,.jsx,.css,.json,.md}\"",
+    "prettier:check": "prettier --check \"**/*{.ts,.tsx,.js,.jsx,.css,.json,.md}\"",
+    "prettier:files": "prettier --write"
   },
   "devDependencies": {
     "@jupyterlab/buildutils": "^3.0.0",

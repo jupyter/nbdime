@@ -4,30 +4,24 @@
 
 import type * as nbformat from '@jupyterlab/nbformat';
 
-import type {
-  IDiffEntry, IDiffArrayEntry
-} from '../diffentries';
+import type { IDiffEntry, IDiffArrayEntry } from '../diffentries';
 
-import {
-  getSubDiffByKey
-} from '../util';
+import { getSubDiffByKey } from '../util';
 
-import {
-  IStringDiffModel, createPatchStringDiffModel
-} from './string';
+import { IStringDiffModel, createPatchStringDiffModel } from './string';
 
 import {
   CellDiffModel,
-  createUnchangedCellDiffModel, createAddedCellDiffModel,
-  createDeletedCellDiffModel, createPatchedCellDiffModel
+  createUnchangedCellDiffModel,
+  createAddedCellDiffModel,
+  createDeletedCellDiffModel,
+  createPatchedCellDiffModel
 } from './cell';
-
 
 /**
  * Diff model for a Jupyter Notebook
  */
 export class NotebookDiffModel {
-
   /**
    * Create a new NotebookDiffModel from a base notebook and a list of diffs.
    *
@@ -64,11 +58,11 @@ export class NotebookDiffModel {
     let skip = 0;
     let previousChunkIndex = -1;
     let currentChunk: CellDiffModel[] = [];
-    for (let e of getSubDiffByKey(diff, 'cells') as IDiffArrayEntry[] || []) {
+    for (let e of (getSubDiffByKey(diff, 'cells') as IDiffArrayEntry[]) || []) {
       let index = e.key;
 
       // diff is sorted on index, so take any preceding cells as unchanged:
-      for (let i=take; i < index; i++) {
+      for (let i = take; i < index; i++) {
         let cell = createUnchangedCellDiffModel(base.cells[i], this.mimetype);
         this.cells.push(cell);
         this.chunkedCells.push([cell]);
@@ -84,7 +78,10 @@ export class NotebookDiffModel {
       if (e.op === 'addrange') {
         // One or more inserted/added cells:
         for (let ei of e.valuelist) {
-          let cell = createAddedCellDiffModel(ei as nbformat.ICell, this.mimetype);
+          let cell = createAddedCellDiffModel(
+            ei as nbformat.ICell,
+            this.mimetype
+          );
           this.cells.push(cell);
           currentChunk.push(cell);
         }
@@ -92,7 +89,7 @@ export class NotebookDiffModel {
       } else if (e.op === 'removerange') {
         // One or more removed/deleted cells:
         skip = e.length;
-        for (let i=index; i < index + skip; i++) {
+        for (let i = index; i < index + skip; i++) {
           let cell = createDeletedCellDiffModel(base.cells[i], this.mimetype);
           this.cells.push(cell);
           currentChunk.push(cell);
@@ -104,7 +101,11 @@ export class NotebookDiffModel {
           this.chunkedCells.push(currentChunk);
         }
         // A cell has changed:
-        let cell = createPatchedCellDiffModel(base.cells[index], e.diff, this.mimetype);
+        let cell = createPatchedCellDiffModel(
+          base.cells[index],
+          e.diff,
+          this.mimetype
+        );
         this.cells.push(cell);
         currentChunk.push(cell);
         skip = 1;
@@ -116,7 +117,7 @@ export class NotebookDiffModel {
       take = Math.max(take, index + skip);
     }
     // Take unchanged values at end
-    for (let i=take; i < base.cells.length; i++) {
+    for (let i = take; i < base.cells.length; i++) {
       let cell = createUnchangedCellDiffModel(base.cells[i], this.mimetype);
       this.cells.push(cell);
       this.chunkedCells.push([cell]);

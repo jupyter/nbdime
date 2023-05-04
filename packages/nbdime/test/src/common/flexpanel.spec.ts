@@ -1,18 +1,11 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import {
-  Widget
-} from '@lumino/widgets';
+import { Widget } from '@lumino/widgets';
 
-import {
-  each
-} from '@lumino/algorithm';
+import { each } from '@lumino/algorithm';
 
-import {
-  FlexPanel
-} from '../../../src/upstreaming/flexpanel';
-
+import { FlexPanel } from '../../../src/upstreaming/flexpanel';
 
 /**
  * Perform tests where a set of steps should give the same behavior
@@ -26,10 +19,13 @@ import {
  * each permutation.
  */
 function combinatorialTest(
-    description: string,
-    steps: ((done: jest.DoneCallback) => void)[] | { [key: string]: ((done?: jest.DoneCallback) => void) },
-    beforeEach?: (done: jest.DoneCallback) => void,
-    afterEach?: (done: jest.DoneCallback) => void) {
+  description: string,
+  steps:
+    | ((done: jest.DoneCallback) => void)[]
+    | { [key: string]: (done?: jest.DoneCallback) => void },
+  beforeEach?: (done: jest.DoneCallback) => void,
+  afterEach?: (done: jest.DoneCallback) => void
+) {
   let stepNames: string[];
   if (Array.isArray(steps)) {
     stepNames = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
@@ -42,12 +38,19 @@ function combinatorialTest(
     steps = stepArray;
   }
   function range(start: number, count: number): number[] {
-    return Array.apply(0, Array(count))
-      .map(function (element: unknown, index: number, array: unknown[]) {
-        return index + start;
+    return Array.apply(0, Array(count)).map(function (
+      element: unknown,
+      index: number,
+      array: unknown[]
+    ) {
+      return index + start;
     });
   }
-  function combine(items: number | number[], combinations?: number[][], partial?: number[]): number[][] {
+  function combine(
+    items: number | number[],
+    combinations?: number[][],
+    partial?: number[]
+  ): number[][] {
     if (!Array.isArray(items)) {
       items = range(0, items);
     }
@@ -78,7 +81,7 @@ function combinatorialTest(
       permStepNames.push(stepNames[i]);
     }
     let stepStr = permStepNames.join(', ');
-    it(description + ' :: Permutation: ' + stepStr, (done) => {
+    it(description + ' :: Permutation: ' + stepStr, done => {
       if (beforeEach) {
         beforeEach(done);
       }
@@ -93,11 +96,8 @@ function combinatorialTest(
   }
 }
 
-
 describe('upstreaming', () => {
-
   describe('FlexPanel', () => {
-
     it('should be initialized with no options', () => {
       let p = new FlexPanel();
       expect(p).not.toBe(null);
@@ -113,7 +113,7 @@ describe('upstreaming', () => {
       p.addWidget(new Widget());
       p.addWidget(new Widget());
       p.addWidget(new Widget());
-      each(p.widgets, (child) => {
+      each(p.widgets, child => {
         expect(child.hasClass('p-FlexPanel-child')).toBe(true);
       });
     });
@@ -178,15 +178,22 @@ describe('upstreaming', () => {
     combinatorialTest(
       'should set minimumSpacing irregardless of operation order',
       {
-        addChild: () => { p.addWidget(child); p.addWidget(new Widget()); },
-        setValue: () => { p.minimumSpacing = 10; },
-        attachParent: () => { Widget.attach(p, document.body); }
+        addChild: () => {
+          p.addWidget(child);
+          p.addWidget(new Widget());
+        },
+        setValue: () => {
+          p.minimumSpacing = 10;
+        },
+        attachParent: () => {
+          Widget.attach(p, document.body);
+        }
       },
       () => {
         p = new FlexPanel();
         child = new Widget();
       },
-      (done) => {
+      done => {
         requestAnimationFrame(() => {
           try {
             expect(child.node.style.marginBottom).toBe('10px');
@@ -206,7 +213,7 @@ describe('upstreaming', () => {
       expect(p.wrap).toBe(true);
     });
 
-    it('should apply wrap if attached after setting', (done) => {
+    it('should apply wrap if attached after setting', done => {
       let p = new FlexPanel();
       p.wrap = true;
       Widget.attach(p, document.body);
@@ -217,7 +224,7 @@ describe('upstreaming', () => {
       });
     });
 
-    it('should apply wrap if attached before setting', (done) => {
+    it('should apply wrap if attached before setting', done => {
       let p = new FlexPanel();
       Widget.attach(p, document.body);
       p.wrap = true;
@@ -235,7 +242,7 @@ describe('upstreaming', () => {
       expect(p.justifyContent).toBe('center');
     });
 
-    it('should apply justifyContent if attached after setting', (done) => {
+    it('should apply justifyContent if attached after setting', done => {
       let p = new FlexPanel();
       p.justifyContent = 'center';
       Widget.attach(p, document.body);
@@ -246,7 +253,7 @@ describe('upstreaming', () => {
       });
     });
 
-    it('should apply justifyContent if attached before setting', (done) => {
+    it('should apply justifyContent if attached before setting', done => {
       let p = new FlexPanel();
       Widget.attach(p, document.body);
       p.justifyContent = 'center';
@@ -264,7 +271,7 @@ describe('upstreaming', () => {
       expect(p.alignItems).toBe('center');
     });
 
-    it('should apply alignItems if attached after setting', (done) => {
+    it('should apply alignItems if attached after setting', done => {
       let p = new FlexPanel();
       p.alignItems = 'center';
       Widget.attach(p, document.body);
@@ -275,7 +282,7 @@ describe('upstreaming', () => {
       });
     });
 
-    it('should apply alignItems if attached before setting', (done) => {
+    it('should apply alignItems if attached before setting', done => {
       let p = new FlexPanel();
       Widget.attach(p, document.body);
       p.alignItems = 'center';
@@ -293,7 +300,7 @@ describe('upstreaming', () => {
       expect(p.alignContent).toBe('center');
     });
 
-    it('should apply alignContent if attached after setting', (done) => {
+    it('should apply alignContent if attached after setting', done => {
       let p = new FlexPanel();
       p.alignContent = 'center';
       Widget.attach(p, document.body);
@@ -304,7 +311,7 @@ describe('upstreaming', () => {
       });
     });
 
-    it('should apply alignContent if attached before setting', (done) => {
+    it('should apply alignContent if attached before setting', done => {
       let p = new FlexPanel();
       Widget.attach(p, document.body);
       p.alignContent = 'center';
@@ -325,15 +332,21 @@ describe('upstreaming', () => {
     combinatorialTest(
       'should set stretchType irregardless of operation order',
       {
-        addChild: () => { p.addWidget(child); },
-        setValue: () => { p.stretchType = 'both'; },
-        attachParent: () => { Widget.attach(p, document.body); }
+        addChild: () => {
+          p.addWidget(child);
+        },
+        setValue: () => {
+          p.stretchType = 'both';
+        },
+        attachParent: () => {
+          Widget.attach(p, document.body);
+        }
       },
       () => {
         p = new FlexPanel();
         child = new Widget();
       },
-      (done) => {
+      done => {
         requestAnimationFrame(() => {
           try {
             expect(child.node.style.flexGrow).toBe('1');
@@ -357,15 +370,21 @@ describe('upstreaming', () => {
     combinatorialTest(
       'should apply evenSizes regardless of operations order',
       {
-        addChild: () => { p.addWidget(child); },
-        setValue: () => { p.evenSizes = true; },
-        attachParent: () => { Widget.attach(p, document.body); }
+        addChild: () => {
+          p.addWidget(child);
+        },
+        setValue: () => {
+          p.evenSizes = true;
+        },
+        attachParent: () => {
+          Widget.attach(p, document.body);
+        }
       },
       () => {
         p = new FlexPanel();
         child = new Widget();
       },
-      (done) => {
+      done => {
         requestAnimationFrame(() => {
           try {
             expect(child.node.style.flexBasis).toBe('0px');
@@ -379,7 +398,5 @@ describe('upstreaming', () => {
         });
       }
     );
-
   });
-
 });

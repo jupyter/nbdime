@@ -1,0 +1,9 @@
+**/build
+**/node_modules
+**/lib
+**/dist
+**/package.json
+**/static
+**/.ipynb_checkpoints
+**/coverage
+CHANGELOG.md

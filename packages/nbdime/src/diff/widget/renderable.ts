@@ -2,29 +2,26 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import type {
-  JSONValue, PartialJSONValue
-} from '@lumino/coreutils';
+import type { JSONValue, PartialJSONValue } from '@lumino/coreutils';
 
-import {
-  PanelLayout, Widget
-} from '@lumino/widgets';
+import { PanelLayout, Widget } from '@lumino/widgets';
 
-import type {
-  IRenderMimeRegistry
-} from '@jupyterlab/rendermime';
+import type { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
-import type {
-   RenderableDiffModel
-} from '../model';
+import type { RenderableDiffModel } from '../model';
 
 /**
  * Widget for outputs with renderable MIME data.
  */
-export
-abstract class RenderableDiffView<T extends (JSONValue | PartialJSONValue)> extends Widget {
-  constructor(model: RenderableDiffModel<T>, editorClass: string[],
-              rendermime: IRenderMimeRegistry, mimetype: string) {
+export abstract class RenderableDiffView<
+  T extends JSONValue | PartialJSONValue
+> extends Widget {
+  constructor(
+    model: RenderableDiffModel<T>,
+    editorClass: string[],
+    rendermime: IRenderMimeRegistry,
+    mimetype: string
+  ) {
     super();
     this.rendermime = rendermime;
     this.model = model;

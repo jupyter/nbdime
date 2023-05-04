@@ -5,18 +5,11 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import type {
-  Message
-} from '@lumino/messaging';
+import type { Message } from '@lumino/messaging';
 
-import {
-  FlexLayout
-} from './flexlayout';
+import { FlexLayout } from './flexlayout';
 
-import {
-  Panel, Widget
-} from '@lumino/widgets';
-
+import { Panel, Widget } from '@lumino/widgets';
 
 /**
  * The class name added to FlexPanel instances.
@@ -27,8 +20,6 @@ const FLEX_PANEL_CLASS = 'p-FlexPanel';
  * The class name added to a FlexPanel child.
  */
 const CHILD_CLASS = 'p-FlexPanel-child';
-
-
 
 /**
  * A panel which arranges its widgets in a single row or column.
@@ -48,8 +39,7 @@ const CHILD_CLASS = 'p-FlexPanel-child';
  * #### Notes
  * This class provides a convenience wrapper around a [[FlexLayout]].
  */
-export
-class FlexPanel extends Panel {
+export class FlexPanel extends Panel {
   /**
    * Construct a new flex panel.
    *
@@ -58,12 +48,12 @@ class FlexPanel extends Panel {
   constructor(options: FlexPanel.IOptions = {}) {
     super({ layout: Private.createLayout(options) });
     if (!options.layout) {
-        if (options.minimumSpacing !== void 0) {
-            this.minimumSpacing = options.minimumSpacing;
-        }
-        if (options.direction !== void 0) {
-            this.direction = options.direction;
-        }
+      if (options.minimumSpacing !== void 0) {
+        this.minimumSpacing = options.minimumSpacing;
+      }
+      if (options.direction !== void 0) {
+        this.direction = options.direction;
+      }
     }
     this.addClass(FLEX_PANEL_CLASS);
   }
@@ -73,7 +63,7 @@ class FlexPanel extends Panel {
    */
   get direction(): FlexPanel.Direction {
     return this.layout.direction;
-  };
+  }
 
   set direction(value: FlexPanel.Direction) {
     this.layout.direction = value;
@@ -84,7 +74,7 @@ class FlexPanel extends Panel {
    */
   get minimumSpacing(): number {
     return this.layout.minimumSpacing;
-  };
+  }
 
   set minimumSpacing(value: number) {
     this.layout.minimumSpacing = value;
@@ -96,7 +86,7 @@ class FlexPanel extends Panel {
    */
   get wrap(): boolean {
     return this.layout.wrap;
-  };
+  }
 
   set wrap(value: boolean) {
     this.layout.wrap = value;
@@ -107,7 +97,7 @@ class FlexPanel extends Panel {
    */
   get justifyContent(): FlexPanel.ContentJustification | null {
     return this.layout.justifyContent;
-  };
+  }
 
   set justifyContent(value: FlexPanel.ContentJustification | null) {
     this.layout.justifyContent = value;
@@ -120,7 +110,7 @@ class FlexPanel extends Panel {
    */
   get alignItems(): FlexPanel.ItemAlignment | null {
     return this.layout.alignItems;
-  };
+  }
 
   set alignItems(value: FlexPanel.ItemAlignment | null) {
     this.layout.alignItems = value;
@@ -132,7 +122,7 @@ class FlexPanel extends Panel {
    */
   get alignContent(): FlexPanel.ContentAlignment | null {
     return this.layout.alignContent;
-  };
+  }
 
   set alignContent(value: FlexPanel.ContentAlignment | null) {
     this.layout.alignContent = value;
@@ -143,7 +133,7 @@ class FlexPanel extends Panel {
    */
   get stretchType(): FlexPanel.StretchType | null {
     return this.layout.stretchType;
-  };
+  }
 
   set stretchType(value: FlexPanel.StretchType | null) {
     this.layout.stretchType = value;
@@ -159,11 +149,11 @@ class FlexPanel extends Panel {
    */
   get evenSizes(): boolean {
     return this.layout.evenSizes;
-  };
+  }
 
   set evenSizes(value: boolean) {
     this.layout.evenSizes = value;
-  };
+  }
 
   /**
    * A message handler invoked on a `'child-added'` message.
@@ -193,39 +183,32 @@ class FlexPanel extends Panel {
 /**
  * The namespace for the `FlexPanel` class statics.
  */
-export
-namespace FlexPanel {
+export namespace FlexPanel {
   /**
    * A type alias for a flex panel direction.
    */
-  export
-  type Direction = FlexLayout.Direction;
+  export type Direction = FlexLayout.Direction;
   /**
    * A type alias for a flex panel direction.
    */
-  export
-  type ContentJustification = FlexLayout.ContentJustification;
+  export type ContentJustification = FlexLayout.ContentJustification;
   /**
    * A type alias for a flex panel direction.
    */
-  export
-  type ContentAlignment = FlexLayout.ContentAlignment;
+  export type ContentAlignment = FlexLayout.ContentAlignment;
   /**
    * A type alias for a flex panel direction.
    */
-  export
-  type ItemAlignment = FlexLayout.ItemAlignment;
+  export type ItemAlignment = FlexLayout.ItemAlignment;
   /**
    * A type alias for a flex panel direction.
    */
-  export
-  type StretchType = FlexLayout.StretchType;
+  export type StretchType = FlexLayout.StretchType;
 
   /**
    * An options object for initializing a flex panel.
    */
-  export
-  interface IOptions extends FlexLayout.IOptions, Panel.IOptions {
+  export interface IOptions extends FlexLayout.IOptions, Panel.IOptions {
     /**
      * The flex layout to use for the flex panel.
      *
@@ -243,8 +226,7 @@ namespace FlexPanel {
    *
    * @returns The flex panel grow factor for the widget.
    */
-  export
-  function getGrow(widget: Widget): number | null {
+  export function getGrow(widget: Widget): number | null {
     return FlexLayout.getGrow(widget);
   }
 
@@ -255,8 +237,7 @@ namespace FlexPanel {
    *
    * @param value - The value for the grow factor.
    */
-  export
-  function setGrow(widget: Widget, value: number): void {
+  export function setGrow(widget: Widget, value: number): void {
     FlexLayout.setGrow(widget, value);
   }
 
@@ -267,8 +248,7 @@ namespace FlexPanel {
    *
    * @returns The flex panel shrink factor for the widget.
    */
-  export
-  function getShrink(widget: Widget): number | null {
+  export function getShrink(widget: Widget): number | null {
     return FlexLayout.getShrink(widget);
   }
 
@@ -279,8 +259,7 @@ namespace FlexPanel {
    *
    * @param value - The value for the shrink factor.
    */
-  export
-  function setShrink(widget: Widget, value: number | null): void {
+  export function setShrink(widget: Widget, value: number | null): void {
     FlexLayout.setShrink(widget, value);
   }
 
@@ -291,8 +270,7 @@ namespace FlexPanel {
    *
    * @returns The flex panel size basis for the widget.
    */
-  export
-  function getSizeBasis(widget: Widget): number | "auto" | null {
+  export function getSizeBasis(widget: Widget): number | 'auto' | null {
     return FlexLayout.getSizeBasis(widget);
   }
 
@@ -303,8 +281,10 @@ namespace FlexPanel {
    *
    * @param value - The value for the size basis.
    */
-  export
-  function setSizeBasis(widget: Widget, value: number | "auto" | null): void {
+  export function setSizeBasis(
+    widget: Widget,
+    value: number | 'auto' | null
+  ): void {
     FlexLayout.setSizeBasis(widget, value);
   }
 }
@@ -316,8 +296,7 @@ namespace Private {
   /**
    * Create a flex layout for the given panel options.
    */
-  export
-  function createLayout(options: FlexPanel.IOptions): FlexLayout {
+  export function createLayout(options: FlexPanel.IOptions): FlexLayout {
     return options.layout || new FlexLayout(options);
   }
 }
