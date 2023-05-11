@@ -2,48 +2,39 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import type {
-  IDiffEntry
-} from '../../diff/diffentries';
+import type { IDiffEntry } from '../../diff/diffentries';
+
+import { DiffRangePos, raw2Pos } from '../../diff/range';
+
+import { StringDiffModel, IStringDiffModel } from '../../diff/model';
 
 import {
-  DiffRangePos, raw2Pos
-} from '../../diff/range';
-
-import {
-  StringDiffModel, IStringDiffModel
-} from '../../diff/model';
-
-import {
-  MergeDecision, buildDiffs, applyDecisions
+  MergeDecision,
+  buildDiffs,
+  applyDecisions,
 } from '../../merge/decisions';
 
-import {
-   LineChunker, Chunk, labelSource
-} from '../../chunking';
+import { LineChunker, Chunk, labelSource } from '../../chunking';
 
-import {
-  patchStringified, stringifyAndBlankNull
-} from '../../patch';
+import { patchStringified, stringifyAndBlankNull } from '../../patch';
 
-import type {
-  DeepCopyableObject
-} from '../../common/util';
-
-
+import type { DeepCopyableObject } from '../../common/util';
 
 /**
  * A string diff model based on merge decisions.
  */
-export
-class DecisionStringDiffModel extends StringDiffModel {
-  constructor(base: any, decisions: MergeDecision[],
-              sourceModels: (IStringDiffModel | null)[],
-              collapsible?: boolean, header?: string, collapsed?: boolean) {
+export class DecisionStringDiffModel extends StringDiffModel {
+  constructor(
+    base: any,
+    decisions: MergeDecision[],
+    sourceModels: (IStringDiffModel | null)[],
+    collapsible?: boolean,
+    header?: string,
+    collapsed?: boolean,
+  ) {
     // Set up initial parameters for super call
     let baseStr = stringifyAndBlankNull(base);
-    super(baseStr, '', [], [],
-      collapsible, header, collapsed);
+    super(baseStr, '', [], [], collapsible, header, collapsed);
     this.rawBase = base;
     this.decisions = decisions;
     this._outdated = true;
@@ -135,7 +126,6 @@ class DecisionStringDiffModel extends StringDiffModel {
   protected _sourceModels: (IStringDiffModel | null)[];
 }
 
-
 /**
  * Abstract base class for a merge model of objects of the type ObjectType,
  * which uses DiffModelType to model each side internally.
@@ -143,9 +133,10 @@ class DecisionStringDiffModel extends StringDiffModel {
  * Implementors need to define the abstract functions createDiffModel and
  * createMergedDiffModel.
  */
-export
-abstract class ObjectMergeModel<ObjectType extends DeepCopyableObject, DiffModelType> {
-
+export abstract class ObjectMergeModel<
+  ObjectType extends DeepCopyableObject,
+  DiffModelType,
+> {
   /**
    * Create a diff model of the correct type given the diff (which might be
    * null)
@@ -160,8 +151,12 @@ abstract class ObjectMergeModel<ObjectType extends DeepCopyableObject, DiffModel
   /**
    *
    */
-  constructor(base: ObjectType | null, decisions: MergeDecision[], mimetype: string,
-              whitelist?: string[]) {
+  constructor(
+    base: ObjectType | null,
+    decisions: MergeDecision[],
+    mimetype: string,
+    whitelist?: string[],
+  ) {
     this.base = base;
     this.mimetype = mimetype;
     this._whitelist = whitelist || null;
@@ -248,13 +243,13 @@ abstract class ObjectMergeModel<ObjectType extends DeepCopyableObject, DiffModel
     if (!this._finalized) {
       for (let md of this.decisions) {
         if (md.action === 'either') {
-          labelSource(md.localDiff, {decision: md, action: 'either'});
-          labelSource(md.remoteDiff, {decision: md, action: 'either'});
+          labelSource(md.localDiff, { decision: md, action: 'either' });
+          labelSource(md.remoteDiff, { decision: md, action: 'either' });
         } else {
-          labelSource(md.localDiff, {decision: md, action: 'local'});
-          labelSource(md.remoteDiff, {decision: md, action: 'remote'});
+          labelSource(md.localDiff, { decision: md, action: 'local' });
+          labelSource(md.remoteDiff, { decision: md, action: 'remote' });
         }
-        labelSource(md.customDiff, {decision: md, action: 'custom'});
+        labelSource(md.customDiff, { decision: md, action: 'custom' });
       }
       this._finalized = true;
     }

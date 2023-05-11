@@ -2,18 +2,11 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import {
-  saveAs
-} from 'file-saver';
+import { saveAs } from 'file-saver';
 
-import {
-  EditorWidget
-} from 'nbdime/lib/common/editor';
+import { EditorWidget } from 'nbdime/lib/common/editor';
 
-
-
-const collapsiblePanelExportJS =
-`<script>
+const collapsiblePanelExportJS = `<script>
 var headers = document.getElementsByClassName("jp-CollapsiblePanel-header");
 for (var i=0;i<headers.length;++i){
   var header=headers[i];
@@ -28,8 +21,7 @@ for (var i=0;i<headers.length;++i){
 }
 </script>`;
 
-const codeMirrorEllipsisExportStyle =
-`<style type="text/css">
+const codeMirrorEllipsisExportStyle = `<style type="text/css">
 .jp-Notebook-diff .CodeMirror-merge-collapsed-widget {
   cursor: initial;
 }
@@ -55,7 +47,6 @@ const codeMirrorEllipsisExportStyle =
 }
 </style>`;
 
-
 function ensureRendered(callback: () => void): void {
   for (let e of EditorWidget.editors) {
     e.setOption('viewportMargin', Infinity);
@@ -70,12 +61,10 @@ function ensureRendered(callback: () => void): void {
   });
 }
 
-
 /**
  * Download diff as static HTML
  */
-export
-function exportDiff(): void {
+export function exportDiff(): void {
   let prefix = '<!DOCTYPE html>\n<html>\n<head>';
   prefix += document.head ? document.head.innerHTML : '';
   prefix += codeMirrorEllipsisExportStyle + '\n</head><body>';
@@ -85,8 +74,13 @@ function exportDiff(): void {
     let rootNode = document.getElementById('nbdime-root')!;
     let content = rootNode!.outerHTML;
     // Strip hover text of CM ellipses
-    content = content.replace(/title="Identical text collapsed. Click to expand."/g, '');
-    let blob = new Blob([prefix + content + postfix], {type: 'text/html;charset=utf-8'});
+    content = content.replace(
+      /title="Identical text collapsed. Click to expand."/g,
+      '',
+    );
+    let blob = new Blob([prefix + content + postfix], {
+      type: 'text/html;charset=utf-8',
+    });
 
     saveAs(blob, 'diff.html');
   });

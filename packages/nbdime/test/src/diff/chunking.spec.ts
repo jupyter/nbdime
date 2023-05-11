@@ -1,21 +1,13 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import {
-  DiffRangeRaw, raw2Pos
-} from '../../../src/diff/range';
+import { DiffRangeRaw, raw2Pos } from '../../../src/diff/range';
 
-import {
-  StringDiffModel
-} from '../../../src/diff/model';
-
+import { StringDiffModel } from '../../../src/diff/model';
 
 describe('diff', () => {
-
   describe('chunking', () => {
-
     describe('raw2pos', () => {
-
       it('should convert a pos in the middle of the first line', () => {
         let base = 'Single line text';
         let raw = new DiffRangeRaw('Single '.length, 'line '.length);
@@ -161,7 +153,10 @@ describe('diff', () => {
 
       it('should convert a pos with new at start AND end', () => {
         let base = 'Line 1\nLine 2\nLine 3\nLine 4\n';
-        let raw = new DiffRangeRaw('Line 1\nLine 2'.length, '\nLine 3\n'.length);
+        let raw = new DiffRangeRaw(
+          'Line 1\nLine 2'.length,
+          '\nLine 3\n'.length,
+        );
         let pos = raw2Pos([raw], base);
         expect(pos).toHaveLength(1);
         expect(pos[0].from.line).toEqual(1);
@@ -176,7 +171,8 @@ describe('diff', () => {
         let base = 'Line 1\nLine 2\nLine 3\nLine 4\nLine 5\n';
         let raw = new DiffRangeRaw(
           'Line 1\n'.length,
-          'Line 2\nLine 3\nLine 4\n'.length);
+          'Line 2\nLine 3\nLine 4\n'.length,
+        );
         let pos = raw2Pos([raw], base);
         expect(pos).toHaveLength(1);
         expect(pos[0].from.line).toEqual(1);
@@ -186,12 +182,10 @@ describe('diff', () => {
         expect(pos[0].chunkStartLine).toBe(true);
         expect(pos[0].endsOnNewline).toBe(true);
       });
-
     });
 
     describe('StringDiffModel', () => {
       describe('getLineChunks', () => {
-
         it('should chunk a single line diff', () => {
           let base = 'Single line text';
           let remote = 'Single updated line text';
@@ -210,8 +204,9 @@ describe('diff', () => {
           let base = 'Line 1\nLine 2 is like this\nLine 3';
           let remote = 'Line 1\nLine 2 is now like this\nLine 3';
           let added: DiffRangeRaw[] = [];
-          added.push(new DiffRangeRaw(
-            'Line 1\nLine 2 is '.length, 'now '.length));
+          added.push(
+            new DiffRangeRaw('Line 1\nLine 2 is '.length, 'now '.length),
+          );
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).toHaveLength(1);
@@ -225,8 +220,7 @@ describe('diff', () => {
           let base = 'Line 1\nLine 2 is like this\nLine 3';
           let remote = 'Line 1\nNow Line 2 is like this\nLine 3';
           let added: DiffRangeRaw[] = [];
-          added.push(new DiffRangeRaw(
-            'Line 1\n'.length, 'Now '.length));
+          added.push(new DiffRangeRaw('Line 1\n'.length, 'Now '.length));
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).toHaveLength(1);
@@ -240,8 +234,12 @@ describe('diff', () => {
           let base = 'Line 1\nLine 2 is like this\nLine 3';
           let remote = 'Line 1\nLine 2 is like this now\nLine 3';
           let added: DiffRangeRaw[] = [];
-          added.push(new DiffRangeRaw(
-            'Line 1\nLine 2 is like this'.length, ' now'.length));
+          added.push(
+            new DiffRangeRaw(
+              'Line 1\nLine 2 is like this'.length,
+              ' now'.length,
+            ),
+          );
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).toHaveLength(1);
@@ -255,8 +253,7 @@ describe('diff', () => {
           let base = 'Line 1\nLine 2\nLine 3';
           let remote = 'Line 1\nLine 1.1\nLine 2\nLine 3';
           let added: DiffRangeRaw[] = [];
-          added.push(new DiffRangeRaw(
-            'Line 1'.length, '\nLine 1.1'.length));
+          added.push(new DiffRangeRaw('Line 1'.length, '\nLine 1.1'.length));
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).toHaveLength(1);
@@ -270,8 +267,7 @@ describe('diff', () => {
           let base = 'Line 1\nLine 2\nLine 3';
           let remote = 'Line 1\nLine 1.1\nLine 2\nLine 3';
           let added: DiffRangeRaw[] = [];
-          added.push(new DiffRangeRaw(
-            'Line 1\n'.length, 'Line 1.1\n'.length));
+          added.push(new DiffRangeRaw('Line 1\n'.length, 'Line 1.1\n'.length));
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).toHaveLength(1);
@@ -283,13 +279,12 @@ describe('diff', () => {
 
         it('should chunk a line split', () => {
           /* Note that this scenario is unlikely to occur for
-            * line-based diffs, but might occur for char-based diffs
-            * of multi-line strings */
+           * line-based diffs, but might occur for char-based diffs
+           * of multi-line strings */
           let base = 'Line 1Line 2\nLine 3';
           let remote = 'Line 1\nLine 2\nLine 3';
           let added: DiffRangeRaw[] = [];
-          added.push(new DiffRangeRaw(
-            'Line 1'.length, '\n'.length));
+          added.push(new DiffRangeRaw('Line 1'.length, '\n'.length));
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).toHaveLength(1);
@@ -301,13 +296,12 @@ describe('diff', () => {
 
         it('should chunk an extended line split', () => {
           /* Note that this scenario is unlikely to occur for
-            * line-based diffs, but might occur for char-based diffs
-            * of multi-line strings */
+           * line-based diffs, but might occur for char-based diffs
+           * of multi-line strings */
           let base = 'Line 1Line 2\nLine 3';
           let remote = 'Line 1\n\n\nLine 2\nLine 3';
           let added: DiffRangeRaw[] = [];
-          added.push(new DiffRangeRaw(
-            'Line 1'.length, '\n\n\n'.length));
+          added.push(new DiffRangeRaw('Line 1'.length, '\n\n\n'.length));
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).toHaveLength(1);
@@ -319,13 +313,12 @@ describe('diff', () => {
 
         it('should chunk a newline at start AND end of entry', () => {
           /* Note that this scenario is unlikely to occur for
-            * line-based diffs, but might occur for char-based diffs
-            * of multi-line strings */
+           * line-based diffs, but might occur for char-based diffs
+           * of multi-line strings */
           let base = 'Line 1Line 2\nLine 3';
           let remote = 'Line 1\nLine 1.1\nLine 2\nLine 3';
           let added: DiffRangeRaw[] = [];
-          added.push(new DiffRangeRaw(
-            'Line 1'.length, '\nLine 1.1\n'.length));
+          added.push(new DiffRangeRaw('Line 1'.length, '\nLine 1.1\n'.length));
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).toHaveLength(1);
@@ -339,8 +332,7 @@ describe('diff', () => {
           let base = 'Line 1\nLine 2\nLine 3';
           let remote = 'Line 0\nLine 1\nLine 2\nLine 3';
           let added: DiffRangeRaw[] = [];
-          added.push(new DiffRangeRaw(
-            0, 'Line 0\n'.length));
+          added.push(new DiffRangeRaw(0, 'Line 0\n'.length));
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).toHaveLength(1);
@@ -354,8 +346,9 @@ describe('diff', () => {
           let base = 'Line 1\nLine 2\nLine 3';
           let remote = 'Line 1\nLine 2\nLine 3\n';
           let added: DiffRangeRaw[] = [];
-          added.push(new DiffRangeRaw(
-            'Line 1\nLine 2\nLine 3'.length, '\n'.length));
+          added.push(
+            new DiffRangeRaw('Line 1\nLine 2\nLine 3'.length, '\n'.length),
+          );
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).toHaveLength(1);
@@ -369,8 +362,12 @@ describe('diff', () => {
           let base = 'Line 1\nLine 2\nLine 3';
           let remote = 'Line 1\nLine 2\nLine 3\nLine 4';
           let added: DiffRangeRaw[] = [];
-          added.push(new DiffRangeRaw(
-            'Line 1\nLine 2\nLine 3'.length, '\nLine 4'.length));
+          added.push(
+            new DiffRangeRaw(
+              'Line 1\nLine 2\nLine 3'.length,
+              '\nLine 4'.length,
+            ),
+          );
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).toHaveLength(1);
@@ -384,8 +381,12 @@ describe('diff', () => {
           let base = 'Line 1\nLine 2\nLine 3';
           let remote = 'Line 1\nLine 2\nLine 3\nLine 4\n';
           let added: DiffRangeRaw[] = [];
-          added.push(new DiffRangeRaw(
-            'Line 1\nLine 2\nLine 3'.length, '\nLine 4\n'.length));
+          added.push(
+            new DiffRangeRaw(
+              'Line 1\nLine 2\nLine 3'.length,
+              '\nLine 4\n'.length,
+            ),
+          );
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).toHaveLength(1);
@@ -399,8 +400,12 @@ describe('diff', () => {
           let base = 'Line 1\nLine 2\nLine 3\n';
           let remote = 'Line 1\nLine 2\nLine 3\nLine 4';
           let added: DiffRangeRaw[] = [];
-          added.push(new DiffRangeRaw(
-            'Line 1\nLine 2\nLine 3\n'.length, 'Line 4'.length));
+          added.push(
+            new DiffRangeRaw(
+              'Line 1\nLine 2\nLine 3\n'.length,
+              'Line 4'.length,
+            ),
+          );
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).toHaveLength(1);
@@ -414,8 +419,12 @@ describe('diff', () => {
           let base = 'Line 1\nLine 2\nLine 3\n';
           let remote = 'Line 1\nLine 2\nLine 3\nLine 4\n';
           let added: DiffRangeRaw[] = [];
-          added.push(new DiffRangeRaw(
-            'Line 1\nLine 2\nLine 3\n'.length, 'Line 4\n'.length));
+          added.push(
+            new DiffRangeRaw(
+              'Line 1\nLine 2\nLine 3\n'.length,
+              'Line 4\n'.length,
+            ),
+          );
           let m = new StringDiffModel(base, remote, added, []);
           let chunks = m.getLineChunks();
           expect(chunks).toHaveLength(1);
@@ -424,10 +433,7 @@ describe('diff', () => {
           expect(chunks[0].baseTo).toEqual(3);
           expect(chunks[0].remoteTo).toEqual(4);
         });
-
       });
     });
-
   });
-
 });

@@ -4,38 +4,24 @@
 
 import * as alertify from 'alertify.js';
 
-import {
-  URLExt
-} from '@jupyterlab/coreutils/lib/url';
+import { URLExt } from '@jupyterlab/coreutils/lib/url';
 
-import type {
-  PartialJSONObject
-} from '@lumino/coreutils';
+import type { PartialJSONObject } from '@lumino/coreutils';
 
-import type {
-  Widget
-} from '@lumino/widgets';
+import type { Widget } from '@lumino/widgets';
+
+import { NotifyUserError } from 'nbdime/lib/common/exceptions';
 
 import {
-  NotifyUserError
-} from 'nbdime/lib/common/exceptions';
-
-import {
-  UNCHANGED_DIFF_CLASS, CHUNK_PANEL_CLASS
+  UNCHANGED_DIFF_CLASS,
+  CHUNK_PANEL_CLASS,
 } from 'nbdime/lib/diff/widget/common';
 
-import {
-  UNCHANGED_MERGE_CLASS
-} from 'nbdime/lib/merge/widget/common';
+import { UNCHANGED_MERGE_CLASS } from 'nbdime/lib/merge/widget/common';
 
-import {
-  CELLDIFF_CLASS
-} from 'nbdime/lib/diff/widget';
+import { CELLDIFF_CLASS } from 'nbdime/lib/diff/widget';
 
-import {
-  CELLMERGE_CLASS
-} from 'nbdime/lib/merge/widget';
-
+import { CELLMERGE_CLASS } from 'nbdime/lib/merge/widget';
 
 /**
  * DOM class for whether or not to hide unchanged cells
@@ -54,9 +40,8 @@ alertify.delay(0).closeLogOnClick(true);
  *  Make an object fully immutable by freezing each object in it.
  */
 function deepFreeze(obj: any): any {
-
   // Freeze properties before freezing self
-  Object.getOwnPropertyNames(obj).forEach(function(name) {
+  Object.getOwnPropertyNames(obj).forEach(function (name) {
     let prop = obj[name];
 
     // Freeze prop if it is an object
@@ -72,8 +57,7 @@ function deepFreeze(obj: any): any {
 /**
  * Retrive a config option
  */
-export
-function getConfigOption(name: string, defaultValue?: any): any {
+export function getConfigOption(name: string, defaultValue?: any): any {
   if (configData) {
     let ret = configData[name];
     if (ret === undefined) {
@@ -100,8 +84,7 @@ function getConfigOption(name: string, defaultValue?: any): any {
 /**
  * Get the base url.
  */
-export
-function getBaseUrl(): string {
+export function getBaseUrl(): string {
   return URLExt.join(window.location.origin, getConfigOption('baseUrl'));
 }
 
@@ -110,15 +93,14 @@ spinner.className = 'nbdime-spinner';
 /**
  * Turn spinner (loading indicator) on/off
  */
-export
-function toggleSpinner(state?: boolean) {
+export function toggleSpinner(state?: boolean) {
   let header = document.getElementById('nbdime-header-buttonrow')!;
   // Figure out current state
   let current = header.contains(spinner);
   if (state === undefined) {
     state = !current;
   } else if (state === current) {
-    return;  // Nothing to do
+    return; // Nothing to do
   }
   if (state) {
     header.appendChild(spinner);
@@ -127,14 +109,15 @@ function toggleSpinner(state?: boolean) {
   }
 }
 
-
 /**
  * Toggle whether to show or hide unchanged cells.
  *
  * This simply marks with a class, real work is done by CSS.
  */
-export
-function toggleShowUnchanged(show?: boolean, updateWidget?: Widget | null) {
+export function toggleShowUnchanged(
+  show?: boolean,
+  updateWidget?: Widget | null,
+) {
   let root = document.getElementById('nbdime-root')!;
   let hiding = root.classList.contains(HIDE_UNCHANGED_CLASS);
   if (show === undefined) {
@@ -154,7 +137,6 @@ function toggleShowUnchanged(show?: boolean, updateWidget?: Widget | null) {
   }
 }
 
-
 /**
  * Gets the chunk element of an added/removed cell, or the cell element for others
  * @param cellElement
@@ -170,25 +152,30 @@ function getChunkElement(cellElement: Element): Element {
   return cellElement;
 }
 
-
 /**
  * Marks certain cells with
  */
-export
-function markUnchangedRanges() {
+export function markUnchangedRanges() {
   let root = document.getElementById('nbdime-root')!;
-  let children = root.querySelectorAll(`.${CELLDIFF_CLASS}, .${CELLMERGE_CLASS}`);
+  let children = root.querySelectorAll(
+    `.${CELLDIFF_CLASS}, .${CELLMERGE_CLASS}`,
+  );
   let rangeStart = -1;
-  for (let i=0; i < children.length; ++i) {
+  for (let i = 0; i < children.length; ++i) {
     let child = children[i];
-    if (!child.classList.contains(UNCHANGED_DIFF_CLASS) &&
-        !child.classList.contains(UNCHANGED_MERGE_CLASS)) {
+    if (
+      !child.classList.contains(UNCHANGED_DIFF_CLASS) &&
+      !child.classList.contains(UNCHANGED_MERGE_CLASS)
+    ) {
       // Visible
       if (rangeStart !== -1) {
         // Previous was hidden
         let N = i - rangeStart;
         // Set attribute on element / chunk element as appropriate
-        getChunkElement(child).setAttribute('data-nbdime-NCellsHiddenBefore', N.toString());
+        getChunkElement(child).setAttribute(
+          'data-nbdime-NCellsHiddenBefore',
+          N.toString(),
+        );
         rangeStart = -1;
       }
     } else if (rangeStart === -1) {
@@ -202,16 +189,19 @@ function markUnchangedRanges() {
     if (rangeStart === 0) {
       // All elements were hidden, nothing to mark
       // Add info on root instead
-      let tag = root.querySelector('.jp-Notebook-diff, .jp-Notebook-merge') || root;
+      let tag =
+        root.querySelector('.jp-Notebook-diff, .jp-Notebook-merge') || root;
       tag.setAttribute('data-nbdime-AllCellsHidden', N.toString());
       return;
     }
     let lastVisible = children[rangeStart - 1];
     // Set attribute on element / chunk element as appropriate
-    getChunkElement(lastVisible).setAttribute('data-nbdime-NCellsHiddenAfter', N.toString());
+    getChunkElement(lastVisible).setAttribute(
+      'data-nbdime-NCellsHiddenAfter',
+      N.toString(),
+    );
   }
 }
-
 
 /**
  * Get the XSRF token from the cookie, if present
@@ -221,9 +211,8 @@ function getXsrfToken(): string | undefined {
   return r ? r[1] : undefined;
 }
 
-
 /**
- * Wrap a navigator.sendBeacon call with XSRF data 
+ * Wrap a navigator.sendBeacon call with XSRF data
  */
 function sendBeacon(url: string, data: PartialJSONObject): void {
   const formData = new FormData();
@@ -234,13 +223,12 @@ function sendBeacon(url: string, data: PartialJSONObject): void {
 
   for (let key of Object.keys(data)) {
     if (data[key] !== null && data[key] !== undefined) {
-      formData.append(key, data[key]!.toString() );
+      formData.append(key, data[key]!.toString());
     }
   }
 
   navigator.sendBeacon(url, formData);
 }
-
 
 export let toolClosed = false;
 /**
@@ -250,41 +238,49 @@ export let toolClosed = false;
  * Used to indicate that the tool has finished its operation, and that the tool
  * should return to its caller.
  */
-export
-function closeTool(exitCode=0) {
+export function closeTool(exitCode = 0) {
   if (!toolClosed) {
     toolClosed = true;
     let url = '/api/closetool';
-    sendBeacon(url, {exitCode});
+    sendBeacon(url, { exitCode });
     window.close();
   }
 }
 
-
-function showError(error: NotifyUserError, url?: string, line?: number, column?: number) {
+function showError(
+  error: NotifyUserError,
+  url?: string,
+  line?: number,
+  column?: number,
+) {
   let message = error.message.replace('\n', '</br>');
   switch (error.severity) {
-  case 'warning':
-    alertify.log(message);
-    break;
-  case 'error':
-    alertify.error(message);
-    break;
-  default:
-    alertify.error(message);
+    case 'warning':
+      alertify.log(message);
+      break;
+    case 'error':
+      alertify.error(message);
+      break;
+    default:
+      alertify.error(message);
   }
 }
 
-export
-function handleError(msg: Event | string, url?: string, line?: number, col?: number, error?: Error): boolean {
+export function handleError(
+  msg: Event | string,
+  url?: string,
+  line?: number,
+  col?: number,
+  error?: Error,
+): boolean {
   try {
     if (error instanceof NotifyUserError) {
       showError(error, url, line, col || 0);
-      return false;  // Suppress error alert
+      return false; // Suppress error alert
     }
   } catch (e) {
     // Not something that user should care about
     console.log((e as any).stack || e);
   }
-  return false;  // Do not suppress default error alert
+  return false; // Do not suppress default error alert
 }

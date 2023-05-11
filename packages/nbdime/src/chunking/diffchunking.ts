@@ -2,26 +2,15 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
+import type { IDiffEntry } from '../diff/diffentries';
 
-import type {
-  IDiffEntry,
-} from '../diff/diffentries';
+import type { DiffRangePos } from '../diff/range';
 
-import type {
-  DiffRangePos
-} from '../diff/range';
+import type { MergeDecision } from '../merge/decisions';
 
-import type {
-  MergeDecision
-} from '../merge/decisions';
+import { valueIn, shallowCopy, unique } from '../common/util';
 
-import {
-  valueIn, shallowCopy, unique
-} from '../common/util';
-
-
-export
-type ChunkSource = {
+export type ChunkSource = {
   decision: MergeDecision;
   action: 'local' | 'remote' | 'either' | 'custom';
 };
@@ -39,11 +28,12 @@ type ChunkSource = {
  */
 export class Chunk {
   constructor(
-      public baseFrom: number,
-      public baseTo: number,
-      public remoteFrom: number,
-      public remoteTo: number,
-      source?: ChunkSource) {
+    public baseFrom: number,
+    public baseTo: number,
+    public remoteFrom: number,
+    public remoteTo: number,
+    source?: ChunkSource,
+  ) {
     this.sources = source ? [source] : [];
   }
 
@@ -72,10 +62,9 @@ export class Chunk {
   /**
    *
    */
-};
+}
 
-export
-class Chunker {
+export class Chunker {
   constructor() {
     this.chunks = [];
     this.editOffset = 0;
@@ -89,7 +78,11 @@ class Chunker {
     return this.chunks.length > 0 ? this.chunks[this.chunks.length - 1] : null;
   }
 
-  protected _overlapChunk(chunk: Chunk, range: DiffRangePos, isAddition: boolean): boolean {
+  protected _overlapChunk(
+    chunk: Chunk,
+    range: DiffRangePos,
+    isAddition: boolean,
+  ): boolean {
     if (isAddition) {
       return chunk.inOrig(range.from.line);
     } else {
@@ -104,21 +97,23 @@ class Chunker {
     }
     const firstLineNew = range.from.ch === 0 && linediff > 0;
 
-
     const startOffset = range.chunkStartLine ? 0 : 1;
     const endOffset =
-      range.chunkStartLine && range.endsOnNewline && firstLineNew ?
-      0 : 1;
+      range.chunkStartLine && range.endsOnNewline && firstLineNew ? 0 : 1;
 
     let current = this._getCurrent();
     if (current) {
       // Have existing chunk, check for overlap
       if (isAddition) {
         if (this._overlapChunk(current, range, isAddition)) {
-          current.remoteTo = Math.max(current.remoteTo,
-              range.from.line + endOffset + linediff);
-          current.baseTo = Math.max(current.baseTo,
-              range.from.line + endOffset + this.editOffset);
+          current.remoteTo = Math.max(
+            current.remoteTo,
+            range.from.line + endOffset + linediff,
+          );
+          current.baseTo = Math.max(
+            current.baseTo,
+            range.from.line + endOffset + this.editOffset,
+          );
           if (range.source && !valueIn(range.source, current.sources)) {
             current.sources.push(range.source);
           }
@@ -128,10 +123,14 @@ class Chunker {
         }
       } else {
         if (this._overlapChunk(current, range, isAddition)) {
-          current.remoteTo = Math.max(current.remoteTo,
-              range.from.line + endOffset - this.editOffset);
-          current.baseTo = Math.max(current.baseTo,
-              range.from.line + endOffset + linediff);
+          current.remoteTo = Math.max(
+            current.remoteTo,
+            range.from.line + endOffset - this.editOffset,
+          );
+          current.baseTo = Math.max(
+            current.baseTo,
+            range.from.line + endOffset + linediff,
+          );
           if (range.source && !valueIn(range.source, current.sources)) {
             current.sources.push(range.source);
           }
@@ -150,7 +149,7 @@ class Chunker {
           startBase + startOffset,
           startBase + endOffset,
           startRemote + startOffset,
-          startRemote + endOffset + linediff
+          startRemote + endOffset + linediff,
         );
       } else {
         let startBase = range.from.line;
@@ -159,7 +158,7 @@ class Chunker {
           startBase + startOffset,
           startBase + endOffset + linediff,
           startRemote + startOffset,
-          startRemote + endOffset
+          startRemote + endOffset,
         );
       }
       if (range.source) {
@@ -185,8 +184,7 @@ class Chunker {
 
     let startOffset = range.chunkStartLine ? 0 : 1;
     let endOffset =
-      range.chunkStartLine && range.endsOnNewline && firstLineNew ?
-      0 : 1;
+      range.chunkStartLine && range.endsOnNewline && firstLineNew ? 0 : 1;
     if (!isAddition) {
       endOffset += linediff;
     }
@@ -198,10 +196,8 @@ class Chunker {
       // Have existing chunk, check for overlap
       let startOrig = startEdit - this.editOffset;
       if (current.baseTo > startEdit) {
-        current.remoteTo = Math.max(current.remoteTo,
-            startOrig + endOffset);
-        current.baseTo = Math.max(current.baseTo,
-            startEdit + endOffset);
+        current.remoteTo = Math.max(current.remoteTo, startOrig + endOffset);
+        current.baseTo = Math.max(current.baseTo, startEdit + endOffset);
         if (range.source && !valueIn(range.source, current.sources)) {
           current.sources.push(range.source);
         }
@@ -216,7 +212,7 @@ class Chunker {
         startEdit + startOffset,
         startEdit + endOffset,
         startOrig + startOffset,
-        startOrig + endOffset
+        startOrig + endOffset,
       );
       if (range.source) {
         current.sources.push(range.source);
@@ -234,7 +230,6 @@ class Chunker {
   protected _currentGhost: Chunk | null = null;
 }
 
-
 /**
  * A chunker that only chunks diffs within lines with each other
  *
@@ -242,9 +237,12 @@ class Chunker {
  * line with a change at the start of the next line, this chunker will keep
  * each line separate. This is useful e.g. for merging.
  */
-export
-class LineChunker extends Chunker {
-  protected _overlapChunk(chunk: Chunk, range: DiffRangePos, isAddition: boolean): boolean {
+export class LineChunker extends Chunker {
+  protected _overlapChunk(
+    chunk: Chunk,
+    range: DiffRangePos,
+    isAddition: boolean,
+  ): boolean {
     let fromLine = range.from.line;
     if (chunk.baseFrom !== chunk.baseTo || chunk.remoteFrom >= chunk.remoteTo) {
       // Ensure aligned addition/removal on same line
@@ -259,12 +257,10 @@ class LineChunker extends Chunker {
   }
 }
 
-
 /**
  * Transform an array of lines to normal chunks
  */
-export
-function lineToNormalChunks(lineChunks: Chunk[]): Chunk[] {
+export function lineToNormalChunks(lineChunks: Chunk[]): Chunk[] {
   // We already have line chunks, so simply merge those chunks that overlap
   let current: Chunk | null = null;
   let ret: Chunk[] = [];
@@ -291,12 +287,13 @@ function lineToNormalChunks(lineChunks: Chunk[]): Chunk[] {
   return ret;
 }
 
-
 /**
  * Label a set of diffs with a source, recursively.
  */
-export
-function labelSource(diff: IDiffEntry[] | null, source: ChunkSource): IDiffEntry[] | null {
+export function labelSource(
+  diff: IDiffEntry[] | null,
+  source: ChunkSource,
+): IDiffEntry[] | null {
   if (diff) {
     for (let d of diff) {
       d.source = source;

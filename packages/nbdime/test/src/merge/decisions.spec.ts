@@ -4,14 +4,17 @@
 import * as decisions from '../../../src/merge/decisions';
 
 import {
-  opAdd, opRemove, opAddRange, opRemoveRange, opPatch,
-  IDiffEntry, IDiffPatch, DiffCollection
+  opAdd,
+  opRemove,
+  opAddRange,
+  opRemoveRange,
+  opPatch,
+  IDiffEntry,
+  IDiffPatch,
+  DiffCollection,
 } from '../../../src/diff/diffentries';
 
-import {
-  arraysEqual
-} from '../../../src/common/util';
-
+import { arraysEqual } from '../../../src/common/util';
 
 function isDiffEmpty(diff: IDiffEntry[] | null): boolean {
   if (diff === null || diff.length === 0) {
@@ -28,21 +31,17 @@ function isDiffEmpty(diff: IDiffEntry[] | null): boolean {
   return true;
 }
 
-
 describe('merge', () => {
-
   describe('decisions', () => {
-
     describe('MergeDecision class', () => {
-
       let jsonStructure: decisions.IMergeDecision = {
-          action: 'custom',
-          local_diff: [opAdd('two', 22)],
-          remote_diff: [opAdd('two', 33)],
-          custom_diff: [opAdd('two', 55)],
-          conflict: true,
-          common_path: ['a', 0, '32', 'foo', 'bar']
-        };
+        action: 'custom',
+        local_diff: [opAdd('two', 22)],
+        remote_diff: [opAdd('two', 33)],
+        custom_diff: [opAdd('two', 55)],
+        conflict: true,
+        common_path: ['a', 0, '32', 'foo', 'bar'],
+      };
 
       it('should initialize by full JSON structure', () => {
         let value = new decisions.MergeDecision(jsonStructure);
@@ -61,7 +60,7 @@ describe('merge', () => {
           jsonStructure.remote_diff,
           jsonStructure.action as decisions.Action,
           jsonStructure.conflict,
-          jsonStructure.custom_diff
+          jsonStructure.custom_diff,
         );
         let value = d.serialize();
         expect(value).toEqual(jsonStructure);
@@ -74,7 +73,7 @@ describe('merge', () => {
 
       it('should initialize to defaults by partial JSON structure', () => {
         // Check everything in one go with empty structure:
-        let s: decisions.IMergeDecision = { };
+        let s: decisions.IMergeDecision = {};
         let value = new decisions.MergeDecision(s);
         expect(value.action).toEqual('base');
         expect(value.localDiff).toEqual(null);
@@ -110,7 +109,14 @@ describe('merge', () => {
         let value = new decisions.MergeDecision(jsonStructure);
 
         value.pushPath('test');
-        expect(value.absolutePath).toEqual(['a', 0, '32', 'foo', 'bar', 'test']);
+        expect(value.absolutePath).toEqual([
+          'a',
+          0,
+          '32',
+          'foo',
+          'bar',
+          'test',
+        ]);
       });
 
       it('should be able to set absolute path', () => {
@@ -128,17 +134,14 @@ describe('merge', () => {
 
         expect(value.diffs).toEqual([
           jsonStructure.local_diff,
-          jsonStructure.remote_diff
-          ]);
+          jsonStructure.remote_diff,
+        ]);
       });
 
       it('should be able to set diffs', () => {
         let value = new decisions.MergeDecision(jsonStructure);
 
-        value.diffs = [
-          jsonStructure.remote_diff!,
-          jsonStructure.local_diff!,
-        ];
+        value.diffs = [jsonStructure.remote_diff!, jsonStructure.local_diff!];
 
         expect(value.localDiff).toEqual(jsonStructure.remote_diff);
         expect(value.remoteDiff).toEqual(jsonStructure.local_diff);
@@ -146,7 +149,7 @@ describe('merge', () => {
         value.diffs = [
           jsonStructure.local_diff!,
           jsonStructure.remote_diff!,
-          null
+          null,
         ];
 
         expect(value.localDiff).toEqual(jsonStructure.local_diff);
@@ -160,17 +163,16 @@ describe('merge', () => {
         expect(value.diffs).toEqual([
           jsonStructure.local_diff,
           jsonStructure.remote_diff,
-          jsonStructure.custom_diff
-          ]);
+          jsonStructure.custom_diff,
+        ]);
       });
-
     });
 
     describe('popPath', () => {
-
       it('should always pop patch paths if only passed one diff', () => {
-        let diffs: IDiffEntry[][] = [[opPatch('a', [opPatch(0, [opPatch('foo',
-          [opAdd('two', 'bar')])])])]];
+        let diffs: IDiffEntry[][] = [
+          [opPatch('a', [opPatch(0, [opPatch('foo', [opAdd('two', 'bar')])])])],
+        ];
         let value = decisions.popPath(diffs)!;
         expect(value.key).toBe('a');
         expect(value.diffs.length).toBe(1);
@@ -192,7 +194,7 @@ describe('merge', () => {
       it('should pop shared patch paths', () => {
         let diffs: IDiffEntry[][] = [
           [opPatch('a', [opPatch(0, [opAdd('three', 'bar')])])],
-          [opPatch('a', [opPatch(0, [opAdd('two', 'whizz')])])]
+          [opPatch('a', [opPatch(0, [opAdd('two', 'whizz')])])],
         ];
         let value = decisions.popPath(diffs)!;
         expect(value.key).toBe('a');
@@ -200,8 +202,10 @@ describe('merge', () => {
         expect(value.diffs[0]).toEqual((diffs[0][0] as IDiffPatch).diff);
         expect(value.diffs[1]).toEqual((diffs[1][0] as IDiffPatch).diff);
 
-        diffs = [(diffs[0][0] as IDiffPatch).diff!,
-                 (diffs[1][0] as IDiffPatch).diff!];
+        diffs = [
+          (diffs[0][0] as IDiffPatch).diff!,
+          (diffs[1][0] as IDiffPatch).diff!,
+        ];
         value = decisions.popPath(diffs)!;
         expect(value.key).toBe(0);
         expect(value.diffs.length).toBe(2);
@@ -212,7 +216,7 @@ describe('merge', () => {
       it('should pop patch path if one entry is null', () => {
         let diffs: DiffCollection = [
           [opPatch('a', [opPatch(0, [opAdd('three', 'bar')])])],
-          null
+          null,
         ];
         let value = decisions.popPath(diffs)!;
         expect(value.key).toBe('a');
@@ -221,10 +225,7 @@ describe('merge', () => {
         expect(value.diffs[1]).toEqual(null);
 
         // Check there is no preference for order:
-        diffs = [
-          null,
-          [opPatch('a', [opPatch(0, [opAdd('three', 'bar')])])]
-        ];
+        diffs = [null, [opPatch('a', [opPatch(0, [opAdd('three', 'bar')])])]];
         value = decisions.popPath(diffs)!;
         expect(value.key).toBe('a');
         expect(value.diffs.length).toBe(2);
@@ -235,7 +236,7 @@ describe('merge', () => {
       it('should NOT pop patch path if only one side has patch', () => {
         let diffs: IDiffEntry[][] = [
           [opPatch('a', [opPatch(0, [opAdd('three', 'bar')])])],
-          [opAdd('b', 'bar')]
+          [opAdd('b', 'bar')],
         ];
         let value = decisions.popPath(diffs);
         expect(value).toBe(null);
@@ -244,14 +245,20 @@ describe('merge', () => {
       it('should NOT pop patch path if only one side has multiple entries', () => {
         let diffs: IDiffEntry[][] = [
           [opPatch('a', [opPatch(0, [opAdd('three', 'bar')])])],
-          [opPatch('a', [opPatch(0, [opAdd('three', 'bar')])]), opAdd('b', 'bar')]
+          [
+            opPatch('a', [opPatch(0, [opAdd('three', 'bar')])]),
+            opAdd('b', 'bar'),
+          ],
         ];
         let value = decisions.popPath(diffs);
         expect(value).toBe(null);
 
         diffs = [
           [opPatch('a', [opPatch(0, [opAdd('three', 'bar')])])],
-          [opAdd('b', 'bar'), opPatch('a', [opPatch(0, [opAdd('three', 'bar')])])]
+          [
+            opAdd('b', 'bar'),
+            opPatch('a', [opPatch(0, [opAdd('three', 'bar')])]),
+          ],
         ];
         value = decisions.popPath(diffs);
         expect(value).toBe(null);
@@ -259,15 +266,27 @@ describe('merge', () => {
 
       it('should NOT pop path if both sides has multiple entries', () => {
         let diffs: IDiffEntry[][] = [
-          [opPatch('a', [opPatch(0, [opAdd('three', 'bar')])]), opAdd('b', 'bar')],
-          [opPatch('a', [opPatch(0, [opAdd('three', 'bar')])]), opAdd('b', 'bar')]
+          [
+            opPatch('a', [opPatch(0, [opAdd('three', 'bar')])]),
+            opAdd('b', 'bar'),
+          ],
+          [
+            opPatch('a', [opPatch(0, [opAdd('three', 'bar')])]),
+            opAdd('b', 'bar'),
+          ],
         ];
         let value = decisions.popPath(diffs);
         expect(value).toBe(null);
 
         diffs = [
-          [opAdd('b', 'bar'), opPatch('a', [opPatch(0, [opAdd('three', 'bar')])])],
-          [opAdd('b', 'bar'), opPatch('a', [opPatch(0, [opAdd('three', 'bar')])])]
+          [
+            opAdd('b', 'bar'),
+            opPatch('a', [opPatch(0, [opAdd('three', 'bar')])]),
+          ],
+          [
+            opAdd('b', 'bar'),
+            opPatch('a', [opPatch(0, [opAdd('three', 'bar')])]),
+          ],
         ];
         value = decisions.popPath(diffs);
         expect(value).toBe(null);
@@ -282,7 +301,7 @@ describe('merge', () => {
       it('should only pop patch path if inner diffs have a length of 1, or if popInner is true', () => {
         let diffs: IDiffEntry[][] = [
           [opPatch(0, [opAdd('three', 'bar'), opAdd('two', 'bar')])],
-          [opPatch(0, [opAdd('three', 'bar'), opAdd('one', 'bar')])]
+          [opPatch(0, [opAdd('three', 'bar'), opAdd('one', 'bar')])],
         ];
         let value = decisions.popPath(diffs);
         expect(value).toBe(null);
@@ -295,7 +314,7 @@ describe('merge', () => {
 
         diffs = [
           [opPatch(0, [opAdd('three', 'bar')])],
-          [opPatch(0, [opAdd('three', 'bar'), opAdd('one', 'bar')])]
+          [opPatch(0, [opAdd('three', 'bar'), opAdd('one', 'bar')])],
         ];
         value = decisions.popPath(diffs);
         expect(value).toBe(null);
@@ -308,7 +327,7 @@ describe('merge', () => {
 
         diffs = [
           [opPatch(0, [opAdd('three', 'bar'), opAdd('two', 'bar')])],
-          [opPatch(0, [opAdd('three', 'bar')])]
+          [opPatch(0, [opAdd('three', 'bar')])],
         ];
         value = decisions.popPath(diffs);
         expect(value).toBe(null);
@@ -319,21 +338,21 @@ describe('merge', () => {
         expect(value.diffs[0]!.length).toBe(2);
         expect(value.diffs[1]!.length).toBe(1);
       });
-
     });
 
     describe('resolveCommonPaths', () => {
-
       it('should move patch ops to common path', () => {
         let decs = [
-          new decisions.MergeDecision([],
+          new decisions.MergeDecision(
+            [],
             [opPatch('a', [opPatch(0, [opPatch('foo', null)])])],
-            [opPatch('a', [opPatch(0, [opRemove('foo')])])]
+            [opPatch('a', [opPatch(0, [opRemove('foo')])])],
           ),
-          new decisions.MergeDecision([],
+          new decisions.MergeDecision(
+            [],
             [opPatch(33, [opPatch(0, [opPatch('foo', null)])])],
-            [opPatch(33, [opPatch(0, null)])]
-          )
+            [opPatch(33, [opPatch(0, null)])],
+          ),
         ];
 
         decisions.resolveCommonPaths(decs);
@@ -341,43 +360,33 @@ describe('merge', () => {
         expect(decs[0].absolutePath).toEqual(['a', 0]);
         expect(decs[1].absolutePath).toEqual([33, 0, 'foo']);
       });
-
     });
 
     describe('pushPatchDecision', () => {
-
-      let simpleDecision : decisions.IMergeDecision = {
-          local_diff: [opAddRange(3, ['line 4\n'])],
-          remote_diff: [opAddRange(3, ['alternative line 4\n'])],
-          common_path: ['cells', 3, 'source']
-        };
+      let simpleDecision: decisions.IMergeDecision = {
+        local_diff: [opAddRange(3, ['line 4\n'])],
+        remote_diff: [opAddRange(3, ['alternative line 4\n'])],
+        common_path: ['cells', 3, 'source'],
+      };
 
       it('should push a single level prefix', () => {
         let dec = new decisions.MergeDecision(simpleDecision);
         let value = decisions.pushPatchDecision(dec, ['source']);
-        expect(value.absolutePath).toEqual(
-          ['cells', 3]
-        );
-        expect(value.localDiff).toEqual(
-          [opPatch('source', dec.localDiff)]
-        );
-        expect(value.remoteDiff).toEqual(
-          [opPatch('source', dec.remoteDiff)]
-        );
+        expect(value.absolutePath).toEqual(['cells', 3]);
+        expect(value.localDiff).toEqual([opPatch('source', dec.localDiff)]);
+        expect(value.remoteDiff).toEqual([opPatch('source', dec.remoteDiff)]);
       });
 
       it('should push a multi-level prefix', () => {
         let dec = new decisions.MergeDecision(simpleDecision);
         let value = decisions.pushPatchDecision(dec, ['cells', 3, 'source']);
         expect(value.absolutePath).toEqual([]);
-        expect(value.localDiff).toEqual(
-          [opPatch('cells', [opPatch(3,
-            [opPatch('source', dec.localDiff)])])]
-        );
-        expect(value.remoteDiff).toEqual(
-          [opPatch('cells', [opPatch(3,
-            [opPatch('source', dec.remoteDiff)])])]
-        );
+        expect(value.localDiff).toEqual([
+          opPatch('cells', [opPatch(3, [opPatch('source', dec.localDiff)])]),
+        ]);
+        expect(value.remoteDiff).toEqual([
+          opPatch('cells', [opPatch(3, [opPatch('source', dec.remoteDiff)])]),
+        ]);
       });
 
       it('should only change path if diffs are missing', () => {
@@ -395,65 +404,68 @@ describe('merge', () => {
         dec.customDiff = dec.localDiff;
         dec.localDiff = dec.remoteDiff = null;
         let value = decisions.pushPatchDecision(dec, ['source']);
-        expect(value.absolutePath).toEqual(
-          ['cells', 3]
-        );
-        expect(value.customDiff).toEqual(
-          [opPatch('source', dec.customDiff)]
-        );
+        expect(value.absolutePath).toEqual(['cells', 3]);
+        expect(value.customDiff).toEqual([opPatch('source', dec.customDiff)]);
       });
 
       it('should fail to push an invalid prefix', () => {
         let dec = new decisions.MergeDecision(simpleDecision);
-        expect(() => {decisions.pushPatchDecision(
-          dec, ['cells'])}).toThrow(
-            /Cannot push a patch that doesn\'t correspond to a key in the decision path!/
-          );
+        expect(() => {
+          decisions.pushPatchDecision(dec, ['cells']);
+        }).toThrow(
+          /Cannot push a patch that doesn\'t correspond to a key in the decision path!/,
+        );
       });
 
       it('should fail to push a prefix longer than path', () => {
         let dec = new decisions.MergeDecision(simpleDecision);
-        expect(() => {decisions.pushPatchDecision(
-          dec, ['/', 'cells', 3, 'source'])}).toThrow(
-            /Cannot remove key from empty decision path: /
-          );
+        expect(() => {
+          decisions.pushPatchDecision(dec, ['/', 'cells', 3, 'source']);
+        }).toThrow(/Cannot remove key from empty decision path: /);
       });
-
     });
 
     describe('buildDiffs', () => {
       let base = {
         source: 'line 1\nline 2\nline 3 is longer\n',
         metadata: {
-          secret: 'foo!'
-        }
+          secret: 'foo!',
+        },
       };
 
-      let simpleDecision : decisions.IMergeDecision = {
+      let simpleDecision: decisions.IMergeDecision = {
         local_diff: [opAddRange(3, ['line 4\n'])],
         remote_diff: [opAddRange(3, ['alternative line 4\n'])],
-        common_path: ['source']
+        common_path: ['source'],
       };
 
       it('should build a simple local diff irregardless of action', () => {
         let dec = new decisions.MergeDecision(simpleDecision);
-        for (let a of ['base', 'local', 'remote', 'clear', 'local_then_remote']) {
+        for (let a of [
+          'base',
+          'local',
+          'remote',
+          'clear',
+          'local_then_remote',
+        ]) {
           dec.action = a as any;
           let value = decisions.buildDiffs(base, [dec], 'local');
-          expect(value).toEqual(
-            [opPatch('source', dec.localDiff)]
-          );
+          expect(value).toEqual([opPatch('source', dec.localDiff)]);
         }
       });
 
       it('should build a simple remote diff irregardless of action', () => {
         let dec = new decisions.MergeDecision(simpleDecision);
-        for (let a of ['base', 'local', 'remote', 'clear', 'local_then_remote']) {
+        for (let a of [
+          'base',
+          'local',
+          'remote',
+          'clear',
+          'local_then_remote',
+        ]) {
           dec.action = a as any;
           let value = decisions.buildDiffs(base, [dec], 'remote');
-          expect(value).toEqual(
-            [opPatch('source', dec.remoteDiff)]
-          );
+          expect(value).toEqual([opPatch('source', dec.remoteDiff)]);
         }
       });
 
@@ -461,18 +473,14 @@ describe('merge', () => {
         let dec = new decisions.MergeDecision(simpleDecision);
         dec.action = 'local';
         let value = decisions.buildDiffs(base, [dec], 'merged');
-        expect(value).toEqual(
-          [opPatch('source', dec.localDiff)]
-        );
+        expect(value).toEqual([opPatch('source', dec.localDiff)]);
       });
 
       it('should build a simple merged diff for remote decision', () => {
         let dec = new decisions.MergeDecision(simpleDecision);
         dec.action = 'remote';
         let value = decisions.buildDiffs(base, [dec], 'merged');
-        expect(value).toEqual(
-          [opPatch('source', dec.remoteDiff)]
-        );
+        expect(value).toEqual([opPatch('source', dec.remoteDiff)]);
       });
 
       it('should build a simple merged diff for custom decision', () => {
@@ -480,9 +488,7 @@ describe('merge', () => {
         dec.customDiff = dec.localDiff;
         dec.action = 'custom';
         let value = decisions.buildDiffs(base, [dec], 'merged');
-        expect(value).toEqual(
-          [opPatch('source', dec.customDiff)]
-        );
+        expect(value).toEqual([opPatch('source', dec.customDiff)]);
       });
 
       it('should build an empty merged diff for base decision', () => {
@@ -495,18 +501,18 @@ describe('merge', () => {
         let dec = new decisions.MergeDecision(simpleDecision);
         dec.action = 'local_then_remote';
         let value = decisions.buildDiffs(base, [dec], 'merged');
-        expect(value).toEqual(
-          [opPatch('source', dec.localDiff!.concat(dec.remoteDiff!))]
-        );
+        expect(value).toEqual([
+          opPatch('source', dec.localDiff!.concat(dec.remoteDiff!)),
+        ]);
       });
 
       it('should build an interleaved merged diff for remote_then_local decision', () => {
         let dec = new decisions.MergeDecision(simpleDecision);
         dec.action = 'remote_then_local';
         let value = decisions.buildDiffs(base, [dec], 'merged');
-        expect(value).toEqual(
-          [opPatch('source', dec.remoteDiff!.concat(dec.localDiff!))]
-        );
+        expect(value).toEqual([
+          opPatch('source', dec.remoteDiff!.concat(dec.localDiff!)),
+        ]);
       });
 
       it('should build a diff for a clear_parent decision on a string', () => {
@@ -515,20 +521,16 @@ describe('merge', () => {
         let value = decisions.buildDiffs(base, [dec], 'merged');
         let expectedInner = opRemoveRange(0, 4);
         expectedInner.source = { decision: dec, action: 'custom' };
-        expect(value).toEqual(
-          [opPatch('source', [expectedInner])]
-        );
+        expect(value).toEqual([opPatch('source', [expectedInner])]);
       });
-
     });
 
     describe('filterDecisions', () => {
-
       let paths = [
         ['cells', 0, 'outputs', 0],
         ['cells', 0, 'outputs', 1],
         ['cells', 2, 'outputs', 1],
-        ['cells', 12, 'outputs', 0, 'data']
+        ['cells', 12, 'outputs', 0, 'data'],
       ];
 
       let decs: decisions.MergeDecision[] = [];
@@ -572,62 +574,50 @@ describe('merge', () => {
           expect(d.level).toBe(4);
         }
       });
-
     });
 
     describe('applyDecisions', () => {
       let baseObject = {
         source: 'line 1\nline 2\nline 3 is longer\n',
         metadata: {
-          secret: 'foo!'
-        }
+          secret: 'foo!',
+        },
       };
 
-      let simpleObjectDecision : decisions.IMergeDecision = {
-          local_diff: [opAddRange(3, ['line 4\n'])],
-          remote_diff: [opAddRange(3, ['alternative line 4\n'])],
-          common_path: ['source']
-        };
+      let simpleObjectDecision: decisions.IMergeDecision = {
+        local_diff: [opAddRange(3, ['line 4\n'])],
+        remote_diff: [opAddRange(3, ['alternative line 4\n'])],
+        common_path: ['source'],
+      };
 
-      it('should apply \'base\' action on object', () => {
-        let decs = [new decisions.MergeDecision(
-          simpleObjectDecision
-        )];
+      it("should apply 'base' action on object", () => {
+        let decs = [new decisions.MergeDecision(simpleObjectDecision)];
         let value = decisions.applyDecisions(baseObject, decs);
         expect(value).toEqual(baseObject);
       });
 
-      it('should apply \'local\' action on object', () => {
-        let decs = [new decisions.MergeDecision(
-          simpleObjectDecision
-        )];
+      it("should apply 'local' action on object", () => {
+        let decs = [new decisions.MergeDecision(simpleObjectDecision)];
         decs[0].action = 'local';
         let value = decisions.applyDecisions(baseObject, decs);
-        expect(value.source).toEqual(
-          baseObject.source + 'line 4\n'
-        );
+        expect(value.source).toEqual(baseObject.source + 'line 4\n');
       });
 
-      it('should apply \'remote\' action on object', () => {
-        let decs = [new decisions.MergeDecision(
-          simpleObjectDecision
-        )];
+      it("should apply 'remote' action on object", () => {
+        let decs = [new decisions.MergeDecision(simpleObjectDecision)];
         decs[0].action = 'remote';
         let value = decisions.applyDecisions(baseObject, decs);
         expect(value.source).toEqual(
-          baseObject.source + 'alternative line 4\n'
+          baseObject.source + 'alternative line 4\n',
         );
       });
 
-      it('should apply \'either\' action on object', () => {
-        let decs = [new decisions.MergeDecision(
-          simpleObjectDecision
-        )];
+      it("should apply 'either' action on object", () => {
+        let decs = [new decisions.MergeDecision(simpleObjectDecision)];
         decs[0].remoteDiff = decs[0].localDiff;
         decs[0].action = 'either';
         let value = decisions.applyDecisions(baseObject, decs);
-        expect(value.source).toEqual(
-          baseObject.source + 'line 4\n');
+        expect(value.source).toEqual(baseObject.source + 'line 4\n');
       });
 
       it('should handle multiple decisions with shared path', () => {
@@ -635,26 +625,26 @@ describe('merge', () => {
           new decisions.MergeDecision({
             local_diff: [opAddRange(0, ['top '])],
             remote_diff: [opAddRange(0, ['not '])],
-            common_path: ['metadata', 'secret']
+            common_path: ['metadata', 'secret'],
           }),
           new decisions.MergeDecision({
             local_diff: [opAdd('foo', true)],
             remote_diff: [opAdd('foo', true)],
-            common_path: ['metadata']
+            common_path: ['metadata'],
           }),
           new decisions.MergeDecision({
             local_diff: [opRemoveRange(0, 1)],
-            common_path: ['seq']
+            common_path: ['seq'],
           }),
           new decisions.MergeDecision({
             local_diff: [opRemoveRange(1, 1)],
             remote_diff: [opRemoveRange(1, 1)],
-            common_path: ['seq']
+            common_path: ['seq'],
           }),
           new decisions.MergeDecision({
             local_diff: [opAdd('bar', 43)],
             remote_diff: [opAdd('bar', 12)],
-            common_path: ['metadata']
+            common_path: ['metadata'],
           }),
         ];
         decs[0].action = 'local';
@@ -662,7 +652,10 @@ describe('merge', () => {
         decs[2].action = 'local';
         decs[3].action = 'either';
         decs[4].action = 'local';
-        let value = decisions.applyDecisions({...baseObject, seq: ['foo', 'bar']}, decs);
+        let value = decisions.applyDecisions(
+          { ...baseObject, seq: ['foo', 'bar'] },
+          decs,
+        );
         expect(value.metadata).toEqual({
           foo: true,
           bar: 43,
@@ -670,9 +663,6 @@ describe('merge', () => {
         });
         expect(value.seq).toEqual([]);
       });
-
     });
-
   });
-
 });

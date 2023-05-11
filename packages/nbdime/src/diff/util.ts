@@ -3,12 +3,19 @@
 'use strict';
 
 import {
-  sortByKey, shallowCopy, accumulateLengths, splitLines
+  sortByKey,
+  shallowCopy,
+  accumulateLengths,
+  splitLines,
 } from '../common/util';
 
 import {
-  IDiffEntry, IDiffArrayEntry, IDiffPatch,
-  opAddRange, opRemoveRange, validateSequenceOp
+  IDiffEntry,
+  IDiffArrayEntry,
+  IDiffPatch,
+  opAddRange,
+  opRemoveRange,
+  validateSequenceOp,
 } from './diffentries';
 
 /**
@@ -16,18 +23,19 @@ import {
  */
 export const JSON_INDENT = '  ';
 
-
 /**
  * Search the list of diffs for an entry with the given key.
  *
  * Returns the first found entry, or null if not entry was found.
  */
-export
-function getSubDiffByKey(diff: IDiffEntry[] | null, key: string | number) : IDiffEntry[] | null {
+export function getSubDiffByKey(
+  diff: IDiffEntry[] | null,
+  key: string | number,
+): IDiffEntry[] | null {
   if (!diff) {
     return null;
   }
-  for (let i=0; i < diff.length; ++i) {
+  for (let i = 0; i < diff.length; ++i) {
     if (diff[i].key === key) {
       return (diff[i] as IDiffPatch).diff || null;
     }
@@ -40,12 +48,14 @@ function getSubDiffByKey(diff: IDiffEntry[] | null, key: string | number) : IDif
  *
  * Returns the first found entry, or null if not entry was found.
  */
-export
-function getDiffEntryByKey(diff: IDiffEntry[] | null, key: string | number) : IDiffEntry | null {
+export function getDiffEntryByKey(
+  diff: IDiffEntry[] | null,
+  key: string | number,
+): IDiffEntry | null {
   if (!diff) {
     return null;
   }
-  for (let i=0; i < diff.length; ++i) {
+  for (let i = 0; i < diff.length; ++i) {
     if (diff[i].key === key) {
       return diff[i];
     }
@@ -53,8 +63,11 @@ function getDiffEntryByKey(diff: IDiffEntry[] | null, key: string | number) : ID
   return null;
 }
 
-
-function validateStringDiff(base: string[], entry: IDiffArrayEntry, lineToChar: number[]): void {
+function validateStringDiff(
+  base: string[],
+  entry: IDiffArrayEntry,
+  lineToChar: number[],
+): void {
   // First valdiate line ops:
   validateSequenceOp(base, entry);
 
@@ -72,8 +85,7 @@ function validateStringDiff(base: string[], entry: IDiffArrayEntry, lineToChar: 
 /**
  * Remove the merge source indicator from a diff (returns a copy).
  */
-export
-function stripSource(diff: IDiffEntry[] | null): IDiffEntry[] | null {
+export function stripSource(diff: IDiffEntry[] | null): IDiffEntry[] | null {
   if (!diff) {
     return null;
   }
@@ -83,7 +95,7 @@ function stripSource(diff: IDiffEntry[] | null): IDiffEntry[] | null {
       ret.push({
         key: e.key,
         op: e.op,
-        diff: stripSource(e.diff)
+        diff: stripSource(e.diff),
       });
     } else {
       let d = shallowCopy(e);
@@ -94,14 +106,14 @@ function stripSource(diff: IDiffEntry[] | null): IDiffEntry[] | null {
   return ret;
 }
 
-
 /**
  * Translates a diff of strings split by str.splitlines() to a diff of the
  * joined multiline string
  */
-export
-function flattenStringDiff(val: string[] | string, diff: IDiffArrayEntry[]): IDiffArrayEntry[] {
-
+export function flattenStringDiff(
+  val: string[] | string,
+  diff: IDiffArrayEntry[],
+): IDiffArrayEntry[] {
   if (typeof val === 'string') {
     val = splitLines(val);
   }
@@ -124,12 +136,11 @@ function flattenStringDiff(val: string[] | string, diff: IDiffArrayEntry[]): IDi
       // Other ops simply have keys which refer to lines
       let d: IDiffEntry | null = null;
       if (e.op === 'addrange') {
-        d = opAddRange(lineOffset,
-                       (e.valuelist as any[]).join(''));
-      } else { // e.op === 'removerange'
+        d = opAddRange(lineOffset, (e.valuelist as any[]).join(''));
+      } else {
+        // e.op === 'removerange'
         let idx = e.key + e.length;
-        d = opRemoveRange(lineOffset,
-                          lineToChar[idx] - lineOffset);
+        d = opRemoveRange(lineOffset, lineToChar[idx] - lineOffset);
       }
       d.source = e.source;
       flattened.push(d);

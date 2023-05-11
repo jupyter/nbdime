@@ -5,7 +5,7 @@
       {
         "key": 13,
         "valuelist": " ",
-         "op": "addrange"
+        "op": "addrange"
       },
       {
         "key": 14,

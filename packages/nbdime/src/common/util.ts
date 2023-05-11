@@ -2,32 +2,32 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-export
-interface DeepCopyableObject {
+export interface DeepCopyableObject {
   [key: string]: any | undefined;
   prototype?: DeepCopyableObject;
 }
 
-export
-type DeepCopyableValue = DeepCopyableObject | DeepCopyableObject[] | string | number | boolean | null;
+export type DeepCopyableValue =
+  | DeepCopyableObject
+  | DeepCopyableObject[]
+  | string
+  | number
+  | boolean
+  | null;
 
 /**
  * Check whether a value is in an array.
  */
-export
-function valueIn(value: any, array: Array<any>) {
+export function valueIn(value: any, array: Array<any>) {
   return array.indexOf(value) >= 0;
 }
-
 
 /**
  * Check whether array is null or empty, and type guards agains null
  */
-export
-function hasEntries<T>(array: T[] | null): array is T[] {
+export function hasEntries<T>(array: T[] | null): array is T[] {
   return array !== null && array.length !== 0;
 }
-
 
 /**
  * Splits a multinline string into an array of lines
@@ -36,8 +36,7 @@ function hasEntries<T>(array: T[] | null): array is T[] {
  * @param {string} multiline
  * @returns {string[]}
  */
-export
-function splitLines(multiline: string): string[] {
+export function splitLines(multiline: string): string[] {
   // Split lines (retaining newlines)
   // We use !postfix, as we also match empty string,
   // so we are guaranteed to get at elast one match
@@ -82,8 +81,7 @@ export function deepCopy<T extends DeepCopyableValue>(obj: T | null): T | null {
 /**
  * Shallow copy routine for objects
  */
-export
-function shallowCopy< T extends { [key: string]: any } >(original: T): T {
+export function shallowCopy<T extends { [key: string]: any }>(original: T): T {
   // First create an empty object with
   // same prototype of our original source
   let clone = Object.create(Object.getPrototypeOf(original));
@@ -91,9 +89,12 @@ function shallowCopy< T extends { [key: string]: any } >(original: T): T {
   for (let k in original) {
     // Don't copy function
     let ok = original[k];
-    if (ok !== null && ok !== undefined &&
-        ok.hasOwnProperty('constructor') &&
-        ok.constructor === Function) {
+    if (
+      ok !== null &&
+      ok !== undefined &&
+      ok.hasOwnProperty('constructor') &&
+      ok.constructor === Function
+    ) {
       continue;
     }
     let pDesc = Object.getOwnPropertyDescriptor(original, k);
@@ -110,8 +111,7 @@ function shallowCopy< T extends { [key: string]: any } >(original: T): T {
 /**
  * Do a shallow, element-wise equality comparison on two arrays.
  */
-export
-function arraysEqual(a: any[] | null, b: any[] | null) {
+export function arraysEqual(a: any[] | null, b: any[] | null) {
   if (a === b) {
     return true;
   }
@@ -129,16 +129,18 @@ function arraysEqual(a: any[] | null, b: any[] | null) {
   return true;
 }
 
-
 /**
  * Find the shared common starting sequence in two arrays
  */
-export
-function findSharedPrefix(a: any[] | null, b: any[] | null): any[] | null {
+export function findSharedPrefix(
+  a: any[] | null,
+  b: any[] | null,
+): any[] | null {
   if (a === null || b === null) {
     return null;
   }
-  if (a === b) {  // Only checking for instance equality
+  if (a === b) {
+    // Only checking for instance equality
     return a.slice();
   }
   let i = 0;
@@ -157,8 +159,10 @@ function findSharedPrefix(a: any[] | null, b: any[] | null): any[] | null {
  * be the parent in a tree-view of values, e.g. a path. In other words, parent
  * is a subsequence of child.
  */
-export
-function isPrefixArray(parent: any[] | null, child: any[] | null): boolean {
+export function isPrefixArray(
+  parent: any[] | null,
+  child: any[] | null,
+): boolean {
   if (parent === child) {
     return true;
   }
@@ -179,20 +183,21 @@ function isPrefixArray(parent: any[] | null, child: any[] | null): boolean {
 /**
  * Sort array by attribute `key` (i.e. compare by array[0][key] < array[1][key]). Stable.
  */
-export
-function sortByKey<T extends {[key: string]: any}>(array: T[], key: string): T[] {
-    return stableSort(array, function(a, b) {
-        let x = a[key]; let y = b[key];
-        return ((x < y) ? -1 : ((x > y) ? 1 : 0));
-    });
+export function sortByKey<T extends { [key: string]: any }>(
+  array: T[],
+  key: string,
+): T[] {
+  return stableSort(array, function (a, b) {
+    let x = a[key];
+    let y = b[key];
+    return x < y ? -1 : x > y ? 1 : 0;
+  });
 }
-
 
 /**
  * Utility function to repeat a string
  */
-export
-function repeatString(str: string, count: number): string {
+export function repeatString(str: string, count: number): string {
   if (count < 1) {
     return '';
   }
@@ -202,7 +207,7 @@ function repeatString(str: string, count: number): string {
     if (count & 1) {
       result += pattern;
     }
-    count >>= 1, pattern += pattern;
+    (count >>= 1), (pattern += pattern);
   }
   return result + pattern;
 }
@@ -214,11 +219,10 @@ function repeatString(str: string, count: number): string {
  *   For the arary ['ab', '123', 'y', '\t\nfoo'], the output would be
  *   [2, 5, 6, 11]
  */
-export
-function accumulateLengths(arr: string[]) {
+export function accumulateLengths(arr: string[]) {
   let ret: number[] = [];
-  arr.reduce<number>(function(a: number, b: string, i: number): number {
-    return ret[i] = a + b.length;
+  arr.reduce<number>(function (a: number, b: string, i: number): number {
+    return (ret[i] = a + b.length);
   }, 0);
   return ret;
 }
@@ -226,16 +230,14 @@ function accumulateLengths(arr: string[]) {
 /**
  * Filter for Array.filter to only have unique values
  */
-export
-function unique<T>(value: T, index: number, self: T[]): boolean {
+export function unique<T>(value: T, index: number, self: T[]): boolean {
   return self.indexOf(value) === index;
 }
 
 /**
  * Return the intersection of two arrays (with no duplicates)
  */
-export
-function intersection<T>(a: T[], b: T[]): T[] {
+export function intersection<T>(a: T[], b: T[]): T[] {
   let ret: T[] = [];
   // Loop over longest, so that indexOf works on shortest
   [a, b] = a.length > b.length ? [a, b] : [b, a];
@@ -247,35 +249,39 @@ function intersection<T>(a: T[], b: T[]): T[] {
   return ret;
 }
 
-
 /**
  * Similar to Array.sort, but guaranteed to keep order stable
  * when compare function returns 0
  */
-export
-function stableSort<T>(arr: T[], compare: (a: T, b: T) => number): T[] {
-  let sorters: {index: number, key: T}[] = [];
-  for (let i=0; i < arr.length; ++i) {
-    sorters.push({index: i, key: arr[i]});
+export function stableSort<T>(arr: T[], compare: (a: T, b: T) => number): T[] {
+  let sorters: { index: number; key: T }[] = [];
+  for (let i = 0; i < arr.length; ++i) {
+    sorters.push({ index: i, key: arr[i] });
   }
-  sorters = sorters.sort((a: {index: number, key: T}, b: {index: number, key: T}): number => {
-    return compare(a.key, b.key) || a.index - b.index;
-  });
+  sorters = sorters.sort(
+    (a: { index: number; key: T }, b: { index: number; key: T }): number => {
+      return compare(a.key, b.key) || a.index - b.index;
+    },
+  );
   let out: T[] = new Array<T>(arr.length);
-  for (let i=0; i < arr.length; ++i) {
+  for (let i = 0; i < arr.length; ++i) {
     out[i] = arr[sorters[i].index];
   }
   return out;
 }
 
-
 /**
  * Copy an object, possibly extending it in the process
  */
-export function copyObj<T extends {[key: string]: any}>(obj: T): T;
-export function copyObj<T extends {[key: string]: any}, U extends {[key: string]: any}>
-(obj: T, target?: U): T & U;
-export function copyObj(obj: {[key: string]: any}, target?: {[key: string]: any}): any {
+export function copyObj<T extends { [key: string]: any }>(obj: T): T;
+export function copyObj<
+  T extends { [key: string]: any },
+  U extends { [key: string]: any },
+>(obj: T, target?: U): T & U;
+export function copyObj(
+  obj: { [key: string]: any },
+  target?: { [key: string]: any },
+): any {
   if (!target) {
     target = {};
   }
@@ -287,12 +293,13 @@ export function copyObj(obj: {[key: string]: any}, target?: {[key: string]: any}
   return target;
 }
 
-
 /**
  * Create or populate a select element with string options
  */
-export
-function buildSelect(options: string[], select?: HTMLSelectElement): HTMLSelectElement {
+export function buildSelect(
+  options: string[],
+  select?: HTMLSelectElement,
+): HTMLSelectElement {
   if (select === undefined) {
     select = document.createElement('select');
   }

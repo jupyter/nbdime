@@ -4,30 +4,26 @@
 
 import type * as nbformat from '@jupyterlab/nbformat';
 
-import type {
-  IDiffEntry
-} from '../../diff/diffentries';
+import type { IDiffEntry } from '../../diff/diffentries';
 
 import {
-  IStringDiffModel, createPatchStringDiffModel,
-  createDirectStringDiffModel
+  IStringDiffModel,
+  createPatchStringDiffModel,
+  createDirectStringDiffModel,
 } from '../../diff/model';
 
-import type {
-  MergeDecision
-} from '../../merge/decisions';
+import type { MergeDecision } from '../../merge/decisions';
 
-import {
-    ObjectMergeModel, DecisionStringDiffModel
-} from './common';
+import { ObjectMergeModel, DecisionStringDiffModel } from './common';
 import { JSONObject, JSONExt } from '@lumino/coreutils';
-
 
 /**
  * Model of a merge of metadata with decisions
  */
-export
-class MetadataMergeModel extends ObjectMergeModel<nbformat.INotebookMetadata, IStringDiffModel> {
+export class MetadataMergeModel extends ObjectMergeModel<
+  nbformat.INotebookMetadata,
+  IStringDiffModel
+> {
   constructor(base: nbformat.INotebookMetadata, decisions: MergeDecision[]) {
     super(base, decisions, 'application/json');
   }
@@ -46,15 +42,16 @@ class MetadataMergeModel extends ObjectMergeModel<nbformat.INotebookMetadata, IS
     if (diff && diff.length > 0) {
       return createPatchStringDiffModel(this.base, diff);
     } else {
-      const baseCopy = JSONExt.deepCopy(this.base) as JSONObject
+      const baseCopy = JSONExt.deepCopy(this.base) as JSONObject;
       return createDirectStringDiffModel(baseCopy, baseCopy);
     }
   }
 
   protected createMergedDiffModel(): IStringDiffModel {
-    return new DecisionStringDiffModel(
-      this.base, this.decisions,
-      [this.local, this.remote]);
+    return new DecisionStringDiffModel(this.base, this.decisions, [
+      this.local,
+      this.remote,
+    ]);
   }
 
   declare base: nbformat.INotebookMetadata;

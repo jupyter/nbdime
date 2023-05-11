@@ -1,20 +1,19 @@
-
 import {
-  IDiffEntry, DiffCollection, IDiffArrayEntry, opRemoveRange
+  IDiffEntry,
+  DiffCollection,
+  IDiffArrayEntry,
+  opRemoveRange,
 } from '../diff/diffentries';
 
-import {
-  MergeDecision, buildDiffs, pushPath
-} from '../merge/decisions';
+import { MergeDecision, buildDiffs, pushPath } from '../merge/decisions';
 
-import {
-  hasEntries, valueIn, unique
-} from '../common/util';
+import { hasEntries, valueIn, unique } from '../common/util';
 
-
-export
-type MergeChunk = {baseStart: number, baseEnd: number, diffs: DiffCollection}
-
+export type MergeChunk = {
+  baseStart: number;
+  baseEnd: number;
+  diffs: DiffCollection;
+};
 
 function anyDiffs(diffs: DiffCollection): boolean {
   for (let d of diffs) {
@@ -44,8 +43,10 @@ function getSectionBoundaries(diffs: IDiffArrayEntry[]) {
   return boundaries.filter(unique);
 }
 
-
-function splitDiffsOnBoundaries(diffs: IDiffArrayEntry[], boundaries: number[]): IDiffArrayEntry[] {
+function splitDiffsOnBoundaries(
+  diffs: IDiffArrayEntry[],
+  boundaries: number[],
+): IDiffArrayEntry[] {
   let newdiffs: IDiffArrayEntry[] = [];
   if (!Array.isArray(boundaries)) {
     throw new Error();
@@ -70,9 +71,13 @@ function splitDiffsOnBoundaries(diffs: IDiffArrayEntry[], boundaries: number[]):
       }
 
       // Add diff entries for each interval between boundaries up to k
-      while (b < boundaries.length - 1 && boundaries[b + 1] <= e.key + e.length) {
-        newdiffs.push(opRemoveRange(boundaries[b],
-                                    boundaries[b + 1] - boundaries[b]));
+      while (
+        b < boundaries.length - 1 &&
+        boundaries[b + 1] <= e.key + e.length
+      ) {
+        newdiffs.push(
+          opRemoveRange(boundaries[b], boundaries[b + 1] - boundaries[b]),
+        );
         b += 1;
       }
     } else {
@@ -82,7 +87,6 @@ function splitDiffsOnBoundaries(diffs: IDiffArrayEntry[], boundaries: number[]):
 
   return newdiffs;
 }
-
 
 /**
  * Make list of chunks on the form (j, k, diffs0, diffs1, ..., diffsN),
@@ -98,16 +102,19 @@ function splitDiffsOnBoundaries(diffs: IDiffArrayEntry[], boundaries: number[]):
  * just before an item that is removed or modified.
  */
 function makeChunks(boundaries: number[], diffs: DiffCollection): MergeChunk[] {
-  let iDiffs: number[] = Array.apply(null, Array(diffs.length)).map(Number.prototype.valueOf, 0);
+  let iDiffs: number[] = Array.apply(null, Array(diffs.length)).map(
+    Number.prototype.valueOf,
+    0,
+  );
   let chunks: MergeChunk[] = [];
-  for (let i=0; i < boundaries.length; ++i) {
+  for (let i = 0; i < boundaries.length; ++i) {
     // Find span of next chunk
     let j = boundaries[i];
-    let k = (i < boundaries.length - 1) ? boundaries[i + 1] : j;
+    let k = i < boundaries.length - 1 ? boundaries[i + 1] : j;
     // Collect diff entries from each side
     // starting at beginning of this chunk
     let subDiffs: DiffCollection = [];
-    for (let m=0; m < diffs.length; ++m) {
+    for (let m = 0; m < diffs.length; ++m) {
       let d = diffs[m];
       let dis: IDiffEntry[] = [];
       while (d && iDiffs[m] < d.length && d[iDiffs[m]].key === j) {
@@ -118,13 +125,12 @@ function makeChunks(boundaries: number[], diffs: DiffCollection): MergeChunk[] {
     }
     // Add non-empty chunks
     if (anyDiffs(subDiffs)) {
-      let c = {baseStart: j, baseEnd: k, diffs: subDiffs};
+      let c = { baseStart: j, baseEnd: k, diffs: subDiffs };
       chunks.push(c);
     }
   }
   return chunks;
 }
-
 
 /**
  * Return list of chunks (i, j, d0, d1, ..., dn) where dX are
@@ -154,7 +160,9 @@ function makeMergeChunks(base: any[], diffs: DiffCollection): MergeChunk[] {
   let splitDiffs: DiffCollection = [];
   for (let d of diffs) {
     if (hasEntries(d)) {
-      splitDiffs.push(splitDiffsOnBoundaries(d as IDiffArrayEntry[], boundaries));
+      splitDiffs.push(
+        splitDiffsOnBoundaries(d as IDiffArrayEntry[], boundaries),
+      );
     } else {
       splitDiffs.push(d);
     }
@@ -166,7 +174,11 @@ function makeMergeChunks(base: any[], diffs: DiffCollection): MergeChunk[] {
   return chunks;
 }
 
-function splitDecisionByChunks(base: any[], decision: MergeDecision, chunks: MergeChunk[]): MergeDecision[] {
+function splitDecisionByChunks(
+  base: any[],
+  decision: MergeDecision,
+  chunks: MergeChunk[],
+): MergeDecision[] {
   if (chunks.length < 2) {
     return [decision];
   }
@@ -178,30 +190,34 @@ function splitDecisionByChunks(base: any[], decision: MergeDecision, chunks: Mer
         cd = pushPath(cd, decision.localPath);
       }
       // Split custom diff according to chunk lines
-      let boundaries =
-        [0, base.length, c.baseStart, c.baseEnd].filter(unique).sort();
+      let boundaries = [0, base.length, c.baseStart, c.baseEnd]
+        .filter(unique)
+        .sort();
       cd = splitDiffsOnBoundaries(cd as IDiffArrayEntry[], boundaries);
     }
-    out.push(new MergeDecision(
-      decision.absolutePath.slice(),
-      c.diffs[0],
-      c.diffs[1],
-      decision.action,
-      decision.conflict
-    ));
+    out.push(
+      new MergeDecision(
+        decision.absolutePath.slice(),
+        c.diffs[0],
+        c.diffs[1],
+        decision.action,
+        decision.conflict,
+      ),
+    );
   }
   return out;
 }
 
-
-export
-function splitMergeDecisionsOnChunks(base: any[], decisions: MergeDecision[]): MergeDecision[] {
+export function splitMergeDecisionsOnChunks(
+  base: any[],
+  decisions: MergeDecision[],
+): MergeDecision[] {
   let out: MergeDecision[] = [];
 
   for (let md of decisions) {
     let diffs: DiffCollection = [
       buildDiffs(base, [md], 'local'),
-      buildDiffs(base, [md], 'remote')
+      buildDiffs(base, [md], 'remote'),
     ];
     let chunks = makeMergeChunks(base, diffs);
     out = out.concat(splitDecisionByChunks(base, md, chunks));

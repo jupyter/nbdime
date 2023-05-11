@@ -7,29 +7,33 @@
 
 'use strict';
 
-
 import {
-  IDiffEntry, IDiffObjectEntry, IDiffPatch, opRemove, opReplace,
-  opRemoveRange, opPatch, DiffCollection
+  IDiffEntry,
+  IDiffObjectEntry,
+  IDiffPatch,
+  opRemove,
+  opReplace,
+  opRemoveRange,
+  opPatch,
+  DiffCollection,
 } from '../diff/diffentries';
 
-import {
-  getSubDiffByKey, stripSource
-} from '../diff/util';
+import { getSubDiffByKey, stripSource } from '../diff/util';
+
+import { patch } from '../patch';
 
 import {
-  patch
-} from '../patch';
-
-import {
-  arraysEqual, deepCopy, valueIn, isPrefixArray, findSharedPrefix, splitLines
+  arraysEqual,
+  deepCopy,
+  valueIn,
+  isPrefixArray,
+  findSharedPrefix,
+  splitLines,
 } from '../common/util';
 
-export
-type DecisionPath = (string | number)[];
+export type DecisionPath = (string | number)[];
 
-export
-interface IMergeDecision {
+export interface IMergeDecision {
   local_diff?: IDiffEntry[] | null;
   remote_diff?: IDiffEntry[] | null;
 
@@ -44,14 +48,31 @@ interface IMergeDecision {
   similar_insert?: IDiffEntry[] | null;
 }
 
-export
-type Action = 'base' | 'local' | 'remote' | 'local_then_remote' |
-  'remote_then_local' | 'custom' | 'clear' | 'clear_parent' | 'either';
-
+export type Action =
+  | 'base'
+  | 'local'
+  | 'remote'
+  | 'local_then_remote'
+  | 'remote_then_local'
+  | 'custom'
+  | 'clear'
+  | 'clear_parent'
+  | 'either';
 
 function validateAction(action: string): Action {
-  if (valueIn(action, ['base', 'local', 'remote', 'local_then_remote',
-  'remote_then_local', 'custom', 'clear', 'clear_parent', 'either'])) {
+  if (
+    valueIn(action, [
+      'base',
+      'local',
+      'remote',
+      'local_then_remote',
+      'remote_then_local',
+      'custom',
+      'clear',
+      'clear_parent',
+      'either',
+    ])
+  ) {
     return action as Action;
   }
   throw new Error('Invalid merge decision action: ' + action);
@@ -64,10 +85,7 @@ function valueOrDefault<T>(value: T | undefined, defaultValue: T): T {
   return value === undefined ? defaultValue : value;
 }
 
-
-export
-class MergeDecision {
-
+export class MergeDecision {
   /**
    * Create a MergeDecision from JSON structure.
    *
@@ -76,36 +94,42 @@ class MergeDecision {
    * of all values except the common path can be overridden
    * by the additional parameters to this function.
    */
-  constructor(decision: IMergeDecision,
-              localDiff?: IDiffEntry[] | null,
-              remoteDiff?: IDiffEntry[] | null,
-              action?: Action,
-              conflict?: boolean,
-              customDiff?: IDiffEntry[] | null,
-              similarInsert?: IDiffEntry[] | null);
+  constructor(
+    decision: IMergeDecision,
+    localDiff?: IDiffEntry[] | null,
+    remoteDiff?: IDiffEntry[] | null,
+    action?: Action,
+    conflict?: boolean,
+    customDiff?: IDiffEntry[] | null,
+    similarInsert?: IDiffEntry[] | null,
+  );
   /**
    * Create a MergeDecision from values.
    *
    * Default values are used for any missing parameters.
    */
-  constructor(commonPath: DecisionPath,
-              localDiff?: IDiffEntry[] | null,
-              remoteDiff?: IDiffEntry[] | null,
-              action?: Action,
-              conflict?: boolean,
-              customDiff?: IDiffEntry[] | null,
-              similarInsert?: IDiffEntry[] | null);
+  constructor(
+    commonPath: DecisionPath,
+    localDiff?: IDiffEntry[] | null,
+    remoteDiff?: IDiffEntry[] | null,
+    action?: Action,
+    conflict?: boolean,
+    customDiff?: IDiffEntry[] | null,
+    similarInsert?: IDiffEntry[] | null,
+  );
   /**
    * MergeDecision copy constructor.
    */
   constructor(decision: MergeDecision);
-  constructor(obj: DecisionPath | IMergeDecision | MergeDecision,
-              localDiff: IDiffEntry[] | null = null,
-              remoteDiff: IDiffEntry[] | null = null,
-              action: Action = 'base',
-              conflict = false,
-              customDiff: IDiffEntry[] | null = null,
-              similarInsert: IDiffEntry[] | null = null) {
+  constructor(
+    obj: DecisionPath | IMergeDecision | MergeDecision,
+    localDiff: IDiffEntry[] | null = null,
+    remoteDiff: IDiffEntry[] | null = null,
+    action: Action = 'base',
+    conflict = false,
+    customDiff: IDiffEntry[] | null = null,
+    similarInsert: IDiffEntry[] | null = null,
+  ) {
     this.level = 0;
     if (obj instanceof Array) {
       this._path = obj;
@@ -122,8 +146,7 @@ class MergeDecision {
       this._path = valueOrDefault(obj.common_path, []);
       localDiff = valueOrDefault(obj.local_diff, localDiff);
       remoteDiff = valueOrDefault(obj.remote_diff, remoteDiff);
-      action = validateAction(
-        valueOrDefault(obj.action, action));
+      action = validateAction(valueOrDefault(obj.action, action));
       conflict = valueOrDefault(obj.conflict, conflict);
       customDiff = valueOrDefault(obj.custom_diff, customDiff);
       similarInsert = valueOrDefault(obj.similar_insert, similarInsert);
@@ -200,13 +223,12 @@ class MergeDecision {
       remote_diff: stripSource(this.remoteDiff),
       action: this.action,
       conflict: this.conflict,
-      custom_diff: stripSource(this.customDiff)
+      custom_diff: stripSource(this.customDiff),
     };
   }
 
   level: number;
 }
-
 
 /**
  * Compare to DecisionPath's for sorting.
@@ -222,11 +244,10 @@ class MergeDecision {
  *  sort first, positive number if b should sort first, or
  *  zero if the are identical.
  */
-export
-function decisionPathSortKey(a: DecisionPath, b: DecisionPath): number {
+export function decisionPathSortKey(a: DecisionPath, b: DecisionPath): number {
   if (a.length === b.length) {
     // Equally deep, sort on keys
-    for (let lvl=0; lvl < a.length; ++lvl) {
+    for (let lvl = 0; lvl < a.length; ++lvl) {
       if (a[lvl] === b[lvl]) {
         // Keys are equal, try a deeper level
         continue;
@@ -254,8 +275,7 @@ function decisionPathSortKey(a: DecisionPath, b: DecisionPath): number {
  *  sort first, positive number if b should sort first, or
  *  zero if the are identical.
  */
-export
-function decisionSortKey(a: MergeDecision, b: MergeDecision): number {
+export function decisionSortKey(a: MergeDecision, b: MergeDecision): number {
   return decisionPathSortKey(a.absolutePath, b.absolutePath);
 }
 
@@ -271,11 +291,17 @@ function decisionSortKey(a: MergeDecision, b: MergeDecision): number {
  * @param {(number | string)} [firstKey]
  * @returns {void}
  */
-export
-function addSorted(decisions: MergeDecision[], toAdd: MergeDecision, firstKey?: number | string): void {
+export function addSorted(
+  decisions: MergeDecision[],
+  toAdd: MergeDecision,
+  firstKey?: number | string,
+): void {
   let idx = 0;
   for (; idx < decisions.length; ++idx) {
-    let c = decisionPathSortKey(decisions[idx].absolutePath, toAdd.absolutePath);
+    let c = decisionPathSortKey(
+      decisions[idx].absolutePath,
+      toAdd.absolutePath,
+    );
     if (c > 0) {
       decisions.splice(idx, 0, toAdd);
       return;
@@ -292,7 +318,9 @@ function addSorted(decisions: MergeDecision[], toAdd: MergeDecision, firstKey?: 
         }
       }
       if (firstKey === key) {
-        throw new Error('Shouldn\'t have multiple decisions with diff on same key');
+        throw new Error(
+          "Shouldn't have multiple decisions with diff on same key",
+        );
       } else if (key === null || firstKey < key) {
         decisions.splice(idx, 0, toAdd);
         return;
@@ -302,10 +330,10 @@ function addSorted(decisions: MergeDecision[], toAdd: MergeDecision, firstKey?: 
   decisions.push(toAdd);
 }
 
-
-export
-function popPath(diffs: DiffCollection, popInner?: boolean):
-      {diffs: DiffCollection, key: string | number} | null {
+export function popPath(
+  diffs: DiffCollection,
+  popInner?: boolean,
+): { diffs: DiffCollection; key: string | number } | null {
   if (diffs.length < 1) {
     return null;
   }
@@ -343,9 +371,13 @@ function popPath(diffs: DiffCollection, popInner?: boolean):
     // Only pop if sub-diff has length 1 (unless popInner is true)
     if (popInner !== true) {
       for (let di of diffs) {
-        if (di && di.length > 0 && (di.length !== 1 ||
+        if (
+          di &&
+          di.length > 0 &&
+          (di.length !== 1 ||
             !(di[0] as IDiffPatch).diff ||
-            (di[0] as IDiffPatch).diff!.length !== 1)) {
+            (di[0] as IDiffPatch).diff!.length !== 1)
+        ) {
           return null;
         }
       }
@@ -358,13 +390,15 @@ function popPath(diffs: DiffCollection, popInner?: boolean):
         retDiffs.push(null);
       }
     }
-    return {diffs: retDiffs, key: key};
+    return { diffs: retDiffs, key: key };
   }
   return null;
 }
 
-export
-function pushPath(diffs: IDiffEntry[], prefix: DecisionPath): IDiffEntry[] {
+export function pushPath(
+  diffs: IDiffEntry[],
+  prefix: DecisionPath,
+): IDiffEntry[] {
   for (let key of prefix.reverse()) {
     diffs = [opPatch(key, diffs)];
   }
@@ -375,8 +409,7 @@ function pushPath(diffs: IDiffEntry[], prefix: DecisionPath): IDiffEntry[] {
  * Expand the `common_path` field of the merge decisions for optimized
  * processing. Modifies the merge decisions in-place.
  */
-export
-function resolveCommonPaths(decisions: MergeDecision[]) {
+export function resolveCommonPaths(decisions: MergeDecision[]) {
   for (let md of decisions) {
     let diffs = md.diffs;
     let path = md.absolutePath || [];
@@ -395,47 +428,47 @@ function resolveCommonPaths(decisions: MergeDecision[]) {
  * Make a new 'cleared' value of the right type.
  */
 function makeClearedValue(value: any): any {
-    if (value instanceof Array) {
-        // Clearing e.g. an outputs list means setting it to an empty array
-        return [];
-    } else if (typeof(value) === 'string') {
-        // Clearing e.g. a source string means setting it to an empty string
-        return '';
-    } else if (value === null || valueIn(typeof(value), ['number', 'boolean'])) {
-        // Clearing anything else (atomic values) means setting it to null
-        return null;
-    } else {
-        // Clearing e.g. a metadata dict means setting it to an empty Object
-        return {};
-    }
+  if (value instanceof Array) {
+    // Clearing e.g. an outputs list means setting it to an empty array
+    return [];
+  } else if (typeof value === 'string') {
+    // Clearing e.g. a source string means setting it to an empty string
+    return '';
+  } else if (value === null || valueIn(typeof value, ['number', 'boolean'])) {
+    // Clearing anything else (atomic values) means setting it to null
+    return null;
+  } else {
+    // Clearing e.g. a metadata dict means setting it to an empty Object
+    return {};
+  }
 }
-
 
 function _resolvePathInObject(obj: any, path: DecisionPath) {
   for (let key of path) {
-    obj = obj[key];   // Should throw if key missing
+    obj = obj[key]; // Should throw if key missing
   }
   return obj;
 }
 
-
-function _combineDiffs(a: IDiffEntry[] | null, b: IDiffEntry[] | null): IDiffEntry[] {
+function _combineDiffs(
+  a: IDiffEntry[] | null,
+  b: IDiffEntry[] | null,
+): IDiffEntry[] {
   if (a && b) {
-      return a.concat(b);
-    } else if (a) {
-      return a.slice();
-    } else if (b) {
-      return b.slice();
-    } else {
-      return [];
-    }
+    return a.concat(b);
+  } else if (a) {
+    return a.slice();
+  } else if (b) {
+    return b.slice();
+  } else {
+    return [];
+  }
 }
-
 
 function resolveAction(base: any, decision: MergeDecision): IDiffEntry[] {
   let a = decision.action;
   if (a === 'base') {
-    return [];   // no-op
+    return []; // no-op
   } else if (a === 'local' || a === 'either') {
     return decision.localDiff ? decision.localDiff.slice() : [];
   } else if (a === 'remote') {
@@ -449,9 +482,12 @@ function resolveAction(base: any, decision: MergeDecision): IDiffEntry[] {
   } else if (a === 'clear') {
     let key: string | null = null;
     if (typeof base !== 'object') {
-      throw new TypeError('Can only use `\'clear\'` action on objects/dicts');
+      throw new TypeError("Can only use `'clear'` action on objects/dicts");
     }
-    for (let d of _combineDiffs(decision.localDiff, decision.remoteDiff) as IDiffObjectEntry[]) {
+    for (let d of _combineDiffs(
+      decision.localDiff,
+      decision.remoteDiff,
+    ) as IDiffObjectEntry[]) {
       if (key) {
         if (key !== d.key) {
           throw new Error('Cannot combine diffs with different keys');
@@ -462,7 +498,7 @@ function resolveAction(base: any, decision: MergeDecision): IDiffEntry[] {
     }
     if (key) {
       let d = opReplace(key, makeClearedValue(base[key]));
-      d.source = {decision, action: 'custom'};
+      d.source = { decision, action: 'custom' };
       return [d];
     } else {
       return [];
@@ -470,12 +506,12 @@ function resolveAction(base: any, decision: MergeDecision): IDiffEntry[] {
   } else if (a === 'clear_parent') {
     if (Array.isArray(base)) {
       let d = opRemoveRange(0, base.length);
-      d.source = {decision, action: 'custom'};
+      d.source = { decision, action: 'custom' };
       return [d];
-    } else if (typeof(base) === 'string') {
+    } else if (typeof base === 'string') {
       let len = splitLines(base).length;
       let d = opRemoveRange(0, len);
-      d.source = {decision, action: 'custom'};
+      d.source = { decision, action: 'custom' };
       return [d];
     } else {
       // Ideally we would do a opReplace on the parent, but this is not
@@ -483,16 +519,15 @@ function resolveAction(base: any, decision: MergeDecision): IDiffEntry[] {
       let diff: IDiffEntry[] = [];
       for (let key of base) {
         let d = opRemove(key);
-        d.source = {decision, action: 'custom'};
+        d.source = { decision, action: 'custom' };
         diff.push(d);
       }
       return diff;
     }
   } else {
-    throw new Error('The action \"' + a + '\" is not defined');
+    throw new Error('The action "' + a + '" is not defined');
   }
 }
-
 
 /**
  * Prevent paths from pointing to specific string lines.
@@ -501,8 +536,10 @@ function resolveAction(base: any, decision: MergeDecision): IDiffEntry[] {
  *
  * Returns a tuple of path and any line key.
  */
-function splitDiffStringPath(base: any, path: DecisionPath):
-    [DecisionPath, DecisionPath | null] {
+function splitDiffStringPath(
+  base: any,
+  path: DecisionPath,
+): [DecisionPath, DecisionPath | null] {
   for (let i = 0; i < path.length; ++i) {
     if (typeof base === 'string') {
       return [path.slice(0, i), path.slice(i)];
@@ -511,7 +548,6 @@ function splitDiffStringPath(base: any, path: DecisionPath):
   }
   return [path, null];
 }
-
 
 /**
  * Apply a merge decision's action to a base.
@@ -541,7 +577,7 @@ export function applyDecisions(base: any, decisions: MergeDecision[]): any {
       } else {
         if (md.action === 'clear_parent') {
           clearParent = true;
-          diffs = [];  // Clear any exisiting decsions!
+          diffs = []; // Clear any exisiting decsions!
         }
         let ad = resolveAction(resolved, md);
         if (line) {
@@ -571,7 +607,7 @@ export function applyDecisions(base: any, decisions: MergeDecision[]): any {
       lastKey = null;
       for (let key of path) {
         parent = resolved;
-        resolved = resolved[key];   // Should throw if key missing
+        resolved = resolved[key]; // Should throw if key missing
         lastKey = key;
       }
       diffs = resolveAction(resolved, md);
@@ -593,7 +629,9 @@ export function applyDecisions(base: any, decisions: MergeDecision[]): any {
   return merged;
 }
 
-type DiffTree = {[prefix: string]: {path: DecisionPath, diff: IDiffEntry[]}};
+type DiffTree = {
+  [prefix: string]: { path: DecisionPath; diff: IDiffEntry[] };
+};
 
 /**
  * Merge a tree of diffs at varying path levels to one diff at their shared root
@@ -632,20 +670,23 @@ function _mergeTree(tree: DiffTree, sortedPaths: string[]): IDiffEntry[] {
       let prefix = findSharedPrefix(path, nextPath);
       let pl = prefix ? prefix.length : 0;
       trunk = pushPath(trunk, path.slice(pl)).concat(
-        pushPath(newTrunk, nextPath.slice(pl)));
-      break;  // Recursion will exhaust sortedPaths
+        pushPath(newTrunk, nextPath.slice(pl)),
+      );
+      break; // Recursion will exhaust sortedPaths
     }
   }
   return trunk;
 }
 
-
 /**
  * Builds a diff for direct application on base. The `which` argument either
  * selects the 'local', 'remote' or 'merged' diffs.
  */
-export
-function buildDiffs(base: any, decisions: MergeDecision[], which: 'local' | 'remote' | 'merged'): IDiffEntry[] | null {
+export function buildDiffs(
+  base: any,
+  decisions: MergeDecision[],
+  which: 'local' | 'remote' | 'merged',
+): IDiffEntry[] | null {
   let tree: DiffTree = {};
   let sortedPaths: string[] = [];
   let local = which === 'local';
@@ -686,7 +727,7 @@ function buildDiffs(base: any, decisions: MergeDecision[], which: 'local' | 'rem
       if (line) {
         subdiffs = pushPath(subdiffs, line);
       }
-      tree[strPath] = {diff: subdiffs, path: path};
+      tree[strPath] = { diff: subdiffs, path: path };
       sortedPaths.push(strPath);
     }
   }
@@ -694,7 +735,7 @@ function buildDiffs(base: any, decisions: MergeDecision[], which: 'local' | 'rem
     return null;
   }
   if (!tree.hasOwnProperty('/')) {
-    tree['/'] = {diff: [], path: []};
+    tree['/'] = { diff: [], path: [] };
     sortedPaths.push('/');
   }
 
@@ -702,25 +743,33 @@ function buildDiffs(base: any, decisions: MergeDecision[], which: 'local' | 'rem
   return _mergeTree(tree, sortedPaths);
 }
 
-
 /**
  * Move a path prefix in a merge decision from `common_path` to the diffs.
  *
  * This is done by wrapping the diffs in nested patch ops.
  */
-export
-function pushPatchDecision(decision: MergeDecision, prefix: DecisionPath): MergeDecision {
+export function pushPatchDecision(
+  decision: MergeDecision,
+  prefix: DecisionPath,
+): MergeDecision {
   let dec = new MergeDecision(decision);
   // We need to start with inner most key to nest correctly, so reverse:
   for (let key of prefix.slice().reverse()) {
     if (dec.absolutePath.length === 0) {
-      throw new Error('Cannot remove key from empty decision path: ' + key + ', ' + dec);
+      throw new Error(
+        'Cannot remove key from empty decision path: ' + key + ', ' + dec,
+      );
     }
     let popped = dec.absolutePath.pop()!;
-    if (popped !== key) {  // Pop and assert
-      throw Error('Cannot push a patch that doesn\'t correspond to ' +
-        'a key in the decision path! Key: ' + key +
-        '; Remaining path: ' + dec.absolutePath.concat([popped]));
+    if (popped !== key) {
+      // Pop and assert
+      throw Error(
+        "Cannot push a patch that doesn't correspond to " +
+          'a key in the decision path! Key: ' +
+          key +
+          '; Remaining path: ' +
+          dec.absolutePath.concat([popped]),
+      );
     }
     let ld = dec.localDiff && dec.localDiff.length > 0;
     let rd = dec.remoteDiff && dec.remoteDiff.length > 0;
@@ -731,7 +780,6 @@ function pushPatchDecision(decision: MergeDecision, prefix: DecisionPath): Merge
   }
   return dec;
 }
-
 
 /**
  * Filter decisions based on matching (segment of) path
@@ -761,9 +809,12 @@ function pushPatchDecision(decision: MergeDecision, prefix: DecisionPath): Merge
  * Note that since the same decision instances are returned, this will modify
  * the level of the passed decisions.
  */
-export
-function filterDecisions(decisions: MergeDecision[], path: DecisionPath,
-                         skipLevels?: number, maxLength?: number): MergeDecision[] {
+export function filterDecisions(
+  decisions: MergeDecision[],
+  path: DecisionPath,
+  skipLevels?: number,
+  maxLength?: number,
+): MergeDecision[] {
   let ret: MergeDecision[] = [];
   skipLevels = skipLevels || 0;
   for (let md of decisions) {
