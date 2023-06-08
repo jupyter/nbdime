@@ -217,7 +217,7 @@ namespace StringDiffModel {
           let ra = additions[this.ia];
           let rd = deletions[this.id];
           if (ra.from.line === rd.from.line - this.editOffset &&
-              ra.from.ch === rd.from.ch) {
+              ra.from.column === rd.from.column) {
             // An addition and deletion start at seemingly same location
             // Take addition, and flag to ensure deletion gets taken next
             if (hintTakeDeletion) {
@@ -228,7 +228,7 @@ namespace StringDiffModel {
             }
           } else if (ra.from.line < rd.from.line - this.editOffset ||
                 (ra.from.line === rd.from.line - this.editOffset &&
-                  ra.from.ch < rd.from.ch)) {
+                  ra.from.column < rd.from.column)) {
             // TODO: Character editOffset should also be used
             isAddition = true;
           } else {
@@ -282,9 +282,9 @@ namespace StringDiffModel {
       }
       let lineA = a.range.from.line  + (a.isAddition ? offsetA : 0);
       let lineB = b.range.from.line  + (b.isAddition ? offsetB : 0);
-      if (lineA < lineB || a.range.from.ch < b.range.from.ch) {
+      if (lineA < lineB || a.range.from.column < b.range.from.column) {
         return -1;
-      } else if (lineA > lineB || a.range.from.ch > b.range.from.ch) {
+      } else if (lineA > lineB || a.range.from.column > b.range.from.column) {
         return 1;
       } else {
         return 0;

@@ -2,7 +2,6 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import * as CodeMirror from 'codemirror';
 
 import {
   valueIn
@@ -12,8 +11,11 @@ import type {
   ChunkSource
 } from '../chunking';
 
+import {
+  CodeEditor
+} from '@jupyterlab/codeeditor';
 
-
+import type { Text } from '@codemirror/state'
 /**
  * Represents a range in a diff (typically in a string), in absolute indices (1D)
  */
@@ -65,8 +67,10 @@ class DiffRangePos {
    * non-inclusive, i.e., it follows the syntax of String.slice().
    */
   constructor(
-        public from: CodeMirror.Position,
-        public to: CodeMirror.Position,
+        //public from: CodeMirror.Position,
+        //public to: CodeMirror.Position,
+    public from: CodeEditor.IPosition,
+    public to: CodeEditor.IPosition,
         chunkStartLine?: boolean,
         endsOnNewline?: boolean) {
     this.chunkStartLine = chunkStartLine === true;
@@ -114,6 +118,14 @@ function findLineNumber(nlPos: number[], index: number): number {
   return lineNo;
 }
 
+export function posToOffset(doc : Text, pos :CodeEditor.IPosition ) {
+  return doc.line(pos.line + 1).from + pos.column
+}
+export function offsetToPos(doc : Text, offset:number) {
+  let line = doc.lineAt(offset)
+  return {line: line.number - 1, column: offset - line.from}
+}
+
 /**
  * Function to convert an array of DiffRangeRaw to DiffRangePos. The
  * `text` parameter is the text in which the ranges exist.
@@ -121,7 +133,7 @@ function findLineNumber(nlPos: number[], index: number): number {
 export
 function raw2Pos(raws: DiffRangeRaw[], text: string): DiffRangePos[] {
   // Find all newline's indices in text
-  let adIdx: number[] = [];
+ let adIdx: number[] = [];
   let i = -1;
   while (-1 !== (i = text.indexOf('\n', i + 1))) {
     adIdx.push(i);
@@ -132,17 +144,17 @@ function raw2Pos(raws: DiffRangeRaw[], text: string): DiffRangePos[] {
     // First `from` position:
     let line = findLineNumber(adIdx, r.from);
     let lineStartIdx = line > 0 ? adIdx[line - 1] + 1 : 0;
-    let from = CodeMirror.Pos(line, r.from - lineStartIdx);
-
+    //let from = CodeMirror.Pos(line, r.from - lineStartIdx);
+    let from : CodeEditor.IPosition = { line: line, column: r.from - lineStartIdx }
     // Then `to` position:
     line = findLineNumber(adIdx, r.to - 1);  // `to` is non-inclusive
     lineStartIdx = line > 0 ? adIdx[line - 1] + 1 : 0;
-    let to = CodeMirror.Pos(line, r.to - lineStartIdx);
-
+    //let to : CodeEditor.IPosition = CodeMirror.Pos(line, r.to - lineStartIdx);
+    let to : CodeEditor.IPosition = { line: line, column: r.to - lineStartIdx };
     // Finally, add some chunking hints:
     let startsOnNewLine = valueIn(r.from, adIdx);
     let endsOnNewline = valueIn(r.to - 1, adIdx);  // non-inclusive
-    let firstLineNew = from.ch === 0 && (
+    let firstLineNew = from.column === 0 && (
       from.line !== to.line || endsOnNewline || r.to === text.length);
     let chunkFirstLine = (
       firstLineNew ||
@@ -158,4 +170,5 @@ function raw2Pos(raws: DiffRangeRaw[], text: string): DiffRangePos[] {
     result.push(pos);
   }
   return result;
+
 }

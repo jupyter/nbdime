@@ -12,16 +12,16 @@
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.12.0",
-    "@jupyterlab/application": "^4.0.0-beta.2",
-    "@jupyterlab/apputils": "^4.0.0-beta.2",
-    "@jupyterlab/cells": "^4.0.0-beta.2",
-    "@jupyterlab/codemirror": "^4.0.0-beta.2",
-    "@jupyterlab/coreutils": "^6.0.0-beta.1",
-    "@jupyterlab/mathjax-extension": "^4.0.0-beta.2",
-    "@jupyterlab/nbformat": "^4.0.0-beta.2",
-    "@jupyterlab/notebook": "^4.0.0-beta.2",
-    "@jupyterlab/rendermime": "^4.0.0-beta.2",
-    "@jupyterlab/theme-light-extension": "^4.0.0-beta.2",
+    "@jupyterlab/application": "^4.0.0",
+    "@jupyterlab/apputils": "^4.0.0",
+    "@jupyterlab/cells": "^4.0.0",
+    "@jupyterlab/codemirror": "^4.0.0",
+    "@jupyterlab/coreutils": "^6.0.0",
+    "@jupyterlab/mathjax-extension": "^4.0.0",
+    "@jupyterlab/nbformat": "^4.0.0",
+    "@jupyterlab/notebook": "^4.0.0",
+    "@jupyterlab/rendermime": "^4.0.0",
+    "@jupyterlab/theme-light-extension": "^4.0.0",
     "@lumino/dragdrop": "^2.0.0",
     "@lumino/widgets": "^2.0.0",
     "alertify.js": "^1.0.12",
@@ -42,8 +42,5 @@
     "typescript": "^4.9.0",
     "webpack": "^5.78.0",
     "webpack-cli": "^5.0.1"
-  },
-  "peerDependencies": {
-    "codemirror": "^5.0.0"
   }
 }

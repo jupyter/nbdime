@@ -50,7 +50,7 @@ export class Chunk {
   /**
    * Indicates the source of a chunk in a merge condition.
    *
-   * For merged content this can be used to indicate whther the chunk originates
+   * For merged content this can be used to indicate whether the chunk originates
    * from base, local, remote or somewhere else.
    */
   sources: ChunkSource[];
@@ -181,7 +181,7 @@ class Chunker {
     if (range.endsOnNewline) {
       linediff += 1;
     }
-    let firstLineNew = range.from.ch === 0 && linediff > 0;
+    let firstLineNew = range.from.column === 0 && linediff > 0;
 
     let startOffset = range.chunkStartLine ? 0 : 1;
     let endOffset =
