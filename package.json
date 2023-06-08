@@ -1,8 +1,7 @@
 {
 	"private": true,
 	"devDependencies": {
-		"@jupyterlab/buildutils": "4.0.0-beta.2",
-		"@types/codemirror": "^5.60.7",
+		"@jupyterlab/buildutils": "4.0.0",
 		"lerna": "^4.0.0",
 		"rimraf": "^2.6.3"
 	},

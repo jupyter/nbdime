@@ -15,7 +15,8 @@ import {
 } from '@jupyterlab/codemirror';
 
 import type { EditorView } from '@codemirror/view';
-import type { Text } from '@codemirror/state'
+import type { Text } from '@codemirror/state';
+import { YFile } from '@jupyter/ydoc';
 export
 class EditorWidget extends CodeEditorWrapper {
   /**
@@ -23,23 +24,28 @@ class EditorWidget extends CodeEditorWrapper {
    * need to loop over all instances.
    */
   /* Commented line : version before proposed changes for JupyterLab 4.0 migration*/
-constructor(options?: CodeMirrorEditor.IOptions | undefined) {
-    /*if (options && options.readOnly) {*/
+/*constructor(options?: CodeMirrorEditor.IOptions | undefined) {*/
+constructor(value?: string, options?: CodeMirrorEditor.IOptions) {
+    /*if (options && options.readOnly) {
       // Prevent readonly editor from trapping tabs
-      /*options.extraKeys = {Tab: false, 'Shift-Tab': false};*/
-   /* }*/
+      options.extraKeys = {Tab: false, 'Shift-Tab': false};
+    }*/
+    const sharedModel = new YFile();
+    if (value) {
+      sharedModel.source = value
+    }
     super({
-      model: new CodeEditor.Model(),
+      model: new CodeEditor.Model({sharedModel}),
       factory: function() {
-        let factory = new CodeMirrorEditorFactory();
+        let factory = new CodeMirrorEditorFactory(/*options*/);
         return factory.newInlineEditor.bind(factory);
       })(),
     });
 
     this.staticLoaded = false;
-    EditorWidget.editors.push(this.cm);
+    //EditorWidget.editors.push(this.cm);
   }
-  public static editors: EditorView[] = [];
+ //public static editors: EditorView[] = [];
 
   get cm(): EditorView {
     return (this.editor as CodeMirrorEditor).editor;
