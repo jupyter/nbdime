@@ -59,7 +59,9 @@ import {
   ViewUpdate
 } from '@codemirror/view';
 
-
+import {
+  LegacyCodeMirror
+} from '../legacy_codemirror/cmconfig';
 //const PICKER_SYMBOL = '\u27ad';
 
 //const CONFLICT_MARKER = '\u26A0'; // '\u2757'
@@ -199,7 +201,7 @@ class DiffView {
   constructor(model: IStringDiffModel,
               type: 'left' | 'right' | 'merge',
               updateCallback: (force?: boolean) => void,
-              options: CodeMirror.MergeView.MergeViewEditorConfiguration) {
+              options: IMergeViewEditorConfiguration) {
     this.model = model;
     this.type = type;
     this.updateCallback = updateCallback;
@@ -902,7 +904,7 @@ class DiffView {
 
 
 export
-interface IMergeViewEditorConfiguration extends CodeMirror.EditorConfiguration {
+interface IMergeViewEditorConfiguration extends LegacyCodeMirror.EditorConfiguration {
   /**
    * When true stretches of unchanged text will be collapsed. When a number is given, this indicates the amount
    * of lines to leave visible around such stretches (which defaults to 2). Defaults to false.
@@ -984,7 +986,7 @@ class MergeView extends Panel {
      *     - Partial changes: Use base + right editor
      */
 
-     let dvOptions = options as CodeMirror.MergeView.MergeViewEditorConfiguration;
+     let dvOptions = options;// as CodeMirror.MergeView.MergeViewEditorConfiguration;
 
     if (merged) {
       //options.gutters = [GUTTER_CONFLICT_CLASS, GUTTER_PICKER_CLASS];

@@ -27,8 +27,7 @@ import {
   PatchObjectHelper
 } from './common';
 
-
-import stableStringify = require('json-stable-stringify');
+import * as stableStringify from 'json-stable-stringify';
 
 
 // Workaround for TS issue #17002
@@ -75,7 +74,7 @@ export
 function stringify(values: ReadonlyJSONValue | null,
                    level?: number,
                    indentFirst: boolean = true) : string {
-  let ret = stableStringify(values, {space: JSON_INDENT});
+  let ret = stableStringify.default(values, {space: JSON_INDENT});
   if (level) {
     ret = _indent(ret, level, indentFirst);
   }
