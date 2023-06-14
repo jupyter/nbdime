@@ -7,101 +7,92 @@
 
 'use strict';
 
-import {
-  Widget, Panel
-} from '@lumino/widgets';
+import { Widget, Panel /*SplitPanel*/ } from '@lumino/widgets';
 
-import type {
-  IStringDiffModel
-} from '../diff/model';
+import type { IStringDiffModel } from '../diff/model';
 
 /*import {
   DecisionStringDiffModel
 } from '../merge/model';*/
 
-/*import type {
-  DiffRangePos
-} from '../diff/range';*/
+import type { DiffRangePos } from '../diff/range';
 
+import { ChunkSource, Chunk, lineToNormalChunks } from '../chunking';
 
-import {
-  /*ChunkSource, Chunk,*/ lineToNormalChunks
-} from '../chunking';
+import { EditorWidget } from './editor';
 
-import type {
-  /*ChunkSource,*/ Chunk
-} from '../chunking';
+import { /*valueIn/*, hasEntries*/ copyObj } from './util';
 
-
-import {
-  EditorWidget
-} from './editor';
-
-import {
-  /*valueIn, hasEntries,*/ copyObj
-} from './util';
-
-import {
-  /*valueIn, hasEntries,*/ /*splitLines,/* copyObj*/
-} from './util';
 
 /* import {
   NotifyUserError
 } from './exceptions'; */
 
-
 /*import {
-  Extension
-} from '@codemirror/state';*/
+  python
+} from '@codemirror/lang-python';
+*/
+
+import { python } from "@codemirror/lang-python";
 
 import {
+  Extension,
+  StateEffect,
+  StateField,
+  ChangeDesc,
+  /*RangeSet,*/
+  /*Line,*/
+  Text,
+  Range
+} from '@codemirror/state';
+
+import {
+  EditorView,
+  lineNumbers,
   ViewPlugin,
-  ViewUpdate
+  ViewUpdate,
+  Decoration,
+  DecorationSet,
+  /*keymap,*/
+  WidgetType
 } from '@codemirror/view';
 
-import {
-  LegacyCodeMirror
-} from '../legacy_codemirror/cmconfig';
+import { LegacyCodeMirror } from '../legacy_codemirror/cmconfig';
 //const PICKER_SYMBOL = '\u27ad';
 
 //const CONFLICT_MARKER = '\u26A0'; // '\u2757'
 
-
 /*export
 type Marker = CodeMirror.LineHandle | CodeMirror.TextMarker;*/
 
-export
-enum DIFF_OP {
+export enum DIFF_OP {
   DIFF_DELETE = -1,
   DIFF_INSERT = 1,
   DIFF_EQUAL = 0
 }
 
-export
-enum EventDirection {
+export enum EventDirection {
   INCOMING,
   OUTGOING
 }
 
-export
-type DiffClasses = {
+export type DiffClasses = {
   [key: string]: string;
-  chunk: string,
-  start: string,
-  end: string,
-  insert: string,
-  del: string,
-  connect: string,
-  gutter: string
+  chunk: string;
+  start: string;
+  end: string;
+  insert: string;
+  del: string;
+  connect: string;
+  gutter: string;
 };
 
-
 /*const GUTTER_PICKER_CLASS = 'jp-Merge-gutter-picker';
-const GUTTER_CONFLICT_CLASS = 'jp-Merge-gutter-conflict';
+const GUTTER_CONFLICT_CLASS = 'jp-Merge-gutter-conflict';*/
 
-const CHUNK_CONFLICT_CLASS = 'jp-Merge-conflict';*/
+const CHUNK_CONFLICT_CLASS = 'jp-Merge-conflict';
 
-const leftClasses: DiffClasses = { chunk: 'CodeMirror-merge-l-chunk',
+/*const leftClasses: DiffClasses = { chunk: 'CodeMirror-merge-l-chunk',
           start: 'CodeMirror-merge-l-chunk-start',
           end: 'CodeMirror-merge-l-chunk-end',
           insert: 'CodeMirror-merge-l-inserted',
@@ -125,27 +116,313 @@ const rightClasses: DiffClasses = { chunk: 'CodeMirror-merge-r-chunk',
           gutter: 'CodeMirror-merge-m-gutter'};
 */
 
+/************************ start decoration lines and marks*****************************/
+export type EditorDecorationsDict = {
+  [key: string]: Decoration;
+  chunk: Decoration;
+  start: Decoration;
+  end: Decoration;
+  conflict: Decoration;
+  endEmpty: Decoration;
+  inserted: Decoration;
+  deleted: Decoration;
+};
+
+export type MergeViewDecorationDict = {
+  [key: string]: EditorDecorationsDict;
+  left: EditorDecorationsDict;
+  right: EditorDecorationsDict;
+  localMerge: EditorDecorationsDict;
+  remoteMerge: EditorDecorationsDict;
+  customMerge: EditorDecorationsDict;
+  eitherMerge: EditorDecorationsDict;
+  mixedMerge: EditorDecorationsDict;
+};
+
+const conflictDecoration = Decoration.line({ class: CHUNK_CONFLICT_CLASS });
+namespace Private {
+  export function buildEditorDecorationDict(
+    editorType: string,
+    chunkAction?: string
+  ) {
+    const suffix: string = chunkAction ? '-' + chunkAction : '';
+    const prefix: string = 'cm-merge' + '-' + editorType;
+    const dict: EditorDecorationsDict = {
+      chunk: Decoration.line({ class: prefix + '-chunk' + suffix }),
+      start: Decoration.line({
+        class: prefix + '-chunk' + '-' + 'start' + suffix
+      }),
+      end: Decoration.line({ class: prefix + '-chunk' + '-' + 'end' + suffix }),
+      endEmpty: Decoration.line({
+        class: prefix + '-chunk' + '-' + 'end' + suffix + '-empty'
+      }),
+      conflict: conflictDecoration,
+      inserted: Decoration.mark({ class: prefix + '-' + 'inserted'}),
+      deleted: Decoration.mark({ class: prefix + '-' + 'deleted'}),
+    };
+    return dict;
+  }
+}
+
+const mergeViewDecorationDict: MergeViewDecorationDict = {
+  left: Private.buildEditorDecorationDict('l'),
+  right: Private.buildEditorDecorationDict('r'),
+  localMerge: Private.buildEditorDecorationDict('m', 'local'),
+  remoteMerge: Private.buildEditorDecorationDict('m', 'remote'),
+  customMerge: Private.buildEditorDecorationDict('m', 'custom'),
+  eitherMerge: Private.buildEditorDecorationDict('m', 'either'),
+  mixedMerge: Private.buildEditorDecorationDict('m', 'mixed')
+};
+const diffViewPlugin = ViewPlugin.fromClass(
+  class {
+    addDiffView(dv: DiffView): void {
+      this.diffviews.push(dv);
+    }
+    update(update: ViewUpdate) {
+      if (update.docChanged || update.viewportChanged) {
+        //console.log('Update tracker');
+        /*for (let dv of this.diffviews ) {
+        dv.update();
+      }*/
+      }
+    }
+    private diffviews: DiffView[] = [];
+  }
+);
+
+function getCommonEditorExtensions(): Extension {
+  return [
+    diffViewPlugin,
+    lineNumbers(),
+    HighlightField,
+    LineWidgetField,
+    python()
+    /*decorationKeymap*/
+  ];
+}
+
+function applyMapping({ from, to }: any, mapping: ChangeDesc) {
+  const map: any = { from: mapping.mapPos(from), to: mapping.mapPos(to) };
+  return map;
+}
+const addHighlight = StateEffect.define<{
+  from: number;
+  to: number;
+  highlightType: string;
+  decorationKey: string;
+}>({
+  map: applyMapping
+});
+
+const removeHighlight = StateEffect.define<{
+  highlightType: string;
+  decorationKey: string;
+}>({
+  map: applyMapping
+});
+
+const HighlightField = StateField.define<DecorationSet>({
+  create() {
+    return Decoration.none;
+  },
+  update(highlightRanges, transaction) {
+    highlightRanges = highlightRanges.map(transaction.changes);
+    for (let e of transaction.effects) {
+      let decoration: Decoration;
+      if (e.is(addHighlight)) {
+        decoration = mergeViewDecorationDict[e.value.decorationKey][e.value.highlightType];
+        highlightRanges = highlightRanges.update({
+          add: [decoration.range(e.value.from, e.value.to)]
+        });
+        /*console.log('****************************')
+        console.log(e.value.decorationKey);
+        console.log(e.value.highlightType);
+        console.log('spec:', decoration.spec.class);
+        console.log('****************************')*/
+      }
+      if (e.is(removeHighlight)) {
+        decoration = mergeViewDecorationDict[e.value.decorationKey][e.value.highlightType];
+         highlightRanges = highlightRanges.update({
+          filter: (from: number, to: number, value: Decoration) => {return (decoration.spec.class !== value.spec.class) },
+        });
+      }
+     }
+  return highlightRanges;
+},
+  provide: field => EditorView.decorations.from(field)
+});
+
+/*function leftHighlightChunkSelection(view: EditorView) {
+   let highlightType = 'chunk'
+   let decorationKey = 'left';
+    let effects: StateEffect<unknown>[] = view.state.selection.ranges
+    .filter(r => !r.empty)
+    .map(({ from }) => addHighlight.of({ from, to: from, highlightType, decorationKey }));
+  view.dispatch({ effects });
+  return true;
+}
+
+function rightHighlightChunkSelection(view: EditorView) {
+   let highlightType = 'chunk'
+   let decorationKey = 'right';
+    let effects: StateEffect<unknown>[] = view.state.selection.ranges
+    .filter(r => !r.empty)
+    .map(({ from }) => addHighlight.of({ from, to: from, highlightType, decorationKey }));
+  view.dispatch({ effects });
+  return true;
+}
+
+function leftHighlightInsertSelection(view: EditorView) {
+  let highlightType = 'inserted'
+  let decorationKey = 'left';
+   let effects: StateEffect<unknown>[] = view.state.selection.ranges
+   .filter(r => !r.empty)
+   .map(({ from, to }) => addHighlight.of({ from, to, highlightType, decorationKey }));
+ view.dispatch({ effects });
+ return true;
+}
+
+function rightHighlightInsertSelection(view: EditorView) {
+  let highlightType = 'inserted'
+  let decorationKey = 'right';
+   let effects: StateEffect<unknown>[] = view.state.selection.ranges
+   .filter(r => !r.empty)
+   .map(({ from, to }) => addHighlight.of({ from, to, highlightType, decorationKey }));
+ view.dispatch({ effects });
+ return true;
+}*/
+/***********************start decoration widget and related statefield***********************************/
+const addLineWidgetEffect = StateEffect.define<{ line: number; size: number }>({
+  map: ({ line, size }, mapping) => ({
+    line: mapping.mapPos(line),
+    size: mapping.mapPos(size)
+  })
+});
+
+const LineWidgetField = StateField.define<DecorationSet>({
+  create: () => {
+    return Decoration.none;
+  },
+  update: (LineWidgetRanges, transaction) => {
+    LineWidgetRanges = LineWidgetRanges.map(transaction.changes);
+    for (let e of transaction.effects) {
+      if (e.is(addLineWidgetEffect))
+        LineWidgetRanges = LineWidgetRanges.update({
+          add: addLineWidget(transaction.state.doc, e.value.line, e.value.size)
+        });
+    }
+    return LineWidgetRanges;
+  },
+  provide: field => EditorView.decorations.from(field)
+});
+class LineWidget extends WidgetType {
+  constructor(block: boolean, line: number, size: number) {
+    super();
+    this.block = block;
+    this.lineNumber = line;
+    this.size = size;
+  }
+  toDOM() {
+    let elt = document.createElement('div');
+    elt.className = 'cm-merge-spacer';
+    elt.style.height = this.size + 'px';
+    elt.style.minWidth = '1px';
+
+    return elt;
+  }
+  block: boolean;
+  lineNumber: number;
+  size: number;
+}
+
+function posToOffset(doc: any, pos: any) {
+  return doc.line(pos.line + 1).from + pos.ch;
+}
+
+/* function offsetToPos(doc, offset) {
+  let line = doc.lineAt(offset)
+  return {line: line.number - 1, ch: offset - line.from}
+} */
+
+function addLineWidget(
+  doc: Text,
+  line: number,
+  size: number
+): Range<Decoration>[] {
+  let widgets: Range<Decoration>[] = [];
+  let block: boolean = true;
+  let deco = Decoration.widget({
+    widget: new LineWidget(block, line, size)
+  });
+  const ch = 0;
+  let pos: any = { line: line, ch: ch };
+  let offset = posToOffset(doc, pos);
+  widgets.push(deco.range(offset));
+  return widgets;
+}
+
+/*function addLineWidgetFromUI(view: EditorView) {
+  const cursor = view.state.selection.main.head;
+  const line: Line = view.state.doc.lineAt(cursor);
+  let effects: StateEffect<unknown>[] = [];
+  effects.push(addLineWidgetEffect.of({line: line.number, size: 40}));
+  view.dispatch({effects});
+  return true;
+
+}*/
+/**************************end decoration widget and related statefield************************************************* */
+/*const decorationKeymap = keymap.of([
+  {
+    key: 'Alt-u',
+    preventDefault: true,
+    run: leftHighlightChunkSelection
+  },
+  {
+    key: 'Alt-v',
+    preventDefault: true,
+    run: leftHighlightInsertSelection
+  },
+  {
+    key: 'Alt-w',
+    preventDefault: true,
+    run: rightHighlightChunkSelection
+  },
+  {
+    key: 'Alt-x',
+    preventDefault: true,
+    run: rightHighlightInsertSelection
+  },
+  {
+    key: 'Alt-h',
+    preventDefault: true,
+    run: addLineWidgetFromUI
+  }],
+)*/
+
 /**
+ *
  * A wrapper view for showing StringDiffModels in a MergeView
  */
 export function createNbdimeMergeView(remote: IStringDiffModel): MergeView;
 export function createNbdimeMergeView(
-      remote: IStringDiffModel | null,
-      local: IStringDiffModel | null,
-      merged: IStringDiffModel,
-      readOnly?: boolean): MergeView;
-export
-function createNbdimeMergeView(
-      remote: IStringDiffModel | null,
-      local?: IStringDiffModel | null,
-      merged?: IStringDiffModel,
-      readOnly?: boolean): MergeView {
+  remote: IStringDiffModel | null,
+  local: IStringDiffModel | null,
+  merged: IStringDiffModel,
+  readOnly?: boolean
+): MergeView;
+export function createNbdimeMergeView(
+  remote: IStringDiffModel | null,
+  local?: IStringDiffModel | null,
+  merged?: IStringDiffModel,
+  readOnly?: boolean
+): MergeView {
   let opts: IMergeViewEditorConfiguration = {
     remote,
     local,
     merged,
     readOnly,
-    orig: null};
+    orig: null
+  };
   opts.collapseIdentical = true;
   let mergeview = new MergeView(opts);
   let editors: DiffView[] = [];
@@ -163,67 +440,43 @@ function createNbdimeMergeView(
   if (mimetype) {
     // Set the editor mode to the MIME type.
     for (let e of editors) {
-     e.ownWidget.model.mimeType = mimetype;
-   }
+      e.remoteEditorWidget.model.mimeType = mimetype;
+    }
     mergeview.base.model.mimeType = mimetype;
   }
   return mergeview;
 }
 
-
-const diffViewPlugin = ViewPlugin.fromClass(class {
-
-  addDiffView(dv: DiffView) : void {
-    this.diffviews.push(dv);
-
-  }
-  update(update: ViewUpdate) {
-    if (update.docChanged || update.viewportChanged){
-      console.log('Update tracker');
-      /*for (let dv of this.diffviews ) {
-        dv.update();
-      }*/
-    }
-  }
-  private diffviews: DiffView[] = [];
-});
-
-/*function getCommonEditorExtensions(): Extension {
-  return [diffViewPlugin];
-}
-*/
-
 /**
  * Used by MergeView to show diff in a string diff model
  */
-export
-class DiffView {
-  constructor(model: IStringDiffModel,
-              type: 'left' | 'right' | 'merge',
-              updateCallback: (force?: boolean) => void,
-              options: IMergeViewEditorConfiguration) {
+export class DiffView {
+  constructor(
+    model: IStringDiffModel,
+    type: 'left' | 'right' | 'merge',
+    updateCallback: (force?: boolean) => void,
+    options: IMergeViewEditorConfiguration
+  ) {
     this.model = model;
     this.type = type;
     this.updateCallback = updateCallback;
-    this.classes = type === 'left' ?
-      leftClasses : type === 'right' ? rightClasses : null;
-    let ownValue = this.model.remote || '';
-    //this.ownWidget = new EditorWidget(ownValue, copyObj({readOnly: !!options.readOnly}, options));
-    this.ownWidget = new EditorWidget(ownValue); // OPTIONS TO BE GIVEN
-    //this.ownWidget.editor.injectExtension(getCommonEditorExtensions());
-    this.ownWidget.editor.injectExtension(diffViewPlugin);
+    //this.classes = type === 'left' ?
+    //leftClasses : type === 'right' ? rightClasses : null;
+    let remoteValue = this.model.remote || '';
+    //this.remoteEditorWidget = new EditorWidget(remoteValue, copyObj({readOnly: !!options.readOnly}, options));
+    this._remoteEditorWidget = new EditorWidget(remoteValue); // OPTIONS TO BE GIVEN
+    this._remoteEditorWidget.editor.injectExtension(getCommonEditorExtensions());
     this.showDifferences = options.showDifferences !== false;
-
   }
-
-  init(base: EditorWidget) {
+  /*
+init(base: CodeMirror.Editor) {
     this.baseEditor = base;
-    const baseEditorPlugin = this.baseEditor.cm.plugin(diffViewPlugin);
-    const remoteEditorPlugin = this.ownWidget.cm.plugin(diffViewPlugin);
-    baseEditorPlugin?.addDiffView(this);
-    remoteEditorPlugin?.addDiffView(this);
-    //this.baseEditor.on('gutterClick', this.onGutterClick.bind(this));
-    //this.ownEditor.on('gutterClick', this.onGutterClick.bind(this));
+    (this.baseEditor.state.diffViews ||
+     (this.baseEditor.state.diffViews = [])).push(this);
+    this.remoteEditor.state.diffViews = [this];
+
+    this.baseEditor.on('gutterClick', this.onGutterClick.bind(this));
+    this.remoteEditor.on('gutterClick', this.onGutterClick.bind(this));
 
     this.lineChunks = this.model.getLineChunks();
     this.chunks = lineToNormalChunks(this.lineChunks);
@@ -233,6 +486,61 @@ class DiffView {
     this.setScrollLock(true, false);
     this.registerScroll();
   }
+*/
+
+  init(baseWidget: EditorWidget) {
+    this.baseEditorWidget = baseWidget;
+    const baseEditor = this.baseEditorWidget.cm;
+    const remoteEditor = this.remoteEditorWidget.cm;
+    const baseEditorPlugin = baseEditor.plugin(diffViewPlugin);
+    const remoteEditorPlugin = remoteEditor.plugin(diffViewPlugin);
+    baseEditorPlugin?.addDiffView(this);
+    remoteEditorPlugin?.addDiffView(this);
+
+    //this.baseEditor.on('gutterClick', this.onGutterClick.bind(this));
+    //this.remoteEditor.on('gutterClick', this.onGutterClick.bind(this));
+
+    this.lineChunks = this.model.getLineChunks();
+    this.chunks = lineToNormalChunks(this.lineChunks);
+    this.clearHighlighting(
+      remoteEditor,
+      this.model.additions,
+      this.chunks,
+      DIFF_OP.DIFF_INSERT
+    );
+
+    this.clearHighlighting(
+      baseEditor,
+      this.model.deletions,
+      this.chunks,
+      DIFF_OP.DIFF_DELETE
+    );
+
+    this.updateHighlighting(
+      remoteEditor,
+      this.model.additions,
+      this.chunks,
+      DIFF_OP.DIFF_INSERT
+    );
+    this.updateHighlighting(
+      baseEditor,
+      this.model.deletions,
+      this.chunks,
+      DIFF_OP.DIFF_DELETE
+    );
+
+
+
+    /*this.dealigned = false;
+
+    this.forceUpdate = this.registerUpdate();
+
+    this.setScrollLock(true, false);
+    this.registerScroll();
+    */
+  }
+
+  update() {}
 
   setShowDifferences(val: boolean) {
     /*
@@ -246,7 +554,7 @@ class DiffView {
 
   syncModel() {
     /*if (this.modelInvalid()) {
-      let edit = this.ownEditor;
+      let edit = this.remoteEditor;
       let updatedLineChunks = this.model.getLineChunks();
       let updatedChunks = lineToNormalChunks(updatedLineChunks);
       //if (this.model.remote === edit.getValue()) {//
@@ -296,25 +604,25 @@ class DiffView {
           'syncModel'
         );
       }
-      this.ownEditor.getDoc().setCursor(cursor);
+      this.remoteEditor.getDoc().setCursor(cursor);
       this.lineChunks = updatedLineChunks;
       this.chunks = updatedChunks;
     }
     */
   }
 
-
-    buildGap(): HTMLElement {
-    /* let lock = this.lockButton = elt('div', undefined, 'CodeMirror-merge-scrolllock');
+  buildGap(): HTMLElement {
+    let lock = (this.lockButton = elt('div', undefined, 'cm-merge-scrolllock'));
     lock.title = 'Toggle locked scrolling';
-    let lockWrap = elt('div', [lock], 'CodeMirror-merge-scrolllock-wrap');
-    let self: DiffView = this;
+    let lockWrap = elt('div', [lock], 'cm-merge-scrolllock-wrap');
+    // TODO: plug listener
+    lock.innerHTML = '\u21db&nbsp;&nbsp;\u21da';
+    /*let self: DiffView = this;
     CodeMirror.on(lock, 'click', function() {
       self.setScrollLock(!self.lockScroll);
-    });
-    return this.gap = elt('div', [lockWrap], 'CodeMirror-merge-gap'); */
-    return (document.createElement("div"));
-
+    });*/
+    return (this.gap = elt('div', [lockWrap], 'cm-merge-gap'));
+    //return (document.createElement("div"));
   }
 
   setScrollLock(val: boolean, action?: boolean) {
@@ -334,35 +642,36 @@ class DiffView {
     let self: DiffView = this;
     self.updating = false;
     self.updatingFast = false;
+
     function update(mode?: 'full') {
       self.updating = true;
       self.updatingFast = false;
       if (mode === 'full') {
         self.syncModel();
         if (self.classes === null) {
-          clearMergeMarks(self.baseEditor, editMarkers);
-          clearMergeMarks(self.ownEditor, origMarkers);
+          clearMergeMarks(self.baseEditorWidget, editMarkers);
+          clearMergeMarks(self.remoteEditor, origMarkers);
         } else {
-          clearMarks(self.baseEditor, editMarkers, self.classes);
-          clearMarks(self.ownEditor, origMarkers, self.classes);
+          clearMarks(self.baseEditorWidget, editMarkers, self.classes);
+          clearMarks(self.remoteEditor, origMarkers, self.classes);
         }
       }
       if (self.showDifferences) {
         self.updateMarks(
-          self.ownEditor, self.model.additions,
+          self.remoteEditor, self.model.additions,
           editMarkers, DIFF_OP.DIFF_INSERT);
         self.updateMarks(
-          self.baseEditor, self.model.deletions,
+          self.baseEditorWidget, self.model.deletions,
           origMarkers, DIFF_OP.DIFF_DELETE);
       }
 
       self.updateCallback(true);
-      checkSync(self.ownEditor);
+      checkSync(self.remoteEditor);
       self.updating = false;
     }
     function setDealign(fast: boolean | CodeMirror.Editor, diffViews: diffView[]) {
         let upd = false;
-        for (let dv of self.baseEditor.state.diffViews) {
+        for (let dv of self.baseEditorWidget.state.diffViews) {
           upd = upd || dv.updating;
         }
         if (upd) {
@@ -373,7 +682,7 @@ class DiffView {
     }
     function set(fast: boolean) {
       let upd = false;
-      for (let dv of self.baseEditor.state.diffViews) {
+      for (let dv of self.baseEditorWidget.state.diffViews) {
         upd = upd || dv.updating || dv.updatingFast;
       }
       if (upd) {
@@ -402,19 +711,18 @@ class DiffView {
       }
     }
     */
-    /*this.baseEditor.on('change', change);
-    this.ownEditor.on('change', change);
-    this.baseEditor.on('markerAdded', setDealign);
-    this.baseEditor.on('markerCleared', setDealign);
-    this.ownEditor.on('markerAdded', setDealign);
-    this.ownEditor.on('markerCleared', setDealign);
-    this.baseEditor.on('viewportChange', function() { set(false); });
-    this.ownEditor.on('viewportChange', function() { set(false); });
+    /*this.baseEditorWidget.on('change', change);
+    this.remoteEditor.on('change', change);
+    this.baseEditorWidget.on('markerAdded', setDealign);
+    this.baseEditorWidget.on('markerCleared', setDealign);
+    this.remoteEditor.on('markerAdded', setDealign);
+    this.remoteEditor.on('markerCleared', setDealign);
+    this.baseEditorWidget.on('viewportChange', function() { set(false); });
+    this.remoteEditor.on('viewportChange', function() { set(false); });
     update();*/
 
-    return ()=>{};
+    return () => {};
   }
-
 
   protected modelInvalid(): boolean {
     /* return this.model instanceof DecisionStringDiffModel &&
@@ -435,11 +743,11 @@ class DiffView {
     if (node && node.sources) {
       let ss = node.sources as ChunkSource[];
       if (gutter === GUTTER_PICKER_CLASS) {
-        if (instance === this.ownEditor) {
+        if (instance === this.remoteEditor) {
           for (let s of ss) {
             s.decision.action = s.action;
           }
-        } else if (this.type === 'merge' && instance === this.baseEditor) {
+        } else if (this.type === 'merge' && instance === this.baseEditorWidget) {
           for (let s of ss) {
             s.decision.action = 'base';
           }
@@ -463,7 +771,7 @@ class DiffView {
           s.decision.conflict = false;
         }
       }
-      for (let dv of this.baseEditor.state.diffViews as DiffView[]) {
+      for (let dv of this.baseEditorWidget.state.diffViews as DiffView[]) {
         if (dv.model instanceof DecisionStringDiffModel) {
           dv.model.invalidate();
         }
@@ -474,10 +782,10 @@ class DiffView {
 
   protected registerScroll(): void {
     /* let self = this;
-    this.baseEditor.on('scroll', function() {
+    this.baseEditorWidget.on('scroll', function() {
       self.syncScroll(EventDirection.OUTGOING);
     });
-    this.ownEditor.on('scroll', function() {
+    this.remoteEditor.on('scroll', function() {
       self.syncScroll(EventDirection.INCOMING);
     }); */
   }
@@ -497,11 +805,11 @@ class DiffView {
     let editor: CodeMirror.Editor;
     let other: CodeMirror.Editor;
     if (type === EventDirection.OUTGOING) {
-      editor = this.baseEditor;
-      other = this.ownEditor;
+      editor = this.baseEditorWidget;
+      other = this.remoteEditor;
     } else {
-      editor = this.ownEditor;
-      other = this.baseEditor;
+      editor = this.remoteEditor;
+      other = this.baseEditorWidget;
     }
 
     if (editor.state.scrollSetBy === this) {
@@ -535,8 +843,7 @@ class DiffView {
     return; */
   }
 
-
-  /* protected updateMarks(editor: CodeMirror.Editor, diff: DiffRangePos[],
+  /*protected updateMarks(editor: EditorView, diff: DiffRangePos[],
                         markers: Marker[], type: DIFF_OP) {
     let classes: DiffClasses;
     if (this.classes === null) {
@@ -590,7 +897,7 @@ class DiffView {
             (picker as any).sources = sources;
             picker.classList.add(GUTTER_PICKER_CLASS);
             editor.setGutterMarker(line, GUTTER_PICKER_CLASS, picker);
-          } else if (editor === self.baseEditor) {
+          } else if (editor === self.baseEditorWidget) {
             for (let s of sources) {
               if (s.decision.action === 'custom' &&
                   !hasEntries(s.decision.localDiff) &&
@@ -602,7 +909,7 @@ class DiffView {
                 editor.setGutterMarker(line, GUTTER_PICKER_CLASS, picker);
               }
             }
-          } else if (conflict && editor === self.ownEditor) {
+          } else if (conflict && editor === self.remoteEditor) {
             // Add conflict markers on editor, if conflicted
             let conflictMarker = elt('div', CONFLICT_MARKER, '');
             (conflictMarker as any).sources = sources;
@@ -636,7 +943,7 @@ class DiffView {
     }
     let cls = type === DIFF_OP.DIFF_DELETE ? classes.del : classes.insert;
     editor.operation(function() {
-      let edit = editor === self.baseEditor;
+      let edit = editor === self.baseEditorWidget;
       if (self.classes) {
         clearMarks(editor, markers, classes);
       } else {
@@ -653,32 +960,247 @@ class DiffView {
     });
   }*/
 
-  get ownEditor(): EditorWidget {
-      return this.ownWidget;
+  private getDecorationKey(sources: ChunkSource[]): string {
+    let s: string = this.type;
+    let res: string = s;
+    if (this.type === 'merge') {
+      s = sources[0].action;
+      res = s + 'Merge'
+      if (sources.length > 1) {
+        for (let si of sources.slice(1)) {
+          if (si.action !== s) {
+            res = 'mixedMerge';
+            break;
+          }
+        }
+      }
+    }
+    return res;
   }
 
-  ownWidget: EditorWidget;
+  private getConflictState(sources: ChunkSource[]): boolean {
+    let conflict = false;
+    if (sources.length > 0) {
+      for (let s of sources) {
+        if (s.decision.conflict) {
+          conflict = true;
+          break;
+        }
+      }
+    }
+    return conflict;
+  }
+
+  private createAddHighlightEffect(
+    highlightType: string,
+    decorationKey: string,
+    startingOffset: number,
+    endingOffset?: number
+  ) {
+    const effect = addHighlight.of({
+      from: startingOffset,
+      to: endingOffset ?? startingOffset,
+      highlightType: highlightType,
+      decorationKey: decorationKey
+    });
+    return effect;
+  }
+
+  private createClearHighlightEffect(
+    highlightType: string,
+    decorationKey: string
+  ) {
+    const effect = removeHighlight.of({
+      highlightType: highlightType,
+      decorationKey: decorationKey
+    });
+    return effect;
+  }
+
+  private buildLineHighlighting(editor: EditorView, chunkArray: Chunk[]) {
+    let effects: StateEffect<unknown>[] = [];
+    let isbaseEditor = editor === this.baseEditorWidget.cm;
+
+    for (let chunk of chunkArray) {
+      let sources: ChunkSource[] = chunk.sources;
+      let decorationKey = this.getDecorationKey(sources);
+      let conflict = this.getConflictState(sources);
+      let chunkFirstLine: number;
+      let chunkLastLine: number;
+
+      if (isbaseEditor) {
+        chunkFirstLine = chunk.baseFrom;
+        chunkLastLine = chunk.baseTo;
+      } else {
+        chunkFirstLine = chunk.remoteFrom;
+        chunkLastLine = chunk.remoteTo;
+      }
+      for (let i = chunkFirstLine; i < chunkLastLine; i++) {
+        const pos: any = { line: i, ch: 0 };
+        const startingOffset = posToOffset(editor.state.doc, pos);
+        effects.push(
+          this.createAddHighlightEffect('chunk', decorationKey, startingOffset)
+        );
+        if (conflict) {
+          effects.push(
+            this.createAddHighlightEffect('conflict', decorationKey, startingOffset)
+          );
+        }
+        if (i === chunkFirstLine) {
+          effects.push(
+            this.createAddHighlightEffect('start', decorationKey, startingOffset)
+          );
+        }
+        if (i === chunkLastLine - 1) {
+          effects.push(this.createAddHighlightEffect('end', decorationKey, startingOffset));
+        }
+      }
+      if (chunkFirstLine === chunkLastLine) {
+        const startingOffset = posToOffset(editor.state.doc, { line: chunkFirstLine, ch: 0 });
+        effects.push(
+          this.createAddHighlightEffect('endEmpty', decorationKey, startingOffset)
+        );
+      }
+    }
+    return effects;
+  }
+
+
+
+  private clearLineHighlighting(editor: EditorView, chunkArray: Chunk[]) {
+    let effects: StateEffect<unknown>[] = [];
+
+    for (let chunk of chunkArray) {
+      let sources: ChunkSource[] = chunk.sources;
+      let decorationKey = this.getDecorationKey(sources);
+      effects.push(this.createClearHighlightEffect('chunk', decorationKey));
+      effects.push(this.createClearHighlightEffect('conflict', decorationKey));
+      effects.push(this.createClearHighlightEffect('start', decorationKey));
+      effects.push(this.createClearHighlightEffect('end', decorationKey,));
+      }
+
+    return effects;
+  }
+
+
+  private buildMarkHighlighting(
+    editor: EditorView,
+    diffRanges: DiffRangePos[],
+    markType: DIFF_OP
+  ) {
+    let effects: StateEffect<unknown>[] = [];
+    let sources: ChunkSource[] = [];
+    if (markType === DIFF_OP.DIFF_INSERT || markType === DIFF_OP.DIFF_DELETE) {
+      let highlightType: string = markType === DIFF_OP.DIFF_DELETE ? 'deleted' : 'inserted';
+      for (let r of diffRanges) {
+        if (r.source !== undefined) {
+          sources.push(r.source);
+        }
+        let decorationKey = this.getDecorationKey(sources);
+        let startingOffset = posToOffset(editor.state.doc, {
+          line: r.from.line,
+          ch: r.from.column
+        });
+        let endingOffset = posToOffset(editor.state.doc, {
+          line: r.to.line,
+          ch: r.to.column
+        });
+        effects.push(
+          this.createAddHighlightEffect(
+            highlightType,
+            decorationKey,
+            startingOffset,
+            endingOffset
+          )
+        );
+      }
+    }
+    return effects;
+  }
+
+  private clearMarkHighlighting(
+    editor: EditorView,
+    diffRanges: DiffRangePos[],
+    markType: DIFF_OP
+  ) {
+    let effects: StateEffect<unknown>[] = [];
+    let sources: ChunkSource[] = [];
+    if (markType === DIFF_OP.DIFF_INSERT || markType === DIFF_OP.DIFF_DELETE) {
+      let highlightType: string = markType === DIFF_OP.DIFF_DELETE ? 'deleted' : 'inserted';
+      for (let r of diffRanges) {
+        if (r.source !== undefined) {
+          sources.push(r.source);
+        }
+        let decorationKey = this.getDecorationKey(sources);
+        effects.push(
+          this.createClearHighlightEffect(
+            highlightType,
+            decorationKey,
+
+          )
+        );
+      }
+    }
+    return effects;
+  }
+
+  protected updateHighlighting(
+    editor: EditorView,
+    diffRanges: DiffRangePos[],
+    chunkArray: Chunk[],
+    type: DIFF_OP
+  ) {
+    let self = this;
+    let LineHighlightEffects: StateEffect<unknown>[] =
+      self.buildLineHighlighting(editor, chunkArray);
+    let MarkHighlightEffects: StateEffect<unknown>[] =
+      self.buildMarkHighlighting(editor, diffRanges, type);
+    let effects: StateEffect<unknown>[] =
+      LineHighlightEffects.concat(MarkHighlightEffects);
+    editor.dispatch({ effects });
+  }
+
+  protected clearHighlighting(
+    editor: EditorView,
+    diffRanges: DiffRangePos[],
+    chunkArray: Chunk[],
+    type: DIFF_OP
+  ) {
+    let self = this;
+    let clearLineHighlightEffects: StateEffect<unknown>[] =
+      self.clearLineHighlighting(editor, chunkArray);
+    let clearMarkHighlightEffects: StateEffect<unknown>[] =
+      self.clearMarkHighlighting(editor, diffRanges, type);
+    let effects: StateEffect<unknown>[] =
+      clearLineHighlightEffects.concat(clearMarkHighlightEffects);
+    editor.dispatch({ effects });
+  }
+
+
+  get remoteEditorWidget(): EditorWidget {
+    return this._remoteEditorWidget;
+  }
+
+  baseEditorWidget: EditorWidget;
+  private _remoteEditorWidget: EditorWidget;
   model: IStringDiffModel;
   type: string;
   showDifferences: boolean;
   dealigned: boolean;
   forceUpdate: Function;
-  baseEditor: EditorWidget;
   chunks: Chunk[];
   lineChunks: Chunk[];
   gap: HTMLElement;
   lockScroll: boolean;
   updating: boolean;
   updatingFast: boolean;
-  collapsedRanges: {line: number, size: number}[] = [];
-
+  collapsedRanges: { line: number; size: number }[] = [];
 
   protected updateCallback: (force?: boolean) => void;
   protected copyButtons: HTMLElement;
   protected lockButton: HTMLElement;
-  protected classes: DiffClasses | null;
+  //protected classes: DiffClasses | null;
 }
-
 
 // Updating the marks for editor content
 
@@ -691,6 +1213,7 @@ class DiffView {
     clearMarks(editor, arr, classes);
   }
 }*/
+
 
 /*function isTextMarker(marker: Marker): marker is CodeMirror.TextMarker {
   return 'clear' in marker;
@@ -721,6 +1244,8 @@ class DiffView {
   }
 }*/
 
+
+
 /*function highlightChars(editor: CodeMirror.Editor, ranges: DiffRangePos[],
                         markers: Marker[], cls: string) {
   let doc = editor.getDoc();
@@ -736,9 +1261,7 @@ class DiffView {
   }
 }*/
 
-
 // Updating the gap between editor and original
-
 
 /**
  * From a line in base, find the matching line in another editor by chunks.
@@ -761,7 +1284,6 @@ class DiffView {
   return baseLine + offset;
 }*/
 
-
 /**
  * From a line in base, find the matching line in another editor by line chunks
  */
@@ -779,6 +1301,20 @@ class DiffView {
   return toMatch.baseTo;
 }*/
 
+/* CM6 */
+/*function getMatchingEditLineLC(toMatch: Chunk, chunks: Chunk[]): number {
+  let editLine = toMatch.baseFrom;
+  for (let i = 0; i < chunks.length; ++i) {
+    let chunk = chunks[i];
+    if (chunk.baseFrom === editLine) {
+      return chunk.remoteTo;
+    }
+    if (chunk.baseFrom > editLine) {
+      break;
+    }
+  }
+  return toMatch.baseTo;
+}*/
 
 /**
  * Find which line numbers align with each other, in the
@@ -869,6 +1405,89 @@ class DiffView {
   return linesToAlign;
 }*/
 
+/* CM6 Version*/
+/*function findAlignedLines(dvs: DiffView[]): number[][] {
+  let linesToAlign: number[][] = [];
+  let ignored: number[] = [];
+
+  // First fill directly from first DiffView
+  let dv = dvs[0];
+  let others = dvs.slice(1);
+  for (let i = 0; i < dv.lineChunks.length; i++) {
+    let chunk = dv.lineChunks[i];
+    let lines = [chunk.baseTo, chunk.remoteTo];
+    for (let o of others) {
+      lines.push(getMatchingEditLineLC(chunk, o.lineChunks));
+    }
+    if (linesToAlign.length > 0 &&
+        linesToAlign[linesToAlign.length - 1][0] === lines[0]) {
+      let last = linesToAlign[linesToAlign.length - 1];
+      for (let j = 0; j < lines.length; ++j) {
+        last[j] = Math.max(last[j], lines[j]);
+      }
+    } else {
+      if (linesToAlign.length > 0) {
+        let prev = linesToAlign[linesToAlign.length - 1];
+        let diff: number | null = lines[0] - prev[0];
+        for (let j = 1; j < lines.length; ++j) {
+          if (diff !== lines[j] - prev[j]) {
+            diff = null;
+            break;
+          }
+        }
+        if (diff === null) {
+          linesToAlign.push(lines);
+        } else {
+          ignored.push(lines[0]);
+          continue;
+        }
+      } else {
+        linesToAlign.push(lines);
+      }
+    }
+  }
+  // Then fill any chunks from remaining DiffView, which are not already added
+  for (let o = 0; o < others.length; o++) {
+    for (let i = 0; i < others[o].lineChunks.length; i++) {
+      let chunk = others[o].lineChunks[i];
+      // Check against existing matches to see if already consumed:
+      let j = 0;
+      for (; j < linesToAlign.length; j++) {
+        let align = linesToAlign[j];
+        if (valueIn(chunk.baseTo, ignored)) {
+          // Chunk already consumed, continue to next chunk
+          j = -1;
+          break;
+        } else if (align[0] >= chunk.baseTo) {
+          // New chunk, which should be inserted in pos j,
+          // such that linesToAlign are sorted on edit line
+          break;
+        }
+      }
+      if (j > -1) {
+        let lines = [chunk.baseTo,
+                     getMatchingEditLineLC(chunk, dv.lineChunks)];
+        for (let k = 0; k < others.length; k++) {
+          if (k === o) {
+            lines.push(chunk.remoteTo);
+          } else {
+            lines.push(getMatchingEditLineLC(chunk, others[k].lineChunks));
+          }
+        }
+        if (linesToAlign.length > j && linesToAlign[j][0] === chunk.baseTo) {
+          let last = linesToAlign[j];
+          for (let k = 0; k < lines.length; ++k) {
+            last[k] = Math.max(last[k], lines[k]);
+          }
+        } else {
+          linesToAlign.splice(j, 0, lines);
+        }
+      }
+    }
+  }
+  return linesToAlign;
+}
+*/
 
 /*function alignLines(cm: CodeMirror.Editor[], lines: number[], aligners: CodeMirror.LineWidget[]): void {
   let maxOffset = 0;
@@ -888,9 +1507,9 @@ class DiffView {
       }
     }
   }
-}*/
+}
 
-/*function padAbove(cm: CodeMirror.Editor, line: number, size: number): CodeMirror.LineWidget {
+function padAbove(cm: CodeMirror.Editor, line: number, size: number): CodeMirror.LineWidget {
   let above = true;
   if (line > cm.getDoc().lastLine()) {
     line--;
@@ -900,11 +1519,11 @@ class DiffView {
   elt.className = 'CodeMirror-merge-spacer';
   elt.style.height = size + 'px'; elt.style.minWidth = '1px';
   return cm.addLineWidget(line, elt, {height: size, above: above});
-}*/
+}
+*/
 
-
-export
-interface IMergeViewEditorConfiguration extends LegacyCodeMirror.EditorConfiguration {
+export interface IMergeViewEditorConfiguration
+  extends LegacyCodeMirror.EditorConfiguration {
   /**
    * When true stretches of unchanged text will be collapsed. When a number is given, this indicates the amount
    * of lines to leave visible around such stretches (which defaults to 2). Defaults to false.
@@ -945,34 +1564,30 @@ interface IMergeViewEditorConfiguration extends LegacyCodeMirror.EditorConfigura
 }
 
 // Merge view, containing 1 or 2 diff views.
-export
-class MergeView extends Panel {
+export class MergeView extends Panel {
   constructor(options: IMergeViewEditorConfiguration) {
     super();
     this.options = options;
     let remote = options.remote;
     let local = options.local || null;
     let merged = options.merged || null;
-
-    let panes: number = 0;
-    let left: DiffView | null = this.left = null;
-    let right: DiffView | null = this.right = null;
-    let merge: DiffView | null = this.merge = null;
+    //let panes: number = 0;
+    let left: DiffView | null = (this.left = null);
+    let right: DiffView | null = (this.right = null);
+    let merge: DiffView | null = (this.merge = null);
     //let self = this;
     this.diffViews = [];
-    //this.aligners = [];
+    this.aligners = [];
     let main = options.remote || options.merged;
     if (!main) {
       throw new Error('Either remote or merged model needs to be specified!');
     }
-    options.value = (main.base !== null ?
-      main.base : main.remote);
+    options.value = main.base !== null ? main.base : main.remote;
     options.lineNumbers = options.lineNumbers !== false;
     // Whether merge view should be readonly
     let readOnly = options.readOnly;
     // For all others:
     options.readOnly = true;
-
 
     /*
      * Different cases possible:
@@ -986,7 +1601,11 @@ class MergeView extends Panel {
      *     - Partial changes: Use base + right editor
      */
 
-     let dvOptions = options;// as CodeMirror.MergeView.MergeViewEditorConfiguration;
+    let dvOptions = options; // as CodeMirror.MergeView.MergeViewEditorConfiguration;
+
+    this.gridPanel = new Panel();
+    this.gridPanel.addClass('cm-grid-panel');
+    this.addWidget(this.gridPanel);
 
     if (merged) {
       //options.gutters = [GUTTER_CONFLICT_CLASS, GUTTER_PICKER_CLASS];
@@ -998,13 +1617,11 @@ class MergeView extends Panel {
 
     //this.base = new EditorWidget(options.value, copyObj({readOnly: !!options.readOnly}, options));
     this.base = new EditorWidget(options.value);
-    //this.base.editor.injectExtension(getCommonEditorExtensions());
-    this.base.editor.injectExtension(diffViewPlugin);
-    //this.base.addClass('CodeMirror-merge-pane');
-    //this.base.addClass('CodeMirror-merge-pane-base');
+    this.base.editor.injectExtension(getCommonEditorExtensions());
 
     if (merged) {
       let showBase = options.showBase !== false;
+
       if (!showBase) {
         this.base.node.style.display = 'hidden';
       }
@@ -1013,77 +1630,100 @@ class MergeView extends Panel {
       if (!local || local.remote === null) {
         // Local value was deleted
         left = this.left = null;
-        leftWidget = new Widget({node: elt('div', 'Value missing', 'jp-mod-missing')});
+        leftWidget = new Widget({
+          node: elt('div', 'Value missing', 'jp-mod-missing')
+        });
       } else {
-        left = this.left = new DiffView(local, 'left', this.alignViews.bind(this),
-          copyObj(dvOptions));
+        left = this.left = new DiffView(
+          local,
+          'left',
+          this.alignViews.bind(this),
+          copyObj(dvOptions)
+        );
         this.diffViews.push(left);
-        leftWidget = left.ownWidget;
+        leftWidget = left.remoteEditorWidget;
       }
-      leftWidget.addClass('CodeMirror-merge-pane');
-      leftWidget.addClass('CodeMirror-merge-pane-local');
-      this.addWidget(leftWidget);
+      this.gridPanel.addWidget(leftWidget);
+      leftWidget.addClass('.cm-left-editor');
+      //leftWidget.addClass('cm-mergeViewEditor');
 
       if (showBase) {
-        this.addWidget(this.base);
+        this.gridPanel.addWidget(this.base);
+        this.base.addClass('.cm-central-editor');
+        //this.base.addClass('cm-mergeViewEditor');
       }
 
       let rightWidget: Widget;
       if (!remote || remote.remote === null) {
         // Remote value was deleted
         right = this.right = null;
-        rightWidget = new Widget({node: elt('div', 'Value missing', 'jp-mod-missing')});
+        rightWidget = new Widget({
+          node: elt('div', 'Value missing', 'jp-mod-missing')
+        });
       } else {
-        right = this.right = new DiffView(remote, 'right', this.alignViews.bind(this),
-          copyObj(dvOptions));
+        right = this.right = new DiffView(
+          remote,
+          'right',
+          this.alignViews.bind(this),
+          copyObj(dvOptions)
+        );
         this.diffViews.push(right);
-        rightWidget = right.ownWidget;
+        rightWidget = right.remoteEditorWidget;
       }
-      rightWidget.addClass('CodeMirror-merge-pane');
-      rightWidget.addClass('CodeMirror-merge-pane-remote');
-      this.addWidget(rightWidget);
+      //rightWidget.addClass('cm-mergeViewEditor');
+      this.gridPanel.addWidget(rightWidget);
+      rightWidget.addClass('cm-right-editor');
 
-      this.addWidget(new Widget({
+      /*this.addWidget(new Widget({
         node: elt('div', null, 'CodeMirror-merge-clear', 'height: 0; clear: both;')
-      }));
+      }));*/
 
-      merge = this.merge = new DiffView(merged, 'merge', this.alignViews.bind(this),
-        copyObj({readOnly}, copyObj(dvOptions)));
+      merge = this.merge = new DiffView(
+        merged,
+        'merge',
+        this.alignViews.bind(this),
+        copyObj({ readOnly }, copyObj(dvOptions))
+      );
       this.diffViews.push(merge);
-      let mergeWidget = merge.ownWidget;
-      mergeWidget.addClass('CodeMirror-merge-pane');
-      mergeWidget.addClass('CodeMirror-merge-pane-final');
-      this.addWidget(mergeWidget);
+      let mergeWidget = merge.remoteEditorWidget;
+      // mergeWidget.addClass('cm-mergeViewEditor');
+      this.gridPanel.addWidget(mergeWidget);
+      mergeWidget.addClass('cm-merge-editor');
+    } else if (remote) {
+      // If in place for type guard
 
-      panes = 3 + (showBase ? 1 : 0);
-    } else if (remote) { // If in place for type guard
-      this.addWidget(this.base);
+      this.gridPanel.addWidget(this.base);
       if (remote.unchanged || remote.added || remote.deleted) {
         if (remote.unchanged) {
-          this.base.addClass('CodeMirror-merge-pane-unchanged');
+          //this.base.addClass('CodeMirror-merge-pane-unchanged');
         } else if (remote.added) {
-          this.base.addClass('CodeMirror-merge-pane-added');
+          //this.base.addClass('CodeMirror-merge-pane-added');
         } else if (remote.deleted) {
-          this.base.addClass('CodeMirror-merge-pane-deleted');
+          //this.base.addClass('CodeMirror-merge-pane-deleted');
         }
-        panes = 1;
       } else {
-        right = this.right = new DiffView(remote, 'right', this.alignViews.bind(this), dvOptions);
+        right = this.right = new DiffView(
+          remote,
+          'right',
+          this.alignViews.bind(this),
+          dvOptions
+        );
         this.diffViews.push(right);
-        let rightWidget = right.ownWidget;
-        rightWidget.addClass('CodeMirror-merge-pane');
-        rightWidget.addClass('CodeMirror-merge-pane-remote');
-        this.addWidget(new Widget({node: right.buildGap()}));
-        this.addWidget(rightWidget);
-        panes = 2;
-      }
-      this.addWidget(new Widget({
-        node: elt('div', null, 'CodeMirror-merge-clear', 'height: 0; clear: both;')
-      }));
-    }
+        let rightWidget = right.remoteEditorWidget;
 
-    this.addClass('CodeMirror-merge');
-    this.addClass('CodeMirror-merge-' + panes + 'pane');
+        //rightWidget.addClass('CodeMirror-merge-pane-remote');
+        //this.addWidget(new Widget({node: right.buildGap()}));
+
+        //rightWidget.addClass('cm-mergeViewEditor');
+        this.gridPanel.addWidget(rightWidget);
+        rightWidget.addClass('cm-right-editor');
+
+        //panes = 2;
+      }
+      /*this.addWidget(new Widget({
+        node: elt('div', null, 'CodeMirror-merge-clear', 'height: 0; clear: both;')
+      }));*/
+    }
 
     for (let dv of [left, right, merge]) {
       if (dv) {
@@ -1091,7 +1731,7 @@ class MergeView extends Panel {
       }
     }
 
-   /* if (options.collapseIdentical && panes > 1) {
+    /* if (options.collapseIdentical && panes > 1) {
       this.base.cm.operation(function() {
           collapseIdenticalStretches(self, options.collapseIdentical);
       });
@@ -1145,7 +1785,7 @@ class MergeView extends Panel {
       let cm: CodeMirror.Editor[] = [self.base.cm];
       let scroll: number[] = [];
       for (let dv of self.diffViews) {
-        cm.push(dv.ownEditor);
+        cm.push(dv.remoteEditor);
       }
       for (let i = 0; i < cm.length; i++) {
         scroll.push(cm[i].getScrollInfo().top);
@@ -1168,9 +1808,80 @@ class MergeView extends Panel {
       }(f);
     }
     for (let dv of this.diffViews) {
-      if (!dv.ownEditor.curOp) {
+      if (!dv.remoteEditor.curOp) {
         f = function(fn) {
-          return function() { dv.ownEditor.operation(fn); };
+          return function() { dv.remoteEditor.operation(fn); };
+        }(f);
+      }
+    }
+    // Perform alignment
+    f();
+  /*}
+
+
+  /*CM6 version */
+  /*alignViews(force?: boolean) {
+     let dealigned = false;
+    if (!this.initialized) {
+      return;
+    }
+    for (let dv of this.diffViews) {
+      dv.syncModel();
+      if (dv.dealigned) {
+        dealigned = true;
+        dv.dealigned = false;
+      }
+    }
+
+    if (!dealigned && !force) {
+      return; // Nothing to do
+    }
+    // Find matching lines
+    let linesToAlign = findAlignedLines(this.diffViews);
+
+    // Function modifying DOM to perform alignment:
+    let self: MergeView = this;
+    let f = function () {
+
+      // Clear old aligners
+      let aligners = self.aligners;
+      for (let i = 0; i < aligners.length; i++) {
+        /*aligners[i].clear();*
+        console.log('implement a clear method for the aligners')
+      }
+      aligners.length = 0;
+
+      // Editors (order is important, so it matches
+      // format of linesToAlign)
+      let cm: EditorView[] = [self.base.cm];
+      let scroll: number[] = [];
+      for (let dv of self.diffViews) {
+        cm.push(dv.remoteEditorWidget.cm);
+      }
+      for (let i = 0; i < cm.length; i++) {
+        scroll.push(cm[i].getScrollInfo().top);
+      }
+
+      for (let ln = 0; ln < linesToAlign.length; ln++) {
+        alignLines(cm, linesToAlign[ln], aligners);
+      }
+
+      for (let i = 0; i < cm.length; i++) {
+        cm[i].scrollTo(null, scroll[i]);
+      }
+    };
+
+    // All editors should have an operation (simultaneously),
+    // so set up nested operation calls.
+    if (!this.base.cm.curOp) {
+      f = function(fn) {
+        return function() { self.base.cm.operation(fn); };
+      }(f);
+    }
+    for (let dv of this.diffViews) {
+      if (!dv.remoteEditorWidget.cm.curOp) {
+        f = function(fn) {
+          return function() { dv.remoteEditorWidget.cm.operation(fn); };
         }(f);
       }
     }
@@ -1191,19 +1902,22 @@ class MergeView extends Panel {
     /*if (!this.merge) {
       throw new Error('No merged value; missing "merged" view');
     }
-    return this.merge.ownEditor.getValue();*/
+    return this.merge.remoteEditor.getValue();*/
     return '';
   }
-
+  //splitPanel: SplitPanel;
+  gridPanel: Panel;
+  subPanel1: Panel;
+  subPanel2: Panel;
   left: DiffView | null;
   right: DiffView | null;
   merge: DiffView | null;
   base: EditorWidget;
   options: any;
   diffViews: DiffView[];
-  /*aligners: CodeMirror.LineWidget[];*/
+  aligners: LineWidget[];
   initialized: boolean = false;
-  collapsedRanges: {size: number, line: number}[] = [];
+  collapsedRanges: { size: number; line: number }[] = [];
 }
 
 /*function collapseSingle(cm: CodeMirror.Editor, from: number, to: number): {mark: CodeMirror.TextMarker, clear: () => void} {
@@ -1290,15 +2004,15 @@ class MergeView extends Panel {
           [{line: line, cm: edit}];
         if (mv.left) {
           editors.push({line: getMatchingEditLine(line, mv.left.chunks),
-            cm: mv.left.ownEditor});
+            cm: mv.left.remoteEditor});
         }
         if (mv.right) {
           editors.push({line: getMatchingEditLine(line, mv.right.chunks),
-            cm: mv.right.ownEditor});
+            cm: mv.right.remoteEditor});
         }
         if (mv.merge) {
           editors.push({line: getMatchingEditLine(line, mv.merge.chunks),
-            cm: mv.merge.ownEditor});
+            cm: mv.merge.remoteEditor});
         }
         let mark = collapseStretch(size, editors);
         mv.collapsedRanges.push({line, size});
@@ -1321,7 +2035,12 @@ class MergeView extends Panel {
 
 // General utilities
 
-function elt(tag: string, content?: string | HTMLElement[] | null, className?: string | null, style?: string | null): HTMLElement {
+function elt(
+  tag: string,
+  content?: string | HTMLElement[] | null,
+  className?: string | null,
+  style?: string | null
+): HTMLElement {
   let e = document.createElement(tag);
   if (className) {
     e.className = className;
@@ -1333,11 +2052,11 @@ function elt(tag: string, content?: string | HTMLElement[] | null, className?: s
     e.appendChild(document.createTextNode(content));
   } else if (content) {
     for (let i = 0; i < content.length; ++i) {
-      e.appendChild((content)[i]);
+      e.appendChild(content[i]);
     }
   }
   return e;
-};
+}
 
 /*function findPrevDiff(chunks: Chunk[], start: number, isOrig: boolean): number | null {
   for (let i = chunks.length - 1; i >= 0; i--) {
@@ -1373,7 +2092,7 @@ function elt(tag: string, content?: string | HTMLElement[] | null, className?: s
   if (views) {
     for (let i = 0; i < views.length; i++) {
       let dv = views[i];
-      let isOrig = cm === dv.ownEditor;
+      let isOrig = cm === dv.remoteEditor;
       let pos = dir === DiffDirection.Previous ?
         findPrevDiff(dv.chunks, line, isOrig) :
         findNextDiff(dv.chunks, line, isOrig);
