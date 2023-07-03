@@ -21,7 +21,7 @@ import { ChunkSource, Chunk, lineToNormalChunks } from '../chunking';
 
 import { EditorWidget } from './editor';
 
-import { /*valueIn/*, hasEntries*/ copyObj } from './util';
+import { valueIn, /*hasEntries*/ copyObj } from './util';
 
 
 /* import {
@@ -42,7 +42,7 @@ import {
   ChangeDesc,
   /*RangeSet,*/
   /*Line,*/
-  Text,
+  /*Text,*/
   Range
 } from '@codemirror/state';
 
@@ -195,7 +195,7 @@ function getCommonEditorExtensions(): Extension {
     diffViewPlugin,
     lineNumbers(),
     HighlightField,
-    LineWidgetField,
+    PaddingWidgetField,
     python()
     /*decorationKeymap*/
   ];
@@ -292,34 +292,33 @@ function rightHighlightInsertSelection(view: EditorView) {
  return true;
 }*/
 /***********************start decoration widget and related statefield***********************************/
-const addLineWidgetEffect = StateEffect.define<{ line: number; size: number }>({
-  map: ({ line, size }, mapping) => ({
-    line: mapping.mapPos(line),
-    size: mapping.mapPos(size)
+const addPaddingWidgetEffect = StateEffect.define<{ offset: number; size: number; above: boolean }>({
+  map: ({ offset, size, above }, mapping) => ({
+    offset: mapping.mapPos(offset),
+    size,
+    above
   })
 });
 
-const LineWidgetField = StateField.define<DecorationSet>({
+const PaddingWidgetField = StateField.define<DecorationSet>({
   create: () => {
     return Decoration.none;
   },
-  update: (LineWidgetRanges, transaction) => {
-    LineWidgetRanges = LineWidgetRanges.map(transaction.changes);
+  update: (paddingWidgetRanges, transaction) => {
+    paddingWidgetRanges = paddingWidgetRanges.map(transaction.changes);
     for (let e of transaction.effects) {
-      if (e.is(addLineWidgetEffect))
-        LineWidgetRanges = LineWidgetRanges.update({
-          add: addLineWidget(transaction.state.doc, e.value.line, e.value.size)
+      if (e.is(addPaddingWidgetEffect))
+      paddingWidgetRanges = paddingWidgetRanges.update({
+          add: [addPaddingWidget(e.value.offset, e.value.size, e.value.above)]
         });
     }
-    return LineWidgetRanges;
+    return paddingWidgetRanges;
   },
   provide: field => EditorView.decorations.from(field)
 });
-class LineWidget extends WidgetType {
-  constructor(block: boolean, line: number, size: number) {
+class PaddingWidget extends WidgetType {
+  constructor(size: number) {
     super();
-    this.block = block;
-    this.lineNumber = line;
     this.size = size;
   }
   toDOM() {
@@ -330,8 +329,6 @@ class LineWidget extends WidgetType {
 
     return elt;
   }
-  block: boolean;
-  lineNumber: number;
   size: number;
 }
 
@@ -344,21 +341,17 @@ function posToOffset(doc: any, pos: any) {
   return {line: line.number - 1, ch: offset - line.from}
 } */
 
-function addLineWidget(
-  doc: Text,
-  line: number,
-  size: number
-): Range<Decoration>[] {
-  let widgets: Range<Decoration>[] = [];
-  let block: boolean = true;
+function addPaddingWidget(
+  pos: number,
+  size: number,
+  above: boolean
+): Range<Decoration> {
   let deco = Decoration.widget({
-    widget: new LineWidget(block, line, size)
+    widget: new PaddingWidget(size),
+    block: true,
+    side: above? -1 : 1
   });
-  const ch = 0;
-  let pos: any = { line: line, ch: ch };
-  let offset = posToOffset(doc, pos);
-  widgets.push(deco.range(offset));
-  return widgets;
+  return deco.range(pos);
 }
 
 /*function addLineWidgetFromUI(view: EditorView) {
@@ -1065,8 +1058,6 @@ init(base: CodeMirror.Editor) {
     return effects;
   }
 
-
-
   private clearLineHighlighting(editor: EditorView, chunkArray: Chunk[]) {
     let effects: StateEffect<unknown>[] = [];
 
@@ -1081,7 +1072,6 @@ init(base: CodeMirror.Editor) {
 
     return effects;
   }
-
 
   private buildMarkHighlighting(
     editor: EditorView,
@@ -1287,7 +1277,7 @@ init(base: CodeMirror.Editor) {
 /**
  * From a line in base, find the matching line in another editor by line chunks
  */
-/*function getMatchingEditLineLC(toMatch: Chunk, chunks: Chunk[]): number {
+function getMatchingEditLineLC(toMatch: Chunk, chunks: Chunk[]): number {
   let editLine = toMatch.baseFrom;
   for (let i = 0; i < chunks.length; ++i) {
     let chunk = chunks[i];
@@ -1299,22 +1289,7 @@ init(base: CodeMirror.Editor) {
     }
   }
   return toMatch.baseTo;
-}*/
-
-/* CM6 */
-/*function getMatchingEditLineLC(toMatch: Chunk, chunks: Chunk[]): number {
-  let editLine = toMatch.baseFrom;
-  for (let i = 0; i < chunks.length; ++i) {
-    let chunk = chunks[i];
-    if (chunk.baseFrom === editLine) {
-      return chunk.remoteTo;
-    }
-    if (chunk.baseFrom > editLine) {
-      break;
-    }
-  }
-  return toMatch.baseTo;
-}*/
+}
 
 /**
  * Find which line numbers align with each other, in the
@@ -1323,7 +1298,7 @@ init(base: CodeMirror.Editor) {
  * [ aligned line #1:[Edit line number, (DiffView#1 line number, DiffView#2 line number,) ...],
  *   algined line #2 ..., etc.]
  */
-/*function findAlignedLines(dvs: DiffView[]): number[][] {
+function findAlignedLines(dvs: DiffView[]): number[][] {
   let linesToAlign: number[][] = [];
   let ignored: number[] = [];
 
@@ -1403,91 +1378,7 @@ init(base: CodeMirror.Editor) {
     }
   }
   return linesToAlign;
-}*/
-
-/* CM6 Version*/
-/*function findAlignedLines(dvs: DiffView[]): number[][] {
-  let linesToAlign: number[][] = [];
-  let ignored: number[] = [];
-
-  // First fill directly from first DiffView
-  let dv = dvs[0];
-  let others = dvs.slice(1);
-  for (let i = 0; i < dv.lineChunks.length; i++) {
-    let chunk = dv.lineChunks[i];
-    let lines = [chunk.baseTo, chunk.remoteTo];
-    for (let o of others) {
-      lines.push(getMatchingEditLineLC(chunk, o.lineChunks));
-    }
-    if (linesToAlign.length > 0 &&
-        linesToAlign[linesToAlign.length - 1][0] === lines[0]) {
-      let last = linesToAlign[linesToAlign.length - 1];
-      for (let j = 0; j < lines.length; ++j) {
-        last[j] = Math.max(last[j], lines[j]);
-      }
-    } else {
-      if (linesToAlign.length > 0) {
-        let prev = linesToAlign[linesToAlign.length - 1];
-        let diff: number | null = lines[0] - prev[0];
-        for (let j = 1; j < lines.length; ++j) {
-          if (diff !== lines[j] - prev[j]) {
-            diff = null;
-            break;
-          }
-        }
-        if (diff === null) {
-          linesToAlign.push(lines);
-        } else {
-          ignored.push(lines[0]);
-          continue;
-        }
-      } else {
-        linesToAlign.push(lines);
-      }
-    }
-  }
-  // Then fill any chunks from remaining DiffView, which are not already added
-  for (let o = 0; o < others.length; o++) {
-    for (let i = 0; i < others[o].lineChunks.length; i++) {
-      let chunk = others[o].lineChunks[i];
-      // Check against existing matches to see if already consumed:
-      let j = 0;
-      for (; j < linesToAlign.length; j++) {
-        let align = linesToAlign[j];
-        if (valueIn(chunk.baseTo, ignored)) {
-          // Chunk already consumed, continue to next chunk
-          j = -1;
-          break;
-        } else if (align[0] >= chunk.baseTo) {
-          // New chunk, which should be inserted in pos j,
-          // such that linesToAlign are sorted on edit line
-          break;
-        }
-      }
-      if (j > -1) {
-        let lines = [chunk.baseTo,
-                     getMatchingEditLineLC(chunk, dv.lineChunks)];
-        for (let k = 0; k < others.length; k++) {
-          if (k === o) {
-            lines.push(chunk.remoteTo);
-          } else {
-            lines.push(getMatchingEditLineLC(chunk, others[k].lineChunks));
-          }
-        }
-        if (linesToAlign.length > j && linesToAlign[j][0] === chunk.baseTo) {
-          let last = linesToAlign[j];
-          for (let k = 0; k < lines.length; ++k) {
-            last[k] = Math.max(last[k], lines[k]);
-          }
-        } else {
-          linesToAlign.splice(j, 0, lines);
-        }
-      }
-    }
-  }
-  return linesToAlign;
 }
-*/
 
 /*function alignLines(cm: CodeMirror.Editor[], lines: number[], aligners: CodeMirror.LineWidget[]): void {
   let maxOffset = 0;
@@ -1508,8 +1399,40 @@ init(base: CodeMirror.Editor) {
     }
   }
 }
+*/
 
-function padAbove(cm: CodeMirror.Editor, line: number, size: number): CodeMirror.LineWidget {
+/* CM6 */
+function alignLines(editors: EditorView[], lines: number[]): void {
+  let maxPosFromTop = 0;
+  let posFromTop: number[] = []; /*top position of the padding relative to the top of the document */
+  let effects: StateEffect<unknown>[] = [];
+  let editorNames: string[] = ['base', 'left','right', 'merge'];
+
+  for (let i = 0; i < editors.length; i++) {
+    if (lines[i] !== null) {
+      let offset = editors[i].state.doc.line(lines[i]).from;
+      console.log('offset:', offset);
+      posFromTop[i] = editors[i].lineBlockAt(offset).top;
+      maxPosFromTop = Math.max(maxPosFromTop, posFromTop[i]);
+    };
+  }
+  for (let i = 0; i < editors.length; i++) {
+    if (lines[i] !== null) {
+      let height = maxPosFromTop - posFromTop[i];
+      console.log('*******************************');
+      console.log(editorNames[i]);
+      console.log('posFromTop:', posFromTop);
+      console.log('height', height);
+      console.log('lines[i]:', lines[i]);
+      if (height > 1) { /* height is in pixels*/
+        effects.push(createPaddingEffect(editors[i], lines[i], height));
+        editors[i].dispatch({ effects:effects });
+      }
+    }
+  }
+}
+
+/* function padAbove(cm: CodeMirror.Editor, line: number, size: number): CodeMirror.LineWidget {
   let above = true;
   if (line > cm.getDoc().lastLine()) {
     line--;
@@ -1521,6 +1444,25 @@ function padAbove(cm: CodeMirror.Editor, line: number, size: number): CodeMirror
   return cm.addLineWidget(line, elt, {height: size, above: above});
 }
 */
+
+
+/* Replaces the CM5 padAbove function */
+function createPaddingEffect(editor: EditorView, line: number, size: number)  {
+  let above = false;
+  let offset: number = editor.state.doc.length;
+  if (line <= editor.state.doc.lines) {
+    above = true;
+  }
+  offset = editor.state.doc.line(line).from;
+  console.log('In createPadding, offset is:', offset);
+  console.log('In createPadding, line is:', line);
+    const effect = addPaddingWidgetEffect.of({
+      offset: offset,
+      size: size,
+      above: above
+    });
+  return effect;
+}
 
 export interface IMergeViewEditorConfiguration
   extends LegacyCodeMirror.EditorConfiguration {
@@ -1577,7 +1519,7 @@ export class MergeView extends Panel {
     let merge: DiffView | null = (this.merge = null);
     //let self = this;
     this.diffViews = [];
-    this.aligners = [];
+    /*this.aligners = [];*/
     let main = options.remote || options.merged;
     if (!main) {
       throw new Error('Either remote or merged model needs to be specified!');
@@ -1750,7 +1692,7 @@ export class MergeView extends Panel {
 
   ////////////////////////////END OF CONSTRUCTOR//////////////////////////////////
 
-  alignViews(force?: boolean) {
+  //alignViews(force?: boolean) {
     /* let dealigned = false;
     if (!this.initialized) {
       return;
@@ -1820,7 +1762,8 @@ export class MergeView extends Panel {
 
 
   /*CM6 version */
-  /*alignViews(force?: boolean) {
+  alignViews(force?: boolean) {
+    //console.log('Enter alighViews:');
      let dealigned = false;
     if (!this.initialized) {
       return;
@@ -1838,56 +1781,46 @@ export class MergeView extends Panel {
     }
     // Find matching lines
     let linesToAlign = findAlignedLines(this.diffViews);
+    //console.log('linesToAlign:', linesToAlign);
 
     // Function modifying DOM to perform alignment:
     let self: MergeView = this;
-    let f = function () {
+    /*let f = function () {*/
 
       // Clear old aligners
-      let aligners = self.aligners;
-      for (let i = 0; i < aligners.length; i++) {
-        /*aligners[i].clear();*
-        console.log('implement a clear method for the aligners')
-      }
-      aligners.length = 0;
+      //let aligners = self.aligners;
+      /*for (let i = 0; i < aligners.length; i++) {
+        /*aligners[i].clear();*/
+        //console.log('implement a clear method for the aligners')
+      //}
+      //aligners.length = 0;
 
-      // Editors (order is important, so it matches
-      // format of linesToAlign)
-      let cm: EditorView[] = [self.base.cm];
+      /*// Editors (order is important, so it matches format of linesToAlign)
+      let cm: CodeMirror.Editor[] = [self.base.cm];
       let scroll: number[] = [];
       for (let dv of self.diffViews) {
-        cm.push(dv.remoteEditorWidget.cm);
+        cm.push(dv.remoteEditor);
+      }*/
+
+      let editors: EditorView[] = [self.base.cm];
+      /*let scroll: number[] = [];*/
+      for (let dv of self.diffViews) {
+        editors.push(dv.remoteEditorWidget.cm);
       }
-      for (let i = 0; i < cm.length; i++) {
-        scroll.push(cm[i].getScrollInfo().top);
+      for (let i = 0; i < editors.length; i++) {
+        /*scroll.push(cm[i].getScrollInfo().top);*/
       }
 
       for (let ln = 0; ln < linesToAlign.length; ln++) {
-        alignLines(cm, linesToAlign[ln], aligners);
+        alignLines(editors, linesToAlign[ln]);
       }
 
-      for (let i = 0; i < cm.length; i++) {
-        cm[i].scrollTo(null, scroll[i]);
+      for (let i = 0; i < editors.length; i++) {
+       /* editors[i].scrollTo(null, scroll[i]);*/
       }
     };
 
-    // All editors should have an operation (simultaneously),
-    // so set up nested operation calls.
-    if (!this.base.cm.curOp) {
-      f = function(fn) {
-        return function() { self.base.cm.operation(fn); };
-      }(f);
-    }
-    for (let dv of this.diffViews) {
-      if (!dv.remoteEditorWidget.cm.curOp) {
-        f = function(fn) {
-          return function() { dv.remoteEditorWidget.cm.operation(fn); };
-        }(f);
-      }
-    }
-    // Perform alignment
-    f();*/
-  }
+
 
   setShowDifferences(val: boolean) {
     /* if (this.right) {
@@ -1915,7 +1848,7 @@ export class MergeView extends Panel {
   base: EditorWidget;
   options: any;
   diffViews: DiffView[];
-  aligners: LineWidget[];
+  //aligners: PaddingWidget[];
   initialized: boolean = false;
   collapsedRanges: { size: number; line: number }[] = [];
 }
