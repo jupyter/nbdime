@@ -656,7 +656,7 @@ def pretty_print_cell(i, cell, prefix="", force_header=False, config=DefaultConf
 
     id = cell.get("id")
     if id and config.details:
-        # Write execution count if there (only source cells)
+        # Write cell ID if there
         c()
         pretty_print_item("id", id, key_prefix, config)
 
