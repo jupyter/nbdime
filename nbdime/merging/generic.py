@@ -641,6 +641,8 @@ def _merge_strings(base, local_diff, remote_diff,
     """Perform a three-way merge of strings. See docstring of merge."""
     assert isinstance(base, str)
 
+    decisions = MergeDecisionBuilder()
+
     # This functions uses a (static) state variable to track recursion.
     # The first time it is called, base can (potentially) be a
     # multi-line string. If so, we split this string on line endings, and merge
@@ -651,7 +653,6 @@ def _merge_strings(base, local_diff, remote_diff,
         # base is a single line with differing edits. We could merge as list of
         # characters, but this is unreliable, and will conflict with line-based
         # chunking.
-        decisions = MergeDecisionBuilder()
 
         # Get strategy for the parent string (path points to line)
         strategy = strategies.get(star_path(path[:-1]))
