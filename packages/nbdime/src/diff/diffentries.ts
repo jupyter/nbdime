@@ -186,7 +186,7 @@ export function validateSequenceOp(
   entry: IDiffEntry,
 ): void {
   if (typeof entry.key !== 'number') {
-    console.info('Invalid patch details', base, entry);
+    console.warn('Invalid patch details', base, entry);
     throw new TypeError(
       `Invalid patch sequence op: Key is not a number: ${entry.key}`,
     );
@@ -227,7 +227,7 @@ export function validateObjectOp(
 ): void {
   let op = entry.op;
   if (typeof entry.key !== 'string') {
-    console.info('Invalid patch details', base, entry, keys);
+    console.warn('Invalid patch details', base, entry, keys);
     throw new TypeError(
       `Invalid patch object op: Key is not a string: ${entry.key}`,
     );
