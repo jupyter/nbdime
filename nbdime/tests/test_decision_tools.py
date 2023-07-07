@@ -123,6 +123,7 @@ def test_pop_patch_multilevel():
 
 @pytest.mark.xfail()
 def test_build_diffs_unsorted():
+    # expected to fail, since `validated` call is significant here!
     b = MergeDecisionBuilder()
     b.onesided((), [op_remove('a')], None)
     b.onesided(('b',), [op_remove('j')], None)
