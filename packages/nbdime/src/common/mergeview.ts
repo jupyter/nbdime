@@ -15,7 +15,7 @@ import type { IStringDiffModel } from '../diff/model';
   DecisionStringDiffModel
 } from '../merge/model';*/
 
-import type { DiffRangePos } from '../diff/range';
+import { type DiffRangePos } from '../diff/range';
 
 import { ChunkSource, Chunk, lineToNormalChunks } from '../chunking';
 
@@ -28,11 +28,6 @@ import { valueIn, /*hasEntries*/ copyObj } from './util';
   NotifyUserError
 } from './exceptions'; */
 
-/*import {
-  python
-} from '@codemirror/lang-python';
-*/
-
 import { python } from "@codemirror/lang-python";
 
 import {
@@ -40,10 +35,10 @@ import {
   StateEffect,
   StateField,
   ChangeDesc,
-  /*RangeSet,*/
-  /*Line,*/
-  /*Text,*/
-  Range
+ // Range,
+  //TransactionSpec,
+  RangeSetBuilder,
+  RangeSet
 } from '@codemirror/state';
 
 import {
@@ -197,7 +192,6 @@ function getCommonEditorExtensions(): Extension {
     HighlightField,
     PaddingWidgetField,
     python()
-    /*decorationKeymap*/
   ];
 }
 
@@ -234,11 +228,6 @@ const HighlightField = StateField.define<DecorationSet>({
         highlightRanges = highlightRanges.update({
           add: [decoration.range(e.value.from, e.value.to)]
         });
-        /*console.log('****************************')
-        console.log(e.value.decorationKey);
-        console.log(e.value.highlightType);
-        console.log('spec:', decoration.spec.class);
-        console.log('****************************')*/
       }
       if (e.is(removeHighlight)) {
         decoration = mergeViewDecorationDict[e.value.decorationKey][e.value.highlightType];
@@ -252,70 +241,23 @@ const HighlightField = StateField.define<DecorationSet>({
   provide: field => EditorView.decorations.from(field)
 });
 
-/*function leftHighlightChunkSelection(view: EditorView) {
-   let highlightType = 'chunk'
-   let decorationKey = 'left';
-    let effects: StateEffect<unknown>[] = view.state.selection.ranges
-    .filter(r => !r.empty)
-    .map(({ from }) => addHighlight.of({ from, to: from, highlightType, decorationKey }));
-  view.dispatch({ effects });
-  return true;
-}
-
-function rightHighlightChunkSelection(view: EditorView) {
-   let highlightType = 'chunk'
-   let decorationKey = 'right';
-    let effects: StateEffect<unknown>[] = view.state.selection.ranges
-    .filter(r => !r.empty)
-    .map(({ from }) => addHighlight.of({ from, to: from, highlightType, decorationKey }));
-  view.dispatch({ effects });
-  return true;
-}
-
-function leftHighlightInsertSelection(view: EditorView) {
-  let highlightType = 'inserted'
-  let decorationKey = 'left';
-   let effects: StateEffect<unknown>[] = view.state.selection.ranges
-   .filter(r => !r.empty)
-   .map(({ from, to }) => addHighlight.of({ from, to, highlightType, decorationKey }));
- view.dispatch({ effects });
- return true;
-}
-
-function rightHighlightInsertSelection(view: EditorView) {
-  let highlightType = 'inserted'
-  let decorationKey = 'right';
-   let effects: StateEffect<unknown>[] = view.state.selection.ranges
-   .filter(r => !r.empty)
-   .map(({ from, to }) => addHighlight.of({ from, to, highlightType, decorationKey }));
- view.dispatch({ effects });
- return true;
-}*/
-/***********************start decoration widget and related statefield***********************************/
-const addPaddingWidgetEffect = StateEffect.define<{ offset: number; size: number; above: boolean }>({
-  map: ({ offset, size, above }, mapping) => ({
-    offset: mapping.mapPos(offset),
-    size,
-    above
-  })
+export const addPaddingWidgetEffect= StateEffect.define<DecorationSet>({
+  map: (value, mapping) => value.map(mapping)
 });
 
-const PaddingWidgetField = StateField.define<DecorationSet>({
-  create: () => {
-    return Decoration.none;
-  },
+export const PaddingWidgetField = StateField.define<DecorationSet>({
+  create: () => Decoration.none,
   update: (paddingWidgetRanges, transaction) => {
-    paddingWidgetRanges = paddingWidgetRanges.map(transaction.changes);
     for (let e of transaction.effects) {
-      if (e.is(addPaddingWidgetEffect))
-      paddingWidgetRanges = paddingWidgetRanges.update({
-          add: [addPaddingWidget(e.value.offset, e.value.size, e.value.above)]
-        });
+      if (e.is(addPaddingWidgetEffect)) {
+        return e.value;
+      }
     }
-    return paddingWidgetRanges;
+    return paddingWidgetRanges.map(transaction.changes);
   },
   provide: field => EditorView.decorations.from(field)
 });
+
 class PaddingWidget extends WidgetType {
   constructor(size: number) {
     super();
@@ -335,62 +277,6 @@ class PaddingWidget extends WidgetType {
 function posToOffset(doc: any, pos: any) {
   return doc.line(pos.line + 1).from + pos.ch;
 }
-
-/* function offsetToPos(doc, offset) {
-  let line = doc.lineAt(offset)
-  return {line: line.number - 1, ch: offset - line.from}
-} */
-
-function addPaddingWidget(
-  pos: number,
-  size: number,
-  above: boolean
-): Range<Decoration> {
-  let deco = Decoration.widget({
-    widget: new PaddingWidget(size),
-    block: true,
-    side: above? -1 : 1
-  });
-  return deco.range(pos);
-}
-
-/*function addLineWidgetFromUI(view: EditorView) {
-  const cursor = view.state.selection.main.head;
-  const line: Line = view.state.doc.lineAt(cursor);
-  let effects: StateEffect<unknown>[] = [];
-  effects.push(addLineWidgetEffect.of({line: line.number, size: 40}));
-  view.dispatch({effects});
-  return true;
-
-}*/
-/**************************end decoration widget and related statefield************************************************* */
-/*const decorationKeymap = keymap.of([
-  {
-    key: 'Alt-u',
-    preventDefault: true,
-    run: leftHighlightChunkSelection
-  },
-  {
-    key: 'Alt-v',
-    preventDefault: true,
-    run: leftHighlightInsertSelection
-  },
-  {
-    key: 'Alt-w',
-    preventDefault: true,
-    run: rightHighlightChunkSelection
-  },
-  {
-    key: 'Alt-x',
-    preventDefault: true,
-    run: rightHighlightInsertSelection
-  },
-  {
-    key: 'Alt-h',
-    preventDefault: true,
-    run: addLineWidgetFromUI
-  }],
-)*/
 
 /**
  *
@@ -447,18 +333,17 @@ export class DiffView {
   constructor(
     model: IStringDiffModel,
     type: 'left' | 'right' | 'merge',
-    updateCallback: (force?: boolean) => void,
+    listener: Extension,
     options: IMergeViewEditorConfiguration
   ) {
     this.model = model;
     this.type = type;
-    this.updateCallback = updateCallback;
     //this.classes = type === 'left' ?
     //leftClasses : type === 'right' ? rightClasses : null;
     let remoteValue = this.model.remote || '';
     //this.remoteEditorWidget = new EditorWidget(remoteValue, copyObj({readOnly: !!options.readOnly}, options));
     this._remoteEditorWidget = new EditorWidget(remoteValue); // OPTIONS TO BE GIVEN
-    this._remoteEditorWidget.editor.injectExtension(getCommonEditorExtensions());
+    this._remoteEditorWidget.editor.injectExtension([listener, getCommonEditorExtensions()]);
     this.showDifferences = options.showDifferences !== false;
   }
   /*
@@ -484,6 +369,7 @@ init(base: CodeMirror.Editor) {
   init(baseWidget: EditorWidget) {
     this.baseEditorWidget = baseWidget;
     const baseEditor = this.baseEditorWidget.cm;
+    this.lineHeight = baseEditor.defaultLineHeight;
     const remoteEditor = this.remoteEditorWidget.cm;
     const baseEditorPlugin = baseEditor.plugin(diffViewPlugin);
     const remoteEditorPlugin = remoteEditor.plugin(diffViewPlugin);
@@ -522,15 +408,12 @@ init(base: CodeMirror.Editor) {
       DIFF_OP.DIFF_DELETE
     );
 
-
-
-    /*this.dealigned = false;
+    this.dealigned = false;
 
     this.forceUpdate = this.registerUpdate();
 
     this.setScrollLock(true, false);
     this.registerScroll();
-    */
   }
 
   update() {}
@@ -1185,6 +1068,7 @@ init(base: CodeMirror.Editor) {
   updating: boolean;
   updatingFast: boolean;
   collapsedRanges: { line: number; size: number }[] = [];
+  lineHeight: number;
 
   protected updateCallback: (force?: boolean) => void;
   protected copyButtons: HTMLElement;
@@ -1276,7 +1160,10 @@ init(base: CodeMirror.Editor) {
 
 /**
  * From a line in base, find the matching line in another editor by line chunks
+ *
  */
+
+
 function getMatchingEditLineLC(toMatch: Chunk, chunks: Chunk[]): number {
   let editLine = toMatch.baseFrom;
   for (let i = 0; i < chunks.length; ++i) {
@@ -1298,6 +1185,7 @@ function getMatchingEditLineLC(toMatch: Chunk, chunks: Chunk[]): number {
  * [ aligned line #1:[Edit line number, (DiffView#1 line number, DiffView#2 line number,) ...],
  *   algined line #2 ..., etc.]
  */
+
 function findAlignedLines(dvs: DiffView[]): number[][] {
   let linesToAlign: number[][] = [];
   let ignored: number[] = [];
@@ -1342,7 +1230,7 @@ function findAlignedLines(dvs: DiffView[]): number[][] {
   for (let o = 0; o < others.length; o++) {
     for (let i = 0; i < others[o].lineChunks.length; i++) {
       let chunk = others[o].lineChunks[i];
-      // Check agains existing matches to see if already consumed:
+      // Check against existing matches to see if already consumed:
       let j = 0;
       for (; j < linesToAlign.length; j++) {
         let align = linesToAlign[j];
@@ -1380,6 +1268,9 @@ function findAlignedLines(dvs: DiffView[]): number[][] {
   return linesToAlign;
 }
 
+
+
+
 /*function alignLines(cm: CodeMirror.Editor[], lines: number[], aligners: CodeMirror.LineWidget[]): void {
   let maxOffset = 0;
   let offset: number[] = [];
@@ -1400,69 +1291,6 @@ function findAlignedLines(dvs: DiffView[]): number[][] {
   }
 }
 */
-
-/* CM6 */
-function alignLines(editors: EditorView[], lines: number[]): void {
-  let maxPosFromTop = 0;
-  let posFromTop: number[] = []; /*top position of the padding relative to the top of the document */
-  let effects: StateEffect<unknown>[] = [];
-  let editorNames: string[] = ['base', 'left','right', 'merge'];
-
-  for (let i = 0; i < editors.length; i++) {
-    if (lines[i] !== null) {
-      let offset = editors[i].state.doc.line(lines[i]).from;
-      console.log('offset:', offset);
-      posFromTop[i] = editors[i].lineBlockAt(offset).top;
-      maxPosFromTop = Math.max(maxPosFromTop, posFromTop[i]);
-    };
-  }
-  for (let i = 0; i < editors.length; i++) {
-    if (lines[i] !== null) {
-      let height = maxPosFromTop - posFromTop[i];
-      console.log('*******************************');
-      console.log(editorNames[i]);
-      console.log('posFromTop:', posFromTop);
-      console.log('height', height);
-      console.log('lines[i]:', lines[i]);
-      if (height > 1) { /* height is in pixels*/
-        effects.push(createPaddingEffect(editors[i], lines[i], height));
-        editors[i].dispatch({ effects:effects });
-      }
-    }
-  }
-}
-
-/* function padAbove(cm: CodeMirror.Editor, line: number, size: number): CodeMirror.LineWidget {
-  let above = true;
-  if (line > cm.getDoc().lastLine()) {
-    line--;
-    above = false;
-  }
-  let elt = document.createElement('div');
-  elt.className = 'CodeMirror-merge-spacer';
-  elt.style.height = size + 'px'; elt.style.minWidth = '1px';
-  return cm.addLineWidget(line, elt, {height: size, above: above});
-}
-*/
-
-
-/* Replaces the CM5 padAbove function */
-function createPaddingEffect(editor: EditorView, line: number, size: number)  {
-  let above = false;
-  let offset: number = editor.state.doc.length;
-  if (line <= editor.state.doc.lines) {
-    above = true;
-  }
-  offset = editor.state.doc.line(line).from;
-  console.log('In createPadding, offset is:', offset);
-  console.log('In createPadding, line is:', line);
-    const effect = addPaddingWidgetEffect.of({
-      offset: offset,
-      size: size,
-      above: above
-    });
-  return effect;
-}
 
 export interface IMergeViewEditorConfiguration
   extends LegacyCodeMirror.EditorConfiguration {
@@ -1508,8 +1336,9 @@ export interface IMergeViewEditorConfiguration
 // Merge view, containing 1 or 2 diff views.
 export class MergeView extends Panel {
   constructor(options: IMergeViewEditorConfiguration) {
-    super();
+    super()
     this.options = options;
+    this.measuring = -1;
     let remote = options.remote;
     let local = options.local || null;
     let merged = options.merged || null;
@@ -1519,7 +1348,6 @@ export class MergeView extends Panel {
     let merge: DiffView | null = (this.merge = null);
     //let self = this;
     this.diffViews = [];
-    /*this.aligners = [];*/
     let main = options.remote || options.merged;
     if (!main) {
       throw new Error('Either remote or merged model needs to be specified!');
@@ -1530,6 +1358,13 @@ export class MergeView extends Panel {
     let readOnly = options.readOnly;
     // For all others:
     options.readOnly = true;
+    this.aligning = true;
+    const listener = EditorView.updateListener.of(update => {
+      if (this.measuring < 0 && (/*update.heightChanged || */update.viewportChanged)
+      && !update.transactions.some(tr => tr.effects.some(e => e.is(addPaddingWidgetEffect)))) {
+        this.alignViews();
+      }
+    });
 
     /*
      * Different cases possible:
@@ -1559,7 +1394,8 @@ export class MergeView extends Panel {
 
     //this.base = new EditorWidget(options.value, copyObj({readOnly: !!options.readOnly}, options));
     this.base = new EditorWidget(options.value);
-    this.base.editor.injectExtension(getCommonEditorExtensions());
+    this.base.editor.injectExtension([listener, getCommonEditorExtensions()]);
+
 
     if (merged) {
       let showBase = options.showBase !== false;
@@ -1579,7 +1415,7 @@ export class MergeView extends Panel {
         left = this.left = new DiffView(
           local,
           'left',
-          this.alignViews.bind(this),
+          listener,
           copyObj(dvOptions)
         );
         this.diffViews.push(left);
@@ -1606,7 +1442,7 @@ export class MergeView extends Panel {
         right = this.right = new DiffView(
           remote,
           'right',
-          this.alignViews.bind(this),
+          listener,
           copyObj(dvOptions)
         );
         this.diffViews.push(right);
@@ -1623,7 +1459,7 @@ export class MergeView extends Panel {
       merge = this.merge = new DiffView(
         merged,
         'merge',
-        this.alignViews.bind(this),
+        listener,
         copyObj({ readOnly }, copyObj(dvOptions))
       );
       this.diffViews.push(merge);
@@ -1647,7 +1483,7 @@ export class MergeView extends Panel {
         right = this.right = new DiffView(
           remote,
           'right',
-          this.alignViews.bind(this),
+          listener,
           dvOptions
         );
         this.diffViews.push(right);
@@ -1684,10 +1520,11 @@ export class MergeView extends Panel {
         dv.collapsedRanges = this.collapsedRanges;
       }
     }
-    this.initialized = true;
-    if (this.left || this.right || this.merge) {
+    this.aligning = false;
+    /*if (this.left || this.right || this.merge) {
       this.alignViews(true);
-    }
+    }*/
+    this.scheduleAlignViews();
   }
 
   ////////////////////////////END OF CONSTRUCTOR//////////////////////////////////
@@ -1763,25 +1600,29 @@ export class MergeView extends Panel {
 
   /*CM6 version */
   alignViews(force?: boolean) {
-    //console.log('Enter alighViews:');
-     let dealigned = false;
-    if (!this.initialized) {
+    console.log('AlignViews')
+    if (this.aligning) {
       return;
     }
-    for (let dv of this.diffViews) {
+    //let dealigned = false;
+    this.aligning = true;
+
+    /*for (let dv of this.diffViews) {
       dv.syncModel();
       if (dv.dealigned) {
         dealigned = true;
         dv.dealigned = false;
       }
     }
+    */
 
-    if (!dealigned && !force) {
+    /*if (!dealigned && !force) {
       return; // Nothing to do
     }
+    */
     // Find matching lines
     let linesToAlign = findAlignedLines(this.diffViews);
-    //console.log('linesToAlign:', linesToAlign);
+
 
     // Function modifying DOM to perform alignment:
     let self: MergeView = this;
@@ -1791,7 +1632,6 @@ export class MergeView extends Panel {
       //let aligners = self.aligners;
       /*for (let i = 0; i < aligners.length; i++) {
         /*aligners[i].clear();*/
-        //console.log('implement a clear method for the aligners')
       //}
       //aligners.length = 0;
 
@@ -1803,24 +1643,73 @@ export class MergeView extends Panel {
       }*/
 
       let editors: EditorView[] = [self.base.cm];
+      let builders: RangeSetBuilder<Decoration>[] = [];
       /*let scroll: number[] = [];*/
       for (let dv of self.diffViews) {
         editors.push(dv.remoteEditorWidget.cm);
       }
+
       for (let i = 0; i < editors.length; i++) {
+        builders.push(new RangeSetBuilder<Decoration>());
         /*scroll.push(cm[i].getScrollInfo().top);*/
       }
 
       for (let ln = 0; ln < linesToAlign.length; ln++) {
-        alignLines(editors, linesToAlign[ln]);
+        let lines = linesToAlign[ln];
+        let maxPosFromTop: number = 0;
+        let posFromTop: number[] = []; /*top position of the padding relative to the top of the document */
+
+        for (let i = 0; i < editors.length; i++) {
+          if (lines[i] !== null) {
+            let offset: number = editors[i].state.doc.line(lines[i]).from + 1;
+            posFromTop[i] = editors[i].lineBlockAt(offset).top;
+            maxPosFromTop = Math.max(maxPosFromTop, posFromTop[i]);
+            //console.log('maxPosFromTop:', maxPosFromTop);
+          }
+        }
+        for (let i = 0; i < editors.length; i++) {
+          if (lines[i] !== null) {
+            let height: number = maxPosFromTop - posFromTop[i];
+            let side = 1; // padding inserted below
+            let offset = editors[i].state.doc.length;
+            if (lines[i] < editors[i].state.doc.lines) {
+              side = -1; // padding inserted above for all lines excepted the last one
+              offset = editors[i].state.doc.line(lines[i]).from;
+            }
+            if(height>1) {
+                builders[i].add(offset, offset, Decoration.widget({
+                  widget: new PaddingWidget(height),
+                  block: true,
+                  side: side
+                }))
+              }
+            }
+          }
+        }
+
+    for (let i = 0; i < editors.length; i++) {
+        let decoSet: DecorationSet = builders[i].finish();
+        if (!RangeSet.eq([decoSet], [editors[i].state.field(PaddingWidgetField)])) {
+          editors[i].dispatch({ effects: addPaddingWidgetEffect.of(decoSet) });
+        }
       }
 
-      for (let i = 0; i < editors.length; i++) {
+    for (let i = 0; i < editors.length; i++) {
        /* editors[i].scrollTo(null, scroll[i]);*/
-      }
+    }
+
+    this.aligning = false;
     };
 
-
+    scheduleAlignViews() {
+      if (this.measuring < 0) {
+        let win = (this.gridPanel.node.ownerDocument.defaultView || window)
+        this.measuring = win.requestAnimationFrame(() => {
+          this.measuring = -1;
+          this.alignViews();
+        })
+      }
+    }
 
   setShowDifferences(val: boolean) {
     /* if (this.right) {
@@ -1848,8 +1737,8 @@ export class MergeView extends Panel {
   base: EditorWidget;
   options: any;
   diffViews: DiffView[];
-  //aligners: PaddingWidget[];
-  initialized: boolean = false;
+  aligning: boolean;
+  measuring: number;
   collapsedRanges: { size: number; line: number }[] = [];
 }
 
