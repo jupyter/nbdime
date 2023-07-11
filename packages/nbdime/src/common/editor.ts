@@ -13,37 +13,106 @@ import {
 } from '@jupyterlab/codeeditor';
 
 import {
-  CodeMirrorEditorFactory, CodeMirrorEditor
+  CodeMirrorEditorFactory,
+  CodeMirrorEditor,
+  EditorExtensionRegistry,
+  EditorLanguageRegistry,
+  EditorThemeRegistry,
+  ybinding
 } from '@jupyterlab/codemirror';
+
+//import { ITranslator, nullTranslator } from '@jupyterlab/translation';
 
 import type { EditorView } from '@codemirror/view';
 import type { Text } from '@codemirror/state';
-import { YFile } from '@jupyter/ydoc';
+import { YFile, IYText } from '@jupyter/ydoc';
+
 export
 class EditorWidget extends CodeEditorWrapper {
   /**
    * Store all editor instances for operations that
    * need to loop over all instances.
    */
-  /* Commented line : version before proposed changes for JupyterLab 4.0 migration*/
-/*constructor(options?: CodeMirrorEditor.IOptions | undefined) {*/
+
 constructor(value?: string, options?: CodeMirrorEditor.IOptions) {
-    /*if (options && options.readOnly) {
-      // Prevent readonly editor from trapping tabs
-      options.extraKeys = {Tab: false, 'Shift-Tab': false};
-    }*/
-    const sharedModel = new YFile();
-    if (value) {
-      sharedModel.source = value
+  const sharedModel = new YFile();
+  if (value) {
+    sharedModel.source = value
+  }
+
+  const extensions = new EditorExtensionRegistry();
+  const languages = new EditorLanguageRegistry();
+  const registry = new EditorExtensionRegistry();
+  const themes = new EditorThemeRegistry();
+
+
+  for (const theme of EditorThemeRegistry.getDefaultThemes(
+    )) { themes.addTheme(theme);}
+
+
+  // Register default languages
+  for (const language of EditorLanguageRegistry.getDefaultLanguages(
+  )) {languages.addLanguage(language);}
+
+  // Register default extensions
+  for (const extensionFactory of EditorExtensionRegistry.getDefaultExtensions(
+    {
+      themes
     }
-    super({
-      model: new CodeEditor.Model({sharedModel}),
-      factory: function() {
-        let factory = new CodeMirrorEditorFactory(/*options*/);
-        return factory.newInlineEditor.bind(factory);
-      }()
+    )) {registry.addExtension(extensionFactory);}
+
+
+    extensions.addExtension({
+      name: 'shared-model-binding',
+      factory: options => {
+        const sharedModel = options.model.sharedModel as IYText;
+        return EditorExtensionRegistry.createImmutableExtension(
+          ybinding({
+            ytext: sharedModel.ysource,
+            undoManager: sharedModel.undoManager ?? undefined
+          })
+        );
+      }
     });
 
+
+  /*console.log('themes:', themes);
+  console.log('languages:', languages);
+  console.log('extensions:', extensions);*/
+  const model =  new CodeEditor.Model({sharedModel});
+  model.mimeType = 'text/x-python'
+
+
+  super({
+    model: model,
+    factory: function() {
+      let factory = new CodeMirrorEditorFactory({
+        extensions,
+        languages
+      });
+
+    return factory.newInlineEditor.bind(factory);
+    }()
+  });
+
+    /********************WORKING VERSION ****************** */
+    /*constructor(value?: string, options?: CodeMirrorEditor.IOptions) {
+      /*if (options && options.readOnly) {
+        // Prevent readonly editor from trapping tabs
+        options.extraKeys = {Tab: false, 'Shift-Tab': false};
+      }*/
+      /*const sharedModel = new YFile();
+      if (value) {
+        sharedModel.source = value
+      }
+      super({
+        model: new CodeEditor.Model({sharedModel}),
+        factory: function() {
+          let factory = new CodeMirrorEditorFactory(/*options*/ /*);*/
+          /*return factory.newInlineEditor.bind(factory);
+        }()
+      });*/
+    /********************************************************** */
     this.staticLoaded = false;
     //EditorWidget.editors.push(this.cm);
   }
