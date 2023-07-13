@@ -21,7 +21,7 @@ import { ChunkSource, Chunk, lineToNormalChunks } from '../chunking';
 
 import { EditorWidget } from './editor';
 
-import { valueIn, /*hasEntries*/ copyObj } from './util';
+import { valueIn, hasEntries, copyObj } from './util';
 
 
 /* import {
@@ -35,8 +35,6 @@ import {
   StateEffect,
   StateField,
   ChangeDesc,
- // Range,
-  //TransactionSpec,
   RangeSetBuilder,
   RangeSet
 } from '@codemirror/state';
@@ -48,14 +46,14 @@ import {
   ViewUpdate,
   Decoration,
   DecorationSet,
-  /*keymap,*/
-  WidgetType
+  WidgetType,
+  GutterMarker,
+  gutter
 } from '@codemirror/view';
 
 import { LegacyCodeMirror } from '../legacy_codemirror/cmconfig';
-//const PICKER_SYMBOL = '\u27ad';
-
-//const CONFLICT_MARKER = '\u26A0'; // '\u2757'
+const PICKER_SYMBOL = '\u27ad';
+const CONFLICT_MARKER = '\u26A0'; // '\u2757'
 
 /*export
 type Marker = CodeMirror.LineHandle | CodeMirror.TextMarker;*/
@@ -82,9 +80,8 @@ export type DiffClasses = {
   gutter: string;
 };
 
-/*const GUTTER_PICKER_CLASS = 'jp-Merge-gutter-picker';
-const GUTTER_CONFLICT_CLASS = 'jp-Merge-gutter-conflict';*/
-
+const GUTTER_PICKER_CLASS = 'jp-Merge-gutter-picker';
+const GUTTER_CONFLICT_CLASS = 'jp-Merge-gutter-conflict';
 const CHUNK_CONFLICT_CLASS = 'jp-Merge-conflict';
 
 /*const leftClasses: DiffClasses = { chunk: 'CodeMirror-merge-l-chunk',
@@ -188,9 +185,12 @@ const diffViewPlugin = ViewPlugin.fromClass(
 function getCommonEditorExtensions(): Extension {
   return [
     diffViewPlugin,
+    gutterMarkerField,
+    gutterSupport,
     lineNumbers(),
-    HighlightField,
-    PaddingWidgetField,
+    highlightField,
+    paddingWidgetField,
+
     python()
   ];
 }
@@ -215,7 +215,7 @@ const removeHighlight = StateEffect.define<{
   map: applyMapping
 });
 
-const HighlightField = StateField.define<DecorationSet>({
+const highlightField = StateField.define<DecorationSet>({
   create() {
     return Decoration.none;
   },
@@ -245,7 +245,7 @@ export const addPaddingWidgetEffect= StateEffect.define<DecorationSet>({
   map: (value, mapping) => value.map(mapping)
 });
 
-export const PaddingWidgetField = StateField.define<DecorationSet>({
+export const paddingWidgetField = StateField.define<DecorationSet>({
   create: () => Decoration.none,
   update: (paddingWidgetRanges, transaction) => {
     for (let e of transaction.effects) {
@@ -272,6 +272,71 @@ class PaddingWidget extends WidgetType {
     return elt;
   }
   size: number;
+}
+
+const pickerMarker = new (class extends GutterMarker {
+  toDOM() {
+    let pickerMarker = elt('div', PICKER_SYMBOL);
+    pickerMarker.className = GUTTER_PICKER_CLASS;
+    return pickerMarker;
+  }
+})();
+
+ const conflictMarker = new (class extends GutterMarker {
+  toDOM() {
+    let conflictMarker = elt('div', CONFLICT_MARKER);
+    conflictMarker.className = GUTTER_CONFLICT_CLASS;
+    return conflictMarker;
+  }
+})();
+
+const gutterMarkerEffect = StateEffect.define<{pos: number, on: boolean, type: string}>({
+  map: (val, mapping) => ({pos: mapping.mapPos(val.pos), on: val.on, type: val.type})
+})
+
+const gutterMarkerField = StateField.define<RangeSet<GutterMarker>>({
+  create:() => {
+    return RangeSet.empty;
+  },
+  update: (gutters, transaction) => {
+    gutters = gutters.map(transaction.changes);
+    for (let e of transaction.effects) {
+      if (e.is(gutterMarkerEffect)) {
+        if (e.value.on) {
+          const marker: GutterMarker = e.value.type === 'picker'? pickerMarker: conflictMarker;
+          gutters = gutters.update({add: [marker.range(e.value.pos)]});
+        }
+        else {
+          gutters = gutters.update({filter: from => from != e.value.pos});
+        }
+      }
+    }
+    return gutters;
+  }
+})
+
+const gutterSupport = [
+  gutterMarkerField,
+  gutter({
+    class: "cm-gutter-marker",
+    markers: v => v.state.field(gutterMarkerField),
+    initialSpacer: () => pickerMarker,
+    domEventHandlers: {
+      mousedown(view, line) {
+        toggleGutterMarker(view, line.from, 'picker')
+        return true
+      }
+    }
+  })
+]
+
+function toggleGutterMarker(view: EditorView, pos: number, type: string) {
+  let gutterMarkers = view.state.field(gutterMarkerField);
+  let hasGutterMarker = false;
+  gutterMarkers.between(pos, pos, () => {hasGutterMarker = true})
+  view.dispatch({
+    effects: gutterMarkerEffect.of({pos: pos, on: !hasGutterMarker, type: type})
+  })
 }
 
 function posToOffset(doc: any, pos: any) {
@@ -401,6 +466,7 @@ init(base: CodeMirror.Editor) {
       this.chunks,
       DIFF_OP.DIFF_INSERT
     );
+
     this.updateHighlighting(
       baseEditor,
       this.model.deletions,
@@ -656,6 +722,7 @@ init(base: CodeMirror.Editor) {
     }
   }*/
 
+
   protected registerScroll(): void {
     /* let self = this;
     this.baseEditorWidget.on('scroll', function() {
@@ -880,7 +947,7 @@ init(base: CodeMirror.Editor) {
       decorationKey: decorationKey
     });
     return effect;
-  }
+  };
 
   private createClearHighlightEffect(
     highlightType: string,
@@ -891,9 +958,23 @@ init(base: CodeMirror.Editor) {
       decorationKey: decorationKey
     });
     return effect;
-  }
+  };
 
-  private buildLineHighlighting(editor: EditorView, chunkArray: Chunk[]) {
+  private createGutterMarkEffects (
+    pos: number,
+    on: boolean,
+    type: string
+  ) {
+    const effect = gutterMarkerEffect.of({
+      pos: pos,
+      on: on,
+      type: type
+    });
+    return effect;
+  };
+
+/* Add line highlighting and gutter markers effects*/
+  private buildLineEffects(editor: EditorView, chunkArray: Chunk[]) {
     let effects: StateEffect<unknown>[] = [];
     let isbaseEditor = editor === this.baseEditorWidget.cm;
 
@@ -917,6 +998,7 @@ init(base: CodeMirror.Editor) {
         effects.push(
           this.createAddHighlightEffect('chunk', decorationKey, startingOffset)
         );
+
         if (conflict) {
           effects.push(
             this.createAddHighlightEffect('conflict', decorationKey, startingOffset)
@@ -926,6 +1008,24 @@ init(base: CodeMirror.Editor) {
           effects.push(
             this.createAddHighlightEffect('start', decorationKey, startingOffset)
           );
+          /****************************************************************** */
+         if (!decorationKey.includes('Merge') ) {
+            // For all editors except merge editor, add a picker button
+            effects.push(this.createGutterMarkEffects(startingOffset, true, 'picker'));
+
+          } else if (editor === this.baseEditorWidget.cm) {
+            for (let s of sources) {
+              if (s.decision.action === 'custom' &&
+                  !hasEntries(s.decision.localDiff) &&
+                  !hasEntries(s.decision.remoteDiff)) {
+                // We have a custom decision, add picker on base only!
+                effects.push(this.createGutterMarkEffects(startingOffset, true, 'picker'))
+              }
+            }
+          } else if (conflict && editor === this.remoteEditorWidget.cm) {
+            effects.push(this.createGutterMarkEffects(startingOffset, true, 'conflict'))
+          }
+
         }
         if (i === chunkLastLine - 1) {
           effects.push(this.createAddHighlightEffect('end', decorationKey, startingOffset));
@@ -936,6 +1036,12 @@ init(base: CodeMirror.Editor) {
         effects.push(
           this.createAddHighlightEffect('endEmpty', decorationKey, startingOffset)
         );
+        if (!decorationKey.includes('Merge')) {
+          effects.push(this.createGutterMarkEffects(startingOffset, true, 'picker'));
+
+        } else if (conflict) {
+          effects.push(this.createGutterMarkEffects(startingOffset, true, 'conflict'));
+        }
       }
     }
     return effects;
@@ -1025,7 +1131,7 @@ init(base: CodeMirror.Editor) {
   ) {
     let self = this;
     let LineHighlightEffects: StateEffect<unknown>[] =
-      self.buildLineHighlighting(editor, chunkArray);
+      self.buildLineEffects(editor, chunkArray);
     let MarkHighlightEffects: StateEffect<unknown>[] =
       self.buildMarkHighlighting(editor, diffRanges, type);
     let effects: StateEffect<unknown>[] =
@@ -1600,7 +1706,6 @@ export class MergeView extends Panel {
 
   /*CM6 version */
   alignViews(force?: boolean) {
-    console.log('AlignViews')
     if (this.aligning) {
       return;
     }
@@ -1664,7 +1769,6 @@ export class MergeView extends Panel {
             let offset: number = editors[i].state.doc.line(lines[i]).from + 1;
             posFromTop[i] = editors[i].lineBlockAt(offset).top;
             maxPosFromTop = Math.max(maxPosFromTop, posFromTop[i]);
-            //console.log('maxPosFromTop:', maxPosFromTop);
           }
         }
         for (let i = 0; i < editors.length; i++) {
@@ -1689,7 +1793,7 @@ export class MergeView extends Panel {
 
     for (let i = 0; i < editors.length; i++) {
         let decoSet: DecorationSet = builders[i].finish();
-        if (!RangeSet.eq([decoSet], [editors[i].state.field(PaddingWidgetField)])) {
+        if (!RangeSet.eq([decoSet], [editors[i].state.field(paddingWidgetField)])) {
           editors[i].dispatch({ effects: addPaddingWidgetEffect.of(decoSet) });
         }
       }
