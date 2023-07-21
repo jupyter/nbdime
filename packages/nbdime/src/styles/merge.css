@@ -137,17 +137,17 @@
 
 
 
-.jp-Notebook-merge .cm-merge-l-chunk .cm-merge-r-chunk { background: var(--jp-merge-both-color2); }
-.jp-Notebook-merge .cm-merge-l-chunk-start .cm-merge-r-chunk-start {
+.jp-Notebook-merge .cm-merge-l-chunk.cm-merge-r-chunk { background: var(--jp-merge-both-color2); }
+.jp-Notebook-merge .cm-merge-l-chunk-start.cm-merge-r-chunk-start {
   border-top: 1px solid var(--jp-merge-both-color1);
   box-sizing: border-box;
 }
-.jp-Notebook-merge .cm-merge-l-chunk-end .cm-merge-r-chunk-end {
+.jp-Notebook-merge .cm-merge-l-chunk-end.cm-merge-r-chunk-end {
   border-bottom: 1px solid var(--jp-merge-both-color1);
   box-sizing: border-box }
 
-.jp-Notebook-merge .cm-merge-l-chunk-end-empty .cm-merge-r-chunk-end-empty + .cm-linewidget .cm-merge-spacer,
-.jp-Notebook-merge .cm-merge-m-chunk-end-remote-empty .cm-merge-m-chunk-end-local-empty + .cm-linewidget .cm-merge-spacer {
+.jp-Notebook-merge .cm-merge-l-chunk-end-empty.cm-merge-r-chunk-end-empty + .cm-linewidget .cm-merge-spacer,
+.jp-Notebook-merge .cm-merge-m-chunk-end-remote-empty.cm-merge-m-chunk-end-local-empty + .cm-linewidget .cm-merge-spacer {
   border-bottom: 1px solid var(--jp-merge-both-color1);
   background-color: var(--jp-merge-both-color2);
   box-sizing: border-box ;
@@ -166,7 +166,6 @@
 
 .jp-Notebook-merge .cm-merge-m-chunk-start-either,
 .jp-Notebook-merge .cm-merge-m-chunk-start-mixed:not(.cm-merge-m-chunk-custom) {
-
   border-top: 1px solid var(--jp-merge-either-color1);
   box-sizing: border-box ;
   }
