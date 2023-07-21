@@ -160,3 +160,6 @@
   background-color: initial;
   color: #b00
 }
+.cm-gutter {
+  cursor: default;
+}
