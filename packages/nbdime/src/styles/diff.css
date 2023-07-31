@@ -126,7 +126,7 @@
   max-width: 100%;
 }
 
-.jp-Notebook-diff .cm-merge-pane-remote {
+.jp-Notebook-diff .cm-right-editor {
   position: relative;
   left: 6%;
 }
@@ -151,12 +151,22 @@
 .jp-Notebook-diff .cm-merge-r-chunk-end { border-bottom: 1px solid var(--jp-diff-deleted-color0); }
 .jp-Notebook-diff .cm-merge-r-connect { fill: var(--jp-diff-deleted-color2); stroke: var(--jp-diff-deleted-color0); stroke-width: 1px; }
 .jp-Notebook-diff .cm-merge-spacer { background-color: var(--jp-diff-deleted-color2); }
+.jp-Notebook-diff .cm-line .cm-merge-r-inserted {
+  background-color:var(--jp-diff-added-color0);
+}
 
-.jp-Notebook-diff .cm-merge-pane-remote .cm-merge-r-chunk { background-color: var(--jp-diff-added-color2); }
-.jp-Notebook-diff .cm-merge-pane-remote .cm-merge-r-chunk-start { border-top: 1px solid var(--jp-diff-added-color0); }
-.jp-Notebook-diff .cm-merge-pane-remote .cm-merge-r-chunk-end { border-bottom: 1px solid var(--jp-diff-added-color0); }
-.jp-Notebook-diff .cm-merge-pane-remote .cm-merge-r-connect { fill: var(--jp-diff-added-color2); stroke: var(--jp-diff-added-color0); stroke-width: 1px; }
-.jp-Notebook-diff .cm-merge-pane-remote .cm-merge-spacer { background-color: var(--jp-diff-added-color2); }
+.jp-Notebook-diff .cm-right-editor .cm-merge-r-chunk { background-color: var(--jp-diff-added-color2); }
+.jp-Notebook-diff .cm-right-editor .cm-merge-r-chunk-start { border-top: 1px solid var(--jp-diff-added-color0); }
+.jp-Notebook-diff .cm-right-editor .cm-merge-r-chunk-end { border-bottom: 1px solid var(--jp-diff-added-color0); }
+.jp-Notebook-diff .cm-right-editor .cm-merge-r-connect { fill: var(--jp-diff-added-color2); stroke: var(--jp-diff-added-color0); stroke-width: 1px; }
+.jp-Notebook-diff .cm-right-editor .cm-merge-spacer { background-color: var(--jp-diff-added-color2); }
+
+
+.jp-Notebook-diff .cm-left-editor .cm-line .cm-merge-r-deleted {
+  /*background-color: initial;*/
+  background-color: var(--jp-diff-deleted-color0);
+
+}
 
 
 .jp-Notebook-diff .jp-Diff-deleted .CodeMirror,
@@ -184,7 +194,8 @@
 
 .jp-CollapsiblePanel-container {
   background-color: var(--jp-layout-color1);
-  color: var(--jp-ui-font-color1);
+  color: var(--jp-ui-
+  -color1);
 }
 
 /*

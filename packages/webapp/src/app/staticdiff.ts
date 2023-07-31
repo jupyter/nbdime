@@ -30,28 +30,27 @@ for (var i=0;i<headers.length;++i){
 
 const codeMirrorEllipsisExportStyle =
 `<style type="text/css">
-.jp-Notebook-diff .CodeMirror-merge-collapsed-widget {
+.jp-Notebook-diff .cm-merge-collapsed-widget {
   cursor: initial;
 }
 
-.CodeMirror-gutters {
+.cm-gutters {
   height: auto !important;
 }
 
-.CodeMirror-sizer, .CodeMirror-scroll {
+.cm-sizer, .cm-scroll {
   margin-bottom: 0 !important;
   padding-bottom: 0 !important;
   margin-right: 0 !important;
   padding-right: 0 !important;
 }
 
-.CodeMirror-hscrollbar, .CodeMirror-vscrollbar,
-.CodeMirror-merge-scrolllock, .CodeMirror-sizer + div {
+.cm-merge-scrolllock, .cm-sizer + div {
   display: none !important;
 }
 
-.CodeMirror-scroll {
-  overflow: auto !important;
+.cm-scroll {
+  overflow-x: auto;
 }
 </style>`;
 

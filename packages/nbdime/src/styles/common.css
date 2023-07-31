@@ -30,57 +30,13 @@
 .nbdime-root .CodeMirror-merge-3pane .CodeMirror-merge-pane { width: 31%; }
 .nbdime-root .CodeMirror-merge-3pane .CodeMirror-merge-gap { width: 3.5%; }
 
-/* Reintroduced
-.nbdime-root .CodeMirror-merge-pane {
-  display: inline-block;
-  white-space: normal;
-  vertical-align: top;
-  width: 100%;
-}
 
-/* Reintroduced
-.nbdime-root .CodeMirror-merge-pane-rightmost {
-  position: absolute;
-  right: 0px;
-  z-index: 1;
-}
+*/
 
-
-.nbdime-root .p-Widget.CodeMirror-merge-gap {
-  z-index: 2;
-  display: inline-block;
-  height: 100%;
-  -moz-box-sizing: border-box;
-  box-sizing: border-box;
-  overflow: hidden;
-  border-left: var(--codemirror-border);
-  border-right: var(--codemirror-border);
-  position: absolute;
-  color: var(--jp-ui-font-color2);
-  background: var(--jp-layout-color2);
-}
-
-.nbdime-root .CodeMirror-merge-scrolllock-wrap {
-  position: absolute;
-  bottom: 0; left: 50%;
-}
-.nbdime-root .CodeMirror-merge-scrolllock {
-  position: relative;
-  left: -50%;
-  cursor: pointer;
-  line-height: 1;
-}
-
-/* Reintroduced
-.nbdime-root .CodeMirror-merge-r-inserted, .CodeMirror-merge-l-inserted {
-    background-color: var(--jp-diff-added-color1);
-}
-
-
-.nbdime-root .CodeMirror-merge-collapsed-widget:before {
+.nbdime-root .cm-merge-collapsed-widget:before {
   content: "(...)";
 }
-.nbdime-root .CodeMirror-merge-collapsed-widget {
+.nbdime-root .cm-merge-collapsed-widget {
   cursor: pointer;
   color: var(--jp-ui-font-color1);
   background: var(--jp-layout-color2);
@@ -89,16 +45,24 @@
   padding: 0 3px;
   border-radius: 4px;
 }
-.nbdime-root .CodeMirror-merge-collapsed-line .CodeMirror-gutter-elt { display: none; }
-*/
 
+.nbdime-root .cm-merge-collapsed-line .cm-gutter-elt {
+  display: none;
+}
 
-.cm-grid-panel {
+.cm-merge-grid-panel {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
   grid-auto-rows: minmax(100px, auto);
-  }
+}
+
+.cm-diff-grid-panel {
+  display: grid;
+  /*grid-template-columns: 50% 50%;*/
+  gap: 10px;
+  /*grid-auto-rows: auto*/
+}
 
   .cm-left-editor {
     grid-column: 1;
@@ -125,7 +89,15 @@
 }
 
 .cm-merge-gap {
-  width: 6%;
+  z-index: 2;
+  display: inline-block;
+  height: 100%;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  overflow: hidden;
+  border-left: var(--codemirror-border);
+  border-right: var(--codemirror-border);
+  position: absolute;
   color: var(--jp-ui-font-color2);
   background: var(--jp-layout-color2);
 }
@@ -153,7 +125,8 @@
   z-index: 1;
 }
 
-.nbdime-root .cm-merge-pane-unchanged { width: 100%; }
+.nbdime-root .cm-merge-pane-unchanged {
+  width: 100%; }
 
 
 .nbdime-root .cm-merge-r-deleted, .cm-l-deleted, .cm-merge-m-deleted {
