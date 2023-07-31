@@ -24,7 +24,7 @@ import {
 
 //import { ITranslator, nullTranslator } from '@jupyterlab/translation';
 
-import type { EditorView } from '@codemirror/view';
+import { type EditorView } from '@codemirror/view';
 import type { Text } from '@codemirror/state';
 import { YFile, IYText } from '@jupyter/ydoc';
 
@@ -43,9 +43,7 @@ constructor(value?: string, options?: CodeMirrorEditor.IOptions) {
 
   const extensions = new EditorExtensionRegistry();
   const languages = new EditorLanguageRegistry();
-  const registry = new EditorExtensionRegistry();
   const themes = new EditorThemeRegistry();
-
 
   for (const theme of EditorThemeRegistry.getDefaultThemes(
     )) { themes.addTheme(theme);}
@@ -60,7 +58,24 @@ constructor(value?: string, options?: CodeMirrorEditor.IOptions) {
     {
       themes
     }
-    )) {registry.addExtension(extensionFactory);}
+    )) {
+      if (extensionFactory.name === 'lineNumbers') {
+        extensions.addExtension(extensionFactory)
+      }
+      if (extensionFactory.name === 'readOnly') {
+        extensions.addExtension(extensionFactory)
+      }
+      if (extensionFactory.name === 'theme') {
+        extensions.addExtension(extensionFactory)
+      }
+      if (extensionFactory.name === 'allowMultipleSelections') {
+        extensions.addExtension(extensionFactory)
+      }
+      if (extensionFactory.name === 'tabSize') {
+        extensions.addExtension(extensionFactory)
+      }
+    }
+
 
 
     extensions.addExtension({
@@ -76,16 +91,13 @@ constructor(value?: string, options?: CodeMirrorEditor.IOptions) {
       }
     });
 
-
-  /*console.log('themes:', themes);
-  console.log('languages:', languages);
-  console.log('extensions:', extensions);*/
   const model =  new CodeEditor.Model({sharedModel});
   model.mimeType = 'text/x-python'
 
 
   super({
     model: model,
+    editorOptions: {config: {lineNumbers: true}},
     factory: function() {
       let factory = new CodeMirrorEditorFactory({
         extensions,

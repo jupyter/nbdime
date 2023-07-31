@@ -20,9 +20,9 @@
   margin-top: 20px;
 }
 
-.jp-Notebook-merge .cm-merge-pane-local,
-.jp-Notebook-merge .cm-merge-pane-remote,
-.jp-Notebook-merge .cm-merge-pane-base:not(.cm-merge-pane-unchanged):not(.cm-merge-pane-deleted):not(.cm-merge-pane-added) {
+.jp-Notebook-merge .cm-left-editor,
+.jp-Notebook-merge .cm-right-editor,
+.jp-Notebook-merge .cm-central-editor:not(.cm-merge-pane-unchanged):not(.cm-merge-pane-deleted):not(.cm-merge-pane-added) {
   width: 33%;
 }
 
@@ -84,20 +84,32 @@
 
 .jp-Notebook-merge .cm-merge-spacer { background-color: #eee; }
 
+.jp-Notebook-merge .cm-line {
+  border-top: 1px solid transparent;
+  border-bottom: 1px solid transparent;
+}
 
 .jp-Notebook-merge .cm-merge-r-chunk {
   background-color: var(--jp-merge-remote-color2);
-  box-sizing: border-box; }
+}
+
 .jp-Notebook-merge .cm-merge-r-chunk-start,
 .jp-Notebook-merge .cm-merge-m-chunk-start-remote {
   border-top: 1px solid var(--jp-merge-remote-color1);
-  box-sizing: border-box }
+}
+
 .jp-Notebook-merge .cm-merge-r-chunk-end,
 .jp-Notebook-merge .cm-merge-m-chunk-end-remote {
   border-bottom: 1px solid var(--jp-merge-remote-color1);
-  box-sizing: border-box }
-.jp-Notebook-merge .cm-merge-r-connect { fill: var(--jp-merge-remote-color2); stroke: var(--jp-merge-remote-color1); stroke-width: 1px; }
-.jp-Notebook-merge .cm-line .cm-merge-r-inserted { background-color: var(--jp-merge-remote-color1); }
+ }
+.jp-Notebook-merge .cm-merge-r-connect {
+  fill: var(--jp-merge-remote-color2);
+  stroke: var(--jp-merge-remote-color1);
+  stroke-width: 1px;
+}
+.jp-Notebook-merge .cm-line .cm-merge-r-inserted {
+  background-color: var(--jp-merge-remote-color1);
+}
 
 .jp-Notebook-merge .cm-merge-r-chunk-end-empty + .cm-linewidget .cm-merge-spacer,
 .jp-Notebook-merge .cm-merge-m-chunk-end-remote-empty + .cm-linewidget .cm-merge-spacer {
@@ -105,54 +117,65 @@
   background-color: var(--jp-merge-remote-color3);
 }
 
-.jp-Notebook-merge .cm-merge-l-chunk { background-color: var(--jp-merge-local-color2); }
+.jp-Notebook-merge .cm-merge-l-chunk {
+  background-color: var(--jp-merge-local-color2);
+}
+
 .jp-Notebook-merge .cm-merge-l-chunk-start,
 .jp-Notebook-merge .cm-merge-m-chunk-start-local {
   border-top: 1px solid var(--jp-merge-local-color1);
-  box-sizing: border-box }
+}
+
 .jp-Notebook-merge .cm-merge-l-chunk-end,
 .jp-Notebook-merge .cm-merge-m-chunk-end-local {
   border-bottom: 1px solid var(--jp-merge-local-color1);
-  box-sizing: border-box }
-.jp-Notebook-merge .cm-merge-l-connect { fill: var(--jp-merge-local-color2); stroke: var(--jp-merge-local-color1); stroke-width: 1px; }
-.jp-Notebook-merge .cm-line .cm-merge-l-inserted { background-color: var(--jp-merge-local-color1) }
+}
+
+.jp-Notebook-merge .cm-merge-l-connect {
+  fill: var(--jp-merge-local-color2);
+  stroke: var(--jp-merge-local-color1);
+  stroke-width: 1px;
+}
+
+.jp-Notebook-merge .cm-line .cm-merge-l-inserted {
+  background-color: var(--jp-merge-local-color1)
+}
 
 .jp-Notebook-merge .cm-merge-l-chunk-end-empty + .cm-linewidget .cm-merge-spacer,
 .jp-Notebook-merge .cm-merge-m-chunk-end-local-empty + .cm-linewidget .cm-merge-spacer {
-  border-bottom: 1px solid var(--jp-merge-local-color1);
   background-color: var(--jp-merge-local-color3);
-  box-sizing: border-box;
+  border-bottom: 1px solid var(--jp-merge-local-color1);
 }
 
-.jp-Notebook-merge .cm-merge-m-chunk-custom { background-color: #ffb; }
+.jp-Notebook-merge .cm-merge-m-chunk-custom {
+  background-color: #ffb;
+}
+
 .jp-Notebook-merge .cm-merge-m-chunk-start-custom {
   border-top: 1px solid #fe6;
-  box-sizing: border-box;
 }
 
 .jp-Notebook-merge .cm-merge-m-chunk-end-custom {
   border-bottom: 1px solid #fe6;
-  box-sizing: border-box;
 }
 
+.jp-Notebook-merge .cm-merge-l-chunk.cm-merge-r-chunk {
+  background: var(--jp-merge-both-color2);
+}
 
-
-.jp-Notebook-merge .cm-merge-l-chunk.cm-merge-r-chunk { background: var(--jp-merge-both-color2); }
 .jp-Notebook-merge .cm-merge-l-chunk-start.cm-merge-r-chunk-start {
   border-top: 1px solid var(--jp-merge-both-color1);
-  box-sizing: border-box;
 }
+
 .jp-Notebook-merge .cm-merge-l-chunk-end.cm-merge-r-chunk-end {
   border-bottom: 1px solid var(--jp-merge-both-color1);
-  box-sizing: border-box }
+}
 
 .jp-Notebook-merge .cm-merge-l-chunk-end-empty.cm-merge-r-chunk-end-empty + .cm-linewidget .cm-merge-spacer,
 .jp-Notebook-merge .cm-merge-m-chunk-end-remote-empty.cm-merge-m-chunk-end-local-empty + .cm-linewidget .cm-merge-spacer {
-  border-bottom: 1px solid var(--jp-merge-both-color1);
   background-color: var(--jp-merge-both-color2);
-  box-sizing: border-box ;
+  border-bottom: 1px solid var(--jp-merge-both-color1);
 }
-
 
 .jp-Notebook-merge .cm-merge-r-chunk-end-empty,
 .jp-Notebook-merge .cm-merge-l-chunk-end-empty,
@@ -167,23 +190,21 @@
 .jp-Notebook-merge .cm-merge-m-chunk-start-either,
 .jp-Notebook-merge .cm-merge-m-chunk-start-mixed:not(.cm-merge-m-chunk-custom) {
   border-top: 1px solid var(--jp-merge-either-color1);
-  box-sizing: border-box ;
-  }
+}
+
 .jp-Notebook-merge .cm-merge-m-chunk-end-either,
 .jp-Notebook-merge .cm-merge-m-chunk-end-mixed:not(.cm-merge-m-chunk-custom) {
   border-bottom: 1px solid var(--jp-merge-either-color1);
-  box-sizing: border-box ;
-  }
+}
 
 .jp-Notebook-merge .cm-merge-m-chunk-end-either-empty + .cm-linewidget .cm-merge-spacer {
   border-bottom: 1px solid var(--jp-merge-either-color1);
   background-color: var(--jp-merge-either-color2);
-  box-sizing: border-box ;
 }
 
-.jp-Notebook-merge .cm-merge-pane-base .cm-line .cm-merge-m-deleted,
-.jp-Notebook-merge .cm-merge-pane-base .cm-line .cm-merge-l-deleted,
-.jp-Notebook-merge .cm-merge-pane-base .cm-line .cm-merge-r-deleted {
+.jp-Notebook-merge .cm-central-editor .cm-line .cm-merge-m-deleted,
+.jp-Notebook-merge .cm-central-editor .cm-line .cm-merge-l-deleted,
+.jp-Notebook-merge .cm-central-editor .cm-line .cm-merge-r-deleted {
   background-color: initial;
   color: #b00;
 }
@@ -229,11 +250,11 @@
   background-color: var(--jp-merge-both-color2);
 }
 
-.jp-Notebook-merge .cm-merge-pane.cm-merge-pane-local.jp-mod-missing {
+.jp-Notebook-merge .cm-merge-pane.cm-left-editor.jp-mod-missing {
   background-color: var(--jp-merge-local-color2);
 }
 
-.jp-Notebook-merge .cm-merge-pane.cm-merge-pane-remote.jp-mod-missing {
+.jp-Notebook-merge .cm-merge-pane.cm-right-editor.jp-mod-missing {
   background-color: var(--jp-merge-remote-color2);
 }
 

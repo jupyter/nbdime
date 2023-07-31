@@ -23,7 +23,7 @@ import { EditorWidget } from './editor';
 
 import { valueIn, hasEntries, splitLines, copyObj } from './util';
 
-import { python } from "@codemirror/lang-python";
+//import { python } from "@codemirror/lang-python";
 
 import {
   Extension,
@@ -36,13 +36,14 @@ import {
 
 import {
   EditorView,
-  lineNumbers,
+  //lineNumbers,
   Decoration,
   DecorationSet,
   WidgetType,
   GutterMarker,
   gutter,
-  BlockInfo
+  BlockInfo,
+  //lineNumbers
 } from '@codemirror/view';
 
 import { LegacyCodeMirror } from '../legacy_codemirror/cmconfig';
@@ -136,12 +137,12 @@ const mergeViewDecorationDict: MergeViewDecorationDict = {
 function getCommonEditorExtensions(): Extension {
   return [
     gutterMarkerField,
-    lineNumbers(),
+    //lineNumbers(),
     highlightField,
     paddingWidgetField,
     pickerLineChunkMappingField,
     conflictMarkerLineChunkMappingField,
-    python()
+    //python()
   ];
 }
 
@@ -330,7 +331,7 @@ export function createNbdimeMergeView(
     readOnly,
     orig: null
   };
-  opts.collapseIdentical = true;
+
   let mergeview = new MergeView(opts);
   let editors: DiffView[] = [];
   if (mergeview.left) {
@@ -375,15 +376,12 @@ export class DiffView {
   }
 
   init(baseWidget: EditorWidget) {
-
     this.baseEditorWidget = baseWidget;
     const baseEditor = this.baseEditorWidget.cm;
     const remoteEditor = this.remoteEditorWidget.cm;
     this.lineChunks = this.model.getLineChunks();
     this.chunks = lineToNormalChunks(this.lineChunks);
     this.updateView(baseEditor, remoteEditor);
-    this.setScrollLock(true, false);
-    this.registerScroll();
   }
 
   updateView( baseEditor: EditorView, remoteEditor: EditorView) {
@@ -414,9 +412,10 @@ export class DiffView {
       this.chunks,
       DIFF_OP.DIFF_DELETE
     );
+
+    this.syncScroll(baseEditor, remoteEditor);
+    this.syncScroll(remoteEditor, baseEditor);
   }
-
-
     syncModel() {
       if (!this.modelInvalid()) {
         return;
@@ -444,95 +443,46 @@ export class DiffView {
     let lock = (this.lockButton = elt('div', undefined, 'cm-merge-scrolllock'));
     lock.title = 'Toggle locked scrolling';
     let lockWrap = elt('div', [lock], 'cm-merge-scrolllock-wrap');
-    // TODO: plug listener
     lock.innerHTML = '\u21db&nbsp;&nbsp;\u21da';
-    /*let self: DiffView = this;
-    CodeMirror.on(lock, 'click', function() {
-      self.setScrollLock(!self.lockScroll);
-    });*/
+    lock.addEventListener("scroll", (event) => {
+       this.setScrollLock(!this.lockScroll);
+      });
     return (this.gap = elt('div', [lockWrap], 'cm-merge-gap'));
-    //return (document.createElement("div"));
   }
 
   setScrollLock(val: boolean, action?: boolean) {
-    /* this.lockScroll = val;
+    this.lockScroll = val;
     if (val && action !== false) {
-      this.syncScroll(EventDirection.OUTGOING);
+      this.syncScroll(this.baseEditorWidget.cm, this.remoteEditorWidget.cm);
     }
     if (this.lockButton) {
       this.lockButton.innerHTML = val ? '\u21db\u21da' : '\u21db&nbsp;&nbsp;\u21da';
-    } */
+    }
   }
-
-
 
   protected modelInvalid(): boolean {
     return this.model instanceof DecisionStringDiffModel &&
             this.model.invalid;
   }
 
-
-  protected registerScroll(): void {
-    /* let self = this;
-    this.baseEditorWidget.on('scroll', function() {
-      self.syncScroll(EventDirection.OUTGOING);
-    });
-    this.remoteEditor.on('scroll', function() {
-      self.syncScroll(EventDirection.INCOMING);
-    }); */
-  }
-
-  /**
+ /**
    * Sync scrolling between base and own editors. `type` is used to indicate
    * which editor is the source, and which editor is the destination of the sync.
    */
-  protected syncScroll(type: EventDirection): void {
-    /* if (this.modelInvalid()) {
+  protected syncScroll (srcEditor: EditorView, destEditor: EditorView): void {
+    if (this.modelInvalid()) {
       return;
     }
-    if (!this.lockScroll) {
+    /*if (!this.lockScroll) {
       return;
-    }
-    // editor: What triggered event, other: What needs to be synced
-    let editor: CodeMirror.Editor;
-    let other: CodeMirror.Editor;
-    if (type === EventDirection.OUTGOING) {
-      editor = this.baseEditorWidget;
-      other = this.remoteEditor;
-    } else {
-      editor = this.remoteEditor;
-      other = this.baseEditorWidget;
-    }
+    }*/
 
-    if (editor.state.scrollSetBy === this) {
-      editor.state.scrollSetBy = null;
-      return;
-    }
-
-    // Position to update to
-    other.state.scrollPosition = editor.getScrollInfo();
-
-    // If ticking, we already have a scroll queued
-    if (other.state.scrollTicking) {
-      return;
-    }
-
-    let sInfo = other.getScrollInfo();
-    // Don't queue an event if already synced.
-    if (other.state.scrollPosition.top === sInfo.top &&
-        other.state.scrollPosition.left === sInfo.left) {
-      return;
-    }
-    // Throttle by requestAnimationFrame().
-    // If event is outgoing, this will lead to a one frame delay of other DiffViews
-    let self = this;
-    window.requestAnimationFrame(function() {
-      other.scrollTo(other.state.scrollPosition.left, other.state.scrollPosition.top);
-      other.state.scrollTicking = false;
-      other.state.scrollSetBy = self;
+    let srcScroller = srcEditor.scrollDOM;
+    let destScroller = destEditor.scrollDOM;
+    srcScroller.addEventListener("scroll", (event) => {
+      window.requestAnimationFrame(function() {destScroller.scrollLeft = srcScroller.scrollLeft;})
     });
-    other.state.scrollTicking = true;
-    return; */
+    return;
   }
 
   private getDecorationKey(sources: ChunkSource[]): string {
@@ -680,7 +630,6 @@ private createGutterEffects (editor: EditorView, chunk: Chunk, pos: number, on: 
     return effects;
   }
 
-
   private clearLineEffects(editor: EditorView, chunkArray: Chunk[]) {
     let effects: StateEffect<unknown>[] = [];
 
@@ -804,10 +753,6 @@ private createGutterEffects (editor: EditorView, chunk: Chunk, pos: number, on: 
   lockScroll: boolean;
   updating: boolean;
   updatingFast: boolean;
-  collapsedRanges: { line: number; size: number }[] = [];
-
-  protected updateCallback: (force?: boolean) => void;
-  protected copyButtons: HTMLElement;
   protected lockButton: HTMLElement;
 }
 
@@ -834,7 +779,7 @@ function getMatchingEditLineLC(toMatch: Chunk, chunks: Chunk[]): number {
  * set of DiffViews. The returned array is of the format:
  *
  * [ aligned line #1:[Edit line number, (DiffView#1 line number, DiffView#2 line number,) ...],
- *   algined line #2 ..., etc.]
+ *   aligned line #2 ..., etc.]
  */
 
 function findAlignedLines(dvs: DiffView[]): number[][] {
@@ -846,7 +791,9 @@ function findAlignedLines(dvs: DiffView[]): number[][] {
   let others = dvs.slice(1);
   for (let i = 0; i < dv.lineChunks.length; i++) {
     let chunk = dv.lineChunks[i];
+
     let lines = [chunk.baseTo, chunk.remoteTo];
+
     for (let o of others) {
       lines.push(getMatchingEditLineLC(chunk, o.lineChunks));
     }
@@ -920,11 +867,6 @@ function findAlignedLines(dvs: DiffView[]): number[][] {
 }
 export interface IMergeViewEditorConfiguration
   extends LegacyCodeMirror.EditorConfiguration {
-  /**
-   * When true stretches of unchanged text will be collapsed. When a number is given, this indicates the amount
-   * of lines to leave visible around such stretches (which defaults to 2). Defaults to false.
-   */
-  collapseIdentical?: boolean | number;
 
   /**
    * Original value, not used
@@ -968,6 +910,7 @@ export class MergeView extends Panel {
     let remote = options.remote;
     let local = options.local || null;
     let merged = options.merged || null;
+    //let panes: number = 0;
     let left: DiffView | null = (this.left = null);
     let right: DiffView | null = (this.right = null);
     let merge: DiffView | null = (this.merge = null);
@@ -1021,22 +964,24 @@ export class MergeView extends Panel {
 
     let dvOptions = options; // as CodeMirror.MergeView.MergeViewEditorConfiguration;
 
-    this.gridPanel = new Panel();
-    this.gridPanel.addClass('cm-grid-panel');
-    this.addWidget(this.gridPanel);
-
     if (merged) {
+
       //options.gutters = [GUTTER_CONFLICT_CLASS, GUTTER_PICKER_CLASS];
-      if (options.lineWrapping === undefined) {
+      if (options.lineWrap === undefined) {
         // Turn off linewrapping for merge view by default, keep for diff
-        options.lineWrapping = false;
+        options.lineWrap = false;
       }
     }
     //this.base = new EditorWidget(options.value, copyObj({readOnly: !!options.readOnly}, options));
     this.base = new EditorWidget(options.value);
     this.base.editor.injectExtension([listener, mergeControlGutter, getCommonEditorExtensions()]);
 
+    /******************************Merge******************************** */
     if (merged) {
+      this.gridPanel = new Panel();
+      this.addWidget(this.gridPanel);
+      console.log('We are in the merge case');
+      this.gridPanel.addClass('cm-merge-grid-panel');
       let showBase = options.showBase !== false;
 
       if (!showBase) {
@@ -1060,6 +1005,7 @@ export class MergeView extends Panel {
         );
         this.diffViews.push(left);
         leftWidget = left.remoteEditorWidget;
+
       }
       this.gridPanel.addWidget(leftWidget);
       leftWidget.addClass('cm-left-editor');
@@ -1070,6 +1016,7 @@ export class MergeView extends Panel {
       }
 
       let rightWidget: Widget;
+
       if (!remote || remote.remote === null) {
         // Remote value was deleted
         right = this.right = null;
@@ -1101,9 +1048,16 @@ export class MergeView extends Panel {
       let mergeWidget = merge.remoteEditorWidget;
       this.gridPanel.addWidget(mergeWidget);
       mergeWidget.addClass('cm-merge-editor');
+
+      //panes = 3 + (showBase ? 1 : 0);
+    /******************************Diff******************************** */
     } else if (remote) {
+      this.gridPanel = new Panel();
+      this.addWidget(this.gridPanel);
+      this.gridPanel.addClass('cm-diff-grid-panel');
       // If in place for type guard
       this.gridPanel.addWidget(this.base);
+      this.base.addClass('cm-left-editor');
       if (remote.unchanged || remote.added || remote.deleted) {
         if (remote.unchanged) {
           this.base.addClass('cm-merge-pane-unchanged');
@@ -1112,6 +1066,7 @@ export class MergeView extends Panel {
         } else if (remote.deleted) {
           this.base.addClass('cm-merge-pane-deleted');
         }
+        //panes = 1;
       } else {
         right = this.right = new DiffView(
           remote,
@@ -1122,21 +1077,22 @@ export class MergeView extends Panel {
         );
         this.diffViews.push(right);
         let rightWidget = right.remoteEditorWidget;
-        this.addWidget(new Widget({node: right.buildGap()}));
-        this.gridPanel.addWidget(rightWidget);
         rightWidget.addClass('cm-right-editor');
+        //this.addWidget(new Widget({node: right.buildGap()}));
+        this.gridPanel.addWidget(rightWidget);
+
+        //panes = 2;
       }
+        /*this.addWidget(new Widget({
+          node: elt('div', null, 'cm-merge-clear', 'height: 0; clear: both;')
+        }));
+      this.addClass('cm-merge');
+      this.addClass('cm-merge-' + panes + 'pane');*/
     }
 
     for (let dv of [left, right, merge]) {
       if (dv) {
         dv.init(this.base);
-      }
-    }
-
-    for (let dv of [left, right, merge]) {
-      if (dv) {
-        dv.collapsedRanges = this.collapsedRanges;
       }
     }
     this.aligning = false;
@@ -1164,7 +1120,7 @@ export class MergeView extends Panel {
         let lines = linesToAlign[ln];
         let maxPosFromTop: number = 0;
         let posFromTop: number[] = []; /*top position of the padding relative to the top of the document */
-
+        //let table = ['base', 'left', 'right', 'merge'];
         for (let i = 0; i < editors.length; i++) {
           if (lines[i] !== null) {
             let offset: number = editors[i].state.doc.line(lines[i]).from + 1;
@@ -1198,11 +1154,6 @@ export class MergeView extends Panel {
           editors[i].dispatch({ effects: replacePaddingWidgetEffect.of(decoSet) });
         }
       }
-
-    for (let i = 0; i < editors.length; i++) {
-       /* editors[i].scrollTo(null, scroll[i]);*/
-    }
-
     this.aligning = false;
     };
 
@@ -1309,7 +1260,6 @@ export class MergeView extends Panel {
   diffViews: DiffView[];
   aligning: boolean;
   measuring: number;
-  collapsedRanges: { size: number; line: number }[] = [];
 }
 // General utilities
 function elt(
