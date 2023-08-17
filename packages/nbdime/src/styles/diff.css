@@ -149,6 +149,11 @@
   text-align: center;
 }
 
+.jp-Notebook-diff .cm-line {
+  border-top: 1px solid transparent;
+  border-bottom: 1px solid transparent;
+}
+
 /* Color diff highlighting according to style vars */
 .jp-Notebook-diff .cm-merge-r-chunk { background-color: var(--jp-diff-deleted-color2); }
 .jp-Notebook-diff .cm-merge-r-chunk-start { border-top: 1px solid var(--jp-diff-deleted-color0); }
