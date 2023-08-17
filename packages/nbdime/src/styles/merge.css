@@ -23,11 +23,6 @@
   margin-top: 20px;
 }
 
-.jp-Notebook-merge .cm-left-editor,
-.jp-Notebook-merge .cm-right-editor,
-.jp-Notebook-merge .cm-central-editor:not(.cm-merge-pane-unchanged):not(.cm-merge-pane-deleted):not(.cm-merge-pane-added) {
-  width: 33%;
-}
 
 .jp-Notebook-merge .cm-merge-pane-final {
   width: 100%;

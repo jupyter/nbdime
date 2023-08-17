@@ -23,8 +23,6 @@ import { EditorWidget } from './editor';
 
 import { valueIn, hasEntries, splitLines, copyObj } from './util';
 
-//import { python } from "@codemirror/lang-python";
-
 import {
   Extension,
   StateEffect,
@@ -36,14 +34,12 @@ import {
 
 import {
   EditorView,
-  //lineNumbers,
   Decoration,
   DecorationSet,
   WidgetType,
   GutterMarker,
   gutter,
-  BlockInfo,
-  //lineNumbers
+  BlockInfo
 } from '@codemirror/view';
 
 import { LegacyCodeMirror } from '../legacy_codemirror/cmconfig';
@@ -137,12 +133,10 @@ const mergeViewDecorationDict: MergeViewDecorationDict = {
 function getCommonEditorExtensions(): Extension {
   return [
     gutterMarkerField,
-    //lineNumbers(),
     highlightField,
     paddingWidgetField,
     pickerLineChunkMappingField,
-    conflictMarkerLineChunkMappingField,
-    //python()
+    conflictMarkerLineChunkMappingField
   ];
 }
 
@@ -208,7 +202,6 @@ export const paddingWidgetField = StateField.define<DecorationSet>({
   },
   provide: field => EditorView.decorations.from(field)
 });
-
 class PaddingWidget extends WidgetType {
   constructor(size: number) {
     super();
@@ -863,6 +856,7 @@ function findAlignedLines(dvs: DiffView[]): number[][] {
       }
     }
   }
+  console.log('Lines to align:', linesToAlign);
   return linesToAlign;
 }
 export interface IMergeViewEditorConfiguration
@@ -980,7 +974,6 @@ export class MergeView extends Panel {
     if (merged) {
       this.gridPanel = new Panel();
       this.addWidget(this.gridPanel);
-      console.log('We are in the merge case');
       this.gridPanel.addClass('cm-merge-grid-panel');
       let showBase = options.showBase !== false;
 
@@ -1008,7 +1001,7 @@ export class MergeView extends Panel {
 
       }
       this.gridPanel.addWidget(leftWidget);
-      leftWidget.addClass('cm-left-editor');
+      leftWidget.addClass('cm-merge-left-editor');
 
       if (showBase) {
         this.gridPanel.addWidget(this.base);
@@ -1035,7 +1028,7 @@ export class MergeView extends Panel {
         rightWidget = right.remoteEditorWidget;
       }
       this.gridPanel.addWidget(rightWidget);
-      rightWidget.addClass('cm-right-editor');
+      rightWidget.addClass('cm-merge-right-editor');
 
       merge = this.merge = new DiffView(
         merged,
@@ -1057,7 +1050,7 @@ export class MergeView extends Panel {
       this.gridPanel.addClass('cm-diff-grid-panel');
       // If in place for type guard
       this.gridPanel.addWidget(this.base);
-      this.base.addClass('cm-left-editor');
+      this.base.addClass('cm-diff-left-editor');
       if (remote.unchanged || remote.added || remote.deleted) {
         if (remote.unchanged) {
           this.base.addClass('cm-merge-pane-unchanged');
@@ -1077,8 +1070,8 @@ export class MergeView extends Panel {
         );
         this.diffViews.push(right);
         let rightWidget = right.remoteEditorWidget;
-        rightWidget.addClass('cm-right-editor');
-        //this.addWidget(new Widget({node: right.buildGap()}));
+        rightWidget.addClass('cm-diff-right-editor');
+        this.addWidget(new Widget({node: right.buildGap()}));
         this.gridPanel.addWidget(rightWidget);
 
         //panes = 2;
@@ -1099,6 +1092,7 @@ export class MergeView extends Panel {
     this.scheduleAlignViews();
   }
   alignViews() {
+    let lineHeight = 20.2;
     if (this.aligning) {
       return;
     }
@@ -1116,44 +1110,108 @@ export class MergeView extends Panel {
         builders.push(new RangeSetBuilder<Decoration>());
       }
 
+      let index_max = editors.length*linesToAlign.length;
+      let paddingsPositions: number[] = new Array(index_max).fill(0)
+      let paddingsHeights: number[] = new Array(index_max).fill(0)
+      let sumDeltas: number[] = new Array(index_max).fill(0)
+      let delta: number[] = new Array(index_max).fill(0)
+      let new_alignment:number[]=new Array(editors.length).fill(0);
+      let new_editor_number_of_lines = new Array(editors.length).fill(0)
+
       for (let ln = 0; ln < linesToAlign.length; ln++) {
-        let lines = linesToAlign[ln];
-        let maxPosFromTop: number = 0;
-        let posFromTop: number[] = []; /*top position of the padding relative to the top of the document */
-        //let table = ['base', 'left', 'right', 'merge'];
+        console.log('***************************');
+        console.log('ln=', ln)
         for (let i = 0; i < editors.length; i++) {
-          if (lines[i] !== null) {
-            let offset: number = editors[i].state.doc.line(lines[i]).from + 1;
-            posFromTop[i] = editors[i].lineBlockAt(offset).top;
-            maxPosFromTop = Math.max(maxPosFromTop, posFromTop[i]);
-          }
-        }
-        for (let i = 0; i < editors.length; i++) {
-          if (lines[i] !== null) {
-            let height: number = maxPosFromTop - posFromTop[i];
-            let side = 1; // padding inserted below
-            let offset = editors[i].state.doc.length;
-            if (lines[i] < editors[i].state.doc.lines) {
-              side = -1; // padding inserted above for all lines excepted the last one
-              offset = editors[i].state.doc.line(lines[i]).from;
-            }
-            if(height>1) {
-                builders[i].add(offset, offset, Decoration.widget({
-                  widget: new PaddingWidget(height),
-                  block: true,
-                  side: side
-                }))
+          let curr_index = (ln*editors.length) + i;
+          let prev_index = ((ln-1)*editors.length) + i;
+          let alignment:number[] = linesToAlign[ln];
+          if (alignment[i] !== null) {
+            if (ln ===0 ){
+              delta[curr_index] = Math.abs(alignment[i] - Math.max(...alignment));
+              new_editor_number_of_lines[i] = editors[i].state.doc.lines + Math.abs(delta[curr_index])
+              sumDeltas[curr_index]+= delta[curr_index];
+              paddingsHeights[curr_index] = delta[curr_index] * lineHeight;
+              new_editor_number_of_lines[i] = editors[i].state.doc.lines + sumDeltas[curr_index]
+              new_alignment[i]= alignment[i];
+              paddingsPositions[curr_index] = new_alignment[i];
+
+            } else {
+              if (editors.length<3) { /*******diff web application******/
+                if(i===0){
+                  new_alignment[i] =  alignment[i] + sumDeltas[(ln-1)*editors.length+i];
+                  new_alignment[i+1] =  alignment[i+1] + sumDeltas[(ln-1)*editors.length+i+1];
+                }
+                if(i===1){
+                  new_alignment[i-1] =  alignment[i-1] + sumDeltas[(ln-1)*editors.length+i-1];
+                  new_alignment[i] =  alignment[i] + sumDeltas[(ln-1)*editors.length+i];
+                }
+              } else { /*******merge web application******/
+                /*to be done*/
               }
+              delta[curr_index] = Math.abs(new_alignment[i] - Math.max(...new_alignment));
+              sumDeltas[curr_index] = sumDeltas[prev_index] + delta[curr_index];
+              paddingsPositions[curr_index] = new_alignment[i];
+              paddingsHeights[curr_index] = delta[curr_index] * lineHeight;
+              new_editor_number_of_lines[i] = editors[i].state.doc.lines + sumDeltas[curr_index]
             }
           }
+          let offset: number = 0;
+          let height: number = paddingsHeights[curr_index];
+          let side : number = 1; /*padding inserted below*/
+          let pos: any;
+          console.log('i:',i)
+          console.log('new_alignment(i):',new_alignment[i]);
+          console.log('new number of lines:',new_editor_number_of_lines[i]);
+          let test = new PaddingWidget(height);
+          console.log('test:', test)
+
+
+          if (new_alignment[i] < editors[i].state.doc.lines) {
+            console.log('line of the padding:', paddingsPositions[curr_index]-1)
+            console.log('number of lines:', editors[i].state.doc.lines)
+            pos = {line: paddingsPositions[curr_index]-1, column: 0};
+            offset = posToOffset(editors[i].state.doc, pos);
+            side = -1;// padding inserted above
+            console.log('offset:', offset);
+            console.log('side:', side);
+
+            if(height>=lineHeight) {
+              builders[i].add(offset, offset, Decoration.widget({
+              widget: new PaddingWidget(height),
+              block: true,
+              side: side
+            }))
+
+          }
         }
+        else {
+          if (new_alignment[i] < editors[i].state.doc.lines) {
+            console.log('line of the padding:', paddingsPositions[curr_index]-1)
+            console.log('number of lines:', editors[i].state.doc.lines)
+            pos = {line: paddingsPositions[curr_index]-1, column: 0};
+            offset = posToOffset(editors[i].state.doc, pos);
+            side = -1;// padding inserted above
+            console.log('offset:', offset);
+
+        }
+          console.log('Cant treat this case for the moment');
+      }
+      }
+    }
+
+    console.log('paddingsPositions',paddingsPositions);
+    console.log('paddingsHeights',paddingsHeights);
+    console.log('new_editor_number_of_lines:', new_editor_number_of_lines);
+    console.log('sumDeltas:', sumDeltas)
 
     for (let i = 0; i < editors.length; i++) {
         let decoSet: DecorationSet = builders[i].finish();
         if (!RangeSet.eq([decoSet], [editors[i].state.field(paddingWidgetField)])) {
           editors[i].dispatch({ effects: replacePaddingWidgetEffect.of(decoSet) });
         }
+        console.log('after addition of paddings, number of lines is:',editors[i].state.doc.lines )
       }
+
     this.aligning = false;
     };
 

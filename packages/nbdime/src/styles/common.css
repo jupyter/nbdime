@@ -57,32 +57,42 @@
   grid-auto-rows: minmax(100px, auto);
 }
 
-.cm-diff-grid-panel {
-  display: grid;
-  /*grid-template-columns: 50% 50%;*/
-  gap: 10px;
-  /*grid-auto-rows: auto*/
+.cm-merge-left-editor {
+  grid-column: 1;
+  grid-row: 1;
 }
 
-  .cm-left-editor {
-    grid-column: 1;
-    grid-row: 1;
-  }
+.cm-central-editor {
+  grid-column: 2;
+  grid-row: 1;
+}
 
-  .cm-central-editor {
-    grid-column: 2;
-    grid-row: 1;
-  }
+.cm-merge-right-editor {
+  grid-column: 3;
+  grid-row: 1;
+}
 
-  .cm-right-editor {
-    grid-column: 3;
-    grid-row: 1;
-  }
+.cm-merge-editor {
+  grid-column: 1/4;
+  grid-row: 2;
+}
 
-  .cm-merge-editor {
-    grid-column: 1/4;
-    grid-row: 2;
-  }
+.cm-diff-grid-panel {
+  display: grid;
+  grid-template-columns: 50% 50%;
+  gap: 10px;
+  grid-auto-rows: minmax(100px, auto);
+}
+
+.cm-diff-left-editor {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.cm-diff-right-editor {
+  grid-column: 2;
+  grid-row: 1;
+}
 
 .nbdime-root .cm-merge-spacer {
   background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,.5) 5px, rgba(255,255,255,.5) 10px);
