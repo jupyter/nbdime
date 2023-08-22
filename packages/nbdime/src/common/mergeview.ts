@@ -1110,76 +1110,58 @@ export class MergeView extends Panel {
         builders.push(new RangeSetBuilder<Decoration>());
       }
 
-      let index_max = editors.length*linesToAlign.length;
-      let paddingsPositions: number[] = new Array(index_max).fill(0)
-      let paddingsHeights: number[] = new Array(index_max).fill(0)
-      let sumDeltas: number[] = new Array(index_max).fill(0)
-      let delta: number[] = new Array(index_max).fill(0)
-      let new_alignment:number[]=new Array(editors.length).fill(0);
-      let new_editor_number_of_lines = new Array(editors.length).fill(0)
+    const sumDeltas = new Array(editors.length).fill(0);
+    const nLines = editors.map(editor => editor.state.doc.lines);
+    
+    for (const alignment_ of linesToAlign) {
+      // console.log('alignement ', alignment_)
+      // console.log('sumDeltas', sumDeltas)
+      const alignment = alignment_.slice(0, 3)
+      const lastLine = Math.max(...alignment);
+      const lineDeltas = alignment.map((line, idx) => lastLine - line - sumDeltas[idx]);
+      // console.log('lineDeltas', lineDeltas)
+      // If some spacers will be before the current line, it means all other editors
+      // must add a spacer.
+      const minDelta = Math.min(...lineDeltas);
+      const correctedDeltas = lineDeltas.map(line => line - minDelta);
+      // console.log('correctedDeltas', correctedDeltas)
+    
+      correctedDeltas.forEach((delta, idx) => {
+        const side = -1;
+        const line = alignment[idx] - 1;
 
-      for (let ln = 0; ln < linesToAlign.length; ln++) {
-        console.log('***************************');
-        console.log('ln=', ln)
-        for (let i = 0; i < editors.length; i++) {
-          let curr_index = (ln*editors.length) + i;
-          let prev_index = ((ln-1)*editors.length) + i;
-          let alignment:number[] = linesToAlign[ln];
-          if (alignment[i] !== null) {
-            if (ln ===0 ){
-              delta[curr_index] = Math.abs(alignment[i] - Math.max(...alignment));
-              new_editor_number_of_lines[i] = editors[i].state.doc.lines + Math.abs(delta[curr_index])
-              sumDeltas[curr_index]+= delta[curr_index];
-              paddingsHeights[curr_index] = delta[curr_index] * lineHeight;
-              new_editor_number_of_lines[i] = editors[i].state.doc.lines + sumDeltas[curr_index]
-              new_alignment[i]= alignment[i];
-              paddingsPositions[curr_index] = new_alignment[i];
+        if (delta > 0 && line < nLines[idx]) {
+          sumDeltas[idx] += delta;
 
-            } else {
-              if (editors.length<3) { /*******diff web application******/
-                if(i===0){
-                  new_alignment[i] =  alignment[i] + sumDeltas[(ln-1)*editors.length+i];
-                  new_alignment[i+1] =  alignment[i+1] + sumDeltas[(ln-1)*editors.length+i+1];
-                }
-                if(i===1){
-                  new_alignment[i-1] =  alignment[i-1] + sumDeltas[(ln-1)*editors.length+i-1];
-                  new_alignment[i] =  alignment[i] + sumDeltas[(ln-1)*editors.length+i];
-                }
-              } else { /*******merge web application******/
-                /*to be done*/
-              }
-              delta[curr_index] = Math.abs(new_alignment[i] - Math.max(...new_alignment));
-              sumDeltas[curr_index] = sumDeltas[prev_index] + delta[curr_index];
-              paddingsPositions[curr_index] = new_alignment[i];
-              paddingsHeights[curr_index] = delta[curr_index] * lineHeight;
-              new_editor_number_of_lines[i] = editors[i].state.doc.lines + sumDeltas[curr_index]
-            }
-          }
-          let offset: number;
-          let height: number = paddingsHeights[curr_index];
-          let side : number = 1; /*padding inserted below*/
-          let pos: any;
-
-          if (new_alignment[i] < new_editor_number_of_lines[i]) {
-            pos = {line: paddingsPositions[curr_index]-1, column: 0};
-            offset = posToOffset(editors[i].state.doc, pos);
-            side = -1;// padding inserted above
-
-            if(height>=lineHeight) {
-              builders[i].add(offset, offset, Decoration.widget({
-              widget: new PaddingWidget(height),
-              block: true,
-              side: side
-            }))
-          }
+          const offset = posToOffset(editors[idx].state.doc, {
+            line,
+            column: 0
+          });
+    
+          builders[idx].add(offset, offset, Decoration.widget({
+            widget: new PaddingWidget(delta * lineHeight),
+            block: true,
+            side
+          }));
         }
-      }
+      });
     }
 
-    console.log('paddingsPositions',paddingsPositions);
-    console.log('paddingsHeights',paddingsHeights);
-    console.log('new_editor_number_of_lines:', new_editor_number_of_lines);
-    console.log('sumDeltas:', sumDeltas)
+    // Last spacer
+    const totalHeight = nLines.map((line, idx) => line + sumDeltas[idx]);
+    const maxHeight = Math.max(...totalHeight);
+    totalHeight.slice(0, 3).forEach((line, idx) => {
+      if(maxHeight > line) {
+        const end = editors[idx].state.doc.length;
+        const delta = maxHeight - line;
+        sumDeltas[idx] += delta;
+        builders[idx].add(end, end, Decoration.widget({
+          widget: new PaddingWidget(delta * lineHeight),
+          block: true,
+          side: 1
+        }));
+      }
+    })
 
     for (let i = 0; i < editors.length; i++) {
         let decoSet: DecorationSet = builders[i].finish();
