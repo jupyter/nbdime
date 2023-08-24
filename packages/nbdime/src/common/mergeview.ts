@@ -44,7 +44,7 @@ import {
 
 import { LegacyCodeMirror } from '../legacy_codemirror/cmconfig';
 const PICKER_SYMBOL = '\u27ad';
-const CONFLICT_MARKER = '\u26A0'; // '\u2757'
+const CONFLICT_MARKER = '\u26A0';
 
 export enum DIFF_OP {
   DIFF_DELETE = -1,
@@ -278,7 +278,7 @@ const pickerLineChunkMappingField = StateField.define<Map<number, Chunk>>({
     let newLineChunkMapping = lineChunkMapping ;
     for (let e of transaction.effects) {
       if (e.is(addLineChunkMappingEffect) && e.value.type === 'picker') {
-          newLineChunkMapping.set(e.value.line, e.value.chunk)
+          newLineChunkMapping.set(e.value.line, e.value.chunk);
       }
     }
     return newLineChunkMapping;
@@ -293,7 +293,7 @@ const conflictMarkerLineChunkMappingField = StateField.define<Map<number, Chunk>
     let newLineChunkMapping = lineChunkMapping ;
     for (let e of transaction.effects) {
       if (e.is(addLineChunkMappingEffect) && e.value.type === 'conflict') {
-          newLineChunkMapping.set(e.value.line, e.value.chunk)
+          newLineChunkMapping.set(e.value.line, e.value.chunk);
       }
     }
     return newLineChunkMapping;
@@ -362,7 +362,6 @@ export class DiffView {
     this.model = model;
     this.type = type;
     let remoteValue = this.model.remote || '';
-    //this.remoteEditorWidget = new EditorWidget(remoteValue, copyObj({readOnly: !!options.readOnly}, options));
     this._remoteEditorWidget = new EditorWidget(remoteValue); // OPTIONS TO BE GIVEN
     this._remoteEditorWidget.editor.injectExtension([listener, mergeControlGutter, getCommonEditorExtensions()]);
     this.showDifferences = options.showDifferences !== false;
@@ -370,8 +369,8 @@ export class DiffView {
 
   init(baseWidget: EditorWidget) {
     this.baseEditorWidget = baseWidget;
-    const baseEditor = this.baseEditorWidget.cm;
-    const remoteEditor = this.remoteEditorWidget.cm;
+    let baseEditor = this.baseEditorWidget.cm;
+    let remoteEditor = this.remoteEditorWidget.cm;
     this.lineChunks = this.model.getLineChunks();
     this.chunks = lineToNormalChunks(this.lineChunks);
     this.updateView(baseEditor, remoteEditor);
@@ -466,10 +465,6 @@ export class DiffView {
     if (this.modelInvalid()) {
       return;
     }
-    /*if (!this.lockScroll) {
-      return;
-    }*/
-
     let srcScroller = srcEditor.scrollDOM;
     let destScroller = destEditor.scrollDOM;
     srcScroller.addEventListener("scroll", (event) => {
@@ -527,7 +522,6 @@ private createGutterEffects (editor: EditorView, chunk: Chunk, pos: number, on: 
   });
   effects.push(mappingEffect);
   return effects;
-
 }
 
 /* Add line backgrounds and gutter markers effects*/
@@ -549,8 +543,8 @@ private createGutterEffects (editor: EditorView, chunk: Chunk, pos: number, on: 
         chunkLastLine = chunk.remoteTo;
       }
       for (let i = chunkFirstLine; i < chunkLastLine; i++) {
-        const pos: any = { line: i, column: 0 };
-        const startingOffset = posToOffset(editor.state.doc, pos);
+        let pos: any = { line: i, column: 0 };
+        let startingOffset = posToOffset(editor.state.doc, pos);
 
         effects.push(addHighlightEffect.of({
           from: startingOffset,
@@ -560,7 +554,6 @@ private createGutterEffects (editor: EditorView, chunk: Chunk, pos: number, on: 
         }));
 
         if (conflict) {
-
           effects.push(addHighlightEffect.of({
             from: startingOffset,
             to: startingOffset,
@@ -577,7 +570,7 @@ private createGutterEffects (editor: EditorView, chunk: Chunk, pos: number, on: 
             decorationKey: decorationKey
           }));
 
-         if (!decorationKey.includes('Merge') ) {
+         if (!decorationKey.includes('Merge')) {
             // For all editors except merge editor, add a picker button
             effects = effects.concat(this.createGutterEffects(editor, chunk, startingOffset, true, 'picker'));
           } else if (editor === this.baseEditorWidget.cm) {
@@ -616,7 +609,6 @@ private createGutterEffects (editor: EditorView, chunk: Chunk, pos: number, on: 
 
         } else if (conflict) {
           effects = effects.concat(this.createGutterEffects(editor, chunk, startingOffset, true, 'picker'));
-
         }
       }
     }
@@ -634,7 +626,6 @@ private createGutterEffects (editor: EditorView, chunk: Chunk, pos: number, on: 
       effects.push(removeHighlightEffect.of({highlightType: 'start', decorationKey: decorationKey}));
       effects.push(removeHighlightEffect.of({highlightType: 'end', decorationKey: decorationKey}));
     }
-
     if (editor !== this.baseEditorWidget.cm) {
       effects.push(removeGutterMarkerEffect.of({type: 'all' }));
       effects.push(removeLineChunkMappingEffect.of({type: 'picker'}));
@@ -738,14 +729,10 @@ private createGutterEffects (editor: EditorView, chunk: Chunk, pos: number, on: 
   model: IStringDiffModel;
   type: string;
   showDifferences: boolean;
-  dealigned: boolean;
-  forceUpdate: Function;
   chunks: Chunk[];
   lineChunks: Chunk[];
   gap: HTMLElement;
   lockScroll: boolean;
-  updating: boolean;
-  updatingFast: boolean;
   protected lockButton: HTMLElement;
 }
 
@@ -904,7 +891,6 @@ export class MergeView extends Panel {
     let remote = options.remote;
     let local = options.local || null;
     let merged = options.merged || null;
-    //let panes: number = 0;
     let left: DiffView | null = (this.left = null);
     let right: DiffView | null = (this.right = null);
     let merge: DiffView | null = (this.merge = null);
@@ -959,17 +945,14 @@ export class MergeView extends Panel {
     let dvOptions = options; // as CodeMirror.MergeView.MergeViewEditorConfiguration;
 
     if (merged) {
-
       //options.gutters = [GUTTER_CONFLICT_CLASS, GUTTER_PICKER_CLASS];
       if (options.lineWrap === undefined) {
         // Turn off linewrapping for merge view by default, keep for diff
         options.lineWrap = false;
       }
     }
-    //this.base = new EditorWidget(options.value, copyObj({readOnly: !!options.readOnly}, options));
-    this.base = new EditorWidget(options.value);
+    this.base = new EditorWidget(options.value); /*options to be given*/
     this.base.editor.injectExtension([listener, mergeControlGutter, getCommonEditorExtensions()]);
-
     /******************************Merge******************************** */
     if (merged) {
       this.gridPanel = new Panel();
@@ -1009,7 +992,6 @@ export class MergeView extends Panel {
       }
 
       let rightWidget: Widget;
-
       if (!remote || remote.remote === null) {
         // Remote value was deleted
         right = this.right = null;
@@ -1041,8 +1023,6 @@ export class MergeView extends Panel {
       let mergeWidget = merge.remoteEditorWidget;
       this.gridPanel.addWidget(mergeWidget);
       mergeWidget.addClass('cm-merge-editor');
-
-      //panes = 3 + (showBase ? 1 : 0);
     /******************************Diff******************************** */
     } else if (remote) {
       this.gridPanel = new Panel();
@@ -1059,7 +1039,6 @@ export class MergeView extends Panel {
         } else if (remote.deleted) {
           this.base.addClass('cm-merge-pane-deleted');
         }
-        //panes = 1;
       } else {
         right = this.right = new DiffView(
           remote,
@@ -1073,14 +1052,7 @@ export class MergeView extends Panel {
         rightWidget.addClass('cm-diff-right-editor');
         this.addWidget(new Widget({node: right.buildGap()}));
         this.gridPanel.addWidget(rightWidget);
-
-        //panes = 2;
       }
-        /*this.addWidget(new Widget({
-          node: elt('div', null, 'cm-merge-clear', 'height: 0; clear: both;')
-        }));
-      this.addClass('cm-merge');
-      this.addClass('cm-merge-' + panes + 'pane');*/
     }
 
     for (let dv of [left, right, merge]) {
@@ -1092,7 +1064,7 @@ export class MergeView extends Panel {
     this.scheduleAlignViews();
   }
   alignViews() {
-    let lineHeight = 20.2;
+    let lineHeight = this.base.cm.defaultLineHeight;
     if (this.aligning) {
       return;
     }
@@ -1111,35 +1083,31 @@ export class MergeView extends Panel {
         builders.push(new RangeSetBuilder<Decoration>());
       }
 
-    const sumDeltas = new Array(editors.length).fill(0);
-    const nLines = editors.map(editor => editor.state.doc.lines);
+    let sumDeltas = new Array(editors.length).fill(0);
+    let nLines = editors.map(editor => editor.state.doc.lines);
 
-    for (const alignment_ of linesToAlign) {
-      // console.log('alignment ', alignment_)
-      // console.log('sumDeltas', sumDeltas)
-      const alignment = alignment_.slice(0, 3)
-      const lastLine = Math.max(...alignment);
-      const lineDeltas = alignment.map((line, idx) => lastLine - line - sumDeltas[idx]);
-      // console.log('lineDeltas', lineDeltas)
+    for (let alignment_ of linesToAlign) {
+      let alignment = alignment_.slice(0, 3)
+      let lastLine = Math.max(...alignment);
+      let lineDeltas = alignment.map((line, i) => lastLine - line - sumDeltas[i]);
       // If some spacers will be before the current line, it means all other editors
       // must add a spacer.
-      const minDelta = Math.min(...lineDeltas);
-      const correctedDeltas = lineDeltas.map(line => line - minDelta);
-      // console.log('correctedDeltas', correctedDeltas)
+      let minDelta = Math.min(...lineDeltas);
+      let correctedDeltas = lineDeltas.map(line => line - minDelta);
 
-      correctedDeltas.forEach((delta, idx) => {
-        const side = -1;
-        const line = alignment[idx] - 1;
+      correctedDeltas.forEach((delta, i) => {
+        let side = -1;
+        let line = alignment[i] - 1;
 
-        if (delta > 0 && line < nLines[idx]) {
-          sumDeltas[idx] += delta;
+        if (delta > 0 && line < nLines[i]) {
+          sumDeltas[i] += delta;
 
-          const offset = posToOffset(editors[idx].state.doc, {
+          let offset = posToOffset(editors[i].state.doc, {
             line,
             column: 0
           });
 
-          builders[idx].add(offset, offset, Decoration.widget({
+          builders[i].add(offset, offset, Decoration.widget({
             widget: new PaddingWidget(delta * lineHeight),
             block: true,
             side
@@ -1149,14 +1117,14 @@ export class MergeView extends Panel {
     }
 
     // Last spacer
-    const totalHeight = nLines.map((line, idx) => line + sumDeltas[idx]);
-    const maxHeight = Math.max(...totalHeight);
-    totalHeight.slice(0, 3).forEach((line, idx) => {
+    let totalHeight = nLines.map((line, i) => line + sumDeltas[i]);
+    let maxHeight = Math.max(...totalHeight);
+    totalHeight.slice(0, 3).forEach((line, i) => {
       if(maxHeight > line) {
-        const end = editors[idx].state.doc.length;
-        const delta = maxHeight - line;
-        sumDeltas[idx] += delta;
-        builders[idx].add(end, end, Decoration.widget({
+        let end = editors[i].state.doc.length;
+        let delta = maxHeight - line;
+        sumDeltas[i] += delta;
+        builders[i].add(end, end, Decoration.widget({
           widget: new PaddingWidget(delta * lineHeight),
           block: true,
           side: 1

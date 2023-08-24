@@ -3,11 +3,6 @@
 
 'use strict';
 
-
-/* import type {
-  Widget
-} from '@lumino/widgets'; */
-
 import {
   CodeEditorWrapper, CodeEditor
 } from '@jupyterlab/codeeditor';
@@ -21,12 +16,9 @@ import {
   ybinding
 } from '@jupyterlab/codemirror';
 
-//import { ITranslator, nullTranslator } from '@jupyterlab/translation';
-
 import { type EditorView } from '@codemirror/view';
 import type { Text } from '@codemirror/state';
 import { YFile, IYText } from '@jupyter/ydoc';
-
 export
 class EditorWidget extends CodeEditorWrapper {
   /**
@@ -59,23 +51,21 @@ constructor(value?: string, options?: CodeMirrorEditor.IOptions) {
     }
     )) {
       if (extensionFactory.name === 'lineNumbers') {
-        extensions.addExtension(extensionFactory)
+        extensions.addExtension(extensionFactory);
       }
       if (extensionFactory.name === 'readOnly') {
-        extensions.addExtension(extensionFactory)
+        extensions.addExtension(extensionFactory);
       }
       if (extensionFactory.name === 'theme') {
         extensions.addExtension(extensionFactory)
       }
       if (extensionFactory.name === 'allowMultipleSelections') {
-        extensions.addExtension(extensionFactory)
+        extensions.addExtension(extensionFactory);
       }
       if (extensionFactory.name === 'tabSize') {
-        extensions.addExtension(extensionFactory)
+        extensions.addExtension(extensionFactory);
       }
     }
-
-
 
     extensions.addExtension({
       name: 'shared-model-binding',
@@ -91,8 +81,6 @@ constructor(value?: string, options?: CodeMirrorEditor.IOptions) {
     });
 
   const model =  new CodeEditor.Model({sharedModel});
-  model.mimeType = 'text/x-python'
-
 
   super({
     model: model,
@@ -106,29 +94,8 @@ constructor(value?: string, options?: CodeMirrorEditor.IOptions) {
     return factory.newInlineEditor.bind(factory);
     }()
   });
-
-    /********************WORKING VERSION ****************** */
-    /*constructor(value?: string, options?: CodeMirrorEditor.IOptions) {
-      /*if (options && options.readOnly) {
-        // Prevent readonly editor from trapping tabs
-        options.extraKeys = {Tab: false, 'Shift-Tab': false};
-      }*/
-      /*const sharedModel = new YFile();
-      if (value) {
-        sharedModel.source = value
-      }
-      super({
-        model: new CodeEditor.Model({sharedModel}),
-        factory: function() {
-          let factory = new CodeMirrorEditorFactory(/*options*/ /*);*/
-          /*return factory.newInlineEditor.bind(factory);
-        }()
-      });*/
-    /********************************************************** */
     this.staticLoaded = false;
-    //EditorWidget.editors.push(this.cm);
   }
- //public static editors: EditorView[] = [];
 
   get cm(): EditorView {
     return (this.editor as CodeMirrorEditor).editor;
@@ -138,24 +105,6 @@ constructor(value?: string, options?: CodeMirrorEditor.IOptions) {
     return (this.editor as CodeMirrorEditor).doc;
   }
 
-    readonly editor: CodeMirrorEditor;
-
-
-  /**  FIX ME
-   * A message handler invoked on an `'resize'` message.
-   */
-  /* protected onResize(msg: Widget.ResizeMessage): void {
-    if (!this.staticLoaded) {
-      if (msg.width < 0 || msg.height < 0) {
-        this.cm.setSize(null, null);
-      } else {
-        super.onResize(msg);
-      }
-      if (this.editor.getOption('readOnly') && document.contains(this.node)) {
-        this.staticLoaded = true;
-      }
-    }
-  } */
-
+  readonly editor: CodeMirrorEditor;
   staticLoaded: boolean;
 }

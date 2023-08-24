@@ -1,0 +1,14 @@
+{
+  "name": "nbdime-ui-tests",
+  "version": "1.0.0",
+  "description": "Nbdime Integration Tests",
+  "private": true,
+  "scripts": {
+    "start": "nbmerge-web -p 41000 data/default/center.ipynb data/default/left.ipynb data/default/right.ipynb ",
+    "test": "npm playwright test",
+    "test:update": "npm playwright test --update-snapshots"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.36.0"
+  }
+}
