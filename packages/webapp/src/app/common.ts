@@ -12,23 +12,23 @@ import type { Widget } from '@lumino/widgets';
 
 import {
   NotifyUserError
-} from '../../../nbdime/lib/common/exceptions';
+} from 'nbdime/lib/common/exceptions';
 
 import {
   UNCHANGED_DIFF_CLASS, CHUNK_PANEL_CLASS
-} from '../../../nbdime/lib/diff/widget/common';
+} from 'nbdime/lib/diff/widget/common';
 
 import {
   UNCHANGED_MERGE_CLASS
-} from '../../../nbdime/lib/merge/widget/common';
+} from 'nbdime/lib/merge/widget/common';
 
 import {
   CELLDIFF_CLASS
-} from '../../../nbdime/lib/diff/widget';
+} from 'nbdime/lib/diff/widget';
 
 import {
   CELLMERGE_CLASS
-} from '../../../nbdime/lib/merge/widget';
+} from 'nbdime/lib/merge/widget';
 
 import { CELLMERGE_CLASS } from 'nbdime/lib/merge/widget';
 

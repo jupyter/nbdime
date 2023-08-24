@@ -11,7 +11,6 @@ import sys
 from jinja2 import FileSystemLoader, Environment
 import nbformat
 from jupyter_server.base.handlers import JupyterHandler, APIHandler
-from jupyter_server_mathjax.app import STATIC_ASSETS_PATH
 from jupyter_server.utils import url_path_join
 from jupyter_server.log import log_request
 import requests
@@ -50,9 +49,7 @@ class NbdimeHandler(JupyterHandler):
             'closable': self.params.get('closable', False),
             'savable': fn is not None,
             'baseUrl': self.nbdime_base_url,
-            'hideUnchanged': self.params.get('hide_unchanged', True),
-            'mathjaxUrl': self.mathjax_url,
-            'mathjaxConfig': self.mathjax_config,
+            'hideUnchanged': self.params.get('hide_unchanged', True)
         }
         if fn:
             # For reference, e.g. if user wants to download file
@@ -312,7 +309,7 @@ class ApiCloseHandler(NbdimeHandler, APIHandler):
                 self.application.exit_code = json.loads(self.request.body).get('exitCode', fallback)
             except json.JSONDecodeError:
                 self.application.exit_code = fallback
-        
+
         if isinstance(self.application.exit_code, str):
             self.application.exit_code = int(self.application.exit_code, 10)
 
@@ -365,10 +362,7 @@ def make_app(**params):
         (r'/api/diff', ApiDiffHandler, params),
         (r'/api/merge', ApiMergeHandler, params),
         (r'/api/store', ApiMergeStoreHandler, params),
-        (r'/api/closetool', ApiCloseHandler, params),
-        (r'/nb-static/mathjax/(.*)', web.StaticFileHandler, {
-            'path': STATIC_ASSETS_PATH
-        })
+        (r'/api/closetool', ApiCloseHandler, params)
         # Static handler will be added automatically
     ]
     if base_url != '/':
@@ -388,7 +382,6 @@ def make_app(**params):
         'template_path': [template_path],
         'base_url': base_url,
         'jinja2_env': env,
-        'mathjax_url': prefix + '/nb-static/mathjax/MathJax.js',
         'local_hostnames': ['localhost', '127.0.0.1'],
         'cookie_secret': base64.encodebytes(os.urandom(32)), # Needed even for an unsecured server.
     }

@@ -1,6 +1,12 @@
 import type * as nbformat from '@jupyterlab/nbformat';
 
-import type { IRenderMimeRegistry } from '@jupyterlab/rendermime';
+import type {
+  CodeEditor
+} from '@jupyterlab/codeeditor';
+
+import type {
+  IRenderMimeRegistry
+} from '@jupyterlab/rendermime';
 
 import { ServerConnection } from '@jupyterlab/services';
 
@@ -49,6 +55,7 @@ export class NbdimeWidget extends Panel {
 
     this.base = options.base;
     this.remote = options.remote;
+    this.editorFactory = options.editorFactory;
     this.rendermime = options.rendermime;
 
     let header = Private.diffHeader(options);
@@ -113,7 +120,7 @@ export class NbdimeWidget extends Panel {
     let base = data['base'] as nbformat.INotebookContent;
     let diff = data['diff'] as any as IDiffEntry[];
     let nbdModel = new NotebookDiffModel(base, diff);
-    let nbdWidget = new NotebookDiffWidget(nbdModel, this.rendermime);
+    let nbdWidget = new NotebookDiffWidget({model: nbdModel, rendermime: this.rendermime, editorFactory: this.editorFactory});
 
     this.scroller.addWidget(nbdWidget);
     let work = nbdWidget.init();
@@ -135,6 +142,7 @@ export class NbdimeWidget extends Panel {
   readonly base: string;
   readonly remote: string | undefined;
 
+  protected editorFactory: CodeEditor.Factory;
   protected rendermime: IRenderMimeRegistry;
 
   protected header: Widget;
@@ -152,6 +160,11 @@ export namespace NbdimeWidget {
      * The remote notebook path. If undefined, base will be diffed against git HEAD.
      */
     remote?: string;
+
+    /**
+     * Code editor factory
+     */
+    editorFactory: CodeEditor.Factory,
 
     /**
      * A rendermime instance to use to render markdown/outputs.

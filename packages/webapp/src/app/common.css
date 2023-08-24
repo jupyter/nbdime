@@ -6,10 +6,6 @@ body {
   font-family: sans-serif;
 }
 
-.CodeMirror-merge {
-  background-color: var(--jp-layout-color1);
-}
-
 .CodeMirror-scroll {
   max-height: calc(100vh - 4em);
 }

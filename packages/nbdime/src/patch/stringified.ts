@@ -218,7 +218,7 @@ function patchStringifiedObject(
   // Object is dict. As diff keys should be unique, create map for easy processing
   let helper = new PatchObjectHelper(base, diff);
   let baseKeys = helper.baseKeys.slice();
-  for( const key in helper.keys()) {
+  for (const key of helper.keys()) {
     let keyString = _makeKeyString(key, level + 1);
     if (helper.isDiffKey(key)) {
       // Entry has a change

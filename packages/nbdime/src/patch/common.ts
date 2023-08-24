@@ -4,11 +4,9 @@
 
 import type { ReadonlyJSONObject } from '@lumino/coreutils';
 
-/* import type {
-  Iterator
-} from '@lumino/algorithm'; */
-
-import type { IDiffObjectEntry } from '../diff/diffentries';
+import type {
+  IDiffObjectEntry
+} from '../diff/diffentries';
 
 import { valueIn, unique } from '../common/util';
 
@@ -27,6 +25,17 @@ class PatchObjectHelper implements Iterator<string> {
     this._diffKeys = diffKeys;
     this.baseKeys = _objectKeys(base);
   }
+
+  keys(): Iterable<string> {
+    this._remainingKeys = this.baseKeys.concat(this._diffKeys).filter(unique).sort();
+    const iterator = this;
+    return {
+      [Symbol.iterator](): Iterator<string> {
+       return iterator;
+      }
+    }
+  }
+
 
   isDiffKey(key: string): boolean {
     return valueIn(key, this._diffKeys);
@@ -66,17 +75,14 @@ class PatchObjectHelper implements Iterator<string> {
     return false;
   }
 
-  iter(): Iterator<string> {
-    this._remainingKeys = this.baseKeys.concat(this._diffKeys).filter(unique).sort();
-    return this;
-  }
-
-  keys(): PatchObjectHelper {
-    return this;
-  }
-
-  next(): any {
+  next(): IteratorResult<string> {
     let key = this._remainingKeys.shift();
+    if (!key) {
+      return {
+        done: true,
+        value: undefined
+      }
+    }
     if (key && valueIn(key, this._diffKeys)) {
       let op = this._diffLUT[key].op;
       if (op === 'add') {
@@ -87,17 +93,7 @@ class PatchObjectHelper implements Iterator<string> {
         this._currentIsAddition = undefined;
       }
     }
-    return key;
-  }
-
-  clone(): PatchObjectHelper {
-    let c = new PatchObjectHelper({}, null);
-    c.baseKeys = this.baseKeys;
-    c._diffKeys = this._diffKeys;
-    c._currentIsAddition = this._currentIsAddition;
-    c._diffLUT = this._diffLUT;
-    c._remainingKeys = this._remainingKeys.slice();
-    return c;
+    return {value: key, done: false}
   }
 
   baseKeys: string[];
@@ -126,5 +122,6 @@ let _objectKeys =
         keys.push(key);
       }
     }
-    return keys;
-  };
+  }
+  return keys;
+};

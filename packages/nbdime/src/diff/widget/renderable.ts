@@ -46,10 +46,10 @@ export abstract class RenderableDiffView<
   get layout(): PanelLayout | null{
     return super.layout as PanelLayout | null;
   }
-
   set layout(value: PanelLayout | null) {
     super.layout = value;
   }
+
   mimetype: string;
 
   /**

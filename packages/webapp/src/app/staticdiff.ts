@@ -4,11 +4,8 @@
 
 import { saveAs } from 'file-saver';
 
-/* import {
-  EditorWidget
-} from 'nbdime/lib/common/editor'; */
-
-const collapsiblePanelExportJS = `<script>
+const collapsiblePanelExportJS =
+`<script>
 var headers = document.getElementsByClassName("jp-CollapsiblePanel-header");
 for (var i=0;i<headers.length;++i){
   var header=headers[i];
@@ -50,16 +47,9 @@ const codeMirrorEllipsisExportStyle =
 </style>`;
 
 function ensureRendered(callback: () => void): void {
-  /*for (let e of EditorWidget.editors) {
-    e.setOption('viewportMargin', Infinity);
-  }*/
   window.requestAnimationFrame(() => {
     // Assume entire viewport has been rendered now
     callback();
-    /*for (let e of EditorWidget.editors) {
-      // Reset to default according to docs
-      e.setOption('viewportMargin', 10);
-    }*/
   });
 }
 

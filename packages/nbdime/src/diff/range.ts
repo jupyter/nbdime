@@ -4,6 +4,12 @@
 
 
 import {
+  CodeEditor
+} from '@jupyterlab/codeeditor';
+
+import type { Text } from '@codemirror/state'
+
+import {
   valueIn
 } from '../common/util';
 
@@ -11,11 +17,6 @@ import type {
   ChunkSource
 } from '../chunking';
 
-import {
-  CodeEditor
-} from '@jupyterlab/codeeditor';
-
-import type { Text } from '@codemirror/state'
 /**
  * Represents a range in a diff (typically in a string), in absolute indices (1D)
  */
@@ -66,8 +67,6 @@ export class DiffRangePos {
    * non-inclusive, i.e., it follows the syntax of String.slice().
    */
   constructor(
-        //public from: CodeMirror.Position,
-        //public to: CodeMirror.Position,
     public from: CodeEditor.IPosition,
     public to: CodeEditor.IPosition,
         chunkStartLine?: boolean,
@@ -131,7 +130,7 @@ export function offsetToPos(doc : Text, offset:number) {
  */
 export function raw2Pos(raws: DiffRangeRaw[], text: string): DiffRangePos[] {
   // Find all newline's indices in text
- let adIdx: number[] = [];
+  let adIdx: number[] = [];
   let i = -1;
   while (-1 !== (i = text.indexOf('\n', i + 1))) {
     adIdx.push(i);
@@ -142,12 +141,11 @@ export function raw2Pos(raws: DiffRangeRaw[], text: string): DiffRangePos[] {
     // First `from` position:
     let line = findLineNumber(adIdx, r.from);
     let lineStartIdx = line > 0 ? adIdx[line - 1] + 1 : 0;
-    //let from = CodeMirror.Pos(line, r.from - lineStartIdx);
-    let from : CodeEditor.IPosition = { line: line, column: r.from - lineStartIdx }
+    let from : CodeEditor.IPosition = { line: line, column: r.from - lineStartIdx };
+
     // Then `to` position:
     line = findLineNumber(adIdx, r.to - 1); // `to` is non-inclusive
     lineStartIdx = line > 0 ? adIdx[line - 1] + 1 : 0;
-    //let to : CodeEditor.IPosition = CodeMirror.Pos(line, r.to - lineStartIdx);
     let to : CodeEditor.IPosition = { line: line, column: r.to - lineStartIdx };
     // Finally, add some chunking hints:
     let startsOnNewLine = valueIn(r.from, adIdx);
@@ -164,5 +162,4 @@ export function raw2Pos(raws: DiffRangeRaw[], text: string): DiffRangePos[] {
     result.push(pos);
   }
   return result;
-
 }

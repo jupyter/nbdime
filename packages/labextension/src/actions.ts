@@ -2,6 +2,8 @@ import { PathExt, URLExt } from '@jupyterlab/coreutils';
 
 import type { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
+import { CodeEditor } from '@jupyterlab/codeeditor';
+
 import { ServerConnection } from '@jupyterlab/services';
 
 import type { Widget } from '@lumino/widgets';
@@ -14,11 +16,15 @@ interface IApiResponse {
   is_git: boolean;
 }
 
-export function diffNotebook(args: {
-  readonly base: string;
-  readonly remote: string;
-  readonly rendermime: IRenderMimeRegistry;
-  hideUnchanged?: boolean;
+
+
+export
+function diffNotebook(args: {
+  readonly base: string,
+  readonly remote: string,
+  readonly rendermime: IRenderMimeRegistry,
+  readonly editorFactory: CodeEditor.Factory,
+  hideUnchanged?: boolean
 }): Widget {
   let { base, remote } = args;
   let widget = new NbdimeWidget(args);
@@ -27,17 +33,21 @@ export function diffNotebook(args: {
   return widget;
 }
 
-export function diffNotebookCheckpoint(args: {
-  readonly path: string;
-  readonly rendermime: IRenderMimeRegistry;
-  hideUnchanged?: boolean;
+
+export
+function diffNotebookCheckpoint(args: {
+  readonly path: string,
+  readonly rendermime: IRenderMimeRegistry,
+  readonly editorFactory: CodeEditor.Factory,
+  hideUnchanged?: boolean
 }): Widget {
-  const { path, rendermime, hideUnchanged } = args;
+  const {path, rendermime, hideUnchanged, editorFactory} = args;
   let nb_dir = PathExt.dirname(path);
   let name = PathExt.basename(path, '.ipynb');
   let base = PathExt.join(nb_dir, name + '.ipynb');
   let widget = new NbdimeWidget({
     base,
+    editorFactory,
     rendermime,
     baseLabel: 'Checkpoint',
     hideUnchanged,
@@ -48,14 +58,17 @@ export function diffNotebookCheckpoint(args: {
   return widget;
 }
 
-export function diffNotebookGit(args: {
-  readonly path: string;
-  readonly rendermime: IRenderMimeRegistry;
-  hideUnchanged?: boolean;
+
+export
+function diffNotebookGit(args: {
+  readonly path: string,
+  readonly rendermime: IRenderMimeRegistry,
+  readonly editorFactory: CodeEditor.Factory,
+  hideUnchanged?: boolean
 }): Widget {
-  const { path, rendermime, hideUnchanged } = args;
+  const {path, rendermime, hideUnchanged, editorFactory} = args;
   let name = PathExt.basename(path, '.ipynb');
-  let widget = new NbdimeWidget({ base: path, rendermime, hideUnchanged });
+  let widget = new NbdimeWidget({base: path, editorFactory, rendermime, hideUnchanged});
   widget.title.label = `Diff git: ${name}`;
   widget.title.caption = `Local: git HEAD\nRemote: '${path}'`;
   widget.title.iconClass = 'fa fa-git jp-fa-tabIcon';
