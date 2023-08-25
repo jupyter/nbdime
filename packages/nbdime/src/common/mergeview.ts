@@ -57,20 +57,10 @@ export enum EventDirection {
   OUTGOING
 }
 
-export type DiffClasses = {
-  [key: string]: string;
-  chunk: string;
-  start: string;
-  end: string;
-  insert: string;
-  del: string;
-  connect: string;
-  gutter: string;
-};
-
 const GUTTER_PICKER_CLASS = 'jp-Merge-gutter-picker';
 const GUTTER_CONFLICT_CLASS = 'jp-Merge-gutter-conflict';
 const CHUNK_CONFLICT_CLASS = 'jp-Merge-conflict';
+
 
 export type EditorDecorationsDict = {
   [key: string]: Decoration;
@@ -95,6 +85,7 @@ export type MergeViewDecorationDict = {
 };
 
 const conflictDecoration = Decoration.line({ class: CHUNK_CONFLICT_CLASS });
+const lineHighlightTypeList = ['chunk', 'conflict', 'start', 'end'];
 
 namespace Private {
   export function buildEditorDecorationDict(
@@ -144,6 +135,10 @@ function applyMapping({ from, to }: any, mapping: ChangeDesc) {
   const map: any = { from: mapping.mapPos(from), to: mapping.mapPos(to) };
   return map;
 }
+
+/**
+ * Effect for adding highlighting on lines or on characters
+ */
 const addHighlightEffect = StateEffect.define<{
   from: number;
   to: number;
@@ -153,6 +148,9 @@ const addHighlightEffect = StateEffect.define<{
   map: applyMapping
 });
 
+/**
+ * Effect for removing highlighting on lines or on characters
+ */
 const removeHighlightEffect = StateEffect.define<{
   highlightType: string;
   decorationKey: string;
@@ -160,6 +158,9 @@ const removeHighlightEffect = StateEffect.define<{
   map: applyMapping
 });
 
+/**
+ * StateField storing information about highlighting elements of an editor
+ */
 const highlightField = StateField.define<DecorationSet>({
   create() {
     return Decoration.none;
@@ -186,10 +187,16 @@ const highlightField = StateField.define<DecorationSet>({
   provide: field => EditorView.decorations.from(field)
 });
 
+/**
+ * StateField storing information about padding widgets used to keep the alignment between different editors
+ */
 export const replacePaddingWidgetEffect= StateEffect.define<DecorationSet>({
   map: (value, mapping) => value.map(mapping)
 });
 
+/**
+ * StateField storing information about padding widgets used to keep the alignment between different editors
+ */
 export const paddingWidgetField = StateField.define<DecorationSet>({
   create: () => Decoration.none,
   update: (paddingWidgetRanges, transaction) => {
@@ -202,6 +209,10 @@ export const paddingWidgetField = StateField.define<DecorationSet>({
   },
   provide: field => EditorView.decorations.from(field)
 });
+
+/**
+ * Widget used for aligning lines of different editors that need to be at the same distance from the top of the document
+ */
 class PaddingWidget extends WidgetType {
   constructor(size: number) {
     super();
@@ -218,14 +229,23 @@ class PaddingWidget extends WidgetType {
   size: number;
 }
 
+/**
+ * Effect for adding a gutter marker
+ */
 const addGutterMarkerEffect = StateEffect.define<{pos: number, on: boolean, type: string}>({
   map: (val, mapping) => ({pos: mapping.mapPos(val.pos), on: val.on, type: val.type})
 })
 
+/**
+ * Effect for removing a gutter marker
+ */
 const removeGutterMarkerEffect = StateEffect.define<{type: string}>({
   map: (val) => ({type: val.type})
 })
 
+/**
+ * StateField storing information about gutter markers (picker and conflict ones)
+ */
 const gutterMarkerField = StateField.define<RangeSet<GutterMarker>>({
   create:() => {
     return RangeSet.empty;
@@ -246,6 +266,9 @@ const gutterMarkerField = StateField.define<RangeSet<GutterMarker>>({
     return gutters;
   }
 })
+/**
+ * Picker gutter marker DOM Element ➭
+ */
 const pickerMarker = new (class extends GutterMarker {
   toDOM() {
     let pickerMarker = elt('div', PICKER_SYMBOL);
@@ -254,6 +277,9 @@ const pickerMarker = new (class extends GutterMarker {
   }
 })();
 
+/**
+ * Conflict gutter marker DOM Element ⚠
+ */
  const conflictMarker = new (class extends GutterMarker {
   toDOM() {
     let conflictMarker = elt('div', CONFLICT_MARKER);
@@ -262,14 +288,25 @@ const pickerMarker = new (class extends GutterMarker {
   }
 })();
 
+/**
+ * Effect for adding a mapping between a line and a chunk
+ * This is used for adding the gutters at the right place : there is a single gutter marker associated with each chunk
+ */
 const addLineChunkMappingEffect = StateEffect.define<{line: number, chunk: Chunk, type: String}>({
   map: (val, mapping) => ({line: mapping.mapPos(val.line), chunk: val.chunk, type: val.type})
 })
 
+/**
+ * Effect for removing a mapping between a line and a chunk
+ * This is used for removing the gutters from the right place there is a single gutter marker associated with each chunk
+ */
 const removeLineChunkMappingEffect = StateEffect.define<{type: String}>({
   map: (val) => ({type: val.type})
 })
 
+/**
+ * StateField storing information about the mapping between a line and a chunk for picker gutter markers
+ */
 const pickerLineChunkMappingField = StateField.define<Map<number, Chunk>>({
   create:() => {
     return new Map();
@@ -285,6 +322,9 @@ const pickerLineChunkMappingField = StateField.define<Map<number, Chunk>>({
   }
 })
 
+/**
+ * StateField storing information about the mapping between a line and a chunk for conflict gutter markers
+ */
 const conflictMarkerLineChunkMappingField = StateField.define<Map<number, Chunk>>({
   create:() => {
     return new Map();
@@ -301,7 +341,6 @@ const conflictMarkerLineChunkMappingField = StateField.define<Map<number, Chunk>
 })
 
 /**
- *
  * A wrapper view for showing StringDiffModels in a MergeView
  */
 export function createNbdimeMergeView(remote: IStringDiffModel): MergeView;
@@ -359,109 +398,112 @@ export class DiffView {
     mergeControlGutter: Extension,
     options: IMergeViewEditorConfiguration
   ) {
-    this.model = model;
-    this.type = type;
-    let remoteValue = this.model.remote || '';
+    this._model = model;
+    this._type = type;
+    let remoteValue = this._model.remote || '';
     this._remoteEditorWidget = new EditorWidget(remoteValue); // OPTIONS TO BE GIVEN
     this._remoteEditorWidget.editor.injectExtension([listener, mergeControlGutter, getCommonEditorExtensions()]);
-    this.showDifferences = options.showDifferences !== false;
   }
 
   init(baseWidget: EditorWidget) {
-    this.baseEditorWidget = baseWidget;
-    let baseEditor = this.baseEditorWidget.cm;
-    let remoteEditor = this.remoteEditorWidget.cm;
-    this.lineChunks = this.model.getLineChunks();
-    this.chunks = lineToNormalChunks(this.lineChunks);
+    this._baseEditorWidget = baseWidget;
+    let baseEditor = this._baseEditorWidget.cm;
+    let remoteEditor = this._remoteEditorWidget.cm;
+    this._lineChunks = this._model.getLineChunks();
+    this._chunks = lineToNormalChunks(this._lineChunks);
     this.updateView(baseEditor, remoteEditor);
-  }
-
-  updateView( baseEditor: EditorView, remoteEditor: EditorView) {
-    this.clearHighlighting(
-      remoteEditor,
-      this.model.additions,
-      this.chunks,
-      DIFF_OP.DIFF_INSERT
-    );
-
-    this.clearHighlighting(
-      baseEditor,
-      this.model.deletions,
-      this.chunks,
-      DIFF_OP.DIFF_DELETE
-    );
-
-    this.updateHighlighting(
-      remoteEditor,
-      this.model.additions,
-      this.chunks,
-      DIFF_OP.DIFF_INSERT
-    );
-
-    this.updateHighlighting(
-      baseEditor,
-      this.model.deletions,
-      this.chunks,
-      DIFF_OP.DIFF_DELETE
-    );
-
     this.syncScroll(baseEditor, remoteEditor);
-    this.syncScroll(remoteEditor, baseEditor);
   }
-    syncModel() {
-      if (!this.modelInvalid()) {
-        return;
-      }
-      let editor = this.remoteEditorWidget.cm;
-      let updatedLineChunks = this.model.getLineChunks();
-      let updatedChunks = lineToNormalChunks(updatedLineChunks);
-      if (this.model.remote === editor.state.doc.toString()) {
-        // Nothing to do except update chunks
-        this.lineChunks = updatedLineChunks;
-        this.chunks = updatedChunks;
-        return;
-      }
-      let cursor = editor.state.selection.main.head
-      let newLines = splitLines(this.model.remote!);
-      editor.dispatch({
-        changes: {from: 0, to: editor.state.doc.length, insert: newLines.slice(0, newLines.length).join('')}
-      });
-      this.remoteEditorWidget.cm.dispatch({selection: {anchor: cursor}})
-      this.lineChunks = updatedLineChunks;
-      this.chunks = updatedChunks;
-  }
+  /**
+   Update the highlighting in the views of baseEditor and remoteEditor
+   */
+  updateView(baseEditor: EditorView, remoteEditor: EditorView) {
+    this.clearHighlighting(
+      remoteEditor,
+      this._model.additions,
+      this._chunks,
+      DIFF_OP.DIFF_INSERT
+    );
 
+    this.clearHighlighting(
+      baseEditor,
+      this._model.deletions,
+      this._chunks,
+      DIFF_OP.DIFF_DELETE
+    );
+
+    this.updateHighlighting(
+      remoteEditor,
+      this._model.additions,
+      this._chunks,
+      DIFF_OP.DIFF_INSERT
+    );
+
+    this.updateHighlighting(
+      baseEditor,
+      this._model.deletions,
+      this._chunks,
+      DIFF_OP.DIFF_DELETE
+    );
+  }
+  /**
+  Update the chunks once a version has been picked
+   */
+  syncModel() {
+    if (!this.modelInvalid()) {
+      return;
+    }
+    let editor = this.remoteEditorWidget.cm;
+    let updatedLineChunks = this._model.getLineChunks();
+    let updatedChunks = lineToNormalChunks(updatedLineChunks);
+    if (this._model.remote === editor.state.doc.toString()) {
+      // Nothing to do except update chunks
+      this._lineChunks = updatedLineChunks;
+      this._chunks = updatedChunks;
+      return;
+    }
+    let cursor = editor.state.selection.main.head
+    let newLines = splitLines(this._model.remote!);
+    editor.dispatch({
+      changes: {from: 0, to: editor.state.doc.length, insert: newLines.slice(0, newLines.length).join('')}
+    }, {selection: {anchor: cursor}});
+    this._lineChunks = updatedLineChunks;
+    this._chunks = updatedChunks;
+  }
+/**
+Add a gap DOM element between 2 editors
+ */
   buildGap(): HTMLElement {
-    let lock = (this.lockButton = elt('div', undefined, 'cm-merge-scrolllock'));
+    let lock = (this._lockButton = elt('div', undefined, 'cm-merge-scrolllock'));
     lock.title = 'Toggle locked scrolling';
     let lockWrap = elt('div', [lock], 'cm-merge-scrolllock-wrap');
     lock.innerHTML = '\u21db&nbsp;&nbsp;\u21da';
     lock.addEventListener("scroll", (event) => {
-       this.setScrollLock(!this.lockScroll);
+       this.setScrollLock(!this._lockScroll);
       });
-    return (this.gap = elt('div', [lockWrap], 'cm-merge-gap'));
+      let gap = elt('div', [lockWrap], 'cm-merge-gap');
+      this._gap = gap;
+    return this._gap;
   }
 
   setScrollLock(val: boolean, action?: boolean) {
-    this.lockScroll = val;
-    if (val && action !== false) {
-      this.syncScroll(this.baseEditorWidget.cm, this.remoteEditorWidget.cm);
-    }
-    if (this.lockButton) {
-      this.lockButton.innerHTML = val ? '\u21db\u21da' : '\u21db&nbsp;&nbsp;\u21da';
+    this._lockScroll = val;
+    if (this._lockButton) {
+      this._lockButton.innerHTML = val ? '\u21db\u21da' : '\u21db&nbsp;&nbsp;\u21da';
     }
   }
 
-  protected modelInvalid(): boolean {
-    return this.model instanceof DecisionStringDiffModel &&
-            this.model.invalid;
+  private modelInvalid(): boolean {
+    return this._model instanceof DecisionStringDiffModel &&
+            this._model.invalid;
   }
 
  /**
-   * Sync scrolling between base and own editors. `type` is used to indicate
-   * which editor is the source, and which editor is the destination of the sync.
+   * Synchronize the scrolling between editors.
+   * srcEditor refers to the source editor from which the scrolling is done and listened
+   * destEditor is the destination editor whose scrolling is synchronized with the one of srcEditor.
    */
-  protected syncScroll (srcEditor: EditorView, destEditor: EditorView): void {
+  private syncScroll (srcEditor: EditorView, destEditor: EditorView): void {
     if (this.modelInvalid()) {
       return;
     }
@@ -470,13 +512,19 @@ export class DiffView {
     srcScroller.addEventListener("scroll", (event) => {
       window.requestAnimationFrame(function() {destScroller.scrollLeft = srcScroller.scrollLeft;})
     });
-    return;
+
+    destScroller.addEventListener("scroll", (event) => {
+      window.requestAnimationFrame(function() {srcScroller.scrollLeft = destScroller.scrollLeft;})
+    });
   }
 
+   /**
+   * The decorationKey is used to have access to the correct css class associated to a given decoration type
+   */
   private getDecorationKey(sources: ChunkSource[]): string {
-    let s: string = this.type;
+    let s: string = this._type;
     let res: string = s;
-    if (this.type === 'merge') {
+    if (this._type === 'merge') {
       s = sources[0].action;
       res = s + 'Merge'
       if (sources.length > 1) {
@@ -504,6 +552,9 @@ export class DiffView {
     return conflict;
   }
 
+  /**
+ * Create effects related to gutter markers
+ */
 private createGutterEffects (editor: EditorView, chunk: Chunk, pos: number, on: true, type: string) {
   let effects: StateEffect<unknown>[] = [];
 
@@ -514,24 +565,23 @@ private createGutterEffects (editor: EditorView, chunk: Chunk, pos: number, on: 
   })
   effects.push(gutterEffect);
 
-  let line: number = offsetToPos(editor.state.doc, pos).line;
-  let mappingEffect = addLineChunkMappingEffect.of({
-    line: line,
+  effects.push(addLineChunkMappingEffect.of({
+    line: offsetToPos(editor.state.doc, pos).line,
     chunk: chunk,
     type: type
-  });
-  effects.push(mappingEffect);
+  }));
   return effects;
 }
 
-/* Add line backgrounds and gutter markers effects*/
+/**
+ * Build line background effects and gutter markers effects
+ */
   private buildLineEffects(editor: EditorView, chunkArray: Chunk[]) {
     let effects: StateEffect<unknown>[] = [];
-    let isbaseEditor = editor === this.baseEditorWidget.cm;
+    let isbaseEditor = editor === this._baseEditorWidget.cm;
     for (let chunk of chunkArray) {
-      let sources: ChunkSource[] = chunk.sources;
-      let decorationKey = this.getDecorationKey(sources);
-      let conflict = this.getConflictState(sources);
+      let decorationKey = this.getDecorationKey(chunk.sources);
+      let conflict = this.getConflictState(chunk.sources);
       let chunkFirstLine: number;
       let chunkLastLine: number;
 
@@ -573,8 +623,8 @@ private createGutterEffects (editor: EditorView, chunk: Chunk, pos: number, on: 
          if (!decorationKey.includes('Merge')) {
             // For all editors except merge editor, add a picker button
             effects = effects.concat(this.createGutterEffects(editor, chunk, startingOffset, true, 'picker'));
-          } else if (editor === this.baseEditorWidget.cm) {
-           for (let s of sources) {
+          } else if (editor === this._baseEditorWidget.cm) {
+           for (let s of chunk.sources) {
               if (s.decision.action === 'custom' &&
                   !hasEntries(s.decision.localDiff) &&
                   !hasEntries(s.decision.remoteDiff)) {
@@ -615,18 +665,20 @@ private createGutterEffects (editor: EditorView, chunk: Chunk, pos: number, on: 
     return effects;
   }
 
+/**
+ * Remove line background effects and gutter markers effects
+ */
   private clearLineEffects(editor: EditorView, chunkArray: Chunk[]) {
     let effects: StateEffect<unknown>[] = [];
 
     for (let chunk of chunkArray) {
       let sources: ChunkSource[] = chunk.sources;
       let decorationKey = this.getDecorationKey(sources);
-      effects.push(removeHighlightEffect.of({highlightType: 'chunk', decorationKey: decorationKey}));
-      effects.push(removeHighlightEffect.of({highlightType: 'conflict', decorationKey: decorationKey}));
-      effects.push(removeHighlightEffect.of({highlightType: 'start', decorationKey: decorationKey}));
-      effects.push(removeHighlightEffect.of({highlightType: 'end', decorationKey: decorationKey}));
+      for (let highlightType of lineHighlightTypeList ) {
+        effects.push(removeHighlightEffect.of({highlightType: highlightType, decorationKey: decorationKey}));
+      }
     }
-    if (editor !== this.baseEditorWidget.cm) {
+    if (editor !== this._baseEditorWidget.cm) {
       effects.push(removeGutterMarkerEffect.of({type: 'all' }));
       effects.push(removeLineChunkMappingEffect.of({type: 'picker'}));
       effects.push(removeLineChunkMappingEffect.of({type: 'conflict'}));
@@ -634,26 +686,28 @@ private createGutterEffects (editor: EditorView, chunk: Chunk, pos: number, on: 
     return effects;
   }
 
+/**
+ * Build character highlighting effects
+ */
   private buildCharacterHighlighting(
     editor: EditorView,
     diffRanges: DiffRangePos[],
     markType: DIFF_OP
   ) {
-    let effects: StateEffect<unknown>[] = [];
-    let sources: ChunkSource[] = [];
+    const effects: StateEffect<unknown>[] = [];
+    const sources: ChunkSource[] = [];
     if (markType === DIFF_OP.DIFF_INSERT || markType === DIFF_OP.DIFF_DELETE) {
-      let highlightType: string = markType === DIFF_OP.DIFF_DELETE ? 'deleted' : 'inserted';
+      const highlightType: string = markType === DIFF_OP.DIFF_DELETE ? 'deleted' : 'inserted';
 
       for (let r of diffRanges) {
         if (r.source !== undefined) {
           sources.push(r.source);
         }
-        let decorationKey = this.getDecorationKey(sources);
-        let startingOffset = posToOffset(editor.state.doc, {
+        const startingOffset = posToOffset(editor.state.doc, {
           line: r.from.line,
           column: r.from.column
         });
-        let endingOffset = posToOffset(editor.state.doc, {
+        const endingOffset = posToOffset(editor.state.doc, {
           line: r.to.line,
           column: r.to.column
         });
@@ -661,13 +715,16 @@ private createGutterEffects (editor: EditorView, chunk: Chunk, pos: number, on: 
           from: startingOffset,
           to: endingOffset,
           highlightType: highlightType,
-          decorationKey: decorationKey
+          decorationKey: this.getDecorationKey(sources)
         }));
       }
     }
     return effects;
   }
 
+  /**
+  Clear character highlighting effects
+  */
   private clearCharacterHighlighting(
     editor: EditorView,
     diffRanges: DiffRangePos[],
@@ -688,34 +745,38 @@ private createGutterEffects (editor: EditorView, chunk: Chunk, pos: number, on: 
     return effects;
   }
 
-  protected updateHighlighting(
+  /**
+  Build line effects (highlight and gutters) and character highlighting effects and dispatch them
+   */
+  private updateHighlighting(
     editor: EditorView,
     diffRanges: DiffRangePos[],
     chunkArray: Chunk[],
     type: DIFF_OP
   ) {
-    let self = this;
-    let LineHighlightEffects: StateEffect<unknown>[] =
-      self.buildLineEffects(editor, chunkArray);
-    let MarkHighlightEffects: StateEffect<unknown>[] =
-      self.buildCharacterHighlighting(editor, diffRanges, type);
-    let effects: StateEffect<unknown>[] =
+    const LineHighlightEffects: StateEffect<unknown>[] =
+     this.buildLineEffects(editor, chunkArray);
+    const MarkHighlightEffects: StateEffect<unknown>[] =
+      this.buildCharacterHighlighting(editor, diffRanges, type);
+    const effects: StateEffect<unknown>[] =
       LineHighlightEffects.concat(MarkHighlightEffects);
     editor.dispatch({ effects });
   }
 
-  protected clearHighlighting(
+  /**
+  Clear line effects (highlight and gutters) and character highlighting effects and dispatch them
+   */
+  private clearHighlighting(
     editor: EditorView,
     diffRanges: DiffRangePos[],
     chunkArray: Chunk[],
     type: DIFF_OP
   ) {
-    let self = this;
-    let clearLineEffects: StateEffect<unknown>[] =
-      self.clearLineEffects(editor, chunkArray);
-    let clearCharacterHighlightEffects: StateEffect<unknown>[] =
-      self.clearCharacterHighlighting(editor, diffRanges, type);
-    let effects: StateEffect<unknown>[] =
+    const clearLineEffects: StateEffect<unknown>[] =
+      this.clearLineEffects(editor, chunkArray);
+    const clearCharacterHighlightEffects: StateEffect<unknown>[] =
+      this.clearCharacterHighlighting(editor, diffRanges, type);
+    const effects: StateEffect<unknown>[] =
       clearLineEffects.concat(clearCharacterHighlightEffects);
     editor.dispatch({ effects });
   }
@@ -724,17 +785,30 @@ private createGutterEffects (editor: EditorView, chunk: Chunk, pos: number, on: 
     return this._remoteEditorWidget;
   }
 
-  baseEditorWidget: EditorWidget;
+  get baseEditorWidget(): EditorWidget {
+    return this._baseEditorWidget;
+  }
+
+  get lineChunks(): Chunk[] {
+    return this._lineChunks;
+  }
+
+  get model(): IStringDiffModel {
+    return this._model;
+  }
+
+  private _baseEditorWidget: EditorWidget;
   private _remoteEditorWidget: EditorWidget;
-  model: IStringDiffModel;
-  type: string;
-  showDifferences: boolean;
-  chunks: Chunk[];
-  lineChunks: Chunk[];
-  gap: HTMLElement;
-  lockScroll: boolean;
-  protected lockButton: HTMLElement;
-}
+  private _model: IStringDiffModel;
+  private _type: string;
+  private _chunks: Chunk[];
+  private _lineChunks: Chunk[];
+  private _gap: HTMLElement;
+  private _lockScroll: boolean;
+  private _lockButton: HTMLElement
+
+  }
+
 
 /**
  * From a line in base, find the matching line in another editor by line chunks
@@ -771,7 +845,6 @@ function findAlignedLines(dvs: DiffView[]): number[][] {
   let others = dvs.slice(1);
   for (let i = 0; i < dv.lineChunks.length; i++) {
     let chunk = dv.lineChunks[i];
-
     let lines = [chunk.baseTo, chunk.remoteTo];
 
     for (let o of others) {
@@ -843,12 +916,10 @@ function findAlignedLines(dvs: DiffView[]): number[][] {
       }
     }
   }
-  console.log('Lines to align:', linesToAlign);
   return linesToAlign;
 }
 export interface IMergeViewEditorConfiguration
   extends LegacyCodeMirror.EditorConfiguration {
-
   /**
    * Original value, not used
    */
@@ -886,35 +957,40 @@ export interface IMergeViewEditorConfiguration
 export class MergeView extends Panel {
   constructor(options: IMergeViewEditorConfiguration) {
     super()
-    this.options = options;
-    this.measuring = -1;
+    this._measuring = -1;
     let remote = options.remote;
     let local = options.local || null;
     let merged = options.merged || null;
-    let left: DiffView | null = (this.left = null);
-    let right: DiffView | null = (this.right = null);
-    let merge: DiffView | null = (this.merge = null);
-    this.diffViews = [];
+    let left: DiffView | null = (this._left = null);
+    let right: DiffView | null = (this._right = null);
+    let merge: DiffView | null = (this._merge = null);
+    this._diffViews = [];
     let main = options.remote || options.merged;
     if (!main) {
       throw new Error('Either remote or merged model needs to be specified!');
     }
     options.value = main.base !== null ? main.base : main.remote;
     options.lineNumbers = options.lineNumbers !== false;
+
     // Whether merge view should be readonly
     let readOnly = options.readOnly;
-    // For all others:
+    //For all others:
     options.readOnly = true;
-    this.aligning = true;
+    this._aligning = true;
 
-    // listener extension to track for changes in the editorView
+    /**
+     * Listener extension to track for changes in the editorView
+     */
     const listener = EditorView.updateListener.of(update => {
-      if (this.measuring < 0 && (/*update.heightChanged || */update.viewportChanged)
+      if (this._measuring < 0 && (/*update.heightChanged || */update.viewportChanged)
       && !update.transactions.some(tr => tr.effects.some(e => e.is(replacePaddingWidgetEffect)))) {
         this.alignViews();
       }
     });
-    // mergeControlGutter to set the gutter in a given editor and the mousedown events for picker markers
+
+    /**
+     * MergeControlGutter to set the gutter in a given editor and the mousedown events for picker markers
+     */
     const mergeControlGutter = [
       gutterMarkerField,
       gutter({
@@ -945,138 +1021,142 @@ export class MergeView extends Panel {
     let dvOptions = options; // as CodeMirror.MergeView.MergeViewEditorConfiguration;
 
     if (merged) {
-      //options.gutters = [GUTTER_CONFLICT_CLASS, GUTTER_PICKER_CLASS];
       if (options.lineWrap === undefined) {
         // Turn off linewrapping for merge view by default, keep for diff
         options.lineWrap = false;
       }
     }
-    this.base = new EditorWidget(options.value); /*options to be given*/
-    this.base.editor.injectExtension([listener, mergeControlGutter, getCommonEditorExtensions()]);
-    /******************************Merge******************************** */
+    this._base = new EditorWidget(options.value);
+    this._base.editor.injectExtension([listener, mergeControlGutter, getCommonEditorExtensions()]);
+    // START MERGE CASE
     if (merged) {
-      this.gridPanel = new Panel();
-      this.addWidget(this.gridPanel);
-      this.gridPanel.addClass('cm-merge-grid-panel');
+      this._gridPanel = new Panel();
+      this.addWidget(this._gridPanel);
+      this._gridPanel.addClass('cm-merge-grid-panel');
       let showBase = options.showBase !== false;
 
       if (!showBase) {
-        this.base.node.style.display = 'hidden';
+        this._base.node.style.display = 'hidden';
       }
 
       let leftWidget: Widget;
       if (!local || local.remote === null) {
         // Local value was deleted
-        left = this.left = null;
+        left = this._left = null;
         leftWidget = new Widget({
           node: elt('div', 'Value missing', 'jp-mod-missing')
         });
       } else {
-        left = this.left = new DiffView(
+        left = this._left = new DiffView(
           local,
           'left',
           listener,
           mergeControlGutter,
           copyObj(dvOptions)
         );
-        this.diffViews.push(left);
+        this._diffViews.push(left);
         leftWidget = left.remoteEditorWidget;
 
       }
-      this.gridPanel.addWidget(leftWidget);
+      this._gridPanel.addWidget(leftWidget);
       leftWidget.addClass('cm-merge-left-editor');
 
       if (showBase) {
-        this.gridPanel.addWidget(this.base);
-        this.base.addClass('cm-central-editor');
+        this._gridPanel.addWidget(this._base);
+        this._base.addClass('cm-central-editor');
       }
 
       let rightWidget: Widget;
       if (!remote || remote.remote === null) {
         // Remote value was deleted
-        right = this.right = null;
+        right = this._right = null;
         rightWidget = new Widget({
           node: elt('div', 'Value missing', 'jp-mod-missing')
         });
       } else {
-        right = this.right = new DiffView(
+        right = this._right = new DiffView(
           remote,
           'right',
           listener,
           mergeControlGutter,
           copyObj(dvOptions)
         );
-        this.diffViews.push(right);
+        this._diffViews.push(right);
         rightWidget = right.remoteEditorWidget;
       }
-      this.gridPanel.addWidget(rightWidget);
+      this._gridPanel.addWidget(rightWidget);
       rightWidget.addClass('cm-merge-right-editor');
 
-      merge = this.merge = new DiffView(
+      merge = this._merge = new DiffView(
         merged,
         'merge',
         listener,
         mergeControlGutter,
         copyObj({ readOnly }, copyObj(dvOptions))
       );
-      this.diffViews.push(merge);
+      this._diffViews.push(merge);
       let mergeWidget = merge.remoteEditorWidget;
-      this.gridPanel.addWidget(mergeWidget);
+      this._gridPanel.addWidget(mergeWidget);
       mergeWidget.addClass('cm-merge-editor');
-    /******************************Diff******************************** */
+    //END MERGE CASE
+
+    // START DIFF CASE
     } else if (remote) {
-      this.gridPanel = new Panel();
-      this.addWidget(this.gridPanel);
-      this.gridPanel.addClass('cm-diff-grid-panel');
+      this._gridPanel = new Panel();
+      this.addWidget(this._gridPanel);
+      this._gridPanel.addClass('cm-diff-grid-panel');
       // If in place for type guard
-      this.gridPanel.addWidget(this.base);
-      this.base.addClass('cm-diff-left-editor');
+      this._gridPanel.addWidget(this._base);
+      this._base.addClass('cm-diff-left-editor');
       if (remote.unchanged || remote.added || remote.deleted) {
         if (remote.unchanged) {
-          this.base.addClass('cm-merge-pane-unchanged');
+          this._base.addClass('cm-merge-pane-unchanged');
         } else if (remote.added) {
-          this.base.addClass('cm-merge-pane-added');
+          this._base.addClass('cm-merge-pane-added');
         } else if (remote.deleted) {
-          this.base.addClass('cm-merge-pane-deleted');
+          this._base.addClass('cm-merge-pane-deleted');
         }
       } else {
-        right = this.right = new DiffView(
+        right = this._right = new DiffView(
           remote,
           'right',
           listener,
           mergeControlGutter,
           dvOptions
         );
-        this.diffViews.push(right);
+        this._diffViews.push(right);
         let rightWidget = right.remoteEditorWidget;
         rightWidget.addClass('cm-diff-right-editor');
         this.addWidget(new Widget({node: right.buildGap()}));
-        this.gridPanel.addWidget(rightWidget);
+        this._gridPanel.addWidget(rightWidget);
       }
     }
 
     for (let dv of [left, right, merge]) {
       if (dv) {
-        dv.init(this.base);
+        dv.init(this._base);
       }
     }
-    this.aligning = false;
+    this._aligning = false;
     this.scheduleAlignViews();
   }
+  /**
+  * Align the matching lines of the different editors
+  */
   alignViews() {
-    let lineHeight = this.base.cm.defaultLineHeight;
-    if (this.aligning) {
+    let lineHeight = this._base.cm.defaultLineHeight;
+    if (this._aligning) {
       return;
     }
-    this.aligning = true;
+    this._aligning = true;
     // Find matching lines
-    let linesToAlign = findAlignedLines(this.diffViews);
+    let linesToAlign = findAlignedLines(this._diffViews);
 
     // Function modifying DOM to perform alignment:
     let self: MergeView = this;
     let editors: EditorView[] = [self.base.cm];
     let builders: RangeSetBuilder<Decoration>[] = [];
-      for (let dv of self.diffViews) {
+      for (let dv of self._diffViews) {
         editors.push(dv.remoteEditorWidget.cm);
       }
       for (let i = 0; i < editors.length; i++) {
@@ -1090,8 +1170,8 @@ export class MergeView extends Panel {
       let alignment = alignment_.slice(0, 3)
       let lastLine = Math.max(...alignment);
       let lineDeltas = alignment.map((line, i) => lastLine - line - sumDeltas[i]);
-      // If some spacers will be before the current line, it means all other editors
-      // must add a spacer.
+      // If some paddings will be before the current line, it means all other editors
+      // must add a padding.
       let minDelta = Math.min(...lineDeltas);
       let correctedDeltas = lineDeltas.map(line => line - minDelta);
 
@@ -1116,7 +1196,7 @@ export class MergeView extends Panel {
       });
     }
 
-    // Last spacer
+    // Padding at the last line of the editor
     let totalHeight = nLines.map((line, i) => line + sumDeltas[i]);
     let maxHeight = Math.max(...totalHeight);
     totalHeight.slice(0, 3).forEach((line, i) => {
@@ -1132,28 +1212,32 @@ export class MergeView extends Panel {
       }
     })
 
-
     for (let i = 0; i < editors.length; i++) {
         let decoSet: DecorationSet = builders[i].finish();
         if (!RangeSet.eq([decoSet], [editors[i].state.field(paddingWidgetField)])) {
           editors[i].dispatch({ effects: replacePaddingWidgetEffect.of(decoSet) });
         }
       }
-
-    this.aligning = false;
+    this._aligning = false;
     };
 
+    /**
+     * Used to schedule the call of alignViews
+     */
     scheduleAlignViews() {
-      if (this.measuring < 0) {
-        let win = (this.gridPanel.node.ownerDocument.defaultView || window)
-        this.measuring = win.requestAnimationFrame(() => {
-          this.measuring = -1;
+      if (this._measuring < 0) {
+        let win = (this._gridPanel.node.ownerDocument.defaultView || window)
+        this._measuring = win.requestAnimationFrame(() => {
+          this._measuring = -1;
           this.alignViews();
         })
       }
     }
 
-  protected onGutterClick(editor: EditorView, line: BlockInfo): boolean {
+  /**
+  * Actions and updates performed when a gutter marker is clicked
+  */
+  private onGutterClick(editor: EditorView, line: BlockInfo): boolean {
     let effects: StateEffect<unknown>[] = [];
     let offset: number = line.from;
     let gutterMarkerline: number = offsetToPos(editor.state.doc, offset).line;
@@ -1162,26 +1246,25 @@ export class MergeView extends Panel {
     if (isPicker) {
       let pickerLineChunksMapping = editor.state.field(pickerLineChunkMappingField);
       let chunk: Chunk = pickerLineChunksMapping.get(gutterMarkerline)!;
-      let sources: ChunkSource[] = chunk.sources;
 
-      if (!(editor == this.base.cm)) {
-        for (let source of sources) {
+      if (!(editor == this._base.cm)) {
+        for (let source of chunk.sources) {
           source.decision.action = source.action;
         }
-      } else if (this.merge && editor === this.base.cm) {
-        for (let source of sources) {
+      } else if (this.merge && editor === this._base.cm) {
+        for (let source of chunk.sources) {
           source.decision.action = 'base';
         }
       }
-      for (let i=sources.length - 1; i >= 0; --i) {
-        let source = sources[i];
+      for (let i=chunk.sources.length - 1; i >= 0; --i) {
+        let source = chunk.sources[i];
         if (this.merge && hasEntries(source.decision.customDiff)) {
           // Custom diffs are cleared on pick,
           // as there is no way to re-pick them
           source.decision.customDiff = [];
         }
       }
-        if (sources.length === 0) {
+        if (chunk.sources.length === 0) {
         // All decisions empty, remove picker
         // In these cases, there should only be one picker, on base
         // so simply remove the one we have here
@@ -1194,15 +1277,14 @@ export class MergeView extends Panel {
     } else  { // conflict picker
       let conflictLineChunksMapping = editor.state.field(conflictMarkerLineChunkMappingField);
       let chunk: Chunk = conflictLineChunksMapping.get(gutterMarkerline)!;
-      let sources: ChunkSource[] = chunk.sources;
 
-      for (let source of sources) {
-        if (editor !== this.base.cm) {
+
+      for (let source of chunk.sources) {
+        if (editor !== this._base.cm) {
           source.decision.conflict = false;
         }
       }
     }
-
     editor.dispatch({effects: effects});
     this.updateDiffModels();
     this.updateDiffViews();
@@ -1210,44 +1292,69 @@ export class MergeView extends Panel {
     return true;
   }
 
+  /**
+   * Update of the models of the diffViews by calling syncModel that updates the chunks
+   */
   private updateDiffModels() {
-    for (let dv of this.diffViews) {
+    for (let dv of this._diffViews) {
       if (dv.model instanceof DecisionStringDiffModel) {
         dv.model.invalidate();
       }
       dv.syncModel();
     }
   }
+
+  /**
+   * Update of the views of the diffViews by calling updateView
+   * Before updating the diffViews, baseEditor needs to be cleared from its pickers
+  */
   private updateDiffViews() {
-     /* before updating the diffViews, baseEditor needs to be cleared from its pickers*/
     this.clearBaseEditorPickers();
-    for (let dv of this.diffViews) {
+    for (let dv of this._diffViews) {
       dv.updateView(dv.baseEditorWidget.cm, dv.remoteEditorWidget.cm);
     }
   }
-
+  /**
+  * Clear the pickers of the baseEditor
+  * The baseEditor is indeed cumulating pickers from different diffViews
+  * Since this editor is common to the 3 diffviews
+  */
   private clearBaseEditorPickers() {
-    /* baseEditor is cumulating pickers from different diffViews*/
-    /*  since this editor is common to the 3 diffviews */
     let effects: StateEffect<unknown>[] = [];
     effects.push(removeGutterMarkerEffect.of({type: 'all'}));
     effects.push(removeLineChunkMappingEffect.of({type: "picker"}));
-    this.base.cm.dispatch({effects});
+    this._base.cm.dispatch({effects});
   }
 
-  gridPanel: Panel;
-  subPanel1: Panel;
-  subPanel2: Panel;
-  left: DiffView | null;
-  right: DiffView | null;
-  merge: DiffView | null;
-  base: EditorWidget;
-  options: any;
-  diffViews: DiffView[];
-  aligning: boolean;
-  measuring: number;
+ public get left(): DiffView | null {
+  return this._left
+ }
+
+ public get right(): DiffView | null {
+  return this._right
+ }
+
+ public get merge(): DiffView | null {
+  return this._merge
+ }
+
+ public get base(): EditorWidget {
+  return this._base
+ }
+
+  private _gridPanel: Panel;
+  private _left: DiffView | null;
+  private _right: DiffView | null;
+  private _merge: DiffView | null;
+  private _base: EditorWidget;
+  private _diffViews: DiffView[];
+  private _aligning: boolean;
+  private _measuring: number;
 }
-// General utilities
+
+/**
+ To create DOM element with defined properties
+ */
 function elt(
   tag: string,
   content?: string | HTMLElement[] | null,
