@@ -34,7 +34,6 @@
   float: left;
 }
 
-
 .jp-Notebook-diff .jp-Metadata-diff {
   margin-bottom: 20px;
   border: solid black thin;
@@ -48,7 +47,6 @@
 .jp-Notebook-diff .jp-Cell-diff > div:first-of-type {
   border-top: solid #ccc 1px;
 }
-
 
 .jp-Notebook-diff .jp-Diff-added .jp-Cellrow-source,
 .jp-Notebook-diff .jp-Diff-added .jp-Cellrow-outputs {
@@ -140,6 +138,7 @@
   width: initial;
   max-width: 100%;
 }
+
 /* Ensure unchanged images are centered */
 .jp-Notebook-diff .jp-Diff-twoway .jp-Cellrow-outputs .jp-Diff-unchanged .jp-RenderedImage {
   text-align: center;
@@ -166,13 +165,10 @@
 .jp-Notebook-diff .cm-right-editor .cm-merge-r-connect { fill: var(--jp-diff-added-color2); stroke: var(--jp-diff-added-color0); stroke-width: 1px; }
 .jp-Notebook-diff .cm-right-editor .cm-merge-spacer { background-color: var(--jp-diff-added-color2); }
 
-
 .jp-Notebook-diff .cm-left-editor .cm-line .cm-merge-r-deleted {
   /*background-color: initial;*/
   background-color: var(--jp-diff-deleted-color0);
-
 }
-
 
 .jp-Notebook-diff .jp-Diff-deleted .CodeMirror,
 .jp-Notebook-diff .jp-Diff-deleted .jp-Diff-renderedOutput,

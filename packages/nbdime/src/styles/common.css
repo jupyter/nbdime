@@ -1,11 +1,10 @@
 
-/*
+
 .nbdime-root .CodeMirror-merge {
   position: relative;
-  white-space: pre;*/
+  white-space: pre;
   /* style as jp-InputArea-editor: */
-  /*border: var(--codemirror-border);
-  border-radius: 0px;
+  border: var(--codemirror-border);
   background: var(--jp-cell-editor-background);
 }
 
@@ -15,39 +14,6 @@
 
 .nbdime-root .CodeMirror-merge, .CodeMirror-merge .CodeMirror {
   height: auto;
-}
-
-.nbdime-root .CodeMirror-merge-4pane .CodeMirror-merge-pane-deleted {
-  display: none;
-}
-
-/* Reintroduced
-.nbdime-root .CodeMirror-merge-pane-unchanged { width: 100%; }
-
-.nbdime-root .CodeMirror-merge-1pane .CodeMirror-merge-gap { width: 6%; }
-.nbdime-root .CodeMirror-merge-2pane .CodeMirror-merge-pane { width: 47%; }
-.nbdime-root .CodeMirror-merge-2pane .CodeMirror-merge-gap { width: 6%; }
-.nbdime-root .CodeMirror-merge-3pane .CodeMirror-merge-pane { width: 31%; }
-.nbdime-root .CodeMirror-merge-3pane .CodeMirror-merge-gap { width: 3.5%; }
-
-
-*/
-
-.nbdime-root .cm-merge-collapsed-widget:before {
-  content: "(...)";
-}
-.nbdime-root .cm-merge-collapsed-widget {
-  cursor: pointer;
-  color: var(--jp-ui-font-color1);
-  background: var(--jp-layout-color2);
-  border: 1px solid var(--jp-border-color1);
-  font-size: 90%;
-  padding: 0 3px;
-  border-radius: 4px;
-}
-
-.nbdime-root .cm-merge-collapsed-line .cm-gutter-elt {
-  display: none;
 }
 
 .cm-merge-grid-panel {
@@ -116,6 +82,7 @@
   position: absolute;
   bottom: 0; left: 50%;
 }
+
 .cm-merge-scrolllock {
   position: relative;
   left: -50%;
@@ -129,6 +96,7 @@
   vertical-align: top;
   width: 100%;
 }
+
 .nbdime-root .cm-merge-pane-rightmost {
   position: absolute;
   right: 0px;
@@ -138,11 +106,11 @@
 .nbdime-root .cm-merge-pane-unchanged {
   width: 100%; }
 
-
 .nbdime-root .cm-merge-r-deleted, .cm-l-deleted, .cm-merge-m-deleted {
   background-color: initial;
   color: #b00
 }
+
 .cm-gutter {
   cursor: default;
 }

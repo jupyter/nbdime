@@ -23,7 +23,6 @@
   margin-top: 20px;
 }
 
-
 .jp-Notebook-merge .cm-merge-pane-final {
   width: 100%;
   border-top: var(--codemirror-border);
@@ -66,7 +65,6 @@
   display: none;
 }
 
-
 .jp-Merge-output-drop-delete {
   border: 3px dashed var(--jp-nbdime-output-color2);
   border-radius: 15px;
@@ -81,7 +79,9 @@
   width: 100%;
 }
 
-.jp-Notebook-merge .cm-merge-spacer { background-color: #eee; }
+.jp-Notebook-merge .cm-merge-spacer {
+  background-color: #eee;
+}
 
 .jp-Notebook-merge .cm-line {
   border-top: 1px solid transparent;
@@ -101,11 +101,13 @@
 .jp-Notebook-merge .cm-merge-m-chunk-end-remote {
   border-bottom: 1px solid var(--jp-merge-remote-color1);
  }
+
 .jp-Notebook-merge .cm-merge-r-connect {
   fill: var(--jp-merge-remote-color2);
   stroke: var(--jp-merge-remote-color1);
   stroke-width: 1px;
 }
+
 .jp-Notebook-merge .cm-line .cm-merge-r-inserted {
   background-color: var(--jp-merge-remote-color1);
 }
@@ -350,7 +352,6 @@
 /* Display chunks of conflicted cell with a start and end marker.
  Add a pseudo-element at start of chunk with button to mark chunk as resolved
 */
-
 .jp-Notebook-merge .jp-conflicted-cells {
   border: solid 2px var(--jp-error-color2);
 }
@@ -371,8 +372,6 @@
 .jp-Notebook-merge .jp-conflicted-cells > .jp-DragPanel {
   padding: 4px;
 }
-
-
 
 /*
 Output mimetype selection:
