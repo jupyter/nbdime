@@ -6,10 +6,6 @@ import type {
   ReadonlyJSONObject
 } from '@lumino/coreutils';
 
-/* import type {
-  Iterator
-} from '@lumino/algorithm'; */
-
 import type {
   IDiffObjectEntry
 } from '../diff/diffentries';

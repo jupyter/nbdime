@@ -187,8 +187,6 @@ class FlexPanel extends Panel {
     this.fit();
   }
 
-  /*declare layout: FlexLayout;*/
-
   get layout(): FlexLayout {
     return super.layout as FlexLayout;
   }

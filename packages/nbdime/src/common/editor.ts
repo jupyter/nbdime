@@ -45,25 +45,16 @@ constructor(value?: string, options?: CodeMirrorEditor.IOptions) {
   )) {languages.addLanguage(language);}
 
   // Register default extensions
+  const extensionNameList = ['lineNumbers', 'readOnly', 'theme', 'allowMultipleSelections', 'tabSize']
   for (const extensionFactory of EditorExtensionRegistry.getDefaultExtensions(
     {
       themes
     }
     )) {
-      if (extensionFactory.name === 'lineNumbers') {
-        extensions.addExtension(extensionFactory);
-      }
-      if (extensionFactory.name === 'readOnly') {
-        extensions.addExtension(extensionFactory);
-      }
-      if (extensionFactory.name === 'theme') {
-        extensions.addExtension(extensionFactory)
-      }
-      if (extensionFactory.name === 'allowMultipleSelections') {
-        extensions.addExtension(extensionFactory);
-      }
-      if (extensionFactory.name === 'tabSize') {
-        extensions.addExtension(extensionFactory);
+      for (const extensionName of extensionNameList ){
+        if (extensionFactory.name === extensionName) {
+          extensions.addExtension(extensionFactory);
+        }
       }
     }
 

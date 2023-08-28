@@ -1,19 +1,7 @@
 
 
-.nbdime-root .CodeMirror-merge {
-  position: relative;
-  white-space: pre;
-  /* style as jp-InputArea-editor: */
-  border: var(--codemirror-border);
-  background: var(--jp-cell-editor-background);
-}
-
 .nbdime-root .CodeMirror.cm-s-jupyter {
   background: transparent;
-}
-
-.nbdime-root .CodeMirror-merge, .CodeMirror-merge .CodeMirror {
-  height: auto;
 }
 
 .cm-merge-grid-panel {

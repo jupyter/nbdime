@@ -215,10 +215,6 @@
   bottom: 0;
 }
 
-.jp-Notebook-merge .CodeMirror-linenumber {
-  bottom: 0;
-}
-
 .jp-Notebook-merge .jp-Merge-oneway-local,
 .jp-Notebook-merge .jp-Merge-oneway-remote {
   width: 75%;
@@ -226,14 +222,6 @@
 
 .jp-Notebook-merge .jp-Merge-oneway-remote {
   margin-left: 25%;
-}
-
-.jp-Notebook-merge .jp-Merge-oneway-local .CodeMirror {
-  background-color: var(--jp-merge-local-color2);
-}
-
-.jp-Notebook-merge .jp-Merge-oneway-remote .CodeMirror {
-  background-color: var(--jp-merge-remote-color2);
 }
 
 .jp-Notebook-merge .jp-Merge-gutter-picker {

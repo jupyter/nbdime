@@ -1,9 +1,6 @@
 import { expect, test } from '@playwright/test';
 
 
-
-/**** Test for the merge application ****/
-/*Test1: Notebooks of same length 1 conflict */
 test.beforeEach(  async ({ page }) => {
 
   await page.goto('http://localhost:41000/merge');
@@ -12,6 +9,8 @@ test.beforeEach(  async ({ page }) => {
   await page.locator('#merge-remote').fill('data/default/test1/right.ipynb');
   await page.getByRole('button', { name: 'Merge files' }).click();
 })
+
+test.describe('Test1: test for the merge application for notebooks of same length and 1 conflict', () => {
 
 test('open an example and take a snapshot', async ({ page }) => {
   await expect.soft(page.getByText('➭')).toHaveCount(12)
@@ -35,4 +34,4 @@ test('choose right version for conflict',  async ({ page }) => {
   await page.getByText('⚠').click();
   expect(await page.locator('#main').screenshot()).toMatchSnapshot();
 })
-
+});

@@ -348,13 +348,13 @@ export function createNbdimeMergeView(
   remote: IStringDiffModel | null,
   local: IStringDiffModel | null,
   merged: IStringDiffModel,
-  readOnly?: boolean
+  readOnly?: boolean | string
 ): MergeView;
 export function createNbdimeMergeView(
   remote: IStringDiffModel | null,
   local?: IStringDiffModel | null,
   merged?: IStringDiffModel,
-  readOnly?: boolean
+  readOnly?: boolean | string
 ): MergeView {
   let opts: IMergeViewEditorConfiguration = {
     remote,
@@ -919,7 +919,7 @@ function findAlignedLines(dvs: DiffView[]): number[][] {
   return linesToAlign;
 }
 export interface IMergeViewEditorConfiguration
-  extends LegacyCodeMirror.EditorConfiguration {
+  extends LegacyCodeMirror.IEditorConfiguration {
   /**
    * Original value, not used
    */

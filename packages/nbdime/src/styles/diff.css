@@ -166,7 +166,6 @@
 .jp-Notebook-diff .cm-right-editor .cm-merge-spacer { background-color: var(--jp-diff-added-color2); }
 
 .jp-Notebook-diff .cm-left-editor .cm-line .cm-merge-r-deleted {
-  /*background-color: initial;*/
   background-color: var(--jp-diff-deleted-color0);
 }
 
@@ -195,8 +194,7 @@
 
 .jp-CollapsiblePanel-container {
   background-color: var(--jp-layout-color1);
-  color: var(--jp-ui-
-  -color1);
+  color: var(--jp-ui--color1);
 }
 
 /*
