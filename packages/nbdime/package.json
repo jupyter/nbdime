@@ -43,6 +43,7 @@
     "@babel/preset-env": "^7.5.0",
     "@jupyterlab/apputils": "^4.0.0",
     "@lumino/messaging": "^2.0.0",
+    "@types/jest": "^29.5.4",
     "@types/json-stable-stringify": "^1.0.32",
     "@types/node": "^18.15.0",
     "@types/sanitizer": "^0.0.28",
