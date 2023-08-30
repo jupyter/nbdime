@@ -42,7 +42,6 @@ import type {
   CellDiffModel, OutputDiffModel
 } from '../model';
 
-
 /**
  * Class for output panel
  */

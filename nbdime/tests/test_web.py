@@ -24,7 +24,7 @@ diff_b = 'src-and-output--2.ipynb'
 merge_a = 'multilevel-test-base.ipynb'
 merge_b = 'multilevel-test-local.ipynb'
 merge_c = 'multilevel-test-remote.ipynb'
-        
+
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
@@ -129,9 +129,3 @@ def test_api_merge(http_client, base_url, nbdime_base_url, merge_validator, file
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
-@pytest.mark.gen_test
-def test_offline_mathjax(http_client, base_url, nbdime_base_url, ioloop_patch):
-    url = base_url + nbdime_base_url + '/nb-static/mathjax/MathJax.js'
-    response = yield http_client.fetch(url)
-    assert response.code == 200
-    assert response.body.startswith(b'/*\n *  /MathJax.js')

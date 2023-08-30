@@ -5,5 +5,9 @@
     { "path": "./packages/nbdime" },
     { "path": "./packages/webapp" },
     { "path": "./packages/labextension" }
-  ]
+  ],
+
+  "compilerOptions": {
+    "types": ["node"]
+  }
 }

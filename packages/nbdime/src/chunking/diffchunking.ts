@@ -102,7 +102,7 @@ class Chunker {
     if (range.endsOnNewline) {
       linediff += 1;
     }
-    const firstLineNew = range.from.ch === 0 && linediff > 0;
+    const firstLineNew = range.from.column === 0 && linediff > 0;
 
 
     const startOffset = range.chunkStartLine ? 0 : 1;

@@ -4,8 +4,11 @@ var tsOptions = tsConfig["compilerOptions"];
 // Need as the test folder is not visible from the src folder
 tsOptions["rootDir"] = null;
 tsOptions["inlineSourceMap"] = true;
+//const jestJupyterLab = require('@jupyterlab/testutils/lib/jest-config');
+//const baseConfig = jestJupyterLab(__dirname);
 
 module.exports = {
+  //...baseConfig,
   testEnvironment: 'jsdom',
   automock: false,
   moduleNameMapper: {

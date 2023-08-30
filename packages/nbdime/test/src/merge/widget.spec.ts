@@ -51,7 +51,7 @@ jest.mock('@jupyterlab/codemirror', () => {
               selections: { changed: { connect: jest.fn() } },
             },
             editor: {
-              getValue: jest.fn().mockImplementation(() => options.model.value.text),
+              getValue: jest.fn().mockImplementation(() => options.model.sharedModel),
               on: jest.fn(),
               operation: jest.fn(),
               state: {}
