@@ -11,7 +11,7 @@ import type {
 } from '../diff/diffentries';
 
 import {
-  valueIn, unique
+  valueIn
 } from '../common/util';
 
 
@@ -19,6 +19,7 @@ export
 class PatchObjectHelper implements Iterator<string> {
   constructor(base: ReadonlyJSONObject, diff: IDiffObjectEntry[] | null) {
       this._diffLUT = {};
+
       let diffKeys : string[] = [];
       if (diff) {
         for (let d of diff) {
@@ -28,7 +29,26 @@ class PatchObjectHelper implements Iterator<string> {
       }
       this._diffKeys = diffKeys;
       this.baseKeys = _objectKeys(base);
+      console.log('HERE WE PASS')
   }
+
+  *[Symbol.iterator](): IterableIterator<string> {
+    while(this._remainingKeys.length) {
+    console.log('going through here')
+    let key = this._remainingKeys.shift();
+    if (key && valueIn(key, this._diffKeys)) {
+      let op = this._diffLUT[key].op;
+      if (op === 'add') {
+        this._currentIsAddition = true;
+      } else if (op === 'remove') {
+        this._currentIsAddition = false;
+      } else {
+        this._currentIsAddition = undefined;
+      }
+      yield key;
+    }
+  }
+}
 
   isDiffKey(key: string): boolean {
     return valueIn(key, this._diffKeys);
@@ -68,10 +88,10 @@ class PatchObjectHelper implements Iterator<string> {
     return false;
   }
 
-  iter(): Iterator<string> {
+  /*iter(): Iterator<string> {
     this._remainingKeys = this.baseKeys.concat(this._diffKeys).filter(unique).sort();
     return this;
-  }
+  }*/
 
   keys(): PatchObjectHelper {
     return this;
