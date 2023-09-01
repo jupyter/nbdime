@@ -126,6 +126,3 @@ def test_api_merge(http_client, base_url, nbdime_base_url, merge_validator, file
     assert json.dumps(data['base'], sort_keys=True) == json.dumps(expected_base, sort_keys=True)
     # Check that decisions follows schema:
     merge_validator.validate(data['merge_decisions'])
-
-
-@pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
