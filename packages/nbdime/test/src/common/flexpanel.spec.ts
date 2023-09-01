@@ -1,15 +1,9 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-globalThis.DragEvent = class DragEvent {} as any;
-
 import {
   Widget
 } from '@lumino/widgets';
-
-import {
-  each
-} from '@lumino/algorithm';
 
 import {
   FlexPanel
@@ -115,9 +109,9 @@ describe('upstreaming', () => {
       p.addWidget(new Widget());
       p.addWidget(new Widget());
       p.addWidget(new Widget());
-      each(p.widgets, (child) => {
+      for(const child of p.widgets) {
         expect(child.hasClass('p-FlexPanel-child')).toBe(true);
-      });
+      };
     });
 
     it('should remove child class name when removing a child widget', () => {
