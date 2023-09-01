@@ -16,7 +16,7 @@ import {
 
 
 export
-class PatchObjectHelper implements Iterator<string> {
+class PatchObjectHelper {
   constructor(base: ReadonlyJSONObject, diff: IDiffObjectEntry[] | null) {
       this._diffLUT = {};
       let diffKeys : string[] = [];
@@ -30,22 +30,15 @@ class PatchObjectHelper implements Iterator<string> {
       this.baseKeys = _objectKeys(base);
   }
 
- *[Symbol.iterator](): IterableIterator<string> {
-    while(this._remainingKeys.length) {
-    let key = this._remainingKeys.shift();
-    if (key && valueIn(key, this._diffKeys)) {
-      let op = this._diffLUT[key].op;
-      if (op === 'add') {
-        this._currentIsAddition = true;
-      } else if (op === 'remove') {
-        this._currentIsAddition = false;
-      } else {
-        this._currentIsAddition = undefined;
+  keys(): Iterable<string> {
+    this._remainingKeys = this.baseKeys.concat(this._diffKeys).filter(unique).sort();
+    const iterator = this;
+    return {
+      [Symbol.iterator](): Iterator<string> {
+       return iterator;
       }
-      yield key!;
     }
   }
-}
 
 
   isDiffKey(key: string): boolean {
@@ -86,17 +79,14 @@ class PatchObjectHelper implements Iterator<string> {
     return false;
   }
 
-  iter(): Iterator<string> {
-    this._remainingKeys = this.baseKeys.concat(this._diffKeys).filter(unique).sort();
-    return this;
-  }
-
-  keys(): PatchObjectHelper {
-    return this;
-  }
-
-  next(): any {
+  next(): IteratorResult<string> {
     let key = this._remainingKeys.shift();
+    if (!key) {
+      return {
+        done: true,
+        value: undefined
+      }
+    }
     if (key && valueIn(key, this._diffKeys)) {
       let op = this._diffLUT[key].op;
       if (op === 'add') {
@@ -107,17 +97,7 @@ class PatchObjectHelper implements Iterator<string> {
         this._currentIsAddition = undefined;
       }
     }
-    return key;
-  }
-
-  clone(): PatchObjectHelper {
-    let c = new PatchObjectHelper({}, null);
-    c.baseKeys = this.baseKeys;
-    c._diffKeys = this._diffKeys;
-    c._currentIsAddition = this._currentIsAddition;
-    c._diffLUT = this._diffLUT;
-    c._remainingKeys = this._remainingKeys.slice();
-    return c;
+    return {value: key, done: false}
   }
 
   baseKeys: string[];
