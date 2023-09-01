@@ -506,6 +506,7 @@ def server_extension_app(tmpdir_factory, request):
          '--port=%i' % port,
         '--ip=127.0.0.1',
         '--log-level=DEBUG',
+        '--LanguageServerManager.autodetect=False',
         '--no-browser', '--%s.token=%s' % (token_config_location, TEST_TOKEN)],
         env=env)
 
