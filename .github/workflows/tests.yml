@@ -3,6 +3,7 @@ name: Test
 on: [push, pull_request]
 
 jobs:
+
   docs:
     name: Documentation
     runs-on: ubuntu-latest
@@ -28,6 +29,57 @@ jobs:
       run: |
         cd docs
         make html
+
+  ui-test:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-22.04]
+        python: ["3.8", "3.9", "3.10", "3.11"]
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: Install node
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+    - name: Install Python ${{ matrix.python }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python }}
+    - name: Check path
+      run: |
+          pwd
+    - name: Install Playwright
+      run: |
+          npm install -D @playwright/test
+          npx playwright install
+    - name: Install nbdime
+      run: |
+          pip install -e .[test]
+    - name: Install jupyterlab and dependencies
+      run: |
+          python -m pip install --upgrade pip wheel setuptools
+          python -m pip install jupyterlab~=4.0
+    - name: Run playwright tests
+      run: |
+          cd ui-tests
+          npx playwright test
+    - name: Upload Playwright Test report
+      if: always()
+      uses: actions/upload-artifact@v2
+      with:
+        name: ui-tests/ui-tests-${{ matrix.os }}-python${{ matrix.python }}
+        path: |
+            playwright-report
+
+
+
+
   js:
     name: JavaScript
     runs-on: ubuntu-latest
