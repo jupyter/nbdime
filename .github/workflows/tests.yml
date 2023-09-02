@@ -72,7 +72,7 @@ jobs:
       with:
         name: ui-tests/ui-tests-${{ matrix.os }}-python${{ matrix.python }}
         path: |
-            playwright-report
+            ui-tests/playwright-report
 
 
 
