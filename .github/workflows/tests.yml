@@ -70,7 +70,7 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v2
       with:
-        name: ui-tests/ui-tests-${{ matrix.os }}-python${{ matrix.python }}
+        name: ui-tests-${{ matrix.os }}-python${{ matrix.python }}
         path: |
             ui-tests/playwright-report
 
