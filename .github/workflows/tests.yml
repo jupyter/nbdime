@@ -65,7 +65,7 @@ jobs:
     - name: Run playwright tests
       run: |
           cd ui-tests
-          npx playwright test --update-snapshots
+          npx playwright test
     - name: Upload Playwright Test report
       if: always()
       uses: actions/upload-artifact@v2
