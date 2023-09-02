@@ -51,9 +51,6 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python }}
-    - name: Check path
-      run: |
-          pwd
     - name: Install Playwright
       run: |
           npm install -D @playwright/test
