@@ -37,7 +37,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-22.04]
-        python: ["3.8", "3.9", "3.10", "3.11"]
+        python: ["3.7", "3.8", "3.9", "3.10", "3.11"]
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -55,13 +55,15 @@ jobs:
       run: |
           npm install -D @playwright/test
           npx playwright install
-    - name: Install nbdime
-      run: |
-          pip install -e .[test]
+
     - name: Install jupyterlab and dependencies
       run: |
           python -m pip install --upgrade pip wheel setuptools
           python -m pip install jupyterlab~=4.0
+    - name: Install and build nbdime
+      run: |
+          pip install -e .[test]
+          npm run build
     - name: Run playwright tests
       run: |
           cd ui-tests
@@ -73,9 +75,6 @@ jobs:
         name: ui-tests-${{ matrix.os }}-python${{ matrix.python }}
         path: |
             ui-tests/playwright-report
-
-
-
 
   js:
     name: JavaScript
@@ -135,7 +134,7 @@ jobs:
             jupyter_server-version: '<2'
           - python-version: '3.11'
             jupyter_server-version: '>=2'
-          - python-version: '3.11'
+          - python-version: '3.8'
             os: windows-latest
 
     steps:
