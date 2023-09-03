@@ -41,8 +41,10 @@ jobs:
 
       - name: Install extension
         run: |
-          set -eux
           python -m pip install .
+
+      - name: Build extension
+        run: |
           npm run build
 
       - uses: jupyterlab/maintainer-tools/.github/actions/update-snapshots@v1
