@@ -20,6 +20,12 @@ jobs:
         python: ["3.8", "3.9", "3.10", "3.11"]
 
     steps:
+      - name: React to the triggering comment
+        run: |
+          hub api repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions --raw-field 'content=+1'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Checkout
         uses: actions/checkout@v3
         with:
@@ -56,3 +62,9 @@ jobs:
           start_server_script: 'null'
           test_folder: ui-tests
           npm_client: npm
+
+      - name: Comment back on the PR
+        run: |
+          hub api repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments --raw-field 'body=Galata snapshots updated.'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
