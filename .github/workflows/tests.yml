@@ -37,7 +37,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-22.04]
-        python: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+        python: ["3.8", "3.9", "3.10", "3.11"]
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -135,6 +135,8 @@ jobs:
           - python-version: '3.11'
             jupyter_server-version: '>=2'
           - python-version: '3.8'
+            os: windows-latest
+          - python-version: '3.11'
             os: windows-latest
 
     steps:
