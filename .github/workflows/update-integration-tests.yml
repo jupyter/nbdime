@@ -12,12 +12,12 @@ jobs:
   update-snapshots:
     if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, 'please update playwright snapshots') }}
     runs-on: ${{ matrix.os }}
+    concurrency: ci-${{ github.ref }}
 
     strategy:
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-22.04]
-        python: ["3.8", "3.9", "3.10", "3.11"]
 
     steps:
       - name: React to the triggering comment
@@ -42,7 +42,7 @@ jobs:
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
         with:
-          python_version: ${{ matrix.python }}
+          python_version: '3.11'
 
       - name: Install dependencies
         run: python -m pip install -U "jupyterlab>=4.0.0,<5"
@@ -65,6 +65,6 @@ jobs:
 
       - name: Comment back on the PR
         run: |
-          hub api repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments --raw-field 'body=Galata snapshots updated.'
+          hub api repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments --raw-field 'body=Playwright ${{ matrix.os }} snapshots updated.'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
