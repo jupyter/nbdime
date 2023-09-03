@@ -194,7 +194,7 @@
 
 .jp-CollapsiblePanel-container {
   background-color: var(--jp-layout-color1);
-  color: var(--jp-ui--color1);
+  color: var(--jp-ui-font-color1);
 }
 
 /*
