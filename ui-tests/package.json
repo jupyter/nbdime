@@ -5,8 +5,8 @@
   "private": true,
   "scripts": {
     "start": "nbmerge-web -p 41000 data/default/center.ipynb data/default/left.ipynb data/default/right.ipynb ",
-    "test": "npm playwright test",
-    "test:update": "npm playwright test --update-snapshots"
+    "test": "npm run playwright test",
+    "test:update": "npm run playwright test --update-snapshots"
   },
   "devDependencies": {
     "@playwright/test": "^1.36.0"
