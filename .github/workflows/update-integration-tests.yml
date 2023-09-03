@@ -53,3 +53,4 @@ jobs:
           # Playwright knows how to start JupyterLab server
           start_server_script: 'null'
           test_folder: ui-tests
+          npm_client: npm
