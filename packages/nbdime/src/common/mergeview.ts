@@ -1117,6 +1117,12 @@ export class MergeView extends Panel {
           this._base.addClass('cm-merge-pane-deleted');
         }
       } else {
+        this._gridPanel = new Panel();
+        this.addWidget(this._gridPanel);
+        this._gridPanel.addClass('cm-diff-grid-panel');
+      // If in place for type guard
+        this._gridPanel.addWidget(this._base);
+        this._base.addClass('cm-diff-left-editor');
         right = this._right = new DiffView(
           remote,
           'right',
@@ -1129,6 +1135,7 @@ export class MergeView extends Panel {
         rightWidget.addClass('cm-diff-right-editor');
         this.addWidget(new Widget({node: right.buildGap()}));
         this._gridPanel.addWidget(rightWidget);
+
       }
     }
 

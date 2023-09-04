@@ -1,14 +1,19 @@
 
 
-.nbdime-root .CodeMirror.cm-s-jupyter {
-  background: transparent;
+.nbdime-root .cm-merge {
+  position: relative;
+  white-space: pre;
+  /* style as jp-InputArea-editor: */
+  border: var(--codemirror-border);
+  border-radius: 0px;
+  background: var(--jp-cell-editor-background);
 }
 
 .cm-merge-grid-panel {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
-  grid-auto-rows: minmax(100px, auto);
+  grid-auto-rows: minmax(18px, auto);
 }
 
 .cm-merge-left-editor {
@@ -35,7 +40,7 @@
   display: grid;
   grid-template-columns: 50% 50%;
   gap: 10px;
-  grid-auto-rows: minmax(100px, auto);
+  grid-auto-rows: minmax(18px, auto);
 }
 
 .cm-diff-left-editor {
@@ -95,8 +100,7 @@
   width: 100%; }
 
 .nbdime-root .cm-merge-r-deleted, .cm-l-deleted, .cm-merge-m-deleted {
-  background-color: initial;
-  color: #b00
+  background-color: var(--jp-diff-deleted-color2);
 }
 
 .cm-gutter {
