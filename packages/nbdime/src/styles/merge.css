@@ -243,7 +243,7 @@
   background-color: var(--jp-merge-local-color2);
 }
 
-.jp-Notebook-merge .cm-merge-pane.cm-right-editor.jp-mod-missing {
+.jp-Notebook-merge .cm-merge-pane.cm-merge-right-editor.jp-mod-missing {
   background-color: var(--jp-merge-remote-color2);
 }
 

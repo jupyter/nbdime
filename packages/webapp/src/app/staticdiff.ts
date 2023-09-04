@@ -6,12 +6,6 @@ import {
   saveAs
 } from 'file-saver';
 
-/* import {
-  EditorWidget
-} from 'nbdime/lib/common/editor'; */
-
-
-
 const collapsiblePanelExportJS =
 `<script>
 var headers = document.getElementsByClassName("jp-CollapsiblePanel-header");
