@@ -1135,7 +1135,6 @@ export class MergeView extends Panel {
         rightWidget.addClass('cm-diff-right-editor');
         this.addWidget(new Widget({node: right.buildGap()}));
         this._gridPanel.addWidget(rightWidget);
-
       }
     }
 
@@ -1184,7 +1183,7 @@ export class MergeView extends Panel {
 
       correctedDeltas.forEach((delta, i) => {
         let side = -1;
-        let line = alignment[i] - 1;
+        let line = alignment[i];
 
         if (delta > 0 && line < nLines[i]) {
           sumDeltas[i] += delta;
