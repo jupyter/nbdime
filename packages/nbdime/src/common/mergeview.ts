@@ -401,7 +401,7 @@ export class DiffView {
     this._model = model;
     this._type = type;
     let remoteValue = this._model.remote || '';
-    this._remoteEditorWidget = new EditorWidget(remoteValue); // OPTIONS TO BE GIVEN
+    this._remoteEditorWidget = new EditorWidget(remoteValue, {config: options});
     this._remoteEditorWidget.editor.injectExtension([listener, mergeControlGutter, getCommonEditorExtensions()]);
   }
 
@@ -1026,7 +1026,7 @@ export class MergeView extends Panel {
         options.lineWrap = false;
       }
     }
-    this._base = new EditorWidget(options.value);
+    this._base = new EditorWidget(options.value, {config: options});
     this._base.editor.injectExtension([listener, mergeControlGutter, getCommonEditorExtensions()]);
     // START MERGE CASE
     if (merged) {
@@ -1144,7 +1144,9 @@ export class MergeView extends Panel {
       }
     }
     this._aligning = false;
-    this.scheduleAlignViews();
+    if (this._diffViews.length > 0) {
+      this.scheduleAlignViews();
+    }
   }
   /**
   * Align the matching lines of the different editors
