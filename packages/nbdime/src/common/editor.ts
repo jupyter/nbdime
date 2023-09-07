@@ -26,7 +26,7 @@ class EditorWidget extends CodeEditorWrapper {
    * need to loop over all instances.
    */
 
-constructor(value?: string, options?: CodeMirrorEditor.IOptions) {
+constructor(value?: string, options?: Partial<CodeMirrorEditor.IOptions>) {
   const sharedModel = new YFile();
   if (value) {
     sharedModel.source = value
@@ -75,7 +75,7 @@ constructor(value?: string, options?: CodeMirrorEditor.IOptions) {
 
   super({
     model: model,
-    editorOptions: {config: {lineNumbers: true}},
+    editorOptions: options,
     factory: function() {
       let factory = new CodeMirrorEditorFactory({
         extensions,
