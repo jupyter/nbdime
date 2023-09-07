@@ -26,6 +26,8 @@ import {
   BlockInfo
 } from '@codemirror/view';
 
+import { CodeMirrorEditor } from '@jupyterlab/codemirror';
+
 import { Widget, Panel } from '@lumino/widgets';
 
 import type {
@@ -932,7 +934,7 @@ function findAlignedLines(dvs: DiffView[]): number[][] {
   return linesToAlign;
 }
 export interface IMergeViewEditorConfiguration
-  extends LegacyCodeMirror.IEditorConfiguration {
+  extends LegacyCodeMirror.IEditorConfiguration, CodeMirrorEditor.IOptions {
   /**
    * Original value, not used
    */

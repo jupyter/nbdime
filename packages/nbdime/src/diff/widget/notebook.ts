@@ -6,6 +6,11 @@ import {
   Panel
 } from '@lumino/widgets';
 
+import type { 
+  IEditorExtensionRegistry,
+  IEditorLanguageRegistry
+} from '@jupyterlab/codemirror';
+
 import type {
   IRenderMimeRegistry
 } from '@jupyterlab/rendermime';
@@ -25,18 +30,21 @@ import {
 import type {
   NotebookDiffModel
 } from '../model';
+import { IDiffWidgetOptions } from '../../common/interfaces';
 
 
 const NBDIFF_CLASS = 'jp-Notebook-diff';
-
 
 /**
  * NotebookDiffWidget
  */
 export
 class NotebookDiffWidget extends Panel {
-  constructor(model: NotebookDiffModel, rendermime: IRenderMimeRegistry) {
+  constructor(options: IDiffWidgetOptions<NotebookDiffModel>) {
     super();
+    const { extensions, languages, model, rendermime } = options;
+    this._extensions = extensions;
+    this._languages = languages;
     this._model = model;
     this._rendermime = rendermime;
     this.addClass(NBDIFF_CLASS);
@@ -99,6 +107,8 @@ class NotebookDiffWidget extends Panel {
     return this._model;
   }
 
+  private _extensions: IEditorExtensionRegistry;
+  private _languages: IEditorLanguageRegistry;
   private _model: NotebookDiffModel;
   private _rendermime: IRenderMimeRegistry;
 }

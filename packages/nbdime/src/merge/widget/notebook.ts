@@ -39,20 +39,20 @@ import {
 import {
   CellsDragDrop, ChunkedCellsWidget
 } from './dragdrop';
+import { IDiffWidgetOptions } from '../../common/interfaces';
 
 
 const NBMERGE_CLASS = 'jp-Notebook-merge';
 const NB_MERGE_CONTROLS_CLASS = 'jp-Merge-notebook-controls';
-
 
 /**
  * NotebookMergeWidget
  */
 export
 class NotebookMergeWidget extends Panel {
-  constructor(model: NotebookMergeModel,
-              rendermime: IRenderMimeRegistry) {
+  constructor(options: IDiffWidgetOptions<NotebookMergeModel>) {
     super();
+    const { model, rendermime } = options;
     this._model = model;
     this._rendermime = rendermime;
 

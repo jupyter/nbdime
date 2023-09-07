@@ -49,6 +49,7 @@ import {
 import { 
   rendererFactories
 } from './rendermime';
+import { createExtensionsRegistry, createLanguagesRegistry, createThemeRegistry } from 'nbdime/src/common/editor';
 
 let diffWidget: NotebookDiffWidget | null = null;
 
@@ -83,7 +84,14 @@ function showDiff(data: { base: nbformat.INotebookContent; diff: IDiffEntry[]; }
   });
 
   let nbdModel = new NotebookDiffModel(data.base, data.diff);
-  let nbdWidget = new NotebookDiffWidget(nbdModel, rendermime);
+  let nbdWidget = new NotebookDiffWidget(
+    {
+      model: nbdModel,
+      rendermime,
+      extensions: createExtensionsRegistry(createThemeRegistry()),
+      languages: createLanguagesRegistry()
+    }
+  );
 
   let root = document.getElementById('nbdime-root');
   if (!root) {

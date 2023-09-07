@@ -57,6 +57,7 @@ import {
 import {
   extractMergedNotebook
 } from './save';
+import { createExtensionsRegistry, createLanguagesRegistry, createThemeRegistry } from 'nbdime/src/common/editor';
 
 let mergeWidget: NotebookMergeWidget | null = null;
 
@@ -76,7 +77,14 @@ function showMerge(data: {
 
   let nbmModel = new NotebookMergeModel(data.base,
       data.merge_decisions);
-  let nbmWidget = new NotebookMergeWidget(nbmModel, rendermime);
+  let nbmWidget = new NotebookMergeWidget(
+    {
+      model: nbmModel,
+      rendermime,
+      extensions: createExtensionsRegistry(createThemeRegistry()),
+      languages: createLanguagesRegistry()
+    }
+  );
 
   let root = document.getElementById('nbdime-root');
   if (!root) {
