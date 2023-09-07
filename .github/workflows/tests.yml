@@ -142,6 +142,7 @@ jobs:
         python -m build
 
     - name: Upload nbdime package
+      if: startsWith(matrix.os, 'ubuntu') &&  matrix.python-version == '3.10'
       uses: actions/upload-artifact@v3
       with:
         name: nbdime-package
@@ -149,6 +150,7 @@ jobs:
         if-no-files-found: error
 
   ui-test:
+    needs: python
     runs-on: ${{ matrix.os }}
     timeout-minutes: 40
     strategy:
