@@ -1247,6 +1247,13 @@ export class MergeView extends Panel {
       }
     }
 
+  getMergedValue(): string {
+    if (!this.merge) {
+      throw new Error('No merged value; missing "merged" view');
+    }
+    return this.merge.baseEditorWidget.model.sharedModel.getSource();
+  }
+
   /**
   * Actions and updates performed when a gutter marker is clicked
   */
