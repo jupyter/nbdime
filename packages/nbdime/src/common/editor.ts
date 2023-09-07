@@ -75,7 +75,7 @@ constructor(value?: string, options?: Partial<CodeMirrorEditor.IOptions>) {
 
   super({
     model: model,
-    editorOptions: {config: {...options?.config, lineNumbers: true}},
+    editorOptions: options,
     factory: function() {
       let factory = new CodeMirrorEditorFactory({
         extensions,
