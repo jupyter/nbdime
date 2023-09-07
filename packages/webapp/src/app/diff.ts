@@ -21,6 +21,8 @@ import {
   MathJaxTypesetter
 } from '@jupyterlab/mathjax-extension';
 
+import { createEditorFactory } from 'nbdime/lib/common/editor';
+
 import type {
   IDiffEntry
 } from 'nbdime/lib/diff/diffentries';
@@ -49,7 +51,6 @@ import {
 import { 
   rendererFactories
 } from './rendermime';
-import { createExtensionsRegistry, createLanguagesRegistry, createThemeRegistry } from 'nbdime/src/common/editor';
 
 let diffWidget: NotebookDiffWidget | null = null;
 
@@ -88,8 +89,7 @@ function showDiff(data: { base: nbformat.INotebookContent; diff: IDiffEntry[]; }
     {
       model: nbdModel,
       rendermime,
-      extensions: createExtensionsRegistry(createThemeRegistry()),
-      languages: createLanguagesRegistry()
+      editorFactory: createEditorFactory()
     }
   );
 

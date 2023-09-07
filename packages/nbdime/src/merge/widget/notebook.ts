@@ -4,6 +4,8 @@
 
 import type * as nbformat from '@jupyterlab/nbformat';
 
+import { CodeEditor } from '@jupyterlab/codeeditor';
+
 import type {
   IRenderMimeRegistry
 } from '@jupyterlab/rendermime';
@@ -11,6 +13,8 @@ import type {
 import {
   Panel
 } from '@lumino/widgets';
+
+import { IDiffWidgetOptions } from '../../common/interfaces';
 
 import {
   hasEntries, deepCopy
@@ -39,7 +43,6 @@ import {
 import {
   CellsDragDrop, ChunkedCellsWidget
 } from './dragdrop';
-import { IDiffWidgetOptions } from '../../common/interfaces';
 
 
 const NBMERGE_CLASS = 'jp-Notebook-merge';
@@ -50,9 +53,9 @@ const NB_MERGE_CONTROLS_CLASS = 'jp-Merge-notebook-controls';
  */
 export
 class NotebookMergeWidget extends Panel {
-  constructor(options: IDiffWidgetOptions<NotebookMergeModel>) {
+  constructor({ editorFactory, model, rendermime }: IDiffWidgetOptions<NotebookMergeModel>) {
     super();
-    const { model, rendermime } = options;
+    this._editorFactory = editorFactory;
     this._model = model;
     this._rendermime = rendermime;
 
@@ -72,7 +75,7 @@ class NotebookMergeWidget extends Panel {
     this.addWidget(new NotebookMergeControls(model));
     work = work.then(() => {
       if (model.metadata) {
-        this.metadataWidget = new MetadataMergeWidget(model.metadata);
+        this.metadataWidget = new MetadataMergeWidget({model: model.metadata, editorFactory: this._editorFactory});
         this.addWidget(this.metadataWidget);
       }
     });
@@ -87,7 +90,7 @@ class NotebookMergeWidget extends Panel {
     for (let c of model.cells) {
       work = work.then(() => {
         return new Promise<void>((resolve) => {
-          let w = new CellMergeWidget(c, rendermime, model.mimetype);
+          let w = new CellMergeWidget({model: c, rendermime, mimetype: model.mimetype, editorFactory: this._editorFactory});
           this.cellWidgets.push(w);
           if (c.onesided && c.conflicted) {
             if (chunk === null) {
@@ -189,6 +192,7 @@ class NotebookMergeWidget extends Panel {
   protected cellWidgets: CellMergeWidget[];
   protected cellContainer: CellsDragDrop;
 
+  private _editorFactory: CodeEditor.Factory;
   private _model: NotebookMergeModel;
   private _rendermime: IRenderMimeRegistry;
 }

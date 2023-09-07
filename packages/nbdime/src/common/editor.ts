@@ -22,10 +22,22 @@ import {
   EditorLanguageRegistry,
   EditorThemeRegistry,
   parseMathIPython,
-  ybinding
+  ybinding,
+  IEditorFactoryOptions
 } from '@jupyterlab/codemirror';
 
-export interface IEditorWidgetOptions extends Omit<CodeMirrorEditor.IOptions, 'host' | 'model' | 'inline'> {
+import { nullTranslator } from '@jupyterlab/translation';
+
+export interface IEditorWidgetOptions extends Omit<CodeEditor.IOptions, 'host' | 'model' | 'inline'> {
+  /**
+   * Editor factory
+   *
+   * #### Notes
+   * The widget needs a factory and a the editor options
+   * because it needs to provide its own node as the host.
+   */
+  factory: CodeEditor.Factory;
+
   /**
    * The starting value of the editor.
    */
@@ -60,28 +72,19 @@ class EditorWidget extends CodeEditorWrapper {
    * Store all editor instances for operations that
    * need to loop over all instances.
    */
-  constructor(value?: string, options?: IEditorWidgetOptions) {
+  constructor(options: IEditorWidgetOptions) {
+    const { factory, value, ...others } = options;
     const sharedModel = new YFile();
     if (value) {
       sharedModel.source = value
     }
 
-    const languages = options?.languages ?? createLanguagesRegistry();
-    const extensions = options?.extensionsRegistry ?? createExtensionsRegistry(createThemeRegistry());
-
     const model =  new CodeEditor.Model({sharedModel});
 
     super({
       model: model,
-      editorOptions: options,
-      factory: function() {
-        let factory = new CodeMirrorEditorFactory({
-          extensions,
-          languages
-        });
-
-      return factory.newInlineEditor.bind(factory);
-      }()
+      factory,
+      editorOptions: others
     });
     this.staticLoaded = false;
   }
@@ -98,7 +101,7 @@ class EditorWidget extends CodeEditorWrapper {
   staticLoaded: boolean;
 }
 
-export function createExtensionsRegistry(themes: EditorThemeRegistry): EditorExtensionRegistry {
+function createExtensionsRegistry(themes: EditorThemeRegistry): EditorExtensionRegistry {
   const extensions = new EditorExtensionRegistry();
 
   // Register default extensions
@@ -130,7 +133,7 @@ export function createExtensionsRegistry(themes: EditorThemeRegistry): EditorExt
   return extensions;
 }
 
-export function createLanguagesRegistry(): EditorLanguageRegistry {
+function createLanguagesRegistry(): EditorLanguageRegistry {
   const languages = new EditorLanguageRegistry();
 
   // Register default languages
@@ -159,9 +162,19 @@ export function createLanguagesRegistry(): EditorLanguageRegistry {
   return languages;
 }
 
-export function createThemeRegistry(): EditorThemeRegistry {
+function createThemeRegistry(): EditorThemeRegistry {
   const themes = new EditorThemeRegistry();
 
   for (const theme of EditorThemeRegistry.getDefaultThemes()) { themes.addTheme(theme); }
   return themes;
+}
+
+export function createEditorFactory(options: IEditorFactoryOptions = {}): CodeEditor.Factory {
+  const factory = new CodeMirrorEditorFactory({
+    extensions: options.extensions ?? createExtensionsRegistry(createThemeRegistry()),
+    languages: options.languages ?? createLanguagesRegistry(),
+    translator: options.translator ?? nullTranslator,
+  });
+
+  return factory.newInlineEditor.bind(factory);
 }

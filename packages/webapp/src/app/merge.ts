@@ -24,6 +24,8 @@ import {
   Sanitizer
 } from '@jupyterlab/apputils';
 
+import { createEditorFactory } from 'nbdime/lib/common/editor';
+
 import {
   NotebookMergeModel
 } from 'nbdime/lib/merge/model';
@@ -57,7 +59,6 @@ import {
 import {
   extractMergedNotebook
 } from './save';
-import { createExtensionsRegistry, createLanguagesRegistry, createThemeRegistry } from 'nbdime/src/common/editor';
 
 let mergeWidget: NotebookMergeWidget | null = null;
 
@@ -81,8 +82,7 @@ function showMerge(data: {
     {
       model: nbmModel,
       rendermime,
-      extensions: createExtensionsRegistry(createThemeRegistry()),
-      languages: createLanguagesRegistry()
+      editorFactory: createEditorFactory()
     }
   );
 
