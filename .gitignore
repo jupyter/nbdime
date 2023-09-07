@@ -29,3 +29,4 @@ nbdime/webapp/static/**
 packages/webapp/webpack-stats.json
 nbdime/labextension/
 ui-tests/playwright-report/
+ui-tests/test-results/
