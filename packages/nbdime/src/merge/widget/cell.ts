@@ -126,14 +126,14 @@ class CellMergeWidget extends Panel {
 
   validateMerged(candidate: nbformat.ICell): nbformat.ICell {
     if (this.sourceView && this.sourceView instanceof MergeView) {
-      let text = (this.sourceView as MergeView).getMergedValue();
+      let text = this.sourceView.getMergedValue();
       let lines = splitLines(text);
       if (candidate.source !== lines) {
         candidate.source = lines;
       }
     }
     if (this.metadataView && this.metadataView instanceof MergeView) {
-      let text = (this.sourceView as MergeView).getMergedValue();
+      let text = this.metadataView.getMergedValue();
       if (JSON.stringify(candidate.metadata) !== text) {
         // This will need to be validated server side,
         // and should not be touched by client side
