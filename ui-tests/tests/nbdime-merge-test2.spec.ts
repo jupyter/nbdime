@@ -3,14 +3,15 @@ import { expect, test } from '@playwright/test';
 test.beforeEach(  async ({ page }) => {
 
   await page.goto('http://localhost:41000/merge');
-  await page.locator('#merge-local').fill('data/default/test2/left.ipynb');
-  await page.locator('#merge-base').fill('data/default/test2/center.ipynb');
-  await page.locator('#merge-remote').fill('data/default/test2/right.ipynb');
+  await page.locator('#merge-local').fill('data/merge_test2/left.ipynb');
+  await page.locator('#merge-base').fill('data/merge_test2/center.ipynb');
+  await page.locator('#merge-remote').fill('data/merge_test2/right.ipynb');
   await page.getByRole('button', { name: 'Merge files' }).click();
 })
 
-test.describe('Test2: test for the merge application for notebooks of same length with 0 conflict', () => {
-test('open an example and take a snapshot', async ({ page }) => {
+/* notebooks of same length with 0 conflict*/
+test.describe('merge test2 ', () => {
+test('take a snapshot at opening', async ({ page }) => {
   await expect.soft(page.getByText('➭')).toHaveCount(12)
   expect(await page.locator('#main').screenshot()).toMatchSnapshot();
 });
