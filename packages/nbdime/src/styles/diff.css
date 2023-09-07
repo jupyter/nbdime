@@ -196,10 +196,6 @@
   background-color: var(--jp-diff-added-color2);
 }
 
-/*.jp-Notebook-diff .cm-right-editor .cm-line .cm-merge-r-deleted {
-  background-color: var(--jp-diff-deleted-color1);
-}*/
-
 .jp-Notebook-diff .jp-Diff-deleted .CodeMirror,
 .jp-Notebook-diff .jp-Diff-deleted .jp-Diff-renderedOutput,
 .jp-Cellrow-outputs .jp-Diff-twoway .jp-Diff-base {
@@ -217,6 +213,14 @@
 .jp-Notebook-diff .jp-Diff-added .cm-merge-pane-added,
 .jp-Notebook-diff .jp-Diff-deleted .cm-merge-pane-deleted {
   width: 100%;
+}
+
+.jp-Notebook-diff .cm-merge-pane-added {
+  background-color: var(--jp-diff-added-color2);
+}
+
+.jp-Notebook-diff .cm-merge-pane-deleted {
+  background-color: var(--jp-diff-deleted-color2);
 }
 
 .jp-Notebook-diff .jp-Cellrow-source .jp-InputPrompt {

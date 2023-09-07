@@ -964,6 +964,7 @@ export class MergeView extends Panel {
     let left: DiffView | null = (this._left = null);
     let right: DiffView | null = (this._right = null);
     let merge: DiffView | null = (this._merge = null);
+    let panes: number = 0;
     this._diffViews = [];
     let main = options.remote || options.merged;
     if (!main) {
@@ -1085,6 +1086,7 @@ export class MergeView extends Panel {
         rightWidget = right.remoteEditorWidget;
       }
       this._gridPanel.addWidget(rightWidget);
+      rightWidget.addClass('cm-merge-pane');
       rightWidget.addClass('cm-merge-right-editor');
 
       merge = this._merge = new DiffView(
@@ -1099,15 +1101,14 @@ export class MergeView extends Panel {
       this._gridPanel.addWidget(mergeWidget);
       mergeWidget.addClass('cm-merge-editor');
     //END MERGE CASE
-
+    panes = 3 + (showBase ? 1 : 0);
     // START DIFF CASE
     } else if (remote) {
       this._gridPanel = new Panel();
       this.addWidget(this._gridPanel);
-      this._gridPanel.addClass('cm-diff-grid-panel');
+      this._gridPanel.addClass('cm-single-panel');
       // If in place for type guard
       this._gridPanel.addWidget(this._base);
-      this._base.addClass('cm-diff-left-editor');
       if (remote.unchanged || remote.added || remote.deleted) {
         if (remote.unchanged) {
           this._base.addClass('cm-merge-pane-unchanged');
@@ -1116,6 +1117,7 @@ export class MergeView extends Panel {
         } else if (remote.deleted) {
           this._base.addClass('cm-merge-pane-deleted');
         }
+        panes = 1;
       } else {
         this._gridPanel = new Panel();
         this.addWidget(this._gridPanel);
@@ -1135,8 +1137,11 @@ export class MergeView extends Panel {
         rightWidget.addClass('cm-diff-right-editor');
         this.addWidget(new Widget({node: right.buildGap()}));
         this._gridPanel.addWidget(rightWidget);
+        panes = 2;
       }
     }
+
+    this.addClass('cm-merge-' + panes + 'pane');
 
     for (let dv of [left, right, merge]) {
       if (dv) {
