@@ -16,7 +16,7 @@ import {
 
 
 export
-class PatchObjectHelper {
+class PatchObjectHelper implements Iterator<string> {
   constructor(base: ReadonlyJSONObject, diff: IDiffObjectEntry[] | null) {
       this._diffLUT = {};
       let diffKeys : string[] = [];

@@ -1,33 +1,33 @@
 {
-	"private": true,
-	"devDependencies": {
-		"@jupyterlab/buildutils": "4.0.0",
-		"@jupyterlab/testutils": "4.0.0",
-		"@types/jest": "^29.5.4",
-		"@types/mocha": "^10.0.1",
-		"@types/node": "^20.5.7",
-		"jest": "^29.6.4",
-		"lerna": "^4.0.0",
-		"mocha": "^10.2.0",
-		"rimraf": "^2.6.3"
-	},
-	"workspaces": [
-		"packages/*"
-	],
-	"scripts": {
-		"build": "lerna run build",
-		"build:dev": "tsc --build",
-		"clean": "lerna run clean",
-		"publish": "npm run clean && npm run build && lerna publish --no-private -m \"Publish npm packages\"",
-		"test": "lerna run test",
-		"update:all": "update-dependency --lerna --minimal --regex .*",
-		"update:lab": "update-dependency --lerna --minimal --regex ^@jupyterlab/",
-		"update:lab:next": "update-dependency --lerna --minimal --regex ^@jupyterlab/ ^next",
-		"updated": "lerna updated",
-		"watch": "tsc --build --watch"
-	},
-	"name": "nbdime-top-repo",
-	"dependencies": {
-		"npm-which": "^3.0.1"
-	}
+  "name": "nbdime-top-repo",
+  "private": true,
+  "scripts": {
+    "build": "lerna run build",
+    "build:dev": "tsc --build",
+    "clean": "lerna run clean",
+    "publish": "npm run clean && npm run build && lerna publish --no-private -m \"Publish npm packages\"",
+    "test": "lerna run test",
+    "update:all": "update-dependency --lerna --minimal --regex .*",
+    "update:lab": "update-dependency --lerna --minimal --regex ^@jupyterlab/",
+    "update:lab:next": "update-dependency --lerna --minimal --regex ^@jupyterlab/ ^next",
+    "updated": "lerna updated",
+    "watch": "tsc --build --watch"
+  },
+  "dependencies": {
+    "npm-which": "^3.0.1"
+  },
+  "devDependencies": {
+    "@jupyterlab/buildutils": "4.0.0",
+    "@jupyterlab/testutils": "4.0.0",
+    "@types/jest": "^29.5.4",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "^20.5.7",
+    "jest": "^29.6.4",
+    "lerna": "^4.0.0",
+    "mocha": "^10.2.0",
+    "rimraf": "^2.6.3"
+  },
+  "workspaces": [
+    "packages/*"
+  ]
 }

@@ -34,6 +34,7 @@
   float: left;
 }
 
+
 .jp-Notebook-diff .jp-Metadata-diff {
   margin-bottom: 20px;
   border: solid black thin;
@@ -47,6 +48,7 @@
 .jp-Notebook-diff .jp-Cell-diff > div:first-of-type {
   border-top: solid #ccc 1px;
 }
+
 
 .jp-Notebook-diff .jp-Diff-added .jp-Cellrow-source,
 .jp-Notebook-diff .jp-Diff-added .jp-Cellrow-outputs {

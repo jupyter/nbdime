@@ -7,22 +7,6 @@
 
 'use strict';
 
-import { Widget, Panel } from '@lumino/widgets';
-
-import type { IStringDiffModel } from '../diff/model';
-
-import {
-  DecisionStringDiffModel
-} from '../merge/model';
-
-import { offsetToPos, posToOffset, type DiffRangePos } from '../diff/range';
-
-import { ChunkSource, Chunk, lineToNormalChunks } from '../chunking';
-
-import { EditorWidget } from './editor';
-
-import { valueIn, hasEntries, splitLines, copyObj } from './util';
-
 import {
   Extension,
   StateEffect,
@@ -42,7 +26,36 @@ import {
   BlockInfo
 } from '@codemirror/view';
 
+import { Widget, Panel } from '@lumino/widgets';
+
+import type {
+  IStringDiffModel
+} from '../diff/model';
+
+import {
+  DecisionStringDiffModel
+} from '../merge/model';
+
+import {
+  offsetToPos,
+  posToOffset,
+  type DiffRangePos
+} from '../diff/range';
+
+import {
+  ChunkSource, Chunk, lineToNormalChunks
+} from '../chunking';
+
+import {
+  EditorWidget
+} from './editor';
+
+import {
+  valueIn, hasEntries, splitLines, copyObj
+} from './util';
+
 import { LegacyCodeMirror } from '../legacy_codemirror/cmconfig';
+
 const PICKER_SYMBOL = '\u27ad';
 const CONFLICT_MARKER = '\u26A0';
 

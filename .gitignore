@@ -12,7 +12,6 @@ MANIFEST
 .cache
 .pytest_cache
 .idea
-.yarn
 
 
 .spyderproject
