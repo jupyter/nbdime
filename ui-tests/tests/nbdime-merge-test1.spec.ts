@@ -42,11 +42,11 @@ test.describe('merge test1', () => {
 
   test('should download a merge result without conflict', async ({ page }) => {
     await page.locator('div:nth-child(3) > .cm-editor > .cm-scroller > .cm-gutters > div:nth-child(2) > div:nth-child(2) > .jp-Merge-gutter-picker').click();
-    await page.getByText('⚠').first().click();
-    await page.locator('div:nth-child(2) > div:nth-child(2) > div > div:nth-child(3) > .cm-editor > .cm-scroller > .cm-gutters > div:nth-child(2) > div:nth-child(2) > .jp-Merge-gutter-picker').click();
     await page.getByText('⚠').click();
     const download1Promise = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Download' }).click();
     const download1 = await download1Promise;
+    // Finalize download
+    expect(await download1.failure()).toBeNull();
   });
 });

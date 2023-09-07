@@ -91,6 +91,9 @@ jobs:
           - python-version: '3.11'
             os: windows-latest
 
+    outputs:
+      wheel: ${{ steps.packaging.outputs.wheel }}
+
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
@@ -135,11 +138,15 @@ jobs:
 
     - name: Build package
       if: startsWith(matrix.os, 'ubuntu') &&  matrix.python-version == '3.10'
+      id: packaging
       run: |
         set -uex
 
         pip install build
         python -m build
+
+        WHEEL_NAME=$(ls dist/nbdime*.whl | cut -d '/' -f2)
+        echo "wheel=${WHEEL_NAME}" >> "$GITHUB_OUTPUT"
 
     - name: Upload nbdime package
       if: startsWith(matrix.os, 'ubuntu') &&  matrix.python-version == '3.10'
@@ -181,8 +188,7 @@ jobs:
 
     - name: Install nbdime from wheel
       run: |
-        set -eux
-        python -m pip install nbdime*.whl
+        python -m pip install "${{ needs.python.outputs.wheel }}"
 
     - name: Install Playwright
       working-directory: ui-tests
