@@ -9,46 +9,46 @@
   background: var(--jp-cell-editor-background);
 }
 
-.cm-merge-grid-panel {
+.nbdime-root .cm-merge-grid-panel {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
   grid-auto-rows: minmax(18px, auto);
 }
 
-.cm-merge-left-editor {
+.nbdime-root .cm-merge-left-editor {
   grid-column: 1;
   grid-row: 1;
 }
 
-.cm-central-editor {
+.nbdime-root .cm-central-editor {
   grid-column: 2;
   grid-row: 1;
 }
 
-.cm-merge-right-editor {
+.nbdime-root .cm-merge-right-editor {
   grid-column: 3;
   grid-row: 1;
 }
 
-.cm-merge-editor {
+.nbdime-root .cm-merge-editor {
   grid-column: 1/4;
   grid-row: 2;
 }
 
-.cm-diff-grid-panel {
+.nbdime-root .cm-diff-grid-panel {
   display: grid;
   grid-template-columns: 50% 50%;
   gap: 10px;
   grid-auto-rows: minmax(18px, auto);
 }
 
-.cm-diff-left-editor {
+.nbdime-root .cm-diff-left-editor {
   grid-column: 1;
   grid-row: 1;
 }
 
-.cm-diff-right-editor {
+.nbdime-root .cm-diff-right-editor {
   grid-column: 2;
   grid-row: 1;
 }
@@ -57,7 +57,7 @@
   background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,.5) 5px, rgba(255,255,255,.5) 10px);
 }
 
-.cm-merge-gap {
+.nbdime-root .cm-merge-gap {
   z-index: 2;
   display: inline-block;
   height: 100%;
@@ -71,12 +71,12 @@
   background: var(--jp-layout-color2);
 }
 
-.cm-merge-scrolllock-wrap {
+.nbdime-root .cm-merge-scrolllock-wrap {
   position: absolute;
   bottom: 0; left: 50%;
 }
 
-.cm-merge-scrolllock {
+.nbdime-root .cm-merge-scrolllock {
   position: relative;
   left: -50%;
   cursor: pointer;
@@ -103,6 +103,6 @@
   background-color: var(--jp-diff-deleted-color2);
 }
 
-.cm-gutter {
+.nbdime-root .cm-gutter {
   cursor: default;
 }
