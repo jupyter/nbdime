@@ -215,11 +215,11 @@
   width: 100%;
 }
 
-.jp-Notebook-diff .cm-merge-pane-added {
+.jp-Notebook-diff .cm-merge-pane-added > .cm-editor {
   background-color: var(--jp-diff-added-color2);
 }
 
-.jp-Notebook-diff .cm-merge-pane-deleted {
+.jp-Notebook-diff .cm-merge-pane-deleted > .cm-editor {
   background-color: var(--jp-diff-deleted-color2);
 }
 
