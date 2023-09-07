@@ -27,6 +27,7 @@
     "style/*.css",
     "schema/*.json"
   ],
+  "style": "style/index.css",
   "scripts": {
     "build": "npm run build:lib && npm run build:labextension",
     "build:dev": "npm run build:lib && jupyter labextension build --development True .",
@@ -85,5 +86,10 @@
         "singleton": true
       }
     }
-  }
+  },
+  "sideEffects": [
+    "style/*.css",
+    "style/index.js"
+  ],
+  "styleModule": "style/index.js"
 }
