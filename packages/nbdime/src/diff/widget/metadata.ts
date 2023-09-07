@@ -58,6 +58,6 @@ class MetadataDiffWidget extends Panel {
     }
   }
 
-  private _editorFactory: CodeEditor.Factory;
+  private _editorFactory: CodeEditor.Factory | undefined;
   private _model: IStringDiffModel;
 }

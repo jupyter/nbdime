@@ -36,7 +36,7 @@ export interface IEditorWidgetOptions extends Omit<CodeEditor.IOptions, 'host' |
    * The widget needs a factory and a the editor options
    * because it needs to provide its own node as the host.
    */
-  factory: CodeEditor.Factory;
+  factory?: CodeEditor.Factory;
 
   /**
    * The starting value of the editor.
@@ -83,7 +83,7 @@ class EditorWidget extends CodeEditorWrapper {
 
     super({
       model: model,
-      factory,
+      factory: factory ?? createEditorFactory(),
       editorOptions: others
     });
     this.staticLoaded = false;

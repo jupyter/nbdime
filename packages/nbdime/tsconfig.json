@@ -3,7 +3,6 @@
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "lib",
-    "types": ["jest"],
     "resolveJsonModule": true
   },
   "include": [

@@ -1,11 +1,3 @@
-var tsConfig = require('./tsconfig.json');
-
-var tsOptions = tsConfig["compilerOptions"];
-// Need as the test folder is not visible from the src folder
-tsOptions["rootDir"] = null;
-tsOptions["inlineSourceMap"] = true;
-
-
 const esModules = [
   '@jupyterlab',
   '@codemirror',
@@ -25,15 +17,20 @@ module.exports = {
     '\\.(css|less|sass|scss)$': 'identity-obj-proxy',
     '\\.(svg)$': '<rootDir>/test/jest-file-mock.js'
   },
-  preset: 'ts-jest/presets/js-with-babel',
+  transform: {
+    // Extracted from https://github.com/kulshekhar/ts-jest/blob/v29.0.3/presets/index.js
+    '^.+\\.tsx?$': [
+      'ts-jest/legacy',
+      {
+        tsconfig: `./tsconfig.test.json`
+      }
+    ],
+    '^.+\\.jsx?$': 'babel-jest'
+  },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   setupFiles: ['<rootDir>/test/jest-setup-files.js'],
   testPathIgnorePatterns: ['/lib/', '/node_modules/'],
   testRegex: '/test/src/.*.spec.ts$',
   transformIgnorePatterns: [`/node_modules/(?!${esModules}).+`],
-  globals: {
-    'ts-jest': {
-      tsconfig: tsOptions
-    }
-  }
+  reporters: ['default', 'github-actions'],
 };

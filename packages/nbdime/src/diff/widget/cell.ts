@@ -67,7 +67,7 @@ export interface ICellDiffViewOptions<T extends IDiffModel = IDiffModel> {
   parent: CellDiffModel;
   editorClasses: string[];
   rendermime: IRenderMimeRegistry;
-  factory: CodeEditor.Factory;
+  factory?: CodeEditor.Factory;
 }
 
 /**
@@ -287,7 +287,7 @@ class CellDiffWidget extends Panel {
     return this._model;
   }
 
-  protected _editorFactory: CodeEditor.Factory;
+  protected _editorFactory: CodeEditor.Factory | undefined;
   protected _model: CellDiffModel;
   protected _rendermime: IRenderMimeRegistry;
 }

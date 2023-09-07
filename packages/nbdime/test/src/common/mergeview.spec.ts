@@ -10,7 +10,6 @@ describe('common', () => {
       let orig = 'Value';
       let remote = createDirectStringDiffModel(orig, orig);
       let p = new MergeView({
-        orig,
         remote,
       });
       expect(p).not.toBe(null);

@@ -365,7 +365,7 @@ class OutputPanel extends Panel {
     }
   }
 
-  protected editorFactory: CodeEditor.Factory
+  protected editorFactory: CodeEditor.Factory | undefined;
   protected model: OutputDiffModel;
   protected rendermime: IRenderMimeRegistry;
   protected editorClasses: string[];

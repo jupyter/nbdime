@@ -54,7 +54,7 @@ describe('merge', () => {
           } as nbformat.INotebookMetadata;
           let model = new MetadataMergeModel(
               base, []);
-          let widget = new MetadataMergeWidget(model);
+          let widget = new MetadataMergeWidget({model});
           expect(widget).not.toBe(null);
       });
 
@@ -64,7 +64,7 @@ describe('merge', () => {
 
       it('should create a widget for a simple realistic model', () => {
           let model = new NotebookMergeModel(notebook as nbformat.INotebookContent, NBdecisions as IMergeDecision[]);
-          let widget = new NotebookMergeWidget(model, rendermime);
+          let widget = new NotebookMergeWidget({model, rendermime});
           expect(widget).not.toBe(null);
           Widget.attach(widget, document.body);
       });

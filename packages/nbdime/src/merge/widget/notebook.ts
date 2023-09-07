@@ -192,7 +192,7 @@ class NotebookMergeWidget extends Panel {
   protected cellWidgets: CellMergeWidget[];
   protected cellContainer: CellsDragDrop;
 
-  private _editorFactory: CodeEditor.Factory;
+  private _editorFactory: CodeEditor.Factory | undefined;
   private _model: NotebookMergeModel;
   private _rendermime: IRenderMimeRegistry;
 }

@@ -102,7 +102,7 @@ class NotebookDiffWidget extends Panel {
     return this._model;
   }
 
-  private _editorFactory: CodeEditor.Factory;
+  private _editorFactory: CodeEditor.Factory | undefined;
   private _model: NotebookDiffModel;
   private _rendermime: IRenderMimeRegistry;
 }

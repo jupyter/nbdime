@@ -84,7 +84,7 @@ export interface ICellMergeViewOptions {
   merged: IDiffModel;
   readOnly?: boolean;
   editorClasses: string[];
-  editorFactory: CodeEditor.Factory;
+  editorFactory?: CodeEditor.Factory;
 }
 
 /**
@@ -475,7 +475,7 @@ export
     return this._model;
   }
 
-  private _editorFactory: CodeEditor.Factory;
+  private _editorFactory: CodeEditor.Factory | undefined;
   private _model: CellMergeModel;
   private _rendermime: IRenderMimeRegistry;
 

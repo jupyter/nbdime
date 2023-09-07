@@ -9,7 +9,7 @@ import { IRenderMimeRegistry } from "@jupyterlab/rendermime";
 export interface IDiffWidgetOptions<T> {
   model: T;
   rendermime: IRenderMimeRegistry;
-  editorFactory: CodeEditor.Factory;
+  editorFactory?: CodeEditor.Factory;
 }
 
 export interface ICellDiffWidgetOptions<T> extends IDiffWidgetOptions<T> {

@@ -72,6 +72,6 @@ class MetadataMergeWidget extends Panel {
 
   protected view: MergeView;
 
-  private _editorFactory: CodeEditor.Factory;
+  private _editorFactory: CodeEditor.Factory | undefined;
   private _model: MetadataMergeModel;
 }
