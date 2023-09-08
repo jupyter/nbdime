@@ -1,0 +1,21 @@
+/*
+ * Copyright (c) Jupyter Development Team.
+ * Distributed under the terms of the Modified BSD License.
+ */
+
+@import url('~@fortawesome/fontawesome-free/css/all.min.css');
+@import url('~@fortawesome/fontawesome-free/css/v4-shims.min.css');
+
+@import url('~@jupyterlab/theme-light-extension/style/theme.css');
+
+@import url('nbdime/lib/common/collapsible.css');
+@import url('nbdime/lib/upstreaming/flexpanel.css');
+@import url('nbdime/lib/common/dragpanel.css');
+@import url('nbdime/lib/styles/variables.css');
+@import url('nbdime/lib/styles/common.css');
+@import url('nbdime/lib/styles/diff.css');
+@import url('nbdime/lib/styles/merge.css');
+
+@import url('../app/common.css');
+@import url('../app/diff.css');
+@import url('../app/merge.css');

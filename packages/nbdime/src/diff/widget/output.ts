@@ -12,6 +12,8 @@ import {
   each, find, toArray
 } from '@lumino/algorithm';
 
+import { CodeEditor } from '@jupyterlab/codeeditor';
+
 import {
   IRenderMimeRegistry, OutputModel, IRenderMime
 } from '@jupyterlab/rendermime';
@@ -28,6 +30,8 @@ import {
   buildSelect, unique, intersection
 } from '../../common/util';
 
+import { ICellDiffViewOptions } from './cell';
+
 import {
   ADDED_DIFF_CLASS, DELETED_DIFF_CLASS,
   TWOWAY_DIFF_CLASS, UNCHANGED_DIFF_CLASS,
@@ -39,8 +43,9 @@ import {
 } from './renderable';
 
 import type {
-  CellDiffModel, OutputDiffModel
+  OutputDiffModel
 } from '../model';
+
 
 /**
  * Class for output panel
@@ -106,9 +111,17 @@ class OutputPanel extends Panel {
   /**
    *
    */
-  constructor(model: OutputDiffModel, parentModel: CellDiffModel,
-              editorClasses: string[], rendermime: IRenderMimeRegistry) {
+  constructor(
+    {
+      model,
+      parent: parentModel,
+      editorClasses,
+      rendermime,
+      factory
+    }: ICellDiffViewOptions<OutputDiffModel>
+  ) {
     super();
+    this.editorFactory = factory;
     this.model = model;
     this.rendermime = rendermime;
     this.editorClasses = editorClasses;
@@ -226,12 +239,12 @@ class OutputPanel extends Panel {
       let aValue = stringModel.base || stringModel.remote!;
       if (!isBase64(aValue)) {
         // 2.
-        view = createNbdimeMergeView(stringModel);
+        view = createNbdimeMergeView({remote: stringModel, factory: this.editorFactory});
       }
     }
     if (!view) {
       // 3.
-      view = createNbdimeMergeView(model.stringify());
+      view = createNbdimeMergeView({remote: model.stringify(), factory: this.editorFactory});
     }
     return view;
   }
@@ -352,6 +365,7 @@ class OutputPanel extends Panel {
     }
   }
 
+  protected editorFactory: CodeEditor.Factory | undefined;
   protected model: OutputDiffModel;
   protected rendermime: IRenderMimeRegistry;
   protected editorClasses: string[];

@@ -7,22 +7,6 @@
 
 'use strict';
 
-import { Widget, Panel } from '@lumino/widgets';
-
-import type { IStringDiffModel } from '../diff/model';
-
-import {
-  DecisionStringDiffModel
-} from '../merge/model';
-
-import { offsetToPos, posToOffset, type DiffRangePos } from '../diff/range';
-
-import { ChunkSource, Chunk, lineToNormalChunks } from '../chunking';
-
-import { EditorWidget } from './editor';
-
-import { valueIn, hasEntries, splitLines, copyObj } from './util';
-
 import {
   Extension,
   StateEffect,
@@ -42,7 +26,36 @@ import {
   BlockInfo
 } from '@codemirror/view';
 
-import { LegacyCodeMirror } from '../legacy_codemirror/cmconfig';
+import { CodeEditor } from '@jupyterlab/codeeditor';
+
+import { Widget, Panel } from '@lumino/widgets';
+
+import type {
+  IStringDiffModel
+} from '../diff/model';
+
+import {
+  DecisionStringDiffModel
+} from '../merge/model';
+
+import {
+  offsetToPos,
+  posToOffset,
+  type DiffRangePos
+} from '../diff/range';
+
+import {
+  ChunkSource, Chunk, lineToNormalChunks
+} from '../chunking';
+
+import {
+  EditorWidget, IEditorWidgetOptions, createEditorFactory
+} from './editor';
+
+import {
+  valueIn, hasEntries, splitLines
+} from './util';
+
 const PICKER_SYMBOL = '\u27ad';
 const CONFLICT_MARKER = '\u26A0';
 
@@ -340,28 +353,25 @@ const conflictMarkerLineChunkMappingField = StateField.define<Map<number, Chunk>
   }
 })
 
-/**
- * A wrapper view for showing StringDiffModels in a MergeView
- */
-export function createNbdimeMergeView(remote: IStringDiffModel): MergeView;
-export function createNbdimeMergeView(
-  remote: IStringDiffModel | null,
-  local: IStringDiffModel | null,
-  merged: IStringDiffModel,
-  readOnly?: boolean | string
-): MergeView;
-export function createNbdimeMergeView(
+export interface IMergeViewOptions {
   remote: IStringDiffModel | null,
   local?: IStringDiffModel | null,
   merged?: IStringDiffModel,
-  readOnly?: boolean | string
-): MergeView {
+  readOnly?: boolean | string,
+  factory?: CodeEditor.Factory
+}
+
+/**
+ * A wrapper view for showing StringDiffModels in a MergeView
+ */
+export function createNbdimeMergeView(options: IMergeViewOptions): MergeView {
+  const {remote, local, merged, readOnly, factory} = options;
   let opts: IMergeViewEditorConfiguration = {
     remote,
     local,
     merged,
-    readOnly,
-    orig: null
+    config: { readOnly },
+    factory: factory ?? createEditorFactory()
   };
 
   let mergeview = new MergeView(opts);
@@ -394,15 +404,12 @@ export class DiffView {
   constructor(
     model: IStringDiffModel,
     type: 'left' | 'right' | 'merge',
-    listener: Extension,
-    mergeControlGutter: Extension,
     options: IMergeViewEditorConfiguration
   ) {
     this._model = model;
     this._type = type;
     let remoteValue = this._model.remote || '';
-    this._remoteEditorWidget = new EditorWidget(remoteValue, {config: options});
-    this._remoteEditorWidget.editor.injectExtension([listener, mergeControlGutter, getCommonEditorExtensions()]);
+    this._remoteEditorWidget = new EditorWidget({...options, value: remoteValue});
   }
 
   init(baseWidget: EditorWidget) {
@@ -919,12 +926,7 @@ function findAlignedLines(dvs: DiffView[]): number[][] {
   return linesToAlign;
 }
 export interface IMergeViewEditorConfiguration
-  extends LegacyCodeMirror.IEditorConfiguration {
-  /**
-   * Original value, not used
-   */
-  orig: any;
-
+  extends Omit<IEditorWidgetOptions, 'value'> {
   /**
    * Provides remote diff of document to be shown on the right of the base.
    * To create a diff view, provide only remote.
@@ -970,13 +972,23 @@ export class MergeView extends Panel {
     if (!main) {
       throw new Error('Either remote or merged model needs to be specified!');
     }
-    options.value = main.base !== null ? main.base : main.remote;
-    options.lineNumbers = options.lineNumbers !== false;
+    const value = main.base !== null ? main.base : (main.remote ?? '');
 
     // Whether merge view should be readonly
-    let readOnly = options.readOnly;
-    //For all others:
-    options.readOnly = true;
+    let readOnly = options.config?.readOnly ?? false;
+
+    options.config = {
+      ...options.config,
+      lineNumbers: options.config?.lineNumbers !== false,
+      // For all others:
+      readOnly: true
+    }
+
+    if (merged) {
+      // Turn off linewrapping for merge view by default, keep for diff
+      options.config.lineWrap = options.config.lineWrap ?? false;
+    }
+
     this._aligning = true;
 
     /**
@@ -1018,17 +1030,14 @@ export class MergeView extends Panel {
      *       but with different classes
      *     - Partial changes: Use base + right editor
      */
-
-    let dvOptions = options; // as CodeMirror.MergeView.MergeViewEditorConfiguration;
-
-    if (merged) {
-      if (options.lineWrap === undefined) {
-        // Turn off linewrapping for merge view by default, keep for diff
-        options.lineWrap = false;
+    this._base = new EditorWidget(
+      {
+        ...options,
+        extensions: [...(options.extensions ?? []), listener, mergeControlGutter, getCommonEditorExtensions()],
+        value
       }
-    }
-    this._base = new EditorWidget(options.value, {config: options});
-    this._base.editor.injectExtension([listener, mergeControlGutter, getCommonEditorExtensions()]);
+    );
+
     // START MERGE CASE
     if (merged) {
       this._gridPanel = new Panel();
@@ -1051,9 +1060,12 @@ export class MergeView extends Panel {
         left = this._left = new DiffView(
           local,
           'left',
-          listener,
-          mergeControlGutter,
-          copyObj(dvOptions)
+          {
+            ...options,
+            // Copy configuration
+            config: { ...options.config },
+            extensions: [...(options.extensions ?? []), listener, mergeControlGutter, getCommonEditorExtensions()]
+          }
         );
         this._diffViews.push(left);
         leftWidget = left.remoteEditorWidget;
@@ -1078,9 +1090,12 @@ export class MergeView extends Panel {
         right = this._right = new DiffView(
           remote,
           'right',
-          listener,
-          mergeControlGutter,
-          copyObj(dvOptions)
+          {
+            ...options,
+            // Copy configuration
+            config: { ...options.config },
+            extensions: [...(options.extensions ?? []), listener, mergeControlGutter, getCommonEditorExtensions()]
+          }
         );
         this._diffViews.push(right);
         rightWidget = right.remoteEditorWidget;
@@ -1092,9 +1107,12 @@ export class MergeView extends Panel {
       merge = this._merge = new DiffView(
         merged,
         'merge',
-        listener,
-        mergeControlGutter,
-        copyObj({ readOnly }, copyObj(dvOptions))
+        {
+          ...options,
+          // Copy configuration
+          config: { ...options.config, readOnly },
+          extensions: [...(options.extensions ?? []), listener, mergeControlGutter, getCommonEditorExtensions()]
+        }
       );
       this._diffViews.push(merge);
       let mergeWidget = merge.remoteEditorWidget;
@@ -1128,9 +1146,12 @@ export class MergeView extends Panel {
         right = this._right = new DiffView(
           remote,
           'right',
-          listener,
-          mergeControlGutter,
-          dvOptions
+          {
+            ...options,
+            // Copy configuration
+            config: { ...options.config },
+            extensions: [...(options.extensions ?? []), listener, mergeControlGutter, getCommonEditorExtensions()]
+          }
         );
         this._diffViews.push(right);
         let rightWidget = right.remoteEditorWidget;
@@ -1248,10 +1269,11 @@ export class MergeView extends Panel {
     }
 
   getMergedValue(): string {
-    if (!this.merge) {
+    if(!this.merge) {
       throw new Error('No merged value; missing "merged" view');
     }
-    return this.merge.baseEditorWidget.model.sharedModel.getSource();
+
+    return this.merge.remoteEditorWidget.doc.toString();
   }
 
   /**

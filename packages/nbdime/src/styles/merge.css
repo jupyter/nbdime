@@ -340,6 +340,7 @@
 /* Display chunks of conflicted cell with a start and end marker.
  Add a pseudo-element at start of chunk with button to mark chunk as resolved
 */
+
 .jp-Notebook-merge .jp-conflicted-cells {
   border: solid 2px var(--jp-error-color2);
 }
@@ -360,6 +361,8 @@
 .jp-Notebook-merge .jp-conflicted-cells > .jp-DragPanel {
   padding: 4px;
 }
+
+
 
 /*
 Output mimetype selection:

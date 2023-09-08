@@ -2,4 +2,4 @@
  * Copyright (c) Jupyter Development Team.
  * Distributed under the terms of the Modified BSD License.
  */
-@import url('base.css');
+import './base.css';

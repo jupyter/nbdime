@@ -6,6 +6,8 @@ import {
   Panel
 } from '@lumino/widgets';
 
+import { CodeEditor } from '@jupyterlab/codeeditor';
+
 import type {
   IRenderMimeRegistry
 } from '@jupyterlab/rendermime';
@@ -25,18 +27,19 @@ import {
 import type {
   NotebookDiffModel
 } from '../model';
+import { IDiffWidgetOptions } from '../../common/interfaces';
 
 
 const NBDIFF_CLASS = 'jp-Notebook-diff';
-
 
 /**
  * NotebookDiffWidget
  */
 export
 class NotebookDiffWidget extends Panel {
-  constructor(model: NotebookDiffModel, rendermime: IRenderMimeRegistry) {
+  constructor({ editorFactory, model, rendermime }: IDiffWidgetOptions<NotebookDiffModel>) {
     super();
+    this._editorFactory = editorFactory;
     this._model = model;
     this._rendermime = rendermime;
     this.addClass(NBDIFF_CLASS);
@@ -54,7 +57,7 @@ class NotebookDiffWidget extends Panel {
     let work = Promise.resolve();
     work = work.then(() => {
       if (model.metadata) {
-        this.addWidget(new MetadataDiffWidget(model.metadata));
+        this.addWidget(new MetadataDiffWidget({model: model.metadata, editorFactory: this._editorFactory}));
       }
     });
     for (let chunk of model.chunkedCells) {
@@ -62,7 +65,7 @@ class NotebookDiffWidget extends Panel {
         return new Promise<void>(resolve => {
           if (chunk.length === 1 && !(chunk[0].added || chunk[0].deleted)) {
             this.addWidget(new CellDiffWidget(
-              chunk[0], rendermime, model.mimetype));
+              {model: chunk[0], rendermime, mimetype: model.mimetype, editorFactory: this._editorFactory}));
           } else {
             let chunkPanel = new Panel();
             chunkPanel.addClass(CHUNK_PANEL_CLASS);
@@ -72,7 +75,7 @@ class NotebookDiffWidget extends Panel {
             removedPanel.addClass(REMOVED_CHUNK_PANEL_CLASS);
             for (let cell of chunk) {
               let target = cell.deleted ? removedPanel : addedPanel;
-              target.addWidget(new CellDiffWidget(cell, rendermime, model.mimetype));
+              target.addWidget(new CellDiffWidget({model: cell, rendermime, mimetype: model.mimetype, editorFactory: this._editorFactory}));
             }
             chunkPanel.addWidget(addedPanel);
             chunkPanel.addWidget(removedPanel);
@@ -99,6 +102,7 @@ class NotebookDiffWidget extends Panel {
     return this._model;
   }
 
+  private _editorFactory: CodeEditor.Factory | undefined;
   private _model: NotebookDiffModel;
   private _rendermime: IRenderMimeRegistry;
 }

@@ -2,11 +2,17 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import { Panel, PanelLayout, Widget } from '@lumino/widgets';
+import {
+  Panel, PanelLayout, Widget
+} from '@lumino/widgets';
 
-import type { Message } from '@lumino/messaging';
+import type {
+  Message
+} from '@lumino/messaging';
 
-import { MimeData } from '@lumino/coreutils';
+import {
+  MimeData
+} from '@lumino/coreutils';
 
 import { Drag } from '@lumino/dragdrop';
 

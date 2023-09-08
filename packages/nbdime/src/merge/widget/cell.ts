@@ -8,6 +8,8 @@ import {
   Panel, Widget
 } from '@lumino/widgets';
 
+import { CodeEditor } from '@jupyterlab/codeeditor';
+
 import type {
   IRenderMimeRegistry
 } from '@jupyterlab/rendermime';
@@ -19,6 +21,8 @@ import {
 import {
   DragPanel
 } from '../../common/dragpanel';
+
+import { ICellDiffWidgetOptions } from '../../common/interfaces';
 
 import {
   createNbdimeMergeView, MergeView
@@ -57,7 +61,7 @@ import {
 
 
 export
-const CELLMERGE_CLASS = 'jp-Cell-merge';
+  const CELLMERGE_CLASS = 'jp-Cell-merge';
 const CELL_HEADER_CLASS = 'jp-Merge-cellHeader';
 const CELL_HEADER_TITLE_CLASS = 'jp-Merge-cellHeader-title';
 
@@ -74,22 +78,31 @@ const OUTPUTS_ROW_CLASS = 'jp-Cellrow-outputs';
 const OUTPUTS_CONFLICTED_CLASS = 'jp-conflicted-outputs';
 const MARK_OUTPUTS_RESOLVED_CLASS = 'jp-conflicted-outputs-button';
 
-
+export interface ICellMergeViewOptions {
+  local: IStringDiffModel | null;
+  remote: IStringDiffModel | null;
+  merged: IDiffModel;
+  readOnly?: boolean;
+  editorClasses: string[];
+  editorFactory?: CodeEditor.Factory;
+}
 
 /**
  * CellMergeWidget for cell changes
  */
 export
-class CellMergeWidget extends Panel {
+  class CellMergeWidget extends Panel {
 
-  static createMergeView(local: IDiffModel | null, remote: IDiffModel | null, merged: IDiffModel,
-                         editorClasses: string[], readOnly=false): Widget | null {
+  static createMergeView({editorFactory, local, remote, merged, readOnly}: ICellMergeViewOptions): Widget | null {
     let view: Widget | null = null;
     if (merged instanceof StringDiffModel) {
-      view = createNbdimeMergeView(
-        remote as IStringDiffModel | null,
-        local as IStringDiffModel | null,
-        merged, readOnly);
+      view = createNbdimeMergeView({
+        remote,
+        local,
+        merged,
+        readOnly: readOnly ?? false,
+        factory: editorFactory
+      });
     }
     return view;
   }
@@ -113,10 +126,17 @@ class CellMergeWidget extends Panel {
   /**
    *
    */
-  constructor(model: CellMergeModel, rendermime: IRenderMimeRegistry,
-              mimetype: string) {
+  constructor(
+    {
+      editorFactory,
+      model,
+      rendermime,
+      mimetype
+    }: ICellDiffWidgetOptions<CellMergeModel>
+  ) {
     super();
     this.addClass(CELLMERGE_CLASS);
+    this._editorFactory = editorFactory
     this._model = model;
     this._rendermime = rendermime;
     this.mimetype = mimetype;
@@ -126,14 +146,14 @@ class CellMergeWidget extends Panel {
 
   validateMerged(candidate: nbformat.ICell): nbformat.ICell {
     if (this.sourceView && this.sourceView instanceof MergeView) {
-      let text = (this.sourceView as MergeView).getMergedValue();
+      let text = this.sourceView.getMergedValue();
       let lines = splitLines(text);
       if (candidate.source !== lines) {
         candidate.source = lines;
       }
     }
     if (this.metadataView && this.metadataView instanceof MergeView) {
-      let text = (this.sourceView as MergeView).getMergedValue();
+      let text = this.metadataView.getMergedValue();
       if (JSON.stringify(candidate.metadata) !== text) {
         // This will need to be validated server side,
         // and should not be touched by client side
@@ -157,8 +177,8 @@ class CellMergeWidget extends Panel {
 
     // Mark cells that have no changes:
     if (model.merged.unchanged &&
-        model.local && model.local.unchanged &&
-        model.remote && model.remote.unchanged) {
+      model.local && model.local.unchanged &&
+      model.remote && model.remote.unchanged) {
       this.addClass(UNCHANGED_MERGE_CLASS);
     }
 
@@ -180,18 +200,25 @@ class CellMergeWidget extends Panel {
     }
 
     if (model.local === null || model.remote === null || (  // One sided change
-          model.local.unchanged && model.remote.unchanged &&
-          model.merged.unchanged) ||  // Unchanged
-          model.local.added !== model.remote.added ||  // Onesided addition
-          model.local.deleted && model.remote.unchanged ||  // Onesided deletion (other side unchanged)
-          model.local.unchanged && model.remote.deleted ||  // Onesided deletion (other side unchanged)
-          model.local.added && model.agreedCell || // Identical additions
-          model.local.deleted && model.remote.deleted   // Deletion on both
-          ) {
+      model.local.unchanged && model.remote.unchanged &&
+      model.merged.unchanged) ||  // Unchanged
+      model.local.added !== model.remote.added ||  // Onesided addition
+      model.local.deleted && model.remote.unchanged ||  // Onesided deletion (other side unchanged)
+      model.local.unchanged && model.remote.deleted ||  // Onesided deletion (other side unchanged)
+      model.local.added && model.agreedCell || // Identical additions
+      model.local.deleted && model.remote.deleted   // Deletion on both
+    ) {
       CURR_CLASSES = CURR_CLASSES.slice(1, 3);
       // Add single view of source:
       let view = CellDiffWidget.createView(
-        model.merged.source, model.merged, CURR_CLASSES, this._rendermime);
+        {
+          model: model.merged.source, 
+          parent: model.merged,
+          editorClasses: CURR_CLASSES,
+          rendermime: this._rendermime,
+          factory: this._editorFactory
+        }
+      );
       if (ladd && !radd || ldel && !rdel) {
         this.addClass(ONEWAY_LOCAL_CLASS);
       } else if (radd && !ladd || rdel && !ldel) {
@@ -211,7 +238,14 @@ class CellMergeWidget extends Panel {
         let container = new Panel();
         for (let m of model.merged.outputs) {
           view = CellDiffWidget.createView(
-            m, model.merged, CURR_CLASSES, this._rendermime);
+            {
+              model: m, 
+              parent: model.merged, 
+              editorClasses: CURR_CLASSES,
+              rendermime: this._rendermime,
+              factory: this._editorFactory
+            }
+          );
           container.addWidget(view);
         }
         container.addClass(OUTPUTS_ROW_CLASS);
@@ -222,7 +256,7 @@ class CellMergeWidget extends Panel {
       // as needed (if changed). Source/metadata/output are each a "row"
       let execDec = model.getExecutionCountDecision();
       if (execDec && execDec.action === 'clear') {
-        let row = new FlexPanel({direction: 'left-to-right'});
+        let row = new FlexPanel({ direction: 'left-to-right' });
         row.addClass(EXECUTIONCOUNT_ROW_CLASS);
         let textWidget = new Widget();
         textWidget.node.innerText = 'Execution count will be cleared.';
@@ -231,17 +265,27 @@ class CellMergeWidget extends Panel {
       }
       let sourceView: Widget | null = null;
       if (model.local && model.local.source.unchanged &&
-          model.remote && model.remote.source.unchanged &&
-          model.merged.source.unchanged) {
+        model.remote && model.remote.source.unchanged &&
+        model.merged.source.unchanged) {
         // Use single unchanged view of source
         sourceView = CellDiffWidget.createView(
-          model.merged.source, model.merged, CURR_CLASSES, this._rendermime);
+          {
+            model: model.merged.source,
+            parent: model.merged, 
+            editorClasses: CURR_CLASSES,
+            rendermime: this._rendermime,
+            factory: this._editorFactory
+          }
+        );
       } else {
         sourceView = CellMergeWidget.createMergeView(
-          model.local ? model.local.source : null,
-          model.remote ? model.remote.source : null,
-          model.merged.source,
-          CURR_CLASSES);
+          {
+            local: model.local ? model.local.source : null,
+            remote: model.remote ? model.remote.source : null,
+            merged: model.merged.source,
+            editorClasses: CURR_CLASSES,
+            editorFactory: this._editorFactory
+        });
       }
       if (sourceView === null) {
         throw new Error('Was not able to create merge view for cell!');
@@ -269,11 +313,14 @@ class CellMergeWidget extends Panel {
 
       if (metadataChanged) {
         let metadataView = CellMergeWidget.createMergeView(
-            model.local ? model.local.metadata : null,
-            model.remote ? model.remote.metadata : null,
-            model.merged.metadata,
-            CURR_CLASSES,
-            true);  // Do not allow manual edit of metadata
+          {
+            local: model.local ? model.local.metadata : null,
+            remote: model.remote ? model.remote.metadata : null,
+            merged: model.merged.metadata,
+            editorClasses: CURR_CLASSES,
+            readOnly: true,  // Do not allow manual edit of metadata
+            editorFactory: this._editorFactory
+        });
         if (metadataView === null) {
           throw new Error('Was not able to create merge view for cell metadata!');
         }
@@ -428,6 +475,7 @@ class CellMergeWidget extends Panel {
     return this._model;
   }
 
+  private _editorFactory: CodeEditor.Factory | undefined;
   private _model: CellMergeModel;
   private _rendermime: IRenderMimeRegistry;
 
