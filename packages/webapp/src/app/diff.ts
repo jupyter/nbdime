@@ -2,55 +2,37 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-
 import type * as nbformat from '@jupyterlab/nbformat';
 
-import {
-  Panel, Widget
-} from '@lumino/widgets';
+import { Panel, Widget } from '@lumino/widgets';
 
-import {
-  RenderMimeRegistry
-} from '@jupyterlab/rendermime';
+import { RenderMimeRegistry } from '@jupyterlab/rendermime';
 
-import {
-  Sanitizer
-} from '@jupyterlab/apputils';
+import { Sanitizer } from '@jupyterlab/apputils';
 
-import {
-  MathJaxTypesetter
-} from '@jupyterlab/mathjax-extension';
+import { MathJaxTypesetter } from '@jupyterlab/mathjax-extension';
 
 import { createEditorFactory } from 'nbdime/lib/common/editor';
 
-import type {
-  IDiffEntry
-} from 'nbdime/lib/diff/diffentries';
+import type { IDiffEntry } from 'nbdime/lib/diff/diffentries';
+
+import { NotebookDiffModel } from 'nbdime/lib/diff/model';
+
+import { NotebookDiffWidget } from 'nbdime/lib/diff/widget';
+
+import { requestDiff } from 'nbdime/lib/request';
 
 import {
-  NotebookDiffModel
-} from 'nbdime/lib/diff/model';
-
-import {
-  NotebookDiffWidget
-} from 'nbdime/lib/diff/widget';
-
-import {
-  requestDiff
-} from 'nbdime/lib/request';
-
-import {
-  getBaseUrl, getConfigOption, toggleSpinner, toggleShowUnchanged,
-  markUnchangedRanges
+  getBaseUrl,
+  getConfigOption,
+  toggleSpinner,
+  toggleShowUnchanged,
+  markUnchangedRanges,
 } from './common';
 
-import {
-  exportDiff
-} from './staticdiff';
+import { exportDiff } from './staticdiff';
 
-import { 
-  rendererFactories
-} from './rendermime';
+import { rendererFactories } from './rendermime';
 
 let diffWidget: NotebookDiffWidget | null = null;
 
@@ -77,21 +59,22 @@ function stripPrefix(s: string): string {
 /**
  * Show the diff as represented by the base notebook and a list of diff entries
  */
-function showDiff(data: { base: nbformat.INotebookContent; diff: IDiffEntry[]; }): Promise<void> {
+function showDiff(data: {
+  base: nbformat.INotebookContent;
+  diff: IDiffEntry[];
+}): Promise<void> {
   let rendermime = new RenderMimeRegistry({
     initialFactories: rendererFactories,
     sanitizer: new Sanitizer(),
-    latexTypesetter: new MathJaxTypesetter()
+    latexTypesetter: new MathJaxTypesetter(),
   });
 
   let nbdModel = new NotebookDiffModel(data.base, data.diff);
-  let nbdWidget = new NotebookDiffWidget(
-    {
-      model: nbdModel,
-      rendermime,
-      editorFactory: createEditorFactory()
-    }
-  );
+  let nbdWidget = new NotebookDiffWidget({
+    model: nbdModel,
+    rendermime,
+    editorFactory: createEditorFactory(),
+  });
 
   let root = document.getElementById('nbdime-root');
   if (!root) {
@@ -107,7 +90,9 @@ function showDiff(data: { base: nbformat.INotebookContent; diff: IDiffEntry[]; }
   panel.addWidget(nbdWidget);
   let work = nbdWidget.init();
   work.then(() => {
-    window.onresize = () => { panel.update(); };
+    window.onresize = () => {
+      panel.update();
+    };
   });
   diffWidget = nbdWidget;
   return work;
@@ -123,9 +108,13 @@ function onDiff(e: Event) {
   let r = (document.getElementById('diff-remote') as HTMLInputElement).value;
   compare(b, r, true);
   return false;
-};
+}
 
-function compare(base: string, remote: string | undefined, pushHistory: boolean | 'replace') {
+function compare(
+  base: string,
+  remote: string | undefined,
+  pushHistory: boolean | 'replace',
+) {
   toggleSpinner(true);
   getDiff(base, remote);
   if (pushHistory) {
@@ -135,12 +124,21 @@ function compare(base: string, remote: string | undefined, pushHistory: boolean 
     if (remote) {
       uri += '&remote=' + encodeURIComponent(remote);
     }
-    editHistory(pushHistory, { base, remote },
-      'Diff: "' + base + '" vs "' + remote + '"', uri);
+    editHistory(
+      pushHistory,
+      { base, remote },
+      'Diff: "' + base + '" vs "' + remote + '"',
+      uri,
+    );
   }
 }
 
-function editHistory(pushHistory: boolean | 'replace', statedata: any, title: string, url?: string): void {
+function editHistory(
+  pushHistory: boolean | 'replace',
+  statedata: any,
+  title: string,
+  url?: string,
+): void {
   if (pushHistory === true) {
     history.pushState(statedata, title, url);
   } else if (pushHistory === 'replace') {
@@ -151,10 +149,15 @@ function editHistory(pushHistory: boolean | 'replace', statedata: any, title: st
 /**
  * Calls `requestDiff` with our response handlers
  */
-export
-function getDiff(base: string, remote: string | undefined) {
+export function getDiff(base: string, remote: string | undefined) {
   let baseUrl = getBaseUrl();
-  requestDiff(base, remote, baseUrl, onDiffRequestCompleted, onDiffRequestFailed);
+  requestDiff(
+    base,
+    remote,
+    baseUrl,
+    onDiffRequestCompleted,
+    onDiffRequestFailed,
+  );
 }
 
 /**
@@ -164,7 +167,9 @@ function onDiffRequestCompleted(data: any) {
   let layoutWork = showDiff(data);
 
   layoutWork.then(() => {
-    let exportBtn = document.getElementById('nbdime-export') as HTMLButtonElement;
+    let exportBtn = document.getElementById(
+      'nbdime-export',
+    ) as HTMLButtonElement;
     exportBtn.style.display = 'initial';
     toggleSpinner(false);
     markUnchangedRanges();
@@ -193,8 +198,8 @@ function onDiffRequestFailed(response: string) {
  */
 function onPopState(e: PopStateEvent) {
   if (e.state) {
-    let eb = (document.getElementById('diff-base') as HTMLInputElement);
-    let er = (document.getElementById('diff-remote') as HTMLInputElement);
+    let eb = document.getElementById('diff-base') as HTMLInputElement;
+    let er = document.getElementById('diff-remote') as HTMLInputElement;
     eb.value = e.state.base;
     er.value = e.state.remote;
     compare(e.state.base, e.state.remote, false);
@@ -220,7 +225,6 @@ function trustOutputs() {
   }
 }
 
-
 /**
  * Wire up callbacks.
  */
@@ -234,12 +238,10 @@ function attachToForm() {
   }
 }
 
-
 /**
  *
  */
-export
-function initializeDiff() {
+export function initializeDiff() {
   attachToForm();
   // If arguments supplied in config, run diff directly:
   let base = getConfigOption('base');
@@ -251,7 +253,9 @@ function initializeDiff() {
   let exportBtn = document.getElementById('nbdime-export') as HTMLButtonElement;
   exportBtn.onclick = exportDiff;
 
-  let hideUnchangedChk = document.getElementById('nbdime-hide-unchanged') as HTMLInputElement;
+  let hideUnchangedChk = document.getElementById(
+    'nbdime-hide-unchanged',
+  ) as HTMLInputElement;
   hideUnchangedChk.checked = getConfigOption('hideUnchanged', true);
   hideUnchangedChk.onchange = () => {
     toggleShowUnchanged(!hideUnchangedChk.checked, diffWidget);

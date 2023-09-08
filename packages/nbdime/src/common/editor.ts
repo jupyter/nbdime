@@ -11,9 +11,7 @@ import type { Text } from '@codemirror/state';
 
 import { YFile, IYText } from '@jupyter/ydoc';
 
-import {
-  CodeEditorWrapper, CodeEditor
-} from '@jupyterlab/codeeditor';
+import { CodeEditorWrapper, CodeEditor } from '@jupyterlab/codeeditor';
 
 import {
   CodeMirrorEditorFactory,
@@ -23,12 +21,13 @@ import {
   EditorThemeRegistry,
   parseMathIPython,
   ybinding,
-  IEditorFactoryOptions
+  IEditorFactoryOptions,
 } from '@jupyterlab/codemirror';
 
 import { nullTranslator } from '@jupyterlab/translation';
 
-export interface IEditorWidgetOptions extends Omit<CodeEditor.IOptions, 'host' | 'model' | 'inline'> {
+export interface IEditorWidgetOptions
+  extends Omit<CodeEditor.IOptions, 'host' | 'model' | 'inline'> {
   /**
    * Editor factory
    *
@@ -41,7 +40,7 @@ export interface IEditorWidgetOptions extends Omit<CodeEditor.IOptions, 'host' |
   /**
    * The starting value of the editor.
    */
-  value?: string
+  value?: string;
 
   /**
    * Editor configuration
@@ -62,12 +61,10 @@ export interface IEditorWidgetOptions extends Omit<CodeEditor.IOptions, 'host' |
      * If the special value "nocursor" is given (instead of simply true), focusing of the editor is also disallowed.
      */
     readOnly?: boolean | string;
-  }
+  };
 }
 
-
-export
-class EditorWidget extends CodeEditorWrapper {
+export class EditorWidget extends CodeEditorWrapper {
   /**
    * Store all editor instances for operations that
    * need to loop over all instances.
@@ -76,15 +73,15 @@ class EditorWidget extends CodeEditorWrapper {
     const { factory, value, ...others } = options;
     const sharedModel = new YFile();
     if (value) {
-      sharedModel.source = value
+      sharedModel.source = value;
     }
 
-    const model =  new CodeEditor.Model({sharedModel});
+    const model = new CodeEditor.Model({ sharedModel });
 
     super({
       model: model,
       factory: factory ?? createEditorFactory(),
-      editorOptions: others
+      editorOptions: others,
     });
     this.staticLoaded = false;
   }
@@ -101,16 +98,22 @@ class EditorWidget extends CodeEditorWrapper {
   staticLoaded: boolean;
 }
 
-function createExtensionsRegistry(themes: EditorThemeRegistry): EditorExtensionRegistry {
+function createExtensionsRegistry(
+  themes: EditorThemeRegistry,
+): EditorExtensionRegistry {
   const extensions = new EditorExtensionRegistry();
 
   // Register default extensions
-  const extensionNameList = ['lineNumbers', 'readOnly', 'theme', 'allowMultipleSelections', 'tabSize'];
-  for (const extensionFactory of EditorExtensionRegistry.getDefaultExtensions(
-    {
-      themes
-    }
-  )) {
+  const extensionNameList = [
+    'lineNumbers',
+    'readOnly',
+    'theme',
+    'allowMultipleSelections',
+    'tabSize',
+  ];
+  for (const extensionFactory of EditorExtensionRegistry.getDefaultExtensions({
+    themes,
+  })) {
     for (const extensionName of extensionNameList) {
       if (extensionFactory.name === extensionName) {
         extensions.addExtension(extensionFactory);
@@ -125,10 +128,10 @@ function createExtensionsRegistry(themes: EditorThemeRegistry): EditorExtensionR
       return EditorExtensionRegistry.createImmutableExtension(
         ybinding({
           ytext: sharedModel.ysource,
-          undoManager: sharedModel.undoManager ?? undefined
-        })
+          undoManager: sharedModel.undoManager ?? undefined,
+        }),
       );
-    }
+    },
   });
   return extensions;
 }
@@ -137,7 +140,9 @@ function createLanguagesRegistry(): EditorLanguageRegistry {
   const languages = new EditorLanguageRegistry();
 
   // Register default languages
-  for (const language of EditorLanguageRegistry.getDefaultLanguages()) { languages.addLanguage(language); }
+  for (const language of EditorLanguageRegistry.getDefaultLanguages()) {
+    languages.addLanguage(language);
+  }
 
   // Add Jupyter Markdown flavor here to support
   // code block highlighting.
@@ -147,16 +152,16 @@ function createLanguagesRegistry(): EditorLanguageRegistry {
     load: async () => {
       const [m, tex] = await Promise.all([
         import('@codemirror/lang-markdown'),
-        import('@codemirror/legacy-modes/mode/stex')
+        import('@codemirror/legacy-modes/mode/stex'),
       ]);
       return m.markdown({
         base: m.markdownLanguage,
         codeLanguages: (info: string) => languages.findBest(info) as any,
         extensions: [
-          parseMathIPython(StreamLanguage.define(tex.stexMath).parser)
-        ]
+          parseMathIPython(StreamLanguage.define(tex.stexMath).parser),
+        ],
       });
-    }
+    },
   });
 
   return languages;
@@ -165,13 +170,18 @@ function createLanguagesRegistry(): EditorLanguageRegistry {
 function createThemeRegistry(): EditorThemeRegistry {
   const themes = new EditorThemeRegistry();
 
-  for (const theme of EditorThemeRegistry.getDefaultThemes()) { themes.addTheme(theme); }
+  for (const theme of EditorThemeRegistry.getDefaultThemes()) {
+    themes.addTheme(theme);
+  }
   return themes;
 }
 
-export function createEditorFactory(options: IEditorFactoryOptions = {}): CodeEditor.Factory {
+export function createEditorFactory(
+  options: IEditorFactoryOptions = {},
+): CodeEditor.Factory {
   const factory = new CodeMirrorEditorFactory({
-    extensions: options.extensions ?? createExtensionsRegistry(createThemeRegistry()),
+    extensions:
+      options.extensions ?? createExtensionsRegistry(createThemeRegistry()),
     languages: options.languages ?? createLanguagesRegistry(),
     translator: options.translator ?? nullTranslator,
   });

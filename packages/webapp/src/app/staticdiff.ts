@@ -4,8 +4,7 @@
 
 import { saveAs } from 'file-saver';
 
-const collapsiblePanelExportJS =
-`<script>
+const collapsiblePanelExportJS = `<script>
 var headers = document.getElementsByClassName("jp-CollapsiblePanel-header");
 for (var i=0;i<headers.length;++i){
   var header=headers[i];
@@ -20,8 +19,7 @@ for (var i=0;i<headers.length;++i){
 }
 </script>`;
 
-const codeMirrorEllipsisExportStyle =
-`<style type="text/css">
+const codeMirrorEllipsisExportStyle = `<style type="text/css">
 .jp-Notebook-diff .cm-merge-collapsed-widget {
   cursor: initial;
 }

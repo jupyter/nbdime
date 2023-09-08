@@ -1,5 +1,3 @@
-
-
 .nbdime-root .cm-merge {
   position: relative;
   white-space: pre;
@@ -54,7 +52,13 @@
 }
 
 .nbdime-root .cm-merge-spacer {
-  background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,.5) 5px, rgba(255,255,255,.5) 10px);
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 5px,
+    rgba(255, 255, 255, 0.5) 5px,
+    rgba(255, 255, 255, 0.5) 10px
+  );
 }
 
 .nbdime-root .cm-merge-gap {
@@ -73,7 +77,8 @@
 
 .nbdime-root .cm-merge-scrolllock-wrap {
   position: absolute;
-  bottom: 0; left: 50%;
+  bottom: 0;
+  left: 50%;
 }
 
 .nbdime-root .cm-merge-scrolllock {
@@ -97,9 +102,12 @@
 }
 
 .nbdime-root .cm-merge-pane-unchanged {
-  width: 100%; }
+  width: 100%;
+}
 
-.nbdime-root .cm-merge-r-deleted, .cm-l-deleted, .cm-merge-m-deleted {
+.nbdime-root .cm-merge-r-deleted,
+.cm-l-deleted,
+.cm-merge-m-deleted {
   background-color: var(--jp-diff-deleted-color2);
 }
 

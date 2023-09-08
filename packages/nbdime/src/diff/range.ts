@@ -2,20 +2,13 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
+import { CodeEditor } from '@jupyterlab/codeeditor';
 
-import {
-  CodeEditor
-} from '@jupyterlab/codeeditor';
+import type { Text } from '@codemirror/state';
 
-import type { Text } from '@codemirror/state'
+import { valueIn } from '../common/util';
 
-import {
-  valueIn
-} from '../common/util';
-
-import type {
-  ChunkSource
-} from '../chunking';
+import type { ChunkSource } from '../chunking';
 
 /**
  * Represents a range in a diff (typically in a string), in absolute indices (1D)
@@ -69,8 +62,9 @@ export class DiffRangePos {
   constructor(
     public from: CodeEditor.IPosition,
     public to: CodeEditor.IPosition,
-        chunkStartLine?: boolean,
-        endsOnNewline?: boolean) {
+    chunkStartLine?: boolean,
+    endsOnNewline?: boolean,
+  ) {
     this.chunkStartLine = chunkStartLine === true;
     this.endsOnNewline = endsOnNewline === true;
   }
@@ -116,12 +110,12 @@ function findLineNumber(nlPos: number[], index: number): number {
   return lineNo;
 }
 
-export function posToOffset(doc : Text, pos :CodeEditor.IPosition ) {
-  return doc.line(pos.line + 1).from + pos.column
+export function posToOffset(doc: Text, pos: CodeEditor.IPosition) {
+  return doc.line(pos.line + 1).from + pos.column;
 }
-export function offsetToPos(doc : Text, offset:number) {
-  let line = doc.lineAt(offset)
-  return {line: line.number - 1, column: offset - line.from}
+export function offsetToPos(doc: Text, offset: number) {
+  let line = doc.lineAt(offset);
+  return { line: line.number - 1, column: offset - line.from };
 }
 
 /**
@@ -141,18 +135,22 @@ export function raw2Pos(raws: DiffRangeRaw[], text: string): DiffRangePos[] {
     // First `from` position:
     let line = findLineNumber(adIdx, r.from);
     let lineStartIdx = line > 0 ? adIdx[line - 1] + 1 : 0;
-    let from : CodeEditor.IPosition = { line: line, column: r.from - lineStartIdx };
+    let from: CodeEditor.IPosition = {
+      line: line,
+      column: r.from - lineStartIdx,
+    };
 
     // Then `to` position:
     line = findLineNumber(adIdx, r.to - 1); // `to` is non-inclusive
     lineStartIdx = line > 0 ? adIdx[line - 1] + 1 : 0;
-    let to : CodeEditor.IPosition = { line: line, column: r.to - lineStartIdx };
+    let to: CodeEditor.IPosition = { line: line, column: r.to - lineStartIdx };
     // Finally, add some chunking hints:
     let startsOnNewLine = valueIn(r.from, adIdx);
-    let endsOnNewline = valueIn(r.to - 1, adIdx);  // non-inclusive
-    let firstLineNew = from.column === 0 && (
-      from.line !== to.line || endsOnNewline || r.to === text.length);
-    let chunkFirstLine = (
+    let endsOnNewline = valueIn(r.to - 1, adIdx); // non-inclusive
+    let firstLineNew =
+      from.column === 0 &&
+      (from.line !== to.line || endsOnNewline || r.to === text.length);
+    let chunkFirstLine =
       firstLineNew ||
       !startsOnNewLine ||
       // Neither preceding nor following character is a newline

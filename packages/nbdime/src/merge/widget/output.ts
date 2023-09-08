@@ -98,7 +98,8 @@ class DisconnectedDropTarget extends DropPanel {
     }
   }
 
-  callback: ((dropTarget: HTMLElement, event: Drag.Event) => void) | null = null;
+  callback: ((dropTarget: HTMLElement, event: Drag.Event) => void) | null =
+    null;
 }
 
 /**

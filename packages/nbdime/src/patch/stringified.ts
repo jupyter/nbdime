@@ -8,9 +8,7 @@ import type {
   ReadonlyJSONObject,
 } from '@lumino/coreutils';
 
-import {
-  valueIn, repeatString
-} from '../common/util';
+import { valueIn, repeatString } from '../common/util';
 
 import { JSON_INDENT, flattenStringDiff } from '../diff/util';
 
@@ -25,6 +23,7 @@ import {
 import { DiffRangeRaw } from '../diff/range';
 
 import * as stableStringify from 'json-stable-stringify';
+import { PatchObjectHelper } from './common';
 
 // Workaround for TS issue #17002
 declare global {
@@ -62,11 +61,12 @@ export type StringifiedPatchResult = {
  * indentFirst controls whether the first line is indented as well, and
  * defaults to true.
  */
-export
-function stringify(values: ReadonlyJSONValue | null,
-                   level?: number,
-                   indentFirst: boolean = true) : string {
-  let ret = stableStringify.default(values, {space: JSON_INDENT});
+export function stringify(
+  values: ReadonlyJSONValue | null,
+  level?: number,
+  indentFirst: boolean = true,
+): string {
+  let ret = stableStringify.default(values, { space: JSON_INDENT });
   if (level) {
     ret = _indent(ret, level, indentFirst);
   }
@@ -295,7 +295,7 @@ function patchStringifiedObject(
       remote += val;
       baseIndex += val.length;
     }
-  };
+  }
 
   // Stringify correctly
   if (remote.slice(remote.length - postfix.length) === postfix) {

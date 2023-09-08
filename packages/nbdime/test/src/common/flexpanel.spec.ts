@@ -3,10 +3,6 @@
 
 import { Widget } from '@lumino/widgets';
 
-import {
-  FlexPanel
-} from '../../../src/upstreaming/flexpanel';
-
 import { FlexPanel } from '../../../src/upstreaming/flexpanel';
 
 /**
@@ -115,9 +111,9 @@ describe('upstreaming', () => {
       p.addWidget(new Widget());
       p.addWidget(new Widget());
       p.addWidget(new Widget());
-      for(const child of p.widgets) {
+      for (const child of p.widgets) {
         expect(child.hasClass('p-FlexPanel-child')).toBe(true);
-      };
+      }
     });
 
     it('should remove child class name when removing a child widget', () => {

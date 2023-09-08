@@ -8,13 +8,9 @@ import type {
 
 import { CommandToolbarButton } from '@jupyterlab/apputils';
 
-import {
-  IEditorServices
-} from '@jupyterlab/codeeditor'
+import { IEditorServices } from '@jupyterlab/codeeditor';
 
-import {
-  PathExt
-} from '@jupyterlab/coreutils';
+import { PathExt } from '@jupyterlab/coreutils';
 
 import type { DocumentRegistry } from '@jupyterlab/docregistry';
 
@@ -119,10 +115,12 @@ function addCommands(
   tracker: INotebookTracker,
   rendermime: IRenderMimeRegistry,
   settings: ISettingRegistry.ISettings,
-  editorServices: IEditorServices
+  editorServices: IEditorServices,
 ): void {
   const { commands, shell } = app;
-  const editorFactory = editorServices.factoryService.newInlineEditor.bind(editorServices.factoryService);
+  const editorFactory = editorServices.factoryService.newInlineEditor.bind(
+    editorServices.factoryService,
+  );
 
   // Whether we have our server extension available
   let hasAPI = true;
@@ -201,7 +199,8 @@ function addCommands(
     label: erroredGen('Notebook diff'),
     caption: erroredGen('Display nbdiff between two notebooks'),
     isEnabled: baseEnabled,
-    iconClass: 'jp-Icon jp-Icon-16 action-notebook-diff action-notebook-diff-notebooks',
+    iconClass:
+      'jp-Icon jp-Icon-16 action-notebook-diff action-notebook-diff-notebooks',
     iconLabel: 'nbdiff',
   });
 
@@ -263,7 +262,12 @@ function addCommands(
  */
 const nbDiffProvider: JupyterFrontEndPlugin<void> = {
   id: pluginId,
-  requires: [INotebookTracker, IRenderMimeRegistry, ISettingRegistry, IEditorServices],
+  requires: [
+    INotebookTracker,
+    IRenderMimeRegistry,
+    ISettingRegistry,
+    IEditorServices,
+  ],
   activate: activateWidgetExtension,
   autoStart: true,
 };
@@ -278,7 +282,7 @@ async function activateWidgetExtension(
   tracker: INotebookTracker,
   rendermime: IRenderMimeRegistry,
   settingsRegistry: ISettingRegistry,
-  editorServices: IEditorServices
+  editorServices: IEditorServices,
 ): Promise<void> {
   let { commands, docRegistry } = app;
   let extension = new NBDiffExtension(commands);

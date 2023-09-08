@@ -6,9 +6,7 @@ import { Panel } from '@lumino/widgets';
 
 import { CodeEditor } from '@jupyterlab/codeeditor';
 
-import type {
-  IRenderMimeRegistry
-} from '@jupyterlab/rendermime';
+import type { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
 import { CellDiffWidget } from './cell';
 
@@ -18,9 +16,7 @@ import {
   REMOVED_CHUNK_PANEL_CLASS,
 } from './common';
 
-import {
-  MetadataDiffWidget
-} from './metadata';
+import { MetadataDiffWidget } from './metadata';
 
 import { IDiffWidgetOptions } from '../../common/interfaces';
 
@@ -31,9 +27,12 @@ const NBDIFF_CLASS = 'jp-Notebook-diff';
 /**
  * NotebookDiffWidget
  */
-export
-class NotebookDiffWidget extends Panel {
-  constructor({ editorFactory, model, rendermime }: IDiffWidgetOptions<NotebookDiffModel>) {
+export class NotebookDiffWidget extends Panel {
+  constructor({
+    editorFactory,
+    model,
+    rendermime,
+  }: IDiffWidgetOptions<NotebookDiffModel>) {
     super();
     this._editorFactory = editorFactory;
     this._model = model;
@@ -53,15 +52,26 @@ class NotebookDiffWidget extends Panel {
     let work = Promise.resolve();
     work = work.then(() => {
       if (model.metadata) {
-        this.addWidget(new MetadataDiffWidget({model: model.metadata, editorFactory: this._editorFactory}));
+        this.addWidget(
+          new MetadataDiffWidget({
+            model: model.metadata,
+            editorFactory: this._editorFactory,
+          }),
+        );
       }
     });
     for (let chunk of model.chunkedCells) {
       work = work.then(() => {
         return new Promise<void>(resolve => {
           if (chunk.length === 1 && !(chunk[0].added || chunk[0].deleted)) {
-            this.addWidget(new CellDiffWidget(
-              {model: chunk[0], rendermime, mimetype: model.mimetype, editorFactory: this._editorFactory}));
+            this.addWidget(
+              new CellDiffWidget({
+                model: chunk[0],
+                rendermime,
+                mimetype: model.mimetype,
+                editorFactory: this._editorFactory,
+              }),
+            );
           } else {
             let chunkPanel = new Panel();
             chunkPanel.addClass(CHUNK_PANEL_CLASS);
@@ -71,7 +81,14 @@ class NotebookDiffWidget extends Panel {
             removedPanel.addClass(REMOVED_CHUNK_PANEL_CLASS);
             for (let cell of chunk) {
               let target = cell.deleted ? removedPanel : addedPanel;
-              target.addWidget(new CellDiffWidget({model: cell, rendermime, mimetype: model.mimetype, editorFactory: this._editorFactory}));
+              target.addWidget(
+                new CellDiffWidget({
+                  model: cell,
+                  rendermime,
+                  mimetype: model.mimetype,
+                  editorFactory: this._editorFactory,
+                }),
+              );
             }
             chunkPanel.addWidget(addedPanel);
             chunkPanel.addWidget(removedPanel);

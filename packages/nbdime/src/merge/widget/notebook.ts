@@ -6,17 +6,13 @@ import type * as nbformat from '@jupyterlab/nbformat';
 
 import { CodeEditor } from '@jupyterlab/codeeditor';
 
-import type {
-  IRenderMimeRegistry
-} from '@jupyterlab/rendermime';
+import type { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
 import { Panel } from '@lumino/widgets';
 
 import { IDiffWidgetOptions } from '../../common/interfaces';
 
-import {
-  hasEntries, deepCopy
-} from '../../common/util';
+import { hasEntries, deepCopy } from '../../common/util';
 
 import { FlexPanel } from '../../upstreaming/flexpanel';
 
@@ -36,9 +32,12 @@ const NB_MERGE_CONTROLS_CLASS = 'jp-Merge-notebook-controls';
 /**
  * NotebookMergeWidget
  */
-export
-class NotebookMergeWidget extends Panel {
-  constructor({ editorFactory, model, rendermime }: IDiffWidgetOptions<NotebookMergeModel>) {
+export class NotebookMergeWidget extends Panel {
+  constructor({
+    editorFactory,
+    model,
+    rendermime,
+  }: IDiffWidgetOptions<NotebookMergeModel>) {
     super();
     this._editorFactory = editorFactory;
     this._model = model;
@@ -60,7 +59,10 @@ class NotebookMergeWidget extends Panel {
     this.addWidget(new NotebookMergeControls(model));
     work = work.then(() => {
       if (model.metadata) {
-        this.metadataWidget = new MetadataMergeWidget({model: model.metadata, editorFactory: this._editorFactory});
+        this.metadataWidget = new MetadataMergeWidget({
+          model: model.metadata,
+          editorFactory: this._editorFactory,
+        });
         this.addWidget(this.metadataWidget);
       }
     });
@@ -76,8 +78,13 @@ class NotebookMergeWidget extends Panel {
     let chunk: ChunkedCellsWidget | null = null;
     for (let c of model.cells) {
       work = work.then(() => {
-        return new Promise<void>((resolve) => {
-          let w = new CellMergeWidget({model: c, rendermime, mimetype: model.mimetype, editorFactory: this._editorFactory});
+        return new Promise<void>(resolve => {
+          let w = new CellMergeWidget({
+            model: c,
+            rendermime,
+            mimetype: model.mimetype,
+            editorFactory: this._editorFactory,
+          });
           this.cellWidgets.push(w);
           if (c.onesided && c.conflicted) {
             if (chunk === null) {

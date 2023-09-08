@@ -32,15 +32,9 @@ import {
   ADD_DEL_LABEL_CLASS,
 } from './common';
 
-import {
-  RenderableDiffView
-} from './renderable';
+import { RenderableDiffView } from './renderable';
 
-import type {
-  OutputDiffModel
-} from '../model';
-
-import type { CellDiffModel, OutputDiffModel } from '../model';
+import type { OutputDiffModel } from '../model';
 
 /**
  * Class for output panel
@@ -105,15 +99,13 @@ export class OutputPanel extends Panel {
   /**
    *
    */
-  constructor(
-    {
-      model,
-      parent: parentModel,
-      editorClasses,
-      rendermime,
-      factory
-    }: ICellDiffViewOptions<OutputDiffModel>
-  ) {
+  constructor({
+    model,
+    parent: parentModel,
+    editorClasses,
+    rendermime,
+    factory,
+  }: ICellDiffViewOptions<OutputDiffModel>) {
     super();
     this.editorFactory = factory;
     this.model = model;
@@ -241,12 +233,18 @@ export class OutputPanel extends Panel {
       let aValue = stringModel.base || stringModel.remote!;
       if (!isBase64(aValue)) {
         // 2.
-        view = createNbdimeMergeView({remote: stringModel, factory: this.editorFactory});
+        view = createNbdimeMergeView({
+          remote: stringModel,
+          factory: this.editorFactory,
+        });
       }
     }
     if (!view) {
       // 3.
-      view = createNbdimeMergeView({remote: model.stringify(), factory: this.editorFactory});
+      view = createNbdimeMergeView({
+        remote: model.stringify(),
+        factory: this.editorFactory,
+      });
     }
     return view;
   }

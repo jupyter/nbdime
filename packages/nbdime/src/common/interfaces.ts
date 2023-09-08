@@ -1,5 +1,5 @@
-import { CodeEditor } from "@jupyterlab/codeeditor";
-import { IRenderMimeRegistry } from "@jupyterlab/rendermime";
+import { CodeEditor } from '@jupyterlab/codeeditor';
+import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
 /**
  * Main widget constructor options

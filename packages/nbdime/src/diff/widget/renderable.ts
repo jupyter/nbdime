@@ -43,7 +43,7 @@ export abstract class RenderableDiffView<
     }
   }
 
-  get layout(): PanelLayout | null{
+  get layout(): PanelLayout | null {
     return super.layout as PanelLayout | null;
   }
   set layout(value: PanelLayout | null) {

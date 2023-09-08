@@ -7,7 +7,7 @@ const esModules = [
   'vscode-ws-jsonrpc',
   'y-protocols',
   'y-websocket',
-  'yjs'
+  'yjs',
 ].join('|');
 
 module.exports = {
@@ -22,10 +22,10 @@ module.exports = {
     '^.+\\.tsx?$': [
       'ts-jest/legacy',
       {
-        tsconfig: `./tsconfig.test.json`
-      }
+        tsconfig: `./tsconfig.test.json`,
+      },
     ],
-    '^.+\\.jsx?$': 'babel-jest'
+    '^.+\\.jsx?$': 'babel-jest',
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   setupFiles: ['<rootDir>/test/jest-setup-files.js'],

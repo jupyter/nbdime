@@ -10,9 +10,7 @@ import { Panel } from '@lumino/widgets';
 
 import { IDiffWidgetOptions } from '../../common/interfaces';
 
-import {
-  createNbdimeMergeView, MergeView
-} from '../../common/mergeview';
+import { createNbdimeMergeView, MergeView } from '../../common/mergeview';
 
 import { CollapsiblePanel } from '../../common/collapsiblepanel';
 
@@ -23,9 +21,11 @@ const ROOT_METADATA_CLASS = 'jp-Metadata-diff';
 /**
  * MetadataWidget for changes to Notebook-level metadata
  */
-export
-class MetadataMergeWidget extends Panel {
-  constructor({model, editorFactory}: Omit<IDiffWidgetOptions<MetadataMergeModel>, 'rendermime'>) {
+export class MetadataMergeWidget extends Panel {
+  constructor({
+    model,
+    editorFactory,
+  }: Omit<IDiffWidgetOptions<MetadataMergeModel>, 'rendermime'>) {
     super();
     this._editorFactory = editorFactory;
     this._model = model;
@@ -38,14 +38,12 @@ class MetadataMergeWidget extends Panel {
 
     // We know/assume that MetadataMergeModel never has
     // null values for local/remote:
-    this.view = createNbdimeMergeView(
-      {
-        remote: model.remote,
-        local: model.local,
-        merged: model.merged,
-        factory: this._editorFactory
-      }
-    );
+    this.view = createNbdimeMergeView({
+      remote: model.remote,
+      local: model.local,
+      merged: model.merged,
+      factory: this._editorFactory,
+    });
     let wrapper = new CollapsiblePanel(
       this.view,
       'Notebook metadata changed',
@@ -54,7 +52,9 @@ class MetadataMergeWidget extends Panel {
     this.addWidget(wrapper);
   }
 
-  validateMerged(candidate: nbformat.INotebookMetadata): nbformat.INotebookMetadata {
+  validateMerged(
+    candidate: nbformat.INotebookMetadata,
+  ): nbformat.INotebookMetadata {
     let text = this.view.getMergedValue();
     if (JSON.stringify(candidate) !== text) {
       // This will need to be validated server side,

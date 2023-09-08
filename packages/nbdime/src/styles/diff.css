@@ -19,7 +19,8 @@
 
 /* Match input border of unchanged cell source */
 .jp-Notebook-diff .jp-Diff-unchanged .cm-merge-pane-unchanged {
-  border: var(--jp-border-width) solid var(--jp-private-notebook-cell-editor-border);
+  border: var(--jp-border-width) solid
+    var(--jp-private-notebook-cell-editor-border);
 }
 
 /* Do not use border between unchanged cells */
@@ -170,7 +171,8 @@
 
 .jp-Notebook-diff .cm-merge-r-connect {
   fill: var(--jp-diff-deleted-color2);
-  stroke: var(--jp-diff-deleted-color0); stroke-width: 1px;
+  stroke: var(--jp-diff-deleted-color0);
+  stroke-width: 1px;
 }
 
 .jp-Notebook-diff .cm-merge-spacer {
@@ -178,7 +180,7 @@
 }
 
 .jp-Notebook-diff .cm-line .cm-merge-r-inserted {
-  background-color:var(--jp-diff-added-color0);
+  background-color: var(--jp-diff-added-color0);
 }
 
 .jp-Notebook-diff .cm-diff-right-editor .cm-merge-r-chunk {
@@ -195,7 +197,8 @@
 
 .jp-Notebook-diff .cm-diff-right-editor .cm-merge-r-connect {
   fill: var(--jp-diff-added-color2);
-  stroke: var(--jp-diff-added-color0); stroke-width: 1px;
+  stroke: var(--jp-diff-added-color0);
+  stroke-width: 1px;
 }
 
 .jp-Notebook-diff .cm-diff-right-editor .cm-merge-spacer {

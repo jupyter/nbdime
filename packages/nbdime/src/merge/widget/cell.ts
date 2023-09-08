@@ -8,9 +8,7 @@ import { Panel, Widget } from '@lumino/widgets';
 
 import { CodeEditor } from '@jupyterlab/codeeditor';
 
-import type {
-  IRenderMimeRegistry
-} from '@jupyterlab/rendermime';
+import type { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
 import { CollapsiblePanel } from '../../common/collapsiblepanel';
 
@@ -18,9 +16,7 @@ import { DragPanel } from '../../common/dragpanel';
 
 import { ICellDiffWidgetOptions } from '../../common/interfaces';
 
-import {
-  createNbdimeMergeView, MergeView
-} from '../../common/mergeview';
+import { createNbdimeMergeView, MergeView } from '../../common/mergeview';
 
 import { hasEntries, splitLines } from '../../common/util';
 
@@ -49,9 +45,7 @@ import {
   MERGE_CLASSES,
 } from './common';
 
-
-export
-  const CELLMERGE_CLASS = 'jp-Cell-merge';
+export const CELLMERGE_CLASS = 'jp-Cell-merge';
 const CELL_HEADER_CLASS = 'jp-Merge-cellHeader';
 const CELL_HEADER_TITLE_CLASS = 'jp-Merge-cellHeader-title';
 
@@ -80,10 +74,14 @@ export interface ICellMergeViewOptions {
 /**
  * CellMergeWidget for cell changes
  */
-export
-  class CellMergeWidget extends Panel {
-
-  static createMergeView({editorFactory, local, remote, merged, readOnly}: ICellMergeViewOptions): Widget | null {
+export class CellMergeWidget extends Panel {
+  static createMergeView({
+    editorFactory,
+    local,
+    remote,
+    merged,
+    readOnly,
+  }: ICellMergeViewOptions): Widget | null {
     let view: Widget | null = null;
     if (merged instanceof StringDiffModel) {
       view = createNbdimeMergeView({
@@ -91,7 +89,7 @@ export
         local,
         merged,
         readOnly: readOnly ?? false,
-        factory: editorFactory
+        factory: editorFactory,
       });
     }
     return view;
@@ -119,17 +117,15 @@ export
   /**
    *
    */
-  constructor(
-    {
-      editorFactory,
-      model,
-      rendermime,
-      mimetype
-    }: ICellDiffWidgetOptions<CellMergeModel>
-  ) {
+  constructor({
+    editorFactory,
+    model,
+    rendermime,
+    mimetype,
+  }: ICellDiffWidgetOptions<CellMergeModel>) {
     super();
     this.addClass(CELLMERGE_CLASS);
-    this._editorFactory = editorFactory
+    this._editorFactory = editorFactory;
     this._model = model;
     this._rendermime = rendermime;
     this.mimetype = mimetype;
@@ -169,9 +165,13 @@ export
     this.createHeader();
 
     // Mark cells that have no changes:
-    if (model.merged.unchanged &&
-      model.local && model.local.unchanged &&
-      model.remote && model.remote.unchanged) {
+    if (
+      model.merged.unchanged &&
+      model.local &&
+      model.local.unchanged &&
+      model.remote &&
+      model.remote.unchanged
+    ) {
       this.addClass(UNCHANGED_MERGE_CLASS);
     }
 
@@ -192,27 +192,28 @@ export
       this.headerTitle = radd ? 'Cell added remotely' : 'Cell deleted remotely';
     }
 
-    if (model.local === null || model.remote === null || (  // One sided change
-      model.local.unchanged && model.remote.unchanged &&
-      model.merged.unchanged) ||  // Unchanged
-      model.local.added !== model.remote.added ||  // Onesided addition
-      model.local.deleted && model.remote.unchanged ||  // Onesided deletion (other side unchanged)
-      model.local.unchanged && model.remote.deleted ||  // Onesided deletion (other side unchanged)
-      model.local.added && model.agreedCell || // Identical additions
-      model.local.deleted && model.remote.deleted   // Deletion on both
+    if (
+      model.local === null ||
+      model.remote === null || // One sided change
+      (model.local.unchanged &&
+        model.remote.unchanged &&
+        model.merged.unchanged) || // Unchanged
+      model.local.added !== model.remote.added || // Onesided addition
+      (model.local.deleted && model.remote.unchanged) || // Onesided deletion (other side unchanged)
+      (model.local.unchanged && model.remote.deleted) || // Onesided deletion (other side unchanged)
+      (model.local.added && model.agreedCell) || // Identical additions
+      (model.local.deleted && model.remote.deleted) // Deletion on both
     ) {
       CURR_CLASSES = CURR_CLASSES.slice(1, 3);
       // Add single view of source:
-      let view = CellDiffWidget.createView(
-        {
-          model: model.merged.source,
-          parent: model.merged,
-          editorClasses: CURR_CLASSES,
-          rendermime: this._rendermime,
-          factory: this._editorFactory
-        }
-      );
-      if (ladd && !radd || ldel && !rdel) {
+      let view = CellDiffWidget.createView({
+        model: model.merged.source,
+        parent: model.merged,
+        editorClasses: CURR_CLASSES,
+        rendermime: this._rendermime,
+        factory: this._editorFactory,
+      });
+      if ((ladd && !radd) || (ldel && !rdel)) {
         this.addClass(ONEWAY_LOCAL_CLASS);
       } else if ((radd && !ladd) || (rdel && !ldel)) {
         this.addClass(ONEWAY_REMOTE_CLASS);
@@ -230,15 +231,13 @@ export
         // Add single view of rendered output
         let container = new Panel();
         for (let m of model.merged.outputs) {
-          view = CellDiffWidget.createView(
-            {
-              model: m,
-              parent: model.merged,
-              editorClasses: CURR_CLASSES,
-              rendermime: this._rendermime,
-              factory: this._editorFactory
-            }
-          );
+          view = CellDiffWidget.createView({
+            model: m,
+            parent: model.merged,
+            editorClasses: CURR_CLASSES,
+            rendermime: this._rendermime,
+            factory: this._editorFactory,
+          });
           container.addWidget(view);
         }
         container.addClass(OUTPUTS_ROW_CLASS);
@@ -257,27 +256,28 @@ export
         this.addWidget(row);
       }
       let sourceView: Widget | null = null;
-      if (model.local && model.local.source.unchanged &&
-        model.remote && model.remote.source.unchanged &&
-        model.merged.source.unchanged) {
+      if (
+        model.local &&
+        model.local.source.unchanged &&
+        model.remote &&
+        model.remote.source.unchanged &&
+        model.merged.source.unchanged
+      ) {
         // Use single unchanged view of source
-        sourceView = CellDiffWidget.createView(
-          {
-            model: model.merged.source,
-            parent: model.merged,
-            editorClasses: CURR_CLASSES,
-            rendermime: this._rendermime,
-            factory: this._editorFactory
-          }
-        );
+        sourceView = CellDiffWidget.createView({
+          model: model.merged.source,
+          parent: model.merged,
+          editorClasses: CURR_CLASSES,
+          rendermime: this._rendermime,
+          factory: this._editorFactory,
+        });
       } else {
-        sourceView = CellMergeWidget.createMergeView(
-          {
-            local: model.local ? model.local.source : null,
-            remote: model.remote ? model.remote.source : null,
-            merged: model.merged.source,
-            editorClasses: CURR_CLASSES,
-            editorFactory: this._editorFactory
+        sourceView = CellMergeWidget.createMergeView({
+          local: model.local ? model.local.source : null,
+          remote: model.remote ? model.remote.source : null,
+          merged: model.merged.source,
+          editorClasses: CURR_CLASSES,
+          editorFactory: this._editorFactory,
         });
       }
       if (sourceView === null) {
@@ -305,14 +305,13 @@ export
       }
 
       if (metadataChanged) {
-        let metadataView = CellMergeWidget.createMergeView(
-          {
-            local: model.local ? model.local.metadata : null,
-            remote: model.remote ? model.remote.metadata : null,
-            merged: model.merged.metadata,
-            editorClasses: CURR_CLASSES,
-            readOnly: true,  // Do not allow manual edit of metadata
-            editorFactory: this._editorFactory
+        let metadataView = CellMergeWidget.createMergeView({
+          local: model.local ? model.local.metadata : null,
+          remote: model.remote ? model.remote.metadata : null,
+          merged: model.merged.metadata,
+          editorClasses: CURR_CLASSES,
+          readOnly: true, // Do not allow manual edit of metadata
+          editorFactory: this._editorFactory,
         });
         if (metadataView === null) {
           throw new Error(

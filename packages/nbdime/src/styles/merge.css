@@ -97,7 +97,7 @@
 .jp-Notebook-merge .cm-merge-r-chunk-end,
 .jp-Notebook-merge .cm-merge-m-chunk-end-remote {
   border-bottom: 1px solid var(--jp-merge-remote-color1);
- }
+}
 
 .jp-Notebook-merge .cm-merge-r-connect {
   fill: var(--jp-merge-remote-color2);
@@ -109,8 +109,14 @@
   background-color: var(--jp-merge-remote-color1);
 }
 
-.jp-Notebook-merge .cm-merge-r-chunk-end-empty + .cm-linewidget .cm-merge-spacer,
-.jp-Notebook-merge .cm-merge-m-chunk-end-remote-empty + .cm-linewidget .cm-merge-spacer {
+.jp-Notebook-merge
+  .cm-merge-r-chunk-end-empty
+  + .cm-linewidget
+  .cm-merge-spacer,
+.jp-Notebook-merge
+  .cm-merge-m-chunk-end-remote-empty
+  + .cm-linewidget
+  .cm-merge-spacer {
   border-bottom: 1px solid var(--jp-merge-remote-color1);
   background-color: var(--jp-merge-remote-color3);
 }
@@ -136,11 +142,17 @@
 }
 
 .jp-Notebook-merge .cm-line .cm-merge-l-inserted {
-  background-color: var(--jp-merge-local-color1)
+  background-color: var(--jp-merge-local-color1);
 }
 
-.jp-Notebook-merge .cm-merge-l-chunk-end-empty + .cm-linewidget .cm-merge-spacer,
-.jp-Notebook-merge .cm-merge-m-chunk-end-local-empty + .cm-linewidget .cm-merge-spacer {
+.jp-Notebook-merge
+  .cm-merge-l-chunk-end-empty
+  + .cm-linewidget
+  .cm-merge-spacer,
+.jp-Notebook-merge
+  .cm-merge-m-chunk-end-local-empty
+  + .cm-linewidget
+  .cm-merge-spacer {
   background-color: var(--jp-merge-local-color3);
   border-bottom: 1px solid var(--jp-merge-local-color1);
 }
@@ -169,8 +181,14 @@
   border-bottom: 1px solid var(--jp-merge-both-color1);
 }
 
-.jp-Notebook-merge .cm-merge-l-chunk-end-empty.cm-merge-r-chunk-end-empty + .cm-linewidget .cm-merge-spacer,
-.jp-Notebook-merge .cm-merge-m-chunk-end-remote-empty.cm-merge-m-chunk-end-local-empty + .cm-linewidget .cm-merge-spacer {
+.jp-Notebook-merge
+  .cm-merge-l-chunk-end-empty.cm-merge-r-chunk-end-empty
+  + .cm-linewidget
+  .cm-merge-spacer,
+.jp-Notebook-merge
+  .cm-merge-m-chunk-end-remote-empty.cm-merge-m-chunk-end-local-empty
+  + .cm-linewidget
+  .cm-merge-spacer {
   background-color: var(--jp-merge-both-color2);
   border-bottom: 1px solid var(--jp-merge-both-color1);
 }
@@ -195,7 +213,10 @@
   border-bottom: 1px solid var(--jp-merge-either-color1);
 }
 
-.jp-Notebook-merge .cm-merge-m-chunk-end-either-empty + .cm-linewidget .cm-merge-spacer {
+.jp-Notebook-merge
+  .cm-merge-m-chunk-end-either-empty
+  + .cm-linewidget
+  .cm-merge-spacer {
   border-bottom: 1px solid var(--jp-merge-either-color1);
   background-color: var(--jp-merge-either-color2);
 }

@@ -17,7 +17,6 @@ import {
 
 import { CellMergeModel, NotebookMergeModel } from '../../../src/merge/model';
 
-
 import _notebook from '../../files/base.ipynb.json';
 import _decisionsNB from '../../files/decisionsA.json';
 

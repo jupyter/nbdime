@@ -1,12 +1,8 @@
 import type * as nbformat from '@jupyterlab/nbformat';
 
-import type {
-  CodeEditor
-} from '@jupyterlab/codeeditor';
+import type { CodeEditor } from '@jupyterlab/codeeditor';
 
-import type {
-  IRenderMimeRegistry
-} from '@jupyterlab/rendermime';
+import type { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
 import { ServerConnection } from '@jupyterlab/services';
 
@@ -120,7 +116,11 @@ export class NbdimeWidget extends Panel {
     let base = data['base'] as nbformat.INotebookContent;
     let diff = data['diff'] as any as IDiffEntry[];
     let nbdModel = new NotebookDiffModel(base, diff);
-    let nbdWidget = new NotebookDiffWidget({model: nbdModel, rendermime: this.rendermime, editorFactory: this.editorFactory});
+    let nbdWidget = new NotebookDiffWidget({
+      model: nbdModel,
+      rendermime: this.rendermime,
+      editorFactory: this.editorFactory,
+    });
 
     this.scroller.addWidget(nbdWidget);
     let work = nbdWidget.init();
@@ -164,7 +164,7 @@ export namespace NbdimeWidget {
     /**
      * Code editor factory
      */
-    editorFactory: CodeEditor.Factory,
+    editorFactory: CodeEditor.Factory;
 
     /**
      * A rendermime instance to use to render markdown/outputs.

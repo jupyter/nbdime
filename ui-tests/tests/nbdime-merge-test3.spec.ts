@@ -1,32 +1,40 @@
 import { expect, test } from '@playwright/test';
 
-
 test.beforeEach(async ({ page }) => {
   await page.goto('http://localhost:41000/merge');
   await page.locator('#merge-local').fill('data/merge_test3/left.ipynb');
   await page.locator('#merge-base').fill('data/merge_test3/center.ipynb');
   await page.locator('#merge-remote').fill('data/merge_test3/right.ipynb');
   await page.getByRole('button', { name: 'Merge files' }).click();
-})
+});
 
 /* 2 cells with merge conflict */
 test.describe('merge test3', () => {
-
   test('should warn for remaining conflicts', async ({ page }) => {
-    await expect.soft(page.getByText('➭')).toHaveCount(25)
+    await expect.soft(page.getByText('➭')).toHaveCount(25);
 
     await page.getByRole('button', { name: 'Download' }).click();
 
-    await expect(page.locator('.dialog .msg')).toHaveText('There are conflicts remaining. Do you still want to download the merge output?');
+    await expect(page.locator('.dialog .msg')).toHaveText(
+      'There are conflicts remaining. Do you still want to download the merge output?',
+    );
   });
 
   test('should download a merge result without conflict', async ({ page }) => {
     // Pick a solution
-    await page.locator('div:nth-child(3) > .cm-editor > .cm-scroller > .cm-gutters > div:nth-child(2) > div:nth-child(3) > .jp-Merge-gutter-picker').first().click();
+    await page
+      .locator(
+        'div:nth-child(3) > .cm-editor > .cm-scroller > .cm-gutters > div:nth-child(2) > div:nth-child(3) > .jp-Merge-gutter-picker',
+      )
+      .first()
+      .click();
     // Mark a conflict as resolved
     await page.getByText('⚠').click();
     // Manually edit the merge result
-    await page.locator('.cm-merge-m-chunk-end-mixed').last().click({ clickCount: 3 });
+    await page
+      .locator('.cm-merge-m-chunk-end-mixed')
+      .last()
+      .click({ clickCount: 3 });
     await page.keyboard.press('Backspace');
 
     const download1Promise = page.waitForEvent('download');
@@ -34,8 +42,10 @@ test.describe('merge test3', () => {
     const download1 = await download1Promise;
 
     let readResolve: (value: unknown) => void;
-    const readDownload = new Promise(resolve => { readResolve = resolve })
-    const stream = (await download1.createReadStream())!
+    const readDownload = new Promise(resolve => {
+      readResolve = resolve;
+    });
+    const stream = (await download1.createReadStream())!;
     stream.setEncoding('utf-8');
     let content = '';
     const chunks: string[] = [];
@@ -49,7 +59,7 @@ test.describe('merge test3', () => {
 
     stream.on('end', () => {
       content = chunks.join('');
-      readResolve(void 0)
+      readResolve(void 0);
     });
 
     await readDownload;

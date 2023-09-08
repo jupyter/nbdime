@@ -4,15 +4,11 @@
 
 import type { ReadonlyJSONObject } from '@lumino/coreutils';
 
-import type {
-  IDiffObjectEntry
-} from '../diff/diffentries';
+import type { IDiffObjectEntry } from '../diff/diffentries';
 
 import { valueIn, unique } from '../common/util';
 
-
-export
-class PatchObjectHelper implements Iterator<string> {
+export class PatchObjectHelper implements Iterator<string> {
   constructor(base: ReadonlyJSONObject, diff: IDiffObjectEntry[] | null) {
     this._diffLUT = {};
     let diffKeys: string[] = [];
@@ -27,15 +23,17 @@ class PatchObjectHelper implements Iterator<string> {
   }
 
   keys(): Iterable<string> {
-    this._remainingKeys = this.baseKeys.concat(this._diffKeys).filter(unique).sort();
+    this._remainingKeys = this.baseKeys
+      .concat(this._diffKeys)
+      .filter(unique)
+      .sort();
     const iterator = this;
     return {
       [Symbol.iterator](): Iterator<string> {
-       return iterator;
-      }
-    }
+        return iterator;
+      },
+    };
   }
-
 
   isDiffKey(key: string): boolean {
     return valueIn(key, this._diffKeys);
@@ -80,8 +78,8 @@ class PatchObjectHelper implements Iterator<string> {
     if (!key) {
       return {
         done: true,
-        value: undefined
-      }
+        value: undefined,
+      };
     }
     if (key && valueIn(key, this._diffKeys)) {
       let op = this._diffLUT[key].op;
@@ -93,7 +91,7 @@ class PatchObjectHelper implements Iterator<string> {
         this._currentIsAddition = undefined;
       }
     }
-    return {value: key, done: false}
+    return { value: key, done: false };
   }
 
   baseKeys: string[];
@@ -122,6 +120,5 @@ let _objectKeys =
         keys.push(key);
       }
     }
-  }
-  return keys;
-};
+    return keys;
+  };

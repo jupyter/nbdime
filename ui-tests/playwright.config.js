@@ -5,7 +5,7 @@
 module.exports = {
   reporter: [
     [process.env.CI ? 'github' : 'list'],
-    ['html', { open: process.env.CI ? 'never' : 'on-failure' }]
+    ['html', { open: process.env.CI ? 'never' : 'on-failure' }],
   ],
   reportSlowTests: null,
   timeout: 60000,
@@ -25,6 +25,6 @@ module.exports = {
     command: 'npm start',
     url: 'http://localhost:41000/merge',
     timeout: 120 * 1000,
-    reuseExistingServer: !process.env.CI
-  }
+    reuseExistingServer: !process.env.CI,
+  },
 };

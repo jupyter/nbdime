@@ -2,17 +2,11 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import {
-  Panel, PanelLayout, Widget
-} from '@lumino/widgets';
+import { Panel, PanelLayout, Widget } from '@lumino/widgets';
 
-import type {
-  Message
-} from '@lumino/messaging';
+import type { Message } from '@lumino/messaging';
 
-import {
-  MimeData
-} from '@lumino/coreutils';
+import { MimeData } from '@lumino/coreutils';
 
 import { Drag } from '@lumino/dragdrop';
 
@@ -143,20 +137,20 @@ export abstract class DropPanel extends Panel {
    */
   handleEvent(event: Event): void {
     switch (event.type) {
-    case 'p-dragenter':
-      this._evtDragEnter(event as Drag.Event);
-      break;
-    case 'p-dragleave':
-      this._evtDragLeave(event as Drag.Event);
-      break;
-    case 'p-dragover':
-      this._evtDragOver(event as Drag.Event);
-      break;
-    case 'p-drop':
-      this.evtDrop(event as Drag.Event);
-      break;
-    default:
-      break;
+      case 'p-dragenter':
+        this._evtDragEnter(event as Drag.Event);
+        break;
+      case 'p-dragleave':
+        this._evtDragLeave(event as Drag.Event);
+        break;
+      case 'p-dragover':
+        this._evtDragOver(event as Drag.Event);
+        break;
+      case 'p-drop':
+        this.evtDrop(event as Drag.Event);
+        break;
+      default:
+        break;
     }
   }
 
@@ -171,7 +165,10 @@ export abstract class DropPanel extends Panel {
    *  - That the `dropTarget` is a valid drop target
    *  - The value of `event.source` if `acceptDropsFromExternalSource` is false
    */
-  protected abstract processDrop(dropTarget: HTMLElement, event: Drag.Event): void;
+  protected abstract processDrop(
+    dropTarget: HTMLElement,
+    event: Drag.Event,
+  ): void;
 
   /**
    * Find a drop target from a given drag event target.
@@ -739,8 +736,10 @@ export class DragDropPanel extends DragDropPanelBase {
    * Override this if you need to handle other mime data than the default.
    */
   protected processDrop(dropTarget: HTMLElement, event: Drag.Event): void {
-    if (!DropPanel.isValidAction(event.supportedActions, 'move') ||
-        event.proposedAction === 'none') {
+    if (
+      !DropPanel.isValidAction(event.supportedActions, 'move') ||
+      event.proposedAction === 'none'
+    ) {
       // The default implementation only handles move action
       // OR Accept proposed none action, and perform no-op
       event.dropAction = 'none';
@@ -788,8 +787,10 @@ export namespace DropPanel {
   /**
    * Validate a drop action against a SupportedActions type
    */
-  export
-  function isValidAction(supported: Drag.SupportedActions, action: Drag.DropAction): boolean {
+  export function isValidAction(
+    supported: Drag.SupportedActions,
+    action: Drag.DropAction,
+  ): boolean {
     switch (supported) {
       case 'all':
         return true;
