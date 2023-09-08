@@ -1,5 +1,3 @@
-
-
 body {
   overflow: scroll !important;
   background-color: var(--jp-layout-color1);
@@ -39,14 +37,18 @@ body {
 }
 
 .nbdime-spinner {
-    border: 16px solid #eee;
-    border-top-color: #999;
-    border-bottom-color: #999;
-    border-radius: 50%;
-    animation: spin 1.3s linear infinite;
+  border: 16px solid #eee;
+  border-top-color: #999;
+  border-bottom-color: #999;
+  border-radius: 50%;
+  animation: spin 1.3s linear infinite;
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }

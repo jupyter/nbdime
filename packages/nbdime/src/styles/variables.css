@@ -1,6 +1,6 @@
-
 :root {
-  --codemirror-border: var(--jp-border-width) solid var(--jp-cell-editor-border-color);
+  --codemirror-border: var(--jp-border-width) solid
+    var(--jp-cell-editor-border-color);
 
   --jp-nbdime-output-color1: rgba(0, 141, 255, 0.7);
   --jp-nbdime-output-color2: rgba(0, 141, 255, 0.5);

@@ -1,5 +1,3 @@
-
-
 .jp-Notebook-merge {
   width: 90%;
   margin: auto;
@@ -26,15 +24,15 @@
   background-color: var(--jp-merge-remote-color1);
 }
 
-
 /* Hiding unchanged cells if told to */
 #nbdime-root.jp-mod-hideUnchanged .jp-Cell-merge.jp-Merge-unchanged {
   display: none;
 }
 
 /* Show a marker with the number of cells hidden before */
-#nbdime-root.jp-mod-hideUnchanged .jp-Cell-merge[data-nbdime-NCellsHiddenBefore]::before {
-  content: attr(data-nbdime-NCellsHiddenBefore) " unchanged cell(s) hidden";
+#nbdime-root.jp-mod-hideUnchanged
+  .jp-Cell-merge[data-nbdime-NCellsHiddenBefore]::before {
+  content: attr(data-nbdime-NCellsHiddenBefore) ' unchanged cell(s) hidden';
   position: absolute;
   width: 100%;
   top: 0;
@@ -45,8 +43,9 @@
 }
 
 /* Show a marker with the number of cells hidden after (for hidden cells at end) */
-#nbdime-root.jp-mod-hideUnchanged .jp-Cell-merge[data-nbdime-NCellsHiddenAfter]::after {
-  content: attr(data-nbdime-NCellsHiddenAfter) " unchanged cell(s) hidden";
+#nbdime-root.jp-mod-hideUnchanged
+  .jp-Cell-merge[data-nbdime-NCellsHiddenAfter]::after {
+  content: attr(data-nbdime-NCellsHiddenAfter) ' unchanged cell(s) hidden';
   position: absolute;
   width: 100%;
   bottom: 0;
@@ -56,17 +55,21 @@
   text-align: center;
 }
 
-#nbdime-root.jp-mod-hideUnchanged .jp-Cell-merge[data-nbdime-NCellsHiddenBefore] {
+#nbdime-root.jp-mod-hideUnchanged
+  .jp-Cell-merge[data-nbdime-NCellsHiddenBefore] {
   padding-top: 40px;
 }
 
-#nbdime-root.jp-mod-hideUnchanged .jp-Cell-merge[data-nbdime-NCellsHiddenAfter] {
+#nbdime-root.jp-mod-hideUnchanged
+  .jp-Cell-merge[data-nbdime-NCellsHiddenAfter] {
   padding-bottom: 40px;
 }
 
 /* Marker for when all cells are unchanged and hidden */
-#nbdime-root.jp-mod-hideUnchanged .jp-Notebook-merge[data-nbdime-AllCellsHidden]::after {
-  content: "No changes, " attr(data-nbdime-AllCellsHidden) " unchanged cell(s) hidden";
+#nbdime-root.jp-mod-hideUnchanged
+  .jp-Notebook-merge[data-nbdime-AllCellsHidden]::after {
+  content: 'No changes, ' attr(data-nbdime-AllCellsHidden)
+    ' unchanged cell(s) hidden';
   display: block;
   width: 100%;
   background-color: #eee;

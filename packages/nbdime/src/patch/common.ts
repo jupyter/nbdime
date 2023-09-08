@@ -2,36 +2,26 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import type {
-  ReadonlyJSONObject
-} from '@lumino/coreutils';
+import type { ReadonlyJSONObject } from '@lumino/coreutils';
 
-import type {
-  IIterator
-} from '@lumino/algorithm';
+import type { IIterator } from '@lumino/algorithm';
 
-import type {
-  IDiffObjectEntry
-} from '../diff/diffentries';
+import type { IDiffObjectEntry } from '../diff/diffentries';
 
-import {
-  valueIn, unique
-} from '../common/util';
+import { valueIn, unique } from '../common/util';
 
-
-export
-class PatchObjectHelper implements IIterator<string> {
+export class PatchObjectHelper implements IIterator<string> {
   constructor(base: ReadonlyJSONObject, diff: IDiffObjectEntry[] | null) {
-      this._diffLUT = {};
-      let diffKeys : string[] = [];
-      if (diff) {
-        for (let d of diff) {
-          diffKeys.push(d.key);
-          this._diffLUT[d.key] = d;
-        }
+    this._diffLUT = {};
+    let diffKeys: string[] = [];
+    if (diff) {
+      for (let d of diff) {
+        diffKeys.push(d.key);
+        this._diffLUT[d.key] = d;
       }
-      this._diffKeys = diffKeys;
-      this.baseKeys = _objectKeys(base);
+    }
+    this._diffKeys = diffKeys;
+    this.baseKeys = _objectKeys(base);
   }
 
   isDiffKey(key: string): boolean {
@@ -73,7 +63,10 @@ class PatchObjectHelper implements IIterator<string> {
   }
 
   iter(): IIterator<string> {
-    this._remainingKeys = this.baseKeys.concat(this._diffKeys).filter(unique).sort();
+    this._remainingKeys = this.baseKeys
+      .concat(this._diffKeys)
+      .filter(unique)
+      .sort();
     return this;
   }
 
@@ -110,22 +103,27 @@ class PatchObjectHelper implements IIterator<string> {
 
   private _currentIsAddition: boolean | undefined;
   private _diffKeys: string[];
-  private _diffLUT: { [key: string]: IDiffObjectEntry};
+  private _diffLUT: { [key: string]: IDiffObjectEntry };
   private _remainingKeys: string[];
 }
-
 
 /**
  * The keys present in a Object class. Equivalent to Object.keys, but with a
  * fallback if not defined.
  */
-let _objectKeys = Object.keys || function (obj: any): string[] {
-  let has = Object.prototype.hasOwnProperty || function () { return true; };
-  let keys: string[] = [];
-  for (let key in obj) {
-    if (has.call(obj, key)) {
-      keys.push(key);
+let _objectKeys =
+  Object.keys ||
+  function (obj: any): string[] {
+    let has =
+      Object.prototype.hasOwnProperty ||
+      function () {
+        return true;
+      };
+    let keys: string[] = [];
+    for (let key in obj) {
+      if (has.call(obj, key)) {
+        keys.push(key);
+      }
     }
-  }
-  return keys;
-};
+    return keys;
+  };

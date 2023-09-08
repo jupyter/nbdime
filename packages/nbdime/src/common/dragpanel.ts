@@ -2,22 +2,18 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import {
-  Panel, PanelLayout, Widget
-} from '@lumino/widgets';
+import { Panel, PanelLayout, Widget } from '@lumino/widgets';
 
-import type {
-  Message
-} from '@lumino/messaging';
+import type { Message } from '@lumino/messaging';
+
+import { MimeData } from '@lumino/coreutils';
 
 import {
-  MimeData
-} from '@lumino/coreutils';
-
-import {
-  Drag, IDragEvent, DropAction, SupportedActions
+  Drag,
+  IDragEvent,
+  DropAction,
+  SupportedActions,
 } from '@lumino/dragdrop';
-
 
 /**
  * The class name added to the DropPanel
@@ -39,7 +35,6 @@ const DRAG_HANDLE = 'jp-mod-dragHandle';
  */
 const DEFAULT_DRAG_HANDLE_CLASS = 'jp-DragPanel-dragHandle';
 
-
 /**
  * The class name added to a drop target.
  */
@@ -48,22 +43,22 @@ const DROP_TARGET_CLASS = 'jp-mod-dropTarget';
 /**
  * MIME type representing drag data by index
  */
-export
-const MIME_INDEX = 'application/vnd.jupyter.dragindex';
+export const MIME_INDEX = 'application/vnd.jupyter.dragindex';
 
 /**
  * The threshold in pixels to start a drag event.
  */
 const DRAG_THRESHOLD = 5;
 
-
 /**
  * Determine whether node is equal to or a decendant of our panel, and that is does
  * not belong to a nested drag panel.
  */
-export
-function belongsToUs(node: HTMLElement, parentClass: string,
-                     parentNode: HTMLElement): boolean {
+export function belongsToUs(
+  node: HTMLElement,
+  parentClass: string,
+  parentNode: HTMLElement,
+): boolean {
   let candidate: HTMLElement | null = node;
   // Traverse DOM until drag panel encountered:
   while (candidate && !candidate.classList.contains(parentClass)) {
@@ -72,15 +67,16 @@ function belongsToUs(node: HTMLElement, parentClass: string,
   return !!candidate && candidate === parentNode;
 }
 
-
 /**
  * Find the direct child node of `parent`, which has `node` as a descendant.
  * Alternatively, parent can be a collection of children.
  *
  * Returns null if not found.
  */
-export
-function findChild(parent: HTMLElement | HTMLElement[], node: HTMLElement): HTMLElement | null  {
+export function findChild(
+  parent: HTMLElement | HTMLElement[],
+  node: HTMLElement,
+): HTMLElement | null {
   // Work our way up the DOM to an element which has this node as parent
   let child: HTMLElement | null = null;
   let parentIsArray = Array.isArray(parent);
@@ -102,7 +98,6 @@ function findChild(parent: HTMLElement | HTMLElement[], node: HTMLElement): HTML
   return child;
 }
 
-
 /**
  * A panel class which allows the user to drop mime data onto it.
  *
@@ -116,12 +111,11 @@ function findChild(parent: HTMLElement | HTMLElement[], node: HTMLElement): HTML
  *
  * For maximum control, `evtDrop` can be overriden.
  */
-export
-abstract class DropPanel extends Panel {
+export abstract class DropPanel extends Panel {
   /**
    * Construct a drop widget.
    */
-  constructor(options: DropPanel.IOptions={}) {
+  constructor(options: DropPanel.IOptions = {}) {
     super(options);
     this.acceptDropsFromExternalSource =
       options.acceptDropsFromExternalSource === true;
@@ -136,7 +130,6 @@ abstract class DropPanel extends Panel {
    */
   acceptDropsFromExternalSource: boolean;
 
-
   /**
    * Handle the DOM events for the widget.
    *
@@ -149,20 +142,20 @@ abstract class DropPanel extends Panel {
    */
   handleEvent(event: Event): void {
     switch (event.type) {
-    case 'p-dragenter':
-      this._evtDragEnter(event as IDragEvent);
-      break;
-    case 'p-dragleave':
-      this._evtDragLeave(event as IDragEvent);
-      break;
-    case 'p-dragover':
-      this._evtDragOver(event as IDragEvent);
-      break;
-    case 'p-drop':
-      this.evtDrop(event as IDragEvent);
-      break;
-    default:
-      break;
+      case 'p-dragenter':
+        this._evtDragEnter(event as IDragEvent);
+        break;
+      case 'p-dragleave':
+        this._evtDragLeave(event as IDragEvent);
+        break;
+      case 'p-dragover':
+        this._evtDragOver(event as IDragEvent);
+        break;
+      case 'p-drop':
+        this.evtDrop(event as IDragEvent);
+        break;
+      default:
+        break;
     }
   }
 
@@ -177,7 +170,10 @@ abstract class DropPanel extends Panel {
    *  - That the `dropTarget` is a valid drop target
    *  - The value of `event.source` if `acceptDropsFromExternalSource` is false
    */
-  protected abstract processDrop(dropTarget: HTMLElement, event: IDragEvent): void;
+  protected abstract processDrop(
+    dropTarget: HTMLElement,
+    event: IDragEvent,
+  ): void;
 
   /**
    * Find a drop target from a given drag event target.
@@ -188,7 +184,10 @@ abstract class DropPanel extends Panel {
    * `node`, or `node` if it is itself a direct child. It also checks that the
    * needed mime type is included
    */
-  protected findDropTarget(input: HTMLElement, mimeData: MimeData): HTMLElement | null  {
+  protected findDropTarget(
+    input: HTMLElement,
+    mimeData: MimeData,
+  ): HTMLElement | null {
     if (!mimeData.hasData(MIME_INDEX)) {
       return null;
     }
@@ -250,7 +249,6 @@ abstract class DropPanel extends Panel {
     node.removeEventListener('p-drop', this);
   }
 
-
   /**
    * Handle the `'p-dragenter'` event for the widget.
    */
@@ -258,7 +256,10 @@ abstract class DropPanel extends Panel {
     if (!this.validateSource(event)) {
       return;
     }
-    let target = this.findDropTarget(event.target as HTMLElement, event.mimeData);
+    let target = this.findDropTarget(
+      event.target as HTMLElement,
+      event.mimeData,
+    );
     if (target === null) {
       return;
     }
@@ -285,7 +286,10 @@ abstract class DropPanel extends Panel {
       return;
     }
     this._clearDropTarget();
-    let target = this.findDropTarget(event.target as HTMLElement, event.mimeData);
+    let target = this.findDropTarget(
+      event.target as HTMLElement,
+      event.mimeData,
+    );
     if (target === null) {
       return;
     }
@@ -307,24 +311,21 @@ abstract class DropPanel extends Panel {
       (elements[0] as HTMLElement).classList.remove(DROP_TARGET_CLASS);
     }
   }
-};
+}
 
 /**
  * An internal base class for implementing drag operations on top
  * of drop class.
  */
-export
-abstract class DragDropPanelBase extends DropPanel {
-
+export abstract class DragDropPanelBase extends DropPanel {
   /**
    * Construct a drag and drop base widget.
    */
-  constructor(options: DragDropPanel.IOptions={}) {
+  constructor(options: DragDropPanel.IOptions = {}) {
     super(options);
     this.childrenAreDragHandles = options.childrenAreDragHandles === true;
     this.addClass(DRAG_WIDGET_CLASS);
   }
-
 
   /**
    * Whether all direct children of the widget are handles, or only those
@@ -353,18 +354,18 @@ abstract class DragDropPanelBase extends DropPanel {
    */
   handleEvent(event: Event): void {
     switch (event.type) {
-    case 'mousedown':
-      this._evtDragMousedown(event as MouseEvent);
-      break;
-    case 'mouseup':
-      this._evtDragMouseup(event as MouseEvent);
-      break;
-    case 'mousemove':
-      this._evtDragMousemove(event as MouseEvent);
-      break;
-    default:
-      super.handleEvent(event);
-      break;
+      case 'mousedown':
+        this._evtDragMousedown(event as MouseEvent);
+        break;
+      case 'mouseup':
+        this._evtDragMouseup(event as MouseEvent);
+        break;
+      case 'mousemove':
+        this._evtDragMousemove(event as MouseEvent);
+        break;
+      default:
+        super.handleEvent(event);
+        break;
     }
   }
 
@@ -434,7 +435,11 @@ abstract class DragDropPanelBase extends DropPanel {
    * Should normally only be overriden if you cannot achieve your goal by
    * other overrides.
    */
-  protected startDrag(handle: HTMLElement, clientX: number, clientY: number): void {
+  protected startDrag(
+    handle: HTMLElement,
+    clientX: number,
+    clientY: number,
+  ): void {
     // Create the drag image.
     let dragImage = this.getDragImage(handle);
 
@@ -444,7 +449,7 @@ abstract class DragDropPanelBase extends DropPanel {
       mimeData: new MimeData(),
       supportedActions: 'all',
       proposedAction: 'copy',
-      source: this
+      source: this,
     });
     this.addMimeData(handle, this.drag.mimeData);
 
@@ -484,8 +489,10 @@ abstract class DragDropPanelBase extends DropPanel {
         candidate = candidate.parentElement;
       }
       // Finally, check that handle does not belong to a nested drag panel
-      if (handle !== null && !belongsToUs(
-          handle, DRAG_WIDGET_CLASS, this.node)) {
+      if (
+        handle !== null &&
+        !belongsToUs(handle, DRAG_WIDGET_CLASS, this.node)
+      ) {
         // Handle belongs to a nested drag panel:
         handle = null;
       }
@@ -505,14 +512,16 @@ abstract class DragDropPanelBase extends DropPanel {
 
     // Left mouse press for drag start.
     if (event.button === 0) {
-      this._clickData = { pressX: event.clientX, pressY: event.clientY,
-                        handle: handle };
+      this._clickData = {
+        pressX: event.clientX,
+        pressY: event.clientY,
+        handle: handle,
+      };
       document.addEventListener('mouseup', this, true);
       document.addEventListener('mousemove', this, true);
       event.preventDefault();
     }
   }
-
 
   /**
    * Handle the `'mouseup'` event for the widget.
@@ -559,7 +568,11 @@ abstract class DragDropPanelBase extends DropPanel {
    * Data stored on mouse down to determine if drag treshold has
    * been overcome, and to initialize drag once it has.
    */
-  private _clickData: { pressX: number, pressY: number, handle: HTMLElement } | null = null;
+  private _clickData: {
+    pressX: number;
+    pressY: number;
+    handle: HTMLElement;
+  } | null = null;
 }
 
 /**
@@ -585,12 +598,11 @@ abstract class DragDropPanelBase extends DropPanel {
  *    copy of the drag target).
  *  - onDragComplete(): Callback on drag source when a drag has completed.
  */
-export
-abstract class DragPanel extends DragDropPanelBase {
+export abstract class DragPanel extends DragDropPanelBase {
   /**
    * Construct a drag widget.
    */
-  constructor(options: DragPanel.IOptions={}) {
+  constructor(options: DragPanel.IOptions = {}) {
     // Implementation removes DropPanel options
     super(options);
   }
@@ -605,12 +617,13 @@ abstract class DragPanel extends DragDropPanelBase {
   /**
    * Simply returns null for DragPanel, as it does not support dropping
    */
-  protected findDropTarget(input: HTMLElement, mimeData: MimeData): HTMLElement | null {
+  protected findDropTarget(
+    input: HTMLElement,
+    mimeData: MimeData,
+  ): HTMLElement | null {
     return null;
   }
-
 }
-
 
 /**
  * A widget which allows the user to rearrange widgets in the panel by
@@ -652,9 +665,7 @@ abstract class DragPanel extends DragDropPanelBase {
  *
  * For maximum control, `startDrag` and `evtDrop` can be overriden.
  */
-export
-class DragDropPanel extends DragDropPanelBase {
-
+export class DragDropPanel extends DragDropPanelBase {
   /**
    * Called when a widget should be moved as a consequence of an internal drag event.
    *
@@ -680,8 +691,11 @@ class DragDropPanel extends DragDropPanelBase {
    *
    * Returns null if not found.
    */
-  protected getIndexOfChildNode(node: HTMLElement | null, parent?: PanelLayout): any {
-    parent = parent || this.layout as PanelLayout;
+  protected getIndexOfChildNode(
+    node: HTMLElement | null,
+    parent?: PanelLayout,
+  ): any {
+    parent = parent || (this.layout as PanelLayout);
     for (let i = 0; i < parent.widgets.length; i++) {
       if (parent.widgets[i].node === node) {
         return i;
@@ -689,7 +703,6 @@ class DragDropPanel extends DragDropPanelBase {
     }
     return null;
   }
-
 
   /**
    * Adds mime data represeting the drag data to the drag event's MimeData bundle.
@@ -728,8 +741,10 @@ class DragDropPanel extends DragDropPanelBase {
    * Override this if you need to handle other mime data than the default.
    */
   protected processDrop(dropTarget: HTMLElement, event: IDragEvent): void {
-    if (!DropPanel.isValidAction(event.supportedActions, 'move') ||
-        event.proposedAction === 'none') {
+    if (
+      !DropPanel.isValidAction(event.supportedActions, 'move') ||
+      event.proposedAction === 'none'
+    ) {
       // The default implementation only handles move action
       // OR Accept proposed none action, and perform no-op
       event.dropAction = 'none';
@@ -756,18 +771,14 @@ class DragDropPanel extends DragDropPanelBase {
   }
 }
 
-
-
 /**
  * The namespace for the `DropPanel` class statics.
  */
-export
-namespace DropPanel {
+export namespace DropPanel {
   /**
    * An options object for initializing a drag panel widget.
    */
-  export
-  interface IOptions extends Panel.IOptions {
+  export interface IOptions extends Panel.IOptions {
     /**
      * Whether the lsit should accept drops from an external source.
      * Defaults to false.
@@ -781,19 +792,21 @@ namespace DropPanel {
   /**
    * Validate a drop action against a SupportedActions type
    */
-  export
-  function isValidAction(supported: SupportedActions, action: DropAction): boolean {
+  export function isValidAction(
+    supported: SupportedActions,
+    action: DropAction,
+  ): boolean {
     switch (supported) {
-    case 'all':
-      return true;
-    case 'link-move':
-      return action === 'move' || action === 'link';
-    case 'copy-move':
-      return action === 'move' || action === 'copy';
-    case 'copy-link':
-      return action === 'link' || action === 'copy';
-    default:
-      return action === supported;
+      case 'all':
+        return true;
+      case 'link-move':
+        return action === 'move' || action === 'link';
+      case 'copy-move':
+        return action === 'move' || action === 'copy';
+      case 'copy-link':
+        return action === 'link' || action === 'copy';
+      default:
+        return action === supported;
     }
   }
 }
@@ -801,13 +814,11 @@ namespace DropPanel {
 /**
  * The namespace for the `DragPanel` class statics.
  */
-export
-namespace DragPanel {
+export namespace DragPanel {
   /**
    * An options object for initializing a drag panel widget.
    */
-  export
-  interface IOptions extends Panel.IOptions {
+  export interface IOptions extends Panel.IOptions {
     /**
      * Whether all direct children of the list are handles, or only those widgets
      * designated as handles. Defaults to false.
@@ -821,16 +832,14 @@ namespace DragPanel {
    * Using this, any child-widget can be a drag handle, as long as mouse events
    * are propagated from it to the DragPanel.
    */
-  export
-  function makeHandle(handle: Widget) {
+  export function makeHandle(handle: Widget) {
     handle.addClass(DRAG_HANDLE);
   }
 
   /**
    * Unmark a widget as a drag handle
    */
-  export
-  function unmakeHandle(handle: Widget) {
+  export function unmakeHandle(handle: Widget) {
     handle.removeClass(DRAG_HANDLE);
   }
 
@@ -839,8 +848,7 @@ namespace DragPanel {
    *
    * The handle will need to be styled to ensure a minimum size
    */
-  export
-  function createDefaultHandle(): Widget {
+  export function createDefaultHandle(): Widget {
     let widget = new Widget();
     widget.addClass(DEFAULT_DRAG_HANDLE_CLASS);
     makeHandle(widget);
@@ -848,23 +856,16 @@ namespace DragPanel {
   }
 }
 
-
 /**
  * The namespace for the `DragDropPanel` class statics.
  */
-export
-namespace DragDropPanel {
-  export
-  interface IOptions extends DragPanel.IOptions, DropPanel.IOptions {
-  }
+export namespace DragDropPanel {
+  export interface IOptions extends DragPanel.IOptions, DropPanel.IOptions {}
 }
 
-
-
-export
-class FriendlyDragDrop extends DragDropPanel {
+export class FriendlyDragDrop extends DragDropPanel {
   private static _counter = 0;
-  private static _groups: {[key: number]: FriendlyDragDrop[]} = {};
+  private static _groups: { [key: number]: FriendlyDragDrop[] } = {};
 
   static makeGroup() {
     const id = this._counter++;
@@ -896,8 +897,10 @@ class FriendlyDragDrop extends DragDropPanel {
       }
       let child = findChild(panel.node, node);
       if (child !== null) {
-        return [panel.friends.indexOf(panel),
-                super.getIndexOfChildNode(child, panel.layout as PanelLayout)];
+        return [
+          panel.friends.indexOf(panel),
+          super.getIndexOfChildNode(child, panel.layout as PanelLayout),
+        ];
       }
     }
     return null;

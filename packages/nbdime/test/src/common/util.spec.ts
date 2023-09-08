@@ -4,11 +4,8 @@
 import * as util from '../../../src/common/util';
 
 describe('common', () => {
-
   describe('util', () => {
-
     describe('arraysEqual', () => {
-
       it('should return true for instance equality', () => {
         let a = [1, 2, 3];
         let value = util.arraysEqual(a, a);
@@ -16,9 +13,11 @@ describe('common', () => {
       });
 
       it('should return true for shallow equality', () => {
-        let arrays = [[1, 2, 3],
-                      ['a', 'b', 'c'],
-                      [123, 'text', true]];
+        let arrays = [
+          [1, 2, 3],
+          ['a', 'b', 'c'],
+          [123, 'text', true],
+        ];
         for (let a of arrays) {
           let value = util.arraysEqual(a, a.slice());
           expect(value).toBe(true);
@@ -48,19 +47,17 @@ describe('common', () => {
       });
 
       it('should return false for deep comparison', () => {
-        let value = util.arraysEqual([{a: 1, b: 2}], [{a: 1, b: 2}]);
+        let value = util.arraysEqual([{ a: 1, b: 2 }], [{ a: 1, b: 2 }]);
         expect(value).toBe(false);
       });
-
     });
 
     describe('findSharedPrefix', () => {
-
       it('should return a copy on identical input', () => {
         let a = [1, 2, 3];
         let value = util.findSharedPrefix(a, a);
         expect(value).toEqual(a);
-        expect(value).not.toBe(a);  // Checking for instance equality
+        expect(value).not.toBe(a); // Checking for instance equality
       });
 
       it('should return null for null inputs', () => {
@@ -115,14 +112,15 @@ describe('common', () => {
         let value = util.findSharedPrefix([1, 2, 3, 4, 5], [1, 2, 3, 6, 7]);
         expect(value).toEqual([1, 2, 3]);
 
-        value = util.findSharedPrefix(['text', 'abc', 'foo'], ['text', 'abc', 'bar']);
+        value = util.findSharedPrefix(
+          ['text', 'abc', 'foo'],
+          ['text', 'abc', 'bar'],
+        );
         expect(value).toEqual(['text', 'abc']);
       });
-
     });
 
     describe('isPrefixArray', () => {
-
       it('should return true for object equality', () => {
         let a = [1, 2, 3];
         let value = util.isPrefixArray(a, a);
@@ -199,11 +197,9 @@ describe('common', () => {
         value = util.isPrefixArray(['def'], ['abc', 'def', 0]);
         expect(value).toBe(false);
       });
-
     });
 
     describe('accumulateLengths', () => {
-
       it('should handle an empty array', () => {
         let value = util.accumulateLengths([]);
         expect(value).toEqual([]);
@@ -228,11 +224,9 @@ describe('common', () => {
         let value = util.accumulateLengths(['\nabc', 'foo\n', '0xde\nad']);
         expect(value).toEqual([4, 8, 15]);
       });
-
     });
 
     describe('hasEntries', () => {
-
       it('should return false for null', () => {
         let value = util.hasEntries(null);
         expect(value).toBe(false);
@@ -252,14 +246,12 @@ describe('common', () => {
         let value = util.hasEntries([4]);
         expect(value).toBe(true);
       });
-
     });
 
     describe('buildSelect', () => {
-
       it('should create an empty select', () => {
         let value = util.buildSelect([]);
-        expect(value.outerHTML).toEqual("<select></select>");
+        expect(value.outerHTML).toEqual('<select></select>');
       });
 
       it('should reuse a given select', () => {
@@ -269,22 +261,15 @@ describe('common', () => {
       });
 
       it('should create a select with options', () => {
-        let value = util.buildSelect([
-          'foo',
-          'bar',
-          '<div>boo</div>'
-        ]);
+        let value = util.buildSelect(['foo', 'bar', '<div>boo</div>']);
         expect(value.outerHTML).toEqual(
           '<select>' +
             '<option>foo</option>' +
             '<option>bar</option>' +
             '<option>&lt;div&gt;boo&lt;/div&gt;</option>' +
-          '</select>'
+            '</select>',
         );
       });
-
     });
-
   });
-
 });

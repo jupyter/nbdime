@@ -1,0 +1,9 @@
+**/build
+**/node_modules
+**/lib
+**/dist
+**/static
+**/.ipynb_checkpoints
+**/coverage
+CHANGELOG.md
+package-lock.json

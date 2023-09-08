@@ -5,10 +5,6 @@
     "rootDir": "src",
     "outDir": "lib"
   },
-  "references": [
-    { "path": "../nbdime" }
-  ],
-  "include": [
-    "src/**/*.ts",
-  ]
+  "references": [{ "path": "../nbdime" }],
+  "include": ["src/**/*.ts"]
 }

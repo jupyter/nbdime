@@ -4,65 +4,71 @@
 
 import * as nbformat from '@jupyterlab/nbformat';
 
-import {
-  Signal
-} from '@lumino/signaling';
+import { Signal } from '@lumino/signaling';
 
 import type {
-  IDiffAddRange, IDiffEntry, IDiffArrayEntry,
-  IDiffPatchObject, IDiffImmutableObjectEntry
+  IDiffAddRange,
+  IDiffEntry,
+  IDiffArrayEntry,
+  IDiffPatchObject,
+  IDiffImmutableObjectEntry,
 } from '../../diff/diffentries';
 
-import {
-  getDiffEntryByKey
-} from '../../diff/util';
+import { getDiffEntryByKey } from '../../diff/util';
 
 import {
   CellDiffModel,
-  createAddedCellDiffModel, createDeletedCellDiffModel,
-  createPatchedCellDiffModel, createUnchangedCellDiffModel,
-  OutputDiffModel, makeOutputModels, ImmutableDiffModel,
-  setMimetypeFromCellType, createImmutableModel
+  createAddedCellDiffModel,
+  createDeletedCellDiffModel,
+  createPatchedCellDiffModel,
+  createUnchangedCellDiffModel,
+  OutputDiffModel,
+  makeOutputModels,
+  ImmutableDiffModel,
+  setMimetypeFromCellType,
+  createImmutableModel,
 } from '../../diff/model';
 
 import {
-  MergeDecision, resolveCommonPaths, buildDiffs, decisionSortKey,
-  filterDecisions, pushPatchDecision, popPath, applyDecisions,
-  Action
+  MergeDecision,
+  resolveCommonPaths,
+  buildDiffs,
+  decisionSortKey,
+  filterDecisions,
+  pushPatchDecision,
+  popPath,
+  applyDecisions,
+  Action,
 } from '../../merge/decisions';
 
-import {
-  patch
-} from '../../patch';
+import { patch } from '../../patch';
 
 import {
-  arraysEqual, valueIn, hasEntries, splitLines, unique, stableSort
+  arraysEqual,
+  valueIn,
+  hasEntries,
+  splitLines,
+  unique,
+  stableSort,
 } from '../../common/util';
 
-import {
-  splitMergeDecisionsOnChunks
-} from '../../chunking';
+import { splitMergeDecisionsOnChunks } from '../../chunking';
 
-import {
-  ObjectMergeModel, DecisionStringDiffModel
-} from './common';
+import { ObjectMergeModel, DecisionStringDiffModel } from './common';
 
-
-import {
-  NotifyUserError
-} from '../../common/exceptions';
-
+import { NotifyUserError } from '../../common/exceptions';
 
 /**
  * Create a cell diff model based on a set of merge
  * decisions that patch the cell.
  */
 function createPatchedCellDecisionDiffModel(
-    base: nbformat.ICell, decisions: MergeDecision[],
-    local: CellDiffModel | null, remote: CellDiffModel | null,
-    mimetype: string):
-    CellDiffModel {
-
+  base: nbformat.ICell,
+  decisions: MergeDecision[],
+  local: CellDiffModel | null,
+  remote: CellDiffModel | null,
+  mimetype: string,
+): CellDiffModel {
   for (let md of decisions) {
     if (md.localPath.length === 0) {
       let val = popPath(md.diffs, true);
@@ -74,15 +80,17 @@ function createPatchedCellDecisionDiffModel(
   }
 
   let source = new DecisionStringDiffModel(
-    base.source, filterDecisions(decisions, ['source'], 2),
-    [local ? local.source : null,
-     remote ? remote.source : null]);
+    base.source,
+    filterDecisions(decisions, ['source'], 2),
+    [local ? local.source : null, remote ? remote.source : null],
+  );
   setMimetypeFromCellType(source, base, mimetype);
 
   let metadata = new DecisionStringDiffModel(
-    base.metadata, filterDecisions(decisions, ['metadata'], 2),
-    [local ? local.metadata : null,
-      remote ? remote.metadata : null]);
+    base.metadata,
+    filterDecisions(decisions, ['metadata'], 2),
+    [local ? local.metadata : null, remote ? remote.metadata : null],
+  );
 
   let outputs: OutputDiffModel[] | null = null;
   let executionCount: ImmutableDiffModel | null = null;
@@ -90,7 +98,11 @@ function createPatchedCellDecisionDiffModel(
     if (base.outputs) {
       let outputBase = base.outputs;
       let outputDec = filterDecisions(decisions, ['outputs'], 2);
-      let mergedDiff = buildDiffs(outputBase, outputDec, 'merged') as IDiffArrayEntry[];
+      let mergedDiff = buildDiffs(
+        outputBase,
+        outputDec,
+        'merged',
+      ) as IDiffArrayEntry[];
       let merged: nbformat.IOutput[];
       if (mergedDiff && mergedDiff.length > 0) {
         merged = patch(outputBase, mergedDiff);
@@ -102,31 +114,50 @@ function createPatchedCellDecisionDiffModel(
     let execBase = base.execution_count;
     let cellDecs = filterDecisions(decisions, ['cells'], 0, 2);
     for (let dec of cellDecs) {
-      if (getDiffEntryByKey(dec.localDiff, 'execution_count') !== null ||
-          getDiffEntryByKey(dec.remoteDiff, 'execution_count') !== null ||
-          getDiffEntryByKey(dec.customDiff, 'execution_count') !== null) {
+      if (
+        getDiffEntryByKey(dec.localDiff, 'execution_count') !== null ||
+        getDiffEntryByKey(dec.remoteDiff, 'execution_count') !== null ||
+        getDiffEntryByKey(dec.customDiff, 'execution_count') !== null
+      ) {
         dec.level = 2;
-        let mergeExecDiff = buildDiffs(base, [dec], 'merged') as IDiffImmutableObjectEntry[] | null;
+        let mergeExecDiff = buildDiffs(base, [dec], 'merged') as
+          | IDiffImmutableObjectEntry[]
+          | null;
         let execDiff = hasEntries(mergeExecDiff) ? mergeExecDiff[0] : null;
         // Pass base as remote, which means fall back to unchanged if no diff:
         executionCount = createImmutableModel(execBase, execBase, execDiff);
       }
     }
-
   }
 
-  return new CellDiffModel(source, metadata, outputs, executionCount, base.cell_type);
+  return new CellDiffModel(
+    source,
+    metadata,
+    outputs,
+    executionCount,
+    base.cell_type,
+  );
 }
-
 
 /**
  * CellMergeModel
  */
-export
-class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
-  constructor(base: nbformat.ICell | null, decisions: MergeDecision[], mimetype: string) {
+export class CellMergeModel extends ObjectMergeModel<
+  nbformat.ICell,
+  CellDiffModel
+> {
+  constructor(
+    base: nbformat.ICell | null,
+    decisions: MergeDecision[],
+    mimetype: string,
+  ) {
     // TODO: Remove/extend whitelist once we support more
-    super(base, [], mimetype, ['source', 'metadata', 'outputs', 'execution_count']);
+    super(base, [], mimetype, [
+      'source',
+      'metadata',
+      'outputs',
+      'execution_count',
+    ]);
     this.onesided = false;
     this._deleteCell = false;
     this.processDecisions(decisions);
@@ -155,7 +186,6 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
 
   readonly deleteCellChanged = new Signal<CellMergeModel, boolean>(this);
 
-
   /**
    * Run time flag whether the user wants to clear the outputs of the cell
    *
@@ -178,8 +208,11 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
    * Whether source is the same in local and remote
    */
   get agreedSource(): boolean {
-    return !!this.local && !!this.remote &&
-      this.local.source.remote === this.remote.source.remote;
+    return (
+      !!this.local &&
+      !!this.remote &&
+      this.local.source.remote === this.remote.source.remote
+    );
   }
 
   /**
@@ -207,7 +240,7 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
     if (lo.length !== ro.length) {
       return false;
     }
-    for (let i=0; i < lo.length; ++i) {
+    for (let i = 0; i < lo.length; ++i) {
       if (JSON.stringify(lo[i].remote) !== JSON.stringify(ro[i].remote)) {
         return false;
       }
@@ -287,9 +320,11 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
   getExecutionCountDecision(): MergeDecision | null {
     let cellDecs = filterDecisions(this.decisions, ['cells'], 0, 2);
     for (let dec of cellDecs) {
-      if (getDiffEntryByKey(dec.localDiff, 'execution_count') !== null ||
-          getDiffEntryByKey(dec.remoteDiff, 'execution_count') !== null ||
-          getDiffEntryByKey(dec.customDiff, 'execution_count') !== null) {
+      if (
+        getDiffEntryByKey(dec.localDiff, 'execution_count') !== null ||
+        getDiffEntryByKey(dec.remoteDiff, 'execution_count') !== null ||
+        getDiffEntryByKey(dec.customDiff, 'execution_count') !== null
+      ) {
         return dec;
       }
     }
@@ -313,17 +348,17 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
       // a custom diff on top!
       let d: IDiffEntry;
       if (dec.action === 'local' || dec.action === 'either') {
-        if (!dec.localDiff ) {
+        if (!dec.localDiff) {
           throw new NotifyUserError('Invalid cell decision');
         }
         d = dec.localDiff[0];
       } else if (dec.action === 'remote') {
-        if (!dec.remoteDiff ) {
+        if (!dec.remoteDiff) {
           throw new NotifyUserError('Invalid cell decision');
         }
         d = dec.remoteDiff[0];
       } else if (dec.action === 'custom') {
-        if (!dec.customDiff ) {
+        if (!dec.customDiff) {
           throw new NotifyUserError('Invalid cell decision');
         }
         d = dec.customDiff[0];
@@ -347,8 +382,10 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
       src = src.join('');
     }
     if (src !== this._merged!.source.remote) {
-      console.warn('Serialized outputs doesn\'t match model value! ' +
-                   'Keeping the model value.');
+      console.warn(
+        "Serialized outputs doesn't match model value! " +
+          'Keeping the model value.',
+      );
       output.source = splitLines(this._merged!.source.remote!);
     }
     if (this.clearOutputs && nbformat.isCode(output)) {
@@ -372,20 +409,23 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
 
     for (let md of decisions) {
       md.level = 2;
-      if (md.absolutePath.length < 2 ||
-          md.absolutePath[0] !== 'cells') {
+      if (md.absolutePath.length < 2 || md.absolutePath[0] !== 'cells') {
         throw new Error('Not a valid path for a cell decision');
-      } else if (md.absolutePath.length === 2 && (
-            hasEntries(md.localDiff) || hasEntries(md.remoteDiff))) {
+      } else if (
+        md.absolutePath.length === 2 &&
+        (hasEntries(md.localDiff) || hasEntries(md.remoteDiff))
+      ) {
         // Have decision on /cells/X/.
         // Split the decision on subkey:
 
         // Nest diff as a patch on cell, which can be split by `splitPatch`:
         let splitDec = pushPatchDecision(md, md.absolutePath.slice(1, 2));
-        let localDiff = hasEntries(splitDec.localDiff) ?
-          splitDec.localDiff[0] as IDiffPatchObject : null;
-        let remoteDiff = hasEntries(splitDec.remoteDiff) ?
-          splitDec.remoteDiff[0] as IDiffPatchObject : null;
+        let localDiff = hasEntries(splitDec.localDiff)
+          ? (splitDec.localDiff[0] as IDiffPatchObject)
+          : null;
+        let remoteDiff = hasEntries(splitDec.remoteDiff)
+          ? (splitDec.remoteDiff[0] as IDiffPatchObject)
+          : null;
 
         let subDecisions = this.splitPatch(splitDec, localDiff, remoteDiff);
         // Add all split decisions:
@@ -393,7 +433,8 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
           subdec.level = 2;
           this.decisions.push(subdec);
         }
-      } else { // Decision has path on subkey
+      } else {
+        // Decision has path on subkey
         // Make local path relative to cell
         this.decisions.push(md);
       }
@@ -419,20 +460,26 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
         into two decisions with an insertion each before creating model.
      6. Patch vs patch: Shouldn't occur, as those should have been recursed
      */
-    console.assert(!this.onesided,
-                   'Cannot have multiple cell decisions on one cell!');
-    this.onesided = true;  // We set this to distinguish case 3 from normal
+    console.assert(
+      !this.onesided,
+      'Cannot have multiple cell decisions on one cell!',
+    );
+    this.onesided = true; // We set this to distinguish case 3 from normal
     if (!hasEntries(md.localDiff)) {
       // 1. or 2.:
       this._local = null;
       if (!md.remoteDiff || md.remoteDiff.length !== 1) {
-        throw new Error('Merge decision does not conform to expectation: ' + md);
+        throw new Error(
+          'Merge decision does not conform to expectation: ' + md,
+        );
       }
       if (this.base === null) {
         // 1.
         let first = md.remoteDiff[0];
         if (first.op !== 'addrange') {
-          throw new Error('Merge decision does not conform to expectation: ' + md);
+          throw new Error(
+            'Merge decision does not conform to expectation: ' + md,
+          );
         }
         let v = first.valuelist[0] as nbformat.ICell;
         this._remote = createAddedCellDiffModel(v, this.mimetype);
@@ -447,13 +494,17 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
       // 1. or 2.:
       this._remote = null;
       if (!md.localDiff || md.localDiff.length !== 1) {
-        throw new Error('Merge decision does not conform to expectation: ' + md);
+        throw new Error(
+          'Merge decision does not conform to expectation: ' + md,
+        );
       }
       if (this.base === null) {
         // 1.
         let first = md.localDiff[0];
         if (first.op !== 'addrange') {
-          throw new Error('Merge decision does not conform to expectation: ' + md);
+          throw new Error(
+            'Merge decision does not conform to expectation: ' + md,
+          );
         }
         let v = first.valuelist[0] as nbformat.ICell;
         this._local = createAddedCellDiffModel(v, this.mimetype);
@@ -487,24 +538,28 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
       } else {
         // 3., by method of elimination
         let ops = [md.localDiff[0].op, md.remoteDiff[0].op];
-        console.assert(
-          valueIn('removerange', ops) && valueIn('patch', ops));
+        console.assert(valueIn('removerange', ops) && valueIn('patch', ops));
         if (this.base === null) {
-          throw new Error('Invalid merge decision, ' +
-            'cannot have null base for deleted cell: ' + md);
+          throw new Error(
+            'Invalid merge decision, ' +
+              'cannot have null base for deleted cell: ' +
+              md,
+          );
         }
         if (ops[0] === 'removerange') {
           this._local = createDeletedCellDiffModel(this.base, this.mimetype);
           this.deleteCell = md.action === 'local';
           // The patch op will be on cell level. Split it on sub keys!
-          newDecisions = newDecisions.concat(this.splitPatch(
-            md, null, md.remoteDiff[0] as IDiffPatchObject));
+          newDecisions = newDecisions.concat(
+            this.splitPatch(md, null, md.remoteDiff[0] as IDiffPatchObject),
+          );
         } else {
           this._remote = createDeletedCellDiffModel(this.base, this.mimetype);
           this.deleteCell = md.action === 'remote';
           // The patch op will be on cell level. Split it on sub keys!
-          newDecisions = newDecisions.concat(this.splitPatch(
-            md, md.localDiff[0] as IDiffPatchObject, null));
+          newDecisions = newDecisions.concat(
+            this.splitPatch(md, md.localDiff[0] as IDiffPatchObject, null),
+          );
         }
         resolveCommonPaths(newDecisions);
       }
@@ -512,12 +567,15 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
     return newDecisions;
   }
 
-
-   /**
-    * Split a decision with a patch on one side into one decision
-    * for each sub entry in the patch.
-    */
-  protected splitPatch(md: MergeDecision, localPatch: IDiffPatchObject | null, remotePatch: IDiffPatchObject | null): MergeDecision[] {
+  /**
+   * Split a decision with a patch on one side into one decision
+   * for each sub entry in the patch.
+   */
+  protected splitPatch(
+    md: MergeDecision,
+    localPatch: IDiffPatchObject | null,
+    remotePatch: IDiffPatchObject | null,
+  ): MergeDecision[] {
     let local = !!localPatch && hasEntries(localPatch.diff);
     let remote = !!remotePatch && hasEntries(remotePatch.diff);
     if (!local && !remote) {
@@ -547,8 +605,9 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
     let patchKey = local ? localPatch!.key : remotePatch!.key;
     for (let key of keys) {
       if (this._whitelist && !valueIn(key, this._whitelist)) {
-        throw new NotifyUserError('Currently not able to handle decisions on variable \"' +
-              key + '\"');
+        throw new NotifyUserError(
+          'Currently not able to handle decisions on variable "' + key + '"',
+        );
       }
       let el = getDiffEntryByKey(localDiff, key);
       let er = getDiffEntryByKey(remoteDiff, key);
@@ -559,12 +618,15 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
         action = el ? 'local' : 'remote';
       }
       // Create new action:
-      split.push(new MergeDecision(
-        md.absolutePath.concat([patchKey]),
-        el ? [el] : null,
-        er ? [er] : null,
-        action,
-        md.conflict));
+      split.push(
+        new MergeDecision(
+          md.absolutePath.concat([patchKey]),
+          el ? [el] : null,
+          er ? [er] : null,
+          action,
+          md.conflict,
+        ),
+      );
     }
     let ret = this.splitOnSourceChunks(split);
     resolveCommonPaths(ret);
@@ -578,7 +640,7 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
    */
   protected splitOnSourceChunks(decisions: MergeDecision[]): MergeDecision[] {
     let out: MergeDecision[] = [];
-    for (let i=0; i < decisions.length; ++i) {
+    for (let i = 0; i < decisions.length; ++i) {
       let dec = decisions[i];
       if (dec.absolutePath[2] === 'source') {
         let base = this.base!.source;
@@ -598,7 +660,9 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
 
   protected createDiffModel(diff: IDiffEntry[]): CellDiffModel {
     if (this.base === null) {
-      throw new Error('Cannot create a patched or unchanged diff model with null base!');
+      throw new Error(
+        'Cannot create a patched or unchanged diff model with null base!',
+      );
     }
     if (diff && diff.length > 0) {
       return createPatchedCellDiffModel(this.base, diff, this.mimetype);
@@ -609,9 +673,16 @@ class CellMergeModel extends ObjectMergeModel<nbformat.ICell, CellDiffModel> {
 
   protected createMergedDiffModel(): CellDiffModel {
     if (this.base === null) {
-      throw new Error('Cannot create a patched or unchanged merged diff model with null base!');
+      throw new Error(
+        'Cannot create a patched or unchanged merged diff model with null base!',
+      );
     }
     return createPatchedCellDecisionDiffModel(
-        this.base, this.decisions, this.local, this.remote, this.mimetype);
+      this.base,
+      this.decisions,
+      this.local,
+      this.remote,
+      this.mimetype,
+    );
   }
 }

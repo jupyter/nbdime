@@ -4,54 +4,32 @@
 
 import type * as nbformat from '@jupyterlab/nbformat';
 
-import type {
-  IRenderMimeRegistry
-} from '@jupyterlab/rendermime';
+import type { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
-import {
-  Panel
-} from '@lumino/widgets';
+import { Panel } from '@lumino/widgets';
 
-import {
-  hasEntries, deepCopy
-} from '../../common/util';
+import { hasEntries, deepCopy } from '../../common/util';
 
-import {
-  FlexPanel
-} from '../../upstreaming/flexpanel';
+import { FlexPanel } from '../../upstreaming/flexpanel';
 
-import type {
-  NotebookMergeModel
-} from '../model';
+import type { NotebookMergeModel } from '../model';
 
-import {
-  MetadataMergeWidget
-} from './metadata';
+import { MetadataMergeWidget } from './metadata';
 
-import {
-  CellMergeWidget
-} from './cell';
+import { CellMergeWidget } from './cell';
 
-import {
-  createCheckbox
-} from './common';
+import { createCheckbox } from './common';
 
-import {
-  CellsDragDrop, ChunkedCellsWidget
-} from './dragdrop';
-
+import { CellsDragDrop, ChunkedCellsWidget } from './dragdrop';
 
 const NBMERGE_CLASS = 'jp-Notebook-merge';
 const NB_MERGE_CONTROLS_CLASS = 'jp-Merge-notebook-controls';
 
-
 /**
  * NotebookMergeWidget
  */
-export
-class NotebookMergeWidget extends Panel {
-  constructor(model: NotebookMergeModel,
-              rendermime: IRenderMimeRegistry) {
+export class NotebookMergeWidget extends Panel {
+  constructor(model: NotebookMergeModel, rendermime: IRenderMimeRegistry) {
     super();
     this._model = model;
     this._rendermime = rendermime;
@@ -77,7 +55,9 @@ class NotebookMergeWidget extends Panel {
       }
     });
     work = work.then(() => {
-      this.cellContainer = new CellsDragDrop({acceptDropsFromExternalSource: true});
+      this.cellContainer = new CellsDragDrop({
+        acceptDropsFromExternalSource: true,
+      });
       this.cellContainer.setFriendlyGroup(CellsDragDrop.makeGroup());
       this.cellContainer.moved.connect(this.onDragDropMove, this);
       this.addWidget(this.cellContainer);
@@ -86,7 +66,7 @@ class NotebookMergeWidget extends Panel {
     let chunk: ChunkedCellsWidget | null = null;
     for (let c of model.cells) {
       work = work.then(() => {
-        return new Promise<void>((resolve) => {
+        return new Promise<void>(resolve => {
           let w = new CellMergeWidget(c, rendermime, model.mimetype);
           this.cellWidgets.push(w);
           if (c.onesided && c.conflicted) {
@@ -120,11 +100,15 @@ class NotebookMergeWidget extends Panel {
     return work;
   }
 
-  validateMerged(candidate: nbformat.INotebookContent): nbformat.INotebookContent {
+  validateMerged(
+    candidate: nbformat.INotebookContent,
+  ): nbformat.INotebookContent {
     let validated = deepCopy(candidate);
     // Validate metadata
     if (this.metadataWidget) {
-      validated.metadata = this.metadataWidget.validateMerged(candidate.metadata);
+      validated.metadata = this.metadataWidget.validateMerged(
+        candidate.metadata,
+      );
     }
 
     // Validate cells
@@ -148,9 +132,12 @@ class NotebookMergeWidget extends Panel {
     return this._model;
   }
 
-  protected onDragDropMove(sender: CellsDragDrop, args: CellsDragDrop.IMovedArgs): void {
+  protected onDragDropMove(
+    sender: CellsDragDrop,
+    args: CellsDragDrop.IMovedArgs,
+  ): void {
     // Move cell in model list
-    let {widget, oldParent, before, after} = args;
+    let { widget, oldParent, before, after } = args;
     let from = this._model.cells.indexOf(widget.model);
     let to: number;
     if (after) {
@@ -169,7 +156,10 @@ class NotebookMergeWidget extends Panel {
       chunk.onResolve();
     }
     // Mark any conflict on a cell moved from chunk as resolved
-    if (oldParent !== this.cellContainer && widget.parent === this.cellContainer) {
+    if (
+      oldParent !== this.cellContainer &&
+      widget.parent === this.cellContainer
+    ) {
       for (let d of widget.model.decisions) {
         d.conflict = false;
       }
@@ -193,14 +183,13 @@ class NotebookMergeWidget extends Panel {
   private _rendermime: IRenderMimeRegistry;
 }
 
-
 /**
  * Collection of notebook-wide controls
  */
 class NotebookMergeControls extends FlexPanel {
   constructor(model: NotebookMergeModel) {
     super({
-      direction: 'left-to-right'
+      direction: 'left-to-right',
     });
     this.model = model;
     this.addClass(NB_MERGE_CONTROLS_CLASS);
@@ -253,15 +242,15 @@ class NotebookMergeControls extends FlexPanel {
 
   handleEvent(event: Event): void {
     switch (event.type) {
-    case 'change':
-      if (event.currentTarget === this.clearOutputsToggle) {
-        this.onClearAllOutputsChanged();
-      } else if (event.currentTarget === this.clearConflictedOutputsToggle) {
-        this.onClearConflictedOutputsChanged();
-      }
-      break;
-    default:
-      break;
+      case 'change':
+        if (event.currentTarget === this.clearOutputsToggle) {
+          this.onClearAllOutputsChanged();
+        } else if (event.currentTarget === this.clearConflictedOutputsToggle) {
+          this.onClearConflictedOutputsChanged();
+        }
+        break;
+      default:
+        break;
     }
   }
 
@@ -310,7 +299,7 @@ class NotebookMergeControls extends FlexPanel {
           all = null;
         }
         if (cell.outputsConflicted) {
-          if (conflicted === null ) {
+          if (conflicted === null) {
             // Indeterminate, current value won't change it
           } else if (conflicted === undefined) {
             conflicted = current;
@@ -332,9 +321,14 @@ class NotebookMergeControls extends FlexPanel {
     this.clearConflictedOutputsToggle.indeterminate = conflicted === null;
     this.clearConflictedOutputsToggle.disabled = conflicted === undefined;
     if (conflicted === undefined) {
-      this.clearConflictedOutputsToggle.parentElement!.setAttribute('disabled', '');
+      this.clearConflictedOutputsToggle.parentElement!.setAttribute(
+        'disabled',
+        '',
+      );
     } else {
-      this.clearConflictedOutputsToggle.parentElement!.removeAttribute('disabled');
+      this.clearConflictedOutputsToggle.parentElement!.removeAttribute(
+        'disabled',
+      );
     }
   }
 

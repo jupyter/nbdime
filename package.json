@@ -5,6 +5,8 @@
     "build:dev": "tsc --build",
     "clean": "lerna run clean",
     "install": "lerna bootstrap --hoist",
+    "prettier": "prettier --list-different --write \"**/*{.ts,.tsx,.js,.jsx,.css,.json,.md}\"",
+    "prettier:check": "prettier --check \"**/*{.ts,.tsx,.js,.jsx,.css,.json,.md}\"",
     "publish": "npm run clean && npm run build && lerna publish --no-private -m \"Publish npm packages\"",
     "test": "lerna run test",
     "update:all": "update-dependency --lerna --minimal --regex .*",

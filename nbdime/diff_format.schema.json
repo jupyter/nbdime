@@ -1,10 +1,9 @@
-
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "Notebook diff format",
   "description": "A list of diff entries that each describe a difference between two Jupyter Notebooks",
   "type": ["array", "object", "null"],
-  "items": {"$ref": "#/definitions/diff"},
+  "items": { "$ref": "#/definitions/diff" },
 
   "definitions": {
     "diff": {
@@ -27,7 +26,7 @@
       "type": "object",
 
       "properties": {
-        "op": { "enum": ["add"]},
+        "op": { "enum": ["add"] },
         "key": {
           "type": ["integer", "string"]
         },
@@ -40,7 +39,7 @@
       "type": "object",
 
       "properties": {
-        "op": { "enum": ["remove"]},
+        "op": { "enum": ["remove"] },
         "key": {
           "type": ["integer", "string"]
         }
@@ -52,7 +51,7 @@
       "type": "object",
 
       "properties": {
-        "op": { "enum": ["replace"]},
+        "op": { "enum": ["replace"] },
         "key": {
           "type": ["integer", "string"]
         },
@@ -65,7 +64,7 @@
       "type": "object",
 
       "properties": {
-        "op": { "enum": ["addrange"]},
+        "op": { "enum": ["addrange"] },
         "key": {
           "type": "integer"
         },
@@ -80,7 +79,7 @@
       "type": "object",
 
       "properties": {
-        "op": { "enum": ["removerange"]},
+        "op": { "enum": ["removerange"] },
         "key": {
           "type": "integer"
         },
@@ -95,13 +94,13 @@
       "type": "object",
 
       "properties": {
-        "op": { "enum": ["patch"]},
+        "op": { "enum": ["patch"] },
         "key": {
           "type": ["integer", "string"]
         },
         "diff": {
           "type": "array",
-          "items": {"$ref": "#/definitions/diff"}
+          "items": { "$ref": "#/definitions/diff" }
         }
       }
     }

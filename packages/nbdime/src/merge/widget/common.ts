@@ -2,10 +2,7 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import {
-  Widget
-} from '@lumino/widgets';
-
+import { Widget } from '@lumino/widgets';
 
 // Merge classes:
 export const UNCHANGED_MERGE_CLASS = 'jp-Merge-unchanged';
@@ -19,9 +16,12 @@ const LOCAL_MERGE_CLASS = 'jp-Merge-local';
 const REMOTE_MERGE_CLASS = 'jp-Merge-remote';
 const MERGED_MERGE_CLASS = 'jp-Merge-merged';
 
-export const MERGE_CLASSES = [BASE_MERGE_CLASS, LOCAL_MERGE_CLASS,
-  REMOTE_MERGE_CLASS, MERGED_MERGE_CLASS];
-
+export const MERGE_CLASSES = [
+  BASE_MERGE_CLASS,
+  LOCAL_MERGE_CLASS,
+  REMOTE_MERGE_CLASS,
+  MERGED_MERGE_CLASS,
+];
 
 /**
  * Create a widget containing a checkbox with a label.
@@ -31,8 +31,11 @@ export const MERGE_CLASSES = [BASE_MERGE_CLASS, LOCAL_MERGE_CLASS,
  * @param {string} text - The text of the label
  * @returns {{checkbox: HTMLInputElement, widget: Widget }}
  */
-export
-function createCheckbox(value: boolean, text: string, indeterminate=false): {checkbox: HTMLInputElement, widget: Widget } {
+export function createCheckbox(
+  value: boolean,
+  text: string,
+  indeterminate = false,
+): { checkbox: HTMLInputElement; widget: Widget } {
   let checkbox = document.createElement('input');
   checkbox.setAttribute('type', 'checkbox');
   checkbox.checked = value;
@@ -45,5 +48,5 @@ function createCheckbox(value: boolean, text: string, indeterminate=false): {che
   label.insertBefore(checkbox, label.childNodes[0]);
   // Add checkbox to header:
   widget.node.appendChild(label);
-  return {checkbox, widget};
+  return { checkbox, widget };
 }

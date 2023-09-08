@@ -1,10 +1,9 @@
-
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "Merge decisions",
   "description": "A list of merge decisions that in their entirety describes a merge of two Jupyter Notebooks",
   "type": "array",
-  "items": {"$ref": "#/definitions/decision"},
+  "items": { "$ref": "#/definitions/decision" },
 
   "definitions": {
     "decision": {
@@ -31,7 +30,18 @@
 
         "action": {
           "description": "How the merge was resolved, or for conflicted entries, the \"best\" initial suggestion for resolution",
-          "enum": ["local", "remote", "base", "clear", "clear_all", "remove", "either", "local_then_remote", "remote_then_local", "custom"]
+          "enum": [
+            "local",
+            "remote",
+            "base",
+            "clear",
+            "clear_all",
+            "remove",
+            "either",
+            "local_then_remote",
+            "remote_then_local",
+            "custom"
+          ]
         },
 
         "custom_diff": {

@@ -2,23 +2,18 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import {
-  URLExt
-} from '@jupyterlab/coreutils';
+import { URLExt } from '@jupyterlab/coreutils';
 
 import {
-  IRenderMime, standardRendererFactories, markdownRendererFactory,
+  IRenderMime,
+  standardRendererFactories,
+  markdownRendererFactory,
 } from '@jupyterlab/rendermime';
 
-import {
-  UNCHANGED_IMAGE
-} from './res';
+import { UNCHANGED_IMAGE } from './res';
 
-
-export
-class MarkdownImageResolver implements IRenderMime.IResolver {
-  constructor(public innerResolver: IRenderMime.IResolver | null) {
-  }
+export class MarkdownImageResolver implements IRenderMime.IResolver {
+  constructor(public innerResolver: IRenderMime.IResolver | null) {}
 
   resolveUrl(url: string): Promise<string> {
     // Do nothing here
@@ -31,7 +26,7 @@ class MarkdownImageResolver implements IRenderMime.IResolver {
   /**
    * Get the download url of a given absolute server path.
    */
-  getDownloadUrl(path: string): Promise<string>{
+  getDownloadUrl(path: string): Promise<string> {
     if (URLExt.isLocal(path)) {
       // Check if it is an image, if so, replace it with our own placeholder
       if (path.match(/.*\.(png|apng|svg|jpeg|jpg|bmp|ico|gif|xbm)$/i)) {
@@ -45,7 +40,6 @@ class MarkdownImageResolver implements IRenderMime.IResolver {
   }
 }
 
-
 class NbdimeMarkdownFactory implements IRenderMime.IRendererFactory {
   readonly safe = markdownRendererFactory.safe;
   readonly mimeTypes = markdownRendererFactory.mimeTypes;
@@ -56,7 +50,6 @@ class NbdimeMarkdownFactory implements IRenderMime.IRendererFactory {
   }
 }
 
-
 let factories: IRenderMime.IRendererFactory[] = [];
 for (let f of standardRendererFactories) {
   if (f === markdownRendererFactory) {
@@ -66,6 +59,5 @@ for (let f of standardRendererFactories) {
   }
 }
 
-export
-const rendererFactories: ReadonlyArray<IRenderMime.IRendererFactory> = factories;
-
+export const rendererFactories: ReadonlyArray<IRenderMime.IRendererFactory> =
+  factories;
