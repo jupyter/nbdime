@@ -13,7 +13,7 @@ test.beforeEach(async ({ page }) => {
 /* notebooks of same length and 1 conflict*/
 test.describe('merge test1', () => {
 
-  test('open an example and take a snapshot', async ({ page }) => {
+  test('take a snapshot at opening', async ({ page }) => {
     await expect.soft(page.getByText('➭')).toHaveCount(12)
     expect.soft(await page.locator('#main').screenshot()).toMatchSnapshot();
 
