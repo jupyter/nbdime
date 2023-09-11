@@ -129,6 +129,7 @@ install_requires = setup_args['install_requires'] = [
     'GitPython!=2.1.4, !=2.1.5, !=2.1.6',  # For difftool taking git refs
     'jupyter_server',
     'jinja2>=2.9',
+    # Note that references to jupyter_server_mathjax have been removed since MathJax4 implementation in JupyterLab 4 now ships all static assets by itself, so there is no need for it. Indeed The import in the server, from jupyter_server_mathjax.app import STATIC_ASSETS_PATH.
 ]
 
 extras_require = setup_args['extras_require'] = {

@@ -506,7 +506,7 @@ def server_extension_app(tmpdir_factory, request):
          '--port=%i' % port,
         '--ip=127.0.0.1',
         '--log-level=DEBUG',
-        '--LanguageServerManager.autodetect=False',
+        '--LanguageServerManager.autodetect=False', #' adding this fixed the last failing Python test, that was working locally and simply timing out on CI because search for language servers was taking long time on slow CI file system.
         '--no-browser', '--%s.token=%s' % (token_config_location, TEST_TOKEN)],
         env=env)
 
