@@ -15,7 +15,23 @@ import {
   toolClosed,
 } from './app/common';
 
-import './style/index';
+import '@jupyterlab/notebook/style/index.js';
+import '@fortawesome/fontawesome-free/css/all.min.css';
+import '@fortawesome/fontawesome-free/css/v4-shims.min.css';
+
+import '@jupyterlab/theme-light-extension/style/theme.css';
+
+import 'nbdime/lib/common/collapsible.css';
+import 'nbdime/lib/upstreaming/flexpanel.css';
+import 'nbdime/lib/common/dragpanel.css';
+import 'nbdime/lib/styles/variables.css';
+import 'nbdime/lib/styles/common.css';
+import 'nbdime/lib/styles/diff.css';
+import 'nbdime/lib/styles/merge.css';
+
+import './app/common.css';
+import './app/diff.css';
+import './app/merge.css';
 
 /** */
 function initialize() {

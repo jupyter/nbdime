@@ -2,13 +2,13 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import { CodeEditor } from '@jupyterlab/codeeditor';
+import type { CodeEditor } from '@jupyterlab/codeeditor';
 
 import type * as nbformat from '@jupyterlab/nbformat';
 
 import { Panel } from '@lumino/widgets';
 
-import { IDiffWidgetOptions } from '../../common/interfaces';
+import type { IDiffWidgetOptions } from '../../common/interfaces';
 
 import { createNbdimeMergeView, MergeView } from '../../common/mergeview';
 

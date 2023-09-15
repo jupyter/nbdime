@@ -8,7 +8,7 @@ import { Panel, Widget } from '@lumino/widgets';
 
 import { each, find, toArray } from '@lumino/algorithm';
 
-import { CodeEditor } from '@jupyterlab/codeeditor';
+import type { CodeEditor } from '@jupyterlab/codeeditor';
 
 import {
   IRenderMimeRegistry,
@@ -22,7 +22,7 @@ import { createNbdimeMergeView } from '../../common/mergeview';
 
 import { buildSelect, unique, intersection } from '../../common/util';
 
-import { ICellDiffViewOptions } from './cell';
+import type { ICellDiffViewOptions } from './cell';
 
 import {
   ADDED_DIFF_CLASS,

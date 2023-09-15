@@ -26,7 +26,7 @@ import {
   BlockInfo,
 } from '@codemirror/view';
 
-import { CodeEditor } from '@jupyterlab/codeeditor';
+import type { CodeEditor } from '@jupyterlab/codeeditor';
 
 import { Widget, Panel } from '@lumino/widgets';
 

@@ -6,7 +6,7 @@ import * as nbformat from '@jupyterlab/nbformat';
 
 import { Panel, Widget } from '@lumino/widgets';
 
-import { CodeEditor } from '@jupyterlab/codeeditor';
+import type { CodeEditor } from '@jupyterlab/codeeditor';
 
 import type { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
@@ -14,7 +14,7 @@ import { CollapsiblePanel } from '../../common/collapsiblepanel';
 
 import { DragPanel } from '../../common/dragpanel';
 
-import { ICellDiffWidgetOptions } from '../../common/interfaces';
+import type { ICellDiffWidgetOptions } from '../../common/interfaces';
 
 import { createNbdimeMergeView, MergeView } from '../../common/mergeview';
 

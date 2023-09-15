@@ -79,7 +79,7 @@ def test_git_difftool(git_repo2, server_extension_app):
         "closable": False,
         "remote": "",
         "savable": False,
-        "hideUnchanged": True
+        "hideUnchanged": True,
     }
 
 

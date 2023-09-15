@@ -4,13 +4,13 @@
 
 import { Panel, Widget } from '@lumino/widgets';
 
-import { CodeEditor } from '@jupyterlab/codeeditor';
+import type { CodeEditor } from '@jupyterlab/codeeditor';
 
 import { createNbdimeMergeView } from '../../common/mergeview';
 
 import { CollapsiblePanel } from '../../common/collapsiblepanel';
 
-import { IDiffWidgetOptions } from '../../common/interfaces';
+import type { IDiffWidgetOptions } from '../../common/interfaces';
 
 import type { IStringDiffModel } from '../model';
 

@@ -4,13 +4,13 @@
 
 import type * as nbformat from '@jupyterlab/nbformat';
 
-import { CodeEditor } from '@jupyterlab/codeeditor';
+import type { CodeEditor } from '@jupyterlab/codeeditor';
 
 import type { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
 import { Panel } from '@lumino/widgets';
 
-import { IDiffWidgetOptions } from '../../common/interfaces';
+import type { IDiffWidgetOptions } from '../../common/interfaces';
 
 import { hasEntries, deepCopy } from '../../common/util';
 

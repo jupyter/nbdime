@@ -4,7 +4,7 @@
 
 import { Panel } from '@lumino/widgets';
 
-import { CodeEditor } from '@jupyterlab/codeeditor';
+import type { CodeEditor } from '@jupyterlab/codeeditor';
 
 import type { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
@@ -18,7 +18,7 @@ import {
 
 import { MetadataDiffWidget } from './metadata';
 
-import { IDiffWidgetOptions } from '../../common/interfaces';
+import type { IDiffWidgetOptions } from '../../common/interfaces';
 
 import type { NotebookDiffModel } from '../model';
 

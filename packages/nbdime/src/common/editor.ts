@@ -5,7 +5,7 @@
 
 import { StreamLanguage } from '@codemirror/language';
 
-import { type EditorView } from '@codemirror/view';
+import type { EditorView } from '@codemirror/view';
 
 import type { Text } from '@codemirror/state';
 

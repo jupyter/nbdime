@@ -362,7 +362,7 @@ def make_app(**params):
         (r'/api/diff', ApiDiffHandler, params),
         (r'/api/merge', ApiMergeHandler, params),
         (r'/api/store', ApiMergeStoreHandler, params),
-        (r'/api/closetool', ApiCloseHandler, params)
+        (r'/api/closetool', ApiCloseHandler, params),
         # Static handler will be added automatically
     ]
     if base_url != '/':

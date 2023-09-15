@@ -4,7 +4,7 @@
 
 import { Panel, Widget } from '@lumino/widgets';
 
-import { CodeEditor } from '@jupyterlab/codeeditor';
+import type { CodeEditor } from '@jupyterlab/codeeditor';
 
 import { IRenderMimeRegistry, MimeModel } from '@jupyterlab/rendermime';
 
@@ -12,7 +12,7 @@ import { FlexPanel } from '../../upstreaming/flexpanel';
 
 import { CollapsiblePanel } from '../../common/collapsiblepanel';
 
-import { ICellDiffWidgetOptions } from '../../common/interfaces';
+import type { ICellDiffWidgetOptions } from '../../common/interfaces';
 
 import { createNbdimeMergeView } from '../../common/mergeview';
 
