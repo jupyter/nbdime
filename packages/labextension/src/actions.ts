@@ -2,7 +2,7 @@ import { PathExt, URLExt } from '@jupyterlab/coreutils';
 
 import type { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
-import { CodeEditor } from '@jupyterlab/codeeditor';
+import type { CodeEditor } from '@jupyterlab/codeeditor';
 
 import { ServerConnection } from '@jupyterlab/services';
 
