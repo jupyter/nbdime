@@ -8,6 +8,8 @@ import { Panel, Widget } from '@lumino/widgets';
 
 import { each, find, toArray } from '@lumino/algorithm';
 
+import type { CodeEditor } from '@jupyterlab/codeeditor';
+
 import {
   IRenderMimeRegistry,
   OutputModel,
@@ -20,6 +22,8 @@ import { createNbdimeMergeView } from '../../common/mergeview';
 
 import { buildSelect, unique, intersection } from '../../common/util';
 
+import type { ICellDiffViewOptions } from './cell';
+
 import {
   ADDED_DIFF_CLASS,
   DELETED_DIFF_CLASS,
@@ -30,7 +34,7 @@ import {
 
 import { RenderableDiffView } from './renderable';
 
-import type { CellDiffModel, OutputDiffModel } from '../model';
+import type { OutputDiffModel } from '../model';
 
 /**
  * Class for output panel
@@ -95,13 +99,15 @@ export class OutputPanel extends Panel {
   /**
    *
    */
-  constructor(
-    model: OutputDiffModel,
-    parentModel: CellDiffModel,
-    editorClasses: string[],
-    rendermime: IRenderMimeRegistry,
-  ) {
+  constructor({
+    model,
+    parent: parentModel,
+    editorClasses,
+    rendermime,
+    factory,
+  }: ICellDiffViewOptions<OutputDiffModel>) {
     super();
+    this.editorFactory = factory;
     this.model = model;
     this.rendermime = rendermime;
     this.editorClasses = editorClasses;
@@ -227,12 +233,18 @@ export class OutputPanel extends Panel {
       let aValue = stringModel.base || stringModel.remote!;
       if (!isBase64(aValue)) {
         // 2.
-        view = createNbdimeMergeView(stringModel);
+        view = createNbdimeMergeView({
+          remote: stringModel,
+          factory: this.editorFactory,
+        });
       }
     }
     if (!view) {
       // 3.
-      view = createNbdimeMergeView(model.stringify());
+      view = createNbdimeMergeView({
+        remote: model.stringify(),
+        factory: this.editorFactory,
+      });
     }
     return view;
   }
@@ -356,6 +368,7 @@ export class OutputPanel extends Panel {
     }
   }
 
+  protected editorFactory: CodeEditor.Factory | undefined;
   protected model: OutputDiffModel;
   protected rendermime: IRenderMimeRegistry;
   protected editorClasses: string[];
@@ -432,7 +445,7 @@ export class RenderableOutputView extends RenderableDiffView<nbformat.IOutput> {
     let i = 0;
     let model = this.model;
     this.mimetype = mimeType;
-    each(this.layout.widgets, (w: Widget) => {
+    each(this.layout!.widgets, (w: Widget) => {
       if (w instanceof RenderedOutputWidget) {
         let output: nbformat.IOutput | null = null;
         if (i === 0 && model.base) {

@@ -128,6 +128,13 @@ export class FlexPanel extends Panel {
     this.layout.alignContent = value;
   }
 
+  get layout(): FlexLayout {
+    return super.layout as FlexLayout;
+  }
+  set layout(value: FlexLayout) {
+    super.layout = value;
+  }
+
   /**
    * Describe how to stretch items to fit into flex panel.
    */
@@ -176,8 +183,6 @@ export class FlexPanel extends Panel {
     super.onAfterAttach(msg);
     this.fit();
   }
-
-  declare layout: FlexLayout;
 }
 
 /**

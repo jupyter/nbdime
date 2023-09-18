@@ -1,9 +1,14 @@
-var tsConfig = require('./tsconfig.json');
-
-var tsOptions = tsConfig['compilerOptions'];
-// Need as the test folder is not visible from the src folder
-tsOptions['rootDir'] = null;
-tsOptions['inlineSourceMap'] = true;
+const esModules = [
+  '@jupyterlab',
+  '@codemirror',
+  '@jupyter/ydoc',
+  'lib0',
+  'nanoid',
+  'vscode-ws-jsonrpc',
+  'y-protocols',
+  'y-websocket',
+  'yjs',
+].join('|');
 
 module.exports = {
   testEnvironment: 'jsdom',
@@ -12,17 +17,20 @@ module.exports = {
     '\\.(css|less|sass|scss)$': 'identity-obj-proxy',
     '\\.(svg)$': '<rootDir>/test/jest-file-mock.js',
   },
-  preset: 'ts-jest/presets/js-with-babel',
+  transform: {
+    // Extracted from https://github.com/kulshekhar/ts-jest/blob/v29.0.3/presets/index.js
+    '^.+\\.tsx?$': [
+      'ts-jest/legacy',
+      {
+        tsconfig: `./tsconfig.test.json`,
+      },
+    ],
+    '^.+\\.jsx?$': 'babel-jest',
+  },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   setupFiles: ['<rootDir>/test/jest-setup-files.js'],
   testPathIgnorePatterns: ['/lib/', '/node_modules/'],
   testRegex: '/test/src/.*.spec.ts$',
-  transformIgnorePatterns: [
-    '/node_modules/(?!((@jupyterlab|y-protocols|yjs|@jupyter/ydoc|lib0)/.*))',
-  ],
-  globals: {
-    'ts-jest': {
-      tsconfig: tsOptions,
-    },
-  },
+  transformIgnorePatterns: [`/node_modules/(?!${esModules}).+`],
+  reporters: ['default', 'github-actions'],
 };

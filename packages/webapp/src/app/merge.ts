@@ -12,7 +12,9 @@ import { Panel, Widget } from '@lumino/widgets';
 
 import { RenderMimeRegistry } from '@jupyterlab/rendermime';
 
-import { defaultSanitizer } from '@jupyterlab/apputils';
+import { Sanitizer } from '@jupyterlab/apputils';
+
+import { createEditorFactory } from 'nbdime/lib/common/editor';
 
 import { NotebookMergeModel } from 'nbdime/lib/merge/model';
 
@@ -49,11 +51,15 @@ function showMerge(data: {
 }): Promise<void> {
   let rendermime = new RenderMimeRegistry({
     initialFactories: rendererFactories,
-    sanitizer: defaultSanitizer,
+    sanitizer: new Sanitizer(),
   });
 
   let nbmModel = new NotebookMergeModel(data.base, data.merge_decisions);
-  let nbmWidget = new NotebookMergeWidget(nbmModel, rendermime);
+  let nbmWidget = new NotebookMergeWidget({
+    model: nbmModel,
+    rendermime,
+    editorFactory: createEditorFactory(),
+  });
 
   let root = document.getElementById('nbdime-root');
   if (!root) {

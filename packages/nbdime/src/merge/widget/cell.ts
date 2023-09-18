@@ -6,11 +6,15 @@ import * as nbformat from '@jupyterlab/nbformat';
 
 import { Panel, Widget } from '@lumino/widgets';
 
+import type { CodeEditor } from '@jupyterlab/codeeditor';
+
 import type { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
 import { CollapsiblePanel } from '../../common/collapsiblepanel';
 
 import { DragPanel } from '../../common/dragpanel';
+
+import type { ICellDiffWidgetOptions } from '../../common/interfaces';
 
 import { createNbdimeMergeView, MergeView } from '../../common/mergeview';
 
@@ -58,25 +62,35 @@ const OUTPUTS_ROW_CLASS = 'jp-Cellrow-outputs';
 const OUTPUTS_CONFLICTED_CLASS = 'jp-conflicted-outputs';
 const MARK_OUTPUTS_RESOLVED_CLASS = 'jp-conflicted-outputs-button';
 
+export interface ICellMergeViewOptions {
+  local: IStringDiffModel | null;
+  remote: IStringDiffModel | null;
+  merged: IDiffModel;
+  readOnly?: boolean;
+  editorClasses: string[];
+  editorFactory?: CodeEditor.Factory;
+}
+
 /**
  * CellMergeWidget for cell changes
  */
 export class CellMergeWidget extends Panel {
-  static createMergeView(
-    local: IDiffModel | null,
-    remote: IDiffModel | null,
-    merged: IDiffModel,
-    editorClasses: string[],
-    readOnly = false,
-  ): Widget | null {
+  static createMergeView({
+    editorFactory,
+    local,
+    remote,
+    merged,
+    readOnly,
+  }: ICellMergeViewOptions): Widget | null {
     let view: Widget | null = null;
     if (merged instanceof StringDiffModel) {
-      view = createNbdimeMergeView(
-        remote as IStringDiffModel | null,
-        local as IStringDiffModel | null,
+      view = createNbdimeMergeView({
+        remote,
+        local,
         merged,
-        readOnly,
-      );
+        readOnly: readOnly ?? false,
+        factory: editorFactory,
+      });
     }
     return view;
   }
@@ -103,13 +117,15 @@ export class CellMergeWidget extends Panel {
   /**
    *
    */
-  constructor(
-    model: CellMergeModel,
-    rendermime: IRenderMimeRegistry,
-    mimetype: string,
-  ) {
+  constructor({
+    editorFactory,
+    model,
+    rendermime,
+    mimetype,
+  }: ICellDiffWidgetOptions<CellMergeModel>) {
     super();
     this.addClass(CELLMERGE_CLASS);
+    this._editorFactory = editorFactory;
     this._model = model;
     this._rendermime = rendermime;
     this.mimetype = mimetype;
@@ -190,12 +206,13 @@ export class CellMergeWidget extends Panel {
     ) {
       CURR_CLASSES = CURR_CLASSES.slice(1, 3);
       // Add single view of source:
-      let view = CellDiffWidget.createView(
-        model.merged.source,
-        model.merged,
-        CURR_CLASSES,
-        this._rendermime,
-      );
+      let view = CellDiffWidget.createView({
+        model: model.merged.source,
+        parent: model.merged,
+        editorClasses: CURR_CLASSES,
+        rendermime: this._rendermime,
+        factory: this._editorFactory,
+      });
       if ((ladd && !radd) || (ldel && !rdel)) {
         this.addClass(ONEWAY_LOCAL_CLASS);
       } else if ((radd && !ladd) || (rdel && !ldel)) {
@@ -214,12 +231,13 @@ export class CellMergeWidget extends Panel {
         // Add single view of rendered output
         let container = new Panel();
         for (let m of model.merged.outputs) {
-          view = CellDiffWidget.createView(
-            m,
-            model.merged,
-            CURR_CLASSES,
-            this._rendermime,
-          );
+          view = CellDiffWidget.createView({
+            model: m,
+            parent: model.merged,
+            editorClasses: CURR_CLASSES,
+            rendermime: this._rendermime,
+            factory: this._editorFactory,
+          });
           container.addWidget(view);
         }
         container.addClass(OUTPUTS_ROW_CLASS);
@@ -246,19 +264,21 @@ export class CellMergeWidget extends Panel {
         model.merged.source.unchanged
       ) {
         // Use single unchanged view of source
-        sourceView = CellDiffWidget.createView(
-          model.merged.source,
-          model.merged,
-          CURR_CLASSES,
-          this._rendermime,
-        );
+        sourceView = CellDiffWidget.createView({
+          model: model.merged.source,
+          parent: model.merged,
+          editorClasses: CURR_CLASSES,
+          rendermime: this._rendermime,
+          factory: this._editorFactory,
+        });
       } else {
-        sourceView = CellMergeWidget.createMergeView(
-          model.local ? model.local.source : null,
-          model.remote ? model.remote.source : null,
-          model.merged.source,
-          CURR_CLASSES,
-        );
+        sourceView = CellMergeWidget.createMergeView({
+          local: model.local ? model.local.source : null,
+          remote: model.remote ? model.remote.source : null,
+          merged: model.merged.source,
+          editorClasses: CURR_CLASSES,
+          editorFactory: this._editorFactory,
+        });
       }
       if (sourceView === null) {
         throw new Error('Was not able to create merge view for cell!');
@@ -285,13 +305,14 @@ export class CellMergeWidget extends Panel {
       }
 
       if (metadataChanged) {
-        let metadataView = CellMergeWidget.createMergeView(
-          model.local ? model.local.metadata : null,
-          model.remote ? model.remote.metadata : null,
-          model.merged.metadata,
-          CURR_CLASSES,
-          true,
-        ); // Do not allow manual edit of metadata
+        let metadataView = CellMergeWidget.createMergeView({
+          local: model.local ? model.local.metadata : null,
+          remote: model.remote ? model.remote.metadata : null,
+          merged: model.merged.metadata,
+          editorClasses: CURR_CLASSES,
+          readOnly: true, // Do not allow manual edit of metadata
+          editorFactory: this._editorFactory,
+        });
         if (metadataView === null) {
           throw new Error(
             'Was not able to create merge view for cell metadata!',
@@ -461,6 +482,7 @@ export class CellMergeWidget extends Panel {
     return this._model;
   }
 
+  private _editorFactory: CodeEditor.Factory | undefined;
   private _model: CellMergeModel;
   private _rendermime: IRenderMimeRegistry;
 }

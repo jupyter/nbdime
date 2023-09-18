@@ -10,7 +10,7 @@ describe('diff', () => {
     describe('MetadataDiffWidget', () => {
       it('should create a widget for an unchanged model', () => {
         let model = createDirectStringDiffModel('{}', '{}');
-        let widget = new MetadataDiffWidget(model);
+        let widget = new MetadataDiffWidget({ model });
         expect(widget).not.toBe(null);
       });
     });

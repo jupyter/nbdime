@@ -2,9 +2,13 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
+import type { CodeEditor } from '@jupyterlab/codeeditor';
+
 import type * as nbformat from '@jupyterlab/nbformat';
 
 import { Panel } from '@lumino/widgets';
+
+import type { IDiffWidgetOptions } from '../../common/interfaces';
 
 import { createNbdimeMergeView, MergeView } from '../../common/mergeview';
 
@@ -18,8 +22,12 @@ const ROOT_METADATA_CLASS = 'jp-Metadata-diff';
  * MetadataWidget for changes to Notebook-level metadata
  */
 export class MetadataMergeWidget extends Panel {
-  constructor(model: MetadataMergeModel) {
+  constructor({
+    model,
+    editorFactory,
+  }: Omit<IDiffWidgetOptions<MetadataMergeModel>, 'rendermime'>) {
     super();
+    this._editorFactory = editorFactory;
     this._model = model;
     this.addClass(ROOT_METADATA_CLASS);
     this.init();
@@ -30,7 +38,12 @@ export class MetadataMergeWidget extends Panel {
 
     // We know/assume that MetadataMergeModel never has
     // null values for local/remote:
-    this.view = createNbdimeMergeView(model.remote, model.local, model.merged);
+    this.view = createNbdimeMergeView({
+      remote: model.remote,
+      local: model.local,
+      merged: model.merged,
+      factory: this._editorFactory,
+    });
     let wrapper = new CollapsiblePanel(
       this.view,
       'Notebook metadata changed',
@@ -54,5 +67,6 @@ export class MetadataMergeWidget extends Panel {
 
   protected view: MergeView;
 
+  private _editorFactory: CodeEditor.Factory | undefined;
   private _model: MetadataMergeModel;
 }

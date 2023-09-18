@@ -8,9 +8,11 @@ import { Panel, Widget } from '@lumino/widgets';
 
 import { RenderMimeRegistry } from '@jupyterlab/rendermime';
 
-import { defaultSanitizer } from '@jupyterlab/apputils';
+import { Sanitizer } from '@jupyterlab/apputils';
 
-import { MathJaxTypesetter } from '@jupyterlab/mathjax2';
+import { MathJaxTypesetter } from '@jupyterlab/mathjax-extension';
+
+import { createEditorFactory } from 'nbdime/lib/common/editor';
 
 import type { IDiffEntry } from 'nbdime/lib/diff/diffentries';
 
@@ -63,15 +65,16 @@ function showDiff(data: {
 }): Promise<void> {
   let rendermime = new RenderMimeRegistry({
     initialFactories: rendererFactories,
-    sanitizer: defaultSanitizer,
-    latexTypesetter: new MathJaxTypesetter({
-      url: getConfigOption('mathjaxUrl'),
-      config: getConfigOption('mathjaxConfig'),
-    }),
+    sanitizer: new Sanitizer(),
+    latexTypesetter: new MathJaxTypesetter(),
   });
 
   let nbdModel = new NotebookDiffModel(data.base, data.diff);
-  let nbdWidget = new NotebookDiffWidget(nbdModel, rendermime);
+  let nbdWidget = new NotebookDiffWidget({
+    model: nbdModel,
+    rendermime,
+    editorFactory: createEditorFactory(),
+  });
 
   let root = document.getElementById('nbdime-root');
   if (!root) {

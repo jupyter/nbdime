@@ -8,6 +8,8 @@ import type {
 
 import { CommandToolbarButton } from '@jupyterlab/apputils';
 
+import { IEditorServices } from '@jupyterlab/codeeditor';
+
 import { PathExt } from '@jupyterlab/coreutils';
 
 import type { DocumentRegistry } from '@jupyterlab/docregistry';
@@ -113,8 +115,12 @@ function addCommands(
   tracker: INotebookTracker,
   rendermime: IRenderMimeRegistry,
   settings: ISettingRegistry.ISettings,
+  editorServices: IEditorServices,
 ): void {
   const { commands, shell } = app;
+  const editorFactory = editorServices.factoryService.newInlineEditor.bind(
+    editorServices.factoryService,
+  );
 
   // Whether we have our server extension available
   let hasAPI = true;
@@ -193,7 +199,8 @@ function addCommands(
     label: erroredGen('Notebook diff'),
     caption: erroredGen('Display nbdiff between two notebooks'),
     isEnabled: baseEnabled,
-    icon: 'jp-Icon jp-Icon-16 action-notebook-diff action-notebook-diff-notebooks',
+    iconClass:
+      'jp-Icon jp-Icon-16 action-notebook-diff action-notebook-diff-notebooks',
     iconLabel: 'nbdiff',
   });
 
@@ -205,6 +212,7 @@ function addCommands(
       }
       let widget = diffNotebookCheckpoint({
         path: current.context.path,
+        editorFactory,
         rendermime,
         hideUnchanged,
       });
@@ -230,6 +238,7 @@ function addCommands(
       }
       let widget = diffNotebookGit({
         path: current.context.path,
+        editorFactory,
         rendermime,
         hideUnchanged,
       });
@@ -253,7 +262,12 @@ function addCommands(
  */
 const nbDiffProvider: JupyterFrontEndPlugin<void> = {
   id: pluginId,
-  requires: [INotebookTracker, IRenderMimeRegistry, ISettingRegistry],
+  requires: [
+    INotebookTracker,
+    IRenderMimeRegistry,
+    ISettingRegistry,
+    IEditorServices,
+  ],
   activate: activateWidgetExtension,
   autoStart: true,
 };
@@ -268,13 +282,14 @@ async function activateWidgetExtension(
   tracker: INotebookTracker,
   rendermime: IRenderMimeRegistry,
   settingsRegistry: ISettingRegistry,
+  editorServices: IEditorServices,
 ): Promise<void> {
   let { commands, docRegistry } = app;
   let extension = new NBDiffExtension(commands);
   docRegistry.addWidgetExtension('Notebook', extension);
 
   const settings = await settingsRegistry.load(pluginId);
-  addCommands(app, tracker, rendermime, settings);
+  addCommands(app, tracker, rendermime, settings, editorServices);
   // Update the command registry when the notebook state changes.
   tracker.currentChanged.connect(() => {
     commands.notifyCommandChanged(CommandIDs.diffNotebookGit);

@@ -4,9 +4,13 @@
 
 import { Panel, Widget } from '@lumino/widgets';
 
+import type { CodeEditor } from '@jupyterlab/codeeditor';
+
 import { createNbdimeMergeView } from '../../common/mergeview';
 
 import { CollapsiblePanel } from '../../common/collapsiblepanel';
+
+import type { IDiffWidgetOptions } from '../../common/interfaces';
 
 import type { IStringDiffModel } from '../model';
 
@@ -18,8 +22,13 @@ const ROOT_METADATA_CLASS = 'jp-Metadata-diff';
  * MetadataWidget for changes to Notebook-level metadata
  */
 export class MetadataDiffWidget extends Panel {
-  constructor(model: IStringDiffModel) {
+  // TODO improve typing hierarchy to avoid `Omit`
+  constructor({
+    model,
+    editorFactory,
+  }: Omit<IDiffWidgetOptions<IStringDiffModel>, 'rendermime'>) {
     super();
+    this._editorFactory = editorFactory;
     this._model = model;
     console.assert(!model.added && !model.deleted);
     this.addClass(ROOT_METADATA_CLASS);
@@ -30,7 +39,10 @@ export class MetadataDiffWidget extends Panel {
     let model = this._model;
     if (!model.unchanged) {
       this.addClass(TWOWAY_DIFF_CLASS);
-      let view: Widget = createNbdimeMergeView(model);
+      let view: Widget = createNbdimeMergeView({
+        remote: model,
+        factory: this._editorFactory,
+      });
       if (model.collapsible) {
         view = new CollapsiblePanel(
           view,
@@ -42,5 +54,6 @@ export class MetadataDiffWidget extends Panel {
     }
   }
 
+  private _editorFactory: CodeEditor.Factory | undefined;
   private _model: IStringDiffModel;
 }

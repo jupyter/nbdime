@@ -4,13 +4,11 @@
 
 import type { ReadonlyJSONObject } from '@lumino/coreutils';
 
-import type { IIterator } from '@lumino/algorithm';
-
 import type { IDiffObjectEntry } from '../diff/diffentries';
 
 import { valueIn, unique } from '../common/util';
 
-export class PatchObjectHelper implements IIterator<string> {
+export class PatchObjectHelper implements Iterator<string> {
   constructor(base: ReadonlyJSONObject, diff: IDiffObjectEntry[] | null) {
     this._diffLUT = {};
     let diffKeys: string[] = [];
@@ -22,6 +20,19 @@ export class PatchObjectHelper implements IIterator<string> {
     }
     this._diffKeys = diffKeys;
     this.baseKeys = _objectKeys(base);
+  }
+
+  keys(): Iterable<string> {
+    this._remainingKeys = this.baseKeys
+      .concat(this._diffKeys)
+      .filter(unique)
+      .sort();
+    const iterator = this;
+    return {
+      [Symbol.iterator](): Iterator<string> {
+        return iterator;
+      },
+    };
   }
 
   isDiffKey(key: string): boolean {
@@ -62,20 +73,14 @@ export class PatchObjectHelper implements IIterator<string> {
     return false;
   }
 
-  iter(): IIterator<string> {
-    this._remainingKeys = this.baseKeys
-      .concat(this._diffKeys)
-      .filter(unique)
-      .sort();
-    return this;
-  }
-
-  keys(): IIterator<string> {
-    return this;
-  }
-
-  next(): string | undefined {
+  next(): IteratorResult<string> {
     let key = this._remainingKeys.shift();
+    if (!key) {
+      return {
+        done: true,
+        value: undefined,
+      };
+    }
     if (key && valueIn(key, this._diffKeys)) {
       let op = this._diffLUT[key].op;
       if (op === 'add') {
@@ -86,17 +91,7 @@ export class PatchObjectHelper implements IIterator<string> {
         this._currentIsAddition = undefined;
       }
     }
-    return key;
-  }
-
-  clone(): IIterator<string> {
-    let c = new PatchObjectHelper({}, null);
-    c.baseKeys = this.baseKeys;
-    c._diffKeys = this._diffKeys;
-    c._currentIsAddition = this._currentIsAddition;
-    c._diffLUT = this._diffLUT;
-    c._remainingKeys = this._remainingKeys.slice();
-    return c;
+    return { value: key, done: false };
   }
 
   baseKeys: string[];

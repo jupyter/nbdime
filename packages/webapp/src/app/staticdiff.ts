@@ -4,8 +4,6 @@
 
 import { saveAs } from 'file-saver';
 
-import { EditorWidget } from 'nbdime/lib/common/editor';
-
 const collapsiblePanelExportJS = `<script>
 var headers = document.getElementsByClassName("jp-CollapsiblePanel-header");
 for (var i=0;i<headers.length;++i){
@@ -22,42 +20,34 @@ for (var i=0;i<headers.length;++i){
 </script>`;
 
 const codeMirrorEllipsisExportStyle = `<style type="text/css">
-.jp-Notebook-diff .CodeMirror-merge-collapsed-widget {
+.jp-Notebook-diff .cm-merge-collapsed-widget {
   cursor: initial;
 }
 
-.CodeMirror-gutters {
+.cm-gutters {
   height: auto !important;
 }
 
-.CodeMirror-sizer, .CodeMirror-scroll {
+.cm-sizer, .cm-scroll {
   margin-bottom: 0 !important;
   padding-bottom: 0 !important;
   margin-right: 0 !important;
   padding-right: 0 !important;
 }
 
-.CodeMirror-hscrollbar, .CodeMirror-vscrollbar,
-.CodeMirror-merge-scrolllock, .CodeMirror-sizer + div {
+.cm-merge-scrolllock, .cm-sizer + div {
   display: none !important;
 }
 
-.CodeMirror-scroll {
-  overflow: auto !important;
+.cm-scroll {
+  overflow-x: auto;
 }
 </style>`;
 
 function ensureRendered(callback: () => void): void {
-  for (let e of EditorWidget.editors) {
-    e.setOption('viewportMargin', Infinity);
-  }
   window.requestAnimationFrame(() => {
     // Assume entire viewport has been rendered now
     callback();
-    for (let e of EditorWidget.editors) {
-      // Reset to default according to docs
-      e.setOption('viewportMargin', 10);
-    }
   });
 }
 

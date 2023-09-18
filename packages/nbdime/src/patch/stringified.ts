@@ -8,8 +8,6 @@ import type {
   ReadonlyJSONObject,
 } from '@lumino/coreutils';
 
-import { each } from '@lumino/algorithm';
-
 import { valueIn, repeatString } from '../common/util';
 
 import { JSON_INDENT, flattenStringDiff } from '../diff/util';
@@ -24,9 +22,8 @@ import {
 
 import { DiffRangeRaw } from '../diff/range';
 
+import * as stableStringify from 'json-stable-stringify';
 import { PatchObjectHelper } from './common';
-
-import stableStringify = require('json-stable-stringify');
 
 // Workaround for TS issue #17002
 declare global {
@@ -69,7 +66,7 @@ export function stringify(
   level?: number,
   indentFirst: boolean = true,
 ): string {
-  let ret = stableStringify(values, { space: JSON_INDENT });
+  let ret = stableStringify.default(values, { space: JSON_INDENT });
   if (level) {
     ret = _indent(ret, level, indentFirst);
   }
@@ -221,7 +218,7 @@ function patchStringifiedObject(
   // Object is dict. As diff keys should be unique, create map for easy processing
   let helper = new PatchObjectHelper(base, diff);
   let baseKeys = helper.baseKeys.slice();
-  each(helper.keys(), key => {
+  for (const key of helper.keys()) {
     let keyString = _makeKeyString(key, level + 1);
     if (helper.isDiffKey(key)) {
       // Entry has a change
@@ -298,7 +295,7 @@ function patchStringifiedObject(
       remote += val;
       baseIndex += val.length;
     }
-  });
+  }
 
   // Stringify correctly
   if (remote.slice(remote.length - postfix.length) === postfix) {

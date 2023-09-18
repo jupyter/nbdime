@@ -4,9 +4,13 @@
 
 import type * as nbformat from '@jupyterlab/nbformat';
 
+import type { CodeEditor } from '@jupyterlab/codeeditor';
+
 import type { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
 import { Panel } from '@lumino/widgets';
+
+import type { IDiffWidgetOptions } from '../../common/interfaces';
 
 import { hasEntries, deepCopy } from '../../common/util';
 
@@ -29,8 +33,13 @@ const NB_MERGE_CONTROLS_CLASS = 'jp-Merge-notebook-controls';
  * NotebookMergeWidget
  */
 export class NotebookMergeWidget extends Panel {
-  constructor(model: NotebookMergeModel, rendermime: IRenderMimeRegistry) {
+  constructor({
+    editorFactory,
+    model,
+    rendermime,
+  }: IDiffWidgetOptions<NotebookMergeModel>) {
     super();
+    this._editorFactory = editorFactory;
     this._model = model;
     this._rendermime = rendermime;
 
@@ -50,7 +59,10 @@ export class NotebookMergeWidget extends Panel {
     this.addWidget(new NotebookMergeControls(model));
     work = work.then(() => {
       if (model.metadata) {
-        this.metadataWidget = new MetadataMergeWidget(model.metadata);
+        this.metadataWidget = new MetadataMergeWidget({
+          model: model.metadata,
+          editorFactory: this._editorFactory,
+        });
         this.addWidget(this.metadataWidget);
       }
     });
@@ -67,7 +79,12 @@ export class NotebookMergeWidget extends Panel {
     for (let c of model.cells) {
       work = work.then(() => {
         return new Promise<void>(resolve => {
-          let w = new CellMergeWidget(c, rendermime, model.mimetype);
+          let w = new CellMergeWidget({
+            model: c,
+            rendermime,
+            mimetype: model.mimetype,
+            editorFactory: this._editorFactory,
+          });
           this.cellWidgets.push(w);
           if (c.onesided && c.conflicted) {
             if (chunk === null) {
@@ -179,6 +196,7 @@ export class NotebookMergeWidget extends Panel {
   protected cellWidgets: CellMergeWidget[];
   protected cellContainer: CellsDragDrop;
 
+  private _editorFactory: CodeEditor.Factory | undefined;
   private _model: NotebookMergeModel;
   private _rendermime: IRenderMimeRegistry;
 }

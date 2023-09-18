@@ -73,7 +73,6 @@ def test_git_difftool(git_repo2, server_extension_app):
     # Extract config data
     match = _re_config.search(r.text)
     data = json.loads(match.group(1))
-    assert data.pop("mathjaxUrl", "").endswith("MathJax.js")
     assert data == {
         "base": "git:",
         "baseUrl": "/nbdime",
@@ -81,7 +80,6 @@ def test_git_difftool(git_repo2, server_extension_app):
         "remote": "",
         "savable": False,
         "hideUnchanged": True,
-        "mathjaxConfig": "TeX-AMS-MML_HTMLorMML-full,Safe",
     }
 
 

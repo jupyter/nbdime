@@ -15,14 +15,11 @@ import {
   toolClosed,
 } from './app/common';
 
+import '@jupyterlab/notebook/style/index.js';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import '@fortawesome/fontawesome-free/css/v4-shims.min.css';
 
-import 'codemirror/lib/codemirror.css';
-import '@jupyterlab/codemirror/style/index.css';
-
 import '@jupyterlab/theme-light-extension/style/theme.css';
-import '@jupyterlab/notebook/style/index.css';
 
 import 'nbdime/lib/common/collapsible.css';
 import 'nbdime/lib/upstreaming/flexpanel.css';

@@ -4,7 +4,7 @@
     "declaration": true,
     "declarationMap": true,
     "lib": ["dom", "es6"],
-    "module": "commonjs",
+    "module": "esnext",
     "moduleResolution": "node",
     "noEmitOnError": true,
     "pretty": true,
@@ -16,7 +16,7 @@
     "esModuleInterop": true,
     "noImplicitReturns": true,
     "resolveJsonModule": true,
-    "importsNotUsedAsValues": "error",
-    "strictPropertyInitialization": false
+    "strictPropertyInitialization": false,
+    "importsNotUsedAsValues": "error"
   }
 }
