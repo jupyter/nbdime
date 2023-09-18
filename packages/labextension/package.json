@@ -1,6 +1,6 @@
 {
   "name": "nbdime-jupyterlab",
-  "version": "2.2.0",
+  "version": "3.0.0-alpha.0",
   "description": "A JupyterLab extension for showing Notebook diffs.",
   "keywords": [
     "jupyter",
@@ -54,7 +54,7 @@
     "@lumino/coreutils": "^2.1.2",
     "@lumino/disposable": "^2.1.2",
     "@lumino/widgets": "^2.3.0",
-    "nbdime": "^6.2.0"
+    "nbdime": "^7.0.0-alpha.0"
   },
   "devDependencies": {
     "@jupyterlab/application": "^4.0.0",
