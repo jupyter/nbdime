@@ -691,7 +691,7 @@ Add a gap DOM element between 2 editors
                 !hasEntries(s.decision.localDiff) &&
                 !hasEntries(s.decision.remoteDiff)
               ) {
-                // We have a custom decision, add picker on base only!*/
+                // We have a custom decision, add picker on base only!
                 effects = effects.concat(
                   this.createGutterEffects(
                     editor,
@@ -727,6 +727,7 @@ Add a gap DOM element between 2 editors
         }
       }
       if (chunkFirstLine === chunkLastLine) {
+        // When the chunk is empty, make sure a horizontal line shows up
         const startingOffset = posToOffset(editor.state.doc, {
           line: chunkFirstLine,
           column: 0,
@@ -750,13 +751,14 @@ Add a gap DOM element between 2 editors
             ),
           );
         } else if (conflict) {
+          // Add conflict markers on editor, if conflicted
           effects = effects.concat(
             this.createGutterEffects(
               editor,
               chunk,
               startingOffset,
               true,
-              'picker',
+              'conflict',
             ),
           );
         }
