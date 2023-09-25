@@ -1695,6 +1695,26 @@ export class MergeView extends Panel {
 
     const sumDeltas = new Array(editors.length).fill(0);
     const nLines = editors.map(editor => editor.state.doc.lines);
+    let processViewportAlignement = false;
+    const viewports = editors.map(e => ({
+      from: offsetToPos(e.state.doc, e.viewport.from),
+      to: offsetToPos(e.state.doc, e.viewport.to),
+    }));
+
+    const addStartSpacers = () => {
+      sumDeltas.forEach((delta, i) => {
+        const from = editors[i].viewport.from;
+        builders[i].add(
+          from,
+          from,
+          Decoration.widget({
+            widget: new PaddingWidget(delta * lineHeight),
+            block: true,
+            side: -1,
+          }),
+        );
+      });
+    };
 
     for (const alignment_ of linesToAlign) {
       const alignment = this._showBase ? alignment_.slice(0, 3) : alignment_;
@@ -1709,41 +1729,66 @@ export class MergeView extends Panel {
         : Math.min(...lineDeltas.slice(1));
       const correctedDeltas = lineDeltas.map(line => line - minDelta);
 
-      correctedDeltas.forEach((delta, i) => {
-        // Don't compute anything for the base editor if it is hidden
-        if (!this._showBase && i === 0) {
-          return;
-        }
-        // Alignments are zero-based
-        let line = alignment[i];
+      const afterViewport = alignment.map((a, i) => a > viewports[i].to.line);
+      if (!afterViewport.some(after => !after)) {
+        // All follow-up alignments are after the viewport => bail out
+        break;
+      }
 
-        if (delta > 0 && line < nLines[i]) {
+      const beforeViewport = alignment.map(
+        (a, i) => a < viewports[i].from.line,
+      );
+
+      if (beforeViewport.some(before => !before)) {
+        if (!processViewportAlignement) {
+          // First time we add spacer in the viewport => add initial spacers
+          addStartSpacers();
+        }
+        processViewportAlignement = true;
+
+        correctedDeltas.forEach((delta, i) => {
+          // Don't compute anything for the base editor if it is hidden
+          if (!this._showBase && i === 0) {
+            return;
+          }
+          const line = alignment[i];
+
+          if (line < nLines[i]) {
+            sumDeltas[i] += delta;
+
+            const offset = posToOffset(editors[i].state.doc, {
+              line,
+              column: 0,
+            });
+
+            builders[i].add(
+              offset,
+              offset,
+              Decoration.widget({
+                widget: new PaddingWidget(delta * lineHeight),
+                block: true,
+                side: -1,
+              }),
+            );
+          }
+        });
+      } else {
+        correctedDeltas.forEach((delta, i) => {
           sumDeltas[i] += delta;
+        });
+      }
+    }
 
-          // This method include the correction from zero-based lines to one-based lines
-          const offset = posToOffset(editors[i].state.doc, {
-            line,
-            column: 0,
-          });
-
-          builders[i].add(
-            offset,
-            offset,
-            Decoration.widget({
-              widget: new PaddingWidget(delta * lineHeight),
-              block: true,
-              side: -1,
-            }),
-          );
-        }
-      });
+    if (!processViewportAlignement) {
+      // There are no spacer in the viewport, we still have to add top spacer
+      addStartSpacers();
     }
 
     // Padding at the last line of the editor
     const totalHeight = nLines.map((line, i) => line + sumDeltas[i]);
     const maxHeight = Math.max(...totalHeight);
     totalHeight.slice(0, this._showBase ? 3 : 4).forEach((line, i) => {
-      if (maxHeight > line) {
+      if (maxHeight > line && viewports[i].to.line === nLines[i]) {
         const end = editors[i].state.doc.length;
         const delta = maxHeight - line;
         sumDeltas[i] += delta;
