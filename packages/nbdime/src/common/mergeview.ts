@@ -1387,10 +1387,6 @@ export class MergeView extends Panel {
           effects: replacePaddingWidgetEffect.of(decoSet),
         });
       }
-      console.log(
-        'after addition of paddings, number of lines is:',
-        editors[i].state.doc.lines,
-      );
     }
     this._aligning = false;
   }
