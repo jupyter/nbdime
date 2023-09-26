@@ -6,15 +6,20 @@
 }
 
 /* Comparing base vs remote, default */
+.nbdime-Diff #nbdime-header-banner {
+  /* editor | gap | editor */
+  grid-template-columns: 47% 6% 47%;
+}
+
 .nbdime-Diff #nbdime-header-base {
+  grid-column: 1;
   display: inline-block;
-  width: 50%;
   background-color: var(--jp-diff-deleted-color0);
 }
 
 .nbdime-Diff #nbdime-header-remote {
+  grid-column: 3;
   display: inline-block;
-  width: 49%;
   background-color: var(--jp-diff-added-color0);
 }
 

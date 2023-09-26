@@ -235,6 +235,7 @@
 
 .jp-Notebook-diff .jp-Cellrow-source .jp-InputPrompt {
   text-align: left;
+  width: 100%;
 }
 
 .jp-CollapsiblePanel-container {

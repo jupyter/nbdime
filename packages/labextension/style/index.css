@@ -60,20 +60,24 @@ padding-left: 8px;
 padding-right: 8px;
 }
 
+.nbdime-Diff .nbdime-header-banner {
+display: grid;
+/* editor | gap | editor */
+grid-template-columns: 47% 6% 47%;
+}
+
 .nbdime-Diff .nbdime-header-base {
+grid-column: 1;
 display: inline-block;
-width: calc(50% - 8px);
 background-color: var(--jp-diff-deleted-color0);
 padding: 0px 4px;
-vertical-align: top;
 }
 
 .nbdime-Diff .nbdime-header-remote {
+grid-column: 3;
 display: inline-block;
-width: calc(49% - 8px);
 background-color: var(--jp-diff-added-color0);
 padding: 0px 4px;
-vertical-align: top;
 }
 
 .nbdime-Diff .nbdime-header-local {
