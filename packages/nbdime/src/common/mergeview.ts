@@ -130,15 +130,16 @@ const mergeViewDecorationDict: MergeViewDecorationDict = {
  * @returns Editor extensions
  */
 function getCommonEditorExtensions(isMergeView = true): Extension {
-  const extensions =  [
-    highlightField,
-    paddingWidgetField,
-  ];
+  const extensions = [highlightField, paddingWidgetField];
 
-  return isMergeView ? [...extensions, 
-    gutterMarkerField,
-    pickerLineChunkMappingField,
-    conflictMarkerLineChunkMappingField,] : extensions;
+  return isMergeView
+    ? [
+        ...extensions,
+        gutterMarkerField,
+        pickerLineChunkMappingField,
+        conflictMarkerLineChunkMappingField,
+      ]
+    : extensions;
 }
 
 function applyMapping({ from, to }: any, mapping: ChangeDesc) {
@@ -570,8 +571,10 @@ export class DiffView {
     }
     // Force scroll synchronization in case it was not synchronize
     window.requestAnimationFrame(() => {
-      this._remoteEditorWidget.cm.scrollDOM.scrollLeft = this._baseEditorWidget.cm.scrollDOM.scrollLeft;
-      this._remoteEditorWidget.cm.scrollDOM.scrollTop = this._baseEditorWidget.cm.scrollDOM.scrollTop;
+      this._remoteEditorWidget.cm.scrollDOM.scrollLeft =
+        this._baseEditorWidget.cm.scrollDOM.scrollLeft;
+      this._remoteEditorWidget.cm.scrollDOM.scrollTop =
+        this._baseEditorWidget.cm.scrollDOM.scrollTop;
     });
   }
 
@@ -592,27 +595,35 @@ export class DiffView {
     }
     let srcScroller = srcEditor.scrollDOM;
     let destScroller = destEditor.scrollDOM;
-    srcScroller.addEventListener('scroll', event => {
-      if(!this._lockScroll) {
-        return;
-      }
+    srcScroller.addEventListener(
+      'scroll',
+      event => {
+        if (!this._lockScroll) {
+          return;
+        }
 
-      window.requestAnimationFrame(function () {
-        destScroller.scrollLeft = srcScroller.scrollLeft;
-        destScroller.scrollTop = srcScroller.scrollTop;
-      });
-    }, {passive: true});
+        window.requestAnimationFrame(function () {
+          destScroller.scrollLeft = srcScroller.scrollLeft;
+          destScroller.scrollTop = srcScroller.scrollTop;
+        });
+      },
+      { passive: true },
+    );
 
-    destScroller.addEventListener('scroll', event => {
-      if(!this._lockScroll) {
-        return;
-      }
+    destScroller.addEventListener(
+      'scroll',
+      event => {
+        if (!this._lockScroll) {
+          return;
+        }
 
-      window.requestAnimationFrame(function () {
-        srcScroller.scrollLeft = destScroller.scrollLeft;
-        srcScroller.scrollTop = destScroller.scrollTop;
-      });
-    }, {passive: true});
+        window.requestAnimationFrame(function () {
+          srcScroller.scrollLeft = destScroller.scrollLeft;
+          srcScroller.scrollTop = destScroller.scrollTop;
+        });
+      },
+      { passive: true },
+    );
   }
 
   /**
@@ -1224,17 +1235,13 @@ export class MergeView extends Panel {
      *     - Partial changes: Use base + right editor
      */
     const inMergeView = !!merged;
-    const additionalExtensions: Extension = inMergeView ? [listener,
-      mergeControlGutter,
-      getCommonEditorExtensions(inMergeView)] : 
-      getCommonEditorExtensions(inMergeView)
+    const additionalExtensions: Extension = inMergeView
+      ? [listener, mergeControlGutter, getCommonEditorExtensions(inMergeView)]
+      : getCommonEditorExtensions(inMergeView);
 
     this._base = new EditorWidget({
       ...options,
-      extensions: [
-        options.extensions ?? [],
-        additionalExtensions,
-      ],
+      extensions: [options.extensions ?? [], additionalExtensions],
       value,
     });
 
@@ -1261,10 +1268,7 @@ export class MergeView extends Panel {
           ...options,
           // Copy configuration
           config: { ...options.config },
-          extensions: [
-            options.extensions ?? [],
-            additionalExtensions,
-          ],
+          extensions: [options.extensions ?? [], additionalExtensions],
         });
         this._diffViews.push(left);
         leftWidget = left.remoteEditorWidget;
@@ -1289,10 +1293,7 @@ export class MergeView extends Panel {
           ...options,
           // Copy configuration
           config: { ...options.config },
-          extensions: [
-            options.extensions ?? [],
-            additionalExtensions,
-          ],
+          extensions: [options.extensions ?? [], additionalExtensions],
         });
         this._diffViews.push(right);
         rightWidget = right.remoteEditorWidget;
@@ -1305,10 +1306,7 @@ export class MergeView extends Panel {
         ...options,
         // Copy configuration
         config: { ...options.config, readOnly },
-        extensions: [
-          options.extensions ?? [],
-          additionalExtensions,
-        ],
+        extensions: [options.extensions ?? [], additionalExtensions],
       });
       this._diffViews.push(merge);
       let mergeWidget = merge.remoteEditorWidget;
@@ -1336,10 +1334,7 @@ export class MergeView extends Panel {
           ...options,
           // Copy configuration
           config: { ...options.config },
-          extensions: [
-            options.extensions ?? [],
-            additionalExtensions,
-          ],
+          extensions: [options.extensions ?? [], additionalExtensions],
         });
         this._diffViews.push(right);
         let rightWidget = right.remoteEditorWidget;
