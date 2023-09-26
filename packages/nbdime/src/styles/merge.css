@@ -225,7 +225,6 @@
 .jp-Notebook-merge .cm-central-editor .cm-line .cm-merge-l-deleted,
 .jp-Notebook-merge .cm-central-editor .cm-line .cm-merge-r-deleted {
   background-color: initial;
-  color: #b00;
 }
 
 .jp-Notebook-merge .CodeMirror-gutter-wrapper {
