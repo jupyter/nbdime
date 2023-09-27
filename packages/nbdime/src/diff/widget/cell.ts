@@ -198,7 +198,7 @@ export class CellDiffWidget extends Panel {
       prompts.push(remoteStr);
     }
     const container = new Panel();
-    container.addClass('cm-merge-2pane');
+    container.addClass(`cm-merge-${prompts.length}pane`);
     for (let text of prompts) {
       let w = new Widget();
       w.node.innerText = text;
