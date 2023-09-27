@@ -10,6 +10,10 @@
   "directories": {
     "lib": "lib/"
   },
+  "files": [
+    "lib/**/*.{js,js.map,d.ts}",
+    "src/**/*.ts"
+  ],
   "scripts": {
     "build": "tsc --project . && node scripts/copy-files.js",
     "build:dev": "tsc --project .",

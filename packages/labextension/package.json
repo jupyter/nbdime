@@ -25,7 +25,8 @@
     "lib/*.js.map",
     "lib/*.d.ts",
     "style/*.css",
-    "schema/*.json"
+    "schema/*.json",
+    "src/*.ts"
   ],
   "style": "style/index.css",
   "scripts": {
