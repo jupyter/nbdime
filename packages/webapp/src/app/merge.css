@@ -5,11 +5,10 @@
   z-index: 0;
 }
 
-.nbdime-Merge #nbdime-header-base,
-.nbdime-Merge #nbdime-header-remote,
-.nbdime-Merge #nbdime-header-local {
-  display: inline-block;
-  width: 33%;
+.nbdime-Merge #nbdime-header-banner {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
 }
 
 .nbdime-Merge #nbdime-header-local {

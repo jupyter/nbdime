@@ -1250,14 +1250,8 @@ export class MergeView extends Panel {
 
     // START MERGE CASE
     if (merged) {
-      this._gridPanel = new Panel();
-      this.addWidget(this._gridPanel);
-      this._gridPanel.addClass('cm-merge-grid-panel');
-      let showBase = options.showBase !== false;
-
-      if (!showBase) {
-        this._base.node.style.display = 'hidden';
-      }
+      this.addClass('cm-merge-grid-panel');
+      let showBase = this._showBase = options.showBase !== false;
 
       let leftWidget: Widget;
       if (!local || local.remote === null) {
@@ -1276,11 +1270,11 @@ export class MergeView extends Panel {
         this._diffViews.push(left);
         leftWidget = left.remoteEditorWidget;
       }
-      this._gridPanel.addWidget(leftWidget);
+      this.addWidget(leftWidget);
       leftWidget.addClass('cm-merge-left-editor');
 
       if (showBase) {
-        this._gridPanel.addWidget(this._base);
+        this.addWidget(this._base);
         this._base.addClass('cm-central-editor');
       }
 
@@ -1301,7 +1295,7 @@ export class MergeView extends Panel {
         this._diffViews.push(right);
         rightWidget = right.remoteEditorWidget;
       }
-      this._gridPanel.addWidget(rightWidget);
+      this.addWidget(rightWidget);
       rightWidget.addClass('cm-merge-pane');
       rightWidget.addClass('cm-merge-right-editor');
 
@@ -1313,7 +1307,10 @@ export class MergeView extends Panel {
       });
       this._diffViews.push(merge);
       let mergeWidget = merge.remoteEditorWidget;
-      this._gridPanel.addWidget(mergeWidget);
+      if(showBase){
+      this.addWidget(mergeWidget);} else {
+        this.insertWidget(1, mergeWidget)
+      }
       mergeWidget.addClass('cm-merge-editor');
       //END MERGE CASE
       panes = 3 + (showBase ? 1 : 0);
@@ -1363,7 +1360,7 @@ export class MergeView extends Panel {
    * Align the matching lines of the different editors
    */
   alignViews() {
-    let lineHeight = this._base.cm.defaultLineHeight;
+    let lineHeight = this._showBase ? this._base.cm.defaultLineHeight : this._diffViews[0].remoteEditorWidget.cm.defaultLineHeight;
     if (this._aligning) {
       return;
     }
@@ -1373,11 +1370,8 @@ export class MergeView extends Panel {
 
     // Function modifying DOM to perform alignment:
     let self: MergeView = this;
-    let editors: EditorView[] = [self.base.cm];
+    let editors: EditorView[] = [self.base.cm, ...self._diffViews.map(dv => dv.remoteEditorWidget.cm)];
     let builders: RangeSetBuilder<Decoration>[] = [];
-    for (let dv of self._diffViews) {
-      editors.push(dv.remoteEditorWidget.cm);
-    }
     for (let i = 0; i < editors.length; i++) {
       builders.push(new RangeSetBuilder<Decoration>());
     }
@@ -1386,17 +1380,23 @@ export class MergeView extends Panel {
     let nLines = editors.map(editor => editor.state.doc.lines);
 
     for (let alignment_ of linesToAlign) {
-      let alignment = alignment_.slice(0, 3);
+      let alignment = this._showBase ? alignment_.slice(0, 3) : alignment_;
       let lastLine = Math.max(...alignment);
       let lineDeltas = alignment.map(
         (line, i) => lastLine - line - sumDeltas[i],
       );
       // If some paddings will be before the current line, it means all other editors
       // must add a padding.
-      let minDelta = Math.min(...lineDeltas);
+      let minDelta = this._showBase ? Math.min(...lineDeltas) : Math.min(...lineDeltas.slice(1));
       let correctedDeltas = lineDeltas.map(line => line - minDelta);
+      console.log(alignment, correctedDeltas)
 
       correctedDeltas.forEach((delta, i) => {
+        // Don't compute anything for the base editor if it is hidden
+        if(!this._showBase && i === 0) {
+          return;
+        }
+
         let side = -1;
         let line = alignment[i];
 
@@ -1442,6 +1442,16 @@ export class MergeView extends Panel {
     });
 
     for (let i = 0; i < editors.length; i++) {
+      // Don't update spacers on base if it is hidden.
+      if(i===0 && !this._showBase) {
+        continue;
+      }
+
+      // Don't insert spacers on merge if base is shown
+      if(i === editors.length -1 && this._showBase) {
+        continue;
+      }
+
       let decoSet: DecorationSet = builders[i].finish();
       if (
         !RangeSet.eq([decoSet], [editors[i].state.field(paddingWidgetField)])
@@ -1597,6 +1607,7 @@ export class MergeView extends Panel {
   private _diffViews: DiffView[];
   private _aligning: boolean;
   private _measuring: number;
+  private _showBase = true;
 }
 
 /**
