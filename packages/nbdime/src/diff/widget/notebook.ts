@@ -4,8 +4,6 @@
 
 import { Panel } from '@lumino/widgets';
 
-import type { CodeEditor } from '@jupyterlab/codeeditor';
-
 import type { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
 import { CellDiffWidget } from './cell';
@@ -18,7 +16,9 @@ import {
 
 import { MetadataDiffWidget } from './metadata';
 
-import type { IDiffWidgetOptions } from '../../common/interfaces';
+import { DiffPanel } from '../../common/basepanel';
+
+import type { IMimeDiffWidgetOptions } from '../../common/interfaces';
 
 import type { NotebookDiffModel } from '../model';
 
@@ -27,15 +27,12 @@ const NBDIFF_CLASS = 'jp-Notebook-diff';
 /**
  * NotebookDiffWidget
  */
-export class NotebookDiffWidget extends Panel {
+export class NotebookDiffWidget extends DiffPanel<NotebookDiffModel> {
   constructor({
-    editorFactory,
-    model,
     rendermime,
-  }: IDiffWidgetOptions<NotebookDiffModel>) {
-    super();
-    this._editorFactory = editorFactory;
-    this._model = model;
+    ...others
+  }: IMimeDiffWidgetOptions<NotebookDiffModel>) {
+    super(others);
     this._rendermime = rendermime;
     this.addClass(NBDIFF_CLASS);
   }
@@ -115,7 +112,5 @@ export class NotebookDiffWidget extends Panel {
     return this._model;
   }
 
-  private _editorFactory: CodeEditor.Factory | undefined;
-  private _model: NotebookDiffModel;
   private _rendermime: IRenderMimeRegistry;
 }
