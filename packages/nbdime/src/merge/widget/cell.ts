@@ -212,7 +212,7 @@ export class CellMergeWidget extends MergePanel<CellMergeModel> {
         parent: model.merged,
         editorClasses: CURR_CLASSES,
         rendermime: this._rendermime,
-        factory: this._editorFactory,
+        editorFactory: this._editorFactory,
       });
       if ((ladd && !radd) || (ldel && !rdel)) {
         this.addClass(ONEWAY_LOCAL_CLASS);
@@ -237,7 +237,7 @@ export class CellMergeWidget extends MergePanel<CellMergeModel> {
             parent: model.merged,
             editorClasses: CURR_CLASSES,
             rendermime: this._rendermime,
-            factory: this._editorFactory,
+            editorFactory: this._editorFactory,
           });
           container.addWidget(view);
         }
@@ -270,7 +270,7 @@ export class CellMergeWidget extends MergePanel<CellMergeModel> {
           parent: model.merged,
           editorClasses: CURR_CLASSES,
           rendermime: this._rendermime,
-          factory: this._editorFactory,
+          editorFactory: this._editorFactory,
         });
       } else {
         sourceView = CellMergeWidget.createMergeView({
