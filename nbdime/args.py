@@ -465,6 +465,12 @@ def add_merge_args(parser):
         default=True,
         help="disallow deletion of transient data such as outputs and "
              "execution counts in order to resolve conflicts.")
+    parser.add_argument(
+        '--no-base',
+        dest='show_base',
+        action="store_false",
+        default=True,
+        help="Don't display the base version.")
 
 
 filename_help = {
@@ -532,6 +538,7 @@ def args_for_server(arguments):
                 workdirectory='cwd',
                 base_url='base_url',
                 hide_unchanged='hide_unchanged',
+                show_base='show_base',
                 )
     ret = {kmap[k]: v for k, v in vars(arguments).items() if k in kmap}
     if 'persist' in arguments:

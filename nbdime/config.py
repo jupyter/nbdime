@@ -256,6 +256,11 @@ class Merge(_Diffing):
              "execution counts in order to resolve conflicts.",
     ).tag(config=True)
 
+    show_base = Bool(
+        True,
+        help="Whether to show the base version (4-panels) or not (3-panels).",
+    ).tag(config=True)
+
 
 class GitDiff(Diff):
     use_filter = Bool(

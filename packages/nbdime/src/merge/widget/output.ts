@@ -137,8 +137,10 @@ export class RenderableOutputsMergeView extends DragDropPanel {
     base: nbformat.IOutput[] | null,
     remote: nbformat.IOutput[] | null,
     local: nbformat.IOutput[] | null,
+    showBase = true
   ) {
     super();
+    this.showBase = showBase
     this.addClass(REORDERABLE_OUTPUT_CLASS);
 
     if (!base !== !remote || !base !== !local) {
@@ -184,7 +186,7 @@ export class RenderableOutputsMergeView extends DragDropPanel {
       row.addWidget(leftPane);
       this.panes.push(leftPane);
     }
-    if (this.base) {
+    if (this.base && this.showBase) {
       let basePane = new OutputArea({
         model: this.base,
         rendermime: this.rendermime,
@@ -386,4 +388,6 @@ export class RenderableOutputsMergeView extends DragDropPanel {
   panes: OutputArea[];
 
   rendermime: IRenderMimeRegistry;
+
+  protected showBase: boolean;
 }

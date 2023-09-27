@@ -44,6 +44,8 @@ import {
   createEditorFactory,
 } from './editor';
 
+import type { IMergeWidgetOptions } from './interfaces';
+
 import { valueIn, hasEntries, splitLines } from './util';
 
 const PICKER_SYMBOL = '\u27ad';
@@ -510,11 +512,26 @@ const CollapsedRangesField = StateField.define<DecorationSet>({
   provide: f => EditorView.decorations.from(f),
 });
 
-export interface IMergeViewOptions {
+/**
+ * Merge view factory options
+ */
+export interface IMergeViewOptions extends Partial<IMergeWidgetOptions> {
+  /**
+   * Diff between the reference and a remote version
+   */
   remote: IStringDiffModel | null;
+  /**
+   * Diff between the reference and a local version
+   */
   local?: IStringDiffModel | null;
+  /**
+   * Diff between the reference and the merged version
+   */
   merged?: IStringDiffModel;
   readOnly?: boolean | string;
+  /**
+   * Text editor factory
+   */
   factory?: CodeEditor.Factory;
 }
 
@@ -522,13 +539,14 @@ export interface IMergeViewOptions {
  * A wrapper view for showing StringDiffModels in a MergeView
  */
 export function createNbdimeMergeView(options: IMergeViewOptions): MergeView {
-  const { remote, local, merged, readOnly, factory } = options;
+  const { remote, local, merged, readOnly, factory, showBase } = options;
   let opts: IMergeViewEditorConfiguration = {
     remote,
     local,
     merged,
     config: { readOnly },
     factory: factory ?? createEditorFactory(),
+    showBase
   };
 
   let mergeview = new MergeView(opts);

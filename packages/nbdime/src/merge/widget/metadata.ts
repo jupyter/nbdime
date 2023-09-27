@@ -2,17 +2,15 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import type { CodeEditor } from '@jupyterlab/codeeditor';
-
 import type * as nbformat from '@jupyterlab/nbformat';
 
-import { Panel } from '@lumino/widgets';
-
-import type { IDiffWidgetOptions } from '../../common/interfaces';
+import type { IDiffWidgetOptions, IMergeWidgetOptions } from '../../common/interfaces';
 
 import { createNbdimeMergeView, MergeView } from '../../common/mergeview';
 
 import { CollapsiblePanel } from '../../common/collapsiblepanel';
+
+import { MergePanel } from '../../common/basepanel';
 
 import type { MetadataMergeModel } from '../model';
 
@@ -21,20 +19,15 @@ const ROOT_METADATA_CLASS = 'jp-Metadata-diff';
 /**
  * MetadataWidget for changes to Notebook-level metadata
  */
-export class MetadataMergeWidget extends Panel {
-  constructor({
-    model,
-    editorFactory,
-  }: Omit<IDiffWidgetOptions<MetadataMergeModel>, 'rendermime'>) {
-    super();
-    this._editorFactory = editorFactory;
-    this._model = model;
+export class MetadataMergeWidget extends MergePanel<MetadataMergeModel> {
+  constructor(options: IDiffWidgetOptions<MetadataMergeModel> & IMergeWidgetOptions) {
+    super(options);
     this.addClass(ROOT_METADATA_CLASS);
     this.init();
   }
 
   init() {
-    let model = this._model;
+    const model = this._model;
 
     // We know/assume that MetadataMergeModel never has
     // null values for local/remote:
@@ -44,7 +37,7 @@ export class MetadataMergeWidget extends Panel {
       merged: model.merged,
       factory: this._editorFactory,
     });
-    let wrapper = new CollapsiblePanel(
+    const wrapper = new CollapsiblePanel(
       this.view,
       'Notebook metadata changed',
       true,
@@ -55,7 +48,7 @@ export class MetadataMergeWidget extends Panel {
   validateMerged(
     candidate: nbformat.INotebookMetadata,
   ): nbformat.INotebookMetadata {
-    let text = this.view.getMergedValue();
+    const text = this.view.getMergedValue();
     if (JSON.stringify(candidate) !== text) {
       // This will need to be validated server side,
       // and should not be touched by client side
@@ -66,7 +59,4 @@ export class MetadataMergeWidget extends Panel {
   }
 
   protected view: MergeView;
-
-  private _editorFactory: CodeEditor.Factory | undefined;
-  private _model: MetadataMergeModel;
 }

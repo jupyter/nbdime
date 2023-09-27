@@ -189,6 +189,7 @@ class MainMergeHandler(NbdimeHandler):
         args['base'] = self.get_argument('base', '')
         args['local'] = self.get_argument('local', '')
         args['remote'] = self.get_argument('remote', '')
+        args['showBase'] = self.params.get('show_base', True)
         self.write(self.render_template('merge.html',
                     config_data=args,
                    ))
@@ -201,10 +202,12 @@ class MainMergetoolHandler(NbdimeHandler):
             args['base'] = self.params['mergetool_args']['base']
             args['local'] = self.params['mergetool_args']['local']
             args['remote'] = self.params['mergetool_args']['remote']
+            args['showBase'] = self.params.get('show_base', True)
         else:
             args['base'] = self.get_argument('base', '')
             args['local'] = self.get_argument('local', '')
             args['remote'] = self.get_argument('remote', '')
+            args['showBase'] = self.params.get('show_base', True)
         self.write(self.render_template('mergetool.html',
                     config_data=args,
                    ))
