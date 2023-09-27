@@ -36,6 +36,7 @@ export class MetadataMergeWidget extends MergePanel<MetadataMergeModel> {
       local: model.local,
       merged: model.merged,
       factory: this._editorFactory,
+      ...this._viewOptions
     });
     const wrapper = new CollapsiblePanel(
       this.view,

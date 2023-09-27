@@ -351,6 +351,7 @@ export class CellMergeWidget extends MergePanel<CellMergeModel> {
           baseOut,
           remoteOut,
           localOut,
+          this._viewOptions.showBase
         );
         this.outputViews = view;
 
