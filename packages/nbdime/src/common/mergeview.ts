@@ -44,6 +44,8 @@ import {
   createEditorFactory,
 } from './editor';
 
+import type { IMergeWidgetOptions } from './interfaces';
+
 import { valueIn, hasEntries, splitLines } from './util';
 
 const PICKER_SYMBOL = '\u27ad';
@@ -409,7 +411,7 @@ const conflictMarkerLineChunkMappingField = StateField.define<
   },
 });
 
-export interface IMergeViewOptions {
+export interface IMergeViewOptions extends Partial<IMergeWidgetOptions> {
   remote: IStringDiffModel | null;
   local?: IStringDiffModel | null;
   merged?: IStringDiffModel;
@@ -421,13 +423,14 @@ export interface IMergeViewOptions {
  * A wrapper view for showing StringDiffModels in a MergeView
  */
 export function createNbdimeMergeView(options: IMergeViewOptions): MergeView {
-  const { remote, local, merged, readOnly, factory } = options;
+  const { remote, local, merged, readOnly, factory, showBase } = options;
   let opts: IMergeViewEditorConfiguration = {
     remote,
     local,
     merged,
     config: { readOnly },
     factory: factory ?? createEditorFactory(),
+    showBase
   };
 
   let mergeview = new MergeView(opts);

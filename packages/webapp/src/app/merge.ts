@@ -59,6 +59,7 @@ function showMerge(data: {
     model: nbmModel,
     rendermime,
     editorFactory: createEditorFactory(),
+    showBase: getConfigOption('showBase', true),
   });
 
   let root = document.getElementById('nbdime-root');

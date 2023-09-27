@@ -4,13 +4,11 @@
 
 import type * as nbformat from '@jupyterlab/nbformat';
 
-import type { CodeEditor } from '@jupyterlab/codeeditor';
-
 import type { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
-import { Panel } from '@lumino/widgets';
+import { MergePanel } from '../../common/basepanel';
 
-import type { IDiffWidgetOptions } from '../../common/interfaces';
+import type { IMergeWidgetOptions, IMimeDiffWidgetOptions } from '../../common/interfaces';
 
 import { hasEntries, deepCopy } from '../../common/util';
 
@@ -32,17 +30,14 @@ const NB_MERGE_CONTROLS_CLASS = 'jp-Merge-notebook-controls';
 /**
  * NotebookMergeWidget
  */
-export class NotebookMergeWidget extends Panel {
+export class NotebookMergeWidget extends MergePanel<NotebookMergeModel> {
   constructor({
-    editorFactory,
-    model,
     rendermime,
-  }: IDiffWidgetOptions<NotebookMergeModel>) {
-    super();
-    this._editorFactory = editorFactory;
-    this._model = model;
+    ...options
+  }: IMimeDiffWidgetOptions<NotebookMergeModel> & IMergeWidgetOptions) {
+    super(options);
     this._rendermime = rendermime;
-
+    
     this.addClass(NBMERGE_CLASS);
   }
 
@@ -62,6 +57,7 @@ export class NotebookMergeWidget extends Panel {
         this.metadataWidget = new MetadataMergeWidget({
           model: model.metadata,
           editorFactory: this._editorFactory,
+          ...this._viewOptions
         });
         this.addWidget(this.metadataWidget);
       }
@@ -84,6 +80,7 @@ export class NotebookMergeWidget extends Panel {
             rendermime,
             mimetype: model.mimetype,
             editorFactory: this._editorFactory,
+            ...this._viewOptions
           });
           this.cellWidgets.push(w);
           if (c.onesided && c.conflicted) {
@@ -196,8 +193,6 @@ export class NotebookMergeWidget extends Panel {
   protected cellWidgets: CellMergeWidget[];
   protected cellContainer: CellsDragDrop;
 
-  private _editorFactory: CodeEditor.Factory | undefined;
-  private _model: NotebookMergeModel;
   private _rendermime: IRenderMimeRegistry;
 }
 
