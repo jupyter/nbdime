@@ -239,12 +239,14 @@ class PaddingWidget extends WidgetType {
  * Effect for adding a gutter marker
  */
 const addGutterMarkerEffect = StateEffect.define<{
-  pos: number;
+  from: number;
+  block: boolean;
   on: boolean;
   type: string;
 }>({
   map: (val, mapping) => ({
-    pos: mapping.mapPos(val.pos),
+    from: mapping.mapPos(val.from),
+    block: val.block,
     on: val.on,
     type: val.type,
   }),
@@ -257,10 +259,30 @@ const removeGutterMarkerEffect = StateEffect.define<{ type: string }>({
   map: val => ({ type: val.type }),
 });
 
+class MergeMarker extends GutterMarker {
+  constructor(options: { symbol: string; className: string; block: boolean }) {
+    super();
+    this._symbol = options.symbol;
+    this._className = options.className;
+    this._block = options.block;
+  }
+  get isBlock() {
+    return this._block;
+  }
+  toDOM() {
+    let pickerMarker = elt('div', this._symbol);
+    pickerMarker.className = this._className;
+    return pickerMarker;
+  }
+  private _symbol: string;
+  private _className: string;
+  private _block: boolean;
+}
+
 /**
  * StateField storing information about gutter markers (picker and conflict ones)
  */
-const gutterMarkerField = StateField.define<RangeSet<GutterMarker>>({
+const gutterMarkerField = StateField.define<RangeSet<MergeMarker>>({
   create: () => {
     return RangeSet.empty;
   },
@@ -269,9 +291,15 @@ const gutterMarkerField = StateField.define<RangeSet<GutterMarker>>({
     for (let e of transaction.effects) {
       if (e.is(addGutterMarkerEffect)) {
         if (e.value.on) {
-          const marker: GutterMarker =
-            e.value.type === 'picker' ? pickerMarker : conflictMarker;
-          gutters = gutters.update({ add: [marker.range(e.value.pos)] });
+          const marker: MergeMarker =
+            e.value.type === 'picker'
+              ? e.value.block
+                ? pickerBlockMarker
+                : pickerMarker
+              : e.value.block
+              ? conflictBlockMarker
+              : conflictMarker;
+          gutters = gutters.update({ add: [marker.range(e.value.from)] });
         }
       }
       if (e.is(removeGutterMarkerEffect)) {
@@ -281,27 +309,34 @@ const gutterMarkerField = StateField.define<RangeSet<GutterMarker>>({
     return gutters;
   },
 });
+
 /**
  * Picker gutter marker DOM Element ➭
  */
-const pickerMarker = new (class extends GutterMarker {
-  toDOM() {
-    let pickerMarker = elt('div', PICKER_SYMBOL);
-    pickerMarker.className = GUTTER_PICKER_CLASS;
-    return pickerMarker;
-  }
-})();
+const pickerMarker = new MergeMarker({
+  symbol: PICKER_SYMBOL,
+  className: GUTTER_PICKER_CLASS,
+  block: false,
+});
+const pickerBlockMarker = new MergeMarker({
+  symbol: PICKER_SYMBOL,
+  className: GUTTER_PICKER_CLASS,
+  block: true,
+});
 
 /**
  * Conflict gutter marker DOM Element ⚠
  */
-const conflictMarker = new (class extends GutterMarker {
-  toDOM() {
-    let conflictMarker = elt('div', CONFLICT_MARKER);
-    conflictMarker.className = GUTTER_CONFLICT_CLASS;
-    return conflictMarker;
-  }
-})();
+const conflictMarker = new MergeMarker({
+  symbol: CONFLICT_MARKER,
+  className: GUTTER_CONFLICT_CLASS,
+  block: false,
+});
+const conflictBlockMarker = new MergeMarker({
+  symbol: CONFLICT_MARKER,
+  className: GUTTER_CONFLICT_CLASS,
+  block: true,
+});
 
 /**
  * Effect for adding a mapping between a line and a chunk
@@ -598,22 +633,23 @@ Add a gap DOM element between 2 editors
   private createGutterEffects(
     editor: EditorView,
     chunk: Chunk,
-    pos: number,
-    on: true,
-    type: string,
+    from: number,
+    type: 'picker' | 'conflict',
+    block: boolean = false,
   ) {
     let effects: StateEffect<unknown>[] = [];
 
     let gutterEffect = addGutterMarkerEffect.of({
-      pos: pos,
-      on: on,
+      from: from,
+      on: true,
       type: type,
+      block: block,
     });
     effects.push(gutterEffect);
 
     effects.push(
       addLineChunkMappingEffect.of({
-        line: offsetToPos(editor.state.doc, pos).line,
+        line: offsetToPos(editor.state.doc, from).line,
         chunk: chunk,
         type: type,
       }),
@@ -676,13 +712,7 @@ Add a gap DOM element between 2 editors
           if (!decorationKey.includes('Merge')) {
             // For all editors except merge editor, add a picker button
             effects = effects.concat(
-              this.createGutterEffects(
-                editor,
-                chunk,
-                startingOffset,
-                true,
-                'picker',
-              ),
+              this.createGutterEffects(editor, chunk, startingOffset, 'picker'),
             );
           } else if (editor === this._baseEditorWidget.cm) {
             for (let s of chunk.sources) {
@@ -697,7 +727,6 @@ Add a gap DOM element between 2 editors
                     editor,
                     chunk,
                     startingOffset,
-                    true,
                     'picker',
                   ),
                 );
@@ -709,7 +738,6 @@ Add a gap DOM element between 2 editors
                 editor,
                 chunk,
                 startingOffset,
-                true,
                 'conflict',
               ),
             );
@@ -745,9 +773,9 @@ Add a gap DOM element between 2 editors
             this.createGutterEffects(
               editor,
               chunk,
-              chunkLastLine,
-              true,
+              startingOffset,
               'picker',
+              true,
             ),
           );
         } else if (conflict) {
@@ -757,8 +785,8 @@ Add a gap DOM element between 2 editors
               editor,
               chunk,
               startingOffset,
-              true,
               'conflict',
+              true,
             ),
           );
         }
@@ -1126,7 +1154,32 @@ export class MergeView extends Panel {
       gutterMarkerField,
       gutter({
         class: 'cm-gutter',
-        markers: editor => editor.state.field(gutterMarkerField),
+        markers: view => {
+          return view.state.field(gutterMarkerField).update({
+            filter: (_from, _to, value: MergeMarker) => !value.isBlock,
+          });
+        },
+        widgetMarker: (
+          view: EditorView,
+          widget: WidgetType,
+          block: BlockInfo,
+        ): GutterMarker | null => {
+          if (!(widget instanceof PaddingWidget)) {
+            return null;
+          }
+          const markers = view.state.field(gutterMarkerField).update({
+            filter: (from, _to, value: MergeMarker) =>
+              value.isBlock && block.from === from,
+          });
+          if (markers.size > 1) {
+            throw Error('More than one block gutter widget matched');
+          }
+          if (markers.size === 1) {
+            const cursor = markers.iter();
+            return cursor.value;
+          }
+          return null;
+        },
         initialSpacer: () => pickerMarker,
         domEventHandlers: {
           mousedown: (editor, line) => {
@@ -1453,9 +1506,10 @@ export class MergeView extends Panel {
       }
       effects.push(
         addGutterMarkerEffect.of({
-          pos: line.from,
+          from: line.from,
           on: false,
           type: 'picker',
+          block: false,
         }),
       );
     } else {
