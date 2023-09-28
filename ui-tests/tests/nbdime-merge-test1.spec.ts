@@ -1,15 +1,16 @@
 import { expect, test } from '@playwright/test';
 
-test.beforeEach(async ({ page }) => {
-  await page.goto('http://localhost:41000/merge');
-  await page.locator('#merge-local').fill('data/merge_test1/left.ipynb');
-  await page.locator('#merge-base').fill('data/merge_test1/center.ipynb');
-  await page.locator('#merge-remote').fill('data/merge_test1/right.ipynb');
-  await page.getByRole('button', { name: 'Merge files' }).click();
-});
-
 /* notebooks of same length and 1 conflict*/
 test.describe('merge test1', () => {
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto('http://localhost:41000/merge');
+    await page.locator('#merge-local').fill('data/merge_test1/left.ipynb');
+    await page.locator('#merge-base').fill('data/merge_test1/center.ipynb');
+    await page.locator('#merge-remote').fill('data/merge_test1/right.ipynb');
+    await page.getByRole('button', { name: 'Merge files' }).click();
+  });
+
   test('take a snapshot at opening', async ({ page }) => {
     await expect.soft(page.getByText('➭')).toHaveCount(12);
     expect.soft(await page.locator('#main').screenshot()).toMatchSnapshot();
@@ -65,3 +66,30 @@ test.describe('merge test1', () => {
     expect(await download1.failure()).toBeNull();
   });
 });
+
+
+  test('3 panels view', async ({ page }) => {
+    const ctxt = page.context();
+    page.route(/.+\/merge/, async (route, request) => {
+      const response = await ctxt.request.fetch(request);
+      if(!response.ok()) {
+        route.abort();
+        return;
+      }
+
+      const buffer = await response!.body();
+      const content = buffer.toString();
+      route.fulfill({ body: content.replace('"showBase": true', '"showBase": false')});
+    })
+    
+    // Load the page
+    await page.goto('http://localhost:41000/merge');
+    await page.locator('#merge-local').fill('data/merge_test1/left.ipynb');
+    await page.locator('#merge-base').fill('data/merge_test1/center.ipynb');
+    await page.locator('#merge-remote').fill('data/merge_test1/right.ipynb');
+    await page.getByRole('button', { name: 'Merge files' }).click();
+
+    await expect.soft(page.getByText('➭')).toHaveCount(8);
+
+    expect(await page.locator('#main').screenshot()).toMatchSnapshot();
+  });
