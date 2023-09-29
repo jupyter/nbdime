@@ -546,7 +546,7 @@ export function createNbdimeMergeView(options: IMergeViewOptions): MergeView {
     merged,
     config: { readOnly },
     factory: factory ?? createEditorFactory(),
-    showBase
+    showBase,
   };
 
   let mergeview = new MergeView(opts);
@@ -1409,7 +1409,7 @@ export class MergeView extends Panel {
     // START MERGE CASE
     if (merged) {
       this.addClass('cm-merge-grid-panel');
-      let showBase = this._showBase = options.showBase !== false;
+      let showBase = (this._showBase = options.showBase !== false);
 
       let leftWidget: Widget;
       if (!local || local.remote === null) {
@@ -1462,9 +1462,10 @@ export class MergeView extends Panel {
         extensions: [options.extensions ?? [], additionalExtensions],
       });
       let mergeWidget = merge.remoteEditorWidget;
-      if(showBase){
-      this.addWidget(mergeWidget);} else {
-        this.insertWidget(1, mergeWidget)
+      if (showBase) {
+        this.addWidget(mergeWidget);
+      } else {
+        this.insertWidget(1, mergeWidget);
       }
       mergeWidget.addClass('cm-merge-editor');
       //END MERGE CASE
@@ -1519,7 +1520,10 @@ export class MergeView extends Panel {
    * Align the matching lines of the different editors
    */
   alignViews() {
-    let lineHeight = this._showBase ? this._base.cm.defaultLineHeight : this._diffViews[0].remoteEditorWidget.cm.defaultLineHeight;
+    console.log(this._showBase, this._diffViews.length);
+    let lineHeight = this._showBase
+      ? this._base.cm.defaultLineHeight
+      : this._diffViews[0].remoteEditorWidget.cm.defaultLineHeight;
     if (this._aligning) {
       return;
     }
@@ -1528,8 +1532,10 @@ export class MergeView extends Panel {
     let linesToAlign = findAlignedLines(this._diffViews);
 
     // Function modifying DOM to perform alignment:
-    let self: MergeView = this;
-    let editors: EditorView[] = [self.base.cm, ...self._diffViews.map(dv => dv.remoteEditorWidget.cm)];
+    let editors: EditorView[] = [
+      this.base.cm,
+      ...this._diffViews.map(dv => dv.remoteEditorWidget.cm),
+    ];
     let builders: RangeSetBuilder<Decoration>[] = [];
     for (let i = 0; i < editors.length; i++) {
       builders.push(new RangeSetBuilder<Decoration>());
@@ -1546,13 +1552,14 @@ export class MergeView extends Panel {
       );
       // If some paddings will be before the current line, it means all other editors
       // must add a padding.
-      let minDelta = this._showBase ? Math.min(...lineDeltas) : Math.min(...lineDeltas.slice(1));
+      let minDelta = this._showBase
+        ? Math.min(...lineDeltas)
+        : Math.min(...lineDeltas.slice(1));
       let correctedDeltas = lineDeltas.map(line => line - minDelta);
-      console.log(alignment, correctedDeltas)
 
       correctedDeltas.forEach((delta, i) => {
         // Don't compute anything for the base editor if it is hidden
-        if(!this._showBase && i === 0) {
+        if (!this._showBase && i === 0) {
           return;
         }
 
@@ -1600,14 +1607,17 @@ export class MergeView extends Panel {
       }
     });
 
-    for (let i = 0; i < editors.length; i++) {
+    // Don't insert spacers on merge if base is shown
+    for (
+      let i = 0;
+      i <
+      (this._showBase && editors.length > 2
+        ? editors.length - 1
+        : editors.length);
+      i++
+    ) {
       // Don't update spacers on base if it is hidden.
-      if(i===0 && !this._showBase) {
-        continue;
-      }
-
-      // Don't insert spacers on merge if base is shown
-      if(i === editors.length -1 && this._showBase) {
+      if (i === 0 && !this._showBase) {
         continue;
       }
 
