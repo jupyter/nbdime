@@ -76,27 +76,31 @@
   width: 100%;
 }
 
-.jp-Notebook-merge .cm-merge-spacer {
-  background-color: #eee;
+.jp-Notebook-merge .cm-line {
+  /* enable positioning pseudo-elements relative to line */
+  position: relative;
 }
 
-.jp-Notebook-merge .cm-line {
-  border-top: 1px solid transparent;
-  border-bottom: 1px solid transparent;
+.jp-Notebook-merge .cm-merge-spacer {
+  background-color: #eee;
 }
 
 .jp-Notebook-merge .cm-merge-r-chunk {
   background-color: var(--jp-merge-remote-color2);
 }
 
-.jp-Notebook-merge .cm-merge-r-chunk-start,
-.jp-Notebook-merge .cm-merge-m-chunk-start-remote {
-  border-top: 1px solid var(--jp-merge-remote-color1);
-}
-
-.jp-Notebook-merge .cm-merge-r-chunk-end,
-.jp-Notebook-merge .cm-merge-m-chunk-end-remote {
-  border-bottom: 1px solid var(--jp-merge-remote-color1);
+/* border-top/bottom without taking up space */
+.jp-Notebook-merge .cm-merge-r-chunk-start::before,
+.jp-Notebook-merge .cm-merge-m-chunk-start-remote::before,
+.jp-Notebook-merge .cm-merge-r-chunk-end::after,
+.jp-Notebook-merge .cm-merge-m-chunk-end-remote::after {
+  content: '';
+  width: 100%;
+  height: 1px;
+  background: var(--jp-merge-remote-color1);
+  display: block;
+  position: absolute;
+  left: 0px;
 }
 
 .jp-Notebook-merge .cm-merge-r-connect {
@@ -125,14 +129,18 @@
   background-color: var(--jp-merge-local-color2);
 }
 
-.jp-Notebook-merge .cm-merge-l-chunk-start,
-.jp-Notebook-merge .cm-merge-m-chunk-start-local {
-  border-top: 1px solid var(--jp-merge-local-color1);
-}
-
-.jp-Notebook-merge .cm-merge-l-chunk-end,
-.jp-Notebook-merge .cm-merge-m-chunk-end-local {
-  border-bottom: 1px solid var(--jp-merge-local-color1);
+/* border-top/bottom without taking up space */
+.jp-Notebook-merge .cm-merge-l-chunk-start::before,
+.jp-Notebook-merge .cm-merge-m-chunk-start-local::before,
+.jp-Notebook-merge .cm-merge-l-chunk-end::after,
+.jp-Notebook-merge .cm-merge-m-chunk-end-local::after {
+  content: '';
+  width: 100%;
+  height: 1px;
+  background: var(--jp-merge-local-color1);
+  display: block;
+  position: absolute;
+  left: 0px;
 }
 
 .jp-Notebook-merge .cm-merge-l-connect {
@@ -161,24 +169,30 @@
   background-color: #ffb;
 }
 
-.jp-Notebook-merge .cm-merge-m-chunk-start-custom {
-  border-top: 1px solid #fe6;
-}
-
-.jp-Notebook-merge .cm-merge-m-chunk-end-custom {
-  border-bottom: 1px solid #fe6;
+.jp-Notebook-merge .cm-merge-m-chunk-start-custom::before,
+.jp-Notebook-merge .cm-merge-m-chunk-end-custom::after {
+  content: '';
+  width: 100%;
+  height: 1px;
+  background: #fe6;
+  display: block;
+  position: absolute;
+  left: 0px;
 }
 
 .jp-Notebook-merge .cm-merge-l-chunk.cm-merge-r-chunk {
   background: var(--jp-merge-both-color2);
 }
 
-.jp-Notebook-merge .cm-merge-l-chunk-start.cm-merge-r-chunk-start {
-  border-top: 1px solid var(--jp-merge-both-color1);
-}
-
-.jp-Notebook-merge .cm-merge-l-chunk-end.cm-merge-r-chunk-end {
-  border-bottom: 1px solid var(--jp-merge-both-color1);
+.jp-Notebook-merge .cm-merge-l-chunk-start.cm-merge-r-chunk-start::before,
+.jp-Notebook-merge .cm-merge-l-chunk-end.cm-merge-r-chunk-end::after {
+  content: '';
+  width: 100%;
+  height: 1px;
+  background: var(--jp-merge-both-color1);
+  display: block;
+  position: absolute;
+  left: 0px;
 }
 
 .jp-Notebook-merge
