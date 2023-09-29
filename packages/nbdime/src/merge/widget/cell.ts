@@ -16,7 +16,10 @@ import { CollapsiblePanel } from '../../common/collapsiblepanel';
 
 import { DragPanel } from '../../common/dragpanel';
 
-import type { ICellDiffWidgetOptions, IMergeWidgetOptions } from '../../common/interfaces';
+import type {
+  ICellDiffWidgetOptions,
+  IMergeWidgetOptions,
+} from '../../common/interfaces';
 
 import { createNbdimeMergeView, MergeView } from '../../common/mergeview';
 
@@ -93,7 +96,7 @@ export class CellMergeWidget extends MergePanel<CellMergeModel> {
         merged,
         readOnly: readOnly ?? false,
         factory: editorFactory,
-        ...others
+        ...others,
       });
     }
     return view;
@@ -279,7 +282,7 @@ export class CellMergeWidget extends MergePanel<CellMergeModel> {
           merged: model.merged.source,
           editorClasses: CURR_CLASSES,
           editorFactory: this._editorFactory,
-          ...this._viewOptions
+          ...this._viewOptions,
         });
       }
       if (sourceView === null) {
@@ -351,7 +354,7 @@ export class CellMergeWidget extends MergePanel<CellMergeModel> {
           baseOut,
           remoteOut,
           localOut,
-          this._viewOptions.showBase
+          this._viewOptions.showBase,
         );
         this.outputViews = view;
 

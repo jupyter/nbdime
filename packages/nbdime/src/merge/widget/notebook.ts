@@ -8,7 +8,10 @@ import type { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
 import { MergePanel } from '../../common/basepanel';
 
-import type { IMergeWidgetOptions, IMimeDiffWidgetOptions } from '../../common/interfaces';
+import type {
+  IMergeWidgetOptions,
+  IMimeDiffWidgetOptions,
+} from '../../common/interfaces';
 
 import { hasEntries, deepCopy } from '../../common/util';
 
@@ -37,7 +40,7 @@ export class NotebookMergeWidget extends MergePanel<NotebookMergeModel> {
   }: IMimeDiffWidgetOptions<NotebookMergeModel> & IMergeWidgetOptions) {
     super(options);
     this._rendermime = rendermime;
-    
+
     this.addClass(NBMERGE_CLASS);
   }
 
@@ -57,7 +60,7 @@ export class NotebookMergeWidget extends MergePanel<NotebookMergeModel> {
         this.metadataWidget = new MetadataMergeWidget({
           model: model.metadata,
           editorFactory: this._editorFactory,
-          ...this._viewOptions
+          ...this._viewOptions,
         });
         this.addWidget(this.metadataWidget);
       }
@@ -80,7 +83,7 @@ export class NotebookMergeWidget extends MergePanel<NotebookMergeModel> {
             rendermime,
             mimetype: model.mimetype,
             editorFactory: this._editorFactory,
-            ...this._viewOptions
+            ...this._viewOptions,
           });
           this.cellWidgets.push(w);
           if (c.onesided && c.conflicted) {
