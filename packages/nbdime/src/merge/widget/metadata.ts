@@ -4,7 +4,10 @@
 
 import type * as nbformat from '@jupyterlab/nbformat';
 
-import type { IDiffWidgetOptions, IMergeWidgetOptions } from '../../common/interfaces';
+import type {
+  IDiffWidgetOptions,
+  IMergeWidgetOptions,
+} from '../../common/interfaces';
 
 import { createNbdimeMergeView, MergeView } from '../../common/mergeview';
 
@@ -20,7 +23,9 @@ const ROOT_METADATA_CLASS = 'jp-Metadata-diff';
  * MetadataWidget for changes to Notebook-level metadata
  */
 export class MetadataMergeWidget extends MergePanel<MetadataMergeModel> {
-  constructor(options: IDiffWidgetOptions<MetadataMergeModel> & IMergeWidgetOptions) {
+  constructor(
+    options: IDiffWidgetOptions<MetadataMergeModel> & IMergeWidgetOptions,
+  ) {
     super(options);
     this.addClass(ROOT_METADATA_CLASS);
     this.init();
@@ -36,7 +41,7 @@ export class MetadataMergeWidget extends MergePanel<MetadataMergeModel> {
       local: model.local,
       merged: model.merged,
       factory: this._editorFactory,
-      ...this._viewOptions
+      ...this._viewOptions,
     });
     const wrapper = new CollapsiblePanel(
       this.view,

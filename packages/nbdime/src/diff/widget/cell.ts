@@ -233,7 +233,10 @@ export class CellDiffWidget extends DiffPanel<CellDiffModel> {
         renderer.renderModel(mimeModel);
         inner = renderer;
       } else {
-        inner = createNbdimeMergeView({ remote: model, factory: editorFactory });
+        inner = createNbdimeMergeView({
+          remote: model,
+          factory: editorFactory,
+        });
       }
       if (model.collapsible) {
         view = new CollapsiblePanel(

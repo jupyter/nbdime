@@ -137,10 +137,10 @@ export class RenderableOutputsMergeView extends DragDropPanel {
     base: nbformat.IOutput[] | null,
     remote: nbformat.IOutput[] | null,
     local: nbformat.IOutput[] | null,
-    showBase = true
+    showBase = true,
   ) {
     super();
-    this.showBase = showBase
+    this.showBase = showBase;
     this.addClass(REORDERABLE_OUTPUT_CLASS);
 
     if (!base !== !remote || !base !== !local) {
