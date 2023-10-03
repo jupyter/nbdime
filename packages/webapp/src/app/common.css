@@ -17,6 +17,8 @@ body {
 }
 
 #nbdime-header-banner {
+  display: grid;
+  grid-auto-rows: minmax(18px, auto);
   margin-top: 10px;
 }
 

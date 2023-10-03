@@ -8,8 +8,6 @@ import type { CodeEditor } from '@jupyterlab/codeeditor';
 
 import { IRenderMimeRegistry, MimeModel } from '@jupyterlab/rendermime';
 
-import { FlexPanel } from '../../upstreaming/flexpanel';
-
 import { CollapsiblePanel } from '../../common/collapsiblepanel';
 
 import type { ICellDiffWidgetOptions } from '../../common/interfaces';
@@ -199,13 +197,13 @@ export class CellDiffWidget extends Panel {
       let remoteStr = `In [${remote || ' '}]:`;
       prompts.push(remoteStr);
     }
-    let container = new FlexPanel({ direction: 'left-to-right' });
+    const container = new Panel();
+    container.addClass(`cm-merge-${prompts.length}pane`);
     for (let text of prompts) {
       let w = new Widget();
       w.node.innerText = text;
       w.addClass(PROMPT_CLASS);
       container.addWidget(w);
-      FlexPanel.setGrow(w, 1);
     }
     container.addClass(EXECUTIONCOUNT_ROW_CLASS);
     return container;

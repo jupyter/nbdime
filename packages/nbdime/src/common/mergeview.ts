@@ -123,14 +123,23 @@ const mergeViewDecorationDict: MergeViewDecorationDict = {
   mixedMerge: Private.buildEditorDecorationDict('m', 'mixed'),
 };
 
-function getCommonEditorExtensions(): Extension {
-  return [
-    gutterMarkerField,
-    highlightField,
-    paddingWidgetField,
-    pickerLineChunkMappingField,
-    conflictMarkerLineChunkMappingField,
-  ];
+/**
+ * Get common editor extensions
+ *
+ * @param isMergeView Whether the editor is within a merge view or not.
+ * @returns Editor extensions
+ */
+function getCommonEditorExtensions(isMergeView = true): Extension {
+  const extensions = [highlightField, paddingWidgetField];
+
+  return isMergeView
+    ? [
+        ...extensions,
+        gutterMarkerField,
+        pickerLineChunkMappingField,
+        conflictMarkerLineChunkMappingField,
+      ]
+    : extensions;
 }
 
 function applyMapping({ from, to }: any, mapping: ChangeDesc) {
@@ -535,8 +544,8 @@ export class DiffView {
     this._chunks = updatedChunks;
   }
   /**
-Add a gap DOM element between 2 editors
- */
+   * Add a gap DOM element between 2 editors
+   */
   buildGap(): HTMLElement {
     let lock = (this._lockButton = elt(
       'div',
@@ -544,23 +553,29 @@ Add a gap DOM element between 2 editors
       'cm-merge-scrolllock',
     ));
     lock.title = 'Toggle locked scrolling';
-    let lockWrap = elt('div', [lock], 'cm-merge-scrolllock-wrap');
-    lock.innerHTML = '\u21db&nbsp;&nbsp;\u21da';
-    lock.addEventListener('scroll', event => {
+    this.setScrollLock(this._lockScroll);
+    lock.addEventListener('click', event => {
       this.setScrollLock(!this._lockScroll);
     });
-    let gap = elt('div', [lockWrap], 'cm-merge-gap');
+    let gap = elt('div', [lock], 'cm-merge-gap');
     this._gap = gap;
     return this._gap;
   }
 
-  setScrollLock(val: boolean, action?: boolean) {
+  setScrollLock(val: boolean) {
     this._lockScroll = val;
     if (this._lockButton) {
       this._lockButton.innerHTML = val
         ? '\u21db\u21da'
         : '\u21db&nbsp;&nbsp;\u21da';
     }
+    // Force scroll synchronization in case it was not synchronize
+    window.requestAnimationFrame(() => {
+      this._remoteEditorWidget.cm.scrollDOM.scrollLeft =
+        this._baseEditorWidget.cm.scrollDOM.scrollLeft;
+      this._remoteEditorWidget.cm.scrollDOM.scrollTop =
+        this._baseEditorWidget.cm.scrollDOM.scrollTop;
+    });
   }
 
   private modelInvalid(): boolean {
@@ -580,17 +595,35 @@ Add a gap DOM element between 2 editors
     }
     let srcScroller = srcEditor.scrollDOM;
     let destScroller = destEditor.scrollDOM;
-    srcScroller.addEventListener('scroll', event => {
-      window.requestAnimationFrame(function () {
-        destScroller.scrollLeft = srcScroller.scrollLeft;
-      });
-    });
+    srcScroller.addEventListener(
+      'scroll',
+      event => {
+        if (!this._lockScroll) {
+          return;
+        }
 
-    destScroller.addEventListener('scroll', event => {
-      window.requestAnimationFrame(function () {
-        srcScroller.scrollLeft = destScroller.scrollLeft;
-      });
-    });
+        window.requestAnimationFrame(function () {
+          destScroller.scrollLeft = srcScroller.scrollLeft;
+          destScroller.scrollTop = srcScroller.scrollTop;
+        });
+      },
+      { passive: true },
+    );
+
+    destScroller.addEventListener(
+      'scroll',
+      event => {
+        if (!this._lockScroll) {
+          return;
+        }
+
+        window.requestAnimationFrame(function () {
+          srcScroller.scrollLeft = destScroller.scrollLeft;
+          srcScroller.scrollTop = destScroller.scrollTop;
+        });
+      },
+      { passive: true },
+    );
   }
 
   /**
@@ -953,7 +986,7 @@ Add a gap DOM element between 2 editors
   private _chunks: Chunk[];
   private _lineChunks: Chunk[];
   private _gap: HTMLElement;
-  private _lockScroll: boolean;
+  private _lockScroll = true;
   private _lockButton: HTMLElement;
 }
 
@@ -1201,14 +1234,14 @@ export class MergeView extends Panel {
      *       but with different classes
      *     - Partial changes: Use base + right editor
      */
+    const inMergeView = !!merged;
+    const additionalExtensions: Extension = inMergeView
+      ? [listener, mergeControlGutter, getCommonEditorExtensions(inMergeView)]
+      : getCommonEditorExtensions(inMergeView);
+
     this._base = new EditorWidget({
       ...options,
-      extensions: [
-        ...(options.extensions ?? []),
-        listener,
-        mergeControlGutter,
-        getCommonEditorExtensions(),
-      ],
+      extensions: [options.extensions ?? [], additionalExtensions],
       value,
     });
 
@@ -1235,12 +1268,7 @@ export class MergeView extends Panel {
           ...options,
           // Copy configuration
           config: { ...options.config },
-          extensions: [
-            ...(options.extensions ?? []),
-            listener,
-            mergeControlGutter,
-            getCommonEditorExtensions(),
-          ],
+          extensions: [options.extensions ?? [], additionalExtensions],
         });
         this._diffViews.push(left);
         leftWidget = left.remoteEditorWidget;
@@ -1265,12 +1293,7 @@ export class MergeView extends Panel {
           ...options,
           // Copy configuration
           config: { ...options.config },
-          extensions: [
-            ...(options.extensions ?? []),
-            listener,
-            mergeControlGutter,
-            getCommonEditorExtensions(),
-          ],
+          extensions: [options.extensions ?? [], additionalExtensions],
         });
         this._diffViews.push(right);
         rightWidget = right.remoteEditorWidget;
@@ -1283,12 +1306,7 @@ export class MergeView extends Panel {
         ...options,
         // Copy configuration
         config: { ...options.config, readOnly },
-        extensions: [
-          ...(options.extensions ?? []),
-          listener,
-          mergeControlGutter,
-          getCommonEditorExtensions(),
-        ],
+        extensions: [options.extensions ?? [], additionalExtensions],
       });
       this._diffViews.push(merge);
       let mergeWidget = merge.remoteEditorWidget;
@@ -1298,12 +1316,9 @@ export class MergeView extends Panel {
       panes = 3 + (showBase ? 1 : 0);
       // START DIFF CASE
     } else if (remote) {
-      this._gridPanel = new Panel();
-      this.addWidget(this._gridPanel);
-      this._gridPanel.addClass('cm-single-panel');
-      // If in place for type guard
-      this._gridPanel.addWidget(this._base);
       if (remote.unchanged || remote.added || remote.deleted) {
+        panes = 1;
+        this.addWidget(this._base);
         if (remote.unchanged) {
           this._base.addClass('cm-merge-pane-unchanged');
         } else if (remote.added) {
@@ -1311,31 +1326,21 @@ export class MergeView extends Panel {
         } else if (remote.deleted) {
           this._base.addClass('cm-merge-pane-deleted');
         }
-        panes = 1;
       } else {
-        this._gridPanel = new Panel();
-        this.addWidget(this._gridPanel);
-        this._gridPanel.addClass('cm-diff-grid-panel');
-        // If in place for type guard
-        this._gridPanel.addWidget(this._base);
+        panes = 2;
+        this.addWidget(this._base);
         this._base.addClass('cm-diff-left-editor');
         right = this._right = new DiffView(remote, 'right', {
           ...options,
           // Copy configuration
           config: { ...options.config },
-          extensions: [
-            ...(options.extensions ?? []),
-            listener,
-            mergeControlGutter,
-            getCommonEditorExtensions(),
-          ],
+          extensions: [options.extensions ?? [], additionalExtensions],
         });
         this._diffViews.push(right);
         let rightWidget = right.remoteEditorWidget;
         rightWidget.addClass('cm-diff-right-editor');
         this.addWidget(new Widget({ node: right.buildGap() }));
-        this._gridPanel.addWidget(rightWidget);
-        panes = 2;
+        this.addWidget(rightWidget);
       }
     }
 
@@ -1451,8 +1456,7 @@ export class MergeView extends Panel {
    */
   scheduleAlignViews() {
     if (this._measuring < 0) {
-      let win = this._gridPanel.node.ownerDocument.defaultView || window;
-      this._measuring = win.requestAnimationFrame(() => {
+      this._measuring = window.requestAnimationFrame(() => {
         this._measuring = -1;
         this.alignViews();
       });

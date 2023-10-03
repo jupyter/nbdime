@@ -223,7 +223,7 @@ namespace Private {
         <label><input class="nbdime-hide-unchanged" type="checkbox">Hide unchanged cells</label>
         <button class="nbdime-export" style="display: none">Export diff</button>
       </div>
-      <div class=nbdime-header-banner>
+      <div class="nbdime-header-banner">
         <span class="nbdime-header-base"></span>
         <span class="nbdime-header-remote"></span>
       </div>`;
