@@ -8,7 +8,7 @@
     "build:dev": "webpack --mode=development",
     "clean": "rimraf build && rimraf -g \"../../nbdime/webapp/static/!(favicon.ico)\"",
     "profile": "webpack --profile --json > webpack-stats.json",
-    "watch": "webpack --watch"
+    "watch": "webpack --mode=development --watch"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.12.0",

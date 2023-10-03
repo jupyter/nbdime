@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "build": "lerna run build",
-    "build:dev": "tsc --build",
+    "build:dev": "lerna run build:dev",
     "clean": "lerna run clean",
     "prettier": "prettier --list-different --write \"**/*{.ts,.tsx,.js,.jsx,.css,.json,.md}\"",
     "prettier:check": "prettier --check \"**/*{.ts,.tsx,.js,.jsx,.css,.json,.md}\"",
@@ -13,7 +13,9 @@
     "update:lab": "update-dependency --lerna --minimal --regex ^@jupyterlab/",
     "update:lab:next": "update-dependency --lerna --minimal --regex ^@jupyterlab/ ^next",
     "updated": "lerna updated",
-    "watch": "tsc --build --watch"
+    "watch:webapp": "run-p watch:lib watch:app",
+    "watch:app": "lerna exec --stream --scope \"nbdime-webapp\" npm run watch",
+    "watch:lib": "lerna exec --stream --scope \"nbdime\" --scope \"jupyterlab-rise\" npm run watch"
   },
   "devDependencies": {
     "@jupyterlab/buildutils": "4.0.0",
@@ -24,6 +26,7 @@
     "jest": "^29.6.4",
     "lerna": "^4.0.0",
     "mocha": "^10.2.0",
+    "npm-run-all": "^4.1.5",
     "rimraf": "^2.6.3",
     "npm-which": "^3.0.1"
   },

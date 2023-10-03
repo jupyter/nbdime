@@ -124,13 +124,25 @@ const mergeViewDecorationDict: MergeViewDecorationDict = {
 };
 
 /**
+ * Additional theme element
+ */
+const baseTheme = EditorView.baseTheme({
+  '.cm-collapsedLines': {
+    padding: '5px 5px 5px 10px',
+    cursor: 'pointer',
+    color: 'var(--jp-ui-font-color2)',
+    outline: 'solid var(--jp-border-width) var(--jp-border-color1)',
+  },
+});
+
+/**
  * Get common editor extensions
  *
  * @param isMergeView Whether the editor is within a merge view or not.
  * @returns Editor extensions
  */
-function getCommonEditorExtensions(isMergeView = true): Extension {
-  const extensions = [highlightField, paddingWidgetField];
+function getCommonEditorExtensions(isMergeView = true): Extension[] {
+  const extensions = [baseTheme, highlightField, paddingWidgetField];
 
   return isMergeView
     ? [
@@ -409,6 +421,92 @@ const conflictMarkerLineChunkMappingField = StateField.define<
   },
 });
 
+/**
+ * Uncollapse effect to synchronize uncollapsed ranges between editors.
+ */
+const uncollapse = StateEffect.define<number>({
+  map: (value, change) => change.mapPos(value),
+});
+
+/**
+ * Effect to set the collapser widgets in an editor
+ */
+const setCollapsers = StateEffect.define<DecorationSet>({
+  map: (value, mapping) => value.map(mapping),
+});
+
+class CollapseWidget extends WidgetType {
+  constructor(
+    readonly lines: number,
+    readonly siblings: { line: number; cm: EditorView }[],
+  ) {
+    super();
+  }
+
+  eq(other: CollapseWidget) {
+    return (
+      this.lines == other.lines &&
+      this.siblings.every(
+        sibling =>
+          other.siblings.findIndex(
+            otherSibling =>
+              otherSibling.line == sibling.line &&
+              otherSibling.cm == sibling.cm,
+          ) >= 0,
+      )
+    );
+  }
+
+  toDOM(view: EditorView) {
+    let outer = document.createElement('div');
+    outer.className = 'cm-collapsedLines';
+    outer.textContent = view.state.phrase('$ unchanged lines', this.lines);
+    outer.addEventListener('click', e => {
+      const pos = view.posAtDOM(e.target as HTMLElement);
+      this.siblings.forEach(sibling => {
+        if (sibling.cm === view) {
+          view.dispatch({ effects: uncollapse.of(pos) });
+        } else {
+          const from = sibling.cm.state.doc.line(sibling.line).from;
+          sibling.cm.dispatch({ effects: uncollapse.of(from) });
+        }
+      });
+    });
+    return outer;
+  }
+
+  ignoreEvent(e: Event) {
+    return e instanceof MouseEvent;
+  }
+
+  get estimatedHeight() {
+    return 27;
+  }
+}
+
+/**
+ * StateField storing information about the collapsed ranges
+ */
+const CollapsedRanges = StateField.define<DecorationSet>({
+  create(state) {
+    return Decoration.none;
+  },
+  update(deco, tr) {
+    for (let e of tr.effects) {
+      if (e.is(setCollapsers)) {
+        return e.value;
+      }
+    }
+
+    deco = deco.map(tr.changes);
+    for (let e of tr.effects)
+      if (e.is(uncollapse))
+        deco = deco.update({ filter: from => from != e.value });
+    return deco;
+  },
+  provide: f => EditorView.decorations.from(f),
+});
+
 export interface IMergeViewOptions {
   remote: IStringDiffModel | null;
   local?: IStringDiffModel | null;
@@ -460,7 +558,7 @@ export class DiffView {
   constructor(
     model: IStringDiffModel,
     type: 'left' | 'right' | 'merge',
-    options: IMergeViewEditorConfiguration,
+    options: Omit<IEditorWidgetOptions, 'value'>,
   ) {
     this._model = model;
     this._type = type;
@@ -971,6 +1069,10 @@ export class DiffView {
     return this._baseEditorWidget;
   }
 
+  get chunks(): Chunk[] {
+    return this._chunks;
+  }
+
   get lineChunks(): Chunk[] {
     return this._lineChunks;
   }
@@ -988,6 +1090,27 @@ export class DiffView {
   private _gap: HTMLElement;
   private _lockScroll = true;
   private _lockButton: HTMLElement;
+}
+
+/**
+ * From a line in base, find the matching line in another editor by chunks.
+ */
+function getMatchingEditLine(baseLine: number, chunks: Chunk[]): number {
+  let offset = 0;
+  // Start values correspond to either the start of the chunk,
+  // or the start of a preceding unmodified part before the chunk.
+  // It is the difference between these two that is interesting.
+  for (let i = 0; i < chunks.length; i++) {
+    let chunk = chunks[i];
+    if (chunk.baseTo > baseLine && chunk.baseFrom <= baseLine) {
+      return 0;
+    }
+    if (chunk.baseFrom > baseLine) {
+      break;
+    }
+    offset = chunk.remoteTo - chunk.baseTo;
+  }
+  return baseLine + offset;
 }
 
 /**
@@ -1016,7 +1139,7 @@ function getMatchingEditLineLC(toMatch: Chunk, chunks: Chunk[]): number {
  *   aligned line #2 ..., etc.]
  */
 
-function findAlignedLines(dvs: DiffView[]): number[][] {
+function findAlignedLines(dvs: Readonly<DiffView[]>): number[][] {
   let linesToAlign: number[][] = [];
   let ignored: number[] = [];
 
@@ -1102,6 +1225,12 @@ function findAlignedLines(dvs: DiffView[]): number[][] {
 export interface IMergeViewEditorConfiguration
   extends Omit<IEditorWidgetOptions, 'value'> {
   /**
+   * When true stretches of unchanged text will be collapsed. When a number is given, this indicates the amount
+   * of lines to leave visible around such stretches (which defaults to 2). Defaults to true.
+   */
+  collapseIdentical?: boolean | number;
+
+  /**
    * Provides remote diff of document to be shown on the right of the base.
    * To create a diff view, provide only remote.
    */
@@ -1140,8 +1269,16 @@ export class MergeView extends Panel {
     let left: DiffView | null = (this._left = null);
     let right: DiffView | null = (this._right = null);
     let merge: DiffView | null = (this._merge = null);
+    // Set to -1 to deactivate
+    if (typeof options.collapseIdentical !== 'undefined') {
+      this._collapseIdentical =
+        typeof options.collapseIdentical === 'number'
+          ? Math.max(-1, options.collapseIdentical)
+          : options.collapseIdentical
+          ? 2
+          : -1;
+    }
     let panes: number = 0;
-    this._diffViews = [];
     let main = options.remote || options.merged;
     if (!main) {
       throw new Error('Either remote or merged model needs to be specified!');
@@ -1235,9 +1372,12 @@ export class MergeView extends Panel {
      *     - Partial changes: Use base + right editor
      */
     const inMergeView = !!merged;
-    const additionalExtensions: Extension = inMergeView
+    const additionalExtensions = inMergeView
       ? [listener, mergeControlGutter, getCommonEditorExtensions(inMergeView)]
       : getCommonEditorExtensions(inMergeView);
+    if(this._collapseIdentical >= 0) {
+      additionalExtensions.push(CollapsedRanges)
+    }
 
     this._base = new EditorWidget({
       ...options,
@@ -1270,7 +1410,6 @@ export class MergeView extends Panel {
           config: { ...options.config },
           extensions: [options.extensions ?? [], additionalExtensions],
         });
-        this._diffViews.push(left);
         leftWidget = left.remoteEditorWidget;
       }
       this._gridPanel.addWidget(leftWidget);
@@ -1295,7 +1434,6 @@ export class MergeView extends Panel {
           config: { ...options.config },
           extensions: [options.extensions ?? [], additionalExtensions],
         });
-        this._diffViews.push(right);
         rightWidget = right.remoteEditorWidget;
       }
       this._gridPanel.addWidget(rightWidget);
@@ -1308,7 +1446,6 @@ export class MergeView extends Panel {
         config: { ...options.config, readOnly },
         extensions: [options.extensions ?? [], additionalExtensions],
       });
-      this._diffViews.push(merge);
       let mergeWidget = merge.remoteEditorWidget;
       this._gridPanel.addWidget(mergeWidget);
       mergeWidget.addClass('cm-merge-editor');
@@ -1336,7 +1473,6 @@ export class MergeView extends Panel {
           config: { ...options.config },
           extensions: [options.extensions ?? [], additionalExtensions],
         });
-        this._diffViews.push(right);
         let rightWidget = right.remoteEditorWidget;
         rightWidget.addClass('cm-diff-right-editor');
         this.addWidget(new Widget({ node: right.buildGap() }));
@@ -1351,6 +1487,11 @@ export class MergeView extends Panel {
         dv.init(this._base);
       }
     }
+
+    if (this._collapseIdentical >= 0) {
+      this.collapseIdenticalStretches();
+    }
+
     this._aligning = false;
     if (this._diffViews.length > 0) {
       this.scheduleAlignViews();
@@ -1471,6 +1612,92 @@ export class MergeView extends Panel {
     return this.merge.remoteEditorWidget.doc.toString();
   }
 
+  protected collapseIdenticalStretches(): void {
+    const margin = this._collapseIdentical;
+    if (margin < 0) {
+      return;
+    }
+
+    // Build an array of line that are not part of a chunks
+    const edit = this.base.cm;
+    const clear = new Array<boolean>(edit.state.doc.lines).fill(true);
+    // Collapsers per editor
+    const builders = [new RangeSetBuilder<Decoration>()];
+
+    if (this.left) {
+      builders.push(new RangeSetBuilder<Decoration>());
+      unclearNearChunks(this.left, margin, clear);
+    }
+    if (this.right) {
+      builders.push(new RangeSetBuilder<Decoration>());
+      unclearNearChunks(this.right, margin, clear);
+    }
+    if (this.merge) {
+      builders.push(new RangeSetBuilder<Decoration>());
+      unclearNearChunks(this.merge, margin, clear);
+    }
+
+    for (let i = 0; i < clear.length; i++) {
+      if (clear[i]) {
+        // Lines are 1-based
+        const line = i + 1;
+        let size = 1;
+        for (; i < clear.length - 1 && clear[i + 1]; i++, size++) {
+          // Just finding size of identical stretch
+        }
+        if (size > margin) {
+          // Store the corresponding collapser positions
+          const editors: { line: number; cm: EditorView }[] = [
+            { line: line, cm: edit },
+          ]; // Collapser in the reference editor
+          if (this.left) {
+            editors.push({
+              line: getMatchingEditLine(line, this.left.chunks),
+              cm: this.left.remoteEditorWidget.cm,
+            });
+          }
+          if (this.right) {
+            editors.push({
+              line: getMatchingEditLine(line, this.right.chunks),
+              cm: this.right.remoteEditorWidget.cm,
+            });
+          }
+          if (this.merge) {
+            editors.push({
+              line: getMatchingEditLine(line, this.merge.chunks),
+              cm: this.merge.remoteEditorWidget.cm,
+            });
+          }
+
+          // Create collapser for this strech
+          editors.forEach((editor, idx) => {
+            const from = editor.cm.state.doc.line(editor.line).from;
+            const to = editor.cm.state.doc.line(editor.line + size - 1).to;
+            builders[idx].add(
+              from,
+              to,
+              Decoration.replace({
+                widget: new CollapseWidget(size, editors),
+                block: true,
+              }),
+            );
+          });
+        }
+      }
+    }
+
+    const editors = [
+      edit,
+      ...this._diffViews.map(dv => dv.remoteEditorWidget.cm),
+    ];
+    builders.forEach((builder, idx) => {
+      const decorationSet = builder.finish();
+      editors[idx].dispatch({
+        effects: setCollapsers.of(decorationSet),
+      });
+    });
+  }
+
   /**
    * Actions and updates performed when a gutter marker is clicked
    */
@@ -1570,28 +1797,34 @@ export class MergeView extends Panel {
     this._base.cm.dispatch({ effects });
   }
 
-  public get left(): DiffView | null {
+  get left(): DiffView | null {
     return this._left;
   }
 
-  public get right(): DiffView | null {
+  get right(): DiffView | null {
     return this._right;
   }
 
-  public get merge(): DiffView | null {
+  get merge(): DiffView | null {
     return this._merge;
   }
 
-  public get base(): EditorWidget {
+  get base(): EditorWidget {
     return this._base;
   }
 
+  private get _diffViews(): Readonly<DiffView[]> {
+    return [this.left, this.right, this.merge].filter(
+      dv => dv !== null,
+    ) as DiffView[];
+  }
+
+  private _collapseIdentical: number = 2;
   private _gridPanel: Panel;
   private _left: DiffView | null;
   private _right: DiffView | null;
   private _merge: DiffView | null;
   private _base: EditorWidget;
-  private _diffViews: DiffView[];
   private _aligning: boolean;
   private _measuring: number;
 }
@@ -1620,4 +1853,20 @@ function elt(
     }
   }
   return e;
+}
+
+function unclearNearChunks(
+  dv: DiffView,
+  margin: number,
+  clear: boolean[],
+): void {
+  for (let i = 0; i < dv.chunks.length; i++) {
+    const chunk = dv.chunks[i];
+    for (let l = chunk.baseFrom - margin; l < chunk.baseTo + margin; l++) {
+      const pos = l;
+      if (pos >= 0 && pos < clear.length) {
+        clear[pos] = false;
+      }
+    }
+  }
 }
