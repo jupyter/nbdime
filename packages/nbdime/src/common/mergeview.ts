@@ -457,36 +457,58 @@ export function createNbdimeMergeView(options: IMergeViewOptions): MergeView {
 }
 
 /**
+ * DiffView options
+ */
+export interface IDiffViewOptions {
+  /**
+   * Diff model
+   */
+  model: IStringDiffModel;
+  /**
+   * Remote content type
+   */
+  type: 'left' | 'right' | 'merge';
+  /**
+   * Editor configuration
+   */
+  options: IMergeViewEditorConfiguration;
+  /**
+   * Whether to synchronize scrolling between the two editors or not.
+   */
+  lockScroll?: boolean;
+}
+
+/**
  * Used by MergeView to show diff in a string diff model
  */
 export class DiffView {
-  constructor(
-    model: IStringDiffModel,
-    type: 'left' | 'right' | 'merge',
-    options: IMergeViewEditorConfiguration,
-  ) {
+  constructor({ model, type, options, lockScroll }: IDiffViewOptions) {
     this._model = model;
     this._type = type;
+    this._lockScroll = lockScroll ?? true;
     let remoteValue = this._model.remote || '';
     this._remoteEditorWidget = new EditorWidget({
       ...options,
       value: remoteValue,
     });
+    this.setScrollLock(this._lockScroll);
   }
 
   init(baseWidget: EditorWidget) {
     this._baseEditorWidget = baseWidget;
-    let baseEditor = this._baseEditorWidget.cm;
-    let remoteEditor = this._remoteEditorWidget.cm;
     this._lineChunks = this._model.getLineChunks();
     this._chunks = lineToNormalChunks(this._lineChunks);
-    this.updateView(baseEditor, remoteEditor);
-    this.syncScroll(baseEditor, remoteEditor);
+    this.updateView();
+    this.syncScroll();
   }
+
   /**
-   Update the highlighting in the views of baseEditor and remoteEditor
+   * Update the highlighting in the views of baseEditor and remoteEditor
    */
-  updateView(baseEditor: EditorView, remoteEditor: EditorView) {
+  updateView() {
+    const baseEditor = this._baseEditorWidget.cm;
+    const remoteEditor = this._remoteEditorWidget.cm;
+
     this.clearHighlighting(
       remoteEditor,
       this._model.additions,
@@ -516,7 +538,7 @@ export class DiffView {
     );
   }
   /**
-  Update the chunks once a version has been picked
+   * Update the chunks once a version has been picked
    */
   syncModel() {
     if (!this.modelInvalid()) {
@@ -546,6 +568,7 @@ export class DiffView {
     this._lineChunks = updatedLineChunks;
     this._chunks = updatedChunks;
   }
+
   /**
    * Add a gap DOM element between 2 editors
    */
@@ -565,6 +588,11 @@ export class DiffView {
     return this._gap;
   }
 
+  /**
+   * Whether to lock scroll or not.
+   *
+   * @param val Scroll lock value
+   */
   setScrollLock(val: boolean) {
     this._lockScroll = val;
     if (this._lockButton) {
@@ -592,12 +620,13 @@ export class DiffView {
    * srcEditor refers to the source editor from which the scrolling is done and listened
    * destEditor is the destination editor whose scrolling is synchronized with the one of srcEditor.
    */
-  private syncScroll(srcEditor: EditorView, destEditor: EditorView): void {
+  private syncScroll(): void {
     if (this.modelInvalid()) {
       return;
     }
-    let srcScroller = srcEditor.scrollDOM;
-    let destScroller = destEditor.scrollDOM;
+
+    const srcScroller = this._baseEditorWidget.cm.scrollDOM;
+    const destScroller = this._remoteEditorWidget.cm.scrollDOM;
     srcScroller.addEventListener(
       'scroll',
       event => {
@@ -989,7 +1018,7 @@ export class DiffView {
   private _chunks: Chunk[];
   private _lineChunks: Chunk[];
   private _gap: HTMLElement;
-  private _lockScroll = true;
+  private _lockScroll: boolean;
   private _lockButton: HTMLElement;
 }
 
@@ -1251,7 +1280,7 @@ export class MergeView extends Panel {
     // START MERGE CASE
     if (merged) {
       this.addClass('cm-merge-grid-panel');
-      let showBase = (this._showBase = options.showBase !== false);
+      const showBase = (this._showBase = options.showBase !== false);
 
       let leftWidget: Widget;
       if (!local || local.remote === null) {
@@ -1261,11 +1290,16 @@ export class MergeView extends Panel {
           node: elt('div', 'Value missing', 'jp-mod-missing'),
         });
       } else {
-        left = this._left = new DiffView(local, 'left', {
-          ...options,
-          // Copy configuration
-          config: { ...options.config },
-          extensions: [options.extensions ?? [], additionalExtensions],
+        left = this._left = new DiffView({
+          model: local,
+          type: 'left',
+          options: {
+            ...options,
+            // Copy configuration
+            config: { ...options.config },
+            extensions: [options.extensions ?? [], additionalExtensions],
+          },
+          lockScroll: showBase,
         });
         this._diffViews.push(left);
         leftWidget = left.remoteEditorWidget;
@@ -1286,11 +1320,16 @@ export class MergeView extends Panel {
           node: elt('div', 'Value missing', 'jp-mod-missing'),
         });
       } else {
-        right = this._right = new DiffView(remote, 'right', {
-          ...options,
-          // Copy configuration
-          config: { ...options.config },
-          extensions: [options.extensions ?? [], additionalExtensions],
+        right = this._right = new DiffView({
+          model: remote,
+          type: 'right',
+          options: {
+            ...options,
+            // Copy configuration
+            config: { ...options.config },
+            extensions: [options.extensions ?? [], additionalExtensions],
+          },
+          lockScroll: showBase,
         });
         this._diffViews.push(right);
         rightWidget = right.remoteEditorWidget;
@@ -1299,11 +1338,16 @@ export class MergeView extends Panel {
       rightWidget.addClass('cm-merge-pane');
       rightWidget.addClass('cm-merge-right-editor');
 
-      merge = this._merge = new DiffView(merged, 'merge', {
-        ...options,
-        // Copy configuration
-        config: { ...options.config, readOnly },
-        extensions: [options.extensions ?? [], additionalExtensions],
+      merge = this._merge = new DiffView({
+        model: merged,
+        type: 'merge',
+        options: {
+          ...options,
+          // Copy configuration
+          config: { ...options.config, readOnly },
+          extensions: [options.extensions ?? [], additionalExtensions],
+        },
+        lockScroll: showBase,
       });
       this._diffViews.push(merge);
       let mergeWidget = merge.remoteEditorWidget;
@@ -1311,6 +1355,46 @@ export class MergeView extends Panel {
         this.addWidget(mergeWidget);
       } else {
         this.insertWidget(1, mergeWidget);
+        // We add scroll synchronization between left, right and merge here
+        // as the base editor is not inserted and the diff view scroll synchronization does not work
+        function addScroll(
+          srcScroller: HTMLElement,
+          destScroller: HTMLElement,
+        ) {
+          srcScroller.addEventListener(
+            'scroll',
+            () => {
+              window.requestAnimationFrame(function () {
+                destScroller.scrollLeft = srcScroller.scrollLeft;
+                destScroller.scrollTop = srcScroller.scrollTop;
+              });
+            },
+            { passive: true },
+          );
+
+          destScroller.addEventListener(
+            'scroll',
+            () => {
+              window.requestAnimationFrame(function () {
+                srcScroller.scrollLeft = destScroller.scrollLeft;
+                srcScroller.scrollTop = destScroller.scrollTop;
+              });
+            },
+            { passive: true },
+          );
+        }
+        if (this.left) {
+          addScroll(
+            this.merge!.remoteEditorWidget.cm.scrollDOM,
+            this.left.remoteEditorWidget.cm.scrollDOM,
+          );
+        }
+        if (this.right) {
+          addScroll(
+            this.merge!.remoteEditorWidget.cm.scrollDOM,
+            this.right.remoteEditorWidget.cm.scrollDOM,
+          );
+        }
       }
       mergeWidget.addClass('cm-merge-editor');
       //END MERGE CASE
@@ -1331,11 +1415,15 @@ export class MergeView extends Panel {
         panes = 2;
         this.addWidget(this._base);
         this._base.addClass('cm-diff-left-editor');
-        right = this._right = new DiffView(remote, 'right', {
-          ...options,
-          // Copy configuration
-          config: { ...options.config },
-          extensions: [options.extensions ?? [], additionalExtensions],
+        right = this._right = new DiffView({
+          model: remote,
+          type: 'right',
+          options: {
+            ...options,
+            // Copy configuration
+            config: { ...options.config },
+            extensions: [options.extensions ?? [], additionalExtensions],
+          },
         });
         this._diffViews.push(right);
         let rightWidget = right.remoteEditorWidget;
@@ -1578,7 +1666,7 @@ export class MergeView extends Panel {
   private updateDiffViews() {
     this.clearBaseEditorPickers();
     for (let dv of this._diffViews) {
-      dv.updateView(dv.baseEditorWidget.cm, dv.remoteEditorWidget.cm);
+      dv.updateView();
     }
   }
   /**
