@@ -1431,7 +1431,7 @@ export class MergeView extends Panel {
     // Padding at the last line of the editor
     let totalHeight = nLines.map((line, i) => line + sumDeltas[i]);
     let maxHeight = Math.max(...totalHeight);
-    totalHeight.slice(0, 3).forEach((line, i) => {
+    totalHeight.slice(0, this._showBase ? 3 : 4).forEach((line, i) => {
       if (maxHeight > line) {
         let end = editors[i].state.doc.length;
         let delta = maxHeight - line;
@@ -1609,7 +1609,6 @@ export class MergeView extends Panel {
     return this._base;
   }
 
-  private _gridPanel: Panel;
   private _left: DiffView | null;
   private _right: DiffView | null;
   private _merge: DiffView | null;
