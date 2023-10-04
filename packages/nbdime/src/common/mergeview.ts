@@ -425,7 +425,7 @@ const conflictMarkerLineChunkMappingField = StateField.define<
 });
 
 /**
- * Uncollapse effect to synchronize uncollapsed ranges between editors.
+ * uncollapseEffect effect to synchronize uncollapseEffectd ranges between editors.
  */
 const uncollapseEffect = StateEffect.define<number>({
   map: (value, change) => change.mapPos(value),
@@ -468,10 +468,10 @@ class CollapseWidget extends WidgetType {
       const pos = view.posAtDOM(e.target as HTMLElement);
       this.siblings.forEach(sibling => {
         if (sibling.cm === view) {
-          view.dispatch({ effects: uncollapse.of(pos) });
+          view.dispatch({ effects: uncollapseEffect.of(pos) });
         } else {
           const from = sibling.cm.state.doc.line(sibling.line).from;
-          sibling.cm.dispatch({ effects: uncollapse.of(from) });
+          sibling.cm.dispatch({ effects: uncollapseEffect.of(from) });
         }
       });
     });
@@ -496,14 +496,14 @@ const CollapsedRangesField = StateField.define<DecorationSet>({
   },
   update(deco, tr) {
     for (let e of tr.effects) {
-      if (e.is(setCollapsers)) {
+      if (e.is(setCollapsersEffect)) {
         return e.value;
       }
     }
 
     deco = deco.map(tr.changes);
     for (let e of tr.effects)
-      if (e.is(uncollapse))
+      if (e.is(uncollapseEffect))
         deco = deco.update({ filter: from => from != e.value });
     return deco;
   },
@@ -1379,7 +1379,7 @@ export class MergeView extends Panel {
       ? [listener, mergeControlGutter, getCommonEditorExtensions(inMergeView)]
       : getCommonEditorExtensions(inMergeView);
     if(this._collapseIdentical >= 0) {
-      additionalExtensions.push(CollapsedRanges)
+      additionalExtensions.push(CollapsedRangesField)
     }
 
     this._base = new EditorWidget({
@@ -1623,7 +1623,7 @@ export class MergeView extends Panel {
 
     // Build an array of line that are not part of a chunks
     const baseEditor = this.base.cm;
-    const clear = new Array<boolean>(edit.state.doc.lines).fill(true);
+    const clear = new Array<boolean>(baseEditor.state.doc.lines).fill(true);
     // Collapsers per editor
     const builders = [new RangeSetBuilder<Decoration>()];
 
@@ -1651,7 +1651,7 @@ export class MergeView extends Panel {
         if (size > margin) {
           // Store the corresponding collapser positions
           const editors: { line: number; cm: EditorView }[] = [
-            { line: line, cm: edit },
+            { line: line, cm: baseEditor },
           ]; // Collapser in the reference editor
           if (this.left) {
             editors.push({
@@ -1690,13 +1690,13 @@ export class MergeView extends Panel {
     }
 
     const editors = [
-      edit,
+      baseEditor,
       ...this._diffViews.map(dv => dv.remoteEditorWidget.cm),
     ];
     builders.forEach((builder, idx) => {
       const decorationSet = builder.finish();
       editors[idx].dispatch({
-        effects: setCollapsers.of(decorationSet),
+        effects: setCollapsersEffect.of(decorationSet),
       });
     });
   }
