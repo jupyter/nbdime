@@ -9,7 +9,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 /* notebooks of same length and 1 conflict*/
-test.describe('merge test10', () => {
+test.describe('merge test4', () => {
   test('should synchronize the collapse status between editor', async ({ page }) => {
     expect.soft(await page.locator('#main').screenshot()).toMatchSnapshot();
 

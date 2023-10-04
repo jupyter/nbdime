@@ -128,10 +128,13 @@ const mergeViewDecorationDict: MergeViewDecorationDict = {
  */
 const baseTheme = EditorView.baseTheme({
   '.cm-collapsedLines': {
-    padding: '5px 5px 5px 10px',
     cursor: 'pointer',
-    color: 'var(--jp-ui-font-color2)',
-    outline: 'solid var(--jp-border-width) var(--jp-border-color1)',
+    color: 'var(--jp-ui-font-color1)',
+    backgroundColor: 'var(--jp-layout-color2)',
+    border: 'var(--jp-border-width) solid var(--jp-border-color1)',
+    fontSize: '90%',
+    padding:'0 3px',
+    borderRadius: '4px',
   },
 });
 
@@ -424,14 +427,14 @@ const conflictMarkerLineChunkMappingField = StateField.define<
 /**
  * Uncollapse effect to synchronize uncollapsed ranges between editors.
  */
-const uncollapse = StateEffect.define<number>({
+const uncollapseEffect = StateEffect.define<number>({
   map: (value, change) => change.mapPos(value),
 });
 
 /**
  * Effect to set the collapser widgets in an editor
  */
-const setCollapsers = StateEffect.define<DecorationSet>({
+const setCollapsersEffect = StateEffect.define<DecorationSet>({
   map: (value, mapping) => value.map(mapping),
 });
 
@@ -487,7 +490,7 @@ class CollapseWidget extends WidgetType {
 /**
  * StateField storing information about the collapsed ranges
  */
-const CollapsedRanges = StateField.define<DecorationSet>({
+const CollapsedRangesField = StateField.define<DecorationSet>({
   create(state) {
     return Decoration.none;
   },
@@ -1619,7 +1622,7 @@ export class MergeView extends Panel {
     }
 
     // Build an array of line that are not part of a chunks
-    const edit = this.base.cm;
+    const baseEditor = this.base.cm;
     const clear = new Array<boolean>(edit.state.doc.lines).fill(true);
     // Collapsers per editor
     const builders = [new RangeSetBuilder<Decoration>()];
