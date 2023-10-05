@@ -2,27 +2,36 @@ import { expect, test } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('http://localhost:41000/merge');
-  await page.locator('#merge-local').fill('data/merge_test10/left.ipynb');
-  await page.locator('#merge-base').fill('data/merge_test10/center.ipynb');
-  await page.locator('#merge-remote').fill('data/merge_test10/right.ipynb');
+  await page.locator('#merge-local').fill('data/merge_test4/left.ipynb');
+  await page.locator('#merge-base').fill('data/merge_test4/center.ipynb');
+  await page.locator('#merge-remote').fill('data/merge_test4/right.ipynb');
   await page.getByRole('button', { name: 'Merge files' }).click();
 });
 
 /* notebooks of same length and 1 conflict*/
 test.describe('merge test4', () => {
-  test('should synchronize the collapse status between editor', async ({ page }) => {
+  test('test case with 2 collapsers', async ({ page }) => {
     expect.soft(await page.locator('#main').screenshot()).toMatchSnapshot();
 
-    // Should display 4 collapsers
-    const collapsers = page.getByText('4 unchanged lines');
-    await expect.soft(collapsers).toHaveCount(4);
-    await expect.soft(page.getByText('gaussian array y')).toHaveCount(0);
+    // Should display 16 collapsers
+    const collapsers1 = page.getByText('12 unchanged lines');
+    await expect.soft(collapsers1).toHaveCount(4);
+    const collapsers2 = page.getByText('5 unchanged lines');
+    await expect.soft(collapsers2).toHaveCount(4);
+    await expect.soft(page.getByText('import numpy')).toHaveCount(0);
+    await expect.soft(page.getByText('noise = np.random.normal(0.0, 0.2, nx)')).toHaveCount(0);
+
 
     // Click on the base editor collapser
-    await page.getByText('4 unchanged lines').nth(1).click();
+    await page.getByText('12 unchanged lines').nth(1).click();
+    await expect.soft(collapsers1).toHaveCount(0);
+    await page.getByText('5 unchanged lines').nth(1).click();
+    await expect.soft(collapsers2).toHaveCount(0);
 
     // Should not display any collapsers
-    await expect.soft(collapsers).toHaveCount(0);
-    await expect(page.getByText('gaussian array y')).toHaveCount(4);
+
+    await expect(page.getByText('import numpy')).toHaveCount(4);
+    await expect(page.getByText('noise = np.random.normal(0.0, 0.2, nx)')).toHaveCount(4);
+
   });
 });
