@@ -10,7 +10,7 @@ test.beforeEach(async ({ page }) => {
 
 /* notebooks of same length and 1 conflict*/
 test.describe('merge test4', () => {
-  test('test case with 2 collapsers', async ({ page }) => {
+  test('should synchronize the collapse status between editor', async ({ page }) => {
     expect.soft(await page.locator('#main').screenshot()).toMatchSnapshot();
 
     // Should display 16 collapsers
