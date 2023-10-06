@@ -13,7 +13,7 @@ test.describe('merge test4', () => {
   test('should synchronize the collapse status between editor', async ({ page }) => {
     expect.soft(await page.locator('#main').screenshot()).toMatchSnapshot();
 
-    // Should display 16 collapsers
+    // Should display 8 collapsers
     const collapsers1 = page.getByText('12 unchanged lines');
     await expect.soft(collapsers1).toHaveCount(4);
     const collapsers2 = page.getByText('5 unchanged lines');
