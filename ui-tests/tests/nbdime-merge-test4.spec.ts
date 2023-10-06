@@ -22,13 +22,13 @@ test.describe('merge test4', () => {
     await expect.soft(page.getByText('noise = np.random.normal(0.0, 0.2, nx)')).toHaveCount(0);
 
 
-    // Click on the base editor collapser
+    // Click on the base editor collapsers
     await page.getByText('12 unchanged lines').nth(1).click();
     await expect.soft(collapsers1).toHaveCount(0);
     await page.getByText('5 unchanged lines').nth(1).click();
     await expect.soft(collapsers2).toHaveCount(0);
 
-    // Should not display any collapsers
+    // Should not display any collapser
 
     await expect(page.getByText('import numpy')).toHaveCount(4);
     await expect(page.getByText('noise = np.random.normal(0.0, 0.2, nx)')).toHaveCount(4);
