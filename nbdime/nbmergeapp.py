@@ -4,6 +4,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 import io
+import json
 import os
 import sys
 
@@ -57,14 +58,18 @@ def main_merge(args):
         logger.debug("Merge completed successfully with no unresolvable conflicts.")
 
     if args.decisions:
-        # Print merge decisions (including unconflicted)
-        config = prettyprint_config_from_args(args, out=io.StringIO())
-        pretty_print_merge_decisions(b, decisions, config=config)
-        logger.warning("Decisions:\n%s", config.out.getvalue())
+        if mfn:
+            # write decisions as JSON file
+            with io.open(mfn, "w", encoding="utf8") as  outfile:
+                json.dump(decisions, outfile, indent=2)
+        else:
+            # Print merge decisions (including unconflicted)
+            config = prettyprint_config_from_args(args, out=io.StringIO())
+            pretty_print_merge_decisions(b, decisions, config=config)
+            logger.warning("Decisions:\n%s", config.out.getvalue())
     elif mfn:
         # Write partial or fully completed merge to given foo.ipynb filename
-        with io.open(mfn, "w", encoding="utf8"):
-            nbformat.write(merged, mfn)
+        nbformat.write(merged, mfn)
         logger.info("Merge result written to %s", mfn)
     else:
         # Write merged notebook to terminal
@@ -126,7 +131,7 @@ def _build_arg_parser():
         '--out',
         default=None,
         type=Path,
-        help="if supplied, the merged notebook is written "
+        help="if supplied, the merged output is written "
              "to this file. Otherwise it is printed to the "
              "terminal.")
     parser.add_argument(
