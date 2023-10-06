@@ -156,7 +156,7 @@ export class CellMergeModel extends ObjectMergeModel<
     decisions: MergeDecision[],
     mimetype: string,
   ) {
-    // TODO: Remove/extend whitelist once we support more
+    // TODO: Remove/extend allowlist once we support more
     super(base, [], mimetype, [
       'source',
       'metadata',
@@ -609,7 +609,7 @@ export class CellMergeModel extends ObjectMergeModel<
     }
     let patchKey = local ? localPatch!.key : remotePatch!.key;
     for (let key of keys) {
-      if (this._whitelist && !valueIn(key, this._whitelist)) {
+      if (this._allowlist && !valueIn(key, this._allowlist)) {
         throw new NotifyUserError(
           'Currently not able to handle decisions on variable "' + key + '"',
         );
