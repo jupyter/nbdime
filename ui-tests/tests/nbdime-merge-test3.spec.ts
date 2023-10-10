@@ -11,8 +11,7 @@ test.beforeEach(async ({ page }) => {
 /* 2 cells with merge conflict */
 test.describe('merge test3', () => {
   test('should warn for remaining conflicts', async ({ page }) => {
-    await page.waitForTimeout(300);
-    await expect.soft(page.getByText('➭')).toHaveCount(25);
+    await expect.soft(page.getByText('➭')).toHaveCount(26);
 
     await page.getByRole('button', { name: 'Download' }).click();
 
