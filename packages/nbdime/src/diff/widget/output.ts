@@ -8,13 +8,13 @@ import { Panel, Widget } from '@lumino/widgets';
 
 import { each, find, toArray } from '@lumino/algorithm';
 
-import type { CodeEditor } from '@jupyterlab/codeeditor';
-
 import {
   IRenderMimeRegistry,
   OutputModel,
   IRenderMime,
 } from '@jupyterlab/rendermime';
+
+import { DiffPanel } from '../../common/basepanel';
 
 import { CollapsiblePanel } from '../../common/collapsiblepanel';
 
@@ -95,33 +95,30 @@ function isBase64(data: string | null, minLength = 64): boolean {
 /**
  * A panel responsible for rendering an output diff
  */
-export class OutputPanel extends Panel {
+export class OutputPanel extends DiffPanel<OutputDiffModel> {
   /**
    *
    */
   constructor({
-    model,
     parent: parentModel,
     editorClasses,
     rendermime,
-    factory,
+    ...others
   }: ICellDiffViewOptions<OutputDiffModel>) {
-    super();
-    this.editorFactory = factory;
-    this.model = model;
+    super(others);
     this.rendermime = rendermime;
     this.editorClasses = editorClasses;
 
-    model.trustedChanged.connect(
+    this._model.trustedChanged.connect(
       (sender: OutputDiffModel, trusted: boolean) => {
         this.trustedChanged(trusted);
       },
     );
-    if (OutputPanel.isTrustSignificant(model, this.rendermime)) {
+    if (OutputPanel.isTrustSignificant(this._model, this.rendermime)) {
       this.addClass(UNTRUSTED_CLASS);
     }
 
-    if (model.added) {
+    if (this._model.added) {
       if (!parentModel.added) {
         // Implies this is added output
         let addSpacer = new Widget();
@@ -130,7 +127,7 @@ export class OutputPanel extends Panel {
         this.addWidget(addSpacer);
       }
       this.addClass(ADDED_DIFF_CLASS);
-    } else if (model.deleted) {
+    } else if (this._model.deleted) {
       if (!parentModel.deleted) {
         // Implies this is deleted output
         let delSpacer = new Widget();
@@ -139,7 +136,7 @@ export class OutputPanel extends Panel {
         this.addWidget(delSpacer);
       }
       this.addClass(DELETED_DIFF_CLASS);
-    } else if (model.unchanged) {
+    } else if (this._model.unchanged) {
       this.addClass(UNCHANGED_DIFF_CLASS);
     } else {
       this.addClass(TWOWAY_DIFF_CLASS);
@@ -156,11 +153,11 @@ export class OutputPanel extends Panel {
    * Add view to panel, possibly wrapped
    */
   protected initContainer(view: Widget) {
-    if (this.model.collapsible) {
+    if (this._model.collapsible) {
       this.container = new CollapsiblePanel(
         view,
-        this.model.collapsibleHeader,
-        this.model.startCollapsed,
+        this._model.collapsibleHeader,
+        this._model.startCollapsed,
       );
     } else {
       this.container = this;
@@ -185,7 +182,7 @@ export class OutputPanel extends Panel {
    */
   protected createView(forceText = false): Widget {
     let view: Widget | null = null;
-    let model = this.model;
+    let model = this._model;
     let rendermime = this.rendermime;
     // Take one of three actions, depending on output types
     // 1) Renderable types: Side-by-side comparison.
@@ -217,7 +214,7 @@ export class OutputPanel extends Panel {
     // 2) Known, non-binary MIME: Show a MergeView with text diff.
     // 3) Unknown types: Stringified JSON diff.
     let view: Widget | undefined;
-    let model = this.model as OutputDiffModel;
+    let model = this._model as OutputDiffModel;
     // Find highest order MIME-type supported by rendermime
     let key: string | string[] | null = null;
     if (this.selectedMimetype === null) {
@@ -235,7 +232,7 @@ export class OutputPanel extends Panel {
         // 2.
         view = createNbdimeMergeView({
           remote: stringModel,
-          factory: this.editorFactory,
+          factory: this._editorFactory,
         });
       }
     }
@@ -243,7 +240,7 @@ export class OutputPanel extends Panel {
       // 3.
       view = createNbdimeMergeView({
         remote: model.stringify(),
-        factory: this.editorFactory,
+        factory: this._editorFactory,
       });
     }
     return view;
@@ -277,7 +274,7 @@ export class OutputPanel extends Panel {
     btnTrust.innerText = 'Trust';
     btnTrust.onclick = (ev: MouseEvent) => {
       // Triggers change event:
-      this.model.trusted = !this.model.trusted;
+      this._model.trusted = !this._model.trusted;
     };
     w = new Widget({ node: btnTrust });
     w.addClass(TRUST_BUTTON_CLASS);
@@ -285,7 +282,7 @@ export class OutputPanel extends Panel {
 
     // Add mimetype select:
     let mimetypes: string[] = [];
-    for (let output of this.model.contents) {
+    for (let output of this._model.contents) {
       let bundle = OutputModel.getData(output);
       mimetypes = mimetypes.concat(Object.keys(bundle));
     }
@@ -318,7 +315,7 @@ export class OutputPanel extends Panel {
     this.updateView();
     if (trusted) {
       this.removeClass(UNTRUSTED_CLASS);
-    } else if (OutputPanel.isTrustSignificant(this.model, this.rendermime)) {
+    } else if (OutputPanel.isTrustSignificant(this._model, this.rendermime)) {
       this.addClass(UNTRUSTED_CLASS);
     }
   }
@@ -327,7 +324,7 @@ export class OutputPanel extends Panel {
    * Update view
    */
   protected updateView(): void {
-    let model = this.model;
+    let model = this._model;
     if (this.view instanceof RenderableOutputView) {
       // Previosuly rendered
       if (
@@ -353,10 +350,10 @@ export class OutputPanel extends Panel {
     if (this._mimetype !== null) {
       return this._mimetype;
     }
-    let data = OutputModel.getData(this.model.base || this.model.remote!);
+    let data = OutputModel.getData(this._model.base || this._model.remote!);
     let mt = this.rendermime.preferredMimeType(
       data,
-      this.model.trusted ? 'any' : 'ensure',
+      this._model.trusted ? 'any' : 'ensure',
     );
     return mt === undefined ? null : mt;
   }
@@ -368,8 +365,6 @@ export class OutputPanel extends Panel {
     }
   }
 
-  protected editorFactory: CodeEditor.Factory | undefined;
-  protected model: OutputDiffModel;
   protected rendermime: IRenderMimeRegistry;
   protected editorClasses: string[];
   protected container: Panel;

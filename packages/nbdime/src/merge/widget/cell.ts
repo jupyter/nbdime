@@ -10,11 +10,16 @@ import type { CodeEditor } from '@jupyterlab/codeeditor';
 
 import type { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
+import { MergePanel } from '../../common/basepanel';
+
 import { CollapsiblePanel } from '../../common/collapsiblepanel';
 
 import { DragPanel } from '../../common/dragpanel';
 
-import type { ICellDiffWidgetOptions } from '../../common/interfaces';
+import type {
+  ICellDiffWidgetOptions,
+  IMergeWidgetOptions,
+} from '../../common/interfaces';
 
 import { createNbdimeMergeView, MergeView } from '../../common/mergeview';
 
@@ -74,14 +79,15 @@ export interface ICellMergeViewOptions {
 /**
  * CellMergeWidget for cell changes
  */
-export class CellMergeWidget extends Panel {
+export class CellMergeWidget extends MergePanel<CellMergeModel> {
   static createMergeView({
     editorFactory,
     local,
     remote,
     merged,
     readOnly,
-  }: ICellMergeViewOptions): Widget | null {
+    ...others
+  }: ICellMergeViewOptions & IMergeWidgetOptions): Widget | null {
     let view: Widget | null = null;
     if (merged instanceof StringDiffModel) {
       view = createNbdimeMergeView({
@@ -90,6 +96,7 @@ export class CellMergeWidget extends Panel {
         merged,
         readOnly: readOnly ?? false,
         factory: editorFactory,
+        ...others,
       });
     }
     return view;
@@ -118,15 +125,12 @@ export class CellMergeWidget extends Panel {
    *
    */
   constructor({
-    editorFactory,
-    model,
     rendermime,
     mimetype,
+    ...options
   }: ICellDiffWidgetOptions<CellMergeModel>) {
-    super();
+    super(options);
     this.addClass(CELLMERGE_CLASS);
-    this._editorFactory = editorFactory;
-    this._model = model;
     this._rendermime = rendermime;
     this.mimetype = mimetype;
 
@@ -211,7 +215,7 @@ export class CellMergeWidget extends Panel {
         parent: model.merged,
         editorClasses: CURR_CLASSES,
         rendermime: this._rendermime,
-        factory: this._editorFactory,
+        editorFactory: this._editorFactory,
       });
       if ((ladd && !radd) || (ldel && !rdel)) {
         this.addClass(ONEWAY_LOCAL_CLASS);
@@ -236,7 +240,7 @@ export class CellMergeWidget extends Panel {
             parent: model.merged,
             editorClasses: CURR_CLASSES,
             rendermime: this._rendermime,
-            factory: this._editorFactory,
+            editorFactory: this._editorFactory,
           });
           container.addWidget(view);
         }
@@ -269,7 +273,7 @@ export class CellMergeWidget extends Panel {
           parent: model.merged,
           editorClasses: CURR_CLASSES,
           rendermime: this._rendermime,
-          factory: this._editorFactory,
+          editorFactory: this._editorFactory,
         });
       } else {
         sourceView = CellMergeWidget.createMergeView({
@@ -278,6 +282,7 @@ export class CellMergeWidget extends Panel {
           merged: model.merged.source,
           editorClasses: CURR_CLASSES,
           editorFactory: this._editorFactory,
+          ...this._viewOptions,
         });
       }
       if (sourceView === null) {
@@ -310,8 +315,9 @@ export class CellMergeWidget extends Panel {
           remote: model.remote ? model.remote.metadata : null,
           merged: model.merged.metadata,
           editorClasses: CURR_CLASSES,
-          readOnly: true, // Do not allow manual edit of metadata
           editorFactory: this._editorFactory,
+          ...this._viewOptions,
+          readOnly: true, // Do not allow manual edit of metadata
         });
         if (metadataView === null) {
           throw new Error(
@@ -348,6 +354,7 @@ export class CellMergeWidget extends Panel {
           baseOut,
           remoteOut,
           localOut,
+          this._viewOptions.showBase,
         );
         this.outputViews = view;
 
@@ -482,7 +489,5 @@ export class CellMergeWidget extends Panel {
     return this._model;
   }
 
-  private _editorFactory: CodeEditor.Factory | undefined;
-  private _model: CellMergeModel;
   private _rendermime: IRenderMimeRegistry;
 }

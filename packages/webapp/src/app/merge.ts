@@ -54,11 +54,18 @@ function showMerge(data: {
     sanitizer: new Sanitizer(),
   });
 
+  const showBase = getConfigOption('showBase', true);
+
+  if (!showBase) {
+    document.querySelector('#nbdime-header-base')!.textContent = 'Merged';
+  }
+
   let nbmModel = new NotebookMergeModel(data.base, data.merge_decisions);
   let nbmWidget = new NotebookMergeWidget({
     model: nbmModel,
     rendermime,
     editorFactory: createEditorFactory(),
+    showBase,
   });
 
   let root = document.getElementById('nbdime-root');

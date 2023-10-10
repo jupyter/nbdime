@@ -29,7 +29,8 @@
   background: var(--jp-cell-editor-background);
 }
 
-.nbdime-root .cm-merge-grid-panel {
+.nbdime-root .cm-merge-3pane,
+.nbdime-root .cm-merge-4pane {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
@@ -51,7 +52,7 @@
   grid-row: 1;
 }
 
-.nbdime-root .cm-merge-editor {
+.nbdime-root .cm-merge-4pane > .cm-merge-editor {
   grid-column: 1/4;
   grid-row: 2;
 }

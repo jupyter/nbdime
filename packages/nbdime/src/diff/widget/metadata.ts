@@ -2,9 +2,9 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
-import { Panel, Widget } from '@lumino/widgets';
+import type { Widget } from '@lumino/widgets';
 
-import type { CodeEditor } from '@jupyterlab/codeeditor';
+import { DiffPanel } from '../../common/basepanel';
 
 import { createNbdimeMergeView } from '../../common/mergeview';
 
@@ -21,16 +21,11 @@ const ROOT_METADATA_CLASS = 'jp-Metadata-diff';
 /**
  * MetadataWidget for changes to Notebook-level metadata
  */
-export class MetadataDiffWidget extends Panel {
+export class MetadataDiffWidget extends DiffPanel<IStringDiffModel> {
   // TODO improve typing hierarchy to avoid `Omit`
-  constructor({
-    model,
-    editorFactory,
-  }: Omit<IDiffWidgetOptions<IStringDiffModel>, 'rendermime'>) {
-    super();
-    this._editorFactory = editorFactory;
-    this._model = model;
-    console.assert(!model.added && !model.deleted);
+  constructor(options: IDiffWidgetOptions<IStringDiffModel>) {
+    super(options);
+    console.assert(!this._model.added && !this._model.deleted);
     this.addClass(ROOT_METADATA_CLASS);
     this.init();
   }
@@ -53,7 +48,4 @@ export class MetadataDiffWidget extends Panel {
       this.addWidget(view);
     }
   }
-
-  private _editorFactory: CodeEditor.Factory | undefined;
-  private _model: IStringDiffModel;
 }
