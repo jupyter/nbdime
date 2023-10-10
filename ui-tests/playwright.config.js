@@ -8,6 +8,7 @@ module.exports = {
     ['html', { open: process.env.CI ? 'never' : 'on-failure' }],
   ],
   reportSlowTests: null,
+  retries: process.env.CI ? 1 : 0,
   timeout: 60000,
   use: {
     // Browser options
