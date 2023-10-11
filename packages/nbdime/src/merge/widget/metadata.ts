@@ -6,7 +6,7 @@ import type * as nbformat from '@jupyterlab/nbformat';
 
 import type {
   IDiffWidgetOptions,
-  IMergeWidgetOptions,
+  IMergeViewOptions,
 } from '../../common/interfaces';
 
 import { createNbdimeMergeView, MergeView } from '../../common/mergeview';
@@ -24,7 +24,7 @@ const ROOT_METADATA_CLASS = 'jp-Metadata-diff';
  */
 export class MetadataMergeWidget extends MergePanel<MetadataMergeModel> {
   constructor(
-    options: IDiffWidgetOptions<MetadataMergeModel> & IMergeWidgetOptions,
+    options: IDiffWidgetOptions<MetadataMergeModel> & IMergeViewOptions,
   ) {
     super(options);
     this.addClass(ROOT_METADATA_CLASS);

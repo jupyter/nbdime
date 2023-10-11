@@ -18,7 +18,7 @@ import { DragPanel } from '../../common/dragpanel';
 
 import type {
   ICellDiffWidgetOptions,
-  IMergeWidgetOptions,
+  IMergeViewOptions,
 } from '../../common/interfaces';
 
 import { createNbdimeMergeView, MergeView } from '../../common/mergeview';
@@ -87,7 +87,7 @@ export class CellMergeWidget extends MergePanel<CellMergeModel> {
     merged,
     readOnly,
     ...others
-  }: ICellMergeViewOptions & IMergeWidgetOptions): Widget | null {
+  }: ICellMergeViewOptions & IMergeViewOptions): Widget | null {
     let view: Widget | null = null;
     if (merged instanceof StringDiffModel) {
       view = createNbdimeMergeView({

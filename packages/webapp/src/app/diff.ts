@@ -68,12 +68,14 @@ function showDiff(data: {
     sanitizer: new Sanitizer(),
     latexTypesetter: new MathJaxTypesetter(),
   });
+  const collapseIdentical = getConfigOption('collapseIdentical', 2);
 
   let nbdModel = new NotebookDiffModel(data.base, data.diff);
   let nbdWidget = new NotebookDiffWidget({
     model: nbdModel,
     rendermime,
     editorFactory: createEditorFactory(),
+    collapseIdentical,
   });
 
   let root = document.getElementById('nbdime-root');

@@ -22,7 +22,6 @@ const ROOT_METADATA_CLASS = 'jp-Metadata-diff';
  * MetadataWidget for changes to Notebook-level metadata
  */
 export class MetadataDiffWidget extends DiffPanel<IStringDiffModel> {
-  // TODO improve typing hierarchy to avoid `Omit`
   constructor(options: IDiffWidgetOptions<IStringDiffModel>) {
     super(options);
     console.assert(!this._model.added && !this._model.deleted);
@@ -37,6 +36,7 @@ export class MetadataDiffWidget extends DiffPanel<IStringDiffModel> {
       let view: Widget = createNbdimeMergeView({
         remote: model,
         factory: this._editorFactory,
+        ...this._viewOptions,
       });
       if (model.collapsible) {
         view = new CollapsiblePanel(

@@ -288,6 +288,13 @@ def add_web_args(parser, default_port=8888):
         default=True,
         help="show unchanged cells by default"
     )
+    parser.add_argument(
+        '--identical-lines-margin',
+        dest='identical_lines_margin',
+        default=2,
+        type=int,
+        help="Margin for collapsing identical lines in editor; set to -1 to deactivate.",
+    )
 
 
 def add_diff_args(parser):
@@ -539,6 +546,7 @@ def args_for_server(arguments):
                 base_url='base_url',
                 hide_unchanged='hide_unchanged',
                 show_base='show_base',
+                identical_lines_margin='identical_lines_margin',
                 )
     ret = {kmap[k]: v for k, v in vars(arguments).items() if k in kmap}
     if 'persist' in arguments:

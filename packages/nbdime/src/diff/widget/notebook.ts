@@ -53,6 +53,7 @@ export class NotebookDiffWidget extends DiffPanel<NotebookDiffModel> {
           new MetadataDiffWidget({
             model: model.metadata,
             editorFactory: this._editorFactory,
+            ...this._viewOptions,
           }),
         );
       }
@@ -67,6 +68,7 @@ export class NotebookDiffWidget extends DiffPanel<NotebookDiffModel> {
                 rendermime,
                 mimetype: model.mimetype,
                 editorFactory: this._editorFactory,
+                ...this._viewOptions,
               }),
             );
           } else {
@@ -84,6 +86,7 @@ export class NotebookDiffWidget extends DiffPanel<NotebookDiffModel> {
                   rendermime,
                   mimetype: model.mimetype,
                   editorFactory: this._editorFactory,
+                  ...this._viewOptions,
                 }),
               );
             }

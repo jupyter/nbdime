@@ -9,7 +9,7 @@ import type { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 import { MergePanel } from '../../common/basepanel';
 
 import type {
-  IMergeWidgetOptions,
+  IMergeViewOptions,
   IMimeDiffWidgetOptions,
 } from '../../common/interfaces';
 
@@ -37,7 +37,7 @@ export class NotebookMergeWidget extends MergePanel<NotebookMergeModel> {
   constructor({
     rendermime,
     ...options
-  }: IMimeDiffWidgetOptions<NotebookMergeModel> & IMergeWidgetOptions) {
+  }: IMimeDiffWidgetOptions<NotebookMergeModel> & IMergeViewOptions) {
     super(options);
     this._rendermime = rendermime;
 

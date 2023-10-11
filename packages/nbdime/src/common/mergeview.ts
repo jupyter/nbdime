@@ -44,7 +44,7 @@ import {
   createEditorFactory,
 } from './editor';
 
-import type { IMergeWidgetOptions } from './interfaces';
+import type { IMergeViewOptions } from './interfaces';
 
 import { valueIn, hasEntries, splitLines } from './util';
 
@@ -135,7 +135,7 @@ const baseTheme = EditorView.baseTheme({
     backgroundColor: 'var(--jp-layout-color2)',
     border: 'var(--jp-border-width) solid var(--jp-border-color1)',
     fontSize: '90%',
-    padding:'0 3px',
+    padding: '0 3px',
     borderRadius: '4px',
   },
 });
@@ -515,7 +515,7 @@ const CollapsedRangesField = StateField.define<DecorationSet>({
 /**
  * Merge view factory options
  */
-export interface IMergeViewOptions extends Partial<IMergeWidgetOptions> {
+export interface IMergeViewFactoryOptions extends Partial<IMergeViewOptions> {
   /**
    * Diff between the reference and a remote version
    */
@@ -538,14 +538,25 @@ export interface IMergeViewOptions extends Partial<IMergeWidgetOptions> {
 /**
  * A wrapper view for showing StringDiffModels in a MergeView
  */
-export function createNbdimeMergeView(options: IMergeViewOptions): MergeView {
-  const { remote, local, merged, readOnly, factory, showBase } = options;
+export function createNbdimeMergeView(
+  options: IMergeViewFactoryOptions,
+): MergeView {
+  const {
+    remote,
+    local,
+    merged,
+    readOnly,
+    factory,
+    collapseIdentical,
+    showBase,
+  } = options;
   let opts: IMergeViewEditorConfiguration = {
     remote,
     local,
     merged,
     config: { readOnly },
     factory: factory ?? createEditorFactory(),
+    collapseIdentical,
     showBase,
   };
 
@@ -1425,8 +1436,8 @@ export class MergeView extends Panel {
     const additionalExtensions = inMergeView
       ? [listener, mergeControlGutter, getCommonEditorExtensions(inMergeView)]
       : getCommonEditorExtensions(inMergeView);
-    if(this._collapseIdentical >= 0) {
-      additionalExtensions.push(CollapsedRangesField)
+    if (this._collapseIdentical >= 0) {
+      additionalExtensions.push(CollapsedRangesField);
     }
 
     this._base = new EditorWidget({
@@ -1608,7 +1619,6 @@ export class MergeView extends Panel {
    * Align the matching lines of the different editors
    */
   alignViews() {
-    console.log(this._showBase, this._diffViews.length);
     let lineHeight = this._showBase
       ? this._base.cm.defaultLineHeight
       : this._diffViews[0].remoteEditorWidget.cm.defaultLineHeight;
@@ -1650,8 +1660,6 @@ export class MergeView extends Panel {
         if (!this._showBase && i === 0) {
           return;
         }
-
-        let side = -1;
         let line = alignment[i];
 
         if (delta > 0 && line < nLines[i]) {
@@ -1668,7 +1676,7 @@ export class MergeView extends Panel {
             Decoration.widget({
               widget: new PaddingWidget(delta * lineHeight),
               block: true,
-              side,
+                side: -1,
             }),
           );
         }
