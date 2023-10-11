@@ -1,5 +1,6 @@
 import type { CodeEditor } from '@jupyterlab/codeeditor';
 import type { IRenderMimeRegistry } from '@jupyterlab/rendermime';
+import type { ITranslator } from '@jupyterlab/translation';
 
 /**
  * Diff view options
@@ -21,6 +22,10 @@ export interface IMergeViewOptions extends IDiffViewOptions {
    * Whether to show the base version (4-panels) or not (3-panels).
    */
   showBase?: boolean;
+  /**
+   * The configuration options for the editor.
+   */
+  translator?: ITranslator;
 }
 
 /**
@@ -37,6 +42,10 @@ export interface IDiffWidgetOptions<T> extends IDiffViewOptions {
    * Text editor factory
    */
   editorFactory?: CodeEditor.Factory;
+  /**
+   * The configuration options for the editor.
+   */
+  translator?: ITranslator;
 }
 
 export interface IMimeDiffWidgetOptions<T> extends IDiffWidgetOptions<T> {

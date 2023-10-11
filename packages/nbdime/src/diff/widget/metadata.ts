@@ -36,6 +36,7 @@ export class MetadataDiffWidget extends DiffPanel<IStringDiffModel> {
       let view: Widget = createNbdimeMergeView({
         remote: model,
         factory: this._editorFactory,
+        translator: this._translator,
         ...this._viewOptions,
       });
       if (model.collapsible) {

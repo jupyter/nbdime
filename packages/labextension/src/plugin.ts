@@ -22,6 +22,8 @@ import { NotebookPanel, INotebookTracker } from '@jupyterlab/notebook';
 
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 
+import { ITranslator, nullTranslator } from '@jupyterlab/translation';
+
 import { find } from '@lumino/algorithm';
 
 import type { CommandRegistry } from '@lumino/commands';
@@ -116,6 +118,7 @@ function addCommands(
   rendermime: IRenderMimeRegistry,
   settings: ISettingRegistry.ISettings,
   editorServices: IEditorServices,
+  translator: ITranslator,
 ): void {
   const { commands, shell } = app;
   const editorFactory = editorServices.factoryService.newInlineEditor.bind(
@@ -194,7 +197,7 @@ function addCommands(
       // TODO: Check args for base/remote
       // if missing, prompt with dialog.
       //let content = current.notebook;
-      //diffNotebook({base, remote});
+      //diffNotebook({base, remote, translator});
     },
     label: erroredGen('Notebook diff'),
     caption: erroredGen('Display nbdiff between two notebooks'),
@@ -215,6 +218,7 @@ function addCommands(
         editorFactory,
         rendermime,
         hideUnchanged,
+        translator,
       });
       shell.add(widget);
       if (args['activate'] !== false) {
@@ -241,6 +245,7 @@ function addCommands(
         editorFactory,
         rendermime,
         hideUnchanged,
+        translator,
       });
       shell.add(widget);
       if (args['activate'] !== false) {
@@ -268,6 +273,7 @@ const nbDiffProvider: JupyterFrontEndPlugin<void> = {
     ISettingRegistry,
     IEditorServices,
   ],
+  optional: [ITranslator],
   activate: activateWidgetExtension,
   autoStart: true,
 };
@@ -283,13 +289,21 @@ async function activateWidgetExtension(
   rendermime: IRenderMimeRegistry,
   settingsRegistry: ISettingRegistry,
   editorServices: IEditorServices,
+  translator: ITranslator | null,
 ): Promise<void> {
   let { commands, docRegistry } = app;
   let extension = new NBDiffExtension(commands);
   docRegistry.addWidgetExtension('Notebook', extension);
 
   const settings = await settingsRegistry.load(pluginId);
-  addCommands(app, tracker, rendermime, settings, editorServices);
+  addCommands(
+    app,
+    tracker,
+    rendermime,
+    settings,
+    editorServices,
+    translator ?? nullTranslator,
+  );
   // Update the command registry when the notebook state changes.
   tracker.currentChanged.connect(() => {
     commands.notifyCommandChanged(CommandIDs.diffNotebookGit);

@@ -6,6 +6,12 @@ import type { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
 import { ServerConnection } from '@jupyterlab/services';
 
+import {
+  nullTranslator,
+  type ITranslator,
+  type TranslationBundle,
+} from '@jupyterlab/translation';
+
 import type { JSONObject } from '@lumino/coreutils';
 
 import type { Message } from '@lumino/messaging';
@@ -53,6 +59,8 @@ export class NbdimeWidget extends Panel {
     this.remote = options.remote;
     this.editorFactory = options.editorFactory;
     this.rendermime = options.rendermime;
+    this.translator = options.translator ?? nullTranslator;
+    this.trans = this.translator.load('nbdime');
 
     let header = Private.diffHeader(options);
     this.addWidget(header);
@@ -120,6 +128,7 @@ export class NbdimeWidget extends Panel {
       model: nbdModel,
       rendermime: this.rendermime,
       editorFactory: this.editorFactory,
+      translator: this.translator,
     });
 
     this.scroller.addWidget(nbdWidget);
@@ -135,7 +144,7 @@ export class NbdimeWidget extends Panel {
       return;
     }
     let widget = new Widget();
-    widget.node.innerHTML = `Failed to fetch diff: ${error}`;
+    widget.node.textContent = this.trans.__('Failed to fetch diff: %1', error);
     this.scroller.addWidget(widget);
   }
 
@@ -144,6 +153,8 @@ export class NbdimeWidget extends Panel {
 
   protected editorFactory: CodeEditor.Factory;
   protected rendermime: IRenderMimeRegistry;
+  protected translator: ITranslator;
+  protected trans: TranslationBundle;
 
   protected header: Widget;
   protected scroller: Panel;
@@ -193,6 +204,11 @@ export namespace NbdimeWidget {
      * Whether to hide unchanged cells by default.
      */
     hideUnchanged?: boolean;
+
+    /**
+     * Application translator.
+     */
+    translator?: ITranslator;
   }
 }
 
@@ -201,7 +217,8 @@ namespace Private {
    * Create a header widget for the diff view.
    */
   export function diffHeader(options: NbdimeWidget.IOptions): Widget {
-    let { base, remote, baseLabel, remoteLabel } = options;
+    let { base, remote, baseLabel, remoteLabel, translator } = options;
+    const trans = (translator ?? nullTranslator).load('nbdime');
     if (remote) {
       if (baseLabel === undefined) {
         baseLabel = base;
@@ -227,12 +244,17 @@ namespace Private {
         <span class="nbdime-header-base"></span>
         <span class="nbdime-header-remote"></span>
       </div>`;
+    node.querySelector('input.nbdime-hide-unchanged')!.textContent = trans.__(
+      'Hide unchanged cells',
+    );
+    node.querySelector('button.nbdime-export')!.textContent =
+      trans.__('Export diff');
     (
       node.getElementsByClassName('nbdime-header-base')[0] as HTMLSpanElement
-    ).innerText = baseLabel;
+    ).textContent = baseLabel;
     (
       node.getElementsByClassName('nbdime-header-remote')[0] as HTMLSpanElement
-    ).innerText = remoteLabel;
+    ).textContent = remoteLabel;
 
     return new Widget({ node });
   }

@@ -4,15 +4,18 @@
 
 import { Panel, Widget } from '@lumino/widgets';
 
-import type { CodeEditor } from '@jupyterlab/codeeditor';
-
 import { IRenderMimeRegistry, MimeModel } from '@jupyterlab/rendermime';
+
+import type { TranslationBundle } from '@jupyterlab/translation';
 
 import { DiffPanel } from '../../common/basepanel';
 
 import { CollapsiblePanel } from '../../common/collapsiblepanel';
 
-import type { ICellDiffWidgetOptions } from '../../common/interfaces';
+import type {
+  ICellDiffWidgetOptions,
+  IMimeDiffWidgetOptions,
+} from '../../common/interfaces';
 
 import { createNbdimeMergeView } from '../../common/mergeview';
 
@@ -53,12 +56,10 @@ const SOURCE_ROW_CLASS = 'jp-Cellrow-source';
 const METADATA_ROW_CLASS = 'jp-Cellrow-metadata';
 const OUTPUTS_ROW_CLASS = 'jp-Cellrow-outputs';
 
-export interface ICellDiffViewOptions<T extends IDiffModel = IDiffModel> {
-  model: T;
+export interface ICellDiffViewOptions<T extends IDiffModel = IDiffModel>
+  extends IMimeDiffWidgetOptions<T> {
   parent: CellDiffModel;
   editorClasses: string[];
-  rendermime: IRenderMimeRegistry;
-  editorFactory?: CodeEditor.Factory;
 }
 
 /**
@@ -76,6 +77,7 @@ export class CellDiffWidget extends DiffPanel<CellDiffModel> {
     super(others);
     this.addClass(CELLDIFF_CLASS);
     this._rendermime = rendermime;
+    this._trans = this._translator.load('nbdime');
     this.mimetype = mimetype;
 
     this.init();
@@ -177,7 +179,9 @@ export class CellDiffWidget extends DiffPanel<CellDiffModel> {
         this.addWidget(container);
       } else {
         let collapsed = !changed;
-        let header = changed ? 'Outputs changed' : 'Outputs unchanged';
+        let header = changed
+          ? this._trans.__('Outputs changed')
+          : this._trans.__('Outputs unchanged');
         let collapser = new CollapsiblePanel(container, header, collapsed);
         collapser.addClass(OUTPUTS_ROW_CLASS);
         this.addWidget(collapser);
@@ -221,6 +225,7 @@ export class CellDiffWidget extends DiffPanel<CellDiffModel> {
     editorClasses,
     rendermime,
     editorFactory,
+    translator,
     ...viewOptions
   }: ICellDiffViewOptions): Panel {
     let view: Panel;
@@ -241,6 +246,7 @@ export class CellDiffWidget extends DiffPanel<CellDiffModel> {
         inner = createNbdimeMergeView({
           remote: model,
           factory: editorFactory,
+          translator,
           ...viewOptions,
         });
       }
@@ -261,6 +267,7 @@ export class CellDiffWidget extends DiffPanel<CellDiffModel> {
         editorClasses,
         rendermime,
         editorFactory,
+        translator,
       });
       if (model.added) {
         view.addClass(ADDED_DIFF_CLASS);
@@ -290,4 +297,5 @@ export class CellDiffWidget extends DiffPanel<CellDiffModel> {
   }
 
   protected _rendermime: IRenderMimeRegistry;
+  protected _trans: TranslationBundle;
 }

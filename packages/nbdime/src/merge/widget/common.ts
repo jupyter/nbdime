@@ -43,7 +43,7 @@ export function createCheckbox(
   // Create label for checkbox:
   let widget = new Widget();
   let label = document.createElement('label');
-  label.innerHTML = text;
+  label.textContent = text;
   // Combine checkbox and label:
   label.insertBefore(checkbox, label.childNodes[0]);
   // Add checkbox to header:

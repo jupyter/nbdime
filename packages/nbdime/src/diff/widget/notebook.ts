@@ -53,6 +53,7 @@ export class NotebookDiffWidget extends DiffPanel<NotebookDiffModel> {
           new MetadataDiffWidget({
             model: model.metadata,
             editorFactory: this._editorFactory,
+            translator: this._translator,
             ...this._viewOptions,
           }),
         );
@@ -68,6 +69,7 @@ export class NotebookDiffWidget extends DiffPanel<NotebookDiffModel> {
                 rendermime,
                 mimetype: model.mimetype,
                 editorFactory: this._editorFactory,
+                translator: this._translator,
                 ...this._viewOptions,
               }),
             );
@@ -86,6 +88,7 @@ export class NotebookDiffWidget extends DiffPanel<NotebookDiffModel> {
                   rendermime,
                   mimetype: model.mimetype,
                   editorFactory: this._editorFactory,
+                  translator: this._translator,
                   ...this._viewOptions,
                 }),
               );

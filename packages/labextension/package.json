@@ -50,6 +50,7 @@
     "@jupyterlab/rendermime": "^4.0.0",
     "@jupyterlab/services": "^7.0.0",
     "@jupyterlab/settingregistry": "^4.0.0",
+    "@jupyterlab/translation": "^4.0.0",
     "@lumino/algorithm": "^2.0.1",
     "@lumino/coreutils": "^2.1.2",
     "@lumino/disposable": "^2.1.2",
