@@ -48,8 +48,8 @@ import type { IMergeViewOptions } from './interfaces';
 
 import { valueIn, hasEntries, splitLines } from './util';
 
-const PICKER_SYMBOL = '\u27ad';
-const CONFLICT_MARKER = '\u26A0';
+const PICKER_SYMBOL = '\u27ad\uFE0E';
+const CONFLICT_MARKER = '\u26A0\uFE0E';
 
 export enum DIFF_OP {
   DIFF_DELETE = -1,
@@ -1179,17 +1179,26 @@ function getMatchingEditLine(baseLine: number, chunks: Chunk[]): number {
  *
  */
 function getMatchingEditLineLC(toMatch: Chunk, chunks: Chunk[]): number {
-  let editLine = toMatch.baseFrom;
+  console.log(toMatch, chunks)
+  const editLine = toMatch.baseFrom;
+  // Initialize with the last chunk in case we don't hit one of the
+  // two escape conditions in the for loop.
+  let previous: Chunk | undefined = chunks[chunks.length - 1];
   for (let i = 0; i < chunks.length; ++i) {
-    let chunk = chunks[i];
+    const chunk = chunks[i];
     if (chunk.baseFrom === editLine) {
+      // Chunk is part of the chunk list
       return chunk.remoteTo;
     }
     if (chunk.baseFrom > editLine) {
+      // Remaining chunks are after the one we are interested
+      previous = chunks[i - 1];
       break;
     }
   }
-  return toMatch.baseTo;
+  // toMatch is not in chunks list, add lines delta from the last chunk
+  console.log(previous, toMatch.baseTo + (previous ? (previous.remoteTo - previous.baseTo) : 0))
+  return toMatch.baseTo + (previous ? (previous.remoteTo - previous.baseTo) : 0);
 }
 
 /**
@@ -1211,7 +1220,7 @@ function findAlignedLines(dvs: Readonly<DiffView[]>): number[][] {
     let chunk = dv.lineChunks[i];
     let lines = [chunk.baseTo, chunk.remoteTo];
 
-    for (let o of others) {
+    for (const o of others) {
       lines.push(getMatchingEditLineLC(chunk, o.lineChunks));
     }
     if (
@@ -1226,6 +1235,7 @@ function findAlignedLines(dvs: Readonly<DiffView[]>): number[][] {
       if (linesToAlign.length > 0) {
         let prev = linesToAlign[linesToAlign.length - 1];
         let diff: number | null = lines[0] - prev[0];
+        // Skip this chunk if it does not required spacers
         for (let j = 1; j < lines.length; ++j) {
           if (diff !== lines[j] - prev[j]) {
             diff = null;
@@ -1619,7 +1629,7 @@ export class MergeView extends Panel {
    * Align the matching lines of the different editors
    */
   alignViews() {
-    let lineHeight = this._showBase
+    const lineHeight = this._showBase
       ? this._base.cm.defaultLineHeight
       : this._diffViews[0].remoteEditorWidget.cm.defaultLineHeight;
     if (this._aligning) {
@@ -1627,45 +1637,47 @@ export class MergeView extends Panel {
     }
     this._aligning = true;
     // Find matching lines
-    let linesToAlign = findAlignedLines(this._diffViews);
+    const linesToAlign = findAlignedLines(this._diffViews);
+    console.log(linesToAlign)
 
     // Function modifying DOM to perform alignment:
-    let editors: EditorView[] = [
+    const editors: EditorView[] = [
       this.base.cm,
       ...this._diffViews.map(dv => dv.remoteEditorWidget.cm),
     ];
-    let builders: RangeSetBuilder<Decoration>[] = [];
+    const builders: RangeSetBuilder<Decoration>[] = [];
     for (let i = 0; i < editors.length; i++) {
       builders.push(new RangeSetBuilder<Decoration>());
     }
 
-    let sumDeltas = new Array(editors.length).fill(0);
-    let nLines = editors.map(editor => editor.state.doc.lines);
+    const sumDeltas = new Array(editors.length).fill(0);
+    const nLines = editors.map(editor => editor.state.doc.lines);
 
-    for (let alignment_ of linesToAlign) {
-      let alignment = this._showBase ? alignment_.slice(0, 3) : alignment_;
-      let lastLine = Math.max(...alignment);
-      let lineDeltas = alignment.map(
+    for (const alignment_ of linesToAlign) {
+      const alignment = this._showBase ? alignment_.slice(0, 3) : alignment_;
+      const lastLine = Math.max(...alignment);
+      const lineDeltas = alignment.map(
         (line, i) => lastLine - line - sumDeltas[i],
       );
       // If some paddings will be before the current line, it means all other editors
       // must add a padding.
-      let minDelta = this._showBase
+      const minDelta = this._showBase
         ? Math.min(...lineDeltas)
         : Math.min(...lineDeltas.slice(1));
-      let correctedDeltas = lineDeltas.map(line => line - minDelta);
+      const correctedDeltas = lineDeltas.map(line => line - minDelta);
 
       correctedDeltas.forEach((delta, i) => {
         // Don't compute anything for the base editor if it is hidden
         if (!this._showBase && i === 0) {
           return;
         }
+        // Alignments are zero-based
         let line = alignment[i];
 
         if (delta > 0 && line < nLines[i]) {
           sumDeltas[i] += delta;
 
-          let offset = posToOffset(editors[i].state.doc, {
+          const offset = posToOffset(editors[i].state.doc, {
             line,
             column: 0,
           });
@@ -1684,12 +1696,12 @@ export class MergeView extends Panel {
     }
 
     // Padding at the last line of the editor
-    let totalHeight = nLines.map((line, i) => line + sumDeltas[i]);
-    let maxHeight = Math.max(...totalHeight);
+    const totalHeight = nLines.map((line, i) => line + sumDeltas[i]);
+    const maxHeight = Math.max(...totalHeight);
     totalHeight.slice(0, this._showBase ? 3 : 4).forEach((line, i) => {
       if (maxHeight > line) {
-        let end = editors[i].state.doc.length;
-        let delta = maxHeight - line;
+        const end = editors[i].state.doc.length;
+        const delta = maxHeight - line;
         sumDeltas[i] += delta;
         builders[i].add(
           end,
@@ -1717,7 +1729,7 @@ export class MergeView extends Panel {
         continue;
       }
 
-      let decoSet: DecorationSet = builders[i].finish();
+      const decoSet: DecorationSet = builders[i].finish();
       if (
         !RangeSet.eq([decoSet], [editors[i].state.field(paddingWidgetField)])
       ) {
