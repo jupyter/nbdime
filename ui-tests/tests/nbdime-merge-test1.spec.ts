@@ -23,8 +23,10 @@ test.describe('merge test1', () => {
 
   test('choose left version for conflict', async ({ page }) => {
     await page
-      .locator('div:nth-child(2) > .jp-Merge-gutter-picker')
-      .first()
+      .locator('.cm-merge-left-editor')
+      .nth(1)  // This select the cell; 0 being the notebook metadata
+      .locator('.jp-Merge-gutter-picker')
+      .last()
       .click();
     await page.getByText('⚠').click();
     expect(await page.locator('#main').screenshot()).toMatchSnapshot();
@@ -32,10 +34,10 @@ test.describe('merge test1', () => {
 
   test('choose central version for conflict', async ({ page }) => {
     await page
-      .locator('div')
-      .filter({ hasText: /^➭➭➭$/ })
-      .locator('div')
-      .nth(3)
+      .locator('.cm-central-editor')
+      .nth(1)  // This select the cell; 0 being the notebook metadata
+      .locator('.jp-Merge-gutter-picker')
+      .nth(2)
       .click();
     await page.getByText('⚠').click();
     expect(await page.locator('#main').screenshot()).toMatchSnapshot();
@@ -43,9 +45,10 @@ test.describe('merge test1', () => {
 
   test('choose right version for conflict', async ({ page }) => {
     await page
-      .locator(
-        'div:nth-child(3) > .cm-editor > .cm-scroller > .cm-gutters > div:nth-child(2) > div:nth-child(2) > .jp-Merge-gutter-picker',
-      )
+      .locator('.cm-merge-right-editor')
+      .nth(1)  // This select the cell; 0 being the notebook metadata
+      .locator('.jp-Merge-gutter-picker')
+      .last()
       .click();
     await page.getByText('⚠').click();
     expect(await page.locator('#main').screenshot()).toMatchSnapshot();
