@@ -30,6 +30,7 @@ export class DiffPanel<
     this._editorFactory = editorFactory;
     this._model = model;
     this._translator = translator ?? nullTranslator;
+    this._viewOptions = viewOptions as U;
   }
 
   protected _editorFactory: CodeEditor.Factory | undefined;

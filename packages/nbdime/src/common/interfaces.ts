@@ -12,6 +12,10 @@ export interface IDiffViewOptions {
    * around such stretches (which defaults to 2). Defaults to true.
    */
   collapseIdentical?: boolean | number;
+  /**
+   * The translation manager.
+   */
+  translator?: ITranslator;
 }
 
 /**
@@ -22,10 +26,6 @@ export interface IMergeViewOptions extends IDiffViewOptions {
    * Whether to show the base version (4-panels) or not (3-panels).
    */
   showBase?: boolean;
-  /**
-   * The configuration options for the editor.
-   */
-  translator?: ITranslator;
 }
 
 /**
@@ -42,10 +42,6 @@ export interface IDiffWidgetOptions<T> extends IDiffViewOptions {
    * Text editor factory
    */
   editorFactory?: CodeEditor.Factory;
-  /**
-   * The configuration options for the editor.
-   */
-  translator?: ITranslator;
 }
 
 export interface IMimeDiffWidgetOptions<T> extends IDiffWidgetOptions<T> {
