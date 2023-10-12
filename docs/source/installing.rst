@@ -44,7 +44,6 @@ and nbdime's web-based viewers depend on the following Node.js packages:
 
   - codemirror
   - json-stable-stringify
-  - jupyter-js-services
   - jupyterlab
   - lumino
 
@@ -90,29 +89,14 @@ Installing Jupyter extensions
 If you want to use the development version of the notebook and lab extensions,
 you will also have to run the following commands after the pip dev install::
 
-    jupyter serverextension enable --py nbdime --sys-prefix # if developing for jupyter notebook
-
     jupyter server extension enable nbdime # if developing for jupyter lab or nbclassic
 
-    jupyter nbextension install --py nbdime --sys-prefix [--sym-link]
-    jupyter nbextension enable --py nbdime --sys-prefix
-
-    jupyter labextension link ./packages/nbdime --no-build
-    jupyter labextension install ./packages/labextension
+    jupyter labextension develop --overwrite .
 
 
 If you do any changes to the front-end code, run :command:`npm run build` from the
-repoistory root to rebuild the extensions. If you make any changes to the
+repository root to rebuild the extensions. If you make any changes to the
 server extension, you will have to restart the server to pick up the changes!
-
-
-.. note::
-
-    The optional ``--sym-link`` flag for :command:`jupyter nbextension install` allows
-    the notebook frontend to pick up a newly built version of the extension on
-    a page refresh. For details on the other flags, see
-    :doc:`extensions`.
-
 
 
 .. toctree::

@@ -129,6 +129,14 @@ skip-if-exists = [
 source_dir = "packages"
 build_dir = "nbdime/labextension"
 
+[tool.jupyter-releaser.options]
+version-cmd = "python scripts/bump_version.py --force"
+
+[tool.jupyter-releaser.hooks]
+before-bump-version = [
+    "npm install"
+]
+
 [tool.pytest.ini_options]
 testpaths = "nbdime/tests"
 norecursedirs = "node_modules"
