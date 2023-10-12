@@ -1677,6 +1677,7 @@ export class MergeView extends Panel {
         if (delta > 0 && line < nLines[i]) {
           sumDeltas[i] += delta;
 
+          // This method include the correction from zero-based lines to one-based lines
           const offset = posToOffset(editors[i].state.doc, {
             line,
             column: 0,

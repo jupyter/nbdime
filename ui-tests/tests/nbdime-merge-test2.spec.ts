@@ -20,7 +20,7 @@ test.describe('merge test2 ', () => {
       .locator('.cm-merge-left-editor')
       .nth(1)  // This select the cell; 0 being the notebook metadata
       .locator('.jp-Merge-gutter-picker')
-      .first()
+      .last()
       .click();
     expect(await page.locator('#main').screenshot()).toMatchSnapshot();
   });
