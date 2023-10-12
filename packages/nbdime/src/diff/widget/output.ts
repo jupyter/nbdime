@@ -233,6 +233,7 @@ export class OutputPanel extends DiffPanel<OutputDiffModel> {
         view = createNbdimeMergeView({
           remote: stringModel,
           factory: this._editorFactory,
+          ...this._viewOptions,
         });
       }
     }
@@ -241,6 +242,7 @@ export class OutputPanel extends DiffPanel<OutputDiffModel> {
       view = createNbdimeMergeView({
         remote: model.stringify(),
         factory: this._editorFactory,
+        ...this._viewOptions,
       });
     }
     return view;

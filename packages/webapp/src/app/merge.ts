@@ -54,6 +54,7 @@ function showMerge(data: {
     sanitizer: new Sanitizer(),
   });
 
+  const collapseIdentical = getConfigOption('collapseIdentical', 2);
   const showBase = getConfigOption('showBase', true);
 
   if (!showBase) {
@@ -65,6 +66,7 @@ function showMerge(data: {
     model: nbmModel,
     rendermime,
     editorFactory: createEditorFactory(),
+    collapseIdentical,
     showBase,
   });
 

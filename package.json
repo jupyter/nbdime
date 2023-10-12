@@ -15,7 +15,7 @@
     "updated": "lerna updated",
     "watch:webapp": "run-p watch:lib watch:app",
     "watch:app": "lerna exec --stream --scope \"nbdime-webapp\" npm run watch",
-    "watch:lib": "lerna exec --stream --scope \"nbdime\" --scope \"jupyterlab-rise\" npm run watch"
+    "watch:lib": "lerna exec --stream --scope \"nbdime\" --scope \"nbdime-jupyterlab\" npm run watch"
   },
   "devDependencies": {
     "@jupyterlab/buildutils": "4.0.0",

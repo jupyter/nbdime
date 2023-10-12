@@ -50,6 +50,7 @@ class NbdimeHandler(JupyterHandler):
             'savable': fn is not None,
             'baseUrl': self.nbdime_base_url,
             'hideUnchanged': self.params.get('hide_unchanged', True),
+            'collapseIdentical': self.params.get('identical_lines_margin', 2),
         }
         if fn:
             # For reference, e.g. if user wants to download file

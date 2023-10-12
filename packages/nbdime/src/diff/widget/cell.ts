@@ -105,6 +105,7 @@ export class CellDiffWidget extends DiffPanel<CellDiffModel> {
       editorClasses: CURR_DIFF_CLASSES,
       rendermime: this._rendermime,
       editorFactory: this._editorFactory,
+      ...this._viewOptions,
     });
     sourceView.addClass(SOURCE_ROW_CLASS);
     if (model.executionCount) {
@@ -122,6 +123,7 @@ export class CellDiffWidget extends DiffPanel<CellDiffModel> {
         editorClasses: CURR_DIFF_CLASSES,
         rendermime: this._rendermime,
         editorFactory: this._editorFactory,
+        ...this._viewOptions,
       });
       metadataView.addClass(METADATA_ROW_CLASS);
       this.addWidget(metadataView);
@@ -140,6 +142,7 @@ export class CellDiffWidget extends DiffPanel<CellDiffModel> {
             editorClasses: CURR_DIFF_CLASSES,
             rendermime: this._rendermime,
             editorFactory: this._editorFactory,
+            ...this._viewOptions,
           });
           container.addWidget(outputsWidget);
           changed = changed || !o.unchanged || o.added || o.deleted;
@@ -159,6 +162,7 @@ export class CellDiffWidget extends DiffPanel<CellDiffModel> {
               editorClasses: CURR_DIFF_CLASSES,
               rendermime: this._rendermime,
               editorFactory: this._editorFactory,
+              ...this._viewOptions,
             });
             target.addWidget(outputsWidget);
             changed = changed || !o.unchanged || o.added || o.deleted;
@@ -217,6 +221,7 @@ export class CellDiffWidget extends DiffPanel<CellDiffModel> {
     editorClasses,
     rendermime,
     editorFactory,
+    ...viewOptions
   }: ICellDiffViewOptions): Panel {
     let view: Panel;
     if (model instanceof StringDiffModel) {
@@ -236,6 +241,7 @@ export class CellDiffWidget extends DiffPanel<CellDiffModel> {
         inner = createNbdimeMergeView({
           remote: model,
           factory: editorFactory,
+          ...viewOptions,
         });
       }
       if (model.collapsible) {
