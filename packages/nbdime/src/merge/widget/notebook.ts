@@ -93,7 +93,7 @@ export class NotebookMergeWidget extends MergePanel<NotebookMergeModel> {
           this.cellWidgets.push(w);
           if (c.onesided && c.conflicted) {
             if (chunk === null) {
-              chunk = new ChunkedCellsWidget();
+              chunk = new ChunkedCellsWidget({ translator: this._translator });
               chunk.cells.moved.connect(this.onDragDropMove, this);
               chunk.resolved.connect(this.onChunkResolved, this);
               this.cellContainer.addToFriendlyGroup(chunk.cells);

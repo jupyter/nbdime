@@ -2,6 +2,8 @@
 // Distributed under the terms of the Modified BSD License.
 'use strict';
 
+import { nullTranslator, type ITranslator } from '@jupyterlab/translation';
+
 import { Panel, Widget } from '@lumino/widgets';
 
 import { Signal, ISignal } from '@lumino/signaling';
@@ -14,7 +16,7 @@ const CELL_DRAG_DROP_CLASS = 'jp-merge-celldragdrop';
 
 const MARK_CHUNK_RESOLVED_CLASS = 'jp-conflicted-cells-button';
 const CHUNK_HEADER_CLASS = 'jp-conflicted-cells-header';
-const CONLICTED_CELL_CHUNK_CLASS = 'jp-conflicted-cells';
+const CONFLICTED_CELL_CHUNK_CLASS = 'jp-conflicted-cells';
 
 export class CellsDragDrop extends FriendlyDragDrop {
   /**
@@ -84,14 +86,15 @@ export class ChunkedCellsWidget extends Panel {
   /**
    *
    */
-  constructor() {
+  constructor({ translator }: { translator?: ITranslator } = {}) {
     super();
-    this.addClass(CONLICTED_CELL_CHUNK_CLASS);
+    const trans = (translator ?? nullTranslator).load('nbdime');
+    this.addClass(CONFLICTED_CELL_CHUNK_CLASS);
     this.header = new Widget();
     this.header.addClass(CHUNK_HEADER_CLASS);
-    this.header.node.innerText = 'Conflicting cell operations';
+    this.header.node.textContent = trans.__('Conflicting cell operations');
     let button = document.createElement('button');
-    button.innerText = 'Resolve Conflict';
+    button.textContent = trans.__('Resolve Conflict');
     button.onclick = this.onResolve.bind(this);
     button.className = MARK_CHUNK_RESOLVED_CLASS;
     this.header.node.appendChild(button);
@@ -109,7 +112,7 @@ export class ChunkedCellsWidget extends Panel {
         }
       }
     }
-    this.removeClass(CONLICTED_CELL_CHUNK_CLASS);
+    this.removeClass(CONFLICTED_CELL_CHUNK_CLASS);
     this.header.parent = null;
     this.header.dispose();
     this._resolved.emit(undefined);
