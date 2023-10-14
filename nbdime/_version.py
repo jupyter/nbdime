@@ -14,4 +14,10 @@ parser = re.compile(r"^(?P<major>\d+)\.(?P<minor>\d+)\.(?P<micro>\d+)((?P<releas
 
 parsed_version = parser.match(__version__)
 groups = parsed_version.groupdict()
-version_info = VersionInfo(groups["major"], groups["minor"], groups["micro"], _specifier_[groups.get("releaselevel", "")], groups.get("serial", ""))
+version_info = VersionInfo(
+    int(groups["major"]),
+    int(groups["minor"]),
+    int(groups["micro"]),
+    _specifier_[groups.get("releaselevel", "")],
+    groups.get("serial", ""),
+)
