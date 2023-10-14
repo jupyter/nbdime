@@ -1,13 +1,134 @@
 [build-system]
-requires = ["jupyter_packaging~=0.9.1", "jupyterlab~=3.0", "setuptools>=40.8.0", "wheel"]
-build-backend = "jupyter_packaging.build_api"
+requires = ["hatchling>=1.5.0", "jupyterlab>=4.0.0,<5"]
+build-backend = "hatchling.build"
 
-[tool.jupyter-packaging.builder]
-factory = "jupyter_packaging.npm_builder"
+[project]
+name = "nbdime"
+authors = [
+  { name="Jupyter Development Team", email="jupyter@googlegroups.com" },
+]
+description = "Diff and merge of Jupyter Notebooks"
+readme = "README.md"
+license = { file = "LICENSE.md" }
+requires-python = ">=3.6"
+classifiers = [
+    "Framework :: Jupyter",
+    "Framework :: Jupyter :: JupyterLab",
+    "Framework :: Jupyter :: JupyterLab :: 4",
+    "Framework :: Jupyter :: JupyterLab :: Extensions",
+    "Framework :: Jupyter :: JupyterLab :: Extensions :: Prebuilt",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+keywords = [
+    "Interactive",
+    "Interpreter",
+    "Shell",
+    "Web",
+]
+dependencies = [
+    "nbformat",
+    "colorama",
+    "pygments",
+    "tornado",
+    "requests",
+    "GitPython!=2.1.4,!=2.1.5,!=2.1.6 ", # For difftool taking git refs
+    "jupyter_server",
+    "jupyter_server_mathjax>=0.2.2",
+    "jinja2>=2.9",
+]
+dynamic = ["version"]
 
-[tool.jupyter-packaging.options]
-ensured-targets = ["nbdime/webapp/static/nbdime.js"]
+[project.urls]
+"Homepage" = "https://nbdime.readthedocs.io"
+"Bug Tracker" = "https://github.com/jupyter/nbdime/issues"
+"Source" = "https://github.com/jupyter/nbdime"
 
-[tool.jupyter-packaging.build-args]
-build_cmd = "build"
+[project.scripts]
+nbdime = "nbdime.__main__:main_dispatch"
+nbshow = "nbdime.nbshowapp:main"
+nbdiff = "nbdime.nbdiffapp:main"
+nbdiff-web = "nbdime.webapp.nbdiffweb:main"
+nbmerge = "nbdime.nbmergeapp:main"
+nbmerge-web = "nbdime.webapp.nbmergeweb:main"
+git-nbdiffdriver = "nbdime.vcs.git.diffdriver:main"
+git-nbdifftool = "nbdime.vcs.git.difftool:main"
+git-nbmergedriver = "nbdime.vcs.git.mergedriver:main"
+git-nbmergetool = "nbdime.vcs.git.mergetool:main"
+hg-nbdiff = "nbdime.vcs.hg.diff:main"
+hg-nbdiffweb = "nbdime.vcs.hg.diffweb:main"
+hg-nbmerge = "nbdime.vcs.hg.merge:main"
+hg-nbmergeweb = "nbdime.vcs.hg.mergeweb:main"
+
+[project.optional-dependencies]
+test = [
+    "pytest>=6.0",
+    "pytest-cov",
+    "pytest-timeout",
+    "pytest-tornado",
+    "jupyter_server[test]",
+    "jsonschema",
+    "mock",
+    "notebook",
+    "requests",
+    "tabulate",
+]
+docs = [
+    "sphinx",
+    "recommonmark",
+    "sphinx_rtd_theme",
+]
+
+[tool.hatch.version]
+path = "nbdime/_version.py"
+
+[tool.hatch.build.targets.sdist]
+artifacts = [
+    "docs",
+    "nbdime/labextension",
+    "nbdime/notebook_ext",
+    "nbdime/webapp/static",
+    "nbdime/webapp/template"
+]
+exclude = [".github", "binder", "node_modules"]
+
+[tool.hatch.build.targets.wheel]
+artifacts = [
+    "nbdime/webapp/static",
+    "nbdime/webapp/template"
+]
+
+[tool.hatch.build.targets.wheel.shared-data]
+"nbdime/notebook_ext" = "share/jupyter/nbextensions/nbdime"
+"nbdime/labextension" = "share/jupyter/labextensions/nbdime-jupyterlab"
+"jupyter-config" = "etc/jupyter"
+
+[tool.hatch.build.hooks.jupyter-builder]
+dependencies = ["hatch-jupyter-builder>=0.5"]
+build-function = "hatch_jupyter_builder.npm_builder"
+ensured-targets = [
+    "nbdime/labextension/static/style.js",
+    "nbdime/webapp/static/nbdime.js",
+]
+skip-if-exists = [
+    "nbdime/labextension/static/style.js",
+    "nbdime/webapp/static/nbdime.js",
+]
+
+[tool.hatch.build.hooks.jupyter-builder.editable-build-kwargs]
 source_dir = "packages"
+build_dir = "nbdime/labextension"
+
+[tool.pytest.ini_options]
+testpaths = "nbdime/tests"
+norecursedirs = "node_modules"

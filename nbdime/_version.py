@@ -1,21 +1,17 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+import re
 from collections import namedtuple
 
 VersionInfo = namedtuple("VersionInfo", ["major", "minor", "micro", "releaselevel", "serial"])
 
-version_info = VersionInfo(4, 0, 0, "alpha", 0)
+_specifier_ = {"a": "alpha", "b": "beta", "rc": "candidate", "": "final"}
 
-_specifier_ = {"alpha": "a", "beta": "b", "candidate": "rc", "final": ""}
+__version__ = "4.0.0a0"
 
-__version__ = "{}.{}.{}{}".format(
-    version_info.major,
-    version_info.minor,
-    version_info.micro,
-    (
-        ""
-        if version_info.releaselevel == "final"
-        else _specifier_[version_info.releaselevel] + str(version_info.serial)
-    ),
-)
+parser = re.compile(r"^(?P<major>\d+)\.(?P<minor>\d+)\.(?P<micro>\d+)((?P<releaselevel>a|b|rc)(?P<serial>\d+))?$")
+
+parsed_version = parser.match(__version__)
+groups = parsed_version.groupdict()
+version_info = VersionInfo(groups["major"], groups["minor"], groups["micro"], _specifier_[groups.get("releaselevel", "")], groups.get("serial", ""))
