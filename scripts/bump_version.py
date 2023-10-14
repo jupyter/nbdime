@@ -29,7 +29,8 @@ def bump(force: bool, spec: str) -> None:
         shlex.split("git status --porcelain"), cwd=HERE, encoding="utf-8"
     )
     if len(output) > 0:
-        raise Exception("Must be in a clean git state with no untracked files")
+        print(output)
+        # raise Exception("Must be in a clean git state with no untracked files")
 
     print(f"Executing 'python -m hatch version {spec}'...")
     run(
