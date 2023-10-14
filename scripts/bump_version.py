@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 from subprocess import check_output, run
 
-LERNA_CMD = "npx lerna version --no-push --force-publish --no-git-tag-version"
+LERNA_CMD = "npx lerna version --no-push --no-git-tag-version"
 
 
 def install_dependencies() -> None:
@@ -37,12 +37,18 @@ def bump(force: bool, spec: str) -> None:
     )
 
     # convert the Python version
-    js_spec = "prerelease" if spec in ["alpha", "a", "beta", "b", "rc"] else spec
+    lerna_cmd = LERNA_CMD
+    js_spec = spec
+    if spec in ["alpha", "a", "beta", "b", "rc"]:
+        js_spec = " --force-publish prerelease"
+    elif spec == "release":
+        js_spec = " --conventional-commits --no-changelog --conventional-graduate"
+    else:
+        js_spec += f" --force-publish"
 
     # bump the JS packages
-    lerna_cmd = LERNA_CMD
     if force:
-        lerna_cmd += " --yes"
+        lerna_cmd += " -y"
     lerna_cmd += f" {js_spec}"
     print(f"Executing '{lerna_cmd}'...")
     run(shlex.split(lerna_cmd), cwd=HERE, check=True, shell=True)
