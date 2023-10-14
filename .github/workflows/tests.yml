@@ -123,7 +123,7 @@ jobs:
         tmpdir=$(mktemp -d)
         echo "TEST_TMPDIR=$tmpdir" >> $GITHUB_ENV
         pushd $tmpdir
-        py.test -l --cov-report xml --cov=nbdime --pyargs nbdime
+        pytest -l --cov-report xml --cov=nbdime --pyargs nbdime
     - name: Test with pytest (Windows)
       if: startsWith(matrix.os, 'windows')
       run: |
@@ -132,7 +132,7 @@ jobs:
         $hgconfig = "[ui]`r`nusername = CI <CI@fake.com>"
         $hgconfig | Set-Content ($HOME + "\mercurial.ini")
         echo "TEST_TMPDIR=." >> $Env:GITHUB_ENV
-        py.test -l --cov-report xml --cov=nbdime --pyargs nbdime
+        pytest -l --cov-report xml --cov=nbdime --pyargs nbdime
     - uses: codecov/codecov-action@v3
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
