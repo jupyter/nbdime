@@ -5,7 +5,13 @@ import argparse
 import shlex
 import sys
 from pathlib import Path
-from subprocess import check_output, run
+from subprocess import check_output, check_call
+try:
+    from jupyter_releaser import run
+except ImportError:
+    def run(cmd, **kwargs):
+        check_call(shlex.split(cmd), encoding="utf-8", **kwargs)
+
 
 LERNA_CMD = "npx lerna version --no-push --no-git-tag-version"
 
@@ -18,7 +24,7 @@ def install_dependencies() -> None:
         pkgs.append("hatch")
     
     if pkgs:
-        run([sys.executable, "-m", "pip", "install"] + pkgs)
+        run(f"{sys.executable} -m pip install {' '.join(pkgs)}")
 
 
 def bump(force: bool, spec: str) -> None:
@@ -34,7 +40,7 @@ def bump(force: bool, spec: str) -> None:
 
     print(f"Executing 'python -m hatch version {spec}'...")
     run(
-        [sys.executable, "-m", "hatch", "version", spec], cwd=HERE, encoding="utf-8", check=True
+        f"{sys.executable} -m hatch version {spec}", cwd=HERE
     )
 
     # convert the Python version
@@ -52,10 +58,10 @@ def bump(force: bool, spec: str) -> None:
         lerna_cmd += " -y"
     lerna_cmd += f" {js_spec}"
     print(f"Executing '{lerna_cmd}'...")
-    run(shlex.split(lerna_cmd), cwd=HERE, encoding="utf-8", check=True, shell=True)
+    run(lerna_cmd, cwd=HERE, shell=True)
 
     print(f"Changed made:")
-    run(["git", "diff"], cwd=HERE, encoding="utf-8", check=True)
+    run("git diff", cwd=HERE)
 
 
 if __name__ == "__main__":
