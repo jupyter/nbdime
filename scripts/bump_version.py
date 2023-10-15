@@ -30,7 +30,7 @@ def bump(force: bool, spec: str) -> None:
     )
     if len(output) > 0:
         print(output)
-        # raise Exception("Must be in a clean git state with no untracked files")
+        raise Exception("Must be in a clean git state with no untracked files")
 
     print(f"Executing 'python -m hatch version {spec}'...")
     run(
@@ -52,10 +52,10 @@ def bump(force: bool, spec: str) -> None:
         lerna_cmd += " -y"
     lerna_cmd += f" {js_spec}"
     print(f"Executing '{lerna_cmd}'...")
-    run(shlex.split(lerna_cmd), cwd=HERE, check=True, shell=True)
+    run(shlex.split(lerna_cmd), cwd=HERE, encoding="utf-8", check=True, shell=True)
 
     print(f"Changed made:")
-    run(["git", "diff"], cwd=HERE, check=True)
+    run(["git", "diff"], cwd=HERE, encoding="utf-8", check=True)
 
 
 if __name__ == "__main__":
