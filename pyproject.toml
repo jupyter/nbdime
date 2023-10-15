@@ -136,6 +136,9 @@ version-cmd = "python scripts/bump_version.py --force"
 before-bump-version = [
     "npm install"
 ]
+before-build-npm = [
+    "npm run build"
+]
 
 [tool.pytest.ini_options]
 testpaths = "nbdime/tests"

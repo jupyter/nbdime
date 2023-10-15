@@ -41,11 +41,11 @@ def bump(force: bool, spec: str) -> None:
     lerna_cmd = LERNA_CMD
     js_spec = spec
     if spec in ["alpha", "a", "beta", "b", "rc"]:
-        js_spec = " --force-publish prerelease"
+        js_spec = "--force-publish prerelease"
     elif spec == "release":
-        js_spec = " --conventional-commits --no-changelog --conventional-graduate"
+        js_spec = "--conventional-commits --no-changelog --conventional-graduate"
     else:
-        js_spec += f" --force-publish"
+        js_spec = f"--force-publish " + js_spec
 
     # bump the JS packages
     if force:
@@ -53,6 +53,9 @@ def bump(force: bool, spec: str) -> None:
     lerna_cmd += f" {js_spec}"
     print(f"Executing '{lerna_cmd}'...")
     run(shlex.split(lerna_cmd), cwd=HERE, check=True, shell=True)
+
+    print(f"Changed made:")
+    run(["git", "diff"], cwd=HERE, check=True)
 
 
 if __name__ == "__main__":
