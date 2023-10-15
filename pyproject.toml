@@ -89,6 +89,9 @@ docs = [
     "sphinx_rtd_theme",
 ]
 
+[tool.check-wheel-contents]
+ignore = ["W002"]
+
 [tool.hatch.version]
 path = "nbdime/_version.py"
 
