@@ -137,6 +137,7 @@ before-bump-version = [
     "npm install"
 ]
 before-build-npm = [
+    "python -m pip install 'jupyterlab>=4.0.0,<5'",
     "npm run build"
 ]
 
