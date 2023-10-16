@@ -63,7 +63,7 @@ def main(args=None):
             base=base, local=local, remote=remote,
             **args_for_browse(arguments)),
         **args_for_server(arguments), 
-        show_base="show_base",
+        show_base=arguments.show_base,
     )
 
 
