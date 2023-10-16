@@ -95,6 +95,7 @@
   white-space: normal;
   vertical-align: top;
   width: 100%;
+  background-color: var(--jp-cell-editor-background);
 }
 
 .nbdime-root .cm-merge-pane-rightmost {
