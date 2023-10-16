@@ -29,6 +29,13 @@ def build_arg_parser():
     add_diff_args(parser)
     add_merge_args(parser)
     add_web_args(parser, 0)
+    parser.add_argument(
+        "--no-base",
+        dest="show_base",
+        action="store_false",
+        default=True,
+        help="Don't display the base version."
+    )
     add_filename_args(parser, ["base", "local", "remote"])
     parser.add_argument(
         '--out',
@@ -55,7 +62,9 @@ def main(args=None):
             rel_url='merge',
             base=base, local=local, remote=remote,
             **args_for_browse(arguments)),
-        **args_for_server(arguments))
+        **args_for_server(arguments), 
+        show_base=arguments.show_base,
+    )
 
 
 if __name__ == "__main__":
