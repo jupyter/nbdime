@@ -1179,7 +1179,6 @@ function getMatchingEditLine(baseLine: number, chunks: Chunk[]): number {
  *
  */
 function getMatchingEditLineLC(toMatch: Chunk, chunks: Chunk[]): number {
-  console.log(toMatch, chunks)
   const editLine = toMatch.baseFrom;
   // Initialize with the last chunk in case we don't hit one of the
   // two escape conditions in the for loop.
@@ -1197,7 +1196,6 @@ function getMatchingEditLineLC(toMatch: Chunk, chunks: Chunk[]): number {
     }
   }
   // toMatch is not in chunks list, add lines delta from the last chunk
-  console.log(previous, toMatch.baseTo + (previous ? (previous.remoteTo - previous.baseTo) : 0))
   return toMatch.baseTo + (previous ? (previous.remoteTo - previous.baseTo) : 0);
 }
 
@@ -1638,7 +1636,6 @@ export class MergeView extends Panel {
     this._aligning = true;
     // Find matching lines
     const linesToAlign = findAlignedLines(this._diffViews);
-    console.log(linesToAlign)
 
     // Function modifying DOM to perform alignment:
     const editors: EditorView[] = [
