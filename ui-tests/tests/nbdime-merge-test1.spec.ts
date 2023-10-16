@@ -12,6 +12,9 @@ test.describe('merge test1', () => {
 
   test('take a snapshot at opening', async ({ page }) => {
     await expect.soft(page.getByText('➭')).toHaveCount(12);
+
+    await expect.soft(page.locator('#nbdime-header-base')).toHaveText('Base');
+
     expect.soft(await page.locator('#main').screenshot()).toMatchSnapshot();
 
     await page.getByRole('button', { name: 'Download' }).click();
@@ -93,6 +96,8 @@ test('3 panels view', async ({ page }) => {
   await page.getByRole('button', { name: 'Merge files' }).click();
 
   await expect.soft(page.getByText('➭')).toHaveCount(8);
+
+  await expect.soft(page.locator('#nbdime-header-base')).toHaveText('Merged');
 
   expect(await page.locator('#main').screenshot()).toMatchSnapshot();
 });
