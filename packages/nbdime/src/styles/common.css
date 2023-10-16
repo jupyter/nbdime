@@ -20,15 +20,6 @@
   grid-column: 3;
 }
 
-.nbdime-root .cm-merge {
-  position: relative;
-  white-space: pre;
-  /* style as jp-InputArea-editor: */
-  border: var(--codemirror-border);
-  border-radius: 0px;
-  background: var(--jp-cell-editor-background);
-}
-
 .nbdime-root .cm-merge-3pane,
 .nbdime-root .cm-merge-4pane {
   display: grid;
@@ -73,7 +64,6 @@
   flex-direction: column;
   align-items: center;
   justify-content: end;
-
   z-index: 2;
   height: 100%;
   box-sizing: border-box;
