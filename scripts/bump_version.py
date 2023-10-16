@@ -45,18 +45,20 @@ def bump(force: bool, spec: str) -> None:
 
     # convert the Python version
     lerna_cmd = LERNA_CMD
-    js_spec = spec
     if spec in ["alpha", "a", "beta", "b", "rc"]:
-        js_spec = "--force-publish prerelease"
+        js_spec = "--force-publish"
+        spec = "prerelease"
     elif spec == "release":
         js_spec = "--conventional-commits --no-changelog --conventional-graduate"
+        spec = ""
     else:
-        js_spec = f"--force-publish " + js_spec
+        js_spec = f"--force-publish"
 
     # bump the JS packages
     if force:
-        lerna_cmd += " -y"
-    lerna_cmd += f" {js_spec}"
+        # This needs to be the latest option for weird reason
+        js_spec += " -y"
+    lerna_cmd += f" {js_spec} {spec}"
     print(f"Executing '{lerna_cmd}'...")
     run(lerna_cmd, cwd=HERE, shell=True)
 
