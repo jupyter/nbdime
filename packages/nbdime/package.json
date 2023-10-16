@@ -11,7 +11,7 @@
     "lib": "lib/"
   },
   "files": [
-    "lib/**/*.{js,js.map,d.ts}",
+    "lib/**/*.{js,js.map,d.ts,css}",
     "src/**/*.ts"
   ],
   "scripts": {
