@@ -245,6 +245,7 @@ export class CellMergeWidget extends MergePanel<CellMergeModel> {
             editorClasses: CURR_CLASSES,
             rendermime: this._rendermime,
             editorFactory: this._editorFactory,
+            translator: this._translator,
           });
           container.addWidget(view);
         }
@@ -324,6 +325,7 @@ export class CellMergeWidget extends MergePanel<CellMergeModel> {
           merged: model.merged.metadata,
           editorClasses: CURR_CLASSES,
           editorFactory: this._editorFactory,
+          translator: this._translator,
           ...this._viewOptions,
           readOnly: true, // Do not allow manual edit of metadata
         });

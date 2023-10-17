@@ -107,6 +107,7 @@ export class CellDiffWidget extends DiffPanel<CellDiffModel> {
       editorClasses: CURR_DIFF_CLASSES,
       rendermime: this._rendermime,
       editorFactory: this._editorFactory,
+      translator: this._translator,
       ...this._viewOptions,
     });
     sourceView.addClass(SOURCE_ROW_CLASS);
@@ -125,6 +126,7 @@ export class CellDiffWidget extends DiffPanel<CellDiffModel> {
         editorClasses: CURR_DIFF_CLASSES,
         rendermime: this._rendermime,
         editorFactory: this._editorFactory,
+        translator: this._translator,
         ...this._viewOptions,
       });
       metadataView.addClass(METADATA_ROW_CLASS);
@@ -144,6 +146,7 @@ export class CellDiffWidget extends DiffPanel<CellDiffModel> {
             editorClasses: CURR_DIFF_CLASSES,
             rendermime: this._rendermime,
             editorFactory: this._editorFactory,
+            translator: this._translator,
             ...this._viewOptions,
           });
           container.addWidget(outputsWidget);
@@ -164,6 +167,7 @@ export class CellDiffWidget extends DiffPanel<CellDiffModel> {
               editorClasses: CURR_DIFF_CLASSES,
               rendermime: this._rendermime,
               editorFactory: this._editorFactory,
+              translator: this._translator,
               ...this._viewOptions,
             });
             target.addWidget(outputsWidget);

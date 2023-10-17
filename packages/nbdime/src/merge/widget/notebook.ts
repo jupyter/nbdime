@@ -64,6 +64,7 @@ export class NotebookMergeWidget extends MergePanel<NotebookMergeModel> {
         this.metadataWidget = new MetadataMergeWidget({
           model: model.metadata,
           editorFactory: this._editorFactory,
+          translator: this._translator,
           ...this._viewOptions,
         });
         this.addWidget(this.metadataWidget);

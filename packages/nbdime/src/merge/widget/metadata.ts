@@ -44,9 +44,10 @@ export class MetadataMergeWidget extends MergePanel<MetadataMergeModel> {
       translator: this._translator,
       ...this._viewOptions,
     });
+    const trans = this._translator.load('nbdime');
     const wrapper = new CollapsiblePanel(
       this.view,
-      'Notebook metadata changed',
+      trans.__('Notebook metadata changed'),
       true,
     );
     this.addWidget(wrapper);
