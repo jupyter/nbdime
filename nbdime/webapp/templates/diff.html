@@ -9,15 +9,15 @@
       <form id="nbdime-diff-form" class="nbdime-forms">
         <fieldset>
           <legend>Please input filenames/URLs of notebooks to diff:</legend>
-          <label>Base:</label>
-          <input id="diff-base" type="text" name="base" value="{{ config_data['base']|e }}" />
-          <label>Remote:</label>
-          <input id="diff-remote" type="text" name="remote" value="{{ config_data['remote']|e }}" />
+          <label>Base:
+          <input id="diff-base" type="text" name="base" value="{{ config_data['base']|e }}" /></label>
+          <label>Remote:
+          <input id="diff-remote" type="text" name="remote" value="{{ config_data['remote']|e }}" /></label>
           <input id="nbdime-run-diff" type="submit" name="diff" value="Diff files" />
         </fieldset>
       </form> <!-- nbdime-forms -->
       <div id="nbdime-header-buttonrow">
-        <input id="nbdime-hide-unchanged" type="checkbox"><label for="cbox1">Hide unchanged cells</label></input>
+        <label><input id="nbdime-hide-unchanged" type="checkbox"></input>Hide unchanged cells</label>
         <button id="nbdime-trust" style="display: none">Trust outputs</button>
         <button id="nbdime-close" type="checkbox" style="display: none">Close tool</button>
         <button id="nbdime-export" type="checkbox" style="display: none">Export diff</button>

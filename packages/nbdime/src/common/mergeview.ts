@@ -1196,7 +1196,7 @@ function getMatchingEditLineLC(toMatch: Chunk, chunks: Chunk[]): number {
     }
   }
   // toMatch is not in chunks list, add lines delta from the last chunk
-  return toMatch.baseTo + (previous ? (previous.remoteTo - previous.baseTo) : 0);
+  return toMatch.baseTo + (previous ? previous.remoteTo - previous.baseTo : 0);
 }
 
 /**
@@ -1444,7 +1444,13 @@ export class MergeView extends Panel {
     const additionalExtensions = inMergeView
       ? [listener, mergeControlGutter, getCommonEditorExtensions(inMergeView)]
       : getCommonEditorExtensions(inMergeView);
-    if (this._collapseIdentical >= 0) {
+    const singlePane = !merged && (remote?.unchanged || remote?.added || remote?.deleted)
+    if (
+      // no collapse
+      this._collapseIdentical >= 0 &&
+      // display a single editor
+      !singlePane
+    ) {
       additionalExtensions.push(CollapsedRangesField);
     }
 
@@ -1686,7 +1692,7 @@ export class MergeView extends Panel {
             Decoration.widget({
               widget: new PaddingWidget(delta * lineHeight),
               block: true,
-                side: -1,
+              side: -1,
             }),
           );
         }

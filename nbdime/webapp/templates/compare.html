@@ -9,18 +9,18 @@
       <form id="nbdime-compare-form" class="nbdime-forms">
         <fieldset>
           <legend>Please input filenames of notebooks to compare:</legend>
-          <label>Local:</label>
-          <input id="compare-local" type="text" name="local" value="{{ config_data['local']|e }}" />
-          <label>Base:</label>
-          <input id="compare-base" type="text" name="base" value="{{ config_data['base']|e }}" />
-          <label>Remote:</label>
-          <input id="compare-remote" type="text" name="remote" value="{{ config_data['remote']|e }}" />
+          <label>Local:
+          <input id="compare-local" type="text" name="local" value="{{ config_data['local']|e }}" /></label>
+          <label>Base:
+          <input id="compare-base" type="text" name="base" value="{{ config_data['base']|e }}" /></label>
+          <label>Remote:
+          <input id="compare-remote" type="text" name="remote" value="{{ config_data['remote']|e }}" /></label>
           <input id="nbdime-run-compare" type="submit" name="auto" value="Compare files" />
           <button id="nbdime-download" style="display: none" type="button">Download</button>
         </fieldset>
       </form> <!-- nbdime-forms -->
       <div id="nbdime-header-buttonrow">
-        <input id="nbdime-hide-unchanged" type="checkbox"><label for="cbox1">Hide unchanged cells</label></input>
+        <label><input id="nbdime-hide-unchanged" type="checkbox"></input>Hide unchanged cells</label>
         <button id="nbdime-save" style="display: none">Save</button>
         <button id="nbdime-download" style="display: none">Download</button>
         <button id="nbdime-close" style="display: none">Close tool</button>
