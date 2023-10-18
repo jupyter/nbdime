@@ -1448,7 +1448,7 @@ export class MergeView extends Panel {
     if (
       // no collapse
       this._collapseIdentical >= 0 &&
-      // display a single editor
+      // not displaying a single editor
       !singlePane
     ) {
       additionalExtensions.push(CollapsedRangesField);
