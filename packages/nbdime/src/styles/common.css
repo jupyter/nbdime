@@ -80,7 +80,7 @@
   line-height: 1;
 }
 
-.nbdime-root .cm-merge-pane {
+.nbdime-root .cm-merge-pane > .cm-editor {
   display: inline-block;
   white-space: normal;
   vertical-align: top;
