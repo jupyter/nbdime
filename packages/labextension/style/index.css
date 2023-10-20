@@ -82,7 +82,7 @@
 
 .nbdime-Diff .nbdime-header-local {
   display: none;
-  width: calc(49% - 8px);
+  width: calc(47% - 8px);
   padding: 0px 4px;
   vertical-align: top;
 }
