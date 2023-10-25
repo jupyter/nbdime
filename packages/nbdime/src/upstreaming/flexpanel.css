@@ -1,19 +1,19 @@
-.p-FlexPanel {
+.lm-FlexPanel {
   display: flex;
 }
 
-.p-FlexPanel.p-mod-left-to-right {
+.lm-FlexPanel.lm-mod-left-to-right {
   flex-direction: row;
 }
 
-.p-FlexPanel.p-mod-right-to-left {
+.lm-FlexPanel.lm-mod-right-to-left {
   flex-direction: row-reverse;
 }
 
-.p-FlexPanel.p-mod-top-to-bottom {
+.lm-FlexPanel.lm-mod-top-to-bottom {
   flex-direction: column;
 }
 
-.p-FlexPanel.p-mod-bottom-to-top {
+.lm-FlexPanel.lm-mod-bottom-to-top {
   flex-direction: column-reverse;
 }

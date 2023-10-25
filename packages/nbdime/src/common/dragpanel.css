@@ -11,6 +11,6 @@
   background-size: 6px 6px;
 }
 
-.p-Panel.jp-DragPanel .p-Widget.jp-mod-dropTarget {
+.lm-Panel.jp-DragPanel .lm-Widget.jp-mod-dropTarget {
   border-top: 1px dashed black;
 }

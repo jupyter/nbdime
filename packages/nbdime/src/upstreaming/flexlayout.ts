@@ -14,22 +14,22 @@ import { PanelLayout, Widget } from '@lumino/widgets';
 /**
  * The class name added to left-to-right flex layout parents.
  */
-const LEFT_TO_RIGHT_CLASS = 'p-mod-left-to-right';
+const LEFT_TO_RIGHT_CLASS = 'lm-mod-left-to-right';
 
 /**
  * The class name added to right-to-left flex layout parents.
  */
-const RIGHT_TO_LEFT_CLASS = 'p-mod-right-to-left';
+const RIGHT_TO_LEFT_CLASS = 'lm-mod-right-to-left';
 
 /**
  * The class name added to top-to-bottom flex layout parents.
  */
-const TOP_TO_BOTTOM_CLASS = 'p-mod-top-to-bottom';
+const TOP_TO_BOTTOM_CLASS = 'lm-mod-top-to-bottom';
 
 /**
  * The class name added to bottom-to-top flex layout parents.
  */
-const BOTTOM_TO_TOP_CLASS = 'p-mod-bottom-to-top';
+const BOTTOM_TO_TOP_CLASS = 'lm-mod-bottom-to-top';
 
 /**
  * A layout which arranges its widgets in a single row or column.
@@ -44,7 +44,7 @@ const BOTTOM_TO_TOP_CLASS = 'p-mod-bottom-to-top';
  *      `setGrow`, `setShrink` and `setSizeBasis`.
  *    - Using the convenience attributes `evenSizes` or `stretchType`.
  *  - Manually by CSS using the flexbox CSS attribute for the classes
- *    `p-FlexPanel` and `p-FlexPanel-child`.
+ *    `lm-FlexPanel` and `lm-FlexPanel-child`.
  */
 export class FlexLayout extends PanelLayout {
   /**
