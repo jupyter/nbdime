@@ -14,6 +14,7 @@ import {
   ChangeDesc,
   RangeSetBuilder,
   RangeSet,
+  EditorState,
 } from '@codemirror/state';
 
 import {
@@ -1465,7 +1466,13 @@ export class MergeView extends Panel {
     const additionalExtensions = inMergeView
       ? [listener, mergeControlGutter, getCommonEditorExtensions(inMergeView)]
       : getCommonEditorExtensions(inMergeView);
-    const singlePane = !merged && (remote?.unchanged || remote?.added || remote?.deleted)
+    additionalExtensions.push(
+      EditorState.phrases.of({
+        '(…$ unchanged lines…)': this._trans.__('(…$ unchanged lines…)'),
+      }),
+    );
+    const singlePane =
+      !merged && (remote?.unchanged || remote?.added || remote?.deleted);
     if (
       // no collapse
       this._collapseIdentical >= 0 &&

@@ -124,6 +124,12 @@ export class NbdimeWidget extends Panel {
     let base = data['base'] as nbformat.INotebookContent;
     let diff = data['diff'] as any as IDiffEntry[];
     let nbdModel = new NotebookDiffModel(base, diff);
+    if (nbdModel.metadata) {
+      const trans = this.translator.load('nbdime');
+      nbdModel.metadata.collapsibleHeader = trans.__(
+        'Notebook metadata changed',
+      );
+    }
     let nbdWidget = new NotebookDiffWidget({
       model: nbdModel,
       rendermime: this.rendermime,
@@ -237,16 +243,16 @@ namespace Private {
     node.className = 'nbdime-Diff';
     node.innerHTML = `
       <div class="nbdime-header-buttonrow">
-        <label><input class="nbdime-hide-unchanged" type="checkbox">Hide unchanged cells</label>
-        <button class="nbdime-export" style="display: none">Export diff</button>
+        <label><input class="nbdime-hide-unchanged" type="checkbox"></label>
+        <button class="nbdime-export" style="display: none"></button>
       </div>
       <div class="nbdime-header-banner">
         <span class="nbdime-header-base"></span>
         <span class="nbdime-header-remote"></span>
       </div>`;
-    node.querySelector('input.nbdime-hide-unchanged')!.textContent = trans.__(
-      'Hide unchanged cells',
-    );
+    node
+      .querySelector('.nbdime-header-buttonrow > label')!
+      .insertAdjacentText('beforeend', trans.__('Hide unchanged cells'));
     node.querySelector('button.nbdime-export')!.textContent =
       trans.__('Export diff');
     (

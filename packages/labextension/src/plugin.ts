@@ -34,12 +34,6 @@ import { diffNotebookGit, diffNotebookCheckpoint, isNbInGit } from './actions';
 
 const pluginId = 'nbdime-jupyterlab:plugin';
 
-/**
- * Error message if the nbdime API is unavailable.
- */
-const serverMissingMsg =
-  'Unable to query nbdime API. Is the server extension enabled?';
-
 const INITIAL_NETWORK_RETRY = 2; // ms
 
 export class NBDiffExtension
@@ -124,6 +118,14 @@ function addCommands(
   const editorFactory = editorServices.factoryService.newInlineEditor.bind(
     editorServices.factoryService,
   );
+  const trans = translator.load('nbdime');
+
+  /**
+   * Error message if the nbdime API is unavailable.
+   */
+  const serverMissingMsg = trans.__(
+    'Unable to query nbdime API. Is the server extension enabled?',
+  );
 
   // Whether we have our server extension available
   let hasAPI = true;
@@ -199,8 +201,8 @@ function addCommands(
       //let content = current.notebook;
       //diffNotebook({base, remote, translator});
     },
-    label: erroredGen('Notebook diff'),
-    caption: erroredGen('Display nbdiff between two notebooks'),
+    label: erroredGen(trans.__('Notebook diff')),
+    caption: erroredGen(trans.__('Display nbdiff between two notebooks')),
     isEnabled: baseEnabled,
     iconClass:
       'jp-Icon jp-Icon-16 action-notebook-diff action-notebook-diff-notebooks',
@@ -225,9 +227,9 @@ function addCommands(
         shell.activateById(widget.id);
       }
     },
-    label: erroredGen('Notebook checkpoint diff'),
+    label: erroredGen(trans.__('Notebook checkpoint diff')),
     caption: erroredGen(
-      'Display nbdiff from checkpoint to currently saved version',
+      trans.__('Display nbdiff from checkpoint to currently saved version'),
     ),
     isEnabled: baseEnabled,
     iconClass:
@@ -252,9 +254,9 @@ function addCommands(
         shell.activateById(widget.id);
       }
     },
-    label: erroredGen('Notebook Git diff'),
+    label: erroredGen(trans.__('Notebook Git diff')),
     caption: erroredGen(
-      'Display nbdiff from git HEAD to currently saved version',
+      trans.__('Display nbdiff from git HEAD to currently saved version'),
     ),
     isEnabled: hasGitNotebook,
     iconClass:
