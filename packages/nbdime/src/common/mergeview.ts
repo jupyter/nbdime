@@ -136,7 +136,7 @@ const baseTheme = EditorView.baseTheme({
     border: 'var(--jp-border-width) solid var(--jp-border-color1)',
     fontSize: '90%',
     padding: '0 3px',
-    borderRadius: '4px',
+    borderRadius: '4px'
   },
 });
 
@@ -1487,10 +1487,12 @@ export class MergeView extends Panel {
         leftWidget = left.remoteEditorWidget;
       }
       this.addWidget(leftWidget);
+      leftWidget.addClass('cm-merge-pane');
       leftWidget.addClass('cm-merge-left-editor');
 
       if (showBase) {
         this.addWidget(this._base);
+        this._base.addClass('cm-merge-pane');
         this._base.addClass('cm-central-editor');
       }
 
@@ -1576,6 +1578,7 @@ export class MergeView extends Panel {
           );
         }
       }
+      mergeWidget.addClass('cm-merge-pane');
       mergeWidget.addClass('cm-merge-editor');
       //END MERGE CASE
       panes = 3 + (showBase ? 1 : 0);
@@ -1594,6 +1597,7 @@ export class MergeView extends Panel {
       } else {
         panes = 2;
         this.addWidget(this._base);
+        this._base.addClass('cm-merge-pane');
         this._base.addClass('cm-diff-left-editor');
         right = this._right = new DiffView({
           model: remote,
@@ -1606,6 +1610,7 @@ export class MergeView extends Panel {
           },
         });
         let rightWidget = right.remoteEditorWidget;
+        rightWidget.addClass('cm-merge-pane');
         rightWidget.addClass('cm-diff-right-editor');
         this.addWidget(new Widget({ node: right.buildGap() }));
         this.addWidget(rightWidget);
