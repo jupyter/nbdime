@@ -10,7 +10,9 @@ test.beforeEach(async ({ page }) => {
 
 /* notebooks of same length and 1 conflict*/
 test.describe('merge test4', () => {
-  test('should synchronize the collapse status between editor', async ({ page }) => {
+  test('should synchronize the collapse status between editor', async ({
+    page,
+  }) => {
     expect.soft(await page.locator('#main').screenshot()).toMatchSnapshot();
 
     // Should display 8 collapsers
@@ -19,8 +21,9 @@ test.describe('merge test4', () => {
     const collapsers2 = page.getByText('5 unchanged lines');
     await expect.soft(collapsers2).toHaveCount(4);
     await expect.soft(page.getByText('import numpy')).toHaveCount(0);
-    await expect.soft(page.getByText('noise = np.random.normal(0.0, 0.2, nx)')).toHaveCount(0);
-
+    await expect
+      .soft(page.getByText('noise = np.random.normal(0.0, 0.2, nx)'))
+      .toHaveCount(0);
 
     // Click on the base editor collapsers
     await page.getByText('12 unchanged lines').nth(1).click();
@@ -31,7 +34,8 @@ test.describe('merge test4', () => {
     // Should not display any collapser
 
     await expect(page.getByText('import numpy')).toHaveCount(4);
-    await expect(page.getByText('noise = np.random.normal(0.0, 0.2, nx)')).toHaveCount(4);
-
+    await expect(
+      page.getByText('noise = np.random.normal(0.0, 0.2, nx)'),
+    ).toHaveCount(4);
   });
 });

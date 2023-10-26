@@ -30,16 +30,19 @@
   ],
   "style": "style/index.css",
   "scripts": {
-    "build": "npm run build:lib && npm run build:labextension",
+    "build": "npm run build:lib:prod && npm run build:labextension",
     "build:dev": "npm run build:lib && jupyter labextension build --development True .",
     "build:labextension": "rimraf ../../nbdime/labextension && mkdirp ../../nbdime/labextension && jupyter labextension build .",
-    "build:lib": "tsc --build",
+    "build:lib": "tsc --sourceMap",
+    "build:lib:prod": "tsc --build",
     "clean": "npm run clean:lib && npm run clean:labextension",
     "clean:labextension": "rimraf ../../nbdime/labextension",
     "clean:lib": "rimraf tsconfig.tsbuildinfo lib",
     "prepublishOnly": "npm run build",
     "update": "rimraf node_modules/nbdime && npm install && npm run build",
-    "watch": "tsc --build --watch"
+    "watch": "run-p watch:src watch:labextension",
+    "watch:src": "tsc -w --sourceMap",
+    "watch:labextension": "jupyter labextension watch ."
   },
   "dependencies": {
     "@jupyterlab/apputils": "^4.0.0",
@@ -50,6 +53,7 @@
     "@jupyterlab/rendermime": "^4.0.0",
     "@jupyterlab/services": "^7.0.0",
     "@jupyterlab/settingregistry": "^4.0.0",
+    "@jupyterlab/translation": "^4.0.0",
     "@lumino/algorithm": "^2.0.1",
     "@lumino/coreutils": "^2.1.2",
     "@lumino/disposable": "^2.1.2",
@@ -62,6 +66,7 @@
     "@jupyterlab/docregistry": "^4.0.0",
     "@lumino/commands": "^2.0.0",
     "mkdirp": "^3.0.0",
+    "npm-run-all": "^4.1.5",
     "rimraf": "^5.0.0",
     "typescript": "^4.9.0"
   },

@@ -1,5 +1,6 @@
 import type { CodeEditor } from '@jupyterlab/codeeditor';
 import type { IRenderMimeRegistry } from '@jupyterlab/rendermime';
+import type { ITranslator } from '@jupyterlab/translation';
 
 /**
  * Diff view options
@@ -11,6 +12,10 @@ export interface IDiffViewOptions {
    * around such stretches (which defaults to 2). Defaults to true.
    */
   collapseIdentical?: boolean | number;
+  /**
+   * The translation manager.
+   */
+  translator?: ITranslator;
 }
 
 /**

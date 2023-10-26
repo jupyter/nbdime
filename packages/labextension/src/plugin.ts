@@ -22,6 +22,8 @@ import { NotebookPanel, INotebookTracker } from '@jupyterlab/notebook';
 
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 
+import { ITranslator, nullTranslator } from '@jupyterlab/translation';
+
 import { find } from '@lumino/algorithm';
 
 import type { CommandRegistry } from '@lumino/commands';
@@ -31,12 +33,6 @@ import { IDisposable, DisposableDelegate } from '@lumino/disposable';
 import { diffNotebookGit, diffNotebookCheckpoint, isNbInGit } from './actions';
 
 const pluginId = 'nbdime-jupyterlab:plugin';
-
-/**
- * Error message if the nbdime API is unavailable.
- */
-const serverMissingMsg =
-  'Unable to query nbdime API. Is the server extension enabled?';
 
 const INITIAL_NETWORK_RETRY = 2; // ms
 
@@ -116,10 +112,19 @@ function addCommands(
   rendermime: IRenderMimeRegistry,
   settings: ISettingRegistry.ISettings,
   editorServices: IEditorServices,
+  translator: ITranslator,
 ): void {
   const { commands, shell } = app;
   const editorFactory = editorServices.factoryService.newInlineEditor.bind(
     editorServices.factoryService,
+  );
+  const trans = translator.load('nbdime');
+
+  /**
+   * Error message if the nbdime API is unavailable.
+   */
+  const serverMissingMsg = trans.__(
+    'Unable to query nbdime API. Is the server extension enabled?',
   );
 
   // Whether we have our server extension available
@@ -194,10 +199,10 @@ function addCommands(
       // TODO: Check args for base/remote
       // if missing, prompt with dialog.
       //let content = current.notebook;
-      //diffNotebook({base, remote});
+      //diffNotebook({base, remote, translator});
     },
-    label: erroredGen('Notebook diff'),
-    caption: erroredGen('Display nbdiff between two notebooks'),
+    label: erroredGen(trans.__('Notebook diff')),
+    caption: erroredGen(trans.__('Display nbdiff between two notebooks')),
     isEnabled: baseEnabled,
     iconClass:
       'jp-Icon jp-Icon-16 action-notebook-diff action-notebook-diff-notebooks',
@@ -215,15 +220,16 @@ function addCommands(
         editorFactory,
         rendermime,
         hideUnchanged,
+        translator,
       });
       shell.add(widget);
       if (args['activate'] !== false) {
         shell.activateById(widget.id);
       }
     },
-    label: erroredGen('Notebook checkpoint diff'),
+    label: erroredGen(trans.__('Notebook checkpoint diff')),
     caption: erroredGen(
-      'Display nbdiff from checkpoint to currently saved version',
+      trans.__('Display nbdiff from checkpoint to currently saved version'),
     ),
     isEnabled: baseEnabled,
     iconClass:
@@ -241,15 +247,16 @@ function addCommands(
         editorFactory,
         rendermime,
         hideUnchanged,
+        translator,
       });
       shell.add(widget);
       if (args['activate'] !== false) {
         shell.activateById(widget.id);
       }
     },
-    label: erroredGen('Notebook Git diff'),
+    label: erroredGen(trans.__('Notebook Git diff')),
     caption: erroredGen(
-      'Display nbdiff from git HEAD to currently saved version',
+      trans.__('Display nbdiff from git HEAD to currently saved version'),
     ),
     isEnabled: hasGitNotebook,
     iconClass:
@@ -268,6 +275,7 @@ const nbDiffProvider: JupyterFrontEndPlugin<void> = {
     ISettingRegistry,
     IEditorServices,
   ],
+  optional: [ITranslator],
   activate: activateWidgetExtension,
   autoStart: true,
 };
@@ -283,13 +291,21 @@ async function activateWidgetExtension(
   rendermime: IRenderMimeRegistry,
   settingsRegistry: ISettingRegistry,
   editorServices: IEditorServices,
+  translator: ITranslator | null,
 ): Promise<void> {
   let { commands, docRegistry } = app;
   let extension = new NBDiffExtension(commands);
   docRegistry.addWidgetExtension('Notebook', extension);
 
   const settings = await settingsRegistry.load(pluginId);
-  addCommands(app, tracker, rendermime, settings, editorServices);
+  addCommands(
+    app,
+    tracker,
+    rendermime,
+    settings,
+    editorServices,
+    translator ?? nullTranslator,
+  );
   // Update the command registry when the notebook state changes.
   tracker.currentChanged.connect(() => {
     commands.notifyCommandChanged(CommandIDs.diffNotebookGit);

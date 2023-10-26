@@ -4,6 +4,8 @@
 
 import type * as nbformat from '@jupyterlab/nbformat';
 
+import type { TranslationBundle } from '@jupyterlab/translation';
+
 import { Panel, Widget } from '@lumino/widgets';
 
 import { each, find, toArray } from '@lumino/algorithm';
@@ -107,6 +109,7 @@ export class OutputPanel extends DiffPanel<OutputDiffModel> {
   }: ICellDiffViewOptions<OutputDiffModel>) {
     super(others);
     this.rendermime = rendermime;
+    this._trans = this._translator.load('nbdime');
     this.editorClasses = editorClasses;
 
     this._model.trustedChanged.connect(
@@ -122,7 +125,7 @@ export class OutputPanel extends DiffPanel<OutputDiffModel> {
       if (!parentModel.added) {
         // Implies this is added output
         let addSpacer = new Widget();
-        addSpacer.node.textContent = 'Output added';
+        addSpacer.node.textContent = this._trans.__('Output added');
         addSpacer.addClass(ADD_DEL_LABEL_CLASS);
         this.addWidget(addSpacer);
       }
@@ -131,7 +134,7 @@ export class OutputPanel extends DiffPanel<OutputDiffModel> {
       if (!parentModel.deleted) {
         // Implies this is deleted output
         let delSpacer = new Widget();
-        delSpacer.node.textContent = 'Output deleted';
+        delSpacer.node.textContent = this._trans.__('Output deleted');
         delSpacer.addClass(ADD_DEL_LABEL_CLASS);
         this.addWidget(delSpacer);
       }
@@ -233,6 +236,7 @@ export class OutputPanel extends DiffPanel<OutputDiffModel> {
         view = createNbdimeMergeView({
           remote: stringModel,
           factory: this._editorFactory,
+          translator: this._translator,
           ...this._viewOptions,
         });
       }
@@ -242,6 +246,7 @@ export class OutputPanel extends DiffPanel<OutputDiffModel> {
       view = createNbdimeMergeView({
         remote: model.stringify(),
         factory: this._editorFactory,
+        translator: this._translator,
         ...this._viewOptions,
       });
     }
@@ -260,11 +265,11 @@ export class OutputPanel extends DiffPanel<OutputDiffModel> {
 
     // Add rendered/source toggle:
     let btnSource = document.createElement('button');
-    let sourceText = ['Show source', 'Render'];
-    btnSource.innerText = sourceText[0];
+    let sourceText = [this._trans.__('Show source'), this._trans.__('Render')];
+    btnSource.textContent = sourceText[0];
     btnSource.onclick = (ev: MouseEvent) => {
       this.forceText = !this.forceText;
-      btnSource.innerText = sourceText[this.forceText ? 1 : 0];
+      btnSource.textContent = sourceText[this.forceText ? 1 : 0];
       this.updateView();
     };
     let w = new Widget({ node: btnSource });
@@ -273,7 +278,7 @@ export class OutputPanel extends DiffPanel<OutputDiffModel> {
 
     // Add trust button:
     let btnTrust = document.createElement('button');
-    btnTrust.innerText = 'Trust';
+    btnTrust.textContent = this._trans.__('Trust');
     btnTrust.onclick = (ev: MouseEvent) => {
       // Triggers change event:
       this._model.trusted = !this._model.trusted;
@@ -375,6 +380,7 @@ export class OutputPanel extends DiffPanel<OutputDiffModel> {
 
   protected menu: Panel;
   protected _mimetype: string | null = null;
+  protected _trans: TranslationBundle;
   protected forceText = false;
 
   /**

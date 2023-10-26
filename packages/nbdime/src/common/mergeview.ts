@@ -14,6 +14,7 @@ import {
   ChangeDesc,
   RangeSetBuilder,
   RangeSet,
+  EditorState,
 } from '@codemirror/state';
 
 import {
@@ -27,6 +28,12 @@ import {
 } from '@codemirror/view';
 
 import type { CodeEditor } from '@jupyterlab/codeeditor';
+
+import {
+  type ITranslator,
+  nullTranslator,
+  type TranslationBundle,
+} from '@jupyterlab/translation';
 
 import { Widget, Panel } from '@lumino/widgets';
 
@@ -549,6 +556,7 @@ export function createNbdimeMergeView(
     factory,
     collapseIdentical,
     showBase,
+    translator,
   } = options;
   let opts: IMergeViewEditorConfiguration = {
     remote,
@@ -558,6 +566,7 @@ export function createNbdimeMergeView(
     factory: factory ?? createEditorFactory(),
     collapseIdentical,
     showBase,
+    translator,
   };
 
   let mergeview = new MergeView(opts);
@@ -603,14 +612,25 @@ export interface IDiffViewOptions {
    * Whether to synchronize scrolling between the two editors or not.
    */
   lockScroll?: boolean;
+  /**
+   * The configuration options for the editor.
+   */
+  translator?: ITranslator;
 }
 
 /**
  * Used by MergeView to show diff in a string diff model
  */
 export class DiffView {
-  constructor({ model, type, options, lockScroll }: IDiffViewOptions) {
+  constructor({
+    model,
+    type,
+    options,
+    lockScroll,
+    translator,
+  }: IDiffViewOptions) {
     this._model = model;
+    this._trans = (translator ?? nullTranslator).load('nbdime');
     this._type = type;
     this._lockScroll = lockScroll ?? true;
     let remoteValue = this._model.remote || '';
@@ -705,7 +725,7 @@ export class DiffView {
       undefined,
       'cm-merge-scrolllock',
     ));
-    lock.title = 'Toggle locked scrolling';
+    lock.title = this._trans.__('Toggle locked scrolling');
     this.setScrollLock(this._lockScroll);
     lock.addEventListener('click', event => {
       this.setScrollLock(!this._lockScroll);
@@ -1145,6 +1165,7 @@ export class DiffView {
   private _baseEditorWidget: EditorWidget;
   private _remoteEditorWidget: EditorWidget;
   private _model: IStringDiffModel;
+  private _trans: TranslationBundle;
   private _type: string;
   private _chunks: Chunk[];
   private _lineChunks: Chunk[];
@@ -1332,6 +1353,7 @@ export class MergeView extends Panel {
   constructor(options: IMergeViewEditorConfiguration) {
     super();
     this._measuring = -1;
+    this._trans = (options.translator ?? nullTranslator).load('nbdime');
     let remote = options.remote;
     let local = options.local || null;
     let merged = options.merged || null;
@@ -1444,7 +1466,13 @@ export class MergeView extends Panel {
     const additionalExtensions = inMergeView
       ? [listener, mergeControlGutter, getCommonEditorExtensions(inMergeView)]
       : getCommonEditorExtensions(inMergeView);
-    const singlePane = !merged && (remote?.unchanged || remote?.added || remote?.deleted)
+    additionalExtensions.push(
+      EditorState.phrases.of({
+        '(…$ unchanged lines…)': this._trans.__('(…$ unchanged lines…)'),
+      }),
+    );
+    const singlePane =
+      !merged && (remote?.unchanged || remote?.added || remote?.deleted);
     if (
       // no collapse
       this._collapseIdentical >= 0 &&
@@ -1470,7 +1498,7 @@ export class MergeView extends Panel {
         // Local value was deleted
         left = this._left = null;
         leftWidget = new Widget({
-          node: elt('div', 'Value missing', 'jp-mod-missing'),
+          node: elt('div', this._trans.__('Value missing'), 'jp-mod-missing'),
         });
       } else {
         left = this._left = new DiffView({
@@ -1483,6 +1511,7 @@ export class MergeView extends Panel {
             extensions: [options.extensions ?? [], additionalExtensions],
           },
           lockScroll: showBase,
+          translator: options.translator,
         });
         leftWidget = left.remoteEditorWidget;
       }
@@ -1501,7 +1530,7 @@ export class MergeView extends Panel {
         // Remote value was deleted
         right = this._right = null;
         rightWidget = new Widget({
-          node: elt('div', 'Value missing', 'jp-mod-missing'),
+          node: elt('div', this._trans.__('Value missing'), 'jp-mod-missing'),
         });
       } else {
         right = this._right = new DiffView({
@@ -1514,6 +1543,7 @@ export class MergeView extends Panel {
             extensions: [options.extensions ?? [], additionalExtensions],
           },
           lockScroll: showBase,
+          translator: options.translator,
         });
         rightWidget = right.remoteEditorWidget;
       }
@@ -1531,6 +1561,7 @@ export class MergeView extends Panel {
           extensions: [options.extensions ?? [], additionalExtensions],
         },
         lockScroll: showBase,
+        translator: options.translator,
       });
       let mergeWidget = merge.remoteEditorWidget;
       if (showBase) {
@@ -1608,6 +1639,7 @@ export class MergeView extends Panel {
             config: { ...options.config },
             extensions: [options.extensions ?? [], additionalExtensions],
           },
+          translator: options.translator,
         });
         let rightWidget = right.remoteEditorWidget;
         rightWidget.addClass('cm-merge-pane');
@@ -1977,6 +2009,7 @@ export class MergeView extends Panel {
     ) as DiffView[];
   }
 
+  private _trans: TranslationBundle;
   private _collapseIdentical: number = 2;
   private _left: DiffView | null;
   private _right: DiffView | null;

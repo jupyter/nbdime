@@ -1,10 +1,12 @@
+import type { CodeEditor } from '@jupyterlab/codeeditor';
+
 import { PathExt, URLExt } from '@jupyterlab/coreutils';
 
 import type { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
-import type { CodeEditor } from '@jupyterlab/codeeditor';
-
 import { ServerConnection } from '@jupyterlab/services';
+
+import { nullTranslator, type ITranslator } from '@jupyterlab/translation';
 
 import type { Widget } from '@lumino/widgets';
 
@@ -22,11 +24,13 @@ export function diffNotebook(args: {
   readonly rendermime: IRenderMimeRegistry;
   readonly editorFactory: CodeEditor.Factory;
   hideUnchanged?: boolean;
+  translator?: ITranslator;
 }): Widget {
-  let { base, remote } = args;
+  let { base, remote, translator } = args;
+  const trans = (translator ?? nullTranslator).load('nbdime');
   let widget = new NbdimeWidget(args);
-  widget.title.label = `Diff: ${base} ↔ ${remote}`;
-  widget.title.caption = `Local: ${base}\nRemote: '${remote}'`;
+  widget.title.label = trans.__('Diff: %1 ↔ %2', base, remote);
+  widget.title.caption = trans.__("Local: '%1'\nRemote: '%2'", base, remote);
   return widget;
 }
 
@@ -35,20 +39,27 @@ export function diffNotebookCheckpoint(args: {
   readonly rendermime: IRenderMimeRegistry;
   readonly editorFactory: CodeEditor.Factory;
   hideUnchanged?: boolean;
+  translator?: ITranslator;
 }): Widget {
-  const { path, rendermime, hideUnchanged, editorFactory } = args;
+  const { path, rendermime, hideUnchanged, editorFactory, translator } = args;
+  const trans = (translator ?? nullTranslator).load('nbdime');
   let nb_dir = PathExt.dirname(path);
   let name = PathExt.basename(path, '.ipynb');
   let base = PathExt.join(nb_dir, name + '.ipynb');
+
   let widget = new NbdimeWidget({
     base,
     editorFactory,
     rendermime,
-    baseLabel: 'Checkpoint',
+    baseLabel: trans.__('Checkpoint'),
     hideUnchanged,
+    translator,
   });
-  widget.title.label = `Diff checkpoint: ${name}`;
-  widget.title.caption = `Local: latest checkpoint\nRemote: '${path}'`;
+  widget.title.label = trans.__('Diff checkpoint: %1', name);
+  widget.title.caption = trans.__(
+    "Local: latest checkpoint\nRemote: '%1'",
+    path,
+  );
   widget.title.iconClass = 'fa fa-clock-o jp-fa-tabIcon';
   return widget;
 }
@@ -58,17 +69,20 @@ export function diffNotebookGit(args: {
   readonly rendermime: IRenderMimeRegistry;
   readonly editorFactory: CodeEditor.Factory;
   hideUnchanged?: boolean;
+  translator?: ITranslator;
 }): Widget {
-  const { path, rendermime, hideUnchanged, editorFactory } = args;
+  const { path, rendermime, hideUnchanged, editorFactory, translator } = args;
+  const trans = (translator ?? nullTranslator).load('nbdime');
   let name = PathExt.basename(path, '.ipynb');
   let widget = new NbdimeWidget({
     base: path,
     editorFactory,
     rendermime,
     hideUnchanged,
+    translator,
   });
-  widget.title.label = `Diff git: ${name}`;
-  widget.title.caption = `Local: git HEAD\nRemote: '${path}'`;
+  widget.title.label = trans.__('Diff git: %1', name);
+  widget.title.caption = trans.__("Local: git HEAD\nRemote: '%1'", path);
   widget.title.iconClass = 'fa fa-git jp-fa-tabIcon';
   return widget;
 }

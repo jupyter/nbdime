@@ -22,9 +22,7 @@ export class CollapsiblePanel extends Panel {
     let header = new Panel();
     header.addClass(COLLAPSIBLE_HEADER);
     if (headerTitle) {
-      // let title = document.createElement('span');
-      header.node.innerText = headerTitle;
-      // header.appendChild(title);
+      header.node.textContent = headerTitle;
     }
     let button = document.createElement('button');
     button.className = COLLAPSIBLE_HEADER_ICON;
@@ -37,8 +35,7 @@ export class CollapsiblePanel extends Panel {
     super();
     this.addClass(COLLAPSIBLE_CLASS);
     this.inner = inner;
-    let constructor = this.constructor as typeof CollapsiblePanel;
-    let header = constructor.createHeader(headerTitle);
+    let header = CollapsiblePanel.createHeader(headerTitle);
     this.header = header;
     this.button = header.node.getElementsByClassName(
       COLLAPSIBLE_HEADER_ICON,

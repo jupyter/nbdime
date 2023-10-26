@@ -6,6 +6,8 @@ import type * as nbformat from '@jupyterlab/nbformat';
 
 import type { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
+import type { ITranslator, TranslationBundle } from '@jupyterlab/translation';
+
 import { MergePanel } from '../../common/basepanel';
 
 import type {
@@ -54,12 +56,15 @@ export class NotebookMergeWidget extends MergePanel<NotebookMergeModel> {
     let rendermime = this._rendermime;
 
     let work = Promise.resolve();
-    this.addWidget(new NotebookMergeControls(model));
+    this.addWidget(
+      new NotebookMergeControls({ model, translator: this._translator }),
+    );
     work = work.then(() => {
       if (model.metadata) {
         this.metadataWidget = new MetadataMergeWidget({
           model: model.metadata,
           editorFactory: this._editorFactory,
+          translator: this._translator,
           ...this._viewOptions,
         });
         this.addWidget(this.metadataWidget);
@@ -83,12 +88,13 @@ export class NotebookMergeWidget extends MergePanel<NotebookMergeModel> {
             rendermime,
             mimetype: model.mimetype,
             editorFactory: this._editorFactory,
+            translator: this._translator,
             ...this._viewOptions,
           });
           this.cellWidgets.push(w);
           if (c.onesided && c.conflicted) {
             if (chunk === null) {
-              chunk = new ChunkedCellsWidget();
+              chunk = new ChunkedCellsWidget({ translator: this._translator });
               chunk.cells.moved.connect(this.onDragDropMove, this);
               chunk.resolved.connect(this.onChunkResolved, this);
               this.cellContainer.addToFriendlyGroup(chunk.cells);
@@ -203,11 +209,18 @@ export class NotebookMergeWidget extends MergePanel<NotebookMergeModel> {
  * Collection of notebook-wide controls
  */
 class NotebookMergeControls extends FlexPanel {
-  constructor(model: NotebookMergeModel) {
+  constructor({
+    model,
+    translator,
+  }: {
+    model: NotebookMergeModel;
+    translator: ITranslator;
+  }) {
     super({
       direction: 'left-to-right',
     });
     this.model = model;
+    this.trans = translator.load('nbdime');
     this.addClass(NB_MERGE_CONTROLS_CLASS);
     let anyOutputs = false;
     for (let cell of model.cells) {
@@ -223,12 +236,12 @@ class NotebookMergeControls extends FlexPanel {
 
   init_controls(): void {
     // Add "Clear all outputs" checkbox
-    let chk = createCheckbox(false, 'Clear <i>all</i> cell outputs');
+    let chk = createCheckbox(false, this.trans.__('Clear all cell outputs'));
     this.clearOutputsToggle = chk.checkbox;
     this.addWidget(chk.widget);
 
     // Add "Clear all conflicted outputs" checkbox
-    chk = createCheckbox(false, 'Clear <i>conflicted</i> cell outputs');
+    chk = createCheckbox(false, this.trans.__('Clear conflicted cell outputs'));
     this.clearConflictedOutputsToggle = chk.checkbox;
     this.addWidget(chk.widget);
 
@@ -353,4 +366,6 @@ class NotebookMergeControls extends FlexPanel {
   clearConflictedOutputsToggle: HTMLInputElement;
 
   model: NotebookMergeModel;
+
+  protected trans: TranslationBundle;
 }

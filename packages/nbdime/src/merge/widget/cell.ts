@@ -10,6 +10,8 @@ import type { CodeEditor } from '@jupyterlab/codeeditor';
 
 import type { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
+import type { TranslationBundle } from '@jupyterlab/translation';
+
 import { MergePanel } from '../../common/basepanel';
 
 import { CollapsiblePanel } from '../../common/collapsiblepanel';
@@ -81,18 +83,14 @@ export interface ICellMergeViewOptions {
  */
 export class CellMergeWidget extends MergePanel<CellMergeModel> {
   static createMergeView({
-    editorFactory,
-    local,
-    remote,
     merged,
+    editorFactory,
     readOnly,
     ...others
   }: ICellMergeViewOptions & IMergeViewOptions): Widget | null {
     let view: Widget | null = null;
     if (merged instanceof StringDiffModel) {
       view = createNbdimeMergeView({
-        remote,
-        local,
         merged,
         readOnly: readOnly ?? false,
         factory: editorFactory,
@@ -132,6 +130,7 @@ export class CellMergeWidget extends MergePanel<CellMergeModel> {
     super(options);
     this.addClass(CELLMERGE_CLASS);
     this._rendermime = rendermime;
+    this._trans = this._translator.load('nbdime');
     this.mimetype = mimetype;
 
     this.init();
@@ -191,9 +190,13 @@ export class CellMergeWidget extends MergePanel<CellMergeModel> {
     let radd = model.remote && model.remote.added;
     let rdel = model.remote && model.remote.deleted;
     if ((ladd && !radd) || (ldel && !rdel)) {
-      this.headerTitle = ladd ? 'Cell added locally' : 'Cell deleted locally';
+      this.headerTitle = ladd
+        ? this._trans.__('Cell added locally')
+        : this._trans.__('Cell deleted locally');
     } else if ((radd && !ladd) || (rdel && !ldel)) {
-      this.headerTitle = radd ? 'Cell added remotely' : 'Cell deleted remotely';
+      this.headerTitle = radd
+        ? this._trans.__('Cell added remotely')
+        : this._trans.__('Cell deleted remotely');
     }
 
     if (
@@ -216,16 +219,17 @@ export class CellMergeWidget extends MergePanel<CellMergeModel> {
         editorClasses: CURR_CLASSES,
         rendermime: this._rendermime,
         editorFactory: this._editorFactory,
+        translator: this._translator,
       });
       if ((ladd && !radd) || (ldel && !rdel)) {
         this.addClass(ONEWAY_LOCAL_CLASS);
       } else if ((radd && !ladd) || (rdel && !ldel)) {
         this.addClass(ONEWAY_REMOTE_CLASS);
       } else if (ldel && rdel) {
-        this.headerTitle = 'Deleted on both sides';
+        this.headerTitle = this._trans.__('Deleted on both sides');
         this.addClass(TWOWAY_DELETION_CLASS);
       } else if (ladd && radd) {
-        this.headerTitle = 'Added on both sides';
+        this.headerTitle = this._trans.__('Added on both sides');
         this.addClass(TWOWAY_ADDITION_CLASS);
       }
       view.addClass(SOURCE_ROW_CLASS);
@@ -241,6 +245,7 @@ export class CellMergeWidget extends MergePanel<CellMergeModel> {
             editorClasses: CURR_CLASSES,
             rendermime: this._rendermime,
             editorFactory: this._editorFactory,
+            translator: this._translator,
           });
           container.addWidget(view);
         }
@@ -255,7 +260,9 @@ export class CellMergeWidget extends MergePanel<CellMergeModel> {
         let row = new FlexPanel({ direction: 'left-to-right' });
         row.addClass(EXECUTIONCOUNT_ROW_CLASS);
         let textWidget = new Widget();
-        textWidget.node.innerText = 'Execution count will be cleared.';
+        textWidget.node.textContent = this._trans.__(
+          'Execution count will be cleared.',
+        );
         row.addWidget(textWidget);
         this.addWidget(row);
       }
@@ -274,6 +281,7 @@ export class CellMergeWidget extends MergePanel<CellMergeModel> {
           editorClasses: CURR_CLASSES,
           rendermime: this._rendermime,
           editorFactory: this._editorFactory,
+          translator: this._translator,
         });
       } else {
         sourceView = CellMergeWidget.createMergeView({
@@ -282,6 +290,7 @@ export class CellMergeWidget extends MergePanel<CellMergeModel> {
           merged: model.merged.source,
           editorClasses: CURR_CLASSES,
           editorFactory: this._editorFactory,
+          translator: this._translator,
           ...this._viewOptions,
         });
       }
@@ -316,6 +325,7 @@ export class CellMergeWidget extends MergePanel<CellMergeModel> {
           merged: model.merged.metadata,
           editorClasses: CURR_CLASSES,
           editorFactory: this._editorFactory,
+          translator: this._translator,
           ...this._viewOptions,
           readOnly: true, // Do not allow manual edit of metadata
         });
@@ -328,7 +338,7 @@ export class CellMergeWidget extends MergePanel<CellMergeModel> {
         let container = new Panel();
         container.addWidget(metadataView);
 
-        let header = 'Metadata changed';
+        let header = this._trans.__('Metadata changed');
         let collapser = new CollapsiblePanel(container, header, true);
         collapser.addClass(METADATA_ROW_CLASS);
         this.addWidget(collapser);
@@ -360,9 +370,9 @@ export class CellMergeWidget extends MergePanel<CellMergeModel> {
 
         let header = outputsChanged
           ? model.outputsConflicted
-            ? 'Outputs conflicted'
-            : 'Outputs changed'
-          : 'Outputs unchanged';
+            ? this._trans.__('Outputs conflicted')
+            : this._trans.__('Outputs changed')
+          : this._trans.__('Outputs unchanged');
         let collapser = new CollapsiblePanel(view, header, !outputsChanged);
         collapser.addClass(OUTPUTS_ROW_CLASS);
 
@@ -378,12 +388,12 @@ export class CellMergeWidget extends MergePanel<CellMergeModel> {
             }
             model.clearOutputConflicts();
             collapser.removeClass(OUTPUTS_CONFLICTED_CLASS);
-            collapser.headerTitle = 'Outputs changed';
+            collapser.headerTitle = this._trans.__('Outputs changed');
             ev.preventDefault();
             ev.stopPropagation();
             conflictClearBtn.parent = null!;
           };
-          btn.innerText = 'Mark resolved';
+          btn.textContent = this._trans.__('Mark resolved');
           node.appendChild(btn);
           collapser.header.insertWidget(1, conflictClearBtn);
         }
@@ -425,7 +435,7 @@ export class CellMergeWidget extends MergePanel<CellMergeModel> {
   private _createClearOutputToggle(): Widget {
     let { checkbox, widget } = createCheckbox(
       this.model.clearOutputs,
-      'Clear outputs',
+      this._trans.__('Clear outputs'),
     );
     if (this.model.clearOutputs) {
       this.addClass(MARKED_CLEAR_OUTPUTS);
@@ -447,7 +457,7 @@ export class CellMergeWidget extends MergePanel<CellMergeModel> {
   private _createDeleteToggle(): Widget {
     let { checkbox, widget } = createCheckbox(
       this.model.deleteCell,
-      'Delete cell',
+      this._trans.__('Delete cell'),
     );
     if (this.model.deleteCell) {
       this.addClass(MARKED_DELETE);
@@ -490,4 +500,5 @@ export class CellMergeWidget extends MergePanel<CellMergeModel> {
   }
 
   private _rendermime: IRenderMimeRegistry;
+  protected _trans: TranslationBundle;
 }
