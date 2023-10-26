@@ -285,7 +285,7 @@ Output mimetype selection:
   margin-left: 5px;
 }
 
-.jp-Diff-outputsContainer > .p-Widget:not(:last-child) {
+.jp-Diff-outputsContainer > .lm-Widget:not(:last-child) {
   padding-bottom: 6px;
   min-height: 2em;
   border-bottom: var(--jp-border-width) solid var(--jp-nbdime-output-color2);

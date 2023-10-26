@@ -9,8 +9,14 @@
     radial-gradient(transparent 19%, rgba(0, 0, 0, 0.4) 20%, transparent 50%) 0
       1px;
   background-size: 6px 6px;
+  cursor: grab;
 }
 
-.p-Panel.jp-DragPanel .p-Widget.jp-mod-dropTarget {
+.lm-Panel.jp-DragPanel .lm-Widget.jp-mod-dropTarget {
   border-top: 1px dashed black;
+}
+
+.lm-mod-drag-image {
+  left: 0px;
+  top: 0px;
 }

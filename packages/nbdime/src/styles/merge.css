@@ -16,7 +16,7 @@
   width: 80%;
 }
 
-.jp-Notebook-merge .jp-merge-celldragdrop > .p-Panel:not(:first-child) {
+.jp-Notebook-merge .jp-merge-celldragdrop > .lm-Panel:not(:first-child) {
   margin-top: 20px;
 }
 
@@ -35,7 +35,7 @@
   border-top: solid #ccc 1px;
 }
 
-.jp-Notebook-merge .jp-Merge-cellHeader > .p-Widget {
+.jp-Notebook-merge .jp-Merge-cellHeader > .lm-Widget {
   margin-right: 0.5em;
 }
 
@@ -54,11 +54,11 @@
   max-width: 33%;
 }
 
-.jp-Cell-merge.p-mod-drag-image {
+.jp-Cell-merge.lm-mod-drag-image {
   background-color: var(--jp-layout-color1);
 }
 
-.jp-Cell-merge.p-mod-drag-image .jp-Merge-cellHeader {
+.jp-Cell-merge.lm-mod-drag-image .jp-Merge-cellHeader {
   display: none;
 }
 
@@ -280,7 +280,7 @@
 
 .jp-Notebook-merge
   .jp-Cell-merge.jp-mod-todelete
-  > .p-Widget:not(.jp-Merge-cellHeader) {
+  > .lm-Widget:not(.jp-Merge-cellHeader) {
   opacity: 0.5;
   filter: alpha(opacity = 50);
 }
@@ -299,7 +299,7 @@
 
 .jp-Notebook-merge
   .jp-Cellrow-outputs
-  .p-FlexPanel:last-of-type
+  .lm-FlexPanel:last-of-type
   .jp-OutputArea {
   margin-top: 5px;
 }
@@ -444,7 +444,7 @@ Output mimetype selection:
   margin-left: 5px;
 }
 
-.jp-Diff-outputsContainer > .p-Widget:not(:last-child) {
+.jp-Diff-outputsContainer > .lm-Widget:not(:last-child) {
   padding-bottom: 6px;
   min-height: 2em;
   border-bottom: var(--jp-border-width) solid var(--jp-nbdime-output-color2);

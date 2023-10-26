@@ -137,16 +137,16 @@ export abstract class DropPanel extends Panel {
    */
   handleEvent(event: Event): void {
     switch (event.type) {
-      case 'p-dragenter':
+      case 'lm-dragenter':
         this._evtDragEnter(event as Drag.Event);
         break;
-      case 'p-dragleave':
+      case 'lm-dragleave':
         this._evtDragLeave(event as Drag.Event);
         break;
-      case 'p-dragover':
+      case 'lm-dragover':
         this._evtDragOver(event as Drag.Event);
         break;
-      case 'p-drop':
+      case 'lm-drop':
         this.evtDrop(event as Drag.Event);
         break;
       default:
@@ -190,7 +190,7 @@ export abstract class DropPanel extends Panel {
   }
 
   /**
-   * Handle the `'p-drop'` event for the widget.
+   * Handle the `'lm-drop'` event for the widget.
    *
    * Responsible for pre-processing event before calling `processDrop`.
    *
@@ -227,10 +227,10 @@ export abstract class DropPanel extends Panel {
    */
   protected onAfterAttach(msg: Message): void {
     let node = this.node;
-    node.addEventListener('p-dragenter', this);
-    node.addEventListener('p-dragleave', this);
-    node.addEventListener('p-dragover', this);
-    node.addEventListener('p-drop', this);
+    node.addEventListener('lm-dragenter', this);
+    node.addEventListener('lm-dragleave', this);
+    node.addEventListener('lm-dragover', this);
+    node.addEventListener('lm-drop', this);
   }
 
   /**
@@ -238,14 +238,14 @@ export abstract class DropPanel extends Panel {
    */
   protected onBeforeDetach(msg: Message): void {
     let node = this.node;
-    node.removeEventListener('p-dragenter', this);
-    node.removeEventListener('p-dragleave', this);
-    node.removeEventListener('p-dragover', this);
-    node.removeEventListener('p-drop', this);
+    node.removeEventListener('lm-dragenter', this);
+    node.removeEventListener('lm-dragleave', this);
+    node.removeEventListener('lm-dragover', this);
+    node.removeEventListener('lm-drop', this);
   }
 
   /**
-   * Handle the `'p-dragenter'` event for the widget.
+   * Handle the `'lm-dragenter'` event for the widget.
    */
   private _evtDragEnter(event: Drag.Event): void {
     if (!this.validateSource(event)) {
@@ -265,7 +265,7 @@ export abstract class DropPanel extends Panel {
   }
 
   /**
-   * Handle the `'p-dragleave'` event for the widget.
+   * Handle the `'lm-dragleave'` event for the widget.
    */
   private _evtDragLeave(event: Drag.Event): void {
     event.preventDefault();
@@ -274,7 +274,7 @@ export abstract class DropPanel extends Panel {
   }
 
   /**
-   * Handle the `'p-dragover'` event for the widget.
+   * Handle the `'lm-dragover'` event for the widget.
    */
   private _evtDragOver(event: Drag.Event): void {
     if (!this.validateSource(event)) {

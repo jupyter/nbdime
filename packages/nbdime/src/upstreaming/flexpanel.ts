@@ -14,12 +14,12 @@ import { Panel, Widget } from '@lumino/widgets';
 /**
  * The class name added to FlexPanel instances.
  */
-const FLEX_PANEL_CLASS = 'p-FlexPanel';
+const FLEX_PANEL_CLASS = 'lm-FlexPanel';
 
 /**
  * The class name added to a FlexPanel child.
  */
-const CHILD_CLASS = 'p-FlexPanel-child';
+const CHILD_CLASS = 'lm-FlexPanel-child';
 
 /**
  * A panel which arranges its widgets in a single row or column.
@@ -34,7 +34,7 @@ const CHILD_CLASS = 'p-FlexPanel-child';
  *      `setGrow`, `setShrink` and `setSizeBasis`.
  *    - Using the convenience attributes `evenSizes` or `stretchType`.
  *  - Manually by CSS using the flexbox CSS attribute for the classes
- *    `p-FlexPanel` and `p-FlexPanel-child`.
+ *    `lm-FlexPanel` and `lm-FlexPanel-child`.
  *
  * #### Notes
  * This class provides a convenience wrapper around a [[FlexLayout]].

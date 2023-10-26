@@ -103,7 +103,7 @@ describe('upstreaming', () => {
 
     it('should add a class name to the flex panel', () => {
       let p = new FlexPanel();
-      expect(p.hasClass('p-FlexPanel')).toBe(true);
+      expect(p.hasClass('lm-FlexPanel')).toBe(true);
     });
 
     it('should add a class name to the flex panel children', () => {
@@ -112,7 +112,7 @@ describe('upstreaming', () => {
       p.addWidget(new Widget());
       p.addWidget(new Widget());
       for (const child of p.widgets) {
-        expect(child.hasClass('p-FlexPanel-child')).toBe(true);
+        expect(child.hasClass('lm-FlexPanel-child')).toBe(true);
       }
     });
 
@@ -124,7 +124,7 @@ describe('upstreaming', () => {
       while (p.widgets.length > 0) {
         let child = p.widgets[0];
         child.parent = null!;
-        expect(child.hasClass('p-FlexPanel-child')).toBe(false);
+        expect(child.hasClass('lm-FlexPanel-child')).toBe(false);
       }
     });
 
@@ -139,14 +139,14 @@ describe('upstreaming', () => {
       let p = new FlexPanel();
       p.direction = 'bottom-to-top';
       Widget.attach(p, document.body);
-      expect(p.hasClass('p-mod-bottom-to-top')).toBe(true);
+      expect(p.hasClass('lm-mod-bottom-to-top')).toBe(true);
     });
 
     it('should apply direction if attached before setting', () => {
       let p = new FlexPanel();
       Widget.attach(p, document.body);
       p.direction = 'bottom-to-top';
-      expect(p.hasClass('p-mod-bottom-to-top')).toBe(true);
+      expect(p.hasClass('lm-mod-bottom-to-top')).toBe(true);
     });
 
     it('should report isHorizontal/isVertical correctly', () => {
