@@ -89,6 +89,9 @@ docs = [
     "sphinx_rtd_theme",
 ]
 
+[tool.check-wheel-contents]
+ignore = ["W002"]
+
 [tool.hatch.version]
 path = "nbdime/_version.py"
 
@@ -128,6 +131,18 @@ skip-if-exists = [
 [tool.hatch.build.hooks.jupyter-builder.editable-build-kwargs]
 source_dir = "packages"
 build_dir = "nbdime/labextension"
+
+[tool.jupyter-releaser.options]
+version-cmd = "python scripts/bump_version.py --force"
+
+[tool.jupyter-releaser.hooks]
+before-bump-version = [
+    "npm install"
+]
+before-build-npm = [
+    "python -m pip install 'jupyterlab>=4.0.0,<5'",
+    "npm run build"
+]
 
 [tool.pytest.ini_options]
 testpaths = "nbdime/tests"

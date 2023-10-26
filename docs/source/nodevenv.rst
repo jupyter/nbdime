@@ -5,7 +5,7 @@ The following steps will: create a virtualenv, named ``myenv``, in the current
 directory; activate the virtualenv; and install npm inside the virtualenv
 using :command:`nodeenv`::
 
-    python3 -m venv myenv          # For Python 2: python2 -m virtualenv myenv
+    python -m venv myenv
     source myenv/bin/activate
     pip install nodeenv
     nodeenv -p
@@ -15,7 +15,7 @@ dependencies using :command:`pip`.
 
 For example with Python 3.5, the steps with output are::
 
-    $ python3 -m venv myenv
+    $ python -m venv myenv
     $ source myenv/bin/activate
     (myenv) $ pip install nodeenv
     Collecting nodeenv
