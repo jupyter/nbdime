@@ -60,7 +60,7 @@ def bump(force: bool, spec: str) -> None:
         js_spec += " -y"
     lerna_cmd += f" {js_spec} {spec}"
     print(f"Executing '{lerna_cmd}'...")
-    run(lerna_cmd, cwd=HERE, shell=True)
+    run(lerna_cmd, cwd=HERE)
 
     print(f"Changed made:")
     run("git diff", cwd=HERE)
