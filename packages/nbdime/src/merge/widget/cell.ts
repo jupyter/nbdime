@@ -68,6 +68,7 @@ const OUTPUTS_ROW_CLASS = 'jp-Cellrow-outputs';
 
 const OUTPUTS_CONFLICTED_CLASS = 'jp-conflicted-outputs';
 const MARK_OUTPUTS_RESOLVED_CLASS = 'jp-conflicted-outputs-button';
+const CELL_ID_CONFLICTED_CLASS = 'jp-conflicted-cellId';
 
 export interface ICellMergeViewOptions {
   local: IStringDiffModel | null;
@@ -265,6 +266,13 @@ export class CellMergeWidget extends MergePanel<CellMergeModel> {
         );
         row.addWidget(textWidget);
         this.addWidget(row);
+      }
+      let idDec = model.getCellIdDecision();
+      if (idDec && idDec.conflict) {
+        this.headerTitle = this._trans.__(
+          'Cell has conflicting IDs! Use a text editor to edit the value (base value kept).',
+        );
+        this.addClass(CELL_ID_CONFLICTED_CLASS);
       }
       let sourceView: Widget | null = null;
       if (

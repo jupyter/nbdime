@@ -162,6 +162,7 @@ export class CellMergeModel extends ObjectMergeModel<
       'metadata',
       'outputs',
       'execution_count',
+      'id',
     ]);
     this.onesided = false;
     this._deleteCell = false;
@@ -254,11 +255,21 @@ export class CellMergeModel extends ObjectMergeModel<
   }
 
   /**
+   * Whether the cell ids are the same in local and remote
+   */
+  get agreedIds(): boolean {
+    if (!this.local || !this.remote) {
+      return false;
+    }
+    return this.local.cellId.remote === this.remote.cellId.remote;
+  }
+
+  /**
    * Whether cell is the same in local and remote
    */
   get agreedCell(): boolean {
     // TODO: Also check other fields?
-    return this.agreedSource && this.agreedMetadata && this.agreedOutputs;
+    return this.agreedSource && this.agreedMetadata && this.agreedOutputs && this.agreedIds;
   }
 
   /**
@@ -329,6 +340,25 @@ export class CellMergeModel extends ObjectMergeModel<
         getDiffEntryByKey(dec.localDiff, 'execution_count') !== null ||
         getDiffEntryByKey(dec.remoteDiff, 'execution_count') !== null ||
         getDiffEntryByKey(dec.customDiff, 'execution_count') !== null
+      ) {
+        return dec;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Get the decision on `id` field (should only be one).
+   *
+   * Returns null if no decision on `id` was found.
+   */
+  getCellIdDecision(): MergeDecision | null {
+    let cellDecs = filterDecisions(this.decisions, ['cells'], 0, 2);
+    for (let dec of cellDecs) {
+      if (
+        getDiffEntryByKey(dec.localDiff, 'id') !== null ||
+        getDiffEntryByKey(dec.remoteDiff, 'id') !== null ||
+        getDiffEntryByKey(dec.customDiff, 'id') !== null
       ) {
         return dec;
       }
