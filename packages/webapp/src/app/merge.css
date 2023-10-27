@@ -76,3 +76,15 @@
   border-bottom: solid #ccc 1px;
   text-align: center;
 }
+
+#nbdime-root pre.jp-mergeapp-error {
+  align-self: center;
+  text-align: center;
+  color: var(--jp-ui-font-color2);
+  background-color: var(--jp-error-color3);
+  border: solid 2px var(--jp-error-color2);
+  width: 90%;
+  margin: auto;
+  position: relative;
+  z-index: 0;
+}
