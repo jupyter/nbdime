@@ -373,9 +373,8 @@ def test_nbmerge_app_decisions(tempfiles, capsys, caplog, reset_log):
     bfn = os.path.join(tempfiles, "inline-conflict--1.ipynb")
     lfn = os.path.join(tempfiles, "inline-conflict--2.ipynb")
     rfn = os.path.join(tempfiles, "inline-conflict--3.ipynb")
-    ofn = os.path.join(tempfiles, "inline-conflict-out.ipynb")
 
-    assert 1 == nbmergeapp.main([bfn, lfn, rfn, '--decisions', '--out', ofn])
+    assert 1 == nbmergeapp.main([bfn, lfn, rfn, '--decisions'])
 
     # ensure decisions are logged with warning:
     assert len(caplog.records) == 2
@@ -383,10 +382,34 @@ def test_nbmerge_app_decisions(tempfiles, capsys, caplog, reset_log):
     assert caplog.records[1].levelno == logging.WARNING
     assert 'conflicted decisions' in caplog.text
 
-    # Don't write output if decisions are requested
+    # Assert no other stderr
     out = capsys.readouterr()[0]
     assert out == ''
-    assert not os.path.exists(ofn)
+
+
+def test_nbmerge_app_decisions_outfile(tempfiles, capsys, caplog, reset_log):
+    bfn = os.path.join(tempfiles, "inline-conflict--1.ipynb")
+    lfn = os.path.join(tempfiles, "inline-conflict--2.ipynb")
+    rfn = os.path.join(tempfiles, "inline-conflict--3.ipynb")
+    ofn = os.path.join(tempfiles, "inline-conflict-out.ipynb")
+
+    assert 1 == nbmergeapp.main([bfn, lfn, rfn, '--decisions', '--out', ofn])
+
+    # ensure decisions are logged with warning:
+    assert len(caplog.records) == 1
+    assert caplog.records[0].levelno == logging.WARNING
+    assert 'Conflicts occurred during merge operation' in caplog.text
+
+    # Assert no other stderr
+    out = capsys.readouterr()[0]
+    assert out == ''
+
+    # Write decisions to output file as JSON if requested
+    with open(os.path.join(tempfiles, 'inline-conflict--decisions.json')) as f:
+        expected = f.read()
+    with open(ofn) as f:
+        actual = f.read()
+    assert expected == actual
 
 
 def test_nbmerge_app_no_colors(filespath):

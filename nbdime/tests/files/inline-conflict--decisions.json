@@ -1,0 +1,126 @@
+[
+  {
+    "common_path": [
+      "cells",
+      0,
+      "outputs"
+    ],
+    "conflict": false,
+    "action": "local",
+    "local_diff": [
+      {
+        "op": "addrange",
+        "key": 0,
+        "valuelist": [
+          {
+            "name": "stdout",
+            "output_type": "stream",
+            "text": "0\n"
+          }
+        ]
+      },
+      {
+        "op": "removerange",
+        "key": 0,
+        "length": 1
+      }
+    ],
+    "remote_diff": null
+  },
+  {
+    "common_path": [
+      "cells",
+      0
+    ],
+    "conflict": true,
+    "action": "custom",
+    "local_diff": [
+      {
+        "op": "patch",
+        "key": "source",
+        "diff": [
+          {
+            "op": "addrange",
+            "key": 2,
+            "valuelist": [
+              "z = 4\n"
+            ]
+          },
+          {
+            "op": "patch",
+            "key": 2,
+            "diff": [
+              {
+                "op": "addrange",
+                "key": 11,
+                "valuelist": " / z"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "remote_diff": [
+      {
+        "op": "patch",
+        "key": "source",
+        "diff": [
+          {
+            "op": "patch",
+            "key": 1,
+            "diff": [
+              {
+                "op": "addrange",
+                "key": 0,
+                "valuelist": "q"
+              },
+              {
+                "op": "removerange",
+                "key": 0,
+                "length": 1
+              },
+              {
+                "op": "addrange",
+                "key": 5,
+                "valuelist": ".1"
+              }
+            ]
+          },
+          {
+            "op": "patch",
+            "key": 2,
+            "diff": [
+              {
+                "op": "addrange",
+                "key": 8,
+                "valuelist": "+"
+              },
+              {
+                "op": "removerange",
+                "key": 8,
+                "length": 1
+              },
+              {
+                "op": "addrange",
+                "key": 10,
+                "valuelist": "q"
+              },
+              {
+                "op": "removerange",
+                "key": 10,
+                "length": 1
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "custom_diff": [
+      {
+        "op": "replace",
+        "key": "source",
+        "value": "x = 1\n<<<<<<< local\ny = 3\nz = 4\nprint(x * y / z)\n=======\nq = 3.1\nprint(x + q)\n>>>>>>> remote"
+      }
+    ]
+  }
+]

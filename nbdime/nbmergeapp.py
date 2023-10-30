@@ -60,8 +60,9 @@ def main_merge(args):
     if args.decisions:
         if mfn:
             # write decisions as JSON file
-            with io.open(mfn, "w", encoding="utf8") as  outfile:
+            with io.open(mfn, "w", encoding="utf8") as outfile:
                 json.dump(decisions, outfile, indent=2)
+                outfile.write("\n")
         else:
             # Print merge decisions (including unconflicted)
             config = prettyprint_config_from_args(args, out=io.StringIO())
