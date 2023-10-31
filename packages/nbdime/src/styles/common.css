@@ -24,7 +24,6 @@
 .nbdime-root .cm-merge-4pane {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
   grid-auto-rows: minmax(18px, auto);
 }
 
