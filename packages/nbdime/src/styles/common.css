@@ -30,16 +30,19 @@
 .nbdime-root .cm-merge-left-editor {
   grid-column: 1;
   grid-row: 1;
+  background-color: var(--jp-cell-editor-background);
 }
 
 .nbdime-root .cm-central-editor {
   grid-column: 2;
   grid-row: 1;
+  background-color: var(--jp-cell-editor-background);
 }
 
 .nbdime-root .cm-merge-right-editor {
   grid-column: 3;
   grid-row: 1;
+  background-color: var(--jp-cell-editor-background);
 }
 
 .nbdime-root .cm-merge-4pane > .cm-merge-editor {
