@@ -143,7 +143,7 @@ const baseTheme = EditorView.baseTheme({
     border: 'var(--jp-border-width) solid var(--jp-border-color1)',
     fontSize: '90%',
     padding: '0 3px',
-    borderRadius: '4px'
+    borderRadius: '4px',
   },
 });
 
