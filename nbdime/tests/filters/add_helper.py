@@ -34,7 +34,8 @@ def _build_arg_parser():
 def clean(notebook):
     if get_marker_cell(notebook) is None:
         notebook['cells'].append(nbformat.v4.new_raw_cell(
-            source=MARKER
+            source=MARKER,
+            id='filtered-cell',
         ))
 
 def smudge(notebook):

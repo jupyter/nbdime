@@ -28,9 +28,19 @@
   border: none;
 }
 
-/* We can float prompt left when unchanged */
-.jp-Notebook-diff .jp-Diff-unchanged .jp-Cellrow-executionCount {
+/* When unchanged hide cell ids and float the execution count left */
+.jp-Notebook-diff .jp-Diff-unchanged .jp-Cellrow-header-cellId {
+  display: none;
+}
+
+.jp-Notebook-diff .jp-Diff-unchanged .jp-Cellrow-header {
   float: left;
+}
+
+.jp-Notebook-diff .jp-Cellrow-header-cellId {
+  align-self: center;
+  text-align: center;
+  color: var(--jp-ui-font-color2);
 }
 
 .jp-Notebook-diff .jp-Metadata-diff {
@@ -232,9 +242,9 @@
   width: 100%;
 }
 
-.jp-Notebook-diff .jp-Cellrow-source .jp-InputPrompt {
+.jp-Notebook-diff .jp-Cellrow-header > .jp-InputPrompt {
   text-align: left;
-  width: 100%;
+  flex-basis: min-content;
 }
 
 .jp-CollapsiblePanel-container {

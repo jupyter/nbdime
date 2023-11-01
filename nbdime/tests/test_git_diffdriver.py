@@ -173,6 +173,7 @@ expected_helper_filter = """nbdiff {0} {1}
 
 ## inserted before /cells/6:
 +  raw cell:
++    id: filtered-cell
 +    source:
 +      nbdime test filter marker
 

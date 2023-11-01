@@ -10,7 +10,7 @@ import copy
 import nbformat
 
 from nbdime.diff_format import op_patch, op_addrange, op_removerange, op_replace
-from .utils import sources_to_notebook, outputs_to_notebook, have_git, strip_cell_ids, new_cell_wo_id
+from .utils import sources_to_notebook, outputs_to_notebook, have_git, strip_cell_ids, new_cell_wo_id, deterministic_cell_ids
 from nbdime.nbmergeapp import _build_arg_parser
 from nbdime import merge_notebooks, apply_decisions
 from nbdime.diffing.notebooks import diff_notebooks, set_notebook_diff_targets
@@ -54,88 +54,121 @@ def test_autoresolve_notebook_ec():
     assert not any(d.conflict for d in decisions)
 
 
-def test_merge_cell_sources_neighbouring_inserts():
+def test_merge_cell_sources_neighbouring_inserts_mergetool():
     base = strip_cell_ids(sources_to_notebook([[
-        "def f(x):",
+        "def f(x):\n",
         "    return x**2",
         ], [
-        "def g(y):",
+        "def g(y):\n",
         "    return y + 2",
         ],
         ]))
     local = strip_cell_ids(sources_to_notebook([[
-        "def f(x):",
+        "def f(x):\n",
         "    return x**2",
         ], [
         "print(f(3))",
         ], [
-        "def g(y):",
+        "def g(y):\n",
         "    return y + 2",
         ],
         ]))
     remote = strip_cell_ids(sources_to_notebook([[
-        "def f(x):",
+        "def f(x):\n",
         "    return x**2",
         ], [
         "print(f(7))",
         ], [
-        "def g(y):",
+        "def g(y):\n",
         "    return y + 2",
         ],
         ]))
-    if 1:
-        expected_partial = base
-        expected_conflicts = [{
-            "common_path": ("cells",),
-            "local_diff": [op_addrange(1, [local.cells[1]])],
-            "remote_diff": [op_addrange(1, [remote.cells[1]])]
-        }]
-    else:
-        # Strategy local_then_remote:
-        expected_partial = sources_to_notebook([[
-            "def f(x):",
-            "    return x**2",
-            ], [
-            "print(f(3))",
-            ], [
-            "print(f(7))",
-            ], [
-            "def g(y):",
-            "    return y + 2",
-            ],
-            ])
-        expected_conflicts = []
+    expected_partial = base
+    expected_conflicts = [{
+        "common_path": ("cells",),
+        "local_diff": [op_addrange(1, [local.cells[1]])],
+        "remote_diff": [op_addrange(1, [remote.cells[1]])]
+    }]
 
     merge_args = copy.deepcopy(args)
     merge_args.merge_strategy = "mergetool"
 
-    _check_sources(base, local, remote, expected_partial, expected_conflicts, merge_args)
+    _check_sources(base, local, remote, expected_partial, expected_conflicts, merge_args, ignore_cell_ids=True)
+
+
+def test_merge_cell_sources_neighbouring_inserts_union():
+    base = strip_cell_ids(sources_to_notebook([[
+        "def f(x):\n",
+        "    return x**2",
+        ], [
+        "def g(y):\n",
+        "    return y + 2",
+        ],
+        ]))
+    local = strip_cell_ids(sources_to_notebook([[
+        "def f(x):\n",
+        "    return x**2",
+        ], [
+        "print(f(3))",
+        ], [
+        "def g(y):\n",
+        "    return y + 2",
+        ],
+        ]))
+    remote = strip_cell_ids(sources_to_notebook([[
+        "def f(x):\n",
+        "    return x**2",
+        ], [
+        "print(f(7))",
+        ], [
+        "def g(y):\n",
+        "    return y + 2",
+        ],
+        ]))
+    expected_partial = sources_to_notebook([[
+        "def f(x):\n",
+        "    return x**2",
+        ], [
+        "print(f(3))",
+        ], [
+        "print(f(7))",
+        ], [
+        "def g(y):\n",
+        "    return y + 2",
+        ],
+        ])
+    expected_conflicts = []
+
+    merge_args = copy.deepcopy(args)
+    merge_args.merge_strategy = "union"
+
+    _check_sources(base, local, remote, expected_partial, expected_conflicts, merge_args, ignore_cell_ids=True)
 
 
 def test_merge_cell_sources_separate_inserts():
     base = strip_cell_ids(sources_to_notebook([[
-        "def f(x):",
+        "def f(x):\n",
         "    return x**2",
         ], [
-        "def g(y):",
+        "def g(y):\n",
         "    return y + 2",
         ],
         ]))
     local = strip_cell_ids(sources_to_notebook([[
         "print(f(3))",
         ], [
-        "def f(x):",
+        "def f(x):\n",
         "    return x**2",
         ], [
-        "def g(y):",
+        "def g(y):\n",
         "    return y + 2",
         ],
         ]))
     remote = strip_cell_ids(sources_to_notebook([[
-        "def f(x):",
+        "def f(x):\n",
         "    return x**2",
         ], [
-        "def g(y):",
+        "def g(y):\n",
         "    return y + 2",
         ], [
         "print(f(7))",
@@ -144,10 +177,10 @@ def test_merge_cell_sources_separate_inserts():
     expected = strip_cell_ids(sources_to_notebook([[
         "print(f(3))",
         ], [
-        "def f(x):",
+        "def f(x):\n",
         "    return x**2",
         ], [
-        "def g(y):",
+        "def g(y):\n",
         "    return y + 2",
         ], [
         "print(f(7))",
@@ -172,6 +205,8 @@ def src2nb(src, strip_ids=False):
     assert "cells" in src
     if strip_ids:
         strip_cell_ids(src)
+    else:
+        deterministic_cell_ids(src)
     return src
 
 
@@ -310,11 +345,9 @@ def test_merge_simple_cell_source_conflicting_insert():
     _check_sources(base, local, remote, expected_partial, expected_conflicts, merge_args, True)
 
 
-@pytest.mark.xfail
 def test_merge_multiline_cell_source_conflict():
     # Modifying cell on both sides interpreted as editing the original cell
-    # (this is where heuristics kick in: when is a cell modified and when is
-    # it replaced?)
+    # Note: This only works with cell ids hinting that the cells are the same
     source = [
         "def foo(x, y):\n",
         "    z = x * y\n",
@@ -324,16 +357,19 @@ def test_merge_multiline_cell_source_conflict():
     base = [source + [""]]
     remote = [source + ["remote\n"] + [""]]
 
-    le = op_addrange(3, "local\n")
-    re = op_addrange(3, "remote\n")
+    le = op_addrange(3, ["local\n"])
+    re = op_addrange(3, ["remote\n"])
 
     expected_partial = base
     expected_conflicts = [{
-        "common_path": ("cells", "0", "source"),
+        "common_path": ("cells", 0, "source"),
         "local_diff": [le],
         "remote_diff": [re]
     }]
-    _check_sources(base, local, remote, expected_partial, expected_conflicts)
+    merge_args = copy.deepcopy(args)
+    merge_args.merge_strategy = "mergetool"
+
+    _check_sources(base, local, remote, expected_partial, expected_conflicts, merge_args)
 
 
 def test_merge_insert_cells_around_conflicting_cell():
@@ -393,98 +429,97 @@ def test_merge_insert_cells_around_conflicting_cell():
     _check_sources(base, local, remote, expected_partial, expected_conflicts, merge_args, True)
 
 
-@pytest.mark.xfail
 def test_merge_interleave_cell_add_remove():
     # Interleaving cell inserts and deletes
     # no modifications = avoids heuristics
-    local = [["local 1"],
-             ["base 1"],
-             ["local 2"],
-             ["base 2"],
-             ["local 3"],
-             ["base 3"],
-             ["base 4"]]
-    base = [["base 1"],
-            ["base 2"],
-            ["base 3"],
-            ["base 4"]]
-    remote = [["remote 1"],
-              ["base 1"],
-              ["remote 2"],
-              ["remote 3"],
-              ["base 3"]]
+    local = [["local 1\n"],
+             ["base 1\n"],
+             ["local 2\n"],
+             ["base 2\n"],
+             ["local 3\n"],
+             ["base 3\n"],
+             ["base 4\n"]]
+    base = [["base 1\n"],
+            ["base 2\n"],
+            ["base 3\n"],
+            ["base 4\n"]]
+    remote = [["remote 1\n"],
+              ["base 1\n"],
+              ["remote 2\n"],
+              ["remote 3\n"],
+              ["base 3\n"]]
     # Note: in this case "remote 3" is before "local 3" because it's lumped
     # together with "remote 2" in the diff and the insert of
     # ["remote 2", "remote 3"]starts before the removal of "base 2"
-    expected_partial = [["local 1"],
-                        ["remote 1"],
-                        ["base 1"],
-                        ["local 2"],
-                        ["remote 2"],
-                        ["remote 3"],
-                        ["local 3"],
-                        ["base 3"]]
+    expected_partial = [["local 1\n"],
+                        ["remote 1\n"],
+                        ["base 1\n"],
+                        ["local 2\n"],
+                        ["remote 2\n"],
+                        ["remote 3\n"],
+                        ["local 3\n"],
+                        ["base 3\n"]]
     expected_conflicts = []
-    _check_sources(base, local, remote, expected_partial, expected_conflicts)
+
+    merge_args = copy.deepcopy(args)
+    merge_args.merge_strategy = "union"
+
+    _check_sources(base, local, remote, expected_partial, expected_conflicts, merge_args, ignore_cell_ids=True)
 
 
-@pytest.mark.xfail
 def test_merge_conflicts_get_diff_indices_shifted():
     # Trying to induce conflicts with shifting of diff indices
     source = [
-        "def foo(x, y):",
-        "    z = x * y",
-        "    return z",
+        "def foo(x, y):\n",
+        "    z = x * y\n",
+        "    return z\n",
         ]
-    local = [["same"], source+["local"], ["different"]]
-    base = [["same"], source+["base"], ["same"]]
-    remote = [["different"], source+["remote"], ["same"]]
+    local = [["same"], source + ["local\n"], ["different"]]
+    base = [["same"], source + ["base\n"], ["same"]]
+    remote = [["different"], source + ["remote\n"], ["same"]]
     expected_partial = [["different"],
-                        source + ["local", "remote"],
+                        source + ["base\n"],
                         ["different"]]
     expected_conflicts = [{
-        "common_path": (),
+        "common_path": ('cells', 1, 'source'),
         "local_diff": [
-            op_removerange(1, 1),
-            op_addrange(1, ["left"]),
+            op_addrange(3, ["local\n"]),
+            op_removerange(3, 1),
         ],
         "remote_diff": [
-            op_removerange(1, 1),
-            op_addrange(1, ["right"]),
+            op_addrange(3, ["remote\n"]),
+            op_removerange(3, 1),
         ]
     }]
-    _check_sources(base, local, remote, expected_partial, expected_conflicts)
+
+    merge_args = copy.deepcopy(args)
+    merge_args.merge_strategy = "mergetool"
+
+    _check_sources(base, local, remote, expected_partial, expected_conflicts, merge_args)
 
     # Trying to induce conflicts with shifting of diff indices
-    source = [
-        "def foo(x, y):",
-        "    z = x * y",
-        "    return z",
-        ]
     local = [["same"],
-             source + ["long line with minor change L"],
+             source + ["long line with minor change left"],
              ["different"]]
     base = [["same"],
             source + ["long line with minor change"],
             ["same"]]
     remote = [["different"],
-              source + ["long line with minor change R"],
+              source + ["long line with minor change right"],
               ["same"]]
     expected_partial = [["different"],
                         source + ["long line with minor change"],
                         ["different"]]
     expected_conflicts = [{
-        "common_path": (),
+        "common_path": ('cells', 1, 'source', 3),
         "local_diff": [
-            op_removerange(1, 1),
-            op_addrange(1, ["left"]),
+            op_addrange(27, " left"),
         ],
         "remote_diff": [
-            op_removerange(1, 1),
-            op_addrange(1, ["right"]),
+            op_addrange(27, " right"),
         ]
     }]
-    _check_sources(base, local, remote, expected_partial, expected_conflicts)
+    _check_sources(base, local, remote, expected_partial, expected_conflicts, merge_args)
 
 
 @pytest.mark.xfail
@@ -576,7 +611,6 @@ def test_merge_input_strategy_base_source_conflict():
     _check_sources(base, local, remote, expected_partial, expected_conflicts, merge_args, ignore_cell_ids=True)
 
 
-@pytest.mark.skip
 def test_merge_input_strategy_union_source_conflict():
     # Conflicting cell inserts at same location as removing old cell
     local = [["local\n", "some other\n", "lines\n", "to align\n"]]
@@ -697,7 +731,6 @@ def test_merge_output_strategy_base_conflict():
     _check_outputs(base, local, remote, expected_partial, expected_conflicts, merge_args, True)
 
 
-@pytest.mark.skip
 def test_merge_output_strategy_union_conflict():
     # Conflicting cell inserts at same location as removing old cell
     local = [["local\nsome other\nlines\nto align\n", "output2", "output3"]]
@@ -773,7 +806,6 @@ def _make_notebook_with_multi_conflicts(
     return base, local, remote, expected_partial
 
 
-@pytest.mark.skip
 def test_metadata_union_strategy_metadata():
     # Conflicting cell inserts at same location as removing old cell
     expected_partial_source = [["remote\n", "some other\n", "lines\n", "to align\n"]]
@@ -794,7 +826,6 @@ def test_metadata_union_strategy_metadata():
     _check(partial, expected_partial, decisions, expected_conflicts)
 
 
-@pytest.mark.skip
 def test_metadata_union_strategy_not_applied_immutable_on_dict():
     # Conflicting cell inserts at same location as removing old cell
     expected_partial_source = [["remote\n", "some other\n", "lines\n", "to align\n"]]
@@ -824,7 +855,6 @@ def test_metadata_union_strategy_not_applied_immutable_on_dict():
     _check(partial, expected_partial, decisions, expected_conflicts)
 
 
-@pytest.mark.skip
 def test_merge_mix_strategies():
     # Conflicting cell inserts at same location as removing old cell
     expected_partial_source = [["remote\n", "some other\n", "lines\n", "to align\n"]]

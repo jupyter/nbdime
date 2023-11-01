@@ -1443,9 +1443,12 @@ export class MergeView extends Panel {
         },
         initialSpacer: () => pickerMarker,
         domEventHandlers: {
-          mousedown: (editor, line) => {
-            this.onGutterClick(editor, line);
-            return true;
+          mouseup: (editor, line, event) => {
+            if ((event as MouseEvent).button === 0) {
+              this.onGutterClick(editor, line);
+              return true;
+            }
+            return false;
           },
         },
       }),

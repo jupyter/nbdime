@@ -6,6 +6,7 @@
 
 
 from collections import defaultdict
+import copy
 
 import nbdime.log
 from .decisions import MergeDecisionBuilder
@@ -22,7 +23,7 @@ from ..diff_format import (
     DiffEntry, DiffOp, ParentDeleted, Missing,
     op_patch, op_addrange, op_removerange)
 from ..diff_utils import as_dict_based_diff
-from ..diffing.notebooks import notebook_predicates, notebook_differs
+from ..diffing.notebooks import notebook_config
 from ..patching import patch
 from ..utils import star_path, Strategies
 
@@ -286,8 +287,8 @@ def _split_addrange(key, local, remote, path, item_strategy):
     # measures defined in notebook predicates.
     intermediate_diff = perform_diff(
         local, remote, path=star_path(path),
-        predicates=notebook_predicates.copy(),
-        differs=notebook_differs.copy())
+        config=copy.copy(notebook_config)
+    )
 
     # Next, translate the diff into decisions
     decisions = MergeDecisionBuilder()
@@ -640,6 +641,8 @@ def _merge_strings(base, local_diff, remote_diff,
     """Perform a three-way merge of strings. See docstring of merge."""
     assert isinstance(base, str)
 
+    decisions = MergeDecisionBuilder()
+
     # This functions uses a (static) state variable to track recursion.
     # The first time it is called, base can (potentially) be a
     # multi-line string. If so, we split this string on line endings, and merge
@@ -650,7 +653,6 @@ def _merge_strings(base, local_diff, remote_diff,
         # base is a single line with differing edits. We could merge as list of
         # characters, but this is unreliable, and will conflict with line-based
         # chunking.
-        decisions = MergeDecisionBuilder()
 
         # Get strategy for the parent string (path points to line)
         strategy = strategies.get(star_path(path[:-1]))
@@ -673,6 +675,8 @@ def _merge_strings(base, local_diff, remote_diff,
         if strategy == "inline-source":
             decisions = resolve_strategy_inline_source(
                 path, base, local_diff, remote_diff)
+        elif strategy == "union":
+            decisions.local_then_remote(path, local_diff, remote_diff)
         else:
             # FIXME XXX: Test regular string merge well also for no specific strategy!
 
@@ -686,8 +690,6 @@ def _merge_strings(base, local_diff, remote_diff,
             finally:
                 # Ensure recursion stops even in case of exceptions
                 _merge_strings.recursion = False
-        #elif strategy == "union":
-        #    nbdime.log.error("union strategy not implemented for source")  # FIXME
         # TODO: Add option to try git merge-file or diff3 even when using mergetool
         #elif strategy == "try-external":
         #    nbdime.log.error("try-external strategy is not implemented")

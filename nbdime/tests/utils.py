@@ -33,14 +33,6 @@ WEB_TEST_TIMEOUT = 15
 TEST_TOKEN = 'nbdime-test-token'
 
 
-@contextmanager
-def random_seed(a=0):
-    import random
-    old_state = random.getstate()
-    random.seed(a)
-    yield
-    random.setstate(old_state)
-
 def assert_is_valid_notebook(nb):
     """These are the current assumptions on notebooks in these tests. Loosen on demand."""
     assert nb["nbformat"] == 4
@@ -66,16 +58,17 @@ def check_symmetric_diff_and_patch(a, b):
 def sources_to_notebook(sources, cell_type='code', id_seed=0, strip_ids=False):
     assert isinstance(sources, list)
     nb = nbformat.v4.new_notebook()
-    with random_seed(id_seed):
-        for source in sources:
-            if isinstance(source, list):
-                source = "".join(source)
-            if cell_type == 'code':
-                nb.cells.append(nbformat.v4.new_code_cell(source))
-            elif cell_type == 'markdown':
-                nb.cells.append(nbformat.v4.new_markdown_cell(source))
+    for source in sources:
+        if isinstance(source, list):
+            source = "".join(source)
+        if cell_type == 'code':
+            nb.cells.append(nbformat.v4.new_code_cell(source))
+        elif cell_type == 'markdown':
+            nb.cells.append(nbformat.v4.new_markdown_cell(source))
     if strip_ids:
         strip_cell_ids(nb)
+    else:
+        deterministic_cell_ids(nb)
     return nb
 
 
@@ -110,6 +103,8 @@ def outputs_to_notebook(outputs, strip_ids=False):
             cell.outputs.append(output)
     if strip_ids:
         strip_cell_ids(nb)
+    else:
+        deterministic_cell_ids(nb)
     return nb
 
 
@@ -124,6 +119,11 @@ def strip_cell_ids(nb):
         strip_cell_id(cell)
     return nb
 
+
+def deterministic_cell_ids(nb):
+    for i, cell in enumerate(nb["cells"]):
+        cell["id"] = f"cell-id-{i}"
+    return nb
 
 def new_cell_wo_id(*args, **kwargs):
     cell = nbformat.v4.new_code_cell(*args, **kwargs)

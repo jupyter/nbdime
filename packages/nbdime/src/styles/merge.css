@@ -43,6 +43,15 @@
   flex-grow: 1;
 }
 
+
+.jp-Notebook-merge .jp-conflicted-cellId .jp-Merge-cellHeader-title {
+  align-self: center;
+  text-align: center;
+  color: var(--jp-ui-font-color2);
+  /* For now, all presence of this header implies conflict */
+  background-color: var(--jp-error-color3);
+}
+
 .jp-Notebook-merge .jp-DragPanel-dragHandle {
   height: 18px;
   width: 12px;

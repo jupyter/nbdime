@@ -6,7 +6,7 @@ import type { IDiffModel } from './common';
 
 import type { IDiffImmutableObjectEntry } from '../diffentries';
 
-export type ImmutableValue = number | boolean | null;
+export type ImmutableValue = string | number | boolean | null;
 
 /**
  * Standard implementation of the IStringDiffModel interface.

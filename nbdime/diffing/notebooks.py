@@ -18,8 +18,11 @@ from functools import lru_cache
 from ..diff_format import MappingDiffBuilder, DiffOp
 from ..utils import defaultdict2
 
-from .generic import (diff, diff_sequence_multilevel,
-                      compare_strings_approximate)
+from .config import DiffConfig
+from .generic import (
+    diff, diff_sequence_multilevel, compare_strings_approximate,
+    diff_string_lines,
+)
 
 __all__ = ["diff_notebooks"]
 
@@ -323,6 +326,7 @@ def compare_cell_moderate(x, y):
     This is used to align cells in the /cells list
     in the second multilevel diff iteration.
     """
+
     # Cell types must match
     if x["cell_type"] != y["cell_type"]:
         return False
@@ -349,6 +353,7 @@ def compare_cell_strict(x, y):
     This is used to align cells in the /cells list
     in the first multilevel diff iteration.
     """
+
     # Cell types must match
     if x["cell_type"] != y["cell_type"]:
         return False
@@ -373,8 +378,13 @@ def compare_cell_strict(x, y):
     return True
 
 
-def diff_single_outputs(a, b, path="/cells/*/outputs/*",
-                        predicates=None, differs=None):
+def compare_cell_by_ids(x, y):
+    """Compare cells x,y strictly using cell IDs"""
+    # Only consider equal if both have IDs and they match
+    return 'id' in x and 'id' in y and x['id'] == y['id']
+
+
+def diff_single_outputs(a, b, path="/cells/*/outputs/*", config=None):
     """DiffOp a pair of output cells."""
     assert path == "/cells/*/outputs/*", 'Invalid path for ouput: %r' % path
     assert a.output_type == b.output_type, 'cannot diff outputs of different types'
@@ -396,13 +406,13 @@ def diff_single_outputs(a, b, path="/cells/*/outputs/*",
                 di.append(e)
 
         # Only diff data:
-        dd = diff_mime_bundle(a.data, b.data, path=path+"/data")
+        dd = diff_mime_bundle(a.data, b.data, path=path+"/data", config=config)
         if dd:
             di.patch("data", dd)
 
         return di.validated()
     else:
-        return diff(a, b)
+        return diff(a, b, config=config)
 
 
 def add_mime_diff(key, avalue, bvalue, diffbuilder):
@@ -410,6 +420,8 @@ def add_mime_diff(key, avalue, bvalue, diffbuilder):
     # I.e. image diff, svg diff, json diff, etc.
 
     mimetype = key.lower()
+    if isinstance(avalue, str) and isinstance(bvalue, str) and avalue == bvalue:
+        return
     if any(mimetype.startswith(tm) for tm in _split_mimes):
         dd = diff(avalue, bvalue)
         if dd:
@@ -418,8 +430,7 @@ def add_mime_diff(key, avalue, bvalue, diffbuilder):
         diffbuilder.replace(key, bvalue)
 
 
-def diff_attachments(a, b, path="/cells/*/attachments",
-                     predicates=None, differs=None):
+def diff_attachments(a, b, path="/cells/*/attachments", config=None):
     """Diff a pair of attachment collections"""
     assert path == "/cells/*/attachments", 'Invalid path for attachment: %r' % path
 
@@ -454,8 +465,7 @@ def diff_attachments(a, b, path="/cells/*/attachments",
     return di.validated()
 
 
-def diff_mime_bundle(a, b, path=None,
-                     predicates=None, differs=None):
+def diff_mime_bundle(a, b, path=None, config=None):
     """Diff a MIME bundle.
 
     A MIME bundle has MIME types as keys, with values that are
@@ -517,6 +527,7 @@ notebook_predicates = defaultdict2(lambda: [operator.__eq__], {
         compare_cell_approximate,
         compare_cell_moderate,
         compare_cell_strict,
+        compare_cell_by_ids,
         ],
     # Predicates to compare output cells (within one cell) in order of low-to-high precedence
     "/cells/*/outputs": [
@@ -529,10 +540,20 @@ notebook_predicates = defaultdict2(lambda: [operator.__eq__], {
 notebook_differs = defaultdict2(lambda: diff, {
     "/cells": diff_sequence_multilevel,
     "/cells/*": diff,
+    "/cells/*/source": diff_string_lines,
     "/cells/*/outputs": diff_sequence_multilevel,
     "/cells/*/outputs/*": diff_single_outputs,
     "/cells/*/attachments": diff_attachments,
     })
+
+
+notebook_config = DiffConfig(
+    predicates=notebook_predicates,
+    differs=notebook_differs,
+    atomic_paths={
+        "/cells/*/id": True
+    }
+)
 
 
 def reset_notebook_differ():
@@ -587,14 +608,12 @@ def set_notebook_diff_targets(sources=True, outputs=True, attachments=True,
 def diff_cells(a, b):
     "This is currently just used by some tests."
     path = "/cells"
-    return notebook_differs[path](
-        a, b, path=path, predicates=notebook_predicates, differs=notebook_differs)
+    return notebook_differs[path](a, b, path=path, config=notebook_config)
 
 
 def diff_item_at_path(a, b, path):
     """Calculate the diff using the configured notebook differ for path."""
-    return notebook_differs[path](
-        a, b, path=path, predicates=notebook_predicates, differs=notebook_differs)
+    return notebook_differs[path](a, b, path=path, config=notebook_config)
 
 
 def diff_notebooks(a, b):
@@ -604,4 +623,4 @@ def diff_notebooks(a, b):
     """
     if not (isinstance(a, dict) and isinstance(b, dict)):
         raise TypeError("Expected inputs to be dicts, got %r and %r" % (a, b))
-    return diff(a, b, path="", predicates=notebook_predicates, differs=notebook_differs)
+    return diff(a, b, path="", config=notebook_config)

@@ -155,11 +155,11 @@ export abstract class ObjectMergeModel<
     base: ObjectType | null,
     decisions: MergeDecision[],
     mimetype: string,
-    whitelist?: string[],
+    allowlist?: string[],
   ) {
     this.base = base;
     this.mimetype = mimetype;
-    this._whitelist = whitelist || null;
+    this._allowlist = allowlist || null;
 
     this.decisions = decisions;
   }
@@ -258,7 +258,7 @@ export abstract class ObjectMergeModel<
   /**
    * List of fields to handle
    */
-  protected _whitelist: string[] | null;
+  protected _allowlist: string[] | null;
 
   protected _local?: DiffModelType | null;
   protected _remote?: DiffModelType | null;

@@ -200,6 +200,7 @@ def test_pretty_print_markdown_cell():
 def test_pretty_print_code_cell():
     cell = v4.new_code_cell(source='def foo():\n    return 4',
         execution_count=3,
+        id='code-cell-id',
         outputs=[
             v4.new_output('stream', name='stdout', text='some\ntext'),
             v4.new_output('display_data', {'text/plain': 'hello display'}),
@@ -213,6 +214,7 @@ def test_pretty_print_code_cell():
 
     assert lines == [
         '+code cell:',
+        '+  id: code-cell-id',
         '+  execution_count: 3',
         '+  source:',
         '+    def foo():',

@@ -71,11 +71,11 @@ def compute_snakes_multilevel(A, B, compares, rect=None, level=None):
     return newsnakes
 
 
-def compute_diff_from_snakes(a, b, snakes, path="", predicates=None, differs=None):
+def compute_diff_from_snakes(a, b, snakes, path="", config=None):
     "Compute diff from snakes."
 
     subpath = "/".join((path, "*"))
-    diffit = differs[subpath]
+    diffit = config.differs[subpath]
 
     di = SequenceDiffBuilder()
     i0, j0, i1, j1 = 0, 0, len(a), len(b)
@@ -88,7 +88,7 @@ def compute_diff_from_snakes(a, b, snakes, path="", predicates=None, differs=Non
         for k in range(n):
             aval = a[i + k]
             bval = b[j + k]
-            cd = diffit(aval, bval, path=subpath, predicates=predicates, differs=differs)
+            cd = diffit(aval, bval, path=subpath, config=config)
             if cd:
                 di.patch(i + k, cd)
 
