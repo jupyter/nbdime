@@ -226,13 +226,13 @@
   z-index: 3;
 }
 
-.jp-Notebook-merge .cm-merge-m-chunk-start-either,
-.jp-Notebook-merge .cm-merge-m-chunk-start-mixed:not(.cm-merge-m-chunk-custom) {
+.jp-Notebook-merge .cm-merge-m-chunk-start-either::before,
+.jp-Notebook-merge .cm-merge-m-chunk-start-mixed:not(.cm-merge-m-chunk-custom)::before {
   border-top: 1px solid var(--jp-merge-either-color1);
 }
 
-.jp-Notebook-merge .cm-merge-m-chunk-end-either,
-.jp-Notebook-merge .cm-merge-m-chunk-end-mixed:not(.cm-merge-m-chunk-custom) {
+.jp-Notebook-merge .cm-merge-m-chunk-end-either::after,
+.jp-Notebook-merge .cm-merge-m-chunk-end-mixed:not(.cm-merge-m-chunk-custom)::after {
   border-bottom: 1px solid var(--jp-merge-either-color1);
 }
 
