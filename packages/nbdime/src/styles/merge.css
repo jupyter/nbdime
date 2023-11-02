@@ -43,7 +43,6 @@
   flex-grow: 1;
 }
 
-
 .jp-Notebook-merge .jp-conflicted-cellId .jp-Merge-cellHeader-title {
   align-self: center;
   text-align: center;
@@ -123,15 +122,20 @@
 }
 
 .jp-Notebook-merge
-  .cm-merge-r-chunk-end-empty
+  .cm-merge-r-chunk-end-empty::after
   + .cm-linewidget
   .cm-merge-spacer,
 .jp-Notebook-merge
-  .cm-merge-m-chunk-end-remote-empty
+  .cm-merge-m-chunk-end-remote-empty::after
   + .cm-linewidget
   .cm-merge-spacer {
-  border-bottom: 1px solid var(--jp-merge-remote-color1);
-  background-color: var(--jp-merge-remote-color3);
+  content: '';
+  width: 100%;
+  height: 1px;
+  background: var(--jp-merge-remote-color1);
+  display: block;
+  position: absolute;
+  left: 0px;
 }
 
 .jp-Notebook-merge .cm-merge-l-chunk {
@@ -229,21 +233,38 @@
 .jp-Notebook-merge .cm-merge-m-chunk-start-either::before,
 .jp-Notebook-merge
   .cm-merge-m-chunk-start-mixed:not(.cm-merge-m-chunk-custom)::before {
-  border-top: 1px solid var(--jp-merge-either-color1);
+  content: '';
+  width: 100%;
+  height: 1px;
+  background: var(--jp-merge-either-color1);
+  display: block;
+  position: absolute;
+  left: 0px;
 }
 
 .jp-Notebook-merge .cm-merge-m-chunk-end-either::after,
 .jp-Notebook-merge
   .cm-merge-m-chunk-end-mixed:not(.cm-merge-m-chunk-custom)::after {
-  border-bottom: 1px solid var(--jp-merge-either-color1);
+  content: '';
+  width: 100%;
+  height: 1px;
+  background: var(--jp-merge-either-color1);
+  display: block;
+  position: absolute;
+  left: 0px;
 }
 
 .jp-Notebook-merge
-  .cm-merge-m-chunk-end-either-empty
+  .cm-merge-m-chunk-end-either-empty::after
   + .cm-linewidget
   .cm-merge-spacer {
-  border-bottom: 1px solid var(--jp-merge-either-color1);
-  background-color: var(--jp-merge-either-color2);
+    content: '';
+    width: 100%;
+    height: 1px;
+    background: var(--jp-merge-either-color1);
+    display: block;
+    position: absolute;
+    left: 0px;
 }
 
 .jp-Notebook-merge .cm-central-editor .cm-line .cm-merge-m-deleted,
