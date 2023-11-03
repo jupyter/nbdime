@@ -27,7 +27,7 @@ test.describe('merge test1', () => {
   test('choose left version for conflict', async ({ page }) => {
     await page
       .locator('.cm-merge-left-editor')
-      .nth(1)  // This select the cell; 0 being the notebook metadata
+      .nth(1) // This select the cell; 0 being the notebook metadata
       .locator('.jp-Merge-gutter-picker')
       .last()
       .click();
@@ -38,7 +38,7 @@ test.describe('merge test1', () => {
   test('choose central version for conflict', async ({ page }) => {
     await page
       .locator('.cm-central-editor')
-      .nth(1)  // This select the cell; 0 being the notebook metadata
+      .nth(1) // This select the cell; 0 being the notebook metadata
       .locator('.jp-Merge-gutter-picker')
       .nth(2)
       .click();
@@ -49,7 +49,7 @@ test.describe('merge test1', () => {
   test('choose right version for conflict', async ({ page }) => {
     await page
       .locator('.cm-merge-right-editor')
-      .nth(1)  // This select the cell; 0 being the notebook metadata
+      .nth(1) // This select the cell; 0 being the notebook metadata
       .locator('.jp-Merge-gutter-picker')
       .last()
       .click();

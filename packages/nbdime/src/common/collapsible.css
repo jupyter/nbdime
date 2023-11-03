@@ -50,10 +50,18 @@ button.jp-CollapsiblePanel-header-icon:active {
   height: 100%;
 
   /* only transition on transform properties which are hardware accelerated = way better performances */
-  -webkit-transition: -webkit-transform 0.3s ease, height 0.3s;
-  -moz-transition: -moz-transform 0.3s ease, height 0.3s;
-  -ms-transition: -ms-transform 0.3s ease, height 0.3s;
-  transition: transform 0.3s ease, height 0.3s;
+  -webkit-transition:
+    -webkit-transform 0.3s ease,
+    height 0.3s;
+  -moz-transition:
+    -moz-transform 0.3s ease,
+    height 0.3s;
+  -ms-transition:
+    -ms-transform 0.3s ease,
+    height 0.3s;
+  transition:
+    transform 0.3s ease,
+    height 0.3s;
 }
 
 .jp-CollapsiblePanel-opened {

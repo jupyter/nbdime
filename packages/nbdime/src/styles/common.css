@@ -24,23 +24,25 @@
 .nbdime-root .cm-merge-4pane {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
   grid-auto-rows: minmax(18px, auto);
 }
 
 .nbdime-root .cm-merge-left-editor {
   grid-column: 1;
   grid-row: 1;
+  background-color: var(--jp-cell-editor-background);
 }
 
 .nbdime-root .cm-central-editor {
   grid-column: 2;
   grid-row: 1;
+  background-color: var(--jp-cell-editor-background);
 }
 
 .nbdime-root .cm-merge-right-editor {
   grid-column: 3;
   grid-row: 1;
+  background-color: var(--jp-cell-editor-background);
 }
 
 .nbdime-root .cm-merge-4pane > .cm-merge-editor {
@@ -86,6 +88,8 @@
   vertical-align: top;
   width: 100%;
   background-color: var(--jp-cell-editor-background);
+  border: var(--codemirror-border);
+  border-radius: 0px;
 }
 
 .nbdime-root .cm-merge-pane-rightmost {

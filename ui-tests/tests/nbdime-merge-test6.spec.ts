@@ -10,7 +10,7 @@ test.describe('merge test6', () => {
   });
 
   test('take a snapshot at opening', async ({ page }) => {
-    await page.getByText('Hide unchanged cells').click()
+    await page.getByText('Hide unchanged cells').click();
     await page.getByText('a = "hello the world"').waitFor();
     // Check that single editor are not collapsed; added cell and unchanged cell
     expect.soft(await page.locator('#main').screenshot()).toMatchSnapshot();
