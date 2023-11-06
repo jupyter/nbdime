@@ -1,6 +1,6 @@
 {
   "name": "nbdime-top-repo",
-  "version": "4.0.0-alpha.0",
+  "version": "4.0.0-rc.0",
   "private": true,
   "workspaces": [
     "packages/*"
