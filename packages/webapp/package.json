@@ -1,6 +1,6 @@
 {
   "name": "nbdime-webapp",
-  "version": "4.0.0-rc.0",
+  "version": "4.0.0-rc.1",
   "private": true,
   "license": "BSD-3-Clause",
   "main": "static/nbdime.js",
@@ -27,7 +27,7 @@
     "@lumino/widgets": "^2.0.0",
     "alertify.js": "^1.0.12",
     "file-saver": "^2.0.1",
-    "nbdime": "^7.0.0-rc.0"
+    "nbdime": "^7.0.0-rc.1"
   },
   "devDependencies": {
     "@types/file-saver": "^2.0.0",
