@@ -20,11 +20,6 @@
   margin-top: 20px;
 }
 
-.jp-Notebook-merge .cm-merge-pane-final {
-  width: 100%;
-  border-top: var(--codemirror-border);
-}
-
 .jp-Notebook-merge .jp-Output-result img {
   max-width: 100%;
 }

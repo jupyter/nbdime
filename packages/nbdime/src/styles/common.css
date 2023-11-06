@@ -25,6 +25,9 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-auto-rows: minmax(18px, auto);
+  gap: var(--jp-border-width);
+  background-color: var(--jp-cell-editor-border-color);
+  border: var(--codemirror-border);
 }
 
 .nbdime-root .cm-merge-left-editor {
@@ -88,8 +91,6 @@
   vertical-align: top;
   width: 100%;
   background-color: var(--jp-cell-editor-background);
-  border: var(--codemirror-border);
-  border-radius: 0px;
 }
 
 .nbdime-root .cm-merge-pane-rightmost {
