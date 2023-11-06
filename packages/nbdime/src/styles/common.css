@@ -3,6 +3,7 @@
   /* editor */
   grid-template-columns: 100%;
   grid-auto-rows: minmax(18px, auto);
+  border: var(--codemirror-border);
 }
 
 .nbdime-root .cm-merge-2pane {
@@ -10,6 +11,7 @@
   /* editor | gap | editor */
   grid-template-columns: 47% 6% 47%;
   grid-auto-rows: minmax(18px, auto);
+  border: var(--codemirror-border);
 }
 
 .nbdime-root .cm-merge-2pane > div:first-child {
