@@ -223,14 +223,14 @@
   background-color: var(--jp-diff-added-color2);
 }
 
-.jp-Notebook-diff .cm-merge-pane-deleted > .cm-editor,
+.jp-Notebook-diff .cm-merge-pane-deleted,
 .jp-Notebook-diff .jp-Diff-deleted .jp-Diff-renderedOutput,
 .jp-Cellrow-outputs .jp-Diff-twoway .jp-Diff-base {
   background-color: var(--jp-diff-deleted-color2);
   border: solid 1px var(--jp-diff-deleted-color0);
 }
 
-.jp-Notebook-diff .cm-merge-pane-added > .cm-editor,
+.jp-Notebook-diff .cm-merge-pane-added,
 .jp-Notebook-diff .jp-Diff-added .jp-Diff-renderedOutput,
 .jp-Cellrow-outputs .jp-Diff-twoway .jp-Diff-remote {
   background-color: var(--jp-diff-added-color2);

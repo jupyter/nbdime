@@ -1628,6 +1628,7 @@ export class MergeView extends Panel {
         } else if (remote.deleted) {
           this._base.addClass('cm-merge-pane-deleted');
         }
+        this._base.addClass('cm-merge-pane');
       } else {
         panes = 2;
         this.addWidget(this._base);

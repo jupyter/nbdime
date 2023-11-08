@@ -282,6 +282,14 @@
   margin-left: 25%;
 }
 
+.jp-Notebook-merge .jp-Merge-oneway-local .cm-merge-pane {
+  background-color: var(--jp-merge-local-color2);
+}
+
+.jp-Notebook-merge .jp-Merge-oneway-remote .cm-merge-pane {
+  background-color: var(--jp-merge-remote-color2);
+}
+
 .jp-Notebook-merge .jp-Merge-gutter-picker {
   width: 16px;
   text-align: right;
