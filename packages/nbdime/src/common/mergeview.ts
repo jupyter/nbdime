@@ -332,7 +332,18 @@ const gutterMarkerField = StateField.define<RangeSet<MergeMarker>>({
               : e.value.block
               ? conflictBlockMarker
               : conflictMarker;
-          gutters = gutters.update({ add: [marker.range(e.value.from)] });
+          // check for overlap (duplicates) with same type
+          let overlap = false;
+          gutters.between(e.value.from, e.value.from, (from, to, value) => {
+            if (from === e.value.from && value.eq(marker)) {
+              overlap = true;
+              return false;
+            }
+            return;
+          });
+          if (!overlap) {
+            gutters = gutters.update({ add: [marker.range(e.value.from)] });
+          }
         }
       }
       if (e.is(removeGutterMarkerEffect)) {
