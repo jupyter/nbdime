@@ -19,8 +19,7 @@
 
 /* Match input border of unchanged cell source */
 .jp-Notebook-diff .jp-Diff-unchanged .cm-merge-pane-unchanged {
-  border: var(--jp-border-width) solid
-    var(--jp-private-notebook-cell-editor-border);
+  border: var(--codemirror-border);
 }
 
 /* Do not use border between unchanged cells */
@@ -221,6 +220,11 @@
 
 .jp-Notebook-diff .cm-diff-right-editor .cm-merge-spacer {
   background-color: var(--jp-diff-added-color2);
+}
+
+/* Unset outer border from common */
+.jp-Notebook-diff .jp-Mergeview-root.cm-merge-1pane {
+  border: unset;
 }
 
 .jp-Notebook-diff .cm-merge-pane-deleted,

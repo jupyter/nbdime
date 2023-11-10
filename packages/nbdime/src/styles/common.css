@@ -1,5 +1,8 @@
 .nbdime-root .cm-merge-pane {
   background-color: var(--jp-cell-editor-background);
+}
+
+.nbdime-root .jp-Mergeview-root {
   border: var(--codemirror-border);
 }
 
@@ -31,6 +34,7 @@
   grid-template-columns: repeat(3, 1fr);
   grid-auto-rows: minmax(18px, auto);
   gap: var(--jp-border-width);
+  background-color: var(--jp-cell-editor-border-color);
 }
 
 .nbdime-root .cm-merge-left-editor {
