@@ -20,11 +20,6 @@
   margin-top: 20px;
 }
 
-.jp-Notebook-merge .cm-merge-pane-final {
-  width: 100%;
-  border-top: var(--codemirror-border);
-}
-
 .jp-Notebook-merge .jp-Output-result img {
   max-width: 100%;
 }
@@ -285,6 +280,14 @@
 
 .jp-Notebook-merge .jp-Merge-oneway-remote {
   margin-left: 25%;
+}
+
+.jp-Notebook-merge .jp-Merge-oneway-local .cm-merge-pane {
+  background-color: var(--jp-merge-local-color2);
+}
+
+.jp-Notebook-merge .jp-Merge-oneway-remote .cm-merge-pane {
+  background-color: var(--jp-merge-remote-color2);
 }
 
 .jp-Notebook-merge .jp-Merge-gutter-picker {

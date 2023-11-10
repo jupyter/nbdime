@@ -1491,6 +1491,8 @@ export class MergeView extends Panel {
       value,
     });
 
+    this.addClass('jp-Mergeview-root');
+
     // START MERGE CASE
     if (merged) {
       this.addClass('cm-merge-grid-panel');
@@ -1628,6 +1630,7 @@ export class MergeView extends Panel {
         } else if (remote.deleted) {
           this._base.addClass('cm-merge-pane-deleted');
         }
+        this._base.addClass('cm-merge-pane');
       } else {
         panes = 2;
         this.addWidget(this._base);
