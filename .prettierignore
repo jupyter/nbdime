@@ -7,3 +7,4 @@
 **/coverage
 CHANGELOG.md
 package-lock.json
+nbdime/tests/files/inline-conflict--decisions.json

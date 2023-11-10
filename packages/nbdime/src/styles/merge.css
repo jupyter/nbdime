@@ -253,13 +253,13 @@
   .cm-merge-m-chunk-end-either-empty::after
   + .cm-linewidget
   .cm-merge-spacer {
-    content: '';
-    width: 100%;
-    height: 1px;
-    background: var(--jp-merge-either-color1);
-    display: block;
-    position: absolute;
-    left: 0px;
+  content: '';
+  width: 100%;
+  height: 1px;
+  background: var(--jp-merge-either-color1);
+  display: block;
+  position: absolute;
+  left: 0px;
 }
 
 .jp-Notebook-merge .cm-central-editor .cm-line .cm-merge-m-deleted,

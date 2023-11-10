@@ -183,23 +183,26 @@ function onPopState(e: PopStateEvent) {
  */
 function onMergeRequestCompleted(data: any) {
   let layoutWork = showMerge(data);
-  layoutWork.then(() => {
-    toggleSpinner(false);
-    markUnchangedRanges();
-  }, reason => {
-    console.log("Failed to show merge result");
-    let root = document.getElementById('nbdime-root');
-    if (!root) {
-      throw new Error('Missing root element "nbidme-root"');
-    }
-    const pre = document.createElement('pre');
-    pre.innerText = reason || "Error occurred displaying merge!";
-    pre.classList.add("jp-mergeapp-error");
-    // we might have a partial render, so leave that in case it is useful
-    root.prepend(pre);
-    mergeWidget = null;
-    toggleSpinner(false);
-  });
+  layoutWork.then(
+    () => {
+      toggleSpinner(false);
+      markUnchangedRanges();
+    },
+    reason => {
+      console.log('Failed to show merge result');
+      let root = document.getElementById('nbdime-root');
+      if (!root) {
+        throw new Error('Missing root element "nbidme-root"');
+      }
+      const pre = document.createElement('pre');
+      pre.innerText = reason || 'Error occurred displaying merge!';
+      pre.classList.add('jp-mergeapp-error');
+      // we might have a partial render, so leave that in case it is useful
+      root.prepend(pre);
+      mergeWidget = null;
+      toggleSpinner(false);
+    },
+  );
 }
 
 /**

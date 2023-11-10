@@ -11,7 +11,7 @@ test.beforeEach(async ({ page }) => {
 /* notebooks of same length with 0 conflict*/
 test.describe('merge test2 ', () => {
   test('take a snapshot at opening', async ({ page }) => {
-    await expect.soft(page.getByText('➭')).toHaveCount(12);
+    await expect.soft(page.getByText('➭')).toHaveCount(11);
     expect(await page.locator('#main').screenshot()).toMatchSnapshot();
   });
 
@@ -30,7 +30,7 @@ test.describe('merge test2 ', () => {
       .locator('.cm-central-editor')
       .nth(1) // This select the cell; 0 being the notebook metadata
       .locator('.jp-Merge-gutter-picker')
-      .nth(2)
+      .nth(1)
       .click();
     expect(await page.locator('#main').screenshot()).toMatchSnapshot();
   });

@@ -11,7 +11,7 @@ test.describe('merge test1', () => {
   });
 
   test('take a snapshot at opening', async ({ page }) => {
-    await expect.soft(page.getByText('➭')).toHaveCount(12);
+    await expect.soft(page.getByText('➭')).toHaveCount(11);
 
     await expect.soft(page.locator('#nbdime-header-base')).toHaveText('Base');
 
@@ -40,7 +40,7 @@ test.describe('merge test1', () => {
       .locator('.cm-central-editor')
       .nth(1) // This select the cell; 0 being the notebook metadata
       .locator('.jp-Merge-gutter-picker')
-      .nth(2)
+      .nth(1)
       .click();
     await page.getByText('⚠').click();
     expect(await page.locator('#main').screenshot()).toMatchSnapshot();

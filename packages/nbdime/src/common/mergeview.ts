@@ -295,21 +295,21 @@ const removeGutterMarkerEffect = StateEffect.define<{ type: string }>({
 class MergeMarker extends GutterMarker {
   constructor(options: { symbol: string; className: string; block: boolean }) {
     super();
-    this._symbol = options.symbol;
-    this._className = options.className;
-    this._block = options.block;
-  }
-  get isBlock() {
-    return this._block;
+    this.symbol = options.symbol;
+    this.className = options.className;
+    this.block = options.block;
   }
   toDOM() {
-    let pickerMarker = elt('div', this._symbol);
-    pickerMarker.className = this._className;
+    let pickerMarker = elt('div', this.symbol);
+    pickerMarker.className = this.className;
     return pickerMarker;
   }
-  private _symbol: string;
-  private _className: string;
-  private _block: boolean;
+  eq(other: GutterMarker): boolean {
+    return other === this;
+  }
+  readonly symbol: string;
+  readonly className: string;
+  readonly block: boolean;
 }
 
 /**
@@ -332,7 +332,18 @@ const gutterMarkerField = StateField.define<RangeSet<MergeMarker>>({
               : e.value.block
               ? conflictBlockMarker
               : conflictMarker;
-          gutters = gutters.update({ add: [marker.range(e.value.from)] });
+          // check for overlap (duplicates) with same type
+          let overlap = false;
+          gutters.between(e.value.from, e.value.from, (from, to, value) => {
+            if (from === e.value.from && value.eq(marker)) {
+              overlap = true;
+              return false;
+            }
+            return;
+          });
+          if (!overlap) {
+            gutters = gutters.update({ add: [marker.range(e.value.from)] });
+          }
         }
       }
       if (e.is(removeGutterMarkerEffect)) {
@@ -1417,7 +1428,7 @@ export class MergeView extends Panel {
         class: 'cm-gutter',
         markers: view => {
           return view.state.field(gutterMarkerField).update({
-            filter: (_from, _to, value: MergeMarker) => !value.isBlock,
+            filter: (_from, _to, value: MergeMarker) => !value.block,
           });
         },
         widgetMarker: (
@@ -1430,7 +1441,7 @@ export class MergeView extends Panel {
           }
           const markers = view.state.field(gutterMarkerField).update({
             filter: (from, _to, value: MergeMarker) =>
-              value.isBlock && block.from === from,
+              value.block && block.from === from,
           });
           if (markers.size > 1) {
             throw Error('More than one block gutter widget matched');
