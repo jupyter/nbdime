@@ -269,7 +269,12 @@ export class CellMergeModel extends ObjectMergeModel<
    */
   get agreedCell(): boolean {
     // TODO: Also check other fields?
-    return this.agreedSource && this.agreedMetadata && this.agreedOutputs && this.agreedIds;
+    return (
+      this.agreedSource &&
+      this.agreedMetadata &&
+      this.agreedOutputs &&
+      this.agreedIds
+    );
   }
 
   /**
