@@ -1,8 +1,8 @@
-.jp-Notebook-merge .jp-Metadata-diff {
+.jp-Notebook-merge .jp-Metadata-merge {
   margin-bottom: 20px;
 }
 
-.jp-Notebook-merge .jp-Metadata-diff .jp-CollapsiblePanel {
+.jp-Notebook-merge .jp-Metadata-merge .jp-CollapsiblePanel {
   border: solid black thin;
 }
 

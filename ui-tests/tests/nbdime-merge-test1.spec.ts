@@ -70,6 +70,11 @@ test.describe('merge test1', () => {
     // Finalize download
     expect(await download1.failure()).toBeNull();
   });
+
+  test('should not collapse source for unchanged metadata', async ({ page }) => {
+    await page.locator('.jp-Metadata-merge .jp-CollapsiblePanel-header-icon').click();
+    expect(await page.locator('#main').screenshot()).toMatchSnapshot();
+  });
 });
 
 test('3 panels view', async ({ page }) => {

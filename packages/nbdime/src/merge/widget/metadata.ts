@@ -17,7 +17,7 @@ import { MergePanel } from '../../common/basepanel';
 
 import type { MetadataMergeModel } from '../model';
 
-const ROOT_METADATA_CLASS = 'jp-Metadata-diff';
+const ROOT_METADATA_CLASS = 'jp-Metadata-merge';
 
 /**
  * MetadataWidget for changes to Notebook-level metadata
@@ -36,18 +36,27 @@ export class MetadataMergeWidget extends MergePanel<MetadataMergeModel> {
 
     // We know/assume that MetadataMergeModel never has
     // null values for local/remote:
+    const viewOptions = {...this._viewOptions};
+    const unchanged = model.decisions.length === 0;
+    if (unchanged) {
+      viewOptions.collapseIdentical = false;
+    }
     this.view = createNbdimeMergeView({
       remote: model.remote,
       local: model.local,
       merged: model.merged,
       factory: this._editorFactory,
       translator: this._translator,
-      ...this._viewOptions,
+      ...viewOptions,
     });
     const trans = this._translator.load('nbdime');
     const wrapper = new CollapsiblePanel(
       this.view,
-      trans.__('Notebook metadata changed'),
+      trans.__(
+        `Notebook metadata ${
+          unchanged ? 'unchanged' : 'changed'
+        }`,
+      ),
       true,
     );
     this.addWidget(wrapper);
