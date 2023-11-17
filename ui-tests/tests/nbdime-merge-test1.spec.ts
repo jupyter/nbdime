@@ -73,7 +73,7 @@ test.describe('merge test1', () => {
 
   test('should not collapse source for unchanged metadata', async ({ page }) => {
     await page.locator('.jp-Metadata-merge .jp-CollapsiblePanel-header-icon').click();
-    expect(await page.locator('#main').screenshot()).toMatchSnapshot();
+    expect(await page.locator('#main').screenshot({animations: 'disabled'})).toMatchSnapshot();
   });
 });
 
