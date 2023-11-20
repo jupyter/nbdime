@@ -27,7 +27,7 @@ jobs:
 
       - name: Prep Release
         id: prep-release
-        uses: jupyter-server/jupyter_releaser/.github/actions/prep-release@d77acfd4f8437095a766776e565d200db9f2a135
+        uses: fcollonval/jupyter_releaser/.github/actions/prep-release@1e5300b94b842e61d4f10bed0db8e855c8fe9108
         env:
           RH_TAG_FORMAT: "{version}"
         with:

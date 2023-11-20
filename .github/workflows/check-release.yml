@@ -14,7 +14,7 @@ jobs:
       - name: Base Setup
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - name: Check Release
-        uses: jupyter-server/jupyter_releaser/.github/actions/check-release@d77acfd4f8437095a766776e565d200db9f2a135
+        uses: fcollonval/jupyter_releaser/.github/actions/check-release@1e5300b94b842e61d4f10bed0db8e855c8fe9108
         env:
           RH_TAG_FORMAT: "{version}"
         with:
