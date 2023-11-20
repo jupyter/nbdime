@@ -24,7 +24,9 @@ jobs:
 
       - name: Populate Release
         id: populate-release
-        uses: jupyter-server/jupyter_releaser/.github/actions/populate-release@v2
+        uses: jupyter-server/jupyter_releaser/.github/actions/populate-release@d77acfd4f8437095a766776e565d200db9f2a135
+        env:
+          RH_TAG_FORMAT: "{version}"
         with:
           token: ${{ secrets.ADMIN_GITHUB_TOKEN }}
           branch: ${{ github.event.inputs.branch }}
@@ -35,7 +37,8 @@ jobs:
         id: finalize-release
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        uses: jupyter-server/jupyter_releaser/.github/actions/finalize-release@v2
+          RH_TAG_FORMAT: "{version}"
+        uses: jupyter-server/jupyter_releaser/.github/actions/finalize-release@d77acfd4f8437095a766776e565d200db9f2a135
         with:
           token: ${{ secrets.ADMIN_GITHUB_TOKEN }}
           release_url: ${{ steps.populate-release.outputs.release_url }}
