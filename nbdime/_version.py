@@ -6,7 +6,7 @@ from collections import namedtuple
 
 VersionInfo = namedtuple("VersionInfo", ["major", "minor", "micro", "releaselevel", "serial"])
 
-_specifier_ = {"a": "alpha", "b": "beta", "rc": "candidate", "": "final"}
+_specifier_ = {"a": "alpha", "b": "beta", "rc": "candidate"}
 
 __version__ = "4.0.0"
 
@@ -14,10 +14,11 @@ parser = re.compile(r"^(?P<major>\d+)\.(?P<minor>\d+)\.(?P<micro>\d+)((?P<releas
 
 parsed_version = parser.match(__version__)
 groups = parsed_version.groupdict()
+
 version_info = VersionInfo(
     int(groups["major"]),
     int(groups["minor"]),
     int(groups["micro"]),
-    _specifier_[groups.get("releaselevel", "")],
+    _specifier_.get(groups.get("releaselevel", ""), "final"),
     groups.get("serial", ""),
 )
