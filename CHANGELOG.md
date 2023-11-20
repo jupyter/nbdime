@@ -2,6 +2,32 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 4.0.0rc1
+
+([Full Changelog](https://github.com/jupyter/nbdime/compare/nbdime-jupyterlab@3.0.0-rc.1...d02956e0e24a0e00160ca912f90261858528a39b))
+
+### Enhancements made
+
+- Change header for unchanged notebook meta [#736](https://github.com/jupyter/nbdime/pull/736) ([@vidartf](https://github.com/vidartf))
+- Ensure collapsed mergepane border [#731](https://github.com/jupyter/nbdime/pull/731) ([@vidartf](https://github.com/vidartf))
+
+### Bugs fixed
+
+- Fix duplicate pickers [#735](https://github.com/jupyter/nbdime/pull/735) ([@vidartf](https://github.com/vidartf))
+
+### Maintenance and upkeep improvements
+
+- Test the releaser fix for tag format [#737](https://github.com/jupyter/nbdime/pull/737) ([@fcollonval](https://github.com/fcollonval))
+- Bump axios from 1.5.1 to 1.6.1 [#734](https://github.com/jupyter/nbdime/pull/734) ([@dependabot](https://github.com/dependabot))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter/nbdime/graphs/contributors?from=2023-11-06&to=2023-11-20&type=c))
+
+[@dependabot](https://github.com/search?q=repo%3Ajupyter%2Fnbdime+involves%3Adependabot+updated%3A2023-11-06..2023-11-20&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyter%2Fnbdime+involves%3Afcollonval+updated%3A2023-11-06..2023-11-20&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyter%2Fnbdime+involves%3Agithub-actions+updated%3A2023-11-06..2023-11-20&type=Issues) | [@vidartf](https://github.com/search?q=repo%3Ajupyter%2Fnbdime+involves%3Avidartf+updated%3A2023-11-06..2023-11-20&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 4.0.0rc0
 
 ([Full Changelog](https://github.com/jupyter/nbdime/compare/4.0.0a1...4349d9477f2dba374bca7355779c94071431b64b))
@@ -39,5 +65,3 @@
 ([GitHub contributors page for this release](https://github.com/jupyter/nbdime/graphs/contributors?from=2023-10-16&to=2023-11-06&type=c))
 
 [@dependabot](https://github.com/search?q=repo%3Ajupyter%2Fnbdime+involves%3Adependabot+updated%3A2023-10-16..2023-11-06&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyter%2Fnbdime+involves%3Afcollonval+updated%3A2023-10-16..2023-11-06&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyter%2Fnbdime+involves%3Agithub-actions+updated%3A2023-10-16..2023-11-06&type=Issues) | [@HaudinFlorence](https://github.com/search?q=repo%3Ajupyter%2Fnbdime+involves%3AHaudinFlorence+updated%3A2023-10-16..2023-11-06&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyter%2Fnbdime+involves%3Akrassowski+updated%3A2023-10-16..2023-11-06&type=Issues) | [@vidartf](https://github.com/search?q=repo%3Ajupyter%2Fnbdime+involves%3Avidartf+updated%3A2023-10-16..2023-11-06&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
