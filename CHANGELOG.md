@@ -2,6 +2,22 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 4.0.1
+
+([Full Changelog](https://github.com/jupyter/nbdime/compare/4.0.0...89548a7f688c31d86138371eb610c74e4810486a))
+
+### Bugs fixed
+
+- Fix version parsing [#739](https://github.com/jupyter/nbdime/pull/739) ([@fcollonval](https://github.com/fcollonval))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter/nbdime/graphs/contributors?from=2023-11-20&to=2023-11-21&type=c))
+
+[@fcollonval](https://github.com/search?q=repo%3Ajupyter%2Fnbdime+involves%3Afcollonval+updated%3A2023-11-20..2023-11-21&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 4.0.0
 
 ([Full Changelog](https://github.com/jupyter/nbdime/compare/3.2.1...d02956e0e24a0e00160ca912f90261858528a39b))
@@ -66,8 +82,6 @@
 ([GitHub contributors page for this release](https://github.com/jupyter/nbdime/graphs/contributors?from=2023-04-30&to=2023-11-20&type=c))
 
 [@agoose77](https://github.com/search?q=repo%3Ajupyter%2Fnbdime+involves%3Aagoose77+updated%3A2023-04-30..2023-11-20&type=Issues) | [@dependabot](https://github.com/search?q=repo%3Ajupyter%2Fnbdime+involves%3Adependabot+updated%3A2023-04-30..2023-11-20&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyter%2Fnbdime+involves%3Afcollonval+updated%3A2023-04-30..2023-11-20&type=Issues) | [@github-actions](https://github.com/search?q=repo%3Ajupyter%2Fnbdime+involves%3Agithub-actions+updated%3A2023-04-30..2023-11-20&type=Issues) | [@HaudinFlorence](https://github.com/search?q=repo%3Ajupyter%2Fnbdime+involves%3AHaudinFlorence+updated%3A2023-04-30..2023-11-20&type=Issues) | [@jtpio](https://github.com/search?q=repo%3Ajupyter%2Fnbdime+involves%3Ajtpio+updated%3A2023-04-30..2023-11-20&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyter%2Fnbdime+involves%3Akrassowski+updated%3A2023-04-30..2023-11-20&type=Issues) | [@minrk](https://github.com/search?q=repo%3Ajupyter%2Fnbdime+involves%3Aminrk+updated%3A2023-04-30..2023-11-20&type=Issues) | [@SylvainCorlay](https://github.com/search?q=repo%3Ajupyter%2Fnbdime+involves%3ASylvainCorlay+updated%3A2023-04-30..2023-11-20&type=Issues) | [@vidartf](https://github.com/search?q=repo%3Ajupyter%2Fnbdime+involves%3Avidartf+updated%3A2023-04-30..2023-11-20&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 4.0.0rc1
 
