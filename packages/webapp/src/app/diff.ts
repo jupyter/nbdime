@@ -22,13 +22,7 @@ import { NotebookDiffWidget } from 'nbdime/lib/diff/widget';
 
 import { requestDiff } from 'nbdime/lib/request';
 
-import {
-  getBaseUrl,
-  getConfigOption,
-  toggleSpinner,
-  toggleShowUnchanged,
-  markUnchangedRanges,
-} from './common';
+import { getBaseUrl, getConfigOption, toggleSpinner } from './common';
 
 import { exportDiff } from './staticdiff';
 
@@ -83,8 +77,6 @@ function showDiff(data: {
     throw new Error('Missing root element "nbidme-root"');
   }
   root.innerHTML = '';
-  // Hide unchanged cells by default:
-  toggleShowUnchanged(!getConfigOption('hideUnchanged', true));
 
   let panel = new Panel();
   panel.id = 'main';
@@ -174,7 +166,6 @@ function onDiffRequestCompleted(data: any) {
     ) as HTMLButtonElement;
     exportBtn.style.display = 'initial';
     toggleSpinner(false);
-    markUnchangedRanges();
   });
 }
 
@@ -254,14 +245,6 @@ export function initializeDiff() {
 
   let exportBtn = document.getElementById('nbdime-export') as HTMLButtonElement;
   exportBtn.onclick = exportDiff;
-
-  let hideUnchangedChk = document.getElementById(
-    'nbdime-hide-unchanged',
-  ) as HTMLInputElement;
-  hideUnchangedChk.checked = getConfigOption('hideUnchanged', true);
-  hideUnchangedChk.onchange = () => {
-    toggleShowUnchanged(!hideUnchangedChk.checked, diffWidget);
-  };
 
   let trustBtn = document.getElementById('nbdime-trust') as HTMLButtonElement;
   trustBtn.onclick = trustOutputs;
