@@ -388,6 +388,7 @@ def make_app(**params):
         'jinja2_env': env,
         'local_hostnames': ['localhost', '127.0.0.1'],
         'cookie_secret': base64.encodebytes(os.urandom(32)), # Needed even for an unsecured server.
+        'allow_unauthenticated_access': True,
     }
 
     try:
