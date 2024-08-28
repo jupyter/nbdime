@@ -16,7 +16,7 @@ Pass ``--help`` to each command to see help text for the command's usage.
 
 .. warning::
     The `-web` variants will start up a local, unsecured server.
-    If the port used by this server is accessible to others users
+    If the port used by this server is accessible to other users
     (which is commonly the case in HPC setups) the content of the
     diffed/merged notebook will be accessibly by other users.
 
