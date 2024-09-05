@@ -12,10 +12,9 @@ MANIFEST
 .cache
 .pytest_cache
 .idea
-
+**/.vscode/
 
 .spyderproject
-**/.vscode/
 **/node_modules/
 nbdime/webapp/test/build/
 nbdime/webapp/build/
