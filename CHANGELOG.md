@@ -2,6 +2,33 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 4.0.2
+
+([Full Changelog](https://github.com/jupyter/nbdime/compare/4.0.1...cafe00c44746cb9831ea2052a7666b898f36fae8))
+
+### Bugs fixed
+
+- Allow unauthenticated access to jupyter server [#761](https://github.com/jupyter/nbdime/pull/761) ([@krassowski](https://github.com/krassowski))
+
+### Maintenance and upkeep improvements
+
+- Update release scripts to use trusted publisher [#768](https://github.com/jupyter/nbdime/pull/768) ([@krassowski](https://github.com/krassowski))
+- Bump express and verdaccio [#765](https://github.com/jupyter/nbdime/pull/765) ([@dependabot](https://github.com/dependabot))
+- Bump braces from 3.0.2 to 3.0.3 [#764](https://github.com/jupyter/nbdime/pull/764) ([@dependabot](https://github.com/dependabot))
+- Bump ejs from 3.1.9 to 3.1.10 [#763](https://github.com/jupyter/nbdime/pull/763) ([@dependabot](https://github.com/dependabot))
+- Bump webpack from 5.86.0 to 5.94.0 [#762](https://github.com/jupyter/nbdime/pull/762) ([@dependabot](https://github.com/dependabot))
+- Bump axios to version 1.7.4 [#760](https://github.com/jupyter/nbdime/pull/760) ([@tiltingpenguin](https://github.com/tiltingpenguin))
+- Update integration tests workflow [#758](https://github.com/jupyter/nbdime/pull/758) ([@krassowski](https://github.com/krassowski))
+- Bump follow-redirects from 1.15.3 to 1.15.6 [#750](https://github.com/jupyter/nbdime/pull/750) ([@dependabot](https://github.com/dependabot))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter/nbdime/graphs/contributors?from=2023-11-21&to=2024-09-05&type=c))
+
+[@dependabot](https://github.com/search?q=repo%3Ajupyter%2Fnbdime+involves%3Adependabot+updated%3A2023-11-21..2024-09-05&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyter%2Fnbdime+involves%3Akrassowski+updated%3A2023-11-21..2024-09-05&type=Issues) | [@tiltingpenguin](https://github.com/search?q=repo%3Ajupyter%2Fnbdime+involves%3Atiltingpenguin+updated%3A2023-11-21..2024-09-05&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 4.0.1
 
 ([Full Changelog](https://github.com/jupyter/nbdime/compare/4.0.0...89548a7f688c31d86138371eb610c74e4810486a))
@@ -15,8 +42,6 @@
 ([GitHub contributors page for this release](https://github.com/jupyter/nbdime/graphs/contributors?from=2023-11-20&to=2023-11-21&type=c))
 
 [@fcollonval](https://github.com/search?q=repo%3Ajupyter%2Fnbdime+involves%3Afcollonval+updated%3A2023-11-20..2023-11-21&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 4.0.0
 
