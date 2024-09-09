@@ -111,3 +111,30 @@
   border-bottom: solid #ccc 1px;
   text-align: center;
 }
+
+.jp-expand-output-wrapper {
+  height: 40px;
+  width: 100%;
+  display: inline-block;
+  background: var(--jp-expand-outer-wrapper);
+  color: var(--jp-expand-color);
+  a {
+    cursor: pointer;
+    height: 100%;
+    display: block;
+    width: 40px;
+    background-color: var(--jp-expand-activate-color);
+    &:hover {
+      background-color: var(--jp-expand-activate-focus-color);
+      svg {
+        fill: var(--jp-expand-background-focus-color);
+      }
+    }
+  }
+  svg {
+    height: 23px;
+    width: 23px;
+    margin: 8px;
+    fill: var(--jp-expand-background-color);
+  }
+}
