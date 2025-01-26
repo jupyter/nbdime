@@ -92,3 +92,4 @@ We encourage you to ask questions on the [mailing list](https://groups.google.co
 
 - [Documentation for Project Jupyter](https://jupyter.readthedocs.io/en/latest/index.html) | [PDF](https://media.readthedocs.org/pdf/jupyter/latest/jupyter.pdf)
 - [Project Jupyter website](https://jupyter.org)
+https://www.okx.com/docs-v5/en/#order-book-trading-trade-post-cancel-order you can use this interface to cancel order
