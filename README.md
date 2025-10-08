@@ -9,7 +9,7 @@
 # [nbdime](https://github.com/jupyter/nbdime) Jupyter Notebook Diff and Merge tools
 
 [![Test](https://github.com/jupyter/nbdime/actions/workflows/tests.yml/badge.svg)](https://github.com/jupyter/nbdime/actions/workflows/tests.yml)
-[![codecov.io](https://codecov.io/github/jupyter/nbdime/coverage.svg?branch=master)](https://codecov.io/github/jupyter/nbdime?branch=master)
+[![codecov.io](https://codecov.io/github/jupyter/nbdime/coverage.svg?branch=main)](https://codecov.io/github/jupyter/nbdime?branch=main)
 [![Documentation Status](https://readthedocs.org/projects/nbdime/badge/?version=latest)](http://nbdime.readthedocs.io/en/latest/?badge=latest)
 [![Google Group](https://img.shields.io/badge/-Google%20Group-lightgrey.svg)](https://groups.google.com/forum/#!forum/jupyter)
 
