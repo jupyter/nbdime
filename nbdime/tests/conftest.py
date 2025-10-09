@@ -89,7 +89,7 @@ def git_repo(tmpdir, request, filespath, needs_git, slow):
     save_cwd = os.getcwd()
     os.chdir(repo)
     request.addfinalizer(lambda: os.chdir(save_cwd))
-    call('git init -b master'.split())
+    call('git init -b main'.split())
 
     # setup base branch
     src = filespath
@@ -98,23 +98,23 @@ def git_repo(tmpdir, request, filespath, needs_git, slow):
     shutil.copy(pjoin(src, 'src-and-output--1.ipynb'), pjoin(repo, 'diff.ipynb'))
     call('git add *.ipynb')
     call('git commit -m "init base branch"')
-    # create base alias for master
-    call('git checkout -b base master')
+    # create base alias for main
+    call('git checkout -b base main')
 
     # setup local branch
-    call('git checkout -b local master')
+    call('git checkout -b local main')
     shutil.copy(pjoin(src, 'multilevel-test-local.ipynb'), pjoin(repo, 'merge-no-conflict.ipynb'))
     shutil.copy(pjoin(src, 'inline-conflict--2.ipynb'), pjoin(repo, 'merge-conflict.ipynb'))
     shutil.copy(pjoin(src, 'src-and-output--2.ipynb'), pjoin(repo, 'diff.ipynb'))
     call('git commit -am "create local branch"')
 
     # setup remote branch with conflict
-    call('git checkout -b remote-conflict master')
+    call('git checkout -b remote-conflict main')
     shutil.copy(pjoin(src, 'inline-conflict--3.ipynb'), pjoin(repo, 'merge-conflict.ipynb'))
     call('git commit -am "create remote with conflict"')
 
     # setup remote branch with no conflict
-    call('git checkout -b remote-no-conflict master')
+    call('git checkout -b remote-no-conflict main')
     shutil.copy(pjoin(src, 'multilevel-test-remote.ipynb'), pjoin(repo, 'merge-no-conflict.ipynb'))
     call('git commit -am "create remote with no conflict"')
 
@@ -131,7 +131,7 @@ def git_repo2(tmpdir, request, filespath, needs_git, slow):
     save_cwd = os.getcwd()
     os.chdir(repo)
     request.addfinalizer(lambda: os.chdir(save_cwd))
-    call('git init -b master'.split())
+    call('git init -b main'.split())
 
     # setup base branch
     src = filespath
@@ -140,17 +140,17 @@ def git_repo2(tmpdir, request, filespath, needs_git, slow):
     shutil.copy(pjoin(src, 'foo--1.ipynb'), pjoin(repo, 'sub', 'subfile.ipynb'))
     call('git add --all')
     call('git commit -m "init base branch"')
-    # create base alias for master
-    call('git checkout -b base master')
+    # create base alias for main
+    call('git checkout -b base main')
 
     # setup local branch
-    call('git checkout -b local master')
+    call('git checkout -b local main')
     shutil.copy(pjoin(src, 'src-and-output--2.ipynb'), pjoin(repo, 'diff.ipynb'))
     shutil.copy(pjoin(src, 'foo--2.ipynb'), pjoin(repo, 'sub', 'subfile.ipynb'))
     call('git commit -am "create local branch"')
 
     # setup remote branch
-    call('git checkout -b remote master')
+    call('git checkout -b remote main')
     shutil.copy(pjoin(src, 'foo--2.ipynb'), pjoin(repo, 'sub', 'subfile.ipynb'))
     shutil.copy(pjoin(src, 'markdown-only--1.ipynb'), pjoin(repo, 'sub', 'added.ipynb'))
     call('git add --all')
