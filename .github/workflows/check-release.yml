@@ -22,5 +22,5 @@ jobs:
       - name: Upload Distributions
         uses: actions/upload-artifact@v4
         with:
-          name: jupyterlab_git-releaser-dist-${{ github.run_number }}
+          name: nbdime-releaser-dist-${{ github.run_number }}
           path: .jupyter_releaser_checkout/dist
