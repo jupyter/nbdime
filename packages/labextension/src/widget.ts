@@ -61,6 +61,8 @@ export class NbdimeWidget extends Panel {
     this.rendermime = options.rendermime;
     this.translator = options.translator ?? nullTranslator;
     this.trans = this.translator.load('nbdime');
+    this.serverSettings =
+      options.serverSettings ?? ServerConnection.makeSettings();
 
     let header = Private.diffHeader(options);
     this.addWidget(header);
@@ -92,11 +94,12 @@ export class NbdimeWidget extends Panel {
     }
 
     requestApiJson(
-      ServerConnection.makeSettings().baseUrl,
+      this.serverSettings.baseUrl,
       'nbdime/api/diff',
       args,
       this.onData.bind(this),
       this.onError.bind(this),
+      this.serverSettings,
     );
     this.id = `nbdime-${JSON.stringify(args)}`;
     this.title.closable = true;
@@ -161,6 +164,7 @@ export class NbdimeWidget extends Panel {
   protected rendermime: IRenderMimeRegistry;
   protected translator: ITranslator;
   protected trans: TranslationBundle;
+  protected serverSettings: ServerConnection.ISettings;
 
   protected header: Widget;
   protected scroller: Panel;
@@ -215,6 +219,11 @@ export namespace NbdimeWidget {
      * Application translator.
      */
     translator?: ITranslator;
+
+    /**
+     * Server connection settings.
+     */
+    serverSettings?: ServerConnection.ISettings;
   }
 }
 

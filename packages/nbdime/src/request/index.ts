@@ -34,13 +34,14 @@ export function requestApiPromise(
   baseUrl: string,
   apiPath: string,
   argument: any,
+  serverSettings?: ServerConnection.ISettings,
 ): Promise<Response> {
   const url = URLExt.join(urlRStrip(baseUrl), apiPath);
   let request = {
     method: 'POST',
     body: JSON.stringify(argument),
   };
-  let settings = ServerConnection.makeSettings();
+  let settings = serverSettings ?? ServerConnection.makeSettings();
   return ServerConnection.makeRequest(url, request, settings).then(handleError);
 }
 
@@ -53,8 +54,9 @@ export function requestApi(
   argument: any,
   onComplete: (result: any) => void,
   onFail: (errorMessage: string) => void,
+  serverSettings?: ServerConnection.ISettings,
 ): void {
-  requestApiPromise(baseUrl, apiPath, argument).then(
+  requestApiPromise(baseUrl, apiPath, argument, serverSettings).then(
     onComplete,
     (error: ServerConnection.NetworkError | ServerConnection.ResponseError) => {
       onFail(error.message);
@@ -69,10 +71,13 @@ export function requestApiJsonPromise(
   baseUrl: string,
   apiPath: string,
   argument: any,
+  serverSettings?: ServerConnection.ISettings,
 ): Promise<JSONObject> {
-  return requestApiPromise(baseUrl, apiPath, argument).then(response => {
-    return response.json();
-  });
+  return requestApiPromise(baseUrl, apiPath, argument, serverSettings).then(
+    response => {
+      return response.json();
+    },
+  );
 }
 
 /**
@@ -84,8 +89,9 @@ export function requestApiJson(
   argument: any,
   callback: (result: any) => void,
   onError: (errorMessage: string) => void,
+  serverSettings?: ServerConnection.ISettings,
 ): void {
-  requestApiJsonPromise(baseUrl, apiPath, argument).then(
+  requestApiJsonPromise(baseUrl, apiPath, argument, serverSettings).then(
     callback,
     (error: ServerConnection.NetworkError | ServerConnection.ResponseError) => {
       onError(error.message);
@@ -100,8 +106,14 @@ export function requestDiffPromise(
   base: string,
   remote: string | undefined,
   baseUrl: string,
+  serverSettings?: ServerConnection.ISettings,
 ): Promise<JSONObject> {
-  return requestApiJsonPromise(baseUrl, 'api/diff', { base, remote });
+  return requestApiJsonPromise(
+    baseUrl,
+    'api/diff',
+    { base, remote },
+    serverSettings,
+  );
 }
 
 /**
@@ -113,8 +125,16 @@ export function requestDiff(
   baseUrl: string,
   onComplete: (result: any) => void,
   onFail: (errorMessage: string) => void,
+  serverSettings?: ServerConnection.ISettings,
 ): void {
-  requestApiJson(baseUrl, 'api/diff', { base, remote }, onComplete, onFail);
+  requestApiJson(
+    baseUrl,
+    'api/diff',
+    { base, remote },
+    onComplete,
+    onFail,
+    serverSettings,
+  );
 }
 
 /**
@@ -125,8 +145,14 @@ export function requestMergePromise(
   local: string,
   remote: string,
   baseUrl: string,
+  serverSettings?: ServerConnection.ISettings,
 ): Promise<JSONObject> {
-  return requestApiJsonPromise(baseUrl, 'api/merge', { base, local, remote });
+  return requestApiJsonPromise(
+    baseUrl,
+    'api/merge',
+    { base, local, remote },
+    serverSettings,
+  );
 }
 
 /**
@@ -139,6 +165,7 @@ export function requestMerge(
   baseUrl: string,
   onComplete: (result: any) => void,
   onFail: (errorMessage: string) => void,
+  serverSettings?: ServerConnection.ISettings,
 ): void {
   requestApiJson(
     baseUrl,
@@ -146,5 +173,6 @@ export function requestMerge(
     { base, local, remote },
     onComplete,
     onFail,
+    serverSettings,
   );
 }
