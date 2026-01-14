@@ -11,12 +11,12 @@ jobs:
     name: Documentation
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6
       with:
         python-version: 3.8
-    - uses: actions/cache@v3
+    - uses: actions/cache@v5
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/setup.py') }}-${{hashFiles('**/requirements.txt')}}
@@ -38,12 +38,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6
       with:
         python-version: 3.8
-    - uses: actions/cache@v3
+    - uses: actions/cache@v5
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/setup.py') }}-${{hashFiles('**/requirements.txt')}}
@@ -55,14 +55,14 @@ jobs:
         npm install -g codecov
 
     - name: Use Node.js 18.x
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v6
       with:
         node-version: 18.x
     - name: Get npm cache directory
       id: npm-cache-dir
       run: |
         echo "::set-output name=dir::$(npm config get cache)"
-    - uses: actions/cache@v3
+    - uses: actions/cache@v5
       id: npm-cache
       with:
         path: ${{ steps.npm-cache-dir.outputs.dir }}
@@ -98,12 +98,12 @@ jobs:
       wheel: ${{ steps.packaging.outputs.wheel }}
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
-    - uses: actions/cache@v3
+    - uses: actions/cache@v5
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/setup.py') }}-${{hashFiles('**/requirements.txt')}}
@@ -133,7 +133,7 @@ jobs:
         $hgconfig | Set-Content ($HOME + "\mercurial.ini")
         echo "TEST_TMPDIR=." >> $Env:GITHUB_ENV
         pytest -l --cov-report xml --cov=nbdime --pyargs nbdime
-    - uses: codecov/codecov-action@v3
+    - uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         verbose: true
@@ -153,7 +153,7 @@ jobs:
 
     - name: Upload nbdime package
       if: startsWith(matrix.os, 'ubuntu') &&  matrix.python-version == '3.10'
-      uses: actions/upload-artifact@v4.6.2
+      uses: actions/upload-artifact@v6
       with:
         name: nbdime-package
         path: dist/nbdime*
@@ -173,19 +173,19 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0
     - name: Install node
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v6
       with:
         node-version: '18.x'
     - name: Install Python '3.11'
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6
       with:
         python-version: '3.11'
     - name: Download nbdime package
-      uses: actions/download-artifact@v4.1.7
+      uses: actions/download-artifact@v7
       with:
         name: nbdime-package
 
@@ -201,7 +201,7 @@ jobs:
           npm install
 
     - name: Set up browser cache
-      uses: actions/cache@v3
+      uses: actions/cache@v5
       with:
         path: |
           ${{ github.workspace }}/pw-browsers
@@ -218,7 +218,7 @@ jobs:
 
     - name: Upload Playwright Test report
       if: always()
-      uses: actions/upload-artifact@v4.6.2
+      uses: actions/upload-artifact@v6
       with:
         name: ui-tests-${{ matrix.os }}
         path: |
