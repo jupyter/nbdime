@@ -2,6 +2,35 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 4.0.3
+
+([Full Changelog](https://github.com/jupyter/nbdime/compare/nbdime-jupyterlab@3.0.2...33f8af222008a363aa5af52074d9d642909d8845))
+
+### Bugs fixed
+
+- Use `serverSettings` for API requests [#793](https://github.com/jupyter/nbdime/pull/793) ([@jtpio](https://github.com/jtpio), [@krassowski](https://github.com/krassowski))
+
+### Maintenance and upkeep improvements
+
+- Update snapshots bot checkout and permission check [#795](https://github.com/jupyter/nbdime/pull/795) ([@martinRenou](https://github.com/martinRenou), [@krassowski](https://github.com/krassowski))
+- Fix CI [#794](https://github.com/jupyter/nbdime/pull/794) ([@jtpio](https://github.com/jtpio), [@krassowski](https://github.com/krassowski))
+- Bump actions/download-artifact from 3 to 4.1.7 in /.github/workflows [#767](https://github.com/jupyter/nbdime/pull/767) ([@Carreau](https://github.com/Carreau))
+
+### Other merged PRs
+
+- master -> main [#789](https://github.com/jupyter/nbdime/pull/789) ([@Carreau](https://github.com/Carreau))
+
+### Contributors to this release
+
+The following people contributed discussions, new ideas, code and documentation contributions, and review.
+See [our definition of contributors](https://github-activity.readthedocs.io/en/latest/#how-does-this-tool-define-contributions-in-the-reports).
+
+([GitHub contributors page for this release](https://github.com/jupyter/nbdime/graphs/contributors?from=2024-09-05&to=2026-01-15&type=c))
+
+@Carreau ([activity](https://github.com/search?q=repo%3Ajupyter%2Fnbdime+involves%3ACarreau+updated%3A2024-09-05..2026-01-15&type=Issues)) | @jtpio ([activity](https://github.com/search?q=repo%3Ajupyter%2Fnbdime+involves%3Ajtpio+updated%3A2024-09-05..2026-01-15&type=Issues)) | @krassowski ([activity](https://github.com/search?q=repo%3Ajupyter%2Fnbdime+involves%3Akrassowski+updated%3A2024-09-05..2026-01-15&type=Issues)) | @martinRenou ([activity](https://github.com/search?q=repo%3Ajupyter%2Fnbdime+involves%3AmartinRenou+updated%3A2024-09-05..2026-01-15&type=Issues))
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 4.0.2
 
 ([Full Changelog](https://github.com/jupyter/nbdime/compare/4.0.1...cafe00c44746cb9831ea2052a7666b898f36fae8))
@@ -26,8 +55,6 @@
 ([GitHub contributors page for this release](https://github.com/jupyter/nbdime/graphs/contributors?from=2023-11-21&to=2024-09-05&type=c))
 
 [@dependabot](https://github.com/search?q=repo%3Ajupyter%2Fnbdime+involves%3Adependabot+updated%3A2023-11-21..2024-09-05&type=Issues) | [@krassowski](https://github.com/search?q=repo%3Ajupyter%2Fnbdime+involves%3Akrassowski+updated%3A2023-11-21..2024-09-05&type=Issues) | [@tiltingpenguin](https://github.com/search?q=repo%3Ajupyter%2Fnbdime+involves%3Atiltingpenguin+updated%3A2023-11-21..2024-09-05&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 4.0.1
 
