@@ -4,7 +4,7 @@ Testing
 See the latest automated build, test, and coverage status at:
 
     - `Build and test on Travis <https://travis-ci.org/jupyter/nbdime>`_
-    - `Coverage on codecov <https://codecov.io/github/jupyter/nbdime?branch=master>`_
+    - `Coverage on codecov <https://codecov.io/github/jupyter/nbdime?branch=main>`_
 
 Dependencies
 ------------
