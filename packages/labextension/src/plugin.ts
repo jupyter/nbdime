@@ -16,6 +16,8 @@ import type { DocumentRegistry } from '@jupyterlab/docregistry';
 
 import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
+import type { ServerConnection } from '@jupyterlab/services';
+
 import type { INotebookModel } from '@jupyterlab/notebook';
 
 import { NotebookPanel, INotebookTracker } from '@jupyterlab/notebook';
@@ -113,6 +115,7 @@ function addCommands(
   settings: ISettingRegistry.ISettings,
   editorServices: IEditorServices,
   translator: ITranslator,
+  serverSettings: ServerConnection.ISettings,
 ): void {
   const { commands, shell } = app;
   const editorFactory = editorServices.factoryService.newInlineEditor.bind(
@@ -155,7 +158,7 @@ function addCommands(
     let dir = PathExt.dirname(path);
     let known_git = lut_known_git[dir];
     if (known_git === undefined) {
-      const inGitPromise = isNbInGit({ path: dir });
+      const inGitPromise = isNbInGit({ path: dir, serverSettings });
       inGitPromise.then(inGit => {
         networkRetry = INITIAL_NETWORK_RETRY;
         lut_known_git[dir] = inGit;
@@ -221,6 +224,7 @@ function addCommands(
         rendermime,
         hideUnchanged,
         translator,
+        serverSettings,
       });
       shell.add(widget);
       if (args['activate'] !== false) {
@@ -248,6 +252,7 @@ function addCommands(
         rendermime,
         hideUnchanged,
         translator,
+        serverSettings,
       });
       shell.add(widget);
       if (args['activate'] !== false) {
@@ -298,6 +303,7 @@ async function activateWidgetExtension(
   docRegistry.addWidgetExtension('Notebook', extension);
 
   const settings = await settingsRegistry.load(pluginId);
+  const serverSettings = app.serviceManager.serverSettings;
   addCommands(
     app,
     tracker,
@@ -305,6 +311,7 @@ async function activateWidgetExtension(
     settings,
     editorServices,
     translator ?? nullTranslator,
+    serverSettings,
   );
   // Update the command registry when the notebook state changes.
   tracker.currentChanged.connect(() => {

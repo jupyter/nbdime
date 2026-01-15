@@ -25,6 +25,7 @@ export function diffNotebook(args: {
   readonly editorFactory: CodeEditor.Factory;
   hideUnchanged?: boolean;
   translator?: ITranslator;
+  serverSettings?: ServerConnection.ISettings;
 }): Widget {
   let { base, remote, translator } = args;
   const trans = (translator ?? nullTranslator).load('nbdime');
@@ -40,8 +41,16 @@ export function diffNotebookCheckpoint(args: {
   readonly editorFactory: CodeEditor.Factory;
   hideUnchanged?: boolean;
   translator?: ITranslator;
+  serverSettings?: ServerConnection.ISettings;
 }): Widget {
-  const { path, rendermime, hideUnchanged, editorFactory, translator } = args;
+  const {
+    path,
+    rendermime,
+    hideUnchanged,
+    editorFactory,
+    translator,
+    serverSettings,
+  } = args;
   const trans = (translator ?? nullTranslator).load('nbdime');
   let nb_dir = PathExt.dirname(path);
   let name = PathExt.basename(path, '.ipynb');
@@ -54,6 +63,7 @@ export function diffNotebookCheckpoint(args: {
     baseLabel: trans.__('Checkpoint'),
     hideUnchanged,
     translator,
+    serverSettings,
   });
   widget.title.label = trans.__('Diff checkpoint: %1', name);
   widget.title.caption = trans.__(
@@ -70,8 +80,16 @@ export function diffNotebookGit(args: {
   readonly editorFactory: CodeEditor.Factory;
   hideUnchanged?: boolean;
   translator?: ITranslator;
+  serverSettings?: ServerConnection.ISettings;
 }): Widget {
-  const { path, rendermime, hideUnchanged, editorFactory, translator } = args;
+  const {
+    path,
+    rendermime,
+    hideUnchanged,
+    editorFactory,
+    translator,
+    serverSettings,
+  } = args;
   const trans = (translator ?? nullTranslator).load('nbdime');
   let name = PathExt.basename(path, '.ipynb');
   let widget = new NbdimeWidget({
@@ -80,6 +98,7 @@ export function diffNotebookGit(args: {
     rendermime,
     hideUnchanged,
     translator,
+    serverSettings,
   });
   widget.title.label = trans.__('Diff git: %1', name);
   widget.title.caption = trans.__("Local: git HEAD\nRemote: '%1'", path);
@@ -87,12 +106,15 @@ export function diffNotebookGit(args: {
   return widget;
 }
 
-export function isNbInGit(args: { readonly path: string }): Promise<boolean> {
+export function isNbInGit(args: {
+  readonly path: string;
+  serverSettings?: ServerConnection.ISettings;
+}): Promise<boolean> {
   let request = {
     method: 'POST',
-    body: JSON.stringify(args),
+    body: JSON.stringify({ path: args.path }),
   };
-  let settings = ServerConnection.makeSettings();
+  let settings = args.serverSettings ?? ServerConnection.makeSettings();
   return ServerConnection.makeRequest(
     URLExt.join(urlRStrip(settings.baseUrl), '/nbdime/api/isgit'),
     request,
