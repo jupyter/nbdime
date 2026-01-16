@@ -20,7 +20,9 @@ Bump the version using the custom script:
 python scripts/bump_version.py <new-version>
 ```
 
-> _\<new-version\>_ can be a segment like `major`, `minor`, `patch`, `alpha`,...
+> _\<new-version\>_ can be a segment like `major`, `minor`, `patch`, `next`, `alpha`,...
+>
+> `next` bumps the patch version for final releases, or the pre-release number for pre-releases (e.g., `1.0.0` → `1.0.1`, `1.0.0a1` → `1.0.0a2`).
 
 Make sure to clean up all the development files before building the package:
 
