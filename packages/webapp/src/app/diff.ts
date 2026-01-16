@@ -244,12 +244,23 @@ function attachToForm() {
  *
  */
 export function initializeDiff() {
-  attachToForm();
-  // If arguments supplied in config, run diff directly:
-  let base = getConfigOption('base');
-  let remote = getConfigOption('remote');
-  if (base && (remote || hasPrefix(base))) {
-    compare(base, remote, 'replace');
+  let diff_data = getConfigOption('diff_data');
+  if (diff_data === undefined) {
+    // This is the normal case.
+    attachToForm();
+    // If arguments supplied in config, run diff directly:
+    let base = getConfigOption('base');
+    let remote = getConfigOption('remote');
+    if (base && (remote || hasPrefix(base))) {
+      compare(base, remote, 'replace');
+    }
+  } else {
+    // Then the diff was pre-generated and included in the config data,
+    // e.g. for non-interactive generation of html diffs.
+    // The diff data should have "base" and "diff" keys for showDiff().
+    // showDiff() requires the data to be mutable, so make a mutable copy.
+    const cloned_diff_data = JSON.parse(JSON.stringify(diff_data))
+    onDiffRequestCompleted(cloned_diff_data);
   }
 
   let exportBtn = document.getElementById('nbdime-export') as HTMLButtonElement;
