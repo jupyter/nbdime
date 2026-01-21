@@ -27,4 +27,10 @@
 
   --jp-merge-either-color1: #aee;
   --jp-merge-either-color2: #cff4f4;
+  --jp-expand-outer-wrapper: rgb(221, 244, 255, 1);
+  --jp-expand-color: rgb(87, 96, 106, 1);
+  --jp-expand-activate-color: rgba(84, 174, 255, 0.4);
+  --jp-expand-activate-focus-color: rgb(14, 94, 208, 1);
+  --jp-expand-background-color: rgb(87, 96, 106, 1);
+  --jp-expand-background-focus-color: rgb(255, 255, 255, 1);
 }
