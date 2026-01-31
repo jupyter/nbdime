@@ -14,6 +14,7 @@ from .config import (
     get_defaults_for_argparse, build_config, entrypoint_configurables,
     Namespace
 )
+from .diffing.generic import set_text_similarity_options
 from .diffing.notebooks import set_notebook_diff_targets, set_notebook_diff_ignores
 from .gitfiles import is_gitref
 from .ignorables import diff_ignorables
@@ -338,6 +339,25 @@ def add_diff_args(parser):
         action=IgnorableAction,
         help="process/ignore details not covered by other options.")
 
+    similarity = parser.add_argument_group(
+        title='similarity',
+        description='Control how text similarity is estimated when aligning cells.')
+    similarity.add_argument(
+        '--text-similarity-threshold',
+        dest='text_similarity_threshold',
+        metavar='RATIO',
+        type=float,
+        default=0.3,
+        help='minimum ratio (0-1) required to consider two text blocks similar',
+    )
+    similarity.add_argument(
+        '--no-text-similarity-ignore-whitespace',
+        dest='text_similarity_ignore_whitespace',
+        action='store_false',
+        default=True,
+        help='do not drop whitespace-only lines before computing similarity',
+    )
+
 
 def add_diff_cli_args(parser):
     """Adds a set of arguments for CLI diff commands (i.e. not web).
@@ -404,6 +424,11 @@ def process_diff_flags(args):
         set_notebook_diff_targets(
             args.sources, args.outputs, args.attachments, args.metadata,
             args.id, args.details)
+
+    set_text_similarity_options(
+        threshold=getattr(args, 'text_similarity_threshold', None),
+        ignore_whitespace_lines=getattr(args, 'text_similarity_ignore_whitespace', None),
+    )
 
 
 def resolve_diff_args(args):

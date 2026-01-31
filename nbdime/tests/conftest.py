@@ -339,7 +339,7 @@ class NBTestDataBase(object):
 _db = NBTestDataBase()
 
 
-def _any_nb_name():
+def _any_nb_names():
     return _db.names
 
 
@@ -370,30 +370,36 @@ def _matching_nb_triplet_names():
                     triplets.append((basename, names[i], names[j]))
     return triplets
 
+def _params_and_ids_from_names(names):
+    return {
+        'params': names,
+        'ids': [n if isinstance(n, str) else "__".join(n) for n in names]
+    }
+
 
 @fixture
 def db():
     return _db
 
 
-@fixture(params=_any_nb_name())
+@fixture(**_params_and_ids_from_names(_any_nb_names()))
 def any_nb(request):
     return _db[request.param]
 
 
-@fixture(params=_any_nb_pair_names())
+@fixture(**_params_and_ids_from_names(_any_nb_pair_names()))
 def any_nb_pair(request):
     a, b = request.param
     return _db[a], _db[b]
 
 
-@fixture(params=_matching_nb_pair_names())
+@fixture(**_params_and_ids_from_names(_matching_nb_pair_names()))
 def matching_nb_pairs(request):
     a, b = request.param
     return _db[a], _db[b]
 
 
-@fixture(params=_matching_nb_triplet_names())
+@fixture(**_params_and_ids_from_names(_matching_nb_triplet_names()))
 def matching_nb_triplets(request):
     a, b, c = request.param
     print(a, b, c)

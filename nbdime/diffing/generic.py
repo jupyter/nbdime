@@ -17,6 +17,39 @@ from .snakes import compute_snakes_multilevel, compute_diff_from_snakes
 __all__ = ["diff"]
 
 
+_text_similarity_settings = {
+    "threshold": 0.3,
+    "ignore_whitespace_lines": True,
+}
+
+
+def set_text_similarity_options(*, threshold=None, ignore_whitespace_lines=None):
+    """Configure defaults for approximate string comparisons.
+
+    Parameters
+    ----------
+    threshold: float, optional
+        Minimum difflib ratio (0-1) used to consider strings similar when no
+        explicit threshold is provided.
+    ignore_whitespace_lines: bool, optional
+        Whether to drop whitespace-only lines before computing similarity.
+    """
+
+    if threshold is not None:
+        if not (0.0 <= threshold <= 1.0):
+            raise ValueError("text similarity threshold must be between 0 and 1")
+        _text_similarity_settings["threshold"] = float(threshold)
+
+    if ignore_whitespace_lines is not None:
+        _text_similarity_settings["ignore_whitespace_lines"] = bool(ignore_whitespace_lines)
+
+
+def get_text_similarity_options():
+    """Return a copy of the current similarity defaults."""
+
+    return _text_similarity_settings.copy()
+
+
 def default_predicates():
     return defaultdict(lambda: (operator.__eq__,))
 
@@ -25,10 +58,8 @@ def default_differs():
     return defaultdict(lambda: diff)
 
 
-def compare_strings_approximate(x, y, threshold=0.7, maxlen=None):
-    "Compare to strings with approximate heuristics."
-    # TODO: Add configuration framework
-    # TODO: Tune threshold with realistic sources
+def compare_strings_approximate(x, y, threshold=0.7, min_divergence_to_be_unsimilar=None, min_match_length_to_be_similar=None, maxlen=None):
+    "Compare two strings with approximate heuristics."
 
     # Fast cutoff when one is empty
     if bool(x) != bool(y):
@@ -38,6 +69,12 @@ def compare_strings_approximate(x, y, threshold=0.7, maxlen=None):
     # and lists of strings also works fine
     if len(x) == len(y) and x == y:
         return True
+    
+    if min_divergence_to_be_unsimilar is not None and len(x) <= min_divergence_to_be_unsimilar and len(y) <= min_divergence_to_be_unsimilar:
+        return True
+
+    if min_match_length_to_be_similar is not None and (len(x) < min_match_length_to_be_similar or len(y) < min_match_length_to_be_similar):
+        return False
 
     # TODO: Investigate performance and quality of this difflib ratio approach,
     # possibly one of the weakest links of the notebook diffing algorithm.
@@ -57,6 +94,9 @@ def compare_strings_approximate(x, y, threshold=0.7, maxlen=None):
     # s = difflib.SequenceMatcher(lambda c: c in (" ", "\t"), x, y, autojunk=False)
     s = difflib.SequenceMatcher(None, x, y, autojunk=False)
 
+    if min_divergence_to_be_unsimilar is not None:
+        threshold = max(threshold, min_divergence_to_be_unsimilar / max(len(x), len(y)))
+
     # Use only the fast ratio approximations first
     if s.real_quick_ratio() < threshold:
         return False
@@ -67,7 +107,14 @@ def compare_strings_approximate(x, y, threshold=0.7, maxlen=None):
         # We know from above that there is not an exact similarity
         return False
 
-    return s.ratio() > threshold
+    if not s.ratio() > threshold:
+        return False
+    
+    if min_match_length_to_be_similar is not None:
+        longest = max((m.size for m in s.get_matching_blocks()), default=0)
+        return longest >= min_match_length_to_be_similar
+    else:
+        return True
 
 
 def diff(a, b, path="", config=None):
