@@ -106,16 +106,22 @@ export function diffNotebookGit(args: {
   return widget;
 }
 
+const isNbInGitCache = new Map<string, Promise<boolean>>();
+
 export function isNbInGit(args: {
   readonly path: string;
   serverSettings?: ServerConnection.ISettings;
 }): Promise<boolean> {
+  const cached = isNbInGitCache.get(args.path);
+  if (cached !== undefined) {
+    return cached;
+  }
   let request = {
     method: 'POST',
     body: JSON.stringify({ path: args.path }),
   };
   let settings = args.serverSettings ?? ServerConnection.makeSettings();
-  return ServerConnection.makeRequest(
+  const promise = ServerConnection.makeRequest(
     URLExt.join(urlRStrip(settings.baseUrl), '/nbdime/api/isgit'),
     request,
     settings,
@@ -129,4 +135,11 @@ export function isNbInGit(args: {
     .then(data => {
       return data['is_git'];
     });
+  isNbInGitCache.set(args.path, promise);
+  promise.finally(() => {
+    setTimeout(() => {
+      isNbInGitCache.delete(args.path);
+    }, 200);
+  });
+  return promise;
 }
