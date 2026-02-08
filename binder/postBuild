@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+# Copyright (c) Jupyter Development Team.
+# Distributed under the terms of the Modified BSD License.
+
+source activate ${NB_PYTHON_PREFIX}
+
+set -euxo pipefail
+
+yarn || yarn
+
+python -m pip install -vv -e . --no-build-isolation
+jupyter server extension enable nbdime
+
+mkdir -p ~/.jupyter/
+
+cp binder/jupyter_config.py ~/.jupyter/
+
+# FIXME until jupyter-server is the default on binder
+cp ${NB_PYTHON_PREFIX}/bin/jupyter-lab ${NB_PYTHON_PREFIX}/bin/jupyter-notebook
+
+jupyter troubleshoot
+jupyter notebook --show-config
+jupyter lab --show-config
+jupyter labextension list
+jupyter server extension list
