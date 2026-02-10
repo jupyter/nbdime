@@ -7,9 +7,9 @@ import os
 import json
 
 import pytest
+import requests
 from tornado import ioloop
 from tornado.httputil import url_concat
-from tornado.escape import json_encode, json_decode
 import nbformat
 
 import nbdime.webapp.nbdiffweb
@@ -73,26 +73,23 @@ def test_merge_web(filespath, unique_port, reset_log, ioloop_patch):
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
-@pytest.mark.gen_test
-def test_fetch_diff(http_client, base_url, nbdime_base_url):
+def test_fetch_diff(web_server, nbdime_base_url):
     url = url_concat(
-        base_url + nbdime_base_url + '/diff',
+        web_server + nbdime_base_url + '/diff',
         dict(base=diff_a, remote=diff_b))
-    response = yield http_client.fetch(url)
-    assert response.code == 200
+    response = requests.get(url)
+    assert response.status_code == 200
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
-@pytest.mark.gen_test
-def test_api_diff(http_client, base_url, nbdime_base_url, diff_validator, filespath, auth_header):
+def test_api_diff(web_server, nbdime_base_url, diff_validator, filespath, auth_header):
     post_data = dict(base=diff_a, remote=diff_b)
-    body = json_encode(post_data)
 
-    url = base_url + nbdime_base_url + '/api/diff'
-    response = yield http_client.fetch(url, method='POST', headers=auth_header, body=body)
-    assert response.code == 200
+    url = web_server + nbdime_base_url + '/api/diff'
+    response = requests.post(url, json=post_data, headers=auth_header)
+    assert response.status_code == 200
     # Check that response is sane:
-    data = json_decode(response.body)
+    data = response.json()
     # Check that base is as expected:
     expected_base = nbformat.read(os.path.join(filespath, diff_a), as_version=4)
     assert json.dumps(data['base'], sort_keys=True) == json.dumps(expected_base, sort_keys=True)
@@ -101,26 +98,23 @@ def test_api_diff(http_client, base_url, nbdime_base_url, diff_validator, filesp
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
-@pytest.mark.gen_test
-def test_fetch_merge(http_client, base_url, nbdime_base_url):
+def test_fetch_merge(web_server, nbdime_base_url):
     url = url_concat(
-        base_url + nbdime_base_url + '/merge',
+        web_server + nbdime_base_url + '/merge',
         dict(base=merge_a, local=merge_b, remote=merge_c))
-    response = yield http_client.fetch(url)
-    assert response.code == 200
+    response = requests.get(url)
+    assert response.status_code == 200
 
 
 @pytest.mark.timeout(timeout=WEB_TEST_TIMEOUT)
-@pytest.mark.gen_test
-def test_api_merge(http_client, base_url, nbdime_base_url, merge_validator, filespath, auth_header):
+def test_api_merge(web_server, nbdime_base_url, merge_validator, filespath, auth_header):
     post_data = dict(base=merge_a, local=merge_b, remote=merge_c)
-    body = json_encode(post_data)
 
-    url = base_url + nbdime_base_url + '/api/merge'
-    response = yield http_client.fetch(url, method='POST', headers=auth_header, body=body)
-    assert response.code == 200
+    url = web_server + nbdime_base_url + '/api/merge'
+    response = requests.post(url, json=post_data, headers=auth_header)
+    assert response.status_code == 200
     # Check that response is sane:
-    data = json_decode(response.body)
+    data = response.json()
     # Check that base is as expected:
     expected_base = nbformat.read(os.path.join(filespath, merge_a), as_version=4)
     assert json.dumps(data['base'], sort_keys=True) == json.dumps(expected_base, sort_keys=True)

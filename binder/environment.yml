@@ -11,7 +11,5 @@ dependencies:
   - hatchling >=1.5.0
   - hatch-jupyter-builder >=0.3.2
   - hatch-nodejs-version
-  # setuptools 82 removed pkg_resources which is needed by pytest_tornado
-  - setuptools < 82.0.0
   # dependencies
   - jupyter_server >=2.0.0
