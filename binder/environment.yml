@@ -1,0 +1,15 @@
+name: example-environment
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - jupyterlab >=4.0.0
+  - nodejs >=25,<26
+  - python >=3.14
+  - yarn >=3,<4
+  # build
+  - hatchling >=1.5.0
+  - hatch-jupyter-builder >=0.3.2
+  - hatch-nodejs-version
+  # dependencies
+  - jupyter_server >=2.0.0

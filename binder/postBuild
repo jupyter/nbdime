@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# perform a development install of nbdime
+#
+#   On Binder, this will run _after_ the environment has been fully created from
+#   the environment.yml in this directory.
+#
+#   This script should also run locally on Linux/MacOS:
+#
+#       bash binder/postBuild
+
+set -euox pipefail
+
+# verify the environment is self-consistent before even starting
+pip check
+
+# install the labextension
+pip install -e .
+jupyter labextension develop --overwrite .
+jupyter server extension enable nbdime
+
+#
+mkdir -p ~/.jupyter/
+
+cp binder/jupyter_config.py ~/.jupyter/
+
+# verify the extension didn't break anything
+pip check
+
+# list the extensions
+jupyter troubleshoot
+jupyter notebook --show-config
+jupyter lab --show-config
+jupyter server extension list
+jupyter labextension list
+
+
+echo ""
+echo "JupyterLab with nbdime is ready to run with:"
+echo ""
+echo "    jupyter lab"
+echo ""

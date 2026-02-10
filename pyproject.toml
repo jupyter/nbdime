@@ -71,7 +71,6 @@ test = [
     "pytest>=6.0",
     "pytest-cov",
     "pytest-timeout",
-    "pytest-tornado",
     "jupyter_server[test]",
     "jsonschema",
     "mock",
