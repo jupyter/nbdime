@@ -23,9 +23,6 @@ classifiers = [
     "License :: OSI Approved :: BSD License",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.6",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -44,7 +41,6 @@ dependencies = [
     "requests",
     "GitPython!=2.1.4,!=2.1.5,!=2.1.6 ", # For difftool taking git refs
     "jupyter_server",
-    "jupyter_server_mathjax>=0.2.2",
     "jinja2>=2.9",
 ]
 dynamic = ["version"]
@@ -75,7 +71,6 @@ test = [
     "pytest>=6.0",
     "pytest-cov",
     "pytest-timeout",
-    "pytest-tornado",
     "jupyter_server[test]",
     "jsonschema",
     "mock",
