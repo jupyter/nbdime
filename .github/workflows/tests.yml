@@ -122,6 +122,7 @@ jobs:
         python -m pip install jupyterlab~=3.0
         python -m pip install --upgrade --upgrade-strategy=eager ".[test]"
         python -m pip install jupyter_server${{ matrix.jupyter_server-version }}
+        python -m pip install 'setuptools<82'
     - name: Test with pytest (Linux)
       if: startsWith(matrix.os, 'ubuntu')
       run: |
