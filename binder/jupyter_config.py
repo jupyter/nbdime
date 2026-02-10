@@ -5,5 +5,3 @@ import logging
 c.ServerApp.log_level = logging.DEBUG
 
 c.ContentsManager.allow_hidden = True
-# Use advance file ID service for out of band rename support
-c.FileIdExtension.file_id_manager_class = "jupyter_server_fileid.manager.LocalFileIdManager"

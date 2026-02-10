@@ -16,9 +16,6 @@ mkdir -p ~/.jupyter/
 
 cp binder/jupyter_config.py ~/.jupyter/
 
-# FIXME until jupyter-server is the default on binder
-cp ${NB_PYTHON_PREFIX}/bin/jupyter-lab ${NB_PYTHON_PREFIX}/bin/jupyter-notebook
-
 jupyter troubleshoot
 jupyter notebook --show-config
 jupyter lab --show-config
