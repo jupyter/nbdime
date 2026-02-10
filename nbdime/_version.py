@@ -8,7 +8,7 @@ VersionInfo = namedtuple("VersionInfo", ["major", "minor", "micro", "releaseleve
 
 _specifier_ = {"a": "alpha", "b": "beta", "rc": "candidate", "": "final"}
 
-__version__ = "4.0.3"
+__version__ = "4.0.4"
 
 parser = re.compile(
     r"^(?P<major>\d+)\.(?P<minor>\d+)\.(?P<micro>\d+)((?P<releaselevel>[A-z]+)(?P<serial>\d+))?$"
