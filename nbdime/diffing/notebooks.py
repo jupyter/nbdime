@@ -14,6 +14,7 @@ import operator
 import re
 import copy
 from functools import lru_cache
+from typing import Union
 
 from ..diff_format import MappingDiffBuilder, DiffOp
 from ..utils import defaultdict2
@@ -21,7 +22,7 @@ from ..utils import defaultdict2
 from .config import DiffConfig
 from .generic import (
     diff, diff_sequence_multilevel, compare_strings_approximate,
-    diff_string_lines,
+    diff_string_lines, get_text_similarity_options,
 )
 
 __all__ = ["diff_notebooks"]
@@ -37,6 +38,7 @@ re_pointer = re.compile(r"0x[a-f0-9]{8,16}", re.IGNORECASE)
 
 TEXT_MIMEDATA_MAX_COMPARE_LENGTH = 10000
 STREAM_MAX_COMPARE_LENGTH = 1000
+MIN_MATCH_LENGTH = 5
 
 
 # List of mimes we can diff recursively
@@ -55,40 +57,39 @@ def _is_base64(test_string, min_len=64):
     return _base64.match(''.join(test_string.splitlines()))
 
 
-# TODO: Maybe cleaner to make the split between strict/approximate
-#       an argument instead of separate functions.
+def _prepare_text_for_similarity(value: Union[str, list[str]], ignore_whitespace_lines: bool) -> str:
+    """Normalize text for approximate comparison, stripping ignorable parts"""
+    if isinstance(value, list):
+        value = "".join(value)
+    if ignore_whitespace_lines:
+        lines = value.splitlines(True)
+        value = "".join(line for line in lines if line.strip())
+    return value
 
 
 @lru_cache(maxsize=1024, typed=False)
 def compare_text_approximate(x, y, maxlen=None):
-    # Fast cutoff when one is empty
-    if bool(x) != bool(y):
-        return False
+    settings = get_text_similarity_options()
 
-    if isinstance(x, list):
-        x = "".join(x)
-    if isinstance(y, list):
-        y = "".join(y)
+    x_norm = _prepare_text_for_similarity(x, settings["ignore_whitespace_lines"])
+    y_norm = _prepare_text_for_similarity(y, settings["ignore_whitespace_lines"])
 
-    # TODO: Review whether this is wanted.
-    #       The motivation is to align tiny
-    #       strings in outputs such as a single number.
-    # Allow aligning short strings without comparison
-    nx = len(x)
-    ny = len(y)
-    shortlen = 10  # TODO: Add this to configuration framework
-    if nx < shortlen and ny < shortlen:
-        return True
+    max_len = max(len(x_norm), len(y_norm))
+    min_match_length = min(MIN_MATCH_LENGTH, max_len - 1)
 
-    return compare_strings_approximate(x, y, threshold=0.7, maxlen=maxlen)
+    return compare_strings_approximate(
+        x, y,
+        threshold=settings["threshold"],
+        min_divergence_to_be_unsimilar=10,
+        min_match_length_to_be_similar=min_match_length,
+        maxlen=maxlen,
+    )
 
 
 def compare_text_strict(x, y, maxlen=None):
     # TODO: Doesn't have to be 100% equal here?
-    if isinstance(x, list):
-        x = "".join(x)
-    if isinstance(y, list):
-        y = "".join(y)
+    x = _prepare_text_for_similarity(x, False)
+    y = _prepare_text_for_similarity(y, False)
     if len(x) == len(y) and x == y:
         return True
     return compare_strings_approximate(x, y, threshold=0.95, maxlen=maxlen)

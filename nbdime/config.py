@@ -3,7 +3,7 @@ import os
 
 from jupyter_core.paths import jupyter_config_path
 
-from traitlets import Unicode, Enum, Integer, Bool, HasTraits, Dict, TraitError
+from traitlets import Unicode, Enum, Integer, Bool, Float, HasTraits, Dict, TraitError
 from traitlets.config.loader import JSONFileConfigLoader, ConfigFileNotFound
 
 from .merging.notebooks import (
@@ -219,6 +219,19 @@ class _Diffing(_Ignorables):
         False,
         help=("whether to pass the --color-words flag to any internal calls "
               "to git diff"),
+    ).tag(config=True)
+
+    text_similarity_threshold = Float(
+        0.3,
+        min=0.0,
+        max=1.0,
+        help=("minimum ratio (0-1) for considering two text blocks similar "
+              "when aligning cells and outputs"),
+    ).tag(config=True)
+
+    text_similarity_ignore_whitespace = Bool(
+        True,
+        help=("ignore whitespace-only lines when estimating text similarity"),
     ).tag(config=True)
 
 
