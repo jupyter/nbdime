@@ -14,6 +14,7 @@ import operator
 import re
 import copy
 from functools import lru_cache
+from typing import Union
 
 from ..diff_format import MappingDiffBuilder, DiffOp
 from ..utils import defaultdict2
@@ -56,7 +57,8 @@ def _is_base64(test_string, min_len=64):
     return _base64.match(''.join(test_string.splitlines()))
 
 
-def _prepare_text_for_similarity(value, ignore_whitespace_lines):
+def _prepare_text_for_similarity(value: Union[str, list[str]], ignore_whitespace_lines: bool) -> str:
+    """Normalize text for approximate comparison, stripping ignorable parts"""
     if isinstance(value, list):
         value = "".join(value)
     if ignore_whitespace_lines:
@@ -68,18 +70,16 @@ def _prepare_text_for_similarity(value, ignore_whitespace_lines):
 @lru_cache(maxsize=1024, typed=False)
 def compare_text_approximate(x, y, maxlen=None):
     settings = get_text_similarity_options()
-    threshold = settings["threshold"]
-    ignore_whitespace_lines = settings["ignore_whitespace_lines"]
 
-    x_norm = _prepare_text_for_similarity(x, ignore_whitespace_lines)
-    y_norm = _prepare_text_for_similarity(y, ignore_whitespace_lines)
+    x_norm = _prepare_text_for_similarity(x, settings["ignore_whitespace_lines"])
+    y_norm = _prepare_text_for_similarity(y, settings["ignore_whitespace_lines"])
 
     max_len = max(len(x_norm), len(y_norm))
     min_match_length = min(MIN_MATCH_LENGTH, max_len - 1)
 
     return compare_strings_approximate(
         x, y,
-        threshold=threshold,
+        threshold=settings["threshold"],
         min_divergence_to_be_unsimilar=10,
         min_match_length_to_be_similar=min_match_length,
         maxlen=maxlen,
