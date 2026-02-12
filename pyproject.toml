@@ -73,7 +73,6 @@ test = [
     "pytest-timeout",
     "jupyter_server[test]",
     "jsonschema",
-    "mock",
     "notebook",
     "requests",
     "tabulate",
