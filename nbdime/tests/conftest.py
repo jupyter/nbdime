@@ -10,6 +10,7 @@ import json
 import glob
 import io
 import re
+import threading
 from collections.abc import Sequence
 from subprocess import Popen, TimeoutExpired
 import sys
@@ -220,18 +221,32 @@ def nbdime_base_url():
 
 
 @fixture
-def app(nbdime_base_url, filespath):
-    """This is a fixture used by the pytest-tornado plugin.
-
-    It is indirectly called by all tests that use the `gen_test`
-    test mark.
-    """
+def web_server(nbdime_base_url, filespath):
+    """Start a Tornado web server in a background thread and yield the base URL."""
+    from tornado import ioloop
     from nbdime.webapp.nbdimeserver import init_app
-    return init_app(
+
+    port_holder = {}
+
+    def on_port(port):
+        port_holder['port'] = port
+
+    app, server = init_app(
+        on_port=on_port,
         base_url=nbdime_base_url,
         port=0,
         cwd=filespath,
-    )[0]
+    )
+    loop = ioloop.IOLoop.current()
+    thread = threading.Thread(target=loop.start, daemon=True)
+    thread.start()
+
+    base_url = 'http://localhost:%d' % port_holder['port']
+    yield base_url
+
+    server.stop()
+    loop.add_callback(loop.stop)
+    thread.join(timeout=5)
 
 
 @fixture

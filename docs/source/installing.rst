@@ -76,7 +76,7 @@ and use :command:`pip` to install::
 
     git clone https://github.com/jupyter/nbdime
     cd nbdime
-    pip install -e .
+    pip install -e '.[test,docs]'
 
 
 Installing Jupyter extensions
