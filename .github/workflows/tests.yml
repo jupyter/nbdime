@@ -96,8 +96,6 @@ jobs:
             jupyter_server-version: '<2'
           - python-version: '3.11'
             jupyter_server-version: '>=2'
-          - python-version: '3.8'
-            os: windows-latest
           - python-version: '3.11'
             os: windows-latest
 

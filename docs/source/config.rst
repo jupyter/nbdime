@@ -34,6 +34,8 @@ The current output of `nbdime --config` is:
       Ignore: {}
       attachments: null
       color_words: false
+      text_similarity_ignore_whitespace: true
+      text_similarity_threshold: 0.3
       details: null
       metadata: null
       outputs: null
@@ -45,6 +47,8 @@ The current output of `nbdime --config` is:
       base_url: "/"
       browser: null
       color_words: false
+      text_similarity_ignore_whitespace: true
+      text_similarity_threshold: 0.3
       details: null
       ip: "127.0.0.1"
       metadata: null
@@ -58,6 +62,8 @@ The current output of `nbdime --config` is:
       Ignore: {}
       attachments: null
       color_words: false
+      text_similarity_ignore_whitespace: true
+      text_similarity_threshold: 0.3
       details: null
       ignore_transients: true
       input_strategy: null
@@ -73,6 +79,8 @@ The current output of `nbdime --config` is:
       base_url: "/"
       browser: null
       color_words: false
+      text_similarity_ignore_whitespace: true
+      text_similarity_threshold: 0.3
       details: null
       ignore_transients: true
       input_strategy: null
@@ -106,6 +114,8 @@ The current output of `nbdime --config` is:
       Ignore: {}
       attachments: null
       color_words: false
+      text_similarity_ignore_whitespace: true
+      text_similarity_threshold: 0.3
       details: null
       metadata: null
       outputs: null
@@ -115,6 +125,8 @@ The current output of `nbdime --config` is:
       Ignore: {}
       attachments: null
       color_words: false
+      text_similarity_ignore_whitespace: true
+      text_similarity_threshold: 0.3
       details: null
       metadata: null
       outputs: null
@@ -126,6 +138,8 @@ The current output of `nbdime --config` is:
       base_url: "/"
       browser: null
       color_words: false
+      text_similarity_ignore_whitespace: true
+      text_similarity_threshold: 0.3
       details: null
       ip: "127.0.0.1"
       metadata: null
@@ -139,6 +153,8 @@ The current output of `nbdime --config` is:
       Ignore: {}
       attachments: null
       color_words: false
+      text_similarity_ignore_whitespace: true
+      text_similarity_threshold: 0.3
       details: null
       ignore_transients: true
       input_strategy: null
@@ -154,6 +170,8 @@ The current output of `nbdime --config` is:
       base_url: "/"
       browser: null
       color_words: false
+      text_similarity_ignore_whitespace: true
+      text_similarity_threshold: 0.3
       details: null
       ignore_transients: true
       input_strategy: null

@@ -195,7 +195,6 @@ def test_nbdiff_app_ignore_details(filespath, tmpdir, reset_notebook_diff):
     assert diff[0]['key'] == 'outputs'
     for subdiff in diff[0]['diff']:
         assert subdiff['op'] != 'patch'
-
     assert diff[1]['key'] == 'source'
 
 
