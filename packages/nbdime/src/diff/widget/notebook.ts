@@ -6,6 +6,8 @@ import { Panel } from '@lumino/widgets';
 
 import type { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
+import { LazyDisplayLinkedListCell, LinkedListCell } from './linked-cells';
+
 import { CellDiffWidget } from './cell';
 
 import {
@@ -20,7 +22,7 @@ import { DiffPanel } from '../../common/basepanel';
 
 import type { IMimeDiffWidgetOptions } from '../../common/interfaces';
 
-import type { NotebookDiffModel } from '../model';
+import type { NotebookDiffModel, CellDiffModel } from '../model';
 
 const NBDIFF_CLASS = 'jp-Notebook-diff';
 
@@ -35,6 +37,7 @@ export class NotebookDiffWidget extends DiffPanel<NotebookDiffModel> {
     super(others);
     this._rendermime = rendermime;
     this.addClass(NBDIFF_CLASS);
+    this.previousCell = null;
   }
 
   /**
@@ -43,8 +46,7 @@ export class NotebookDiffWidget extends DiffPanel<NotebookDiffModel> {
    * Separated from constructor to allow 'live' adding of widgets
    */
   init(): Promise<void> {
-    let model = this._model;
-    let rendermime = this._rendermime;
+    const model = this._model;
 
     let work = Promise.resolve();
     work = work.then(() => {
@@ -59,44 +61,10 @@ export class NotebookDiffWidget extends DiffPanel<NotebookDiffModel> {
         );
       }
     });
-    for (let chunk of model.chunkedCells) {
+    for (const chunk of model.chunkedCells) {
       work = work.then(() => {
         return new Promise<void>(resolve => {
-          if (chunk.length === 1 && !(chunk[0].added || chunk[0].deleted)) {
-            this.addWidget(
-              new CellDiffWidget({
-                model: chunk[0],
-                rendermime,
-                mimetype: model.mimetype,
-                editorFactory: this._editorFactory,
-                translator: this._translator,
-                ...this._viewOptions,
-              }),
-            );
-          } else {
-            let chunkPanel = new Panel();
-            chunkPanel.addClass(CHUNK_PANEL_CLASS);
-            let addedPanel = new Panel();
-            addedPanel.addClass(ADDED_CHUNK_PANEL_CLASS);
-            let removedPanel = new Panel();
-            removedPanel.addClass(REMOVED_CHUNK_PANEL_CLASS);
-            for (let cell of chunk) {
-              let target = cell.deleted ? removedPanel : addedPanel;
-              target.addWidget(
-                new CellDiffWidget({
-                  model: cell,
-                  rendermime,
-                  mimetype: model.mimetype,
-                  editorFactory: this._editorFactory,
-                  translator: this._translator,
-                  ...this._viewOptions,
-                }),
-              );
-            }
-            chunkPanel.addWidget(addedPanel);
-            chunkPanel.addWidget(removedPanel);
-            this.addWidget(chunkPanel);
-          }
+          this.addDiffChunk(chunk);
           // This limits us to drawing 60 cells per second, which shouldn't
           // be a problem...
           requestAnimationFrame(() => {
@@ -106,6 +74,59 @@ export class NotebookDiffWidget extends DiffPanel<NotebookDiffModel> {
       });
     }
     return work;
+  }
+
+  private addDiffChunk(chunk: CellDiffModel[]): void {
+    if (chunk.length === 1 && !(chunk[0].added || chunk[0].deleted)) {
+      this.addWidget(this.addCellPanel(chunk[0]));
+    } else {
+      this.addChunkPanel(chunk);
+    }
+  }
+
+  private addChunkPanel(chunk: CellDiffModel[]): void {
+    let chunkPanel = new Panel();
+    chunkPanel.addClass(CHUNK_PANEL_CLASS);
+    let addedPanel = new Panel();
+    addedPanel.addClass(ADDED_CHUNK_PANEL_CLASS);
+    let removedPanel = new Panel();
+    removedPanel.addClass(REMOVED_CHUNK_PANEL_CLASS);
+    for (let cell of chunk) {
+      const target = cell.deleted ? removedPanel : addedPanel;
+      target.addWidget(this.addCellPanel(cell));
+    }
+    chunkPanel.addWidget(addedPanel);
+    chunkPanel.addWidget(removedPanel);
+    this.addWidget(chunkPanel);
+  }
+
+  private addCellPanel(
+    cell: CellDiffModel,
+  ): LinkedListCell | LazyDisplayLinkedListCell {
+    let linkedCell: LinkedListCell | LazyDisplayLinkedListCell;
+    if (cell.unchanged) {
+      linkedCell = new LazyDisplayLinkedListCell(() =>
+        this.creatCellWidget(cell),
+      );
+    } else {
+      linkedCell = new LinkedListCell(() => this.creatCellWidget(cell));
+    }
+    if (this.previousCell) {
+      linkedCell.prev = this.previousCell;
+    }
+    this.previousCell = linkedCell;
+    return linkedCell;
+  }
+
+  creatCellWidget(cell: CellDiffModel): CellDiffWidget {
+    return new CellDiffWidget({
+      model: cell,
+      rendermime: this._rendermime,
+      mimetype: this._model.mimetype,
+      editorFactory: this._editorFactory,
+      translator: this._translator,
+      ...this._viewOptions,
+    });
   }
 
   /**
@@ -119,4 +140,5 @@ export class NotebookDiffWidget extends DiffPanel<NotebookDiffModel> {
   }
 
   private _rendermime: IRenderMimeRegistry;
+  private previousCell: LinkedListCell | null;
 }
