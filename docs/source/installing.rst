@@ -31,7 +31,7 @@ For manual registration see :doc:`extensions`.
 Dependencies
 ------------
 
-nbdime requires Python version 3.6 or higher.
+nbdime requires Python version 3.10 or higher.
 
 nbdime depends on the following Python packages,
 which will be installed by :command:`pip`:

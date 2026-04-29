@@ -483,15 +483,10 @@ def server_extension_app(tmpdir_factory, request):
     cmd = request.param
 
     def _get_version(pkg):
-        v = None
-        try:
-            from importlib.metadata import version
-            v = version('jupyter_server')
-        except ImportError:
-            import pkg_resources
-            v = pkg_resources.get_distribution('jupyter_server').version
-        from packaging import version
-        return version.parse(v)
+        from importlib.metadata import version
+        v = version('jupyter_server')
+        from packaging import version as _v
+        return _v.parse(v)
 
     if cmd == 'notebook':
         token_config_location = 'NotebookApp'
