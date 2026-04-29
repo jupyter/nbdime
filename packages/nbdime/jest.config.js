@@ -1,7 +1,9 @@
 const esModules = [
   '@jupyterlab',
   '@codemirror',
-  '@jupyter/ydoc',
+  '@jupyter',
+  '@microsoft',
+  'exenv-es6',
   'lib0',
   'nanoid',
   'vscode-ws-jsonrpc',
