@@ -53,10 +53,10 @@ jobs:
       run: |
         python -m pip install --upgrade pip
 
-    - name: Use Node.js 18.x
+    - name: Use Node.js 24.x
       uses: actions/setup-node@v6
       with:
-        node-version: 18.x
+        node-version: 24.x
     - name: Get npm cache directory
       id: npm-cache-dir
       run: |
@@ -185,7 +185,7 @@ jobs:
     - name: Install node
       uses: actions/setup-node@v6
       with:
-        node-version: '18.x'
+        node-version: '24.x'
     - name: Install Python '3.11'
       uses: actions/setup-python@v6
       with:

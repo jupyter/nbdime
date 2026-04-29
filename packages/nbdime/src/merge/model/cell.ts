@@ -38,7 +38,7 @@ import {
   pushPatchDecision,
   popPath,
   applyDecisions,
-  Action,
+  type Action,
 } from '../../merge/decisions';
 
 import { patch } from '../../patch';

@@ -8,7 +8,7 @@ import type { IDiffEntry, IDiffArrayEntry } from '../diffentries';
 
 import { getSubDiffByKey } from '../util';
 
-import { IStringDiffModel, createPatchStringDiffModel } from './string';
+import { type IStringDiffModel, createPatchStringDiffModel } from './string';
 
 import {
   CellDiffModel,

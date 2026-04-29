@@ -13,7 +13,7 @@ import type { IDiffEntry, IDiffArrayEntry, IDiffReplace } from '../diffentries';
 import { getSubDiffByKey, getDiffEntryByKey } from '../util';
 
 import {
-  IStringDiffModel,
+  type IStringDiffModel,
   StringDiffModel,
   createDirectStringDiffModel,
   createPatchStringDiffModel,

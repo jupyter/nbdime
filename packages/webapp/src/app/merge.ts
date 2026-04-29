@@ -6,7 +6,7 @@ import * as alertify from 'alertify.js';
 
 import type * as nbformat from '@jupyterlab/nbformat';
 
-import { JSONExt, JSONObject } from '@lumino/coreutils';
+import { JSONExt, type JSONObject } from '@lumino/coreutils';
 
 import { Panel, Widget } from '@lumino/widgets';
 

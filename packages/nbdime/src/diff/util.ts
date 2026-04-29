@@ -10,9 +10,9 @@ import {
 } from '../common/util';
 
 import {
-  IDiffEntry,
-  IDiffArrayEntry,
-  IDiffPatch,
+  type IDiffEntry,
+  type IDiffArrayEntry,
+  type IDiffPatch,
   opAddRange,
   opRemoveRange,
   validateSequenceOp,

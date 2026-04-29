@@ -3,11 +3,11 @@
 'use strict';
 
 import {
-  JSONValue,
-  JSONObject,
+  type JSONValue,
+  type JSONObject,
   JSONExt,
-  JSONArray,
-  PartialJSONValue,
+  type JSONArray,
+  type PartialJSONValue,
 } from '@lumino/coreutils';
 
 import { Signal } from '@lumino/signaling';
@@ -21,7 +21,7 @@ import { patch } from '../../patch';
 import type { IDiffModel } from './common';
 
 import {
-  IStringDiffModel,
+  type IStringDiffModel,
   createDirectStringDiffModel,
   createPatchStringDiffModel,
 } from './string';

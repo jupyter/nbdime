@@ -9,7 +9,7 @@ import type { IRenderMimeRegistry, IOutputModel } from '@jupyterlab/rendermime';
 import {
   OutputArea,
   OutputAreaModel,
-  IOutputAreaModel,
+  type IOutputAreaModel,
 } from '@jupyterlab/outputarea';
 
 import type { Drag } from '@lumino/dragdrop';

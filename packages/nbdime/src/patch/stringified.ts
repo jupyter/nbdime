@@ -13,9 +13,9 @@ import { valueIn, repeatString } from '../common/util';
 import { JSON_INDENT, flattenStringDiff } from '../diff/util';
 
 import {
-  IDiffEntry,
-  IDiffArrayEntry,
-  IDiffObjectEntry,
+  type IDiffEntry,
+  type IDiffArrayEntry,
+  type IDiffObjectEntry,
   validateObjectOp,
   validateSequenceOp,
 } from '../diff/diffentries';
@@ -67,6 +67,9 @@ export function stringify(
   indentFirst: boolean = true,
 ): string {
   let ret = stableStringify.default(values, { space: JSON_INDENT });
+  if (ret === undefined) {
+    throw new TypeError('Cannot stringify undefined JSON value.');
+  }
   if (level) {
     ret = _indent(ret, level, indentFirst);
   }

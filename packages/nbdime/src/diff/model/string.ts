@@ -5,11 +5,11 @@
 import * as nbformat from '@jupyterlab/nbformat';
 
 import {
-  JSONObject,
-  JSONArray,
+  type JSONObject,
+  type JSONArray,
   JSONExt,
-  JSONValue,
-  PartialJSONObject,
+  type JSONValue,
+  type PartialJSONObject,
 } from '@lumino/coreutils';
 
 import type { IDiffEntry } from '../diffentries';

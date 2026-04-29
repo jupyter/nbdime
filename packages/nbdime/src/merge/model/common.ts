@@ -6,7 +6,7 @@ import type { IDiffEntry } from '../../diff/diffentries';
 
 import { DiffRangePos, raw2Pos } from '../../diff/range';
 
-import { StringDiffModel, IStringDiffModel } from '../../diff/model';
+import { StringDiffModel, type IStringDiffModel } from '../../diff/model';
 
 import {
   MergeDecision,

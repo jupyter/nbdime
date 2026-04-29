@@ -8,14 +8,14 @@
 'use strict';
 
 import {
-  IDiffEntry,
-  IDiffObjectEntry,
-  IDiffPatch,
+  type IDiffEntry,
+  type IDiffObjectEntry,
+  type IDiffPatch,
   opRemove,
   opReplace,
   opRemoveRange,
   opPatch,
-  DiffCollection,
+  type DiffCollection,
 } from '../diff/diffentries';
 
 import { getSubDiffByKey, stripSource } from '../diff/util';

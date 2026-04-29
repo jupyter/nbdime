@@ -8,7 +8,7 @@
 'use strict';
 
 import {
-  Extension,
+  type Extension,
   StateEffect,
   StateField,
   ChangeDesc,
@@ -20,7 +20,7 @@ import {
 import {
   EditorView,
   Decoration,
-  DecorationSet,
+  type DecorationSet,
   WidgetType,
   GutterMarker,
   gutter,
@@ -43,11 +43,11 @@ import { DecisionStringDiffModel } from '../merge/model';
 
 import { offsetToPos, posToOffset, type DiffRangePos } from '../diff/range';
 
-import { ChunkSource, Chunk, lineToNormalChunks } from '../chunking';
+import { type ChunkSource, Chunk, lineToNormalChunks } from '../chunking';
 
 import {
   EditorWidget,
-  IEditorWidgetOptions,
+  type IEditorWidgetOptions,
   createEditorFactory,
 } from './editor';
 

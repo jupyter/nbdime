@@ -17,6 +17,6 @@
     "noImplicitReturns": true,
     "resolveJsonModule": true,
     "strictPropertyInitialization": false,
-    "importsNotUsedAsValues": "error"
+    "verbatimModuleSyntax": true
   }
 }

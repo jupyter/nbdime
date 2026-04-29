@@ -13,7 +13,7 @@ import { each, find, toArray } from '@lumino/algorithm';
 import {
   IRenderMimeRegistry,
   OutputModel,
-  IRenderMime,
+  type IRenderMime,
 } from '@jupyterlab/rendermime';
 
 import { DiffPanel } from '../../common/basepanel';

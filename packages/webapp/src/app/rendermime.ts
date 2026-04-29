@@ -5,7 +5,7 @@
 import { URLExt } from '@jupyterlab/coreutils';
 
 import {
-  IRenderMime,
+  type IRenderMime,
   standardRendererFactories,
   markdownRendererFactory,
 } from '@jupyterlab/rendermime';

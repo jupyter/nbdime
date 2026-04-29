@@ -20,7 +20,7 @@ import type {
 } from '../../diff/diffentries';
 
 import {
-  IMergeDecision,
+  type IMergeDecision,
   MergeDecision,
   resolveCommonPaths,
   filterDecisions,
