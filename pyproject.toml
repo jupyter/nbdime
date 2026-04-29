@@ -131,7 +131,7 @@ version-cmd = "python scripts/bump_version.py --force"
 
 [tool.jupyter-releaser.hooks]
 before-bump-version = [
-    "npm install"
+    "npm ci"
 ]
 before-build-npm = [
     "python -m pip install 'jupyterlab>=4.0.0,<5'",
