@@ -1,32 +1,35 @@
 global.fetch = require('jest-fetch-mock');
-//global.crypto = require('crypto');
 
-global.DragEvent = class DragEvent {};
+const noop = () => {};
 
-// jsdom does not implement these; @jupyter/web-components and
-// @microsoft/fast-foundation rely on them.
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: query => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: () => {},
-    removeListener: () => {},
-    addEventListener: () => {},
-    removeEventListener: () => {},
-    dispatchEvent: () => false,
-  }),
+const defineWindowProperty = (name, value) => {
+  Object.defineProperty(window, name, {
+    configurable: true,
+    writable: true,
+    value,
+  });
+};
+
+const createMediaQueryList = query => ({
+  matches: false,
+  media: query,
+  onchange: null,
+  addListener: noop,
+  removeListener: noop,
+  addEventListener: noop,
+  removeEventListener: noop,
+  dispatchEvent: () => false,
 });
 
-global.ResizeObserver = class ResizeObserver {
+class NoopObserver {
   observe() {}
   unobserve() {}
   disconnect() {}
-};
+}
 
-global.IntersectionObserver = class IntersectionObserver {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
-};
+// jsdom does not implement these browser APIs, but JupyterLab UI dependencies
+// expect them to exist.
+defineWindowProperty('DragEvent', class DragEvent {});
+defineWindowProperty('matchMedia', createMediaQueryList);
+defineWindowProperty('ResizeObserver', NoopObserver);
+defineWindowProperty('IntersectionObserver', NoopObserver);
