@@ -119,7 +119,7 @@ class Web(NbdimeConfigurable):
         '127.0.0.1',
         help="specify the interface to listen to for the web server. "
         "NOTE: Setting this to anything other than 127.0.0.1/localhost "
-        "might comprimise the security of your computer. Use with care!",
+        "might compromise the security of your computer. Use with care!",
     ).tag(config=True)
 
     base_url = Unicode(
