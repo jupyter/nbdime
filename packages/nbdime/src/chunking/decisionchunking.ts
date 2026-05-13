@@ -1,7 +1,7 @@
 import {
-  IDiffEntry,
-  DiffCollection,
-  IDiffArrayEntry,
+  type IDiffEntry,
+  type DiffCollection,
+  type IDiffArrayEntry,
   opRemoveRange,
 } from '../diff/diffentries';
 

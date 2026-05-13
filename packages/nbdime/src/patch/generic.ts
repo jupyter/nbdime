@@ -3,21 +3,21 @@
 'use strict';
 
 import {
-  JSONValue,
-  JSONArray,
+  type JSONValue,
+  type JSONArray,
   JSONExt,
-  JSONObject,
-  PartialJSONArray,
-  PartialJSONObject,
-  PartialJSONValue,
+  type JSONObject,
+  type PartialJSONArray,
+  type PartialJSONObject,
+  type PartialJSONValue,
 } from '@lumino/coreutils';
 
 import { deepCopy } from '../common/util';
 
 import {
-  IDiffEntry,
-  IDiffArrayEntry,
-  IDiffObjectEntry,
+  type IDiffEntry,
+  type IDiffArrayEntry,
+  type IDiffObjectEntry,
   validateObjectOp,
   validateSequenceOp,
 } from '../diff/diffentries';

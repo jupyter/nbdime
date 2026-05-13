@@ -6,7 +6,7 @@ import { nullTranslator, type ITranslator } from '@jupyterlab/translation';
 
 import { Panel, Widget } from '@lumino/widgets';
 
-import { Signal, ISignal } from '@lumino/signaling';
+import { Signal, type ISignal } from '@lumino/signaling';
 
 import { FriendlyDragDrop, DragDropPanel } from '../../common/dragpanel';
 

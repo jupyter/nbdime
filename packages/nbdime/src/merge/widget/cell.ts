@@ -28,9 +28,9 @@ import { createNbdimeMergeView, MergeView } from '../../common/mergeview';
 import { hasEntries, splitLines } from '../../common/util';
 
 import {
-  IStringDiffModel,
+  type IStringDiffModel,
   StringDiffModel,
-  IDiffModel,
+  type IDiffModel,
   OutputDiffModel,
 } from '../../diff/model';
 

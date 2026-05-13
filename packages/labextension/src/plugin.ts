@@ -30,7 +30,7 @@ import { find } from '@lumino/algorithm';
 
 import type { CommandRegistry } from '@lumino/commands';
 
-import { IDisposable, DisposableDelegate } from '@lumino/disposable';
+import { type IDisposable, DisposableDelegate } from '@lumino/disposable';
 
 import { diffNotebookGit, diffNotebookCheckpoint, isNbInGit } from './actions';
 

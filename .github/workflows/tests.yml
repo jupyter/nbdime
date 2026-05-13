@@ -15,7 +15,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v6
       with:
-        python-version: 3.8
+        python-version: '3.11'
     - uses: actions/cache@v5
       with:
         path: ~/.cache/pip
@@ -42,7 +42,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v6
       with:
-        python-version: 3.8
+        python-version: '3.11'
     - uses: actions/cache@v5
       with:
         path: ~/.cache/pip
@@ -53,10 +53,10 @@ jobs:
       run: |
         python -m pip install --upgrade pip
 
-    - name: Use Node.js 18.x
+    - name: Use Node.js 24.x
       uses: actions/setup-node@v6
       with:
-        node-version: 18.x
+        node-version: 24.x
     - name: Get npm cache directory
       id: npm-cache-dir
       run: |
@@ -89,7 +89,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
+        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
         os: [ubuntu-latest]
         include:
           - python-version: '3.11'
@@ -185,7 +185,7 @@ jobs:
     - name: Install node
       uses: actions/setup-node@v6
       with:
-        node-version: '18.x'
+        node-version: '24.x'
     - name: Install Python '3.11'
       uses: actions/setup-python@v6
       with:

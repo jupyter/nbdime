@@ -6,7 +6,6 @@
 import operator
 from collections import defaultdict
 import difflib
-from typing import Optional, Union
 
 from ..diff_format import SequenceDiffBuilder, MappingDiffBuilder, validate_diff
 from ..diff_utils import count_consumed_symbols
@@ -24,7 +23,7 @@ _text_similarity_settings = {
 }
 
 
-def set_text_similarity_options(threshold: Optional[Union[int, float]]=None, ignore_whitespace_lines: Optional[bool]=None) -> None:
+def set_text_similarity_options(threshold: int | float | None = None, ignore_whitespace_lines: bool | None = None) -> None:
     """Configure defaults for approximate string comparisons.
 
     Parameters
@@ -61,7 +60,7 @@ def default_differs():
     return defaultdict(lambda: diff)
 
 
-def compare_strings_approximate(x: str, y: str, threshold: float=0.7, maxlen: Optional[int]=None, min_divergence_to_be_unsimilar: Optional[int]=None, min_match_length_to_be_similar: Optional[int]=None):
+def compare_strings_approximate(x: str, y: str, threshold: float=0.7, maxlen: int | None = None, min_divergence_to_be_unsimilar: int | None = None, min_match_length_to_be_similar: int | None = None):
     "Compare two strings with approximate heuristics."
 
     # Fast cutoff when one is empty

@@ -25,7 +25,7 @@ import { FlexPanel } from '../../upstreaming/flexpanel';
 
 import {
   CellDiffModel,
-  IDiffModel,
+  type IDiffModel,
   StringDiffModel,
   OutputDiffModel,
   ImmutableDiffModel,

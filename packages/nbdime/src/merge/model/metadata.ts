@@ -7,7 +7,7 @@ import type * as nbformat from '@jupyterlab/nbformat';
 import type { IDiffEntry } from '../../diff/diffentries';
 
 import {
-  IStringDiffModel,
+  type IStringDiffModel,
   createPatchStringDiffModel,
   createDirectStringDiffModel,
 } from '../../diff/model';
@@ -15,7 +15,7 @@ import {
 import type { MergeDecision } from '../../merge/decisions';
 
 import { ObjectMergeModel, DecisionStringDiffModel } from './common';
-import { JSONObject, JSONExt } from '@lumino/coreutils';
+import { type JSONObject, JSONExt } from '@lumino/coreutils';
 
 /**
  * Model of a merge of metadata with decisions

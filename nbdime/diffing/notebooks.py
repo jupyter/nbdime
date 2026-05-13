@@ -14,7 +14,6 @@ import operator
 import re
 import copy
 from functools import lru_cache
-from typing import Union
 
 from ..diff_format import MappingDiffBuilder, DiffOp
 from ..utils import defaultdict2
@@ -57,7 +56,7 @@ def _is_base64(test_string, min_len=64):
     return _base64.match(''.join(test_string.splitlines()))
 
 
-def _prepare_text_for_similarity(value: Union[str, list[str]], ignore_whitespace_lines: bool) -> str:
+def _prepare_text_for_similarity(value: str | list[str], ignore_whitespace_lines: bool) -> str:
     """Normalize text for approximate comparison, stripping ignorable parts"""
     if isinstance(value, list):
         value = "".join(value)

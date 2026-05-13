@@ -9,7 +9,7 @@ import type { EditorView } from '@codemirror/view';
 
 import type { Text } from '@codemirror/state';
 
-import { YFile, IYText } from '@jupyter/ydoc';
+import { YFile, type IYText } from '@jupyter/ydoc';
 
 import { CodeEditorWrapper, CodeEditor } from '@jupyterlab/codeeditor';
 
@@ -21,7 +21,7 @@ import {
   EditorThemeRegistry,
   parseMathIPython,
   ybinding,
-  IEditorFactoryOptions,
+  type IEditorFactoryOptions,
 } from '@jupyterlab/codemirror';
 
 import { nullTranslator } from '@jupyterlab/translation';
