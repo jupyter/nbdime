@@ -326,11 +326,8 @@ def asyncio_patch():
     do this as early as possible to make it a low priority and overrideable
 
     ref: https://github.com/tornadoweb/tornado/issues/2608
-
-    FIXME: if/when tornado supports the defaults in asyncio,
-            remove and bump tornado requirement for py38
     """
-    if sys.platform.startswith("win") and sys.version_info >= (3, 8):
+    if sys.platform.startswith("win"):
         import asyncio
         try:
             from asyncio import (
@@ -343,7 +340,6 @@ def asyncio_patch():
         else:
             if type(asyncio.get_event_loop_policy()) is WindowsProactorEventLoopPolicy:
                 # WindowsProactorEventLoopPolicy is not compatible with tornado 6
-                # fallback to the pre-3.8 default of Selector
                 asyncio.set_event_loop_policy(WindowsSelectorEventLoopPolicy())
 
 
