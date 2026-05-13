@@ -46,7 +46,7 @@
   "devDependencies": {
     "@babel/core": "^7.5.0",
     "@babel/preset-env": "^7.5.0",
-    "@jupyterlab/apputils": "^4.0.0",
+    "@jupyterlab/apputils": "^4.6.7",
     "@lumino/messaging": "^2.0.0",
     "@types/jest": "^29.5.14",
     "@types/node": "^18.15.0",
@@ -54,7 +54,7 @@
     "fs-extra": "^11.1.1",
     "identity-obj-proxy": "^3.0.0",
     "jest": "^29.7.0",
-    "jest-environment-jsdom": "^29.7.0",
+    "jest-environment-jsdom": "^30.4.1",
     "jest-fetch-mock": "^3.0.3",
     "rimraf": "^5.0.0",
     "ts-jest": "^29.4.9",
