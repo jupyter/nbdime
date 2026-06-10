@@ -40,7 +40,7 @@
     "style-loader": "^3.3.2",
     "ts-loader": "^9.4.2",
     "typescript": "^5.9.3",
-    "webpack": "^5.78.0",
+    "webpack": "^5.107.2",
     "webpack-cli": "^5.0.1"
   }
 }
