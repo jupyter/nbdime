@@ -10,7 +10,7 @@
 
 [![Test](https://github.com/jupyter/nbdime/actions/workflows/tests.yml/badge.svg)](https://github.com/jupyter/nbdime/actions/workflows/tests.yml)
 [![codecov.io](https://codecov.io/github/jupyter/nbdime/coverage.svg?branch=main)](https://codecov.io/github/jupyter/nbdime?branch=main)
-[![Documentation Status](https://readthedocs.org/projects/nbdime/badge/?version=latest)](http://nbdime.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/nbdime/badge/?version=latest)](https://nbdime.readthedocs.io/en/latest/?badge=latest)
 [![Google Group](https://img.shields.io/badge/-Google%20Group-lightgrey.svg)](https://groups.google.com/forum/#!forum/jupyter)
 
 `nbdime` provides tools for diffing and merging of [Jupyter Notebooks](https://jupyter-notebook.readthedocs.io).
@@ -45,7 +45,7 @@ See also description and discussion in the [Jupyter Enhancement Proposal](https:
 
 ## Contributing
 
-If you would like to contribute to the project, please read our [contributor documentation](http://jupyter.readthedocs.io/en/latest/contributor/content-contributor.html) and the [`CONTRIBUTING.md`](CONTRIBUTING.md).
+If you would like to contribute to the project, please read our [contributor documentation](https://jupyter.readthedocs.io/en/latest/contributor/content-contributor.html) and the [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Development Install
 
