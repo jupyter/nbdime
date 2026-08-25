@@ -32,7 +32,7 @@ jobs:
           python_version: '3.11'
 
       - name: Install dependencies
-        run: python -m pip install -U "jupyterlab>=4.0.0,<5"
+        run: python -m pip install -U "jupyter-builder"
 
       - name: Install extension
         run: |
