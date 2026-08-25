@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling>=1.5.0", "jupyterlab>=4.0.0,<5"]
+requires = ["hatchling>=1.5.0", "jupyter-builder"]
 build-backend = "hatchling.build"
 
 [project]
@@ -136,7 +136,7 @@ before-bump-version = [
     "npm ci"
 ]
 before-build-npm = [
-    "python -m pip install 'jupyterlab>=4.0.0,<5'",
+    "python -m pip install 'jupyter-builder'",
     "npm run build"
 ]
 

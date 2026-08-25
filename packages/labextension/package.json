@@ -31,8 +31,8 @@
   "style": "style/index.css",
   "scripts": {
     "build": "npm run build:lib:prod && npm run build:labextension",
-    "build:dev": "npm run build:lib && jupyter labextension build --development True .",
-    "build:labextension": "rimraf ../../nbdime/labextension && mkdirp ../../nbdime/labextension && jupyter labextension build .",
+    "build:dev": "npm run build:lib && jupyter-builder build --development True .",
+    "build:labextension": "rimraf ../../nbdime/labextension && mkdirp ../../nbdime/labextension && jupyter-builder build .",
     "build:lib": "tsc --sourceMap",
     "build:lib:prod": "tsc --build",
     "clean": "npm run clean:lib && npm run clean:labextension",
@@ -42,7 +42,7 @@
     "update": "rimraf node_modules/nbdime && npm install && npm run build",
     "watch": "run-p watch:src watch:labextension",
     "watch:src": "tsc -w --sourceMap",
-    "watch:labextension": "jupyter labextension watch ."
+    "watch:labextension": "jupyter-builder watch ."
   },
   "dependencies": {
     "@jupyterlab/apputils": "^4.0.0",
@@ -62,7 +62,7 @@
   },
   "devDependencies": {
     "@jupyterlab/application": "^4.0.0",
-    "@jupyterlab/builder": "^4.0.0",
+    "@jupyter/builder": "^1.0.0",
     "@jupyterlab/docregistry": "^4.0.0",
     "@lumino/commands": "^2.0.0",
     "mkdirp": "^3.0.0",
