@@ -220,6 +220,22 @@ describe('merge', () => {
         expect(model.base).toBe(notebook);
       });
 
+      it('should preserve a remotely deleted cell when deletion is unchecked', () => {
+        const decision: IMergeDecision = {
+          local_diff: null,
+          remote_diff: [opRemoveRange(0, 1)],
+          action: 'remote',
+          common_path: ['cells'],
+        };
+        const model = new NotebookMergeModel(notebook, [decision]);
+
+        expect(model.cells[0].deleteCell).toBe(true);
+
+        model.cells[0].deleteCell = false;
+
+        expect(model.cells[0].serialize()).toEqual(notebook.cells[0]);
+      });
+
       describe('decision splitting', () => {
         const diff: IDiffEntry[] = [
           opPatch(0, [opPatch('metadata', [opReplace('collapsed', true)])]),

@@ -412,6 +412,11 @@ export class CellMergeModel extends ObjectMergeModel<
     }
     let decisions: MergeDecision[] = [];
     for (let md of this.decisions) {
+      // Cell-level removal decisions are represented by deleteCell. They
+      // cannot be applied as patches to the contents of a retained cell.
+      if (arraysEqual(md.absolutePath, ['cells'])) {
+        continue;
+      }
       let nmd = new MergeDecision(md);
       nmd.level = 2;
       decisions.push(nmd);
@@ -421,12 +426,13 @@ export class CellMergeModel extends ObjectMergeModel<
     if (Array.isArray(src)) {
       src = src.join('');
     }
-    if (src !== this._merged!.source.remote) {
+    const mergedSource = this._merged!.source.remote;
+    if (mergedSource !== null && src !== mergedSource) {
       console.warn(
         "Serialized outputs doesn't match model value! " +
           'Keeping the model value.',
       );
-      output.source = splitLines(this._merged!.source.remote!);
+      output.source = splitLines(mergedSource);
     }
     if (this.clearOutputs && nbformat.isCode(output)) {
       output.outputs = [];
