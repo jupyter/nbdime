@@ -6,7 +6,7 @@ import type {
   JupyterFrontEnd,
 } from '@jupyterlab/application';
 
-import { CommandToolbarButton } from '@jupyterlab/apputils';
+import { CommandToolbarButton, InputDialog } from '@jupyterlab/apputils';
 
 import { IEditorServices } from '@jupyterlab/codeeditor';
 
@@ -32,7 +32,12 @@ import type { CommandRegistry } from '@lumino/commands';
 
 import { type IDisposable, DisposableDelegate } from '@lumino/disposable';
 
-import { diffNotebookGit, diffNotebookCheckpoint, isNbInGit } from './actions';
+import {
+  diffNotebook,
+  diffNotebookGit,
+  diffNotebookCheckpoint,
+  isNbInGit,
+} from './actions';
 
 const pluginId = 'nbdime-jupyterlab:plugin';
 
@@ -198,11 +203,81 @@ function addCommands(
   });
 
   commands.addCommand(CommandIDs.diffNotebook, {
-    execute: args => {
-      // TODO: Check args for base/remote
-      // if missing, prompt with dialog.
-      //let content = current.notebook;
-      //diffNotebook({base, remote, translator});
+    describedBy: {
+      args: {
+        type: 'object',
+        properties: {
+          base: {
+            type: 'string',
+            description: trans.__(
+              'Path to the base notebook. If omitted, the command prompts for it.',
+            ),
+          },
+          remote: {
+            type: 'string',
+            description: trans.__(
+              'Path to the remote notebook. If omitted, the command prompts for it.',
+            ),
+          },
+          activate: {
+            type: 'boolean',
+            description: trans.__(
+              'Whether to activate the diff widget after opening it.',
+            ),
+          },
+        },
+      },
+    },
+    execute: async args => {
+      async function getNotebookPath(
+        name: 'base' | 'remote',
+      ): Promise<string | null> {
+        const value = args[name];
+        if (typeof value === 'string') {
+          const path = value.trim();
+          if (path) {
+            return path;
+          }
+        }
+
+        const label =
+          name === 'base'
+            ? trans.__('Base notebook path')
+            : trans.__('Remote notebook path');
+        const result = await InputDialog.getText({
+          title: trans.__('Compare notebooks'),
+          label,
+          text:
+            name === 'remote' ? tracker.currentWidget?.context.path ?? '' : '',
+          placeholder: trans.__('path/to/notebook.ipynb'),
+          okLabel: trans.__('Compare'),
+        });
+        const path = result.value?.trim();
+        return result.button.accept && path ? path : null;
+      }
+
+      const base = await getNotebookPath('base');
+      if (!base) {
+        return;
+      }
+      const remote = await getNotebookPath('remote');
+      if (!remote) {
+        return;
+      }
+
+      const widget = diffNotebook({
+        base,
+        remote,
+        editorFactory,
+        rendermime,
+        hideUnchanged,
+        translator,
+        serverSettings,
+      });
+      shell.add(widget);
+      if (args['activate'] !== false) {
+        shell.activateById(widget.id);
+      }
     },
     label: erroredGen(trans.__('Notebook diff')),
     caption: erroredGen(trans.__('Display nbdiff between two notebooks')),
