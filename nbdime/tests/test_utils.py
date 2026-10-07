@@ -5,8 +5,20 @@ import tempfile
 
 from nbdime.utils import (
     strings_to_lists, revert_strings_to_lists, is_in_repo,
-    locate_gitattributes
+    locate_gitattributes, pushd
 )
+
+
+def test_pushd_restores_original_directory():
+    original = os.getcwd()
+    directory = tempfile.mkdtemp()
+    try:
+        with pushd(directory):
+            assert os.path.samefile(os.getcwd(), directory)
+        assert os.path.samefile(os.getcwd(), original)
+    finally:
+        os.chdir(original)
+        shutil.rmtree(directory)
 
 
 def test_string_to_lists():

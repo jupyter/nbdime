@@ -316,7 +316,7 @@ def split_os_path(path):
 @contextmanager
 def pushd(path):
     """Change current directory with context manager (changes back)"""
-    old = os.curdir
+    old = os.getcwd()
     try:
         os.chdir(path)
         yield
