@@ -590,10 +590,9 @@ def resolve_strategy_inline_recurse(path, base, decisions):
                 }
 
             elif k == 'id':
-                cell[k] = {
-                    "local_id": lcell[k],
-                    "remote_id": rcell[k],
-                }
+                # A cell id has to be a string, so the conflict cannot be
+                # shown inline. Keep the local id.
+                cell[k] = lcell[k]
 
             elif k == 'execution_count':
                 cell[k] = None  # Clear
