@@ -1097,6 +1097,22 @@ def test_inline_merge_cells_insertion_similar():
     assert merged == expected
 
 
+def test_inline_merge_cells_insertion_similar_ids_differ():
+    # The same cell was added by hand on each side, so it has a different
+    # id on each side but the same source.
+    base = sources_to_notebook([['unmodified']], strip_ids=True)
+    local = sources_to_notebook([['unmodified'], ['added']], strip_ids=True)
+    remote = sources_to_notebook([['unmodified'], ['added']], strip_ids=True)
+    local.cells[1]["id"] = "cell-id-local"
+    remote.cells[1]["id"] = "cell-id-remote"
+    merged, decisions = merge_notebooks(base, local, remote)
+    # The merged notebook must still be a valid notebook
+    try:
+        nbformat.validate(merged)
+    except Exception as e:
+        pytest.fail(f"merged notebook is not a valid notebook: {e!r}")
+
+
 def test_inline_merge_cells_insertion_unsimilar():
     base = sources_to_notebook([['unmodified']], cell_type='markdown', strip_ids=True)
     local = sources_to_notebook([['unmodified'], ['local\n', 'friendly faces\n', '3.14']], cell_type='markdown', strip_ids=True)
