@@ -991,3 +991,55 @@ def test_only_metadata(db, reset_notebook_diff):
             path[4] == 'metadata'
         )
 
+
+
+@pytest.mark.parametrize("strategy", ["inline", "mergetool"])
+def test_merge_concurrent_inserts_with_removal_keeps_agreed_cells_once(strategy):
+    # Both sides replace the same base cell with the same two new cells.
+    # The first new cell was added by hand on each side, so it has a
+    # different id on each side but the same source. The second new cell
+    # is identical on both sides.
+    # Expected: the agreed removal and the agreed insert merge cleanly,
+    # and only the cell with differing ids is a conflict.
+    # Observed: the whole chunk becomes one conflict. The inline strategy
+    # then emits every cell from both sides, so the identical cell appears
+    # twice. The mergetool strategy keeps base, so the agreed changes are lost.
+    base = sources_to_notebook([[
+        "def f(x):\n",
+        "    return x**2",
+        ], [
+        "x = 1\n",
+        "y = 2",
+        ], [
+        "print(f(3))",
+        ],
+        ], strip_ids=True)
+    local = sources_to_notebook([[
+        "def f(x):\n",
+        "    return x**2",
+        ], [
+        "def g(y):\n",
+        "    return y + 2",
+        ], [
+        "print(g(4))",
+        ], [
+        "print(f(3))",
+        ],
+        ], strip_ids=True)
+    remote = copy.deepcopy(local)
+    local.cells[1]["id"] = "cell-id-local"
+    remote.cells[1]["id"] = "cell-id-remote"
+
+    merge_args = copy.deepcopy(args)
+    merge_args.merge_strategy = strategy
+
+    partial, decisions = merge_notebooks(base, local, remote, merge_args)
+
+    sources = [cell["source"] for cell in partial.cells]
+    assert sources.count(local.cells[2]["source"]) == 1
+    assert base.cells[1]["source"] not in sources
+
+    conflicts = [d for d in decisions if d.conflict]
+    assert len(conflicts) == 1
+    assert conflicts[0].local_diff == [op_addrange(1, [local.cells[1]])]
+    assert conflicts[0].remote_diff == [op_addrange(1, [remote.cells[1]])]
