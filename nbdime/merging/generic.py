@@ -410,9 +410,17 @@ def _merge_concurrent_inserts(base, ldiff, rdiff, path, decisions, item_strategy
 
     # If there are any conflicts in the merging, and removals following...
     if subdecisions.has_conflicted() and (len(ldiff) == 2 or len(rdiff) == 2):
-        # ... throw away subdecisions here and mark entire thing as conflicted
-        decisions = MergeDecisionBuilder()
-        decisions.conflict(path, ldiff, rdiff, item_strategy)
+        if (len(ldiff) == 2 and len(rdiff) == 2 and
+                any(not d.conflict for d in subdecisions.decisions)):
+            # ... but both sides agree on the removal and on some of the
+            # inserted values, keep those agreements so that only the
+            # differing inserted values are marked as conflicted
+            decisions = subdecisions
+            decisions.agreement(path, ldiff[1:], rdiff[1:])
+        else:
+            # ... throw away subdecisions here and mark entire thing as conflicted
+            decisions = MergeDecisionBuilder()
+            decisions.conflict(path, ldiff, rdiff, item_strategy)
     else:
         # ... otherwise use decisions from merging of inserted values, and if
         # there are removals at the end, add them without conflict

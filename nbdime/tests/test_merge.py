@@ -202,10 +202,14 @@ def test_deep_merge_lists_delete_no_conflict():
     m = apply_decisions(b, decisions)
     #assert m == [[1, 5], [2, 4], [1, 5], [4, 6]]  # This was expected behaviour before: clear b, add l, add r
     #assert m == [[1, 5], [4]]  # 2,3,6 should be gone. TODO: This is the naively ideal thought-reading behaviour. Possible?
-    assert m == b  # conflicts lead to original kept in m
-    assert decisions[0].conflict
-    assert decisions[0].local_diff == [op_addrange(0, l), op_removerange(0, 2)]
-    assert decisions[0].remote_diff == [op_addrange(0, r), op_removerange(0, 2)]
+    #assert m == b  # This was expected behaviour before: conflicts lead to original kept in m
+    # Both sides agree on removing the base entries and on inserting [1, 5],
+    # so only the second inserted entry is conflicted (and left out of m)
+    assert m == [[1, 5]]
+    conflicts = [d for d in decisions if d.conflict]
+    assert len(conflicts) == 1
+    assert conflicts[0].local_diff == [op_addrange(0, [l[1]])]
+    assert conflicts[0].remote_diff == [op_addrange(0, [r[1]])]
 
 
 
