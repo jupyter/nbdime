@@ -10,6 +10,7 @@
 import {
   type IDiffEntry,
   type IDiffObjectEntry,
+  type IDiffReplace,
   type IDiffPatch,
   opRemove,
   opReplace,
@@ -57,6 +58,7 @@ export type Action =
   | 'custom'
   | 'clear'
   | 'clear_parent'
+  | 'take_max'
   | 'either';
 
 function validateAction(action: string): Action {
@@ -70,6 +72,7 @@ function validateAction(action: string): Action {
       'custom',
       'clear',
       'clear_parent',
+      'take_max',
       'either',
     ])
   ) {
@@ -479,6 +482,28 @@ function resolveAction(base: any, decision: MergeDecision): IDiffEntry[] {
     return _combineDiffs(decision.localDiff, decision.remoteDiff);
   } else if (a === 'remote_then_local') {
     return _combineDiffs(decision.remoteDiff, decision.localDiff);
+  } else if (a === 'take_max') {
+    let diffs = _combineDiffs(
+      decision.localDiff,
+      decision.remoteDiff,
+    ) as IDiffReplace[];
+    if (diffs.length === 0) {
+      return [];
+    }
+    let key = diffs[0].key;
+    let value = base[key];
+    for (let d of diffs) {
+      if (d.key !== key) {
+        throw new Error('Cannot combine diffs with different keys');
+      }
+      value = Math.max(value, d.value);
+    }
+    if (value === base[key]) {
+      return [];
+    }
+    let d = opReplace(key, value);
+    d.source = { decision, action: 'custom' };
+    return [d];
   } else if (a === 'clear') {
     let key: string | null = null;
     if (typeof base !== 'object') {

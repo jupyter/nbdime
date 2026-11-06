@@ -25,6 +25,7 @@ import {
   resolveCommonPaths,
   filterDecisions,
   decisionSortKey,
+  applyDecisions,
 } from '../../merge/decisions';
 
 import { labelSource } from '../../chunking';
@@ -78,6 +79,7 @@ export class NotebookMergeModel {
     this.base = base;
     let ctor = this.constructor as typeof NotebookMergeModel;
     let decisions = ctor.preprocessDecisions(rawMergeDecisions);
+    this._rootDecisions = decisions.filter(md => md.absolutePath.length === 0);
 
     // The notebook metadata MIME type is used for determining the MIME type
     // of source cells, so store it easily accessible:
@@ -104,6 +106,7 @@ export class NotebookMergeModel {
         nb[key] = this.base[key];
       }
     }
+    nb = applyDecisions(nb, this._rootDecisions);
 
     // Serialize metadata
     nb['metadata'] = this.metadata.serialize();
@@ -129,6 +132,7 @@ export class NotebookMergeModel {
       ret = ret.concat(c.decisions);
     }
     ret = ret.concat(this.metadata.decisions);
+    ret = ret.concat(this._rootDecisions);
     return ret;
   }
 
@@ -166,6 +170,9 @@ export class NotebookMergeModel {
    * Whether there are unsaved changes
    */
   unsavedChanges: boolean;
+
+  /** Decisions on root fields, such as the notebook format version. */
+  protected _rootDecisions: MergeDecision[];
 
   /**
    * Correlate the different cells in the diff lists into a merge list

@@ -6,6 +6,7 @@ import * as decisions from '../../../src/merge/decisions';
 import {
   opAdd,
   opRemove,
+  opReplace,
   opAddRange,
   opRemoveRange,
   opPatch,
@@ -15,6 +16,7 @@ import {
 } from '../../../src/diff/diffentries';
 
 import { arraysEqual } from '../../../src/common/util';
+import { stripSource } from '../../../src/diff/util';
 
 function isDiffEmpty(diff: IDiffEntry[] | null): boolean {
   if (diff === null || diff.length === 0) {
@@ -522,6 +524,51 @@ describe('merge', () => {
         let expectedInner = opRemoveRange(0, 4);
         expectedInner.source = { decision: dec, action: 'custom' };
         expect(value).toEqual([opPatch('source', [expectedInner])]);
+      });
+    });
+
+    describe('take_max decisions', () => {
+      it.each([
+        [1, 2, 4, 4],
+        [1, 4, 2, 4],
+        [5, 2, 4, 5],
+        [1, 4, 4, 4],
+        [-1, 0, -2, 0],
+      ])(
+        'should merge %i, %i and %i to %i',
+        (base, local, remote, expected) => {
+          let original = { nbformat_minor: base };
+          let raw = {
+            action: 'take_max',
+            common_path: [],
+            local_diff: [opReplace('nbformat_minor', local)],
+            remote_diff: [opReplace('nbformat_minor', remote)],
+          };
+          let decision = new decisions.MergeDecision(raw);
+
+          expect(decision.serialize()).toMatchObject(raw);
+          expect(decisions.applyDecisions(original, [decision])).toEqual({
+            nbformat_minor: expected,
+          });
+          expect(
+            stripSource(decisions.buildDiffs(original, [decision], 'merged')),
+          ).toEqual(
+            expected === base ? [] : [opReplace('nbformat_minor', expected)],
+          );
+          expect(original.nbformat_minor).toBe(base);
+          expect(decision.serialize()).toMatchObject(raw);
+        },
+      );
+
+      it.each(['local_diff', 'remote_diff'])('should handle only %s', side => {
+        let decision = new decisions.MergeDecision({
+          action: 'take_max',
+          common_path: [],
+          [side]: [opReplace('nbformat_minor', 4)],
+        });
+        expect(
+          decisions.applyDecisions({ nbformat_minor: 1 }, [decision]),
+        ).toEqual({ nbformat_minor: 4 });
       });
     });
 
