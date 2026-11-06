@@ -209,6 +209,28 @@ describe('merge', () => {
     });
 
     describe('NotebookMergeModel', () => {
+      it('should preserve the maximum notebook format version when saving', () => {
+        let base: nbformat.INotebookContent = {
+          cells: [],
+          metadata: {},
+          nbformat: 4,
+          nbformat_minor: 1,
+        };
+        let model = new NotebookMergeModel(base, [
+          {
+            common_path: [],
+            action: 'take_max',
+            local_diff: [opReplace('nbformat_minor', 2)],
+            remote_diff: [opReplace('nbformat_minor', 4)],
+          },
+        ]);
+
+        expect(model.serialize()).toEqual({ ...base, nbformat_minor: 4 });
+        expect(model.decisions).toHaveLength(1);
+        expect(model.conflicts).toHaveLength(0);
+        expect(base.nbformat_minor).toBe(1);
+      });
+
       it('should initialize a model with empty decisions', () => {
         let model = new NotebookMergeModel(notebook, []);
         expect(model.base).toBe(notebook);
