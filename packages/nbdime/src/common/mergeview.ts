@@ -979,10 +979,14 @@ export class DiffView {
       }
       if (chunkFirstLine === chunkLastLine) {
         // When the chunk is empty, make sure a horizontal line shows up
-        const startingOffset = posToOffset(editor.state.doc, {
-          line: chunkFirstLine,
-          column: 0,
-        });
+        // A final insertion/deletion can start just past the last text line.
+        // Anchor its marker to the EOF padding instead of requesting a line
+        // that does not exist in CodeMirror's document.
+        const doc = editor.state.doc;
+        const startingOffset =
+          chunkFirstLine === doc.lines
+            ? doc.length
+            : posToOffset(doc, { line: chunkFirstLine, column: 0 });
         effects.push(
           addHighlightEffect.of({
             from: startingOffset,
