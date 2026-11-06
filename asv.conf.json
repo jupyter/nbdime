@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "project": "nbdime",
+  "project_url": "https://nbdime.readthedocs.io",
+  "repo": ".",
+  "branches": ["main"],
+  "show_commit_url": "https://github.com/jupyter/nbdime/commit/",
+  "environment_type": "virtualenv",
+  "pythons": ["3.12"],
+  "benchmark_dir": "benchmarks",
+  "env_dir": ".asv/env",
+  "results_dir": ".asv/results",
+  "html_dir": ".asv/html"
+}
