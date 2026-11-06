@@ -216,8 +216,12 @@ def add_git_config_subcommand(subparsers, enable, disable, subparser_help, enabl
     config = subparsers.add_parser('config',
         description=subparser_help)
 
-    # Option for git scope (global/system):
+    # Option for git scope (local/global/system):
     scope = config.add_mutually_exclusive_group()
+    scope.add_argument('--local', action='store_const', dest='scope',
+        const='local',
+        help="configure only the current git repository (the default)"
+    )
     scope.add_argument('--global', action='store_const', dest='scope',
         const='global',
         help="configure your global git config instead of the current repo"

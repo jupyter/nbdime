@@ -45,18 +45,19 @@ drivers/tools are given below.
 
 To configure all diff/merge drivers and tools, simply call::
 
-    nbdime config-git (--enable | --disable) [--global | --system]
+    nbdime config-git (--enable | --disable) [--local | --global | --system]
 
 This command will register nbdime with git for the current project
-(repository), or on the global (user), or sytem level according to
-the ``--global`` or ``--system`` options.
+(repository), or on the global (user), or system level according to
+the ``--local``, ``--global`` or ``--system`` options. These options are
+mutually exclusive.
 
 .. versionadded:: 0.3
 
     :command:`nbdime config-git`. Prior to 0.3, each nbdime entrypoint had to enable git integration separately.
 
 .. note::
-    When neither the global or system flag is given, the configuration
+    With ``--local``, or when no scope flag is given, the configuration
     is only applied to the current project (repository). The command
     will therefore need to be run from within a git repository.
 

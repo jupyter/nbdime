@@ -28,7 +28,7 @@ def enable(scope=None, set_default=False):
     """Enable nbdime git difftool"""
     cmd = ['git', 'config']
     if scope:
-        assert scope in ('global', 'system'), 'invalid scope value: %r' % scope
+        assert scope in ('local', 'global', 'system'), 'invalid scope value: %r' % scope
         cmd.append('--' + scope)
 
     check_call(cmd + ['difftool.nbdime.cmd', 'git-nbdifftool diff "$LOCAL" "$REMOTE" "$BASE"'])
@@ -43,7 +43,7 @@ def disable(scope=None, _=None):
     """Disable nbdime git difftool"""
     cmd = ['git', 'config']
     if scope:
-        assert scope in ('global', 'system'), 'invalid scope value: %r' % scope
+        assert scope in ('local', 'global', 'system'), 'invalid scope value: %r' % scope
         cmd.append('--' + scope)
     try:
         tool = check_output(cmd + ['diff.guitool']).decode('utf8', 'replace').strip()
