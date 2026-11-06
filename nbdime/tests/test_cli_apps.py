@@ -535,22 +535,40 @@ def _check_mergetool_disabled():
         get_output('git config --get --local merge.tool')
 
 
-def test_config_git(git_repo):
+@pytest.mark.parametrize('scope', [[], ['--local']])
+def test_config_git(git_repo, scope, tmp_path, monkeypatch):
     """Check that `nbime config-git` command works"""
+    global_config = tmp_path / 'global.gitconfig'
+    original_config = '[test]\n\tunchanged = true\n'
+    global_config.write_text(original_config, encoding='utf8')
+    monkeypatch.setenv('GIT_CONFIG_GLOBAL', str(global_config))
 
-    main_dispatch(['config-git', '--enable'])
+    main_dispatch(['config-git', '--enable'] + scope)
 
     _check_diffdriver_enabled()
     _check_difftool_enabled()
     _check_mergedriver_enabled()
     _check_mergetool_enabled()
+    assert global_config.read_text(encoding='utf8') == original_config
 
-    main_dispatch(['config-git', '--disable'])
+    main_dispatch(['config-git', '--disable'] + scope)
 
     _check_diffdriver_disabled()
     _check_difftool_disabled()
     _check_mergedriver_disabled()
     _check_mergetool_disabled()
+    assert global_config.read_text(encoding='utf8') == original_config
+
+
+@pytest.mark.parametrize('scopes', [
+    ['--local', '--global'], ['--global', '--local'],
+    ['--local', '--system'], ['--system', '--local'],
+])
+def test_config_git_rejects_multiple_scopes(scopes, capsys):
+    with pytest.raises(SystemExit) as error:
+        main_dispatch(['config-git', '--enable'] + scopes)
+    assert error.value.code == 2
+    assert 'not allowed with argument' in capsys.readouterr().err
 
 
 def test_config_git_fails(git_repo):

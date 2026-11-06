@@ -43,7 +43,7 @@ def enable(scope=None):
         return   # Not in git repository
     gitattributes = locate_gitattributes(scope)
     if gitattributes is None:
-        assert scope is None, "No gitattributes found for scope: %s" % scope
+        assert scope in (None, 'local'), "No gitattributes found for scope: %s" % scope
         print("No .git directory in %s, skipping git attributes" % os.curdir, file=sys.stderr)
         return
 
