@@ -32,8 +32,12 @@ Running
 From an environment with a development installation of nbdime::
 
     python -m pip install asv
+    asv machine --yes
     asv check --python=same
     asv run --python=same --quick --show-stderr --dry-run
+
+``asv machine --yes`` records the current machine with detected defaults;
+run it once per machine, including a fresh non-interactive CI runner.
 
 The quick run is a smoke check, not a performance measurement. For timings in
 the current environment, omit ``--quick``. Use ``--bench StreamOutput`` (or
